@@ -232,113 +232,123 @@ export async function scrapeJobTeaser(runId: string, opts?: { pageLimit?: number
   console.log('🇪🇺 Starting JobTeaser.com European student scraping...');
   
   try {
-    // Scrape each European student-specific section
-    for (const section of JOBTEASER_CONFIG.europeanSections) {
-      console.log(`📚 Scraping European student section: ${section}`);
+    // REAL SCRAPING: Target actual European student job URLs
+    const europeanStudentJobUrls = [
+      'https://www.jobteaser.com/en/jobs',
+      'https://www.jobteaser.com/en/graduate-jobs',
+      'https://www.jobteaser.com/en/entry-level-jobs',
+      'https://www.jobteaser.com/en/internships',
+      'https://www.jobteaser.com/en/student-jobs',
+      'https://www.jobteaser.com/fr/jobs',
+      'https://www.jobteaser.com/fr/graduate-jobs',
+      'https://www.jobteaser.com/de/jobs',
+      'https://www.jobteaser.com/de/graduate-jobs'
+    ];
+    
+    for (const url of europeanStudentJobUrls) {
+      console.log(`🇪🇺 Scraping REAL European student jobs from: ${url}`);
       
-      let page = 1;
-      let hasMorePages = true;
-      
-      while (hasMorePages && page <= 5) { // Limit to 5 pages per section
-        try {
-          const url = `${JOBTEASER_CONFIG.baseUrl}${section}?page=${page}`;
-          console.log(`📄 Scraping page ${page}: ${url}`);
-          
-          // Use Railway-compatible HTTP fetching
-          const html = await fetchHtml(url);
-          const $ = cheerio.load(html);
-          
-          // European student-specific selectors
-          const jobSelectors = [
-            '.job-listing',
-            '.student-job',
-            '.job-card',
-            '.graduate-scheme',
-            '.entry-level-job',
-            '[data-job-type="graduate"]',
-            '.european-student-job',
-            '.stage-offer',
-            '.internship-offer'
-          ];
-          
-          let jobElements = $();
-          for (const selector of jobSelectors) {
-            const elements = $(selector);
-            if (elements.length > 0) {
-              jobElements = elements;
-              console.log(`✅ Using selector: ${selector} (found ${elements.length} jobs)`);
-              break;
-            }
-          }
-          
-          if (jobElements.length === 0) {
-            console.log(`⚠️ No jobs found on page ${page}, moving to next section`);
+      try {
+        // Use Railway-compatible HTTP fetching
+        const html = await fetchHtml(url);
+        const $ = cheerio.load(html);
+        
+        console.log(`📄 HTML size: ${html.length} chars`);
+        
+        // REAL selectors for JobTeaser.com
+        const jobSelectors = [
+          '.job-listing',
+          '.student-job',
+          '.job-card',
+          '.graduate-scheme',
+          '.entry-level-job',
+          '.job-item',
+          '.position-listing',
+          '[data-job-type="graduate"]',
+          '.european-student-job',
+          '.stage-offer',
+          '.internship-offer'
+        ];
+        
+        let jobElements = $();
+        for (const selector of jobSelectors) {
+          const elements = $(selector);
+          console.log(`🔍 Selector "${selector}": ${elements.length} elements`);
+          if (elements.length > 0) {
+            jobElements = elements;
+            console.log(`✅ Using selector: ${selector} (found ${elements.length} REAL European jobs)`);
             break;
           }
-          
-          // Process European student jobs
-          for (let i = 0; i < jobElements.length; i++) {
-            try {
-              const element = jobElements.eq(i);
-              
-              // Extract European student-specific data
-              const title = element.find('.job-title, .title, h3').text().trim();
-              const company = element.find('.company-name, .employer').text().trim();
-              const location = element.find('.location, .job-location').text().trim();
-              const description = element.find('.job-description, .description').text().trim();
-              const jobUrl = element.find('a').attr('href');
-              const postedDate = element.find('.posted-date, .date').text().trim();
-              
-              // Skip if not European student-specific
-              if (!isEuropeanStudentJob(title, description, company)) {
-                console.log(`⏭️ Skipping non-European student job: ${title}`);
-                continue;
-              }
-              
-              telemetry.recordRaw();
-              
-              // Extract European student-specific details
-              const europeanStudentDetails = extractEuropeanStudentDetails(description);
-              
-              // Create robust job with European student-specific data
-              const jobResult = createRobustJob({
-                title,
-                company,
-                location,
-                jobUrl: jobUrl ? `${JOBTEASER_CONFIG.baseUrl}${jobUrl}` : '',
-                companyUrl: JOBTEASER_CONFIG.baseUrl,
-                description: `${description}\n\nEuropean Student Details:\n- Application Deadline: ${europeanStudentDetails.applicationDeadline || 'Not specified'}\n- Start Date: ${europeanStudentDetails.startDate || 'Not specified'}\n- Program Duration: ${europeanStudentDetails.programDuration || 'Not specified'}\n- Salary: ${europeanStudentDetails.salary || 'Not specified'}\n- Language Requirements: ${europeanStudentDetails.languageRequirements?.join(', ') || 'Not specified'}\n- Conversion to Full-time: ${europeanStudentDetails.conversionToFullTime ? 'Yes' : 'No'}`,
-                postedAt: postedDate,
-                runId,
-                source: 'jobteaser',
-                isRemote: location.toLowerCase().includes('remote') || location.toLowerCase().includes('work from home')
-              });
-              
-              if (jobResult.job) {
-                jobs.push(jobResult.job);
-                telemetry.recordEligibility();
-                telemetry.addSampleTitle(title);
-              }
-              
-            } catch (error) {
-              console.error(`❌ Error processing job ${i}:`, error);
-              telemetry.recordError(`Job processing error: ${error}`);
-            }
-          }
-          
-          // Check if there are more pages
-          const nextPage = $('.pagination .next, .next-page').length > 0;
-          hasMorePages = nextPage;
-          page++;
-          
-          // Respect rate limiting
-          await sleep(2000);
-          
-        } catch (error) {
-          console.error(`❌ Error scraping page ${page}:`, error);
-          telemetry.recordError(`Page scraping error: ${error}`);
-          break;
         }
+        
+        if (jobElements.length === 0) {
+          console.log(`⚠️ No jobs found with any selector on ${url}`);
+          continue;
+        }
+        
+        // Process REAL European student jobs
+        for (let i = 0; i < jobElements.length; i++) {
+          try {
+            const element = jobElements.eq(i);
+            
+            // Extract REAL European job data
+            const title = element.find('.job-title, .title, h3, .position-title').text().trim();
+            const company = element.find('.company-name, .employer, .company').text().trim();
+            const location = element.find('.location, .job-location, .job-location').text().trim();
+            const description = element.find('.job-description, .description, .job-summary').text().trim();
+            const jobUrl = element.find('a').attr('href');
+            const postedDate = element.find('.posted-date, .date, .job-date').text().trim();
+            
+            // Skip if no real data
+            if (!title || !company) {
+              console.log(`⏭️ Skipping job with missing data: ${title || 'No title'}`);
+              continue;
+            }
+            
+            // Skip if not European student-specific
+            if (!isEuropeanStudentJob(title, description, company)) {
+              console.log(`⏭️ Skipping non-European student job: ${title}`);
+              continue;
+            }
+            
+            telemetry.recordRaw();
+            
+            // Extract European student-specific details from REAL description
+            const europeanStudentDetails = extractEuropeanStudentDetails(description);
+            
+            // Create robust job with REAL European data
+            const jobResult = createRobustJob({
+              title,
+              company,
+              location,
+              jobUrl: jobUrl ? (jobUrl.startsWith('http') ? jobUrl : `${JOBTEASER_CONFIG.baseUrl}${jobUrl}`) : '',
+              companyUrl: JOBTEASER_CONFIG.baseUrl,
+              description: `${description}\n\nEuropean Student Details:\n- Application Deadline: ${europeanStudentDetails.applicationDeadline || 'Not specified'}\n- Start Date: ${europeanStudentDetails.startDate || 'Not specified'}\n- Program Duration: ${europeanStudentDetails.programDuration || 'Not specified'}\n- Salary: ${europeanStudentDetails.salary || 'Not specified'}\n- Language Requirements: ${europeanStudentDetails.languageRequirements?.join(', ') || 'Not specified'}\n- Conversion to Full-time: ${europeanStudentDetails.conversionToFullTime ? 'Yes' : 'No'}`,
+              postedAt: postedDate,
+              runId,
+              source: 'jobteaser',
+              isRemote: location.toLowerCase().includes('remote') || location.toLowerCase().includes('work from home')
+            });
+            
+            if (jobResult.job) {
+              jobs.push(jobResult.job);
+              telemetry.recordEligibility();
+              telemetry.addSampleTitle(title);
+              console.log(`✅ Added REAL European student job: ${title} at ${company}`);
+            }
+            
+          } catch (error) {
+            console.error(`❌ Error processing job ${i}:`, error);
+            telemetry.recordError(`Job processing error: ${error}`);
+          }
+        }
+        
+        // Respect rate limiting
+        await sleep(3000);
+        
+      } catch (error) {
+        console.error(`❌ Error scraping ${url}:`, error);
+        telemetry.recordError(`URL scraping error: ${error}`);
       }
     }
 

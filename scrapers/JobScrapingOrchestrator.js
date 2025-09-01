@@ -1,7 +1,7 @@
 // 🔧 SCRAPER ORCHESTRATION SYSTEM
 // MASTER SCRAPING CONTROLLER
 
-const RemoteOKScraper = require('./RemoteOKScraper');
+// Removed RemoteOKScraper - it's poison for graduates
 
 class JobScrapingOrchestrator {
   constructor() {
@@ -39,10 +39,8 @@ class JobScrapingOrchestrator {
       console.warn('Milkround scraper not available:', error.message);
     }
     
-    // Only add RemoteOK as a last resort, and filter it heavily
-    if (process.env.INCLUDE_REMOTEOK === 'true') {
-      this.scrapers.push(new RemoteOKScraper());
-    }
+    // Removed RemoteOK - it's poison for graduates
+    // Only add graduate-focused scrapers
     
     // Log which scrapers are active
     console.log('🎯 Active scrapers:', this.scrapers.map(s => s.name).join(', '));

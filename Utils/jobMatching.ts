@@ -1,7 +1,28 @@
 /* ============================
    JobPing Types & Normalizers
    (single source of truth)
+   
+   PHASE 6: Integration & Migration
+   Feature Flag: USE_NEW_MATCHING_ARCHITECTURE
    ============================ */
+
+// Feature flag for gradual migration
+const USE_NEW_MATCHING_ARCHITECTURE = process.env.USE_NEW_MATCHING_ARCHITECTURE === 'true';
+
+// Import new services when feature flag is enabled
+let MatcherOrchestrator: any = null;
+let newScoringService: any = null;
+
+if (USE_NEW_MATCHING_ARCHITECTURE) {
+  try {
+    const { MatcherOrchestrator: Orchestrator } = require('./matching/matcher.orchestrator');
+    const { ScoringService } = require('./matching/scoring.service');
+    MatcherOrchestrator = Orchestrator;
+    newScoringService = ScoringService;
+  } catch (error) {
+    console.warn('⚠️ New matching architecture not available, falling back to legacy:', error instanceof Error ? error.message : 'Unknown error');
+  }
+}
 
 // ---------- DB row shapes (match your Postgres schema) ----------
 export interface JobRow {
@@ -455,6 +476,18 @@ export function applyHardGates(job: Job, userPrefs: UserPreferences): { passed: 
 
 // C3: Scoring model
 export function calculateMatchScore(job: Job, userPrefs: UserPreferences): MatchScore {
+  // PHASE 6: Feature flag integration
+  if (USE_NEW_MATCHING_ARCHITECTURE && newScoringService) {
+    try {
+      const scoringService = new newScoringService();
+      return scoringService.calculateMatchScore(job, userPrefs);
+    } catch (error) {
+      console.error('❌ New scoring service failed, falling back to legacy:', error instanceof Error ? error.message : 'Unknown error');
+      // Fall through to legacy implementation
+    }
+  }
+
+  // Legacy implementation
   const categories = normalizeToString(job.categories);
   const tags = normalizeCategoriesForRead(categories);
   
@@ -1637,6 +1670,20 @@ export async function performEnhancedAIMatching(
   userPrefs: UserPreferences,
   openai: OpenAI
 ): Promise<MatchResult[]> {
+  // PHASE 6: Feature flag integration
+  if (USE_NEW_MATCHING_ARCHITECTURE && MatcherOrchestrator) {
+    try {
+      console.log('🚀 Using new matching architecture for AI matching');
+      const orchestrator = new MatcherOrchestrator(openai, getSupabaseClient());
+      const result = await orchestrator.generateMatchesWithStrategy(userPrefs, jobs, 'ai_only');
+      return result.matches;
+    } catch (error) {
+      console.error('❌ New architecture failed, falling back to legacy:', error);
+      // Fall through to legacy implementation
+    }
+  }
+
+  // Legacy implementation
   try {
     // C7: AI + Fallback orchestration
     // Include user single career path, top 3 cities, and eligibility notes
@@ -1711,7 +1758,21 @@ export function parseAndValidateMatches(response: string, jobs: Job[]): JobMatch
 
 // C7: Robust fallback matching
 export function generateRobustFallbackMatches(jobs: Job[], userPrefs: UserPreferences): MatchResult[] {
-  console.log(`🧠 Using robust fallback for ${userPrefs.email}`);
+  // PHASE 6: Feature flag integration
+  if (USE_NEW_MATCHING_ARCHITECTURE && MatcherOrchestrator) {
+    try {
+      console.log('🚀 Using new matching architecture for fallback matching');
+      const orchestrator = new MatcherOrchestrator(null, getSupabaseClient());
+      const result = orchestrator.generateMatchesWithStrategy(userPrefs, jobs, 'fallback_only');
+      return result.matches;
+    } catch (error) {
+      console.error('❌ New architecture failed, falling back to legacy:', error instanceof Error ? error.message : 'Unknown error');
+      // Fall through to legacy implementation
+    }
+  }
+
+  // Legacy implementation
+  console.log(`🧠 Using legacy robust fallback for ${userPrefs.email}`);
   
   // Use the robust matching system
   const matches = performRobustMatching(jobs, userPrefs);

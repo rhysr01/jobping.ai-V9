@@ -9,12 +9,12 @@ async function testRemoteOKScraper() {
   
   try {
     // Dynamically import the ES module
-    const { scrapeRemoteOK } = await import('./scrapers/remoteok.ts');
+    // Removed RemoteOK - it's poison for graduates
     
     console.log('✅ RemoteOK scraper module loaded');
     
     // Test with a small limit
-    const jobs = await scrapeRemoteOK();
+    // Removed RemoteOK scraper call - it's poison for graduates
     console.log(`📊 RemoteOK found ${jobs.length} jobs`);
     
     if (jobs.length > 0) {

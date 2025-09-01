@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { scrapeGreenhouse } from '../../../scrapers/greenhouse';
 import { scrapeLever } from '../../../scrapers/lever';
 import { scrapeWorkday } from '../../../scrapers/workday';
-import { scrapeRemoteOK } from '../../../scrapers/remoteok';
+// Removed RemoteOK import - it's poison for graduates
 import { atomicUpsertJobs } from '../../../Utils/jobMatching';
 import { runReliableScrapers } from '../../../Utils/reliableScrapers';
 import { coerceScraperResult } from '../../../Utils/robustJobCreation';
@@ -28,22 +28,26 @@ function sleep(ms: number): Promise<void> {
 // Initialize security middleware
 const securityMiddleware = new SecurityMiddleware();
 
-// Company configurations for different platforms
+// Import curated graduate employers
+import { getGraduateEmployersByPlatform } from '../../../Utils/graduateEmployers';
+
+// Company configurations for different platforms (using curated graduate employers)
 const COMPANIES = {
-  greenhouse: [
-    { name: 'Stripe', url: 'https://boards.greenhouse.io/stripe', platform: 'greenhouse' as const },
-    { name: 'Airbnb', url: 'https://boards.greenhouse.io/airbnb', platform: 'greenhouse' as const },
-    { name: 'Shopify', url: 'https://boards.greenhouse.io/shopify', platform: 'greenhouse' as const },
-  ],
-  lever: [
-    { name: 'Spotify', url: 'https://jobs.lever.co/spotify', platform: 'lever' as const },
-    { name: 'Discord', url: 'https://jobs.lever.co/discord', platform: 'lever' as const },
-    { name: 'Reddit', url: 'https://jobs.lever.co/reddit', platform: 'lever' as const },
-  ],
-  workday: [
-    { name: 'Coinbase', url: 'https://coinbase.wd12.myworkdayjobs.com/External', platform: 'workday' as const },
-    { name: 'Tesla', url: 'https://tesla.wd12.myworkdayjobs.com/External', platform: 'workday' as const },
-  ]
+  greenhouse: getGraduateEmployersByPlatform('greenhouse').map(employer => ({
+    name: employer.name,
+    url: employer.url,
+    platform: 'greenhouse' as const
+  })),
+  lever: getGraduateEmployersByPlatform('lever').map(employer => ({
+    name: employer.name,
+    url: employer.url,
+    platform: 'lever' as const
+  })),
+  workday: getGraduateEmployersByPlatform('workday').map(employer => ({
+    name: employer.name,
+    url: employer.url,
+    platform: 'workday' as const
+  }))
 };
 
 export async function POST(req: NextRequest) {
@@ -141,59 +145,7 @@ export async function POST(req: NextRequest) {
       results.reliable = { success: false, error: 'Reliable scrapers disabled by configuration' };
     }
 
-    // Scrape RemoteOK
-    if ((platforms.includes('all') || platforms.includes('remoteok')) && isPlatformEnabled('remoteok')) {
-      console.log('📡 Scraping RemoteOK...');
-      try {
-        const remoteOKResult = await scrapeRemoteOK(runId);
-        const remoteOKJobs = remoteOKResult.jobs;
-        const funnel = remoteOKResult.funnel;
-        
-        // Chunk processing
-        const chunks = chunkArray(remoteOKJobs, config.batchSize);
-        let totalInserted = 0;
-        let totalUpdated = 0;
-        let totalErrors: string[] = [];
-        
-        for (const chunk of chunks) {
-          // Filter out non-Job objects and cast properly
-          const validJobs = chunk.filter((job): job is Job => 
-            job && typeof job === 'object' && 
-            'job_hash' in job && 'title' in job && 'company' in job && 'location' in job
-          );
-          
-          const result = await atomicUpsertJobs(validJobs);
-          totalInserted += result.inserted;
-          totalUpdated += result.updated;
-          totalErrors.push(...result.errors);
-          
-          if (chunks.length > 1) {
-            await sleep(config.retryDelay);
-          }
-        }
-        
-        // Update funnel with database results
-        funnel.inserted = totalInserted;
-        funnel.updated = totalUpdated;
-        funnel.errors = totalErrors.length;
-        
-        results.remoteok = {
-          success: true,
-          jobs: remoteOKJobs.length,
-          inserted: totalInserted,
-          updated: totalUpdated,
-          errors: totalErrors,
-          chunks: chunks.length,
-          funnel
-        };
-        console.log(`✅ RemoteOK: ${remoteOKJobs.length} jobs processed in ${chunks.length} chunks`);
-      } catch (error: any) {
-        results.remoteok = { success: false, error: error.message };
-        console.error('❌ RemoteOK scrape failed:', error.message);
-      }
-    } else if (platforms.includes('remoteok') && !isPlatformEnabled('remoteok')) {
-      results.remoteok = { success: false, error: 'RemoteOK scraper disabled by configuration' };
-    }
+    // Removed RemoteOK scraper - it's poison for graduates
 
     // Scrape Greenhouse companies with dynamic discovery
     if ((platforms.includes('all') || platforms.includes('greenhouse')) && isPlatformEnabled('greenhouse')) {
