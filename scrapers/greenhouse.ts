@@ -244,7 +244,13 @@ async function backoffRetry<T>(fn: () => Promise<T>, maxRetries = 5): Promise<T>
 }
 
 export async function scrapeGreenhouse(runId: string, opts?: { pageLimit?: number }): Promise<{ raw: number; eligible: number; careerTagged: number; locationTagged: number; inserted: number; updated: number; errors: string[]; samples: string[] }> {
-  const telemetry = new FunnelTelemetryTracker();
+  // Simplified metrics tracking
+  let rawCount = 0;
+  let eligibleCount = 0;
+  let savedCount = 0;
+  const errors: string[] = [];
+  const samples: string[] = [];
+  const userAgent = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
   
   console.log('🎯 Starting Greenhouse scraper with CURATED graduate employers...');
   
@@ -260,7 +266,7 @@ export async function scrapeGreenhouse(runId: string, opts?: { pageLimit?: numbe
       const robotsCheck = await RobotsCompliance.isScrapingAllowed(employer.url);
       if (!robotsCheck.allowed) {
         console.log(`🚫 Robots.txt disallows scraping for ${employer.name}: ${robotsCheck.reason}`);
-        telemetry.recordError(`Robots.txt disallows: ${robotsCheck.reason}`);
+        errors.push(`Robots.txt disallows: ${robotsCheck.reason}`);
         continue;
       }
       console.log(`✅ Robots.txt allows scraping for ${employer.name}`);
@@ -338,74 +344,103 @@ export async function scrapeGreenhouse(runId: string, opts?: { pageLimit?: numbe
       console.warn(`⚠️ No jobs found at ${employer.name} - trying JSON endpoint`);
       const apiJobs = await tryGreenhouseAPI(employer, runId, userAgent);
       
-      // For API fallback, create basic telemetry
+      // For API fallback, process jobs using IngestJob format
       if (apiJobs.length > 0) {
-        telemetry.recordRaw(); // At least 1 raw job was found
-        telemetry.recordEligibility();
-        telemetry.recordCareerTagging();
-        telemetry.recordLocationTagging();
+        // Convert API results to database format and insert
+        const databaseJobs = apiJobs.map(convertToDatabaseFormat);
+        const result = await atomicUpsertJobs(databaseJobs);
         
-        // Add sample titles
-        apiJobs.slice(0, 5).forEach(job => telemetry.addSampleTitle(job.title));
+        console.log(`✅ Greenhouse API (${employer.name}): ${result.inserted} inserted, ${result.updated} updated`);
         
-        // Track database operations (assuming all get inserted since it's new)
-        for (let i = 0; i < apiJobs.length; i++) {
-          telemetry.recordInserted();
-        }
+        return {
+          raw: apiJobs.length,
+          eligible: apiJobs.length,
+          careerTagged: apiJobs.length,
+          locationTagged: apiJobs.length,
+          inserted: result.inserted,
+          updated: result.updated,
+          errors: result.errors,
+          samples: apiJobs.slice(0, 5).map(job => job.title)
+        };
       }
       
-      telemetry.logTelemetry(`Greenhouse-${employer.name}`);
-      return telemetry.getTelemetry();
+      return {
+        raw: 0,
+        eligible: 0,
+        careerTagged: 0,
+        locationTagged: 0,
+        inserted: 0,
+        updated: 0,
+        errors: ['No jobs found via API fallback'],
+        samples: []
+      };
     }
     
     console.log(`🔍 Found ${jobElements.length} job elements at ${employer.name}`);
 
-    const processedJobs = await Promise.all(
-      jobElements.map(async (_, el) => {
-        try {
-          return await processJobElement($, $(el), employer, runId, userAgent, telemetry);
-        } catch (err) {
-          console.warn(`⚠️ Error processing job at ${employer.name}:`, err);
-          return null;
-        }
-      }).get()
-    );
-
-    const validJobs = processedJobs.filter((job): job is Job => job !== null);
+    // Process jobs using new IngestJob format
+    const ingestJobs: IngestJob[] = [];
     
-    // CRITICAL: Insert jobs into database
-    if (validJobs.length > 0) {
+    for (let i = 0; i < jobElements.length; i++) {
+      rawCount++;
+      
       try {
-        const result = await atomicUpsertJobs(validJobs);
-        
-        // Update telemetry with upsert results
-        for (let i = 0; i < result.inserted; i++) telemetry.recordInserted();
-        for (let i = 0; i < result.updated; i++) telemetry.recordUpdated();
+        const ingestJob = await processJobElement($, $(jobElements[i]), employer, runId, userAgent);
+        if (ingestJob) {
+          eligibleCount++;
+          
+          // Check if job should be saved based on north-star rule
+          if (shouldSaveJob(ingestJob)) {
+            savedCount++;
+            ingestJobs.push(ingestJob);
+            samples.push(ingestJob.title);
+            
+            logJobProcessing(ingestJob, 'SAVED', { company: employer.name });
+          } else {
+            logJobProcessing(ingestJob, 'FILTERED', { company: employer.name });
+          }
+        }
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+        console.warn(`⚠️ Error processing job at ${employer.name}:`, errorMsg);
+        errors.push(errorMsg);
+      }
+    }
+
+    // Convert IngestJobs to database format and insert
+    if (ingestJobs.length > 0) {
+      try {
+        const databaseJobs = ingestJobs.map(convertToDatabaseFormat);
+        const result = await atomicUpsertJobs(databaseJobs);
         
         console.log(`✅ Greenhouse DATABASE (${employer.name}): ${result.inserted} inserted, ${result.updated} updated, ${result.errors.length} errors`);
+        
         if (result.errors.length > 0) {
           console.error('❌ Greenhouse upsert errors:', result.errors.slice(0, 3));
-          result.errors.forEach(error => telemetry.recordError(error));
+          errors.push(...result.errors);
         }
       } catch (error: any) {
         const errorMsg = error instanceof Error ? error.message : 'Database error';
         console.error(`❌ Greenhouse database upsert failed for ${employer.name}:`, errorMsg);
-        telemetry.recordError(errorMsg);
+        errors.push(errorMsg);
       }
     }
     
-    // Log telemetry for this company
-    telemetry.logTelemetry(`Greenhouse-${employer.name}`);
-    
-    console.log(`✅ Scraped ${validJobs.length} graduate jobs from ${employer.name}`);
+    console.log(`✅ Scraped ${savedCount} graduate jobs from ${employer.name} (${eligibleCount} eligible, ${rawCount} total)`);
     
     // Log scraping activity for compliance monitoring
     RobotsCompliance.logScrapingActivity('greenhouse', employer.url, true);
     
-    // Track performance
-    PerformanceMonitor.trackDuration(`greenhouse_scraping_${employer.name}`, scrapeStart);
-    
-    return telemetry.getTelemetry();
+    return {
+      raw: rawCount,
+      eligible: eligibleCount,
+      careerTagged: savedCount,
+      locationTagged: savedCount,
+      inserted: savedCount,
+      updated: 0,
+      errors,
+      samples
+    };
     
   } catch (error: any) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -414,9 +449,18 @@ export async function scrapeGreenhouse(runId: string, opts?: { pageLimit?: numbe
     // Log failed scraping activity for compliance monitoring
     RobotsCompliance.logScrapingActivity('greenhouse', employer.url, false);
     
-    PerformanceMonitor.trackDuration(`greenhouse_scraping_${employer.name}`, scrapeStart);
-    telemetry.recordError(errorMsg);
-    return telemetry.getTelemetry();
+    errors.push(errorMsg);
+    
+    return {
+      raw: rawCount,
+      eligible: eligibleCount,
+      careerTagged: savedCount,
+      locationTagged: savedCount,
+      inserted: savedCount,
+      updated: 0,
+      errors,
+      samples
+    };
   } finally {
     // Return browser to pool
     await SimpleBrowserPool.returnBrowser(browser);
@@ -428,9 +472,8 @@ async function processJobElement(
   $el: cheerio.Cheerio<any>, 
   employer: GraduateEmployer, 
   runId: string,
-  userAgent: string,
-  telemetry?: FunnelTelemetryTracker
-): Promise<Job | null> {
+  userAgent: string
+): Promise<IngestJob | null> {
   
   // Extract title with multiple fallbacks for current and legacy Greenhouse
   const title = (

@@ -12,7 +12,7 @@ import {
   convertToDatabaseFormat, 
   shouldSaveJob, 
   logJobProcessing 
-} from './utils.js';
+} from './utils';
 import { RobotsCompliance, RespectfulRateLimiter, JOBPING_USER_AGENT } from '../Utils/robotsCompliance';
 
 // Use JobPing-specific user agent for ethical scraping

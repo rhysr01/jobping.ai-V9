@@ -23,7 +23,7 @@ class JobScrapingOrchestrator {
       // const { scrapeJobTeaser } = require('./jobteaser'); // TEMPORARILY DISABLED due to syntax errors
       this.scrapers.push({
         name: 'JobTeaser',
-        scrapeWithRetry: () => scrapeJobTeaser('orchestrator-run-' + Date.now())
+        scrapeWithRetry: () => Promise.resolve({ raw: 0, eligible: 0, careerTagged: 0, locationTagged: 0, inserted: 0, updated: 0, errors: ['Temporarily disabled due to syntax errors'], samples: [] })
       });
     } catch (error) {
       console.warn('JobTeaser scraper not available:', error.message);
