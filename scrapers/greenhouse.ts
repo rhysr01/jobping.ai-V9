@@ -8,6 +8,7 @@ import { createRobustJob, FunnelTelemetryTracker, isEarlyCareerEligible } from '
 import { RobotsCompliance, RespectfulRateLimiter, JOBPING_USER_AGENT } from '../Utils/robotsCompliance';
 import { PerformanceMonitor } from '../Utils/performanceMonitor';
 import { getProductionRateLimiter } from '../Utils/productionRateLimiter';
+import { getGraduateEmployersByPlatform, GraduateEmployer } from '../Utils/graduateEmployers';
 
 // Use JobPing-specific user agent for ethical scraping
 const USER_AGENTS = [JOBPING_USER_AGENT];
@@ -242,62 +243,67 @@ async function backoffRetry<T>(fn: () => Promise<T>, maxRetries = 5): Promise<T>
   throw new Error('Max retries exceeded');
 }
 
-export async function scrapeGreenhouse(company: {
-  name: string;
-  url: string;
-  platform: 'greenhouse';
-  tags?: string[];
-}, runId: string): Promise<{ raw: number; eligible: number; careerTagged: number; locationTagged: number; inserted: number; updated: number; errors: string[]; samples: string[] }> {
-  const jobs: Job[] = [];
-  const userAgent = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
-  const browser = await SimpleBrowserPool.getBrowser();
-  const scrapeStart = Date.now();
+export async function scrapeGreenhouse(runId: string, opts?: { pageLimit?: number }): Promise<{ raw: number; eligible: number; careerTagged: number; locationTagged: number; inserted: number; updated: number; errors: string[]; samples: string[] }> {
   const telemetry = new FunnelTelemetryTracker();
   
-  try {
-    // Check robots.txt compliance before scraping
-    const robotsCheck = await RobotsCompliance.isScrapingAllowed(company.url);
-    if (!robotsCheck.allowed) {
-      console.log(`🚫 Robots.txt disallows scraping for ${company.name}: ${robotsCheck.reason}`);
-      telemetry.recordError(`Robots.txt disallows: ${robotsCheck.reason}`);
-      telemetry.logTelemetry(`Greenhouse-${company.name}`);
-      return telemetry.getTelemetry();
-    }
-    console.log(`✅ Robots.txt allows scraping for ${company.name}`);
-
-    // Wait for respectful rate limiting
-    await RespectfulRateLimiter.waitForDomain(new URL(company.url).hostname);
-
-    // Intelligent platform-specific rate limiting
-    const delay = await getProductionRateLimiter().getScraperDelay('greenhouse');
-    console.log(`⏱️ Greenhouse: Waiting ${delay}ms before scraping ${company.name}`);
-    await sleep(delay);
-
-    let html: string;
+  console.log('🎯 Starting Greenhouse scraper with CURATED graduate employers...');
+  
+  // Get ONLY companies that actually have graduate programs
+  const graduateEmployers = getGraduateEmployersByPlatform('greenhouse');
+  console.log(`📋 Found ${graduateEmployers.length} curated graduate employers on Greenhouse`);
+  
+  for (const employer of graduateEmployers) {
+    console.log(`🏢 Scraping graduate jobs from: ${employer.name}`);
     
-    if (browser) {
-      // Use browser pool for enhanced scraping
-      console.log(`🌐 Using browser pool for ${company.name} scraping`);
-      const page = await browser.newPage();
-      await page.setUserAgent(userAgent);
-      await page.goto(company.url, { waitUntil: 'networkidle2', timeout: 15000 });
-      html = await page.content();
-      await page.close();
-    } else {
-      // Fallback to axios
-      console.log(`📡 Using axios fallback for ${company.name} scraping`);
-      const response = await backoffRetry(() =>
-        axios.get(company.url, {
-          headers: getRandomHeaders(userAgent),
-          timeout: 15000,
-        })
-      );
-      html = response.data;
+    try {
+      // Check robots.txt compliance before scraping
+      const robotsCheck = await RobotsCompliance.isScrapingAllowed(employer.url);
+      if (!robotsCheck.allowed) {
+        console.log(`🚫 Robots.txt disallows scraping for ${employer.name}: ${robotsCheck.reason}`);
+        telemetry.recordError(`Robots.txt disallows: ${robotsCheck.reason}`);
+        continue;
+      }
+      console.log(`✅ Robots.txt allows scraping for ${employer.name}`);
+
+      // Wait for respectful rate limiting
+      await RespectfulRateLimiter.waitForDomain(new URL(employer.url).hostname);
+
+      // Intelligent platform-specific rate limiting
+      const delay = await getProductionRateLimiter().getScraperDelay('greenhouse');
+      console.log(`⏱️ Greenhouse: Waiting ${delay}ms before scraping ${employer.name}`);
+      await sleep(delay);
+
+      // Build Greenhouse URL for this specific employer
+      const greenhouseUrl = `https://boards.greenhouse.io/embed/job_board?for=company&b=https://boards.greenhouse.io/company&company=${employer.name.toLowerCase().replace(/\s+/g, '')}`;
       
-      // Check for blocks/rate limits (simplified)
-      if (response.status === 429 || response.status === 403) {
-        console.warn(`🚨 Block detected for ${company.name}! Status: ${response.status}`);
-        await getProductionRateLimiter().getScraperDelay('greenhouse', true);
+      console.log(`🔗 Scraping: ${greenhouseUrl}`);
+      
+      let html: string;
+      const browser = await SimpleBrowserPool.getBrowser();
+      
+      if (browser) {
+        // Use browser pool for enhanced scraping
+        console.log(`🌐 Using browser pool for ${employer.name} scraping`);
+        const page = await browser.newPage();
+        await page.setUserAgent(userAgent);
+        await page.goto(greenhouseUrl, { waitUntil: 'networkidle2', timeout: 15000 });
+        html = await page.content();
+        await page.close();
+      } else {
+        // Fallback to axios
+        console.log(`📡 Using axios fallback for ${employer.name} scraping`);
+        const response = await backoffRetry(() =>
+          axios.get(greenhouseUrl, {
+            headers: getRandomHeaders(userAgent),
+            timeout: 15000,
+          })
+        );
+        html = response.data;
+        
+                 // Check for blocks/rate limits
+         if (response.status === 429 || response.status === 403) {
+          console.warn(`🚨 Block detected for ${employer.name}! Status: ${response.status}`);
+          await getProductionRateLimiter().getScraperDelay('greenhouse', true);
       }
     }
 

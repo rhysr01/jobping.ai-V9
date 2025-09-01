@@ -37,6 +37,22 @@ export class MatcherOrchestrator {
     user: UserPreferences,
     jobs: Job[]
   ): Promise<MatchingResult> {
+    // Input validation
+    if (!user || !user.email) {
+      throw new Error('Invalid user: email is required');
+    }
+    
+    if (!Array.isArray(jobs) || jobs.length === 0) {
+      return {
+        user: user.email,
+        matches: [],
+        matchCount: 0,
+        aiSuccess: false,
+        fallbackUsed: false,
+        processingTime: 0,
+        errors: ['No jobs available for matching']
+      };
+    }
     const startTime = Date.now();
     const envConfig = getConfig();
     
@@ -234,13 +250,24 @@ export class MatcherOrchestrator {
       // Test scoring service
       const testJob = {
         id: 'test',
+        job_hash: 'test-hash',
         title: 'Test Job',
         company: 'Test Company',
         job_url: 'https://example.com',
+        location: 'Test City',
+        description: 'Test description',
+        experience_required: 'entry-level',
+        work_environment: 'remote',
+        source: 'test',
         categories: ['early-career'],
-        location: ['Test City'],
+        company_profile_url: '',
+        language_requirements: [],
+        scrape_timestamp: new Date().toISOString(),
+        original_posted_date: new Date().toISOString(),
+        posted_at: new Date().toISOString(),
+        last_seen_at: new Date().toISOString(),
+        is_active: true,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
       };
       
       const testUser = {

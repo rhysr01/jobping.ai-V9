@@ -347,7 +347,8 @@ export function validateJobUserCompatibility(
   };
 } {
   const hardGates = applyHardGates(job, user);
-  const location = validateLocationCompatibility(job.location, user.target_cities || []);
+  const jobLocation = Array.isArray(job.location) ? job.location : [job.location];
+  const location = validateLocationCompatibility(jobLocation, user.target_cities || []);
   const careerPath = validateCareerPathCompatibility(job.categories, user.career_path || '');
   const workEnvironment = validateWorkEnvironmentCompatibility(
     job.work_environment || 'unclear',

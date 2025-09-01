@@ -13,7 +13,7 @@ import {
   reqFirst, 
   toStringArray,
   cats
-} from '@/Utils/jobMatching';
+} from '../jobMatching';
 
 // Local implementation of normalizeToString since it's not exported
 function normalizeToString(value: any): string {
@@ -89,7 +89,7 @@ export class ScoringService {
    */
   private calculateCareerPathScore(tags: string[], userPrefs: UserPreferences): number {
     const jobCareerPath = tags.find(tag => tag.startsWith('career:'))?.replace('career:', '');
-    const userCareerPath = reqFirst(userPrefs.career_path);
+    const userCareerPath = reqFirst(Array.isArray(userPrefs.career_path) ? userPrefs.career_path : [userPrefs.career_path || '']);
     
     if (jobCareerPath && userCareerPath) {
       if (jobCareerPath === userCareerPath) {

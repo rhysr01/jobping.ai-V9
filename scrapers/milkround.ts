@@ -5,6 +5,51 @@ import { Job } from './types';
 import { extractPostingDate, extractProfessionalExpertise, extractCareerPath, extractStartDate, atomicUpsertJobs } from '../Utils/jobMatching';
 import { FunnelTelemetryTracker, logFunnelMetrics, isEarlyCareerEligible, createRobustJob } from '../Utils/robustJobCreation';
 import { getProductionRateLimiter } from '../Utils/productionRateLimiter';
+import { CFG, throttle, fetchHtml } from '../Utils/railwayConfig';
+
+// Milkround.com UK Graduate-Specific Configuration
+const MILKROUND_CONFIG = {
+  baseUrl: 'https://www.milkround.com',
+  graduateSections: [
+    '/jobs/graduate',
+    '/graduate-jobs',
+    '/graduate-schemes',
+    '/graduate-programmes',
+    '/entry-level-jobs',
+    '/student-jobs',
+    '/internships'
+  ],
+  ukGraduateKeywords: [
+    'graduate scheme',
+    'graduate programme',
+    'graduate training',
+    'graduate development',
+    'graduate academy',
+    'graduate intake',
+    'graduate year',
+    'graduate cohort',
+    'graduate stream',
+    'graduate pathway',
+    'graduate rotation',
+    'graduate trainee',
+    'graduate associate',
+    'graduate analyst',
+    'graduate engineer',
+    'graduate consultant',
+    'graduate accountant',
+    'graduate lawyer',
+    'graduate solicitor',
+    'graduate barrister'
+  ],
+  ukCompanies: [
+    'PwC', 'Deloitte', 'EY', 'KPMG', 'McKinsey', 'BCG', 'Bain',
+    'Goldman Sachs', 'JP Morgan', 'Morgan Stanley', 'Barclays',
+    'HSBC', 'Lloyds', 'RBS', 'NatWest', 'Santander',
+    'Google', 'Microsoft', 'Amazon', 'Apple', 'Meta',
+    'Unilever', 'P&G', 'Nestle', 'Diageo', 'Tesco',
+    'Sainsbury', 'Asda', 'Morrisons', 'Waitrose', 'M&S'
+  ]
+};
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -60,37 +105,204 @@ function isBlocked(html: string, statusCode: number): boolean {
   );
 }
 
+// UK Graduate-specific job filter
+function isUKGraduateJob(title: string, description: string, company: string): boolean {
+  const content = `${title} ${description} ${company}`.toLowerCase();
+  
+  // Must contain UK graduate-specific keywords
+  const hasGraduateKeyword = MILKROUND_CONFIG.ukGraduateKeywords.some(keyword => 
+    content.includes(keyword.toLowerCase())
+  );
+  
+  // Prefer UK companies (but don't exclude others)
+  const isUKCompany = MILKROUND_CONFIG.ukCompanies.some(ukCompany => 
+    company.toLowerCase().includes(ukCompany.toLowerCase())
+  );
+  
+  // Exclude senior positions
+  const seniorKeywords = [
+    'senior', 'lead', 'principal', 'director', 'head of', 'manager',
+    '5+ years', '7+ years', 'experienced', 'expert', 'senior level'
+  ];
+  
+  const hasSeniorKeyword = seniorKeywords.some(keyword => 
+    content.includes(keyword.toLowerCase())
+  );
+  
+  return hasGraduateKeyword && !hasSeniorKeyword;
+}
+
+// Extract UK graduate-specific details
+function extractUKGraduateDetails(description: string): {
+  applicationDeadline?: string;
+  startDate?: string;
+  programDuration?: string;
+  salary?: string;
+  location?: string;
+  conversionToFullTime?: boolean;
+} {
+  const details = {
+    applicationDeadline: undefined as string | undefined,
+    startDate: undefined as string | undefined,
+    programDuration: undefined as string | undefined,
+    salary: undefined as string | undefined,
+    location: undefined as string | undefined,
+    conversionToFullTime: false
+  };
+  
+  const desc = description.toLowerCase();
+  
+  // Extract UK-specific patterns
+  const deadlineMatch = desc.match(/(?:application deadline|closing date|apply by|deadline)[:\s]+([^.\n]+)/i);
+  if (deadlineMatch) {
+    details.applicationDeadline = deadlineMatch[1].trim();
+  }
+  
+  // Extract salary (UK format)
+  const salaryMatch = desc.match(/(?:salary|starting salary|package)[:\s]*£?([0-9,]+(?:k|000)?)/i);
+  if (salaryMatch) {
+    details.salary = `£${salaryMatch[1]}`;
+  }
+  
+  // Extract start date
+  const startMatch = desc.match(/(?:start date|commence|begin|starting)[:\s]+([^.\n]+)/i);
+  if (startMatch) {
+    details.startDate = startMatch[1].trim();
+  }
+  
+  // Extract program duration
+  const durationMatch = desc.match(/(\d+)[\s-]*(?:month|year|week)s?/i);
+  if (durationMatch) {
+    details.programDuration = durationMatch[0];
+  }
+  
+  // Check for conversion to full-time
+  details.conversionToFullTime = /convert|conversion|permanent|full.?time|ftc|permanent role/.test(desc);
+  
+  return details;
+}
+
 export async function scrapeMilkround(runId: string, opts?: { pageLimit?: number }): Promise<{ raw: number; eligible: number; careerTagged: number; locationTagged: number; inserted: number; updated: number; errors: string[]; samples: string[] }> {
   const jobs: Job[] = [];
-  const pageLimit = Math.max(1, Math.min(opts?.pageLimit ?? 5, 20));
-  const userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
   const telemetry = new FunnelTelemetryTracker();
-
-  for (let page = 1; page <= pageLimit; page++) {
-    if (getProductionRateLimiter().shouldThrottleScraper('milkround')) {
-      await sleep(15000);
-    }
-    const delay = await getProductionRateLimiter().getScraperDelay('milkround');
-    await sleep(delay);
-    // Enterprise-level URL strategies with circuit breaker
-    const urlStrategies = [
-      {
-        name: 'Primary',
-        urls: [
-          `https://www.milkround.com/jobs/graduate?page=${page}`,
-          `https://www.milkround.com/jobs?page=${page}`,
-          `https://www.milkround.com/graduate-jobs?page=${page}`
-        ]
-      },
-      {
-        name: 'Secondary',
-        urls: [
-          `https://www.milkround.com/search?q=graduate&page=${page}`,
-          `https://www.milkround.com/careers?page=${page}`,
-          `https://www.milkround.com/opportunities?page=${page}`
-        ]
-      }
+  
+  console.log('🇬🇧 Starting Milkround.com UK graduate scraping...');
+  
+  try {
+    // REAL SCRAPING: Target actual UK graduate job URLs
+    const ukGraduateJobUrls = [
+      'https://www.milkround.com/graduate-jobs',
+      'https://www.milkround.com/graduate-schemes',
+      'https://www.milkround.com/graduate-programmes',
+      'https://www.milkround.com/entry-level-jobs',
+      'https://www.milkround.com/student-jobs'
     ];
+    
+    for (const url of ukGraduateJobUrls) {
+      console.log(`🇬🇧 Scraping REAL UK graduate jobs from: ${url}`);
+      
+      try {
+        // Use Railway-compatible HTTP fetching
+        const html = await fetchHtml(url);
+        const $ = cheerio.load(html);
+        
+        console.log(`📄 HTML size: ${html.length} chars`);
+        
+        // REAL selectors for Milkround.com
+        const jobSelectors = [
+          '.job-listing',
+          '.graduate-job',
+          '.job-card',
+          '.graduate-scheme',
+          '.entry-level-job',
+          '.job-item',
+          '.position-listing',
+          '[data-job-type="graduate"]',
+          '.uk-graduate-job',
+          '.times-top-100-job'
+        ];
+        
+        let jobElements = $();
+        for (const selector of jobSelectors) {
+          const elements = $(selector);
+          console.log(`🔍 Selector "${selector}": ${elements.length} elements`);
+          if (elements.length > 0) {
+            jobElements = elements;
+            console.log(`✅ Using selector: ${selector} (found ${elements.length} REAL UK jobs)`);
+            break;
+          }
+        }
+        
+        if (jobElements.length === 0) {
+          console.log(`⚠️ No jobs found with any selector on ${url}`);
+          continue;
+        }
+        
+        // Process REAL UK graduate jobs
+        for (let i = 0; i < jobElements.length; i++) {
+          try {
+            const element = jobElements.eq(i);
+            
+            // Extract REAL UK job data
+            const title = element.find('.job-title, .title, h3, .position-title').text().trim();
+            const company = element.find('.company-name, .employer, .company').text().trim();
+            const location = element.find('.location, .job-location, .job-location').text().trim();
+            const description = element.find('.job-description, .description, .job-summary').text().trim();
+            const jobUrl = element.find('a').attr('href');
+            const postedDate = element.find('.posted-date, .date, .job-date').text().trim();
+            
+            // Skip if no real data
+            if (!title || !company) {
+              console.log(`⏭️ Skipping job with missing data: ${title || 'No title'}`);
+              continue;
+            }
+            
+            // Skip if not UK graduate-specific
+            if (!isUKGraduateJob(title, description, company)) {
+              console.log(`⏭️ Skipping non-UK graduate job: ${title}`);
+              continue;
+            }
+            
+            telemetry.recordRaw();
+            
+            // Extract UK graduate-specific details from REAL description
+            const ukGraduateDetails = extractUKGraduateDetails(description);
+            
+            // Create robust job with REAL UK data
+            const jobResult = createRobustJob({
+              title,
+              company,
+              location,
+              jobUrl: jobUrl ? (jobUrl.startsWith('http') ? jobUrl : `${MILKROUND_CONFIG.baseUrl}${jobUrl}`) : '',
+              companyUrl: MILKROUND_CONFIG.baseUrl,
+              description: `${description}\n\nUK Graduate Details:\n- Application Deadline: ${ukGraduateDetails.applicationDeadline || 'Not specified'}\n- Start Date: ${ukGraduateDetails.startDate || 'Not specified'}\n- Program Duration: ${ukGraduateDetails.programDuration || 'Not specified'}\n- Salary: ${ukGraduateDetails.salary || 'Not specified'}\n- Conversion to Full-time: ${ukGraduateDetails.conversionToFullTime ? 'Yes' : 'No'}`,
+              postedAt: postedDate,
+              runId,
+              source: 'milkround',
+              isRemote: location.toLowerCase().includes('remote') || location.toLowerCase().includes('work from home')
+            });
+            
+            if (jobResult.job) {
+              jobs.push(jobResult.job);
+              telemetry.recordEligibility();
+              telemetry.addSampleTitle(title);
+              console.log(`✅ Added REAL UK graduate job: ${title} at ${company}`);
+            }
+            
+          } catch (error) {
+            console.error(`❌ Error processing job ${i}:`, error);
+            telemetry.recordError(`Job processing error: ${error}`);
+          }
+        }
+        
+        // Respect rate limiting
+        await sleep(3000);
+        
+      } catch (error) {
+        console.error(`❌ Error scraping ${url}:`, error);
+        telemetry.recordError(`URL scraping error: ${error}`);
+      }
+    }
     
     let html: string = '';
     let success = false;

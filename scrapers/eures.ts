@@ -6,6 +6,52 @@ import { extractPostingDate, atomicUpsertJobs } from '../Utils/jobMatching';
 import { FunnelTelemetryTracker, logFunnelMetrics, isEarlyCareerEligible, createRobustJob } from '../Utils/robustJobCreation';
 import { getProductionRateLimiter } from '../Utils/productionRateLimiter';
 
+// STRICT graduate-specific filtering for EURES
+function isGraduateJob(title: string, description: string): boolean {
+  const content = `${title} ${description}`.toLowerCase();
+  
+  // MUST contain graduate-specific keywords (strict)
+  const graduateKeywords = [
+    'graduate programme', 'graduate scheme', 'graduate training',
+    'graduate trainee', 'graduate associate', 'graduate analyst',
+    'graduate engineer', 'graduate consultant', 'graduate accountant',
+    'trainee programme', 'trainee scheme', 'junior graduate',
+    'entry level graduate', 'new graduate', 'graduate intake',
+    'graduate development', 'graduate academy', 'graduate year'
+  ];
+  
+  const hasGraduateKeyword = graduateKeywords.some(keyword => 
+    content.includes(keyword.toLowerCase())
+  );
+  
+  // Exclude ANY senior positions
+  const seniorKeywords = [
+    'senior', 'lead', 'principal', 'director', 'head of', 'manager',
+    '5+ years', '7+ years', 'experienced', 'expert', 'senior level',
+    'team lead', 'staff', 'architect', 'specialist', 'consultant',
+    'senior engineer', 'senior analyst', 'senior consultant'
+  ];
+  
+  const hasSeniorKeyword = seniorKeywords.some(keyword => 
+    content.includes(keyword.toLowerCase())
+  );
+  
+  // Exclude anything requiring >1 year experience
+  const experienceKeywords = [
+    '2+ years', '3+ years', '4+ years', '5+ years', '6+ years', '7+ years',
+    'minimum 2 years', 'minimum 3 years', 'minimum 4 years',
+    'at least 2 years', 'at least 3 years', 'at least 4 years',
+    '2 years experience', '3 years experience', '4 years experience'
+  ];
+  
+  const hasExperienceRequirement = experienceKeywords.some(keyword => 
+    content.includes(keyword.toLowerCase())
+  );
+  
+  // Must be graduate-specific AND not senior AND not requiring experience
+  return hasGraduateKeyword && !hasSeniorKeyword && !hasExperienceRequirement;
+}
+
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -229,7 +275,14 @@ async function scrapeEuresHTML(runId: string, pageLimit: number): Promise<Job[]>
       const date = extractPostingDate(description, 'eures', jobUrl);
       const content = `${title} ${description}`.toLowerCase();
       const workEnv = /\bremote\b/.test(content) ? 'remote' : /\b(on.?site|office|in.person|onsite)\b/.test(content) ? 'on-site' : 'hybrid';
-      const experience = /\b(intern|internship)\b/.test(content) ? 'internship' : /\b(graduate|junior|entry|trainee)\b/.test(content) ? 'entry-level' : 'entry-level';
+      
+      // STRICT graduate filtering - only accept graduate-specific jobs
+      if (!isGraduateJob(title, description)) {
+        console.log(`⏭️ EURES: Skipping non-graduate job: "${title}"`);
+        return null;
+      }
+      
+      console.log(`✅ EURES: Accepting graduate job: "${title}"`);
 
       // Use enhanced robust job creation with Job Ingestion Contract
       const jobResult = createRobustJob({

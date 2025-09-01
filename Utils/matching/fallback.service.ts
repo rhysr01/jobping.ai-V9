@@ -161,7 +161,7 @@ export class FallbackMatchingService {
         const daysOld = (Date.now() - new Date(job.created_at).getTime()) / (1000 * 60 * 60 * 24);
         return daysOld <= 30; // Last 30 days
       })
-      .slice(0, this.config.fallback.maxMatches);
+      .slice(0, this.config.fallback.maxEmergencyMatches);
     
     // Create basic match results
     const emergencyMatches: MatchResult[] = recentJobs.map(job => {
@@ -190,12 +190,16 @@ export class FallbackMatchingService {
     lowConfidenceThreshold: number;
     diversityFactor: number;
     freshnessWeight: number;
+    emergencyFallbackEnabled: boolean;
+    maxEmergencyMatches: number;
   } {
     return {
       maxMatches: this.config.fallback.maxMatches,
       lowConfidenceThreshold: this.config.fallback.lowConfidenceThreshold,
       diversityFactor: this.config.fallback.diversityFactor,
-      freshnessWeight: this.config.fallback.freshnessWeight
+      freshnessWeight: this.config.fallback.freshnessWeight,
+      emergencyFallbackEnabled: this.config.fallback.emergencyFallbackEnabled,
+      maxEmergencyMatches: this.config.fallback.maxEmergencyMatches
     };
   }
 

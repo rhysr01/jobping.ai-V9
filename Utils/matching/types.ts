@@ -6,15 +6,29 @@
  */
 
 // Re-export shared types from scrapers
+// Re-export types from scrapers
 export {
-  Job,
   User,
   Match,
   MatchLog,
   JobUpsertResult,
   DateExtractionResult,
   FreshnessTier,
-} from '@/scrapers/types';
+} from '../../scrapers/types';
+
+// Import Job type but extend it for our needs
+import { Job as BaseJob } from '../../scrapers/types';
+
+// Extended Job interface for matching system
+export interface Job extends Omit<BaseJob, 'id' | 'location'> {
+  // Override specific properties for matching system
+  id: number | string;
+  location: string | string[];
+  // Add any additional properties needed for matching
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
 // Matching-specific types
 export interface MatchScore {
@@ -54,7 +68,7 @@ export interface UserPreferences {
   languages_spoken?: string[];
   company_types?: string[];
   roles_selected?: string[];
-  career_path?: string;
+  career_path?: string | string[];
   entry_level_preference?: string;
   target_cities?: string[];
   subscription_tier?: string;
@@ -93,6 +107,18 @@ export interface MatchingResult {
   fallbackUsed: boolean;
   processingTime: number;
   errors?: string[];
+}
+
+export interface ScoringContext {
+  job: Job;
+  user: UserPreferences;
+  config: any;
+  weights: {
+    eligibility: number;
+    careerPath: number;
+    location: number;
+    freshness: number;
+  };
 }
 
 // Type-safe property accessors (replaces anyIndex function)

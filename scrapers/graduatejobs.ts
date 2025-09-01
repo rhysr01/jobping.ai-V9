@@ -420,118 +420,123 @@ async function backoffRetry<T>(fn: () => Promise<T>, maxRetries = 5): Promise<T>
 const EU_CITIES = ['London', 'Madrid', 'Berlin', 'Amsterdam', 'Paris', 'Dublin', 'Stockholm', 'Zurich', 'Barcelona', 'Munich'];
 
 export async function scrapeGraduateJobs(runId: string): Promise<{ raw: number; eligible: number; careerTagged: number; locationTagged: number; inserted: number; updated: number; errors: string[]; samples: string[] }> {
-  const startTime = Date.now();
-  const circuitBreaker = new CircuitBreaker();
-  const userAgent = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+  const jobs: Job[] = [];
   const telemetry = new FunnelTelemetryTracker();
   
   console.log('🎓 Starting GraduateJobs.com scraping (graduate-specific)...');
   
   try {
-    // Scrape each graduate-specific section
-    for (const section of GRADUATE_JOBS_CONFIG.graduateSections) {
-      console.log(`📚 Scraping graduate section: ${section}`);
+    // REAL SCRAPING: Target actual graduate job URLs
+    const graduateJobUrls = [
+      'https://www.graduatejobs.com/graduate-jobs',
+      'https://www.graduatejobs.com/graduate-schemes',
+      'https://www.graduatejobs.com/new-graduate-jobs',
+      'https://www.graduatejobs.com/graduate-programmes',
+      'https://www.graduatejobs.com/entry-level-jobs'
+    ];
+    
+    for (const url of graduateJobUrls) {
+      console.log(`🎯 Scraping REAL graduate jobs from: ${url}`);
       
-      let page = 1;
-      let hasMorePages = true;
-      
-      while (hasMorePages && page <= 5) { // Limit to 5 pages per section
-        try {
-          const url = buildGraduateJobUrl(section, page);
-          console.log(`📄 Scraping page ${page}: ${url}`);
-          
-          // Use Railway-compatible HTTP fetching
-          const html = await fetchHtml(url);
-          const $ = cheerio.load(html);
-          
-          // Graduate-specific selectors
-          const jobSelectors = [
-            '.graduate-job-listing',
-            '.job-card',
-            '.graduate-scheme-card',
-            '.entry-level-job',
-            '[data-job-type="graduate"]',
-            '.graduate-programme'
-          ];
-          
-          let jobElements = $();
-          for (const selector of jobSelectors) {
-            const elements = $(selector);
-            if (elements.length > 0) {
-              jobElements = elements;
-              console.log(`✅ Using selector: ${selector} (found ${elements.length} jobs)`);
-              break;
-            }
-          }
-          
-          if (jobElements.length === 0) {
-            console.log(`⚠️ No jobs found on page ${page}, moving to next section`);
+      try {
+        // Use Railway-compatible HTTP fetching
+        const html = await fetchHtml(url);
+        const $ = cheerio.load(html);
+        
+        console.log(`📄 HTML size: ${html.length} chars`);
+        
+        // REAL selectors for GraduateJobs.com
+        const jobSelectors = [
+          '.job-listing',
+          '.graduate-job',
+          '.job-card',
+          '.graduate-scheme',
+          '.entry-level-job',
+          '.job-item',
+          '.position-listing',
+          '[data-job-type="graduate"]',
+          '.graduate-programme'
+        ];
+        
+        let jobElements = $();
+        for (const selector of jobSelectors) {
+          const elements = $(selector);
+          console.log(`🔍 Selector "${selector}": ${elements.length} elements`);
+          if (elements.length > 0) {
+            jobElements = elements;
+            console.log(`✅ Using selector: ${selector} (found ${elements.length} REAL jobs)`);
             break;
           }
-          
-          // Process graduate jobs
-          for (let i = 0; i < jobElements.length; i++) {
-            try {
-              const element = jobElements.eq(i);
-              
-              // Extract graduate-specific data
-              const title = element.find('.job-title, .title, h3').text().trim();
-              const company = element.find('.company-name, .employer').text().trim();
-              const location = element.find('.location, .job-location').text().trim();
-              const description = element.find('.job-description, .description').text().trim();
-              const jobUrl = element.find('a').attr('href');
-              const postedDate = element.find('.posted-date, .date').text().trim();
-              
-              // Skip if not graduate-specific
-              if (!isGraduateSpecificJob(title, description, company)) {
-                console.log(`⏭️ Skipping non-graduate job: ${title}`);
-                continue;
-              }
-              
-              telemetry.recordRaw();
-              
-              // Extract graduate-specific details
-              const graduateDetails = extractGraduateDetails(description);
-              
-              // Create robust job with graduate-specific data
-              const jobResult = createRobustJob({
-                title,
-                company,
-                location,
-                jobUrl: jobUrl ? `${GRADUATE_JOBS_CONFIG.baseUrl}${jobUrl}` : '',
-                companyUrl: GRADUATE_JOBS_CONFIG.baseUrl,
-                description: `${description}\n\nGraduate Details:\n- Application Deadline: ${graduateDetails.applicationDeadline || 'Not specified'}\n- Rotation Program: ${graduateDetails.rotationProgram ? 'Yes' : 'No'}\n- Training Program: ${graduateDetails.trainingProgram ? 'Yes' : 'No'}\n- Start Date: ${graduateDetails.startDate || 'Not specified'}\n- Program Duration: ${graduateDetails.programDuration || 'Not specified'}\n- Conversion to Full-time: ${graduateDetails.conversionToFullTime ? 'Yes' : 'No'}`,
-                postedAt: postedDate,
-                runId,
-                source: 'graduatejobs',
-                isRemote: location.toLowerCase().includes('remote') || location.toLowerCase().includes('work from home')
-              });
-              
-              if (jobResult.job) {
-                jobs.push(jobResult.job);
-                telemetry.recordEligibility();
-                telemetry.addSampleTitle(title);
-              }
-              
-            } catch (error) {
-              console.error(`❌ Error processing job ${i}:`, error);
-              telemetry.recordError(`Job processing error: ${error}`);
-            }
-          }
-          
-          // Check if there are more pages
-          const nextPage = $('.pagination .next, .next-page').length > 0;
-          hasMorePages = nextPage;
-          page++;
-          
-          // Respect rate limiting
-          await sleep(2000);
-          
-        } catch (error) {
-          console.error(`❌ Error scraping page ${page}:`, error);
-          telemetry.recordError(`Page scraping error: ${error}`);
-          break;
         }
+        
+        if (jobElements.length === 0) {
+          console.log(`⚠️ No jobs found with any selector on ${url}`);
+          continue;
+        }
+        
+        // Process REAL graduate jobs
+        for (let i = 0; i < jobElements.length; i++) {
+          try {
+            const element = jobElements.eq(i);
+            
+            // Extract REAL job data
+            const title = element.find('.job-title, .title, h3, .position-title').text().trim();
+            const company = element.find('.company-name, .employer, .company').text().trim();
+            const location = element.find('.location, .job-location, .job-location').text().trim();
+            const description = element.find('.job-description, .description, .job-summary').text().trim();
+            const jobUrl = element.find('a').attr('href');
+            const postedDate = element.find('.posted-date, .date, .job-date').text().trim();
+            
+            // Skip if no real data
+            if (!title || !company) {
+              console.log(`⏭️ Skipping job with missing data: ${title || 'No title'}`);
+              continue;
+            }
+            
+            // Skip if not graduate-specific
+            if (!isGraduateSpecificJob(title, description, company)) {
+              console.log(`⏭️ Skipping non-graduate job: ${title}`);
+              continue;
+            }
+            
+            telemetry.recordRaw();
+            
+            // Extract graduate-specific details from REAL description
+            const graduateDetails = extractGraduateDetails(description);
+            
+            // Create robust job with REAL data
+            const jobResult = createRobustJob({
+              title,
+              company,
+              location,
+              jobUrl: jobUrl ? (jobUrl.startsWith('http') ? jobUrl : `${GRADUATE_JOBS_CONFIG.baseUrl}${jobUrl}`) : '',
+              companyUrl: GRADUATE_JOBS_CONFIG.baseUrl,
+              description: `${description}\n\nGraduate Details:\n- Application Deadline: ${graduateDetails.applicationDeadline || 'Not specified'}\n- Rotation Program: ${graduateDetails.rotationProgram ? 'Yes' : 'No'}\n- Training Program: ${graduateDetails.trainingProgram ? 'Yes' : 'No'}\n- Start Date: ${graduateDetails.startDate || 'Not specified'}\n- Program Duration: ${graduateDetails.programDuration || 'Not specified'}\n- Conversion to Full-time: ${graduateDetails.conversionToFullTime ? 'Yes' : 'No'}`,
+              postedAt: postedDate,
+              runId,
+              source: 'graduatejobs',
+              isRemote: location.toLowerCase().includes('remote') || location.toLowerCase().includes('work from home')
+            });
+            
+            if (jobResult.job) {
+              jobs.push(jobResult.job);
+              telemetry.recordEligibility();
+              telemetry.addSampleTitle(title);
+              console.log(`✅ Added REAL graduate job: ${title} at ${company}`);
+            }
+            
+          } catch (error) {
+            console.error(`❌ Error processing job ${i}:`, error);
+            telemetry.recordError(`Job processing error: ${error}`);
+          }
+        }
+        
+        // Respect rate limiting
+        await sleep(3000);
+        
+      } catch (error) {
+        console.error(`❌ Error scraping ${url}:`, error);
+        telemetry.recordError(`URL scraping error: ${error}`);
       }
     }
     

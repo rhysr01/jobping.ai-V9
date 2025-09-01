@@ -8,6 +8,20 @@
 
 // Re-export existing normalization functions from jobMatching.ts
 // TODO: After testing, move implementations here
+// Import functions from jobMatching
+import { 
+  toStringArray,
+  toOptString,
+  toWorkEnv,
+  reqString,
+  reqFirst,
+  normalizeUser,
+  normalizeCategoriesForRead,
+  mapCategories,
+  mapCities,
+} from '../jobMatching';
+
+// Re-export all functions
 export { 
   toStringArray,
   toOptString,
@@ -18,7 +32,7 @@ export {
   normalizeCategoriesForRead,
   mapCategories,
   mapCities,
-} from '@/Utils/jobMatching';
+};
 
 // Additional normalization utilities
 export function normalizeEmail(email: unknown): string {

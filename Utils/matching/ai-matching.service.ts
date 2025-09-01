@@ -11,7 +11,7 @@ import { MATCHING_CONFIG } from '../config/matching';
 import { 
   reqFirst, 
   toStringArray 
-} from '@/Utils/jobMatching';
+} from '../jobMatching';
 import { ScoringService } from './scoring.service';
 
 export class AIMatchingService {
@@ -65,13 +65,13 @@ export class AIMatchingService {
    * Build matching prompt for AI
    */
   buildMatchingPrompt(jobs: Job[], userPrefs: UserPreferences): string {
-    const userCareerPath = reqFirst(userPrefs.career_path);
+    const userCareerPath = reqFirst(Array.isArray(userPrefs.career_path) ? userPrefs.career_path : [userPrefs.career_path || '']);
     const topCities = (userPrefs.target_cities || []).slice(0, 3);
     const eligibilityNotes = userPrefs.entry_level_preference || 'entry-level';
     
     const jobList = jobs.map((job, index) => {
       const categories = job.categories?.join(', ') || '';
-      const location = job.location?.join(', ') || '';
+      const location = Array.isArray(job.location) ? job.location.join(', ') : job.location || '';
       return `${index + 1}. ${job.title} at ${job.company} (${location}) - Categories: ${categories}`;
     }).join('\n');
 
@@ -163,7 +163,7 @@ Example format:
   private transformToJobMatch(match: any, jobs: Job[]): JobMatch {
     const job = jobs[match.job_index - 1]; // Convert to 0-based index
     return {
-      job_id: job.id,
+      job_id: String(job.id),
       match_score: match.match_score,
       match_reason: match.match_reason,
       confidence_score: match.confidence_score
@@ -181,7 +181,7 @@ Example format:
     const results: MatchResult[] = [];
     
     for (const aiMatch of aiMatches) {
-      const job = jobs.find(j => j.id === aiMatch.job_id);
+      const job = jobs.find(j => String(j.id) === aiMatch.job_id);
       if (!job) continue;
       
       // Use scoring service to get detailed breakdown

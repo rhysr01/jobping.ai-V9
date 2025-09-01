@@ -60,6 +60,10 @@ export const MATCHING_CONFIG = {
     maxMatches: 6,
     lowConfidenceThreshold: 0.4,
     backfillEnabled: true,
+    diversityFactor: 0.3,
+    freshnessWeight: 0.2,
+    emergencyFallbackEnabled: true,
+    maxEmergencyMatches: 3,
   },
 
   // Tier Distribution Configuration
@@ -84,6 +88,7 @@ export const MATCHING_CONFIG = {
     jobCap: 300,
     perUserCap: 6,
     aiTimeout: 2000, // 2 seconds for tests
+    enableDetailedLogging: true,
   },
   
   production: {
@@ -92,6 +97,7 @@ export const MATCHING_CONFIG = {
     perUserCap: 100,
     maxJobsPerUserFree: parseInt(process.env.SEND_DAILY_FREE || '50'),
     maxJobsPerUserPremium: parseInt(process.env.SEND_DAILY_PREMIUM || '100'),
+    enableDetailedLogging: false,
   },
 
   // Rate Limiting
@@ -137,6 +143,46 @@ export function getScoringWeights() {
     location: weights.location / 100,
     freshness: weights.freshness / 100,
   };
+}
+
+// Configuration validation
+export function validateConfig(): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  // Validate scoring weights sum to 100
+  const weightSum = Object.values(MATCHING_CONFIG.scoring.weights).reduce((sum, weight) => sum + weight, 0);
+  if (weightSum !== 100) {
+    errors.push(`Scoring weights must sum to 100, got ${weightSum}`);
+  }
+  
+  // Validate thresholds are in correct order
+  const { thresholds } = MATCHING_CONFIG.scoring;
+  if (thresholds.excellent <= thresholds.good) {
+    errors.push('Excellent threshold must be greater than good threshold');
+  }
+  if (thresholds.good <= thresholds.fair) {
+    errors.push('Good threshold must be greater than fair threshold');
+  }
+  if (thresholds.fair <= thresholds.poor) {
+    errors.push('Fair threshold must be greater than poor threshold');
+  }
+  
+  // Validate cache TTL is positive
+  if (MATCHING_CONFIG.cache.ttl <= 0) {
+    errors.push('Cache TTL must be positive');
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}
+
+// Get specific configuration section
+export function getConfigSection<T extends keyof typeof MATCHING_CONFIG>(
+  section: T
+): typeof MATCHING_CONFIG[T] {
+  return MATCHING_CONFIG[section];
 }
 
 // Export type for config

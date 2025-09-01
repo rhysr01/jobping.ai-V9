@@ -5,6 +5,60 @@ import { Job } from './types';
 import { extractPostingDate, extractProfessionalExpertise, extractCareerPath, extractStartDate, atomicUpsertJobs } from '../Utils/jobMatching';
 import { FunnelTelemetryTracker, logFunnelMetrics, isEarlyCareerEligible, createRobustJob } from '../Utils/robustJobCreation';
 import { getProductionRateLimiter } from '../Utils/productionRateLimiter';
+import { CFG, throttle, fetchHtml } from '../Utils/railwayConfig';
+
+// JobTeaser European Student-Specific Configuration
+const JOBTEASER_CONFIG = {
+  baseUrl: 'https://www.jobteaser.com',
+  europeanSections: [
+    '/en/jobs',
+    '/en/graduate-jobs',
+    '/en/entry-level-jobs',
+    '/en/internships',
+    '/en/student-jobs',
+    '/en/graduate-programmes',
+    '/en/graduate-schemes'
+  ],
+  europeanGraduateKeywords: [
+    'graduate programme',
+    'graduate scheme',
+    'graduate training',
+    'graduate development',
+    'graduate academy',
+    'graduate intake',
+    'graduate year',
+    'graduate cohort',
+    'graduate stream',
+    'graduate pathway',
+    'graduate rotation',
+    'graduate trainee',
+    'graduate associate',
+    'graduate analyst',
+    'graduate engineer',
+    'graduate consultant',
+    'graduate accountant',
+    'graduate lawyer',
+    'graduate solicitor',
+    'graduate barrister',
+    'stage',
+    'internship',
+    'alternance',
+    'apprentissage',
+    'formation',
+    'programme de formation'
+  ],
+  europeanCompanies: [
+    'L\'Oréal', 'LVMH', 'Kering', 'Hermès', 'Chanel',
+    'Danone', 'Nestlé', 'Unilever', 'P&G', 'Reckitt',
+    'BNP Paribas', 'Société Générale', 'Crédit Agricole', 'AXA',
+    'Total', 'Engie', 'EDF', 'Veolia', 'Suez',
+    'Airbus', 'Safran', 'Thales', 'Dassault',
+    'Renault', 'PSA', 'Michelin', 'Valeo',
+    'Capgemini', 'Atos', 'Sopra Steria', 'Accenture',
+    'SAP', 'Siemens', 'Bosch', 'Volkswagen', 'BMW',
+    'Deutsche Bank', 'Commerzbank', 'Allianz', 'Munich Re'
+  ]
+};
 
 // Enhanced Puppeteer scraper ready for future use (currently disabled due to Next.js compilation issues)
 // const JobTeaserScraperEnhanced = require('./jobteaser-puppeteer');
@@ -88,16 +142,205 @@ function isBlocked(html: string, statusCode: number): boolean {
   );
 }
 
+// European Student-specific job filter
+function isEuropeanStudentJob(title: string, description: string, company: string): boolean {
+  const content = `${title} ${description} ${company}`.toLowerCase();
+  
+  // Must contain European student-specific keywords
+  const hasGraduateKeyword = JOBTEASER_CONFIG.europeanGraduateKeywords.some(keyword => 
+    content.includes(keyword.toLowerCase())
+  );
+  
+  // Prefer European companies (but don't exclude others)
+  const isEuropeanCompany = JOBTEASER_CONFIG.europeanCompanies.some(europeanCompany => 
+    company.toLowerCase().includes(europeanCompany.toLowerCase())
+  );
+  
+  // Exclude senior positions
+  const seniorKeywords = [
+    'senior', 'lead', 'principal', 'director', 'head of', 'manager',
+    '5+ years', '7+ years', 'experienced', 'expert', 'senior level'
+  ];
+  
+  const hasSeniorKeyword = seniorKeywords.some(keyword => 
+    content.includes(keyword.toLowerCase())
+  );
+  
+  return hasGraduateKeyword && !hasSeniorKeyword;
+}
+
+// Extract European student-specific details
+function extractEuropeanStudentDetails(description: string): {
+  applicationDeadline?: string;
+  startDate?: string;
+  programDuration?: string;
+  salary?: string;
+  location?: string;
+  conversionToFullTime?: boolean;
+  languageRequirements?: string[];
+} {
+  const details = {
+    applicationDeadline: undefined as string | undefined,
+    startDate: undefined as string | undefined,
+    programDuration: undefined as string | undefined,
+    salary: undefined as string | undefined,
+    location: undefined as string | undefined,
+    conversionToFullTime: false,
+    languageRequirements: [] as string[]
+  };
+  
+  const desc = description.toLowerCase();
+  
+  // Extract European-specific patterns
+  const deadlineMatch = desc.match(/(?:application deadline|closing date|apply by|deadline|date limite)[:\s]+([^.\n]+)/i);
+  if (deadlineMatch) {
+    details.applicationDeadline = deadlineMatch[1].trim();
+  }
+  
+  // Extract salary (European format)
+  const salaryMatch = desc.match(/(?:salary|starting salary|package|rémunération)[:\s]*€?([0-9,]+(?:k|000)?)/i);
+  if (salaryMatch) {
+    details.salary = `€${salaryMatch[1]}`;
+  }
+  
+  // Extract start date
+  const startMatch = desc.match(/(?:start date|commence|begin|starting|début)[:\s]+([^.\n]+)/i);
+  if (startMatch) {
+    details.startDate = startMatch[1].trim();
+  }
+  
+  // Extract program duration
+  const durationMatch = desc.match(/(\d+)[\s-]*(?:month|year|week|mois|année|semaine)s?/i);
+  if (durationMatch) {
+    details.programDuration = durationMatch[0];
+  }
+  
+  // Extract language requirements
+  const languages = ['english', 'french', 'german', 'spanish', 'italian', 'dutch'];
+  details.languageRequirements = languages.filter(lang => desc.includes(lang));
+  
+  // Check for conversion to full-time
+  details.conversionToFullTime = /convert|conversion|permanent|full.?time|cdi|permanent role/.test(desc);
+  
+  return details;
+}
+
 export async function scrapeJobTeaser(runId: string, opts?: { pageLimit?: number }): Promise<{ raw: number; eligible: number; careerTagged: number; locationTagged: number; inserted: number; updated: number; errors: string[]; samples: string[] }> {
-  console.log('🚀 Starting JobTeaser scraper...');
+  const jobs: Job[] = [];
   const telemetry = new FunnelTelemetryTracker();
   
-  // Platform-specific throttling
-  if (getProductionRateLimiter().shouldThrottleScraper('jobteaser')) {
-    await sleep(15000);
-  }
-  const delay = await getProductionRateLimiter().getScraperDelay('jobteaser');
-  await sleep(delay);
+  console.log('🇪🇺 Starting JobTeaser.com European student scraping...');
+  
+  try {
+    // Scrape each European student-specific section
+    for (const section of JOBTEASER_CONFIG.europeanSections) {
+      console.log(`📚 Scraping European student section: ${section}`);
+      
+      let page = 1;
+      let hasMorePages = true;
+      
+      while (hasMorePages && page <= 5) { // Limit to 5 pages per section
+        try {
+          const url = `${JOBTEASER_CONFIG.baseUrl}${section}?page=${page}`;
+          console.log(`📄 Scraping page ${page}: ${url}`);
+          
+          // Use Railway-compatible HTTP fetching
+          const html = await fetchHtml(url);
+          const $ = cheerio.load(html);
+          
+          // European student-specific selectors
+          const jobSelectors = [
+            '.job-listing',
+            '.student-job',
+            '.job-card',
+            '.graduate-scheme',
+            '.entry-level-job',
+            '[data-job-type="graduate"]',
+            '.european-student-job',
+            '.stage-offer',
+            '.internship-offer'
+          ];
+          
+          let jobElements = $();
+          for (const selector of jobSelectors) {
+            const elements = $(selector);
+            if (elements.length > 0) {
+              jobElements = elements;
+              console.log(`✅ Using selector: ${selector} (found ${elements.length} jobs)`);
+              break;
+            }
+          }
+          
+          if (jobElements.length === 0) {
+            console.log(`⚠️ No jobs found on page ${page}, moving to next section`);
+            break;
+          }
+          
+          // Process European student jobs
+          for (let i = 0; i < jobElements.length; i++) {
+            try {
+              const element = jobElements.eq(i);
+              
+              // Extract European student-specific data
+              const title = element.find('.job-title, .title, h3').text().trim();
+              const company = element.find('.company-name, .employer').text().trim();
+              const location = element.find('.location, .job-location').text().trim();
+              const description = element.find('.job-description, .description').text().trim();
+              const jobUrl = element.find('a').attr('href');
+              const postedDate = element.find('.posted-date, .date').text().trim();
+              
+              // Skip if not European student-specific
+              if (!isEuropeanStudentJob(title, description, company)) {
+                console.log(`⏭️ Skipping non-European student job: ${title}`);
+                continue;
+              }
+              
+              telemetry.recordRaw();
+              
+              // Extract European student-specific details
+              const europeanStudentDetails = extractEuropeanStudentDetails(description);
+              
+              // Create robust job with European student-specific data
+              const jobResult = createRobustJob({
+                title,
+                company,
+                location,
+                jobUrl: jobUrl ? `${JOBTEASER_CONFIG.baseUrl}${jobUrl}` : '',
+                companyUrl: JOBTEASER_CONFIG.baseUrl,
+                description: `${description}\n\nEuropean Student Details:\n- Application Deadline: ${europeanStudentDetails.applicationDeadline || 'Not specified'}\n- Start Date: ${europeanStudentDetails.startDate || 'Not specified'}\n- Program Duration: ${europeanStudentDetails.programDuration || 'Not specified'}\n- Salary: ${europeanStudentDetails.salary || 'Not specified'}\n- Language Requirements: ${europeanStudentDetails.languageRequirements?.join(', ') || 'Not specified'}\n- Conversion to Full-time: ${europeanStudentDetails.conversionToFullTime ? 'Yes' : 'No'}`,
+                postedAt: postedDate,
+                runId,
+                source: 'jobteaser',
+                isRemote: location.toLowerCase().includes('remote') || location.toLowerCase().includes('work from home')
+              });
+              
+              if (jobResult.job) {
+                jobs.push(jobResult.job);
+                telemetry.recordEligibility();
+                telemetry.addSampleTitle(title);
+              }
+              
+            } catch (error) {
+              console.error(`❌ Error processing job ${i}:`, error);
+              telemetry.recordError(`Job processing error: ${error}`);
+            }
+          }
+          
+          // Check if there are more pages
+          const nextPage = $('.pagination .next, .next-page').length > 0;
+          hasMorePages = nextPage;
+          page++;
+          
+          // Respect rate limiting
+          await sleep(2000);
+          
+        } catch (error) {
+          console.error(`❌ Error scraping page ${page}:`, error);
+          telemetry.recordError(`Page scraping error: ${error}`);
+          break;
+        }
+      }
+    }
 
   // Use fallback method for now (enhanced Puppeteer scraper ready for future use)
   let jobs = await scrapeJobTeaserFallback(runId, opts);
@@ -565,5 +808,3 @@ async function fetchDescription(jobUrl: string, ua: string): Promise<string> {
     return 'Description not available';
   }
 }
-
-
