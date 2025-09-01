@@ -169,13 +169,21 @@ function getPerformanceMetrics() {
 export async function GET() {
   const isVercel = process.env.VERCEL === '1';
   
+  // Import Railway config
+  const { CFG } = await import('@/Utils/railwayConfig');
+  
   return NextResponse.json({
-    status: 'healthy',
+    ok: true,
+    env: CFG.env,
+    mode: CFG.useBrowser ? 'puppeteer' : 'axios',
+    rateLimit: CFG.rateLimitEnabled ? 'on' : 'off',
+    rpm: CFG.rpm,
+    rph: CFG.rph,
+    ts: new Date().toISOString(),
     environment: process.env.NODE_ENV,
-    timestamp: new Date().toISOString(),
     version: process.env.VERCEL_GIT_COMMIT_SHA || 'local',
     platform: isVercel ? 'vercel' : 'local',
     region: process.env.VERCEL_REGION || 'unknown',
-    // ... rest of existing health data
+    uptime: process.uptime()
   });
 }

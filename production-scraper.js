@@ -20,7 +20,11 @@ const CONFIG = {
   API_KEY: process.env.JOBPING_API_KEY || 'test-api-key',
   // Railway-specific settings
   IS_RAILWAY: process.env.RAILWAY_ENVIRONMENT === 'production',
-  DISABLE_PUPPETEER: process.env.DISABLE_PUPPETEER === 'true' || process.env.RAILWAY_ENVIRONMENT === 'production'
+  DISABLE_PUPPETEER: process.env.DISABLE_PUPPETEER === 'true' || process.env.RAILWAY_ENVIRONMENT === 'production',
+  // Rate limiting settings
+  ENABLE_RATE_LIMITING: process.env.ENABLE_RATE_LIMITING !== 'false',
+  SCRAPER_RPM: parseInt(process.env.SCRAPER_REQUESTS_PER_MINUTE || '12'),
+  SCRAPER_RPH: parseInt(process.env.SCRAPER_REQUESTS_PER_HOUR || '360')
 };
 
 // Logging system
@@ -63,6 +67,13 @@ class ProductionScraperOrchestrator {
   async start() {
     log('info', '🚀 Starting Production Scraper System');
     log('info', `📋 Config: ${CONFIG.SCRAPING_INTERVAL_MINUTES}min intervals, ${CONFIG.MAX_CONCURRENT_SCRAPERS} concurrent`);
+    
+    // Log Railway configuration
+    if (CONFIG.IS_RAILWAY) {
+      log('info', '🚂 Railway environment detected');
+      log('info', `📊 Rate limiting: ${CONFIG.ENABLE_RATE_LIMITING ? 'enabled' : 'disabled'}`);
+      log('info', `📊 Requests/min: ${CONFIG.SCRAPER_RPM}, Requests/hour: ${CONFIG.SCRAPER_RPH}`);
+    }
     
     // Run once immediately
     await this.runScrapingCycle();

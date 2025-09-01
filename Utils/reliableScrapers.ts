@@ -1,15 +1,15 @@
-// Integration layer for reliable scrapers in TypeScript API
+// Integration layer for reliable scrapers - GRADUATE FOCUSED
 import { Job, createJobCategories, ScraperResult } from '../scrapers/types';
 import { extractCareerPath } from './jobMatching';
 import { logFunnelMetrics, FunnelTelemetry } from './robustJobCreation';
 
-// Temporarily use a simple implementation until we can properly integrate the JS modules
-// const JobScrapingOrchestrator = require('../scrapers/JobScrapingOrchestrator');
+// Import the orchestrator that now includes graduate scrapers
+const JobScrapingOrchestrator = require('../scrapers/JobScrapingOrchestrator');
 
 export async function runReliableScrapers(runId: string): Promise<ScraperResult> {
-  console.log(`🚀 Starting reliable scraper system for run ${runId}`);
+  console.log(`🚀 Starting GRADUATE-FOCUSED scraper system for run ${runId}`);
   
-  // Initialize funnel tracking with standardized structure
+  // Initialize funnel tracking
   const funnel: FunnelTelemetry = {
     raw: 0,
     eligible: 0,
@@ -22,194 +22,120 @@ export async function runReliableScrapers(runId: string): Promise<ScraperResult>
   };
   
   try {
-    // For now, use the proven RemoteOK API approach directly
-    const axios = require('axios');
-    const crypto = require('crypto');
+    // Use the orchestrator which now includes graduate scrapers
+    const orchestrator = new JobScrapingOrchestrator();
+    const results = await orchestrator.runAllScrapers();
     
-    console.log('📡 Fetching from RemoteOK API...');
-    const response = await axios.get('https://remoteok.io/api', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json'
-      },
-      timeout: 10000
-    });
-
-    // RemoteOK returns array with first item being metadata
-    const rawJobs = response.data.slice(1);
+    // Get all unique jobs
+    const allJobs = orchestrator.getAllJobs();
     
-    funnel.raw = rawJobs.length;
-    console.log(`📊 Raw jobs received: ${rawJobs.length}`);
+    funnel.raw = allJobs.length;
+    console.log(`📊 Total jobs collected: ${allJobs.length}`);
     
-    // For debugging, let's see what jobs we're getting
-    if (rawJobs.length > 0) {
-      console.log(`🔍 Sample job:`, {
-        position: rawJobs[0].position,
-        company: rawJobs[0].company,
-        description: rawJobs[0].description?.substring(0, 100)
-      });
+    // Log the distribution
+    const summary = orchestrator.getSummary();
+    if (summary.warning) {
+      console.error(`⚠️  ${summary.warning}`);
     }
     
-    // Use the standardized early-career eligibility check
+    // Filter for early-career eligibility
     const { isEarlyCareerEligible } = require('./robustJobCreation');
     
-    const graduateJobs = rawJobs.filter((job: any) => {
-      if (!job.position || !job.company) return false;
+    const graduateJobs = allJobs.filter((job: any) => {
+      if (!job.title || !job.company) return false;
       
-      const title = job.position || '';
+      const title = job.title || '';
       const description = job.description || '';
       
+      // More lenient for jobs from graduate-specific sources
+      if (job.source && ['graduatejobs', 'jobteaser', 'milkround'].includes(job.source)) {
+        // These are from graduate boards, so trust them more
+        return true;
+      }
+      
+      // Strict filtering for general job boards
       const eligibility = isEarlyCareerEligible(title, description);
       return eligibility.eligible;
     });
     
     funnel.eligible = graduateJobs.length;
-    console.log(`🎯 Found ${graduateJobs.length} graduate-appropriate jobs from ${rawJobs.length} total`);
+    console.log(`🎯 Graduate-appropriate jobs: ${graduateJobs.length}/${allJobs.length} (${((graduateJobs.length/allJobs.length)*100).toFixed(1)}%)`);
     
-    // Convert to our Job interface format with proper tagging
-    const formattedJobs: Job[] = graduateJobs.map((job: any) => {
-      // Extract career path using the standardized function
-      const careerPath = extractCareerPath(job.position, job.description || '');
-      
-      // Use the standardized robust job creation with Job Ingestion Contract
+    // Convert to our Job interface format
+    const formattedJobs: Job[] = [];
+    
+    for (const job of graduateJobs) {
       const { createRobustJob } = require('./robustJobCreation');
+      
+      // Determine if job is remote based on source and location
+      const isRemote = job.source === 'remoteok' || 
+                      job.location?.toLowerCase().includes('remote') ||
+                      job.work_environment === 'remote';
+      
       const jobResult = createRobustJob({
-        title: job.position,
+        title: job.title,
         company: job.company,
-        location: 'Remote',
-        jobUrl: `https://remoteok.io/remote-jobs/${job.id}`,
-        companyUrl: `https://${job.company.toLowerCase().replace(/\s+/g, '')}.com`,
-        description: job.description || job.position || '',
-        department: 'General',
-        postedAt: job.date && !isNaN(job.date) ? new Date(job.date * 1000).toISOString() : new Date().toISOString(),
+        location: job.location || 'Unknown',
+        jobUrl: job.job_url || job.url || '#',
+        companyUrl: job.company_profile_url || `https://${job.company.toLowerCase().replace(/\s+/g, '')}.com`,
+        description: job.description || '',
+        department: job.department || 'General',
+        postedAt: job.posted_at || job.original_posted_date || new Date().toISOString(),
         runId,
-        source: 'remoteok',
-        isRemote: true,
-        platformId: job.id.toString() // Include native platform ID
+        source: job.source || 'unknown',
+        isRemote,
+        platformId: job.id?.toString() || job.job_hash
       });
       
       if (jobResult.job) {
-        // Update funnel tracking
+        formattedJobs.push(jobResult.job);
         funnel.careerTagged++;
         funnel.locationTagged++;
         
-        // Add sample titles (up to 5)
-        if (funnel.samples.length < 5) {
-          funnel.samples.push(job.position);
+        // Add sample titles
+        if (funnel.samples.length < 10) {
+          funnel.samples.push(job.title);
         }
-        
-        return jobResult.job;
       } else {
-        console.log(`❌ Job filtered out: "${job.position}" - Stage: ${jobResult.funnelStage}, Reason: ${jobResult.reason}`);
-        return null;
+        console.log(`❌ Job filtered: "${job.title}" at ${job.company} - ${jobResult.reason}`);
       }
-    }).filter(Boolean); // Remove null jobs
-
-    console.log(`✅ Reliable scrapers completed: ${formattedJobs.length} jobs formatted`);
+    }
     
-    console.log(`✅ Reliable scrapers completed: ${formattedJobs.length} jobs formatted`);
+    console.log(`✅ Formatted ${formattedJobs.length} jobs for database`);
     
-    // Log standardized funnel
-    logFunnelMetrics('remoteok', funnel);
+    // Show job source distribution
+    const sourceDistribution: Record<string, number> = {};
+    formattedJobs.forEach(job => {
+      sourceDistribution[job.source] = (sourceDistribution[job.source] || 0) + 1;
+    });
+    
+    console.log('📈 Final job distribution:');
+    Object.entries(sourceDistribution).forEach(([source, count]) => {
+      const percentage = ((count / formattedJobs.length) * 100).toFixed(1);
+      console.log(`   ${source}: ${count} jobs (${percentage}%)`);
+    });
+    
+    // WARNING if still too many RemoteOK jobs
+    const remoteOKCount = sourceDistribution['remoteok'] || 0;
+    if (remoteOKCount > formattedJobs.length * 0.3) {
+      console.error('⚠️  WARNING: RemoteOK still represents >30% of jobs!');
+      console.error('   Graduates are still seeing too many senior roles.');
+      console.error('   Check that graduate scrapers are working properly.');
+    }
+    
+    // Log funnel metrics
+    logFunnelMetrics('reliable_scrapers', funnel);
     
     return { jobs: formattedJobs, funnel };
     
   } catch (error) {
-    console.error('❌ Reliable scrapers API failed:', error);
-    console.log('🎯 Falling back to sample graduate jobs...');
+    console.error('❌ Reliable scraper system failed:', error);
     
-    // Ensure errors are strings
-    const errorMessage = error instanceof Error ? error.message : 
-                        typeof error === 'string' ? error : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     funnel.errors.push(errorMessage);
     
-    // Fallback: Generate sample graduate jobs to prove the system works
-    const sampleJobs: Job[] = [
-      {
-        job_hash: require('crypto').createHash('md5').update(`graduate-software-engineer-${runId}`).digest('hex'),
-        title: 'Graduate Software Engineer',
-        company: 'TechCorp Europe',
-        location: 'Dublin, Ireland',
-        job_url: 'https://techcorp.com/careers/graduate-software-engineer',
-        description: 'Graduate software engineering position for recent computer science graduates. Training provided.',
-        experience_required: 'early-career',
-        work_environment: 'hybrid',
-        source: 'remoteok',
-        categories: [createJobCategories('tech', ['early-career', 'loc:dublin'])],
-        company_profile_url: 'https://techcorp.com',
-        language_requirements: ['English'],
-        scrape_timestamp: new Date().toISOString(),
-        original_posted_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        posted_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        last_seen_at: new Date().toISOString(),
-        is_active: true,
-        freshness_tier: 'fresh',
-        scraper_run_id: runId,
-        created_at: new Date().toISOString()
-      },
-      {
-        job_hash: require('crypto').createHash('md5').update(`data-analyst-graduate-${runId}`).digest('hex'),
-        title: 'Data Analyst Graduate Programme',
-        company: 'DataInsights Ltd',
-        location: 'London, UK',
-        job_url: 'https://datainsights.com/careers/graduate-programme',
-        description: '12-month graduate programme for data analysts. Perfect for mathematics and statistics graduates.',
-        experience_required: 'early-career',
-        work_environment: 'hybrid',
-        source: 'remoteok',
-        categories: [createJobCategories('data-analytics', ['early-career', 'loc:london'])],
-        company_profile_url: 'https://datainsights.com',
-        language_requirements: ['English'],
-        scrape_timestamp: new Date().toISOString(),
-        original_posted_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        posted_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        last_seen_at: new Date().toISOString(),
-        is_active: true,
-        freshness_tier: 'fresh',
-        scraper_run_id: runId,
-        created_at: new Date().toISOString()
-      },
-      {
-        job_hash: require('crypto').createHash('md5').update(`marketing-intern-${runId}`).digest('hex'),
-        title: 'Marketing Internship',
-        company: 'BrandBuilders Madrid',
-        location: 'Madrid, Spain',
-        job_url: 'https://brandbuilders.com/careers/marketing-intern',
-        description: '6-month marketing internship for students and recent graduates. Remote work options available.',
-        experience_required: 'early-career',
-        work_environment: 'remote',
-        source: 'remoteok',
-        categories: [createJobCategories('marketing', ['early-career', 'loc:madrid'])],
-        company_profile_url: 'https://brandbuilders.com',
-        language_requirements: ['English', 'Spanish'],
-        scrape_timestamp: new Date().toISOString(),
-        original_posted_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        posted_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        last_seen_at: new Date().toISOString(),
-        is_active: true,
-        freshness_tier: 'fresh',
-        scraper_run_id: runId,
-        created_at: new Date().toISOString()
-      }
-    ];
-    
-    // Update funnel for fallback with proper counting
-    funnel.eligible = sampleJobs.length;
-    funnel.careerTagged = sampleJobs.filter(job => 
-      job.categories && job.categories.includes('career:') && !job.categories.includes('career:unknown')
-    ).length;
-    funnel.locationTagged = sampleJobs.filter(job => 
-      job.categories && job.categories.includes('loc:') && !job.categories.includes('loc:unknown')
-    ).length;
-    funnel.samples = sampleJobs.map(job => job.title);
-    
-    console.log(`✅ Generated ${sampleJobs.length} sample graduate jobs as fallback`);
-    
-    // Log standardized funnel
-    logFunnelMetrics('remoteok', funnel);
-    
-    return { jobs: sampleJobs, funnel };
+    // Return empty result on error
+    logFunnelMetrics('reliable_scrapers', funnel);
+    return { jobs: [], funnel };
   }
 }
-
-

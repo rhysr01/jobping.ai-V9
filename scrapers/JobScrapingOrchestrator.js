@@ -5,30 +5,82 @@ const RemoteOKScraper = require('./RemoteOKScraper');
 
 class JobScrapingOrchestrator {
   constructor() {
-    this.scrapers = [
-      new RemoteOKScraper()
-      // More scrapers will be added here
-    ];
+    // CRITICAL FIX: Actually include graduate-focused scrapers!
+    this.scrapers = [];
+    
+    // Add graduate-focused scrapers FIRST (higher priority)
+    try {
+      const { scrapeGraduateJobs } = require('./graduatejobs');
+      this.scrapers.push({
+        name: 'GraduateJobs',
+        scrapeWithRetry: () => scrapeGraduateJobs('orchestrator-run-' + Date.now())
+      });
+    } catch (error) {
+      console.warn('GraduateJobs scraper not available:', error.message);
+    }
+    
+    try {
+      const { scrapeJobTeaser } = require('./jobteaser');
+      this.scrapers.push({
+        name: 'JobTeaser',
+        scrapeWithRetry: () => scrapeJobTeaser('orchestrator-run-' + Date.now())
+      });
+    } catch (error) {
+      console.warn('JobTeaser scraper not available:', error.message);
+    }
+    
+    try {
+      const { scrapeMilkround } = require('./milkround');
+      this.scrapers.push({
+        name: 'Milkround',
+        scrapeWithRetry: () => scrapeMilkround('orchestrator-run-' + Date.now())
+      });
+    } catch (error) {
+      console.warn('Milkround scraper not available:', error.message);
+    }
+    
+    // Only add RemoteOK as a last resort, and filter it heavily
+    if (process.env.INCLUDE_REMOTEOK === 'true') {
+      this.scrapers.push(new RemoteOKScraper());
+    }
+    
+    // Log which scrapers are active
+    console.log('🎯 Active scrapers:', this.scrapers.map(s => s.name).join(', '));
     
     this.results = {
       successful: [],
       failed: [],
-      totalJobs: 0
+      totalJobs: 0,
+      jobsBySource: {}
     };
   }
 
   async runAllScrapers() {
     console.log('🚀 Starting job scraping orchestration...');
+    console.log(`📊 Running ${this.scrapers.length} scrapers`);
+    
+    if (this.scrapers.length === 0) {
+      console.error('❌ NO SCRAPERS CONFIGURED! Check scraper imports.');
+      return this.results;
+    }
     
     const promises = this.scrapers.map(async (scraper) => {
       try {
         console.log(`⚡ Starting ${scraper.name} scraper...`);
         const startTime = Date.now();
         
-        const jobs = await scraper.scrapeWithRetry();
+        const result = await scraper.scrapeWithRetry();
+        
+        // Handle different return types
+        let jobs = [];
+        if (result && result.jobs) {
+          jobs = result.jobs;
+        } else if (Array.isArray(result)) {
+          jobs = result;
+        }
         
         const duration = Date.now() - startTime;
-        console.log(`✅ ${scraper.name} completed in ${duration}ms`);
+        console.log(`✅ ${scraper.name} completed: ${jobs.length} jobs in ${duration}ms`);
         
         this.results.successful.push({
           scraper: scraper.name,
@@ -37,6 +89,8 @@ class JobScrapingOrchestrator {
           duration: duration
         });
         
+        // Track jobs by source
+        this.results.jobsBySource[scraper.name] = jobs.length;
         this.results.totalJobs += jobs.length;
         
         return {
@@ -53,6 +107,8 @@ class JobScrapingOrchestrator {
           scraper: scraper.name,
           error: error.message
         });
+        
+        this.results.jobsBySource[scraper.name] = 0;
         
         return {
           scraper: scraper.name,
@@ -91,6 +147,22 @@ class JobScrapingOrchestrator {
       });
     }
     
+    // Show job distribution
+    console.log('\n📈 JOB DISTRIBUTION:');
+    Object.entries(this.results.jobsBySource).forEach(([source, count]) => {
+      const percentage = this.results.totalJobs > 0 
+        ? ((count / this.results.totalJobs) * 100).toFixed(1)
+        : '0.0';
+      console.log(`   ${source}: ${count} jobs (${percentage}%)`);
+    });
+    
+    // WARNING if RemoteOK dominates
+    if (this.results.jobsBySource['RemoteOK'] > this.results.totalJobs * 0.5) {
+      console.log('\n⚠️  WARNING: RemoteOK represents >50% of jobs!');
+      console.log('   This means graduates are getting mostly senior roles.');
+      console.log('   Fix the graduate scrapers to provide real entry-level jobs!');
+    }
+    
     console.log('='.repeat(60));
   }
 
@@ -101,10 +173,22 @@ class JobScrapingOrchestrator {
       allJobs.push(...result.jobs);
     });
     
-    // Remove duplicates based on title + company
+    // Remove duplicates based on job_hash
     const uniqueJobs = this.removeDuplicates(allJobs);
     
     console.log(`🔄 Deduplicated: ${allJobs.length} → ${uniqueJobs.length} jobs`);
+    
+    // Log distribution after deduplication
+    const sourceCounts = {};
+    uniqueJobs.forEach(job => {
+      const source = job.source || 'unknown';
+      sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+    });
+    
+    console.log('📊 Final job distribution by source:');
+    Object.entries(sourceCounts).forEach(([source, count]) => {
+      console.log(`   ${source}: ${count} jobs`);
+    });
     
     return uniqueJobs;
   }
@@ -113,7 +197,8 @@ class JobScrapingOrchestrator {
     const seen = new Set();
     
     return jobs.filter(job => {
-      const key = `${job.title.toLowerCase()}-${job.company.toLowerCase()}`;
+      // Use job_hash if available, otherwise fall back to title+company
+      const key = job.job_hash || `${job.title?.toLowerCase()}-${job.company?.toLowerCase()}`;
       
       if (seen.has(key)) {
         return false;
@@ -130,6 +215,10 @@ class JobScrapingOrchestrator {
       total_jobs: this.results.totalJobs,
       successful_scrapers: this.results.successful.length,
       failed_scrapers: this.results.failed.length,
+      job_distribution: this.results.jobsBySource,
+      warning: this.results.jobsBySource['RemoteOK'] > this.results.totalJobs * 0.5 
+        ? 'RemoteOK dominates job pool - graduates getting senior jobs!'
+        : null,
       scrapers: [
         ...this.results.successful.map(s => ({
           name: s.scraper,

@@ -27,7 +27,14 @@
     "test:e2e": "playwright test -c ./",
     "test:a11y": "playwright test a11y.spec.ts",
     "perf": "lhci autorun",
-    "fe:check": "next build && playwright test && lhci autorun"
+    "fe:check": "next build && playwright test && lhci autorun",
+    "setup:prod": "node scripts/production-setup.js",
+    "optimize": "node scripts/performance-optimizer.js",
+    "check:launch": "node scripts/pre-launch-checklist.js",
+    "test:integration": "jest __tests__/integration",
+    "test:email": "node scripts/email-verification-test.js",
+    "db:migrate": "echo 'Run migrations in Supabase dashboard'",
+    "health:check": "curl -f http://localhost:3000/api/health || exit 1"
   },
   "dependencies": {
     "@stripe/stripe-js": "^7.8.0",

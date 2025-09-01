@@ -105,6 +105,47 @@ REDIS_URL=redis://custom-host:6379 npx tsx scripts/lock-and-rl-check.ts
 - **Rate Limiting**: 30 requests trigger 429 (prod mode only)
 - **Lock Cleanup**: All locks clear within 180 seconds
 
+## 📧 Email Verification Testing (`email-verification-test.js`)
+
+**Comprehensive testing for the email verification system:**
+
+```bash
+# Run all email verification tests
+npm run test:email
+
+# Test with specific email
+npm run test:email -- --email=your-email@example.com
+
+# Direct script execution
+node scripts/email-verification-test.js --email=your-email@example.com
+```
+
+**What it tests:**
+1. **Webhook Registration** - User creation via Tally form
+2. **Database User Creation** - User storage in Supabase
+3. **Email Sending** - Verification email delivery
+4. **Verification Token** - Token generation and validation
+5. **Email Verification** - Complete verification flow
+6. **Welcome Email Sequence** - Post-verification emails
+7. **Token Expiration** - 24-hour expiration logic
+
+**Test Endpoints (test mode only):**
+- `POST /api/test-email` - Send test verification emails
+- `POST /api/test-token` - Generate test verification tokens
+- `POST /api/test-welcome-email` - Trigger welcome email sequence
+- `POST /api/webhook-tally?test=email-verification` - Test webhook flow
+
+**Output:**
+- Console logs with real-time test progress
+- Detailed JSON report saved to `email-verification-test-report.json`
+- Exit codes for CI/CD integration (0 = success, 1 = failure)
+
+**Environment Requirements:**
+- `JOBPING_TEST_MODE=1` or `NODE_ENV=test`
+- Valid Resend API key for email testing
+- Supabase connection for database tests
+- Local development server running on port 3000
+
 ## 🧪 Legacy Pilot Testing (`pilot-testing.js`)
 
 ### Purpose

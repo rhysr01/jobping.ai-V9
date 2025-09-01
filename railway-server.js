@@ -55,6 +55,14 @@ async function initializeOrchestrator() {
     const { ProductionScraperOrchestrator } = require('./production-scraper');
     orchestrator = new ProductionScraperOrchestrator();
     
+    // Log Railway configuration
+    try {
+      const { logConfig } = require('./Utils/railwayConfig');
+      logConfig();
+    } catch (configError) {
+      log(`⚠️ Could not load Railway config: ${configError.message}`, 'yellow');
+    }
+    
     log('✅ Production Scraper Orchestrator initialized', 'green');
     serviceState.status = 'ready';
   } catch (error) {
@@ -69,8 +77,9 @@ async function initializeOrchestrator() {
       // Override configuration for Railway
       process.env.DISABLE_PUPPETEER = 'true';
       process.env.ENABLE_BROWSER_POOL = 'false';
-      process.env.SCRAPER_REQUESTS_PER_MINUTE = '15';
-      process.env.SCRAPER_REQUESTS_PER_HOUR = '500';
+      process.env.ENABLE_RATE_LIMITING = 'true';
+      process.env.SCRAPER_REQUESTS_PER_MINUTE = '12';
+      process.env.SCRAPER_REQUESTS_PER_HOUR = '360';
       
       log('✅ Production Scraper Orchestrator initialized with Railway fallback', 'green');
       serviceState.status = 'ready';

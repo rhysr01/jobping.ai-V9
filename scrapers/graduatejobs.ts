@@ -5,6 +5,153 @@ import { Job } from './types';
 import { atomicUpsertJobs, extractPostingDate, extractProfessionalExpertise, extractCareerPath, extractStartDate } from '../Utils/jobMatching';
 import { PerformanceMonitor } from '../Utils/performanceMonitor';
 import { FunnelTelemetryTracker, logFunnelMetrics, isEarlyCareerEligible, createRobustJob } from '../Utils/robustJobCreation';
+import { CFG, throttle, fetchHtml } from '../Utils/railwayConfig';
+
+// GraduateJobs.com specific configuration
+const GRADUATE_JOBS_CONFIG = {
+  baseUrl: 'https://www.graduatejobs.com',
+  graduateSections: [
+    '/graduate-jobs',
+    '/new-graduate-jobs', 
+    '/graduate-schemes',
+    '/graduate-programmes',
+    '/entry-level-jobs',
+    '/graduate-internships'
+  ],
+  searchParams: {
+    'experience-level': 'graduate',
+    'job-type': 'graduate-scheme',
+    'entry-level': 'true'
+  }
+};
+
+// Graduate-specific job categories
+const GRADUATE_CATEGORIES = [
+  'graduate-scheme',
+  'new-graduate', 
+  'entry-level',
+  'graduate-programme',
+  'graduate-internship',
+  'trainee-programme',
+  'graduate-rotation',
+  'graduate-training'
+];
+
+// Graduate-specific keywords to look for
+const GRADUATE_KEYWORDS = [
+  'graduate scheme',
+  'graduate programme', 
+  'new graduate',
+  'entry level',
+  'graduate training',
+  'rotation programme',
+  'graduate internship',
+  'trainee programme',
+  'graduate development',
+  'graduate academy',
+  'graduate pathway',
+  'graduate stream',
+  'graduate cohort',
+  'graduate intake',
+  'graduate year',
+  'graduate class'
+];
+
+// Graduate-specific filters
+function isGraduateSpecificJob(title: string, description: string, company: string): boolean {
+  const content = `${title} ${description} ${company}`.toLowerCase();
+  
+  // Must contain graduate-specific keywords
+  const hasGraduateKeyword = GRADUATE_KEYWORDS.some(keyword => 
+    content.includes(keyword.toLowerCase())
+  );
+  
+  // Exclude senior positions
+  const seniorKeywords = [
+    'senior', 'lead', 'principal', 'director', 'head of', 'manager',
+    '5+ years', '7+ years', 'experienced', 'expert', 'senior level'
+  ];
+  
+  const hasSeniorKeyword = seniorKeywords.some(keyword => 
+    content.includes(keyword.toLowerCase())
+  );
+  
+  return hasGraduateKeyword && !hasSeniorKeyword;
+}
+
+// Extract graduate-specific details
+function extractGraduateDetails(description: string): {
+  applicationDeadline?: string;
+  rotationProgram?: boolean;
+  trainingProgram?: boolean;
+  startDate?: string;
+  programDuration?: string;
+  conversionToFullTime?: boolean;
+} {
+  const details: {
+    applicationDeadline?: string;
+    rotationProgram: boolean;
+    trainingProgram: boolean;
+    startDate?: string;
+    programDuration?: string;
+    conversionToFullTime: boolean;
+  } = {
+    applicationDeadline: undefined,
+    rotationProgram: false,
+    trainingProgram: false,
+    startDate: undefined,
+    programDuration: undefined,
+    conversionToFullTime: false
+  };
+  
+  const desc = description.toLowerCase();
+  
+  // Extract application deadline
+  const deadlineMatch = desc.match(/(?:application deadline|closing date|apply by|deadline)[:\s]+([^.\n]+)/i);
+  if (deadlineMatch) {
+    details.applicationDeadline = deadlineMatch[1].trim();
+  }
+  
+  // Check for rotation program
+  details.rotationProgram = /rotation|rotational|rotating/.test(desc);
+  
+  // Check for training program
+  details.trainingProgram = /training programme|training program|development programme|graduate academy/.test(desc);
+  
+  // Extract start date
+  const startMatch = desc.match(/(?:start date|commence|begin|starting)[:\s]+([^.\n]+)/i);
+  if (startMatch) {
+    details.startDate = startMatch[1].trim();
+  }
+  
+  // Extract program duration
+  const durationMatch = desc.match(/(\d+)[\s-]*(?:month|year|week)s?/i);
+  if (durationMatch) {
+    details.programDuration = durationMatch[0];
+  }
+  
+  // Check for conversion to full-time
+  details.conversionToFullTime = /convert|conversion|permanent|full.?time|ftc|permanent role/.test(desc);
+  
+  return details;
+}
+
+// Graduate-specific job URL builder
+function buildGraduateJobUrl(section: string, page: number = 1): string {
+  const url = new URL(`${GRADUATE_JOBS_CONFIG.baseUrl}${section}`);
+  
+  // Add graduate-specific search parameters
+  Object.entries(GRADUATE_JOBS_CONFIG.searchParams).forEach(([key, value]) => {
+    url.searchParams.set(key, value);
+  });
+  
+  // Add pagination
+  if (page > 1) {
+    url.searchParams.set('page', page.toString());
+  }
+  
+  return url.toString();
+}
 
 const USER_AGENTS = [
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
@@ -278,149 +425,144 @@ export async function scrapeGraduateJobs(runId: string): Promise<{ raw: number; 
   const userAgent = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
   const telemetry = new FunnelTelemetryTracker();
   
-  console.log('🎓 Starting GraduateJobs scraping...');
+  console.log('🎓 Starting GraduateJobs.com scraping (graduate-specific)...');
   
   try {
-    const allJobs: Job[] = [];
-    
-    // Scrape jobs for each EU city
-    for (const city of EU_CITIES) {
-      console.log(`📍 Scraping GraduateJobs for ${city}...`);
+    // Scrape each graduate-specific section
+    for (const section of GRADUATE_JOBS_CONFIG.graduateSections) {
+      console.log(`📚 Scraping graduate section: ${section}`);
       
-      try {
-        const cityJobs = await circuitBreaker.execute(async () => {
-          return await scrapeCityJobs(city, runId, userAgent);
-        });
-        
-        allJobs.push(...cityJobs);
-        
-        // Track telemetry for this city
-        for (let i = 0; i < cityJobs.length; i++) {
-          telemetry.recordRaw();
-          telemetry.recordEligibility();
-          telemetry.recordCareerTagging();
-          telemetry.recordLocationTagging();
-          telemetry.addSampleTitle(cityJobs[i].title);
+      let page = 1;
+      let hasMorePages = true;
+      
+      while (hasMorePages && page <= 5) { // Limit to 5 pages per section
+        try {
+          const url = buildGraduateJobUrl(section, page);
+          console.log(`📄 Scraping page ${page}: ${url}`);
+          
+          // Use Railway-compatible HTTP fetching
+          const html = await fetchHtml(url);
+          const $ = cheerio.load(html);
+          
+          // Graduate-specific selectors
+          const jobSelectors = [
+            '.graduate-job-listing',
+            '.job-card',
+            '.graduate-scheme-card',
+            '.entry-level-job',
+            '[data-job-type="graduate"]',
+            '.graduate-programme'
+          ];
+          
+          let jobElements = $();
+          for (const selector of jobSelectors) {
+            const elements = $(selector);
+            if (elements.length > 0) {
+              jobElements = elements;
+              console.log(`✅ Using selector: ${selector} (found ${elements.length} jobs)`);
+              break;
+            }
+          }
+          
+          if (jobElements.length === 0) {
+            console.log(`⚠️ No jobs found on page ${page}, moving to next section`);
+            break;
+          }
+          
+          // Process graduate jobs
+          for (let i = 0; i < jobElements.length; i++) {
+            try {
+              const element = jobElements.eq(i);
+              
+              // Extract graduate-specific data
+              const title = element.find('.job-title, .title, h3').text().trim();
+              const company = element.find('.company-name, .employer').text().trim();
+              const location = element.find('.location, .job-location').text().trim();
+              const description = element.find('.job-description, .description').text().trim();
+              const jobUrl = element.find('a').attr('href');
+              const postedDate = element.find('.posted-date, .date').text().trim();
+              
+              // Skip if not graduate-specific
+              if (!isGraduateSpecificJob(title, description, company)) {
+                console.log(`⏭️ Skipping non-graduate job: ${title}`);
+                continue;
+              }
+              
+              telemetry.recordRaw();
+              
+              // Extract graduate-specific details
+              const graduateDetails = extractGraduateDetails(description);
+              
+              // Create robust job with graduate-specific data
+              const jobResult = createRobustJob({
+                title,
+                company,
+                location,
+                jobUrl: jobUrl ? `${GRADUATE_JOBS_CONFIG.baseUrl}${jobUrl}` : '',
+                companyUrl: GRADUATE_JOBS_CONFIG.baseUrl,
+                description: `${description}\n\nGraduate Details:\n- Application Deadline: ${graduateDetails.applicationDeadline || 'Not specified'}\n- Rotation Program: ${graduateDetails.rotationProgram ? 'Yes' : 'No'}\n- Training Program: ${graduateDetails.trainingProgram ? 'Yes' : 'No'}\n- Start Date: ${graduateDetails.startDate || 'Not specified'}\n- Program Duration: ${graduateDetails.programDuration || 'Not specified'}\n- Conversion to Full-time: ${graduateDetails.conversionToFullTime ? 'Yes' : 'No'}`,
+                postedAt: postedDate,
+                runId,
+                source: 'graduatejobs',
+                isRemote: location.toLowerCase().includes('remote') || location.toLowerCase().includes('work from home')
+              });
+              
+              if (jobResult.job) {
+                jobs.push(jobResult.job);
+                telemetry.recordEligibility();
+                telemetry.addSampleTitle(title);
+              }
+              
+            } catch (error) {
+              console.error(`❌ Error processing job ${i}:`, error);
+              telemetry.recordError(`Job processing error: ${error}`);
+            }
+          }
+          
+          // Check if there are more pages
+          const nextPage = $('.pagination .next, .next-page').length > 0;
+          hasMorePages = nextPage;
+          page++;
+          
+          // Respect rate limiting
+          await sleep(2000);
+          
+        } catch (error) {
+          console.error(`❌ Error scraping page ${page}:`, error);
+          telemetry.recordError(`Page scraping error: ${error}`);
+          break;
         }
-        
-        console.log(`✅ ${city}: ${cityJobs.length} jobs found`);
-        
-        // Rate limiting between cities
-        await sleep(2000 + Math.random() * 3000);
-        
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-        console.error(`❌ Failed to scrape ${city}:`, errorMsg);
-        telemetry.recordError(errorMsg);
-        continue;
       }
     }
     
-    const duration = Date.now() - startTime;
-    console.log(`🎓 GraduateJobs scraping completed: ${allJobs.length} jobs in ${duration}ms`);
-    
-    // Use atomicUpsertJobs for database insertion
-    if (allJobs.length > 0) {
-      try {
-        const result = await atomicUpsertJobs(allJobs);
-        console.log(`💾 GraduateJobs database result: ${result.inserted} inserted, ${result.updated} updated`);
-        
-        // Track upsert results
-        for (let i = 0; i < result.inserted; i++) telemetry.recordInserted();
-        for (let i = 0; i < result.updated; i++) telemetry.recordUpdated();
-        
-        if (result.errors.length > 0) {
-          result.errors.forEach(error => telemetry.recordError(error));
+    // Process jobs in batches
+    if (jobs.length > 0) {
+      console.log(`📦 Processing ${jobs.length} graduate jobs...`);
+      
+      const batches = [];
+      for (let i = 0; i < jobs.length; i += 50) {
+        batches.push(jobs.slice(i, i + 50));
+      }
+      
+      for (const batch of batches) {
+        try {
+          const result = await atomicUpsertJobs(batch);
+          telemetry.recordInserted();
+          console.log(`✅ Processed batch: ${result.inserted} inserted, ${result.updated} updated`);
+        } catch (error) {
+          console.error(`❌ Error processing batch:`, error);
+          telemetry.recordError(`Batch processing error: ${error}`);
         }
-      } catch (error: any) {
-        const errorMsg = error instanceof Error ? error.message : 'Database error';
-        console.error(`❌ GraduateJobs database error:`, errorMsg);
-        telemetry.recordError(errorMsg);
       }
     }
-    
-    // Log standardized funnel metrics
-    logFunnelMetrics('graduatejobs', telemetry.getTelemetry());
-    
-    return telemetry.getTelemetry();
     
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-    console.error('❌ GraduateJobs scraping failed:', errorMsg);
-    telemetry.recordError(errorMsg);
-    
-    logFunnelMetrics('graduatejobs', telemetry.getTelemetry());
-    return telemetry.getTelemetry();
-  } finally {
-    await SimpleBrowserPool.cleanup();
+    console.error('❌ GraduateJobs scraping failed:', error);
+    telemetry.recordError(`Scraping failed: ${error}`);
   }
-}
-
-async function scrapeCityJobs(city: string, runId: string, userAgent: string): Promise<Job[]> {
-  const jobs: Job[] = [];
-  console.log(`🎯 Scraping ${city} with simplified approach...`);
   
-  // Simplified approach - generate sample graduate jobs for testing
-  // In production, this would use proper APIs or validated scraping
-  const sampleJobs = [
-    {
-      title: `Graduate Software Engineer - ${city}`,
-      company: `TechCorp ${city}`,
-      location: city,
-      description: `Graduate software engineering position in ${city}. Perfect for new graduates looking to start their tech career.`,
-      experience_required: 'Entry Level',
-      work_environment: 'hybrid',
-      categories: ['technology', 'graduate', 'software'],
-      language_requirements: ['English']
-    },
-    {
-      title: `Data Analyst Graduate Programme - ${city}`,
-      company: `DataInnovate ${city}`,
-      location: city,
-      description: `12-month graduate programme for data analysts in ${city}. Training provided for recent graduates.`,
-      experience_required: 'Graduate',
-      work_environment: 'office',
-      categories: ['data', 'analytics', 'graduate'],
-      language_requirements: ['English']
-    },
-    {
-      title: `Marketing Intern - ${city}`,
-      company: `BrandBuilders ${city}`,
-      location: city,
-      description: `6-month internship opportunity in marketing for students and recent graduates in ${city}.`,
-      experience_required: 'Internship',
-      work_environment: 'hybrid',
-      categories: ['marketing', 'internship', 'graduate'],
-      language_requirements: ['English']
-    }
-  ];
-
-  // Convert sample jobs to proper Job format
-  for (const sampleJob of sampleJobs) {
-    // Use enhanced robust job creation with Job Ingestion Contract
-    const jobResult = createRobustJob({
-      title: sampleJob.title,
-      company: sampleJob.company,
-      location: sampleJob.location,
-      jobUrl: `https://graduatejobs.com/jobs/${sampleJob.title.toLowerCase().replace(/\s+/g, '-')}`,
-      companyUrl: `https://graduatejobs.com/companies/${sampleJob.company.toLowerCase().replace(/\s+/g, '-')}`,
-      description: sampleJob.description,
-      department: 'General',
-      postedAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-      runId,
-      source: 'graduatejobs',
-      isRemote: sampleJob.work_environment === 'remote'
-    });
-
-    // Record telemetry and debug filtering
-    if (jobResult.job) {
-      console.log(`✅ Job accepted: "${sampleJob.title}"`);
-      jobs.push(jobResult.job);
-    } else {
-      console.log(`❌ Job filtered out: "${sampleJob.title}" - Stage: ${jobResult.funnelStage}, Reason: ${jobResult.reason}`);
-    }
-  }
-
-  console.log(`✅ Generated ${jobs.length} sample graduate jobs for ${city}`);
-  return jobs;
+  // Log telemetry
+  logFunnelMetrics('graduatejobs', telemetry.getTelemetry());
+  
+  return telemetry.getTelemetry();
 }

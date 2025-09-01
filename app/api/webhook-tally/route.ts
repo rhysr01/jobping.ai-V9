@@ -181,6 +181,12 @@ function extractUserData(fields: NonNullable<TallyWebhookData['data']>['fields']
 }
 
 export async function POST(req: NextRequest) {
+  // Test endpoint for email verification testing
+  const url = new URL(req.url);
+  if (url.searchParams.get('test') === 'email-verification') {
+    return await handleEmailVerificationTest(req);
+  }
+
   // PRODUCTION: Rate limiting for webhook endpoint
   // Skip rate limiting in test mode
   if (!isTestMode()) {
@@ -521,6 +527,80 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       error: 'Registration failed',
       details: error instanceof Error ? error.message : JSON.stringify(error)
+    }, { status: 500 });
+  }
+}
+
+// Test handler for email verification testing
+async function handleEmailVerificationTest(req: NextRequest) {
+  try {
+    const { email, type } = await req.json();
+    
+    if (!email) {
+      return NextResponse.json({ error: 'Email required' }, { status: 400 });
+    }
+
+    const supabase = getSupabaseClient();
+    
+    if (type === 'verification') {
+      // Test verification email sending
+      const token = EmailVerificationOracle.generateVerificationToken();
+      const success = await EmailVerificationOracle.sendVerificationEmail(
+        email, 
+        token, 
+        'Test User'
+      );
+      
+      if (success) {
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Verification email sent',
+          token: token.substring(0, 8) + '...',
+          email 
+        });
+      } else {
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Failed to send verification email' 
+        }, { status: 500 });
+      }
+    } else if (type === 'welcome') {
+      // Test welcome email sequence
+      const { data: user } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .single();
+      
+      if (user) {
+        await sendWelcomeEmail({
+          to: email,
+          userName: user.full_name || 'there',
+          matchCount: 5
+        });
+        
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Welcome email sent',
+          email 
+        });
+      } else {
+        return NextResponse.json({ 
+          success: false, 
+          error: 'User not found' 
+        }, { status: 404 });
+      }
+    } else {
+      return NextResponse.json({ 
+        error: 'Invalid test type. Use "verification" or "welcome"' 
+      }, { status: 400 });
+    }
+    
+  } catch (error) {
+    console.error('❌ Test endpoint error:', error);
+    return NextResponse.json({ 
+      error: 'Test failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }
