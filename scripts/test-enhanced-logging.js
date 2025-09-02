@@ -46,7 +46,7 @@ async function testEnhancedLogging() {
       
       // Check if our new fields exist
       const hasNewFields = sampleRecord.hasOwnProperty('user_career_path') && 
-                           sampleRecord.hasOwnProperty('user_professional_expertise') &&
+                           sampleRecord.hasOwnProperty('user_professional_experience') &&
                            sampleRecord.hasOwnProperty('user_work_preference');
       
       console.log('🔧 New fields present:', hasNewFields ? '✅' : '❌');
@@ -84,9 +84,13 @@ async function testEnhancedLogging() {
       match_type: 'ai_success',
       matches_generated: 15,
       user_career_path: 'Strategy & Business Design',
-      user_professional_expertise: 'Consulting',
+      user_professional_experience: 'Consulting',
       user_work_preference: 'Hybrid',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      success: true,
+      fallback_used: false,
+      jobs_processed: 0,
+      job_batch_id: 'test_batch_001'
     };
 
     const { data: insertData, error: insertError } = await supabase
@@ -119,7 +123,7 @@ async function testEnhancedLogging() {
     console.log('✅ New entry verified');
     console.log('📋 Enhanced data captured:');
     console.log(`   Career Path: ${verifyData.user_career_path}`);
-    console.log(`   Professional Expertise: ${verifyData.user_professional_expertise}`);
+    console.log(`   Professional Expertise: ${verifyData.user_professional_experience}`);
     console.log(`   Work Preference: ${verifyData.user_work_preference}`);
 
     // 5. Test different match types
@@ -151,10 +155,14 @@ async function testEnhancedLogging() {
         match_type: testType.type,
         matches_generated: testType.matches,
         user_career_path: testType.careerPath,
-        user_professional_expertise: testType.expertise,
+        user_professional_experience: testType.expertise,
         user_work_preference: testType.workPref,
         error_message: testType.errorMessage,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        success: testType.type === 'ai_success',
+        fallback_used: testType.type === 'fallback',
+        jobs_processed: 0,
+        job_batch_id: `test_batch_${testType.type}`
       };
 
       const { error: typeError } = await supabase

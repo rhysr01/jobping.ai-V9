@@ -1,6 +1,6 @@
-import AdzunaScraper from './adzuna-scraper';
-import ReedScraper from './reed-scraper';
-import InfoJobsScraper from './infojobs-scraper';
+import AdzunaScraper from './adzuna-scraper-standalone';
+import ReedScraper from './reed-scraper-standalone';
+import InfoJobsScraper from './infojobs-scraper-standalone';
 import { IngestJob, Job } from './types';
 import { 
   classifyEarlyCareer, 
