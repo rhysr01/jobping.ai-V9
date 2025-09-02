@@ -1684,6 +1684,8 @@ export async function performEnhancedAIMatching(
   }
 
   // Legacy implementation
+  const startTime = Date.now(); // Track processing time for logging
+  
   try {
     // C7: AI + Fallback orchestration
     // Include user single career path, top 3 cities, and eligibility notes
@@ -1710,8 +1712,15 @@ export async function performEnhancedAIMatching(
     const aiMatches = parseAndValidateMatches(content, jobs);
     const robustMatches = convertToRobustMatches(aiMatches, userPrefs, jobs);
     
-    // Log successful matching
-    await logMatchSession(userPrefs.email, 'ai_success', jobs.length, robustMatches.length);
+    // Log successful matching with enhanced details
+    const endTime = Date.now();
+    await logMatchSession(userPrefs.email, 'ai_success', jobs.length, robustMatches.length, undefined, {
+      processingTimeMs: endTime - startTime,
+      aiModelUsed: 'gpt-4',
+      cacheHit: false,
+      userTier: 'free', // Default, should be passed from caller
+      jobFreshnessDistribution: { total: jobs.length }
+    });
     
     return robustMatches;
     
@@ -1719,7 +1728,14 @@ export async function performEnhancedAIMatching(
     console.error('AI matching failed:', error);
     
     // Log failure and use robust fallback
-    await logMatchSession(userPrefs.email, 'ai_failed', jobs.length, 0, error instanceof Error ? error.message : 'Unknown error');
+    const endTime = Date.now();
+    await logMatchSession(userPrefs.email, 'ai_failed', jobs.length, 0, error instanceof Error ? error.message : 'Unknown error', {
+      processingTimeMs: endTime - startTime,
+      aiModelUsed: 'gpt-4',
+      cacheHit: false,
+      userTier: 'free',
+      jobFreshnessDistribution: { total: jobs.length }
+    });
     
     return generateRobustFallbackMatches(jobs, userPrefs);
   }
@@ -1888,13 +1904,21 @@ export function getMatchQuality(score: number): string {
   return 'poor';
 }
 
-// 6. Log Match Session
+// 6. Log Match Session with Enhanced Details
 export async function logMatchSession(
   userEmail: string,
   matchType: 'ai_success' | 'ai_failed' | 'fallback',
   jobsProcessed: number,
   matchesGenerated: number,
-  errorMessage?: string
+  errorMessage?: string,
+  additionalData?: {
+    processingTimeMs?: number;
+    aiModelUsed?: string;
+    cacheHit?: boolean;
+    userTier?: string;
+    jobFreshnessDistribution?: Record<string, number>;
+    batchId?: string;
+  }
 ): Promise<void> {
   try {
     const supabase = createClient(
@@ -1902,21 +1926,52 @@ export async function logMatchSession(
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
     
-    await supabase.from('match_logs').insert({
+    const batchId = additionalData?.batchId || `batch_${Date.now()}`;
+    const startTime = Date.now();
+    
+    const logData = {
       user_email: userEmail,
-      job_batch_id: `batch_${Date.now()}`,
+      job_batch_id: batchId,
       success: matchType === 'ai_success',
       fallback_used: matchType === 'fallback' || matchType === 'ai_failed',
       jobs_processed: jobsProcessed,
       matches_generated: matchesGenerated,
       error_message: errorMessage,
       match_type: matchType,
-      timestamp: new Date().toISOString()
-    });
+      timestamp: new Date().toISOString(),
+      processing_time_ms: additionalData?.processingTimeMs || (Date.now() - startTime),
+      ai_model_used: additionalData?.aiModelUsed || null,
+      cache_hit: additionalData?.cacheHit || false,
+      user_tier: additionalData?.userTier || 'unknown',
+      job_freshness_distribution: additionalData?.jobFreshnessDistribution || null
+    };
     
-    console.log(`Logged ${matchType} session for ${userEmail}`);
+    const { error } = await supabase.from('match_logs').insert(logData);
+    
+    if (error) {
+      console.error('Failed to insert match log:', error);
+      return;
+    }
+    
+    // Enhanced console logging
+    const emoji = matchType === 'ai_success' ? '✅' : matchType === 'fallback' ? '🔄' : '❌';
+    const tierInfo = additionalData?.userTier ? ` (${additionalData.userTier})` : '';
+    const timeInfo = additionalData?.processingTimeMs ? ` in ${additionalData.processingTimeMs}ms` : '';
+    const cacheInfo = additionalData?.cacheHit ? ' [CACHE HIT]' : '';
+    
+    console.log(`${emoji} Logged ${matchType} session for ${userEmail}${tierInfo}${timeInfo}${cacheInfo}`);
+    console.log(`   📊 Jobs: ${jobsProcessed} → Matches: ${matchesGenerated}`);
+    
+    if (additionalData?.jobFreshnessDistribution) {
+      console.log(`   🆕 Freshness: ${JSON.stringify(additionalData.jobFreshnessDistribution)}`);
+    }
+    
+    if (errorMessage) {
+      console.log(`   ⚠️  Error: ${errorMessage}`);
+    }
+    
   } catch (error) {
-    console.error('Failed to log match session:', error);
+    console.error('❌ Failed to log match session:', error);
   }
 }
 

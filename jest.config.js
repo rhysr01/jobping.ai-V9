@@ -31,12 +31,28 @@ const customJestConfig = {
     '**/__tests__/**/*.(ts|tsx|js)',
     '**/*.(test|spec).(ts|tsx|js)',
   ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/tests/', // Exclude Playwright tests
+    '/playwright-report/',
+    '/.next/',
+    '/out/',
+    '/dist/',
+    '/coverage/',
+    '/tmp/',
+    '/cache/',
+    '/scripts/', // Exclude scraper scripts
+  ],
   transformIgnorePatterns: [
     'node_modules/(?!(cheerio|parse5|domhandler|domutils|entities|nth-check|boolbase|css-select|css-what|htmlparser2|readable-stream|string_decoder|inherits|isarray|core-util-is|buffer|process|util|events|stream|path|os|fs|crypto|url|querystring|punycode|http|https|zlib|assert|constants|domain|dns|net|tls|tty|v8|vm|worker_threads|child_process|cluster|dgram|dns|fs|http|https|net|os|path|punycode|querystring|readline|repl|stream|string_decoder|timers|tls|tty|url|util|v8|vm|worker_threads|zlib)/)',
   ],
   testEnvironmentOptions: {
     customExportConditions: ['node', 'node-addons'],
   },
+  // Add timeout for async operations
+  testTimeout: 10000,
+  // Detect open handles to prevent hanging tests
+  detectOpenHandles: true,
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

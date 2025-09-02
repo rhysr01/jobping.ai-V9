@@ -9,7 +9,7 @@ import {
   logMatchSession,
   type UserPreferences,
 } from '@/Utils/jobMatching';
-import { sendMatchedJobsEmail, sendWelcomeEmail } from '@/Utils/emailUtils';
+// import { sendMatchedJobsEmail, sendWelcomeEmail } from '@/Utils/emailUtils';
 import { EmailVerificationOracle } from '@/Utils/emailVerification';
 import { normalizeCareerPath } from '@/scrapers/types';
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-import { sendMatchedJobsEmail } from '@/Utils/emailUtils';
+// import { sendMatchedJobsEmail } from '@/Utils/emailUtils';
 import { 
   performEnhancedAIMatching, 
   generateRobustFallbackMatches,

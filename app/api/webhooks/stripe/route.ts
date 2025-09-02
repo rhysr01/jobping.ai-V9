@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { constructWebhookEvent } from '@/Utils/stripe';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
+import { paymentRecoverySystem } from '@/Utils/advancedPaymentSystem';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
@@ -76,6 +77,8 @@ export async function POST(req: NextRequest) {
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
         await handlePaymentFailed(invoice, supabase);
+        // Trigger automated payment recovery
+        await paymentRecoverySystem.retryFailedPayment(invoice.id);
         break;
       }
 

@@ -332,10 +332,35 @@ function generateJobCard(card: EmailJobCard, index: number, isPremium: boolean, 
                          location.startsWith('eu-') ? 'EU Remote' : 
                          location.replace('-', ' ');
   
-  // Format freshness display
-  const freshnessDisplay = freshness === 'fresh' ? '🆕 <24h' :
-                          freshness === 'recent' ? '📅 1-7d' :
-                          '📅 >7d';
+  // Format posting date display
+  const formatPostingDate = (dateString: string) => {
+    try {
+      const postedDate = new Date(dateString);
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - postedDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) {
+        return '📅 Posted today';
+      } else if (diffDays === 1) {
+        return '📅 Posted yesterday';
+      } else if (diffDays < 7) {
+        return `📅 Posted ${diffDays} days ago`;
+      } else if (diffDays < 30) {
+        const weeks = Math.floor(diffDays / 7);
+        return `📅 Posted ${weeks} week${weeks > 1 ? 's' : ''} ago`;
+      } else {
+        return `📅 Posted ${postedDate.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric' 
+        })}`;
+      }
+    } catch (error) {
+      return '📅 Date unavailable';
+    }
+  };
+  
+  const postingDateDisplay = formatPostingDate(job.created_at || job.updated_at || new Date().toISOString());
   
   // Confidence badge
   const confidenceBadge = confidence >= 0.8 ? '🟢 High' :
@@ -461,7 +486,7 @@ function generateJobCard(card: EmailJobCard, index: number, isPremium: boolean, 
               align-items: center;
               gap: 4px;
             ">
-              ${freshnessDisplay}
+              ${postingDateDisplay}
             </span>
             <span style="
               font-size: 12px;
@@ -925,408 +950,468 @@ export async function sendMatchedJobsEmail({
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-        <title>JobPingAI - Your Job Matches</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>JobPing - Your AI-Curated Job Matches</title>
+        <!--[if mso]>
+        <noscript>
+          <xml>
+            <o:OfficeDocumentSettings>
+              <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+          </xml>
+        </noscript>
+        <![endif]-->
+        <style>
+          /* Reset styles for email clients */
+          body, table, td, p, a, li, blockquote { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+          table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+          img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+          
+          /* Responsive design */
+          @media only screen and (max-width: 600px) {
+            .container { width: 100% !important; }
+            .mobile-padding { padding: 20px !important; }
+            .mobile-text { font-size: 16px !important; }
+            .mobile-title { font-size: 24px !important; }
+            .mobile-button { width: 100% !important; }
+          }
+        </style>
       </head>
       <body style="
         margin: 0;
         padding: 0;
-        background: #FFFFFF;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        text-rendering: optimizeLegibility;
-        font-feature-settings: 'tnum' on, 'lnum' on, 'kern' on;
+        background-color: #f4f4f4;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-size: 16px;
         line-height: 1.6;
-        color: #000000;
+        color: #333333;
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
       ">
-        <div style="
-          max-width: 600px;
-          margin: 0 auto;
-          background: #FFFFFF;
-          border-radius: 20px;
-          overflow: hidden;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.04);
-          margin-top: 40px;
-          margin-bottom: 40px;
-          border: 1px solid #F0F0F0;
-        ">
-          <!-- Header -->
-          <div style="
-            background: #000000;
-            padding: 40px 40px 32px 40px;
-            text-align: center;
-          ">
-            <!-- JobPingAI Logo -->
-            <div style="
-              font-size: 28px;
-              font-weight: 900;
-              letter-spacing: -0.02em;
-              color: #FFFFFF;
-              margin-bottom: 8px;
-            ">
-              JOBPINGAI
-            </div>
-            <div style="
-              font-size: 14px;
-              color: #CCCCCC;
-              font-weight: 500;
-              letter-spacing: 0.5px;
-              text-transform: uppercase;
-            ">
-              AI-Powered Job Matching
-            </div>
-          </div>
-          
-          <!-- Main Content -->
-          <div style="
-            padding: 48px 40px;
-            color: #000000;
-          ">
-            ${isPremium ? `
-            <!-- Premium Badge -->
-            <div style="
-              background: #000000;
-              color: #FFFFFF;
-              padding: 12px 20px;
-              border-radius: 12px;
-              margin-bottom: 32px;
-              text-align: center;
-              font-size: 13px;
-              font-weight: 700;
-              letter-spacing: 1px;
-              text-transform: uppercase;
-              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            ">
-              ⭐ Premium Member
-            </div>
-            ` : ''}
-            
-            <!-- Greeting -->
-            <h1 style="
-              font-size: 32px;
-              font-weight: 800;
-              margin: 0 0 12px 0;
-              letter-spacing: -0.02em;
-              color: #000000;
-              line-height: 1.1;
-            ">
-              Hi${userName ? ' ' + userName : ''},
-            </h1>
-            
-            <!-- Intro Message -->
-            <p style="
-              font-size: 18px;
-              line-height: 1.6;
-              margin: 0 0 40px 0;
-              color: #333333;
-              font-weight: 400;
-            ">
-              ${isSignupEmail ? 'Welcome to <strong style="color: #000000;">JobPingAI</strong>! 🎉' : 'Your fresh job matches are here!'}<br>
-              ${emailTypeText} <strong style="color: #000000;">${jobs.length} ${isPremium ? 'premium ' : ''}AI-matched jobs</strong>:
-            </p>
-            
-            <!-- Job Cards -->
-            <div style="margin-bottom: 40px;">
-              ${jobs.map((job, index) => `
-                <!-- Job Card ${index + 1} -->
-                <div style="
-                  background: #FFFFFF;
-                  border: 1px solid #F0F0F0;
-                  border-radius: 16px;
-                  margin-bottom: 20px;
-                  padding: 28px;
-                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-                  transition: all 0.2s ease;
-                  ${index === 0 ? 'border: 2px solid #000000; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);' : ''}
-                ">
-                  <div style="display: flex; align-items: flex-start; gap: 20px;">
-                    <!-- Job Icon -->
-                    <div style="
-                      width: 48px;
-                      height: 48px;
-                      background: #000000;
-                      border-radius: 12px;
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      flex-shrink: 0;
-                      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                    ">
-                      <div style="
-                        width: 24px;
-                        height: 24px;
-                        background: #FFFFFF;
-                        border-radius: 3px;
-                        position: relative;
-                      ">
-                        <div style="
-                          position: absolute;
-                          top: 8px;
-                          left: 5px;
-                          width: 14px;
-                          height: 8px;
-                          border: 2px solid #000000;
-                          border-top: none;
-                        "></div>
-                      </div>
-                    </div>
+        <!-- Email Container -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f4f4f4;">
+          <tr>
+            <td align="center" style="padding: 20px 0;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" class="container" style="
+                max-width: 600px;
+                background-color: #ffffff;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+              ">
+                <!-- Header -->
+                <tr>
+                  <td style="
+                    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+                    padding: 40px 30px;
+                    text-align: center;
+                  ">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                      <tr>
+                        <td>
+                          <h1 style="
+                            margin: 0 0 8px 0;
+                            font-size: 32px;
+                            font-weight: 700;
+                            color: #ffffff;
+                            letter-spacing: -0.02em;
+                            line-height: 1.2;
+                          ">
+                            JobPing
+                          </h1>
+                          <p style="
+                            margin: 0;
+                            font-size: 16px;
+                            color: #e5e5e5;
+                            font-weight: 500;
+                            letter-spacing: 0.5px;
+                          ">
+                            AI-Powered Job Matching
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Main Content -->
+                <tr>
+                  <td class="mobile-padding" style="padding: 40px 30px;">
+                    ${isPremium ? `
+                    <!-- Premium Badge -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 24px;">
+                      <tr>
+                        <td style="
+                          background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+                          padding: 12px 20px;
+                          border-radius: 20px;
+                          text-align: center;
+                        ">
+                          <span style="
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: #1a1a1a;
+                            letter-spacing: 0.5px;
+                            text-transform: uppercase;
+                          ">
+                            ⭐ Premium Member
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+                    ` : ''}
                     
-                    <!-- Job Content -->
-                    <div style="flex: 1; min-width: 0;">
-                      <!-- Job Title & Company -->
-                      <div style="margin-bottom: 16px;">
-                        <h3 style="
-                          margin: 0 0 6px 0;
-                          font-size: 20px;
-                          font-weight: 700;
-                          color: #000000;
-                          line-height: 1.3;
-                        ">
-                          <a href="${job.job_url}" target="_blank" style="
-                            color: #000000;
+                    <!-- Greeting -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 24px;">
+                      <tr>
+                        <td>
+                          <h2 style="
+                            margin: 0 0 16px 0;
+                            font-size: 28px;
+                            font-weight: 700;
+                            color: #1a1a1a;
+                            line-height: 1.2;
+                            letter-spacing: -0.01em;
+                          " class="mobile-title">
+                            Hi${userName ? ' ' + userName : ''} 👋
+                          </h2>
+                          <p style="
+                            margin: 0 0 32px 0;
+                            font-size: 18px;
+                            line-height: 1.6;
+                            color: #4a4a4a;
+                            font-weight: 400;
+                          " class="mobile-text">
+                            ${isSignupEmail ? 'Welcome to <strong style="color: #1a1a1a;">JobPing</strong>! 🎉' : 'Your fresh job matches are here!'}<br>
+                            ${emailTypeText} <strong style="color: #1a1a1a;">${jobs.length} ${isPremium ? 'premium ' : ''}AI-matched opportunities</strong>:
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Job Cards -->
+                    ${jobs.map((job, index) => `
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="
+                      margin-bottom: 20px;
+                      background-color: #ffffff;
+                      border: 1px solid #e5e5e5;
+                      border-radius: 8px;
+                      overflow: hidden;
+                      ${index === 0 ? 'border: 2px solid #1a1a1a;' : ''}
+                    ">
+                      <tr>
+                        <td style="padding: 24px;">
+                          <!-- Job Header -->
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 16px;">
+                            <tr>
+                              <td>
+                                <h3 style="
+                                  margin: 0 0 8px 0;
+                                  font-size: 20px;
+                                  font-weight: 700;
+                                  color: #1a1a1a;
+                                  line-height: 1.3;
+                                ">
+                                  <a href="${job.job_url}" target="_blank" style="
+                                    color: #1a1a1a;
+                                    text-decoration: none;
+                                  ">${job.title}</a>
+                                </h3>
+                                <p style="
+                                  margin: 0;
+                                  font-size: 16px;
+                                  font-weight: 600;
+                                  color: #4a4a4a;
+                                ">${job.company}</p>
+                              </td>
+                            </tr>
+                          </table>
+                          
+                          <!-- Job Details -->
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 16px;">
+                            <tr>
+                              <td>
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                                  <tr>
+                                    ${job.location ? `
+                                    <td style="padding-right: 16px;">
+                                      <span style="
+                                        font-size: 14px;
+                                        color: #666666;
+                                        font-weight: 500;
+                                      ">
+                                        📍 ${job.location}
+                                      </span>
+                                    </td>
+                                    ` : ''}
+                                    ${isPremium && (job.match_score || index === 0) ? `
+                                    <td style="padding-right: 16px;">
+                                      <span style="
+                                        background-color: #1a1a1a;
+                                        color: #ffffff;
+                                        padding: 4px 12px;
+                                        border-radius: 12px;
+                                        font-size: 12px;
+                                        font-weight: 600;
+                                        letter-spacing: 0.3px;
+                                      ">
+                                        ${job.match_score || 'Top Match'}
+                                      </span>
+                                    </td>
+                                    ` : ''}
+                                    <td>
+                                      <span style="
+                                        font-size: 14px;
+                                        color: #666666;
+                                        font-weight: 500;
+                                      ">
+                                        📅 Posted ${(() => {
+                                          try {
+                                            const postedDate = new Date(job.created_at || job.updated_at || new Date());
+                                            const now = new Date();
+                                            const diffTime = Math.abs(now.getTime() - postedDate.getTime());
+                                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                            
+                                            if (diffDays === 0) return 'today';
+                                            if (diffDays === 1) return 'yesterday';
+                                            if (diffDays < 7) return `${diffDays} days ago`;
+                                            if (diffDays < 30) {
+                                              const weeks = Math.floor(diffDays / 7);
+                                              return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+                                            }
+                                            return postedDate.toLocaleDateString('en-US', { 
+                                              month: 'short', 
+                                              day: 'numeric' 
+                                            });
+                                          } catch (error) {
+                                            return 'recently';
+                                          }
+                                        })()}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                          
+                          ${isPremium ? `
+                          <!-- Premium Match Insights -->
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="
+                            margin-bottom: 16px;
+                            background-color: #f8f9fa;
+                            border-left: 3px solid #1a1a1a;
+                            border-radius: 4px;
+                          ">
+                            <tr>
+                              <td style="padding: 16px;">
+                                <p style="
+                                  margin: 0 0 6px 0;
+                                  font-size: 13px;
+                                  font-weight: 700;
+                                  color: #1a1a1a;
+                                  text-transform: uppercase;
+                                  letter-spacing: 0.3px;
+                                ">
+                                  Why this matches you:
+                                </p>
+                                <p style="
+                                  margin: 0;
+                                  font-size: 14px;
+                                  color: #4a4a4a;
+                                  line-height: 1.5;
+                                ">
+                                  ${job.match_reason || 'Strong alignment with your skills, experience level, and career goals.'}
+                                </p>
+                              </td>
+                            </tr>
+                          </table>
+                          ` : job.match_reason ? `
+                          <!-- Basic Match Reason -->
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="
+                            margin-bottom: 16px;
+                            background-color: #f8f9fa;
+                            border-radius: 4px;
+                          ">
+                            <tr>
+                              <td style="padding: 12px 16px;">
+                                <p style="
+                                  margin: 0;
+                                  font-size: 14px;
+                                  color: #4a4a4a;
+                                  line-height: 1.4;
+                                  font-style: italic;
+                                ">
+                                  ${job.match_reason}
+                                </p>
+                              </td>
+                            </tr>
+                          </table>
+                          ` : ''}
+                          
+                          <!-- Apply Button -->
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-top: 16px;">
+                            <tr>
+                              <td align="center">
+                                <a href="${job.job_url}" target="_blank" style="
+                                  display: inline-block;
+                                  background-color: #1a1a1a;
+                                  color: #ffffff;
+                                  padding: 12px 24px;
+                                  border-radius: 6px;
+                                  text-decoration: none;
+                                  font-size: 14px;
+                                  font-weight: 600;
+                                  letter-spacing: 0.3px;
+                                " class="mobile-button">
+                                  View Job →
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                    `).join('')}
+                    
+                    ${!isPremium ? `
+                    <!-- Upgrade Prompt -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="
+                      margin-bottom: 32px;
+                      background-color: #f8f9fa;
+                      border: 1px solid #dee2e6;
+                      border-radius: 8px;
+                    ">
+                      <tr>
+                        <td style="padding: 32px; text-align: center;">
+                          <h3 style="
+                            margin: 0 0 16px 0;
+                            color: #1a1a1a;
+                            font-size: 22px;
+                            font-weight: 700;
+                            letter-spacing: -0.01em;
+                          ">
+                            Want more opportunities? 🚀
+                          </h3>
+                          <p style="
+                            margin: 0 0 24px 0;
+                            color: #4a4a4a;
+                            font-size: 16px;
+                            line-height: 1.6;
+                          ">
+                            Premium members get <strong style="color: #1a1a1a;">~45 jobs per week</strong><br>
+                            + detailed match insights + priority support
+                          </p>
+                          <a href="${process.env.NEXT_PUBLIC_BASE_URL}/pricing" style="
+                            display: inline-block;
+                            background-color: #1a1a1a;
+                            color: #ffffff;
+                            padding: 14px 28px;
+                            border-radius: 6px;
                             text-decoration: none;
-                          ">${job.title}</a>
-                        </h3>
-                        <p style="
-                          margin: 0;
-                          font-size: 16px;
-                          font-weight: 500;
-                          color: #666666;
-                        ">${job.company}</p>
-                      </div>
-                      
-                      <!-- Location & Details -->
-                      <div style="
-                        display: flex;
-                        align-items: center;
-                        gap: 16px;
-                        margin-bottom: 16px;
-                        flex-wrap: wrap;
-                      ">
-                        ${job.location ? `
-                        <span style="
-                          font-size: 14px;
-                          color: #666666;
-                          display: flex;
-                          align-items: center;
-                          gap: 6px;
-                          font-weight: 500;
-                        ">
-                          📍 ${job.location}
-                        </span>
-                        ` : ''}
-                        ${isPremium && (job.match_score || index === 0) ? `
-                        <span style="
-                          background: #000000;
-                          color: #FFFFFF;
-                          padding: 4px 10px;
-                          border-radius: 8px;
-                          font-size: 12px;
-                          font-weight: 600;
-                          letter-spacing: 0.5px;
-                          text-transform: uppercase;
-                        ">
-                          ${job.match_score || 'Top Match'}
-                        </span>
-                        ` : ''}
-                      </div>
-                      
-                      ${isPremium ? `
-                      <!-- Premium Match Insights -->
-                      <div style="
-                        background: #F8F8F8;
-                        border-left: 4px solid #000000;
-                        padding: 16px 20px;
-                        border-radius: 12px;
-                        margin-top: 16px;
-                        margin-bottom: 20px;
-                      ">
-                        <div style="
-                          font-size: 14px;
-                          font-weight: 700;
-                          color: #000000;
-                          margin-bottom: 6px;
-                          text-transform: uppercase;
-                          letter-spacing: 0.5px;
-                        ">
-                          Why it's perfect for you:
-                        </div>
-                        <div style="
-                          font-size: 14px;
-                          color: #333333;
-                          line-height: 1.5;
-                        ">
-                          ${job.match_reason || 'Strong alignment with your skills, experience level, and career goals.'}
-                        </div>
-                      </div>
-                      ` : job.match_reason ? `
-                      <!-- Basic Match Reason -->
-                      <div style="
-                        background: #F8F8F8;
-                        padding: 12px 16px;
-                        border-radius: 8px;
-                        margin-top: 12px;
-                        margin-bottom: 16px;
-                      ">
-                        <div style="
-                          font-size: 13px;
-                          color: #333333;
-                          line-height: 1.4;
-                          font-style: italic;
-                        ">
-                          ${job.match_reason}
-                        </div>
-                      </div>
-                      ` : ''}
-                      
-                      <!-- Apply Button -->
-                      <div style="margin-top: 20px;">
-                        <a href="${job.job_url}" target="_blank" style="
-                          display: inline-block;
-                          background: #000000;
-                          color: #FFFFFF;
-                          padding: 12px 24px;
-                          border-radius: 10px;
-                          text-decoration: none;
-                          font-size: 14px;
-                          font-weight: 600;
-                          transition: all 0.2s ease;
-                          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                        ">
-                          View Job →
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-            
-            ${!isPremium ? `
-            <!-- Upgrade Prompt -->
-            <div style="
-              background: #F8F8F8;
-              border: 2px solid #E0E0E0;
-              border-radius: 20px;
-              padding: 40px;
-              margin-bottom: 40px;
-              text-align: center;
-              box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-            ">
-              <h3 style="
-                margin: 0 0 16px 0;
-                color: #000000;
-                font-size: 24px;
-                font-weight: 800;
-                letter-spacing: -0.02em;
-              ">
-                Want more opportunities? 🚀
-              </h3>
-              <p style="
-                margin: 0 0 32px 0;
-                color: #666666;
-                font-size: 18px;
-                line-height: 1.6;
-              ">
-                Premium members get <strong style="color: #000000;">~45 jobs per week</strong><br>
-                + detailed match insights + priority support
-              </p>
-              <a href="${process.env.NEXT_PUBLIC_BASE_URL}/pricing" style="
-                display: inline-block;
-                background: #000000;
-                color: #FFFFFF;
-                padding: 16px 36px;
-                border-radius: 12px;
-                text-decoration: none;
-                font-weight: 700;
-                font-size: 16px;
-                letter-spacing: -0.01em;
-                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-                transition: all 0.2s ease;
-              ">
-                Upgrade to Premium
-              </a>
-            </div>
-            ` : ''}
-            
-            <!-- Schedule Info -->
-            <div style="
-              text-align: center;
-              margin-bottom: 40px;
-              padding: 24px;
-              background: #F8F8F8;
-              border-radius: 16px;
-              border: 1px solid #E0E0E0;
-            ">
-              <p style="
-                margin: 0 0 8px 0;
-                font-size: 18px;
-                color: #000000;
-                font-weight: 700;
-              ">
-                You'll get <strong>${isPremium ? jobLimit + ' premium jobs every 48 hours' : jobLimit + ' jobs per week'}</strong>
-              </p>
-              <p style="
-                margin: 0;
-                font-size: 14px;
-                color: #666666;
-              ">
-                ${isPremium ? 'Manage your subscription anytime in your account.' : 'Reply with "unsubscribe" to stop these emails.'}
-              </p>
-            </div>
-            
-            ${isSignupEmail ? `
-            <!-- Welcome Next Steps -->
-            <div style="
-              background: #F0F8F0;
-              border-radius: 16px;
-              padding: 28px;
-              margin-bottom: 40px;
-              text-align: center;
-              border: 1px solid #D4F4D4;
-            ">
-              <p style="
-                margin: 0;
-                color: #2D5A2D;
-                font-size: 18px;
-                font-weight: 700;
-              ">
-                <strong>Next steps:</strong> Check your email every 48 hours for fresh opportunities!
-              </p>
-            </div>
-            ` : ''}
-            
-          </div>
-          
-          <!-- Footer -->
-          <div style="
-            background: #000000;
-            padding: 32px 40px;
-            text-align: center;
-          ">
-            <div style="
-              font-size: 24px;
-              font-weight: 900;
-              letter-spacing: 2px;
-              color: #FFFFFF;
-              margin-bottom: 8px;
-            ">
-              JOBPINGAI
-            </div>
-            <p style="
-              margin: 0;
-              font-size: 14px;
-              color: #CCCCCC;
-              letter-spacing: 0.5px;
-            ">
-              AI-powered job matching for ambitious professionals
-            </p>
-          </div>
-        </div>
+                            font-weight: 600;
+                            font-size: 14px;
+                            letter-spacing: 0.3px;
+                          " class="mobile-button">
+                            Upgrade to Premium
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                    ` : ''}
+                    
+                    <!-- Schedule Info -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="
+                      margin-bottom: 32px;
+                      background-color: #f8f9fa;
+                      border: 1px solid #e9ecef;
+                      border-radius: 8px;
+                    ">
+                      <tr>
+                        <td style="padding: 20px; text-align: center;">
+                          <p style="
+                            margin: 0 0 8px 0;
+                            font-size: 16px;
+                            color: #1a1a1a;
+                            font-weight: 600;
+                          ">
+                            You'll get <strong>${isPremium ? jobLimit + ' premium jobs every 48 hours' : jobLimit + ' jobs per week'}</strong>
+                          </p>
+                          <p style="
+                            margin: 0;
+                            font-size: 14px;
+                            color: #666666;
+                          ">
+                            ${isPremium ? 'Manage your subscription anytime in your account.' : 'Reply with "unsubscribe" to stop these emails.'}
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    ${isSignupEmail ? `
+                    <!-- Welcome Next Steps -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="
+                      margin-bottom: 32px;
+                      background-color: #e8f5e8;
+                      border: 1px solid #c3e6c3;
+                      border-radius: 8px;
+                    ">
+                      <tr>
+                        <td style="padding: 24px; text-align: center;">
+                          <p style="
+                            margin: 0;
+                            color: #2d5a2d;
+                            font-size: 16px;
+                            font-weight: 600;
+                          ">
+                            <strong>Next steps:</strong> Check your email every 48 hours for fresh opportunities!
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                    ` : ''}
+                  </td>
+                </tr>
+                
+                <!-- Footer -->
+                <tr>
+                  <td style="
+                    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+                    padding: 32px 30px;
+                    text-align: center;
+                  ">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                      <tr>
+                        <td>
+                          <h2 style="
+                            margin: 0 0 8px 0;
+                            font-size: 24px;
+                            font-weight: 700;
+                            color: #ffffff;
+                            letter-spacing: 1px;
+                          ">
+                            JobPing
+                          </h2>
+                          <p style="
+                            margin: 0;
+                            font-size: 14px;
+                            color: #e5e5e5;
+                            letter-spacing: 0.3px;
+                          ">
+                            AI-powered job matching for ambitious professionals
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
       </body>
-      </html>
-    `;
+    </html>
+  `;
 
     try {
       // Dynamic subject line based on subscription and email type

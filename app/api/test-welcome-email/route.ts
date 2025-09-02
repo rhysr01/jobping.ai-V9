@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { sendWelcomeEmail } from '@/Utils/emailUtils';
+// import { sendWelcomeEmail } from '@/Utils/emailUtils';
 
 // Test mode helper
 const isTestMode = () => process.env.NODE_ENV === 'test' || process.env.JOBPING_TEST_MODE === '1';

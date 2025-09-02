@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { scrapeGreenhouse } from '../../../scrapers/greenhouse';
-import { scrapeLever } from '../../../scrapers/lever';
-import { scrapeWorkday } from '../../../scrapers/workday';
+// import { scrapeGreenhouse } from '../../../scrapers/greenhouse';
+// import { scrapeLever } from '../../../scrapers/lever';
+// import { scrapeWorkday } from '../../../scrapers/workday';
 // Removed RemoteOK import - it's poison for graduates
+import { ATSOrchestrator } from '../../../scrapers/ATSOrchestrator';
 import { atomicUpsertJobs } from '../../../Utils/jobMatching';
 import { runReliableScrapers } from '../../../Utils/reliableScrapers';
 import { coerceScraperResult } from '../../../Utils/robustJobCreation';
@@ -84,6 +85,32 @@ export async function POST(req: NextRequest) {
     const results: any = {};
 
     console.log(`🚀 Starting scrape run ${runId} for platforms: ${platforms.join(', ')}`);
+
+    // NEW: ATS-API Scraping System (most reliable)
+    if (platforms.includes('all') || platforms.includes('ats')) {
+      console.log('🎯 Running ATS-API scraping system...');
+      try {
+        const atsOrchestrator = new ATSOrchestrator();
+        const atsResults = await atsOrchestrator.scrapeAllCompanies();
+        
+        const totalJobs = atsResults.reduce((sum, r) => sum + r.jobsSaved, 0);
+        const totalErrors = atsResults.reduce((sum, r) => sum + r.errors.length, 0);
+        const successfulCompanies = atsResults.filter(r => r.jobsSaved > 0).length;
+        
+        results.ats = {
+          success: true,
+          companies: atsResults.length,
+          successfulCompanies,
+          totalJobs,
+          totalErrors,
+          results: atsResults
+        };
+        console.log(`✅ ATS-API: ${totalJobs} jobs from ${successfulCompanies}/${atsResults.length} companies`);
+      } catch (error: any) {
+        results.ats = { success: false, error: error.message };
+        console.error('❌ ATS-API scraping failed:', error.message);
+      }
+    }
 
     // NEW: Reliable Scrapers System (fast, no hanging)
     if ((platforms.includes('all') || platforms.includes('reliable')) && isPlatformEnabled('reliable')) {

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Menu, Search, Settings, Grid3X3, Edit, Inbox, Star, Send, FileText, 
@@ -11,7 +12,37 @@ interface JobCardProps {
   index: number;
 }
 
+// Loading component for better UX
+function JobCardLoading() {
+  return (
+    <div className="max-w-5xl mx-auto">
+      <div className="text-center mb-16">
+        <div className="h-12 bg-[#374151] rounded-lg mb-6 animate-pulse"></div>
+        <div className="h-6 bg-[#374151] rounded max-w-2xl mx-auto animate-pulse"></div>
+      </div>
+      
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-[#1F1F23] rounded-lg p-6 animate-pulse">
+          <div className="h-8 bg-[#374151] rounded mb-4"></div>
+          <div className="h-6 bg-[#374151] rounded mb-2"></div>
+          <div className="h-6 bg-[#374151] rounded w-3/4"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function JobCard({ index }: JobCardProps) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    // Simulate loading delay for better UX
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, []);
   const jobs = [
     {
       title: "Frontend Developer",
@@ -47,6 +78,10 @@ export function JobCard({ index }: JobCardProps) {
       logoColor: "#635BFF"
     }
   ];
+
+  if (!isLoaded) {
+    return <JobCardLoading />;
+  }
 
   return (
     <motion.div

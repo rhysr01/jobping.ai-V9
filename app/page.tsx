@@ -1,22 +1,47 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import HowItWorks from './components/HowItWorks';
-import Features from './components/Features';
 import Footer from './components/Footer';
-import { JobCard } from './components/JobCard';
-import PriceSelector from './components/PriceSelector';
-import { SignupHeader } from './components/SignupHeader';
+import { JobCardSkeleton } from './components/JobCardSkeleton';
+
+// Lazy load heavy components for better performance
+const Features = lazy(() => import('./components/Features'));
+const JobCard = lazy(() => import('./components/JobCard').then(module => ({ default: module.JobCard })));
+const PriceSelector = lazy(() => import('./components/PriceSelector'));
+const SignupHeader = lazy(() => import('./components/SignupHeader').then(module => ({ default: module.SignupHeader })));
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
+
+  const validateField = (name: string, value: string): string => {
+    if (name === 'email') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!value) return 'Email is required';
+      if (!emailRegex.test(value)) return 'Please enter a valid email address';
+    }
+    if (name === 'name') {
+      if (!value.trim()) return 'Name is required';
+      if (value.trim().length < 2) return 'Name must be at least 2 characters';
+    }
+    return '';
+  };
+
+  const handleInputChange = (name: string, value: string) => {
+    const error = validateField(name, value);
+    setErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
+  };
 
   return (
     <div className="min-h-screen bg-[#0B0B0F] relative overflow-hidden">
@@ -34,150 +59,54 @@ export default function Home() {
         
         {/* Gmail Job Preview Section */}
         <section className="py-20 bg-[#0B0B0F] relative">
-          <JobCard index={0} />
+          <Suspense fallback={<JobCardSkeleton />}>
+            <JobCard index={0} />
+          </Suspense>
         </section>
 
         {/* Features Section */}
-        <Features />
+        <Suspense fallback={
+          <div className="py-24 md:py-32 text-center">
+            <div className="h-8 bg-[#374151] rounded-lg mb-4 animate-pulse max-w-md mx-auto"></div>
+            <div className="h-6 bg-[#374151] rounded animate-pulse max-w-2xl mx-auto"></div>
+          </div>
+        }>
+          <Features />
+        </Suspense>
 
         {/* Pricing Section */}
-        <Suspense fallback={<div className="py-24 md:py-32">Loading...</div>}>
+        <Suspense fallback={
+          <div className="py-24 md:py-32 text-center">
+            <div className="h-8 bg-[#374151] rounded-lg mb-4 animate-pulse max-w-md mx-auto"></div>
+            <div className="h-6 bg-[#374151] rounded animate-pulse max-w-2xl mx-auto"></div>
+          </div>
+        }>
           <PriceSelector />
         </Suspense>
 
         {/* Signup Section */}
         <section id="signup" className="py-20 bg-[#0B0B0F] relative">
           <div className="container-frame">
-            <Suspense fallback={<div className="mb-6">Loading...</div>}>
+            <Suspense fallback={
+              <div className="text-center mb-6">
+                <div className="h-8 bg-[#374151] rounded-lg mb-4 animate-pulse max-w-md mx-auto"></div>
+                <div className="h-6 bg-[#374151] rounded animate-pulse max-w-2xl mx-auto"></div>
+              </div>
+            }>
               <SignupHeader />
             </Suspense>
             <div className="max-w-md mx-auto">
-              {/* Fallback form (shown by default) */}
-              {!loaded && <form 
-                data-testid="fallback-form" 
-                className="bg-white/5 p-6 rounded-lg border border-white/10"
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.currentTarget);
-                  
-                  try {
-                    // First try to submit to Tally webhook endpoint
-                    const response = await fetch('/api/webhook-tally', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({
-                        eventId: `fallback-${Date.now()}`,
-                        eventType: 'FORM_RESPONSE',
-                        createdAt: new Date().toISOString(),
-                        formId: 'fallback-form',
-                        responseId: `fallback-${Date.now()}`,
-                        data: {
-                          fields: [
-                            { key: 'name', label: 'Name', type: 'text', value: formData.get('name') },
-                            { key: 'email', label: 'Email', type: 'email', value: formData.get('email') },
-                            { key: 'plan', label: 'Plan', type: 'select', value: formData.get('plan') }
-                          ]
-                        }
-                      }),
-                    });
-                     
-                    if (response.ok) {
-                      // Show success message
-                      const successEl = document.querySelector('[data-testid="success-message"]');
-                      if (successEl) successEl.classList.remove('hidden');
-                    } else {
-                      // Fallback to simple subscribe endpoint
-                      await fetch('/api/subscribe', {
-                        method: 'POST',
-                        body: formData,
-                      });
-                    }
-                  } catch (error) {
-                    console.error('Form submission error:', error);
-                    // Show error message
-                    const errorEl = document.querySelector('[data-testid="error-message"]');
-                    if (errorEl) errorEl.classList.remove('hidden');
-                  }
-                }}
-              >
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="name-input" className="block text-sm font-medium text-white mb-2">
-                      Your name
-                    </label>
-                    <input
-                      id="name-input"
-                      data-testid="name-input"
-                      name="name"
-                      type="text"
-                      placeholder="Your name"
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                      aria-describedby="name-error"
-                    />
-                    <div id="name-error" data-testid="name-error" className="hidden text-red-400 text-sm mt-1">
-                      Name is required
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="email-input" className="block text-sm font-medium text-white mb-2">
-                      Your email
-                    </label>
-                    <input
-                      id="email-input"
-                      data-testid="email-input"
-                      name="email"
-                      type="email"
-                      placeholder="Your email"
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                      aria-describedby="email-error"
-                    />
-                    <div id="email-error" data-testid="email-error" className="hidden text-red-400 text-sm mt-1">
-                      Valid email is required
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="plan-select" className="block text-sm font-medium text-white mb-2">
-                      Choose your plan
-                    </label>
-                    <select
-                      id="plan-select"
-                      data-testid="plan-select"
-                      name="plan"
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      aria-describedby="plan-error"
-                    >
-                      <option value="free">Free Plan</option>
-                      <option value="premium">Premium Plan</option>
-                    </select>
-                    <div id="plan-error" data-testid="plan-error" className="hidden text-red-400 text-sm mt-1">
-                      Please select a plan
-                    </div>
-                  </div>
-                  
-                  <button
-                    data-testid="submit-button"
-                    type="submit"
-                    className="w-full bg-white text-[#0B0B0F] px-6 py-3 rounded-lg font-semibold hover:bg-[#F8F9FA] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    Get Started
-                  </button>
-                  
-                  <div data-testid="success-message" className="hidden text-green-400 text-sm text-center">
-                    Thank you! We'll be in touch soon.
-                  </div>
-                  
-                  <div data-testid="error-message" className="hidden text-red-400 text-sm text-center">
-                    Something went wrong. Please try again.
+              {/* Loading state while Tally iframe loads */}
+              {!loaded && (
+                <div className="bg-white/5 p-6 rounded-lg border border-white/10 flex items-center justify-center">
+                  <div className="text-white text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+                    <p className="text-sm">Loading signup form...</p>
                   </div>
                 </div>
-              </form>}
+              )}
               
+              {/* Tally iframe - simplified single form approach */}
               <iframe
                 className="h-[500px] w-full border-none focus-visible:ring-2 ring-white/20 rounded-lg"
                 src="https://tally.so/r/mJEqx4?alignLeft=1&transparentBackground=1&hideTitle=1"

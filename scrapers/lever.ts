@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { Job } from './types.js';
-import { atomicUpsertJobs } from '../Utils/jobMatching';
+import { Job } from './types.ts';
+import { atomicUpsertJobs } from '../Utils/jobMatching.ts';
 import { 
   IngestJob, 
   classifyEarlyCareer, 
@@ -12,8 +12,8 @@ import {
   convertToDatabaseFormat, 
   shouldSaveJob, 
   logJobProcessing 
-} from './utils';
-import { RobotsCompliance, RespectfulRateLimiter, JOBPING_USER_AGENT } from '../Utils/robotsCompliance';
+} from './utils.ts';
+import { RobotsCompliance, RespectfulRateLimiter, JOBPING_USER_AGENT } from '../Utils/robotsCompliance.ts';
 
 // Use JobPing-specific user agent for ethical scraping
 const USER_AGENTS = [JOBPING_USER_AGENT];
@@ -518,10 +518,10 @@ async function tryLeverAPI(company: any, runId: string, userAgent: string): Prom
 // Test runner
 if (require.main === module) {
   const testCompany = {
-    name: 'ExampleCompany',
-    url: 'https://jobs.lever.co/examplecompany',
+    name: 'Spotify',
+    url: 'https://jobs.lever.co/spotify',
     platform: 'lever' as const,
-    tags: ['test']
+    tags: ['music', 'tech']
   };
 
   scrapeLever(testCompany, 'test-run-123')

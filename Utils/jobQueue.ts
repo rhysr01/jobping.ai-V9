@@ -419,7 +419,7 @@ export class JobQueueManager {
     console.log(`📧 Processing send-emails job for ${emailData.length} emails`);
     
     try {
-      const { sendMatchedJobsEmail } = await import('./emailUtils');
+      // const { sendMatchedJobsEmail } = await import('./emailUtils');
       
       const results = [];
       

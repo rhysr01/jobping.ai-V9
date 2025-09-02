@@ -615,3 +615,67 @@ export function calculateCareerPathTelemetry(jobs: Job[]): CareerPathTelemetry {
   
   return telemetry;
 }
+
+// Core types for ATS-API scraping system
+
+export type IngestJob = {
+  title: string;
+  company: string;
+  description: string;
+  job_url: string;
+  posted_at: string;
+  source: string;
+  location?: string;
+  languages_required?: string[];
+  work_environment?: string; // Remote/Hybrid/Onsite
+  meta?: {
+    early?: boolean;
+    eligibility?: "certain" | "uncertain";
+    role?: string;
+    remote_scope?: "emea" | "world" | null;
+    country?: string | null;
+    signals?: string[];
+  };
+  job_hash?: string;
+};
+
+export interface SourceAdapter {
+  fetchListings(input: Record<string, string>): Promise<IngestJob[]>;
+}
+
+export interface CompanyConfig {
+  company: string;
+  platform: string;
+  slug?: string;
+  tenant?: string;
+  careerSite?: string;
+  priority: number;
+  refresh_days: number;
+}
+
+export interface ScrapingResult {
+  company: string;
+  platform: string;
+  jobsFound: number;
+  jobsProcessed: number;
+  jobsSaved: number;
+  errors: string[];
+  duration: number;
+  timestamp: string;
+}
+
+export interface RateLimitConfig {
+  requestsPerSecond: number;
+  requestsPerMinute: number;
+  requestsPerHour: number;
+  maxConcurrency: number;
+  backoffMultiplier: number;
+  maxRetries: number;
+}
+
+export interface HostCooldown {
+  host: string;
+  blockedCount: number;
+  lastBlocked: string;
+  cooldownUntil?: string;
+}
