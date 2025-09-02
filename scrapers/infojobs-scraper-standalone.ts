@@ -50,7 +50,7 @@ const INFOJOBS_CONFIG = {
   },
   // Hourly rotation for quota management
   rotationInterval: 60 * 60 * 1000, // 1 hour
-  // Cities to target
+  // Cities to target (focusing on Spanish cities from target list)
   cities: ['Madrid', 'Barcelona'] as const,
   // Categories to rotate through
   categories: [

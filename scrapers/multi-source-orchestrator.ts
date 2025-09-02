@@ -18,21 +18,22 @@ const EARLY_CAREER_PATTERNS = {
   es: /(becario|prácticas|junior|recién.?graduad|estudiante|primer.?empleo|sin.?experiencia|0-1|0-2|1-2|iniciador|principiante)/i,
   de: /(praktikant|praktikum|trainee|berufseinsteiger|junior|absolvent|student|anfänger|einsteiger|assistent)/i,
   fr: /(stagiaire|alternance|junior|débutant|jeune.?diplômé|étudiant|premier.?emploi|sans.?expérience|0-1|0-2|1-2|débutant)/i,
+  it: /(stagista|tirocinio|junior|principiante|neolaureato|studente|primo.?lavoro|senza.?esperienza|0-1|0-2|1-2|iniziante|apprendista|assistente)/i,
   nl: /(stagiair|werkstudent|junior|starter|afgestudeerde|student|eerste.?baan|geen.?ervaring|0-1|0-2|1-2|beginner)/i
 };
 
 // Target cities with language mapping
 const TARGET_CITIES = {
+  'Dublin': { country: 'ie', lang: 'en' },
   'London': { country: 'gb', lang: 'en' },
   'Madrid': { country: 'es', lang: 'es' },
   'Berlin': { country: 'de', lang: 'de' },
-  'Amsterdam': { country: 'nl', lang: 'nl' },
   'Paris': { country: 'fr', lang: 'fr' },
-  'Dublin': { country: 'ie', lang: 'en' },
-  'Stockholm': { country: 'se', lang: 'en' }, // Swedish companies often use English
-  'Zurich': { country: 'ch', lang: 'de' }, // German-speaking part
   'Barcelona': { country: 'es', lang: 'es' },
-  'Munich': { country: 'de', lang: 'de' }
+  'Zurich': { country: 'ch', lang: 'de' }, // German-speaking part
+  'Milan': { country: 'it', lang: 'it' },
+  'Rome': { country: 'it', lang: 'it' },
+  'Amsterdam': { country: 'nl', lang: 'nl' }
 };
 
 interface ScrapingMetrics {
@@ -102,6 +103,9 @@ class MultiSourceOrchestrator {
     }
     if (textLower.includes('stagiaire') || textLower.includes('alternance') || textLower.includes('diplômé')) {
       return 'fr';
+    }
+    if (textLower.includes('stagista') || textLower.includes('tirocinio') || textLower.includes('neolaureato')) {
+      return 'it';
     }
     if (textLower.includes('stagiair') || textLower.includes('werkstudent') || textLower.includes('afgestudeerde')) {
       return 'nl';

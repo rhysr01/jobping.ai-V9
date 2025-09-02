@@ -43,16 +43,16 @@ const ADZUNA_CONFIG = {
   appId: process.env.ADZUNA_APP_ID || '',
   appKey: process.env.ADZUNA_APP_KEY || '',
   countries: {
+    'Dublin': 'ie',
     'London': 'gb',
     'Madrid': 'es', 
     'Berlin': 'de',
-    'Amsterdam': 'nl',
     'Paris': 'fr',
-    'Dublin': 'ie',
-    'Stockholm': 'se',
-    'Zurich': 'ch',
     'Barcelona': 'es',
-    'Munich': 'de'
+    'Zurich': 'ch',
+    'Milan': 'it',
+    'Rome': 'it',
+    'Amsterdam': 'nl'
   },
   dailyBudget: 33, // 1,000 calls/month ≈ 33/day
   reserveCalls: 3
@@ -311,6 +311,14 @@ class AdzunaScraper {
       budgetRemaining: ADZUNA_CONFIG.dailyBudget - this.dailyCallCount,
       lastRun: this.lastRunDate
     };
+  }
+
+  public getCountries(): Record<string, string> {
+    return ADZUNA_CONFIG.countries;
+  }
+
+  public getTargetCities(): string[] {
+    return Object.keys(ADZUNA_CONFIG.countries);
   }
 }
 

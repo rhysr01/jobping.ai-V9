@@ -33,7 +33,7 @@ async function testRealJobIngestion() {
     const { data: realJobs, error: jobsError } = await supabase
       .from('jobs')
       .select('*')
-      .eq('source', 'adzuna')
+      .in('source', ['adzuna', 'reed']) // Test our European early-career jobs
       .order('created_at', { ascending: false })
       .limit(20); // Test with 20 recent jobs
 
@@ -43,12 +43,12 @@ async function testRealJobIngestion() {
     }
 
     if (!realJobs || realJobs.length === 0) {
-      console.log('ℹ️  No Adzuna jobs found in database');
-      console.log('💡 Make sure you have run the Adzuna scraper first');
+      console.log('ℹ️  No jobs found in database');
+      console.log('💡 Make sure you have jobs in the database');
       return;
     }
 
-    console.log(`✅ Found ${realJobs.length} real Adzuna jobs`);
+    console.log(`✅ Found ${realJobs.length} real jobs from database`);
     console.log('🌍 Jobs from cities:', [...new Set(realJobs.map(job => job.location))].slice(0, 5).join(', '));
 
     // 2. Test job ingestion on real data

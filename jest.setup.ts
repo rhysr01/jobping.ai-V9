@@ -174,6 +174,8 @@ jest.mock('@/Utils/enhancedCache', () => ({
       close: jest.fn(() => Promise.resolve()),
       log: jest.fn(),
       startMaintenance: jest.fn(),
+      sweepInterval: null, // Prevent setInterval from running
+      sweep: jest.fn(),
     })),
   },
 }));
