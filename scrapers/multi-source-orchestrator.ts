@@ -11,6 +11,20 @@ import {
   shouldSaveJob 
 } from './utils';
 
+// Career path patterns for diverse job discovery
+const CAREER_PATH_PATTERNS = {
+  strategy: /(strategy|consulting|business.?design|transformation|corporate.?development|analyst|associate)/i,
+  data: /(data.?analyst|business.?intelligence|data.?scientist|research.?analyst|analytics|insights)/i,
+  retail: /(merchandising|retail.?management|brand.?strategy|luxury|fashion|retail)/i,
+  sales: /(sales.?development|account.?manager|customer.?success|business.?development|sales)/i,
+  marketing: /(digital.?marketing|brand.?marketing|content.?specialist|growth.?strategist|marketing)/i,
+  finance: /(investment.?banking|venture.?capital|corporate.?finance|financial.?analyst|finance)/i,
+  operations: /(supply.?chain|logistics|operations|procurement|process.?improvement|operations)/i,
+  product: /(product.?management|innovation|product.?operations|product.?analyst|product)/i,
+  tech: /(IT.?business.?analyst|product.?owner|digital.?transformation|technology|tech)/i,
+  sustainability: /(sustainability|ESG|impact.?investing|CSR|environmental|sustainability)/i
+};
+
 // Early-career tagging patterns (multilingual)
 const EARLY_CAREER_PATTERNS = {
   en: /(intern|graduate|junior|trainee|entry.?level|placement|new.?grad|recent.?graduate|first.?job|no.?experience|0-1|0-2|1-2|starter|beginner|apprentice|associate|assistant)/i,
@@ -106,6 +120,19 @@ class MultiSourceOrchestrator {
     return 'en'; // Default to English
   }
 
+  private detectCareerPath(text: string): string {
+    const textLower = text.toLowerCase();
+    
+    // Detect career path based on job content
+    for (const [path, pattern] of Object.entries(CAREER_PATH_PATTERNS)) {
+      if (pattern.test(textLower)) {
+        return path;
+      }
+    }
+    
+    return 'general'; // Default career path
+  }
+
   private enrichJob(job: IngestJob): JobEnrichment {
     const { city, country, isRemote, isEU } = parseLocation(job.location);
     const lang = this.detectLanguage(`${job.title} ${job.description}`);
@@ -141,6 +168,9 @@ class MultiSourceOrchestrator {
     // Detect visa sponsorship (simple heuristic)
     const visaSponsorship = /visa|sponsorship|work.?permit|relocation|relocate/i.test(text);
     
+    // Detect career path
+    const careerPath = this.detectCareerPath(text);
+    
     return {
       city,
       country,
@@ -151,7 +181,8 @@ class MultiSourceOrchestrator {
       role,
       confidence: Math.min(1, confidence),
       freshnessScore: Math.max(0, Math.min(100, freshnessScore)),
-      visaSponsorship
+      visaSponsorship,
+      careerPath
     };
   }
 

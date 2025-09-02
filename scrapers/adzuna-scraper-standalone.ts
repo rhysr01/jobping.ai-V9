@@ -53,13 +53,15 @@ const ADZUNA_CONFIG = {
   reserveCalls: 3
 };
 
-// Track rotation strategy
-type Track = 'A' | 'B' | 'C';
+// Career path rotation strategy for diverse job discovery
+type Track = 'A' | 'B' | 'C' | 'D' | 'E';
 
 const TRACK_QUERIES: Record<Track, string> = {
-  A: 'graduate',
-  B: 'junior',
-  C: 'intern'
+  A: 'graduate analyst',           // Strategy & Business Design
+  B: 'junior consultant',          // Consulting & Strategy
+  C: 'data analyst',               // Data & Analytics
+  D: 'trainee manager',            // Operations & Management
+  E: 'associate developer'         // Tech & Product
 };
 
 class AdzunaScraper {
@@ -84,11 +86,13 @@ class AdzunaScraper {
   private getTrackForDay(): Track {
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
     
-    // Day 1: Track A, Day 2: Track B, Day 3: Track A, Day 4: Track C, repeat
-    const pattern = dayOfYear % 4;
-    if (pattern === 0 || pattern === 2) return 'A';
-    if (pattern === 1) return 'B';
-    return 'C';
+    // Rotate through 5 career paths for diverse job discovery
+    const pattern = dayOfYear % 5;
+    if (pattern === 0) return 'A';      // Strategy & Business Design
+    if (pattern === 1) return 'B';      // Consulting & Strategy
+    if (pattern === 2) return 'C';      // Data & Analytics
+    if (pattern === 3) return 'D';      // Operations & Management
+    return 'E';                         // Tech & Product
   }
 
   private async makeRequest(url: string, headers: Record<string, string> = {}): Promise<AdzunaResponse> {

@@ -951,7 +951,7 @@ export async function sendMatchedJobsEmail({
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>JobPing - Your AI-Curated Job Matches</title>
+        <title>🎯 ${jobs.length} Fresh EU/UK Jobs - JobPing</title>
         <!--[if mso]>
         <noscript>
           <xml>
@@ -1249,23 +1249,39 @@ export async function sendMatchedJobsEmail({
                           </table>
                           ` : ''}
                           
-                          <!-- Apply Button -->
-                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-top: 16px;">
+                          <!-- Apply Button - High Conversion -->
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-top: 20px;">
                             <tr>
                               <td align="center">
                                 <a href="${job.job_url}" target="_blank" style="
-                                  display: inline-block;
-                                  background-color: #1a1a1a;
+                                  display: block;
+                                  background-color: #007AFF;
                                   color: #ffffff;
-                                  padding: 12px 24px;
-                                  border-radius: 6px;
+                                  padding: 18px 40px;
+                                  border-radius: 8px;
                                   text-decoration: none;
-                                  font-size: 14px;
-                                  font-weight: 600;
-                                  letter-spacing: 0.3px;
+                                  font-size: 18px;
+                                  font-weight: 700;
+                                  text-align: center;
+                                  letter-spacing: 0.5px;
+                                  text-transform: uppercase;
+                                  border: 3px solid #007AFF;
+                                  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
                                 " class="mobile-button">
-                                  View Job →
+                                  🚀 APPLY NOW
                                 </a>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align="center" style="padding-top: 12px;">
+                                <p style="
+                                  margin: 0;
+                                  font-size: 14px;
+                                  color: #666666;
+                                  font-weight: 500;
+                                ">
+                                  ${index < 2 ? '⚡ Trending - Apply fast!' : '⏰ Limited applications'}
+                                </p>
                               </td>
                             </tr>
                           </table>
@@ -1414,16 +1430,15 @@ export async function sendMatchedJobsEmail({
   `;
 
     try {
-      // Dynamic subject line based on subscription and email type
+      // Dynamic subject line optimized for opens
       const getSubjectLine = () => {
+        const urgencyPhrases = ['Fresh', 'Hot', 'New', 'Latest'];
+        const urgency = urgencyPhrases[Math.floor(Math.random() * urgencyPhrases.length)];
+        
         if (isSignupEmail) {
-          return isPremium 
-            ? `🎯 Welcome to JobPingAI Premium - ${jobs.length} Curated Opportunities`
-            : `🎯 Welcome to JobPingAI - Your First ${jobs.length} Job Matches`;
+          return `🎯 Your ${jobs.length} EU/UK jobs are ready!`;
         } else {
-          return isPremium
-            ? `⭐ Premium Job Matches - ${jobs.length} Exclusive Opportunities`
-            : `🎯 Fresh Job Matches - ${jobs.length} New Opportunities`;
+          return `${urgency} ${jobs.length} EU/UK jobs (visa-friendly) 🏺`;
         }
       };
 

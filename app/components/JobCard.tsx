@@ -92,10 +92,11 @@ export function JobCard({ index }: JobCardProps) {
     >
       <div className="text-center mb-16">
         <h2 className="text-[#F8F9FA] font-bold text-4xl lg:text-5xl mb-6 tracking-tight">
-          See What Lands in Your Inbox
+          What Gets Delivered to Your Email
         </h2>
         <p className="text-[#9CA3AF] text-xl max-w-2xl mx-auto leading-relaxed">
-          Every 48 hours, receive perfectly matched job opportunities with AI-powered insights and one-click applications.
+          <strong className="text-[#D1D5DB]">6-8 curated opportunities</strong> every 48 hours. No spam, no irrelevant jobs.<br />
+          Just quality roles you can actually get.
         </p>
       </div>
 
@@ -355,15 +356,19 @@ export function JobCard({ index }: JobCardProps) {
                       <div className="flex items-center justify-between">
                         <a 
                           href="#" 
-                          className="px-6 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2 text-white"
+                          className="px-8 py-3 rounded-lg font-bold text-lg transition-all duration-200 inline-flex items-center gap-2 text-white hover:transform hover:scale-105 shadow-lg hover:shadow-xl"
                           style={{ backgroundColor: job.logoColor }}
                         >
-                          Apply Now
-                          <ExternalLink className="w-4 h-4" />
+                          🚀 APPLY NOW
+                          <ExternalLink className="w-5 h-5" />
                         </a>
                         <div className="text-xs text-[#9AA0A6] space-x-4">
-                          <span className="text-[#FBBC04] font-medium">⚡ {job.applicants} applicants</span>
-                          <span>Posted {job.posted}</span>
+                          <span className="text-[#FBBC04] font-medium bg-[#FBBC04]/10 px-2 py-1 rounded-full">
+                            ⚡ Only {job.applicants} applied
+                          </span>
+                          <span className="text-[#10B981]">
+                            ⏰ {job.posted}
+                          </span>
                         </div>
                       </div>
                     </div>

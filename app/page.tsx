@@ -6,6 +6,8 @@ import Hero from './components/Hero';
 import HowItWorks from './components/HowItWorks';
 import Footer from './components/Footer';
 import { JobCardSkeleton } from './components/JobCardSkeleton';
+import FAQ from './components/FAQ';
+import Comparison from './components/Comparison';
 
 // Lazy load heavy components for better performance
 const Features = lazy(() => import('./components/Features'));
@@ -58,7 +60,7 @@ export default function Home() {
         <HowItWorks />
         
         {/* Gmail Job Preview Section */}
-        <section className="py-20 bg-[#0B0B0F] relative">
+        <section id="preview" className="py-20 bg-[#0B0B0F] relative">
           <Suspense fallback={<JobCardSkeleton />}>
             <JobCard index={0} />
           </Suspense>
@@ -74,6 +76,9 @@ export default function Home() {
           <Features />
         </Suspense>
 
+        {/* Comparison Section */}
+        <Comparison />
+
         {/* Pricing Section */}
         <Suspense fallback={
           <div className="py-24 md:py-32 text-center">
@@ -83,6 +88,9 @@ export default function Home() {
         }>
           <PriceSelector />
         </Suspense>
+
+        {/* FAQ Section */}
+        <FAQ />
 
         {/* Signup Section */}
         <section id="signup" className="py-20 bg-[#0B0B0F] relative">

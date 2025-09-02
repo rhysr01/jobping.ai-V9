@@ -47,12 +47,15 @@ const REED_CONFIG = {
   seenJobTTL: 48 * 60 * 60 * 1000
 };
 
-// Alternating run strategies
-type RunType = 'A' | 'B';
+// Career path rotation strategies for diverse job discovery
+type RunType = 'A' | 'B' | 'C' | 'D' | 'E';
 
 const RUN_QUERIES: Record<RunType, string> = {
-  A: '(graduate OR intern)',
-  B: '(junior OR entry level)'
+  A: '(graduate analyst OR strategy associate)',     // Strategy & Business Design
+  B: '(junior consultant OR business analyst)',      // Consulting & Strategy
+  C: '(data analyst OR business intelligence)',      // Data & Analytics
+  D: '(trainee manager OR operations analyst)',      // Operations & Management
+  E: '(associate developer OR product analyst)'      // Tech & Product
 };
 
 class ReedScraper {
@@ -142,8 +145,11 @@ class ReedScraper {
   private async fetchLondonJobs(sinceIso?: string): Promise<IngestJob[]> {
     const jobs: IngestJob[] = [];
     
-    // Determine run type for this execution
-    const runType = this.lastRunType === 'A' ? 'B' : 'A';
+    // Determine run type for this execution - rotate through 5 career paths
+    const runTypes: RunType[] = ['A', 'B', 'C', 'D', 'E'];
+    const currentIndex = runTypes.indexOf(this.lastRunType);
+    const nextIndex = (currentIndex + 1) % runTypes.length;
+    const runType = runTypes[nextIndex];
     this.lastRunType = runType;
 
     console.log(`🔄 Reed scraping London with Run ${runType}: ${RUN_QUERIES[runType]}`);

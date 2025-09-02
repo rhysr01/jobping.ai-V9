@@ -502,13 +502,66 @@ textarea:focus-visible {
   }
 }
 
-/* REDUCED MOTION */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+/* EMAIL CTA OPTIMIZATION - High Conversion */
+.email-cta-primary {
+  display: block !important;
+  width: 100% !important;
+  max-width: 280px !important;
+  margin: 20px auto !important;
+  background-color: #007AFF !important;
+  color: #ffffff !important;
+  padding: 18px 24px !important;
+  border-radius: 8px !important;
+  text-decoration: none !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  border: 3px solid #007AFF !important;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3) !important;
+  line-height: 1.2 !important;
+}
+
+.email-cta-primary:hover {
+  background-color: #0056CC !important;
+  border-color: #0056CC !important;
+  transform: translateY(-1px) !important;
+}
+
+/* MOBILE OPTIMIZATION */
+@media only screen and (max-width: 480px) {
+  .email-cta-primary {
+    padding: 16px 20px !important;
+    font-size: 16px !important;
+    min-height: 48px !important; /* Touch target size */
+  }
+  
+  .mobile-padding {
+    padding: 16px !important;
+  }
+  
+  .mobile-title {
+    font-size: 24px !important;
+    line-height: 1.2 !important;
+  }
+  
+  .mobile-text {
+    font-size: 16px !important;
+  }
+}
+
+/* EMAIL CLIENT COMPATIBILITY */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  .email-cta-primary {
+    display: block !important;
+  }
+}
+
+/* GMAIL MOBILE APP */
+@media only screen and (max-device-width: 480px) {
+  .email-cta-primary {
+    width: 100% !important;
+    min-width: 100% !important;
   }
 }
