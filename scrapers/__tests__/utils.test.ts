@@ -5,7 +5,6 @@
 import {
   IngestJob,
   classifyEarlyCareer,
-  inferRole,
   parseLocation,
   makeJobHash,
   validateJob,
@@ -66,47 +65,7 @@ describe('Scraper Helper Functions', () => {
     });
   });
 
-  describe('inferRole', () => {
-    it('should infer software engineering role', () => {
-      const job: IngestJob = {
-        ...mockIngestJob,
-        title: 'Software Engineer',
-        description: 'We are looking for a software engineer'
-      };
-      
-      expect(inferRole(job)).toBe('software-engineering');
-    });
 
-    it('should infer data science role', () => {
-      const job: IngestJob = {
-        ...mockIngestJob,
-        title: 'Data Scientist',
-        description: 'We are looking for a data scientist'
-      };
-      
-      expect(inferRole(job)).toBe('data-science');
-    });
-
-    it('should infer product management role', () => {
-      const job: IngestJob = {
-        ...mockIngestJob,
-        title: 'Product Manager',
-        description: 'We are looking for a product manager'
-      };
-      
-      expect(inferRole(job)).toBe('product-management');
-    });
-
-    it('should return general for unknown roles', () => {
-      const job: IngestJob = {
-        ...mockIngestJob,
-        title: 'Unknown Role',
-        description: 'We are looking for someone'
-      };
-      
-      expect(inferRole(job)).toBe('general');
-    });
-  });
 
   describe('parseLocation', () => {
     it('should parse EU location correctly', () => {
@@ -289,7 +248,6 @@ describe('Scraper Helper Functions', () => {
       expect(result.metadata).toBeDefined();
       expect(result.metadata.isEarlyCareer).toBe(true);
       expect(result.metadata.isEU).toBe(true);
-      expect(result.metadata.role).toBe('software-engineering');
     });
 
     it('should handle remote jobs correctly', () => {

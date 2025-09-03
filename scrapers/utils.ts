@@ -219,8 +219,10 @@ export function validateJob(job: IngestJob): { valid: boolean; errors: string[] 
 export function convertToDatabaseFormat(job: IngestJob) {
   const { city, country, isRemote, isEU } = parseLocation(job.location);
   const isEarlyCareer = classifyEarlyCareer(job);
-  const role = inferRole(job);
   const jobHash = makeJobHash(job);
+  
+  // ✅ Log early career classification for debugging
+  console.log(`🎯 Early Career: "${job.title}" - ${isEarlyCareer ? 'YES' : 'NO'}`);
   
   return {
     job_hash: jobHash,
@@ -231,7 +233,7 @@ export function convertToDatabaseFormat(job: IngestJob) {
     job_url: job.url.trim(),
     source: job.source.trim(),
     posted_at: job.posted_at || new Date().toISOString(),
-    categories: [role, isEarlyCareer ? 'early-career' : 'experienced'],
+    categories: [isEarlyCareer ? 'early-career' : 'experienced'],
     work_environment: isRemote ? 'remote' : 'on-site',
     experience_required: isEarlyCareer ? 'entry-level' : 'experienced',
     company_profile_url: '',
@@ -248,7 +250,6 @@ export function convertToDatabaseFormat(job: IngestJob) {
       isRemote,
       isEU,
       isEarlyCareer,
-      role,
       parsedAt: new Date().toISOString()
     }
   };
@@ -272,12 +273,10 @@ export function shouldSaveJob(job: IngestJob): boolean {
 export function logJobProcessing(job: IngestJob, action: string, details?: any) {
   const { isEU } = parseLocation(job.location);
   const isEarlyCareer = classifyEarlyCareer(job);
-  const role = inferRole(job);
   
   console.log(`[${action}] ${job.company} - ${job.title}`);
   console.log(`  Location: ${job.location} (EU: ${isEU})`);
   console.log(`  Early Career: ${isEarlyCareer}`);
-  console.log(`  Role: ${role}`);
   console.log(`  Should Save: ${shouldSaveJob(job)}`);
   
   if (details) {
