@@ -8,14 +8,35 @@ const execAsync = promisify(exec);
 const { createClient } = require('@supabase/supabase-js');
 const path = require('path');
 
-// Load environment variables
-require('dotenv').config({ path: '.env.local' });
+// Load environment variables (Railway will provide these)
+// require('dotenv').config({ path: '.env.local' });
+
+// Check required environment variables
+const requiredEnvVars = {
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY
+};
+
+// Validate environment variables
+for (const [key, value] of Object.entries(requiredEnvVars)) {
+  if (!value) {
+    console.error(`❌ Missing required environment variable: ${key}`);
+    console.error('Please set this variable in Railway dashboard');
+    process.exit(1);
+  }
+}
+
+console.log('✅ Environment variables loaded successfully');
+console.log(`📡 Supabase URL: ${requiredEnvVars.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing'}`);
+console.log(`🔑 Supabase Key: ${requiredEnvVars.SUPABASE_SERVICE_ROLE_KEY ? 'Set' : 'Missing'}`);
 
 // Initialize Supabase
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  requiredEnvVars.NEXT_PUBLIC_SUPABASE_URL,
+  requiredEnvVars.SUPABASE_SERVICE_ROLE_KEY
 );
+
+console.log('✅ Supabase client initialized successfully');
 
 class RealJobRunner {
   constructor() {
