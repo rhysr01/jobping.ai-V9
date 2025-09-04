@@ -6,12 +6,19 @@ import PaymentMethodManager from '../components/PaymentMethodManager';
 import { CreditCard, Settings, FileText, Plus } from 'lucide-react';
 
 interface BillingPageProps {
-  params: { userId: string };
+  params: Promise<{ userId: string }>;
 }
 
 export default function BillingPage({ params }: BillingPageProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'payment-methods'>('overview');
-  const userId = params.userId;
+  const [userId, setUserId] = useState<string>('');
+
+  // Handle async params
+  React.useEffect(() => {
+    params.then((resolvedParams) => {
+      setUserId(resolvedParams.userId);
+    });
+  }, [params]);
 
   const tabs = [
     {

@@ -76,8 +76,9 @@ export async function POST(request: NextRequest) {
       ];
       
       if (result.status === 'fulfilled') {
-        console.log(`✅ Deleted from ${tableNames[index]}: ${result.value.data?.length || 0} records`);
-        return { table: tableNames[index], success: true, count: result.value.data?.length || 0 };
+        const count = (result.value.data as any)?.length || 0;
+        console.log(`✅ Deleted from ${tableNames[index]}: ${count} records`);
+        return { table: tableNames[index], success: true, count: count };
       } else {
         console.error(`❌ Failed to delete from ${tableNames[index]}:`, result.reason);
         return { table: tableNames[index], success: false, error: result.reason };

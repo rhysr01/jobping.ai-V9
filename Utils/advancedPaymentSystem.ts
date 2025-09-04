@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Initialize Stripe with advanced configuration
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-07-30.basil',
   typescript: true,
 });
 
@@ -77,7 +77,9 @@ export class PaymentRecoverySystem {
 
       if (paymentMethods.data.length === 0) {
         console.log(`❌ No payment methods found for customer ${invoice.customer}`);
-        await this.sendPaymentMethodUpdateEmail(customer.email!);
+        if ('email' in customer && customer.email) {
+          await this.sendPaymentMethodUpdateEmail(customer.email);
+        }
         return false;
       }
 
@@ -86,10 +88,12 @@ export class PaymentRecoverySystem {
         payment_method: paymentMethods.data[0].id
       });
 
-      if (paymentIntent.status === 'succeeded') {
+      if (paymentIntent.status === 'paid') {
         console.log(`✅ Payment retry successful for invoice ${invoiceId}`);
-        await this.updateSubscriptionStatus(invoice.subscription as string, 'active');
-        await this.sendPaymentSuccessEmail(customer.email!);
+        await this.updateSubscriptionStatus(invoice.data.subscription as string, 'active');
+        if ('email' in customer && customer.email) {
+          await this.sendPaymentSuccessEmail(customer.email);
+        }
         return true;
       }
 
@@ -127,7 +131,9 @@ export class PaymentRecoverySystem {
       
       // Send final failure notification
       const customer = await stripe.customers.retrieve(subscription.customer as string);
-      await this.sendPaymentFailureEmail(customer.email!);
+      if ('email' in customer && customer.email) {
+        await this.sendPaymentFailureEmail(customer.email);
+      }
       
       console.log(`🚫 Subscription ${subscription.id} suspended due to payment failure`);
     } catch (error) {

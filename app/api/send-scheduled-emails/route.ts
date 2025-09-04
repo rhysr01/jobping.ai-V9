@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-// import { sendMatchedJobsEmail } from '@/Utils/emailUtils';
+import { sendMatchedJobsEmail } from '@/Utils/email';
 import { 
   performEnhancedAIMatching, 
   generateRobustFallbackMatches,
@@ -226,7 +226,8 @@ export async function POST(req: NextRequest) {
           }));
         } else {
           try {
-            matches = await performEnhancedAIMatching(jobs, userPreferences, openai);
+            const aiResult = await performEnhancedAIMatching(jobs, userPreferences, openai);
+            matches = aiResult.matches;
             
             if (!matches || matches.length === 0) {
               matchType = 'fallback';
@@ -285,7 +286,6 @@ export async function POST(req: NextRequest) {
         await logMatchSession(
           user.email,
           matchType,
-          jobs.length,
           matches.length
         );
 

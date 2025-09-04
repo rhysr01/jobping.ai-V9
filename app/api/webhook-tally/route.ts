@@ -9,7 +9,7 @@ import {
   logMatchSession,
   type UserPreferences,
 } from '@/Utils/jobMatching';
-import { sendMatchedJobsEmail, sendWelcomeEmail } from '@/Utils/emailUtils';
+import { sendMatchedJobsEmail, sendWelcomeEmail } from '@/Utils/email';
 import { EmailVerificationOracle } from '@/Utils/emailVerification';
 import { normalizeCareerPath } from '@/scrapers/types';
 
@@ -73,7 +73,7 @@ function getSupabaseClient() {
         })
       };
     }
-    throw new Error('Database connection failed: ' + error.message);
+    throw new Error('Database connection failed: ' + (error instanceof Error ? error.message : String(error)));
   }
 }
 
@@ -380,7 +380,8 @@ export async function POST(req: NextRequest) {
         
         try {
           const openai = getOpenAIClient();
-          matches = await performEnhancedAIMatching(jobs, userData as unknown as UserPreferences, openai);
+          const aiResult = await performEnhancedAIMatching(jobs, userData as unknown as UserPreferences, openai);
+          matches = aiResult.matches;
           matchType = 'ai_success';
           
           if (!matches || matches.length === 0) {
@@ -418,7 +419,8 @@ export async function POST(req: NextRequest) {
         
         try {
           const openai = getOpenAIClient();
-          matches = await performEnhancedAIMatching(jobs, userData as unknown as UserPreferences, openai);
+          const aiResult = await performEnhancedAIMatching(jobs, userData as unknown as UserPreferences, openai);
+          matches = aiResult.matches;
           matchType = 'ai_success';
           
           if (!matches || matches.length === 0) {
@@ -438,7 +440,6 @@ export async function POST(req: NextRequest) {
       await logMatchSession(
         userData.email as string,
         matchType,
-        jobs.length,
         matches.length
       );
     } catch (logError) {

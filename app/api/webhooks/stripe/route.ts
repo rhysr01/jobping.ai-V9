@@ -78,7 +78,9 @@ export async function POST(req: NextRequest) {
         const invoice = event.data.object as Stripe.Invoice;
         await handlePaymentFailed(invoice, supabase);
         // Trigger automated payment recovery
-        await paymentRecoverySystem.retryFailedPayment(invoice.id);
+        if (invoice.id) {
+          await paymentRecoverySystem.retryFailedPayment(invoice.id);
+        }
         break;
       }
 

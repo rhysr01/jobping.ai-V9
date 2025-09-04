@@ -8,7 +8,6 @@ const nextConfig: NextConfig = {
     formats: ['image/webp', 'image/avif'],
   },
   // Add Vercel-specific optimizations
-  swcMinify: true,
   compress: true,
   poweredByHeader: false,
   webpack: (config, { isServer, webpack }) => {

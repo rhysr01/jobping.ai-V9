@@ -276,31 +276,32 @@ export default function BillingDashboard({ userId }: BillingDashboardProps) {
                 <div className="flex gap-2">
                   {currentSubscription.status === 'active' && (
                     <>
-                      <Button
-                        variant="outline"
-                        onClick={() => handleSubscriptionAction('pause')}
-                        disabled={actionLoading === 'pause'}
-                      >
-                        <Pause className="w-4 h-4 mr-2" />
-                        Pause
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => handleSubscriptionAction('cancel')}
-                        disabled={actionLoading === 'cancel'}
-                      >
-                        Cancel
-                      </Button>
+                                          <button
+                      className="border border-gray-600 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      onClick={() => handleSubscriptionAction('pause')}
+                      disabled={actionLoading === 'pause'}
+                    >
+                      <Pause className="w-4 h-4 mr-2" />
+                      Pause
+                    </button>
+                    <button
+                      className="border border-gray-600 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      onClick={() => handleSubscriptionAction('cancel')}
+                      disabled={actionLoading === 'cancel'}
+                    >
+                      Cancel
+                    </button>
                     </>
                   )}
                   {currentSubscription.status === 'paused' && (
-                    <Button
-                      onClick={() => handleSubscriptionAction('resume')}
-                      disabled={actionLoading === 'resume'}
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Resume
-                    </Button>
+                                      <button
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    onClick={() => handleSubscriptionAction('resume')}
+                    disabled={actionLoading === 'resume'}
+                  >
+                    <Play className="w-4 h-4 mr-2" />
+                    Resume
+                  </button>
                   )}
                 </div>
               </div>
@@ -421,31 +422,32 @@ export default function BillingDashboard({ userId }: BillingDashboardProps) {
               <div className="flex gap-2">
                 {currentSubscription.status === 'active' && (
                   <>
-                    <Button
-                      variant="outline"
+                    <button
+                      className="border border-gray-600 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                       onClick={() => handleSubscriptionAction('pause')}
                       disabled={actionLoading === 'pause'}
                     >
                       <Pause className="w-4 h-4 mr-2" />
                       Pause
-                    </Button>
-                    <Button
-                      variant="outline"
+                    </button>
+                    <button
+                      className="border border-gray-600 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                       onClick={() => handleSubscriptionAction('cancel')}
-                      disabled={actionLoading === 'cancel'}
+                      disabled={actionLoading === 'pause'}
                     >
                       Cancel
-                    </Button>
+                    </button>
                   </>
                 )}
                 {currentSubscription.status === 'paused' && (
-                  <Button
+                  <button
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                     onClick={() => handleSubscriptionAction('resume')}
                     disabled={actionLoading === 'resume'}
                   >
                     <Play className="w-4 h-4 mr-2" />
                     Resume
-                  </Button>
+                  </button>
                 )}
               </div>
             </div>

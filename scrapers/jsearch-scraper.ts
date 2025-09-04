@@ -1,4 +1,4 @@
-import { httpClient } from '../Utils/httpClient.js';
+// import { httpClient } from '../Utils/httpClient.js'; // Removed broken import
 import { classifyEarlyCareer, convertToDatabaseFormat } from './utils.js';
 
 // Types
@@ -237,54 +237,55 @@ class JSearchScraper {
     await this.throttleRequest();
 
     try {
-      const response = await httpClient.get<JSearchResponse>(JSEARCH_CONFIG.baseUrl, {
-        params: {
-          query: params.query,
-          page: params.page || 1,
-          num_pages: params.num_pages || 1,
-          date_posted: params.date_posted || JSEARCH_CONFIG.datePosted,
-          remote_jobs_only: params.remote_jobs_only || false,
-          employment_types: params.employment_types || 'FULLTIME,PARTTIME,CONTRACTOR',
-          job_requirements: params.job_requirements || 'under_3_years_experience,no_degree',
-          ...params
-        },
+      // Build query parameters for URL
+      const queryParams = new URLSearchParams({
+        query: params.query,
+        page: (params.page || 1).toString(),
+        num_pages: (params.num_pages || 1).toString(),
+        date_posted: params.datePosted || JSEARCH_CONFIG.datePosted,
+        remote_jobs_only: (params.remote_jobs_only || false).toString(),
+        employment_types: params.employment_types || 'FULLTIME,PARTTIME,CONTRACTOR',
+        job_requirements: params.job_requirements || 'under_3_years_experience,no_degree'
+      });
+
+      const url = `${JSEARCH_CONFIG.baseUrl}?${queryParams.toString()}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
         headers: {
           'X-RapidAPI-Key': JSEARCH_CONFIG.apiKey,
           'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
           'Accept': 'application/json'
         }
-      }, {
-        dailyLimit: JSEARCH_CONFIG.dailyBudget,
-        minInterval: JSEARCH_CONFIG.requestInterval
       });
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          console.warn('🚫 Rate limited by JSearch API, backing off...');
+          await new Promise(resolve => setTimeout(resolve, 30000)); // 30 second backoff
+          return this.makeRequest(params);
+        }
+        
+        if (response.status === 403) {
+          throw new Error('JSearch API access denied - check your RapidAPI key and subscription');
+        }
+        
+        if (response.status === 402) {
+          throw new Error('JSearch API quota exceeded - upgrade your RapidAPI plan');
+        }
+        
+        throw new Error(`JSearch API error: ${response.status} ${response.statusText}`);
+      }
 
       this.requestCount++;
       this.dailyRequestCount++;
       this.monthlyRequestCount++;
       
-      return response.data;
+      const data = await response.json();
+      return data as JSearchResponse;
 
     } catch (error: any) {
-      if (error.response?.status === 429) {
-        console.warn('🚫 Rate limited by JSearch API, backing off...');
-        await new Promise(resolve => setTimeout(resolve, 30000)); // 30 second backoff
-        return this.makeRequest(params);
-      }
-      
-      if (error.response?.status === 403) {
-        throw new Error('JSearch API access denied - check your RapidAPI key and subscription');
-      }
-      
-      if (error.response?.status === 402) {
-        throw new Error('JSearch API quota exceeded - upgrade your RapidAPI plan');
-      }
-      
-      console.error('JSearch API error:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data
-      });
-      
+      console.error('JSearch API error:', error);
       throw error;
     }
   }
