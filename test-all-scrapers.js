@@ -1,25 +1,21 @@
 /**
- * Test script to run all scrapers and see what jobs they find
+ * Test script to run the three main scrapers: Adzuna, Reed, and Greenhouse
  */
 
 import { execSync } from 'child_process';
 import fs from 'fs';
 
-// List of all scrapers to test
+// List of scrapers to test (including all new scrapers)
 const scrapers = [
-  'lever',
-  'greenhouse', 
-  'milkround',
-  'workday',
-  'jobteaser',
-  'eures',
-  'graduatejobs',
-  'graduateland',
-  'iagora',
-  'smartrecruiters'
+  'adzuna-scraper-standalone',
+  'reed-scraper-standalone',
+  'greenhouse',
+  'indeed-scraper',
+  'muse-scraper',
+  'jsearch-scraper'
 ];
 
-console.log('🧪 Testing all scrapers with IngestJob format...\n');
+console.log('🧪 Testing the six main scrapers: Adzuna, Reed, Greenhouse, Indeed, The Muse, and JSearch...\n');
 
 const results = [];
 
@@ -27,8 +23,8 @@ for (const scraper of scrapers) {
   console.log(`\n🔍 Testing ${scraper} scraper...`);
   
   try {
-    // Run the scraper directly
-    const output = execSync(`node scrapers/${scraper}.ts`, { 
+    // Run the scraper directly with tsx for TypeScript files
+    const output = execSync(`npx tsx scrapers/${scraper}.ts`, { 
       encoding: 'utf8',
       timeout: 30000, // 30 second timeout
       stdio: 'pipe'

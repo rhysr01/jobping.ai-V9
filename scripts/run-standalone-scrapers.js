@@ -19,10 +19,10 @@ const path = require('path');
 // Configuration
 const CONFIG = {
   // Which scrapers to run
-  scrapers: process.env.SCRAPERS?.split(',') || ['reed', 'adzuna', 'infojobs'],
+  scrapers: process.env.SCRAPERS?.split(',') || ['reed', 'adzuna', 'lever'],
   
   // Run mode
-  mode: process.argv[2] || 'all', // 'all', 'reed', 'adzuna', 'infojobs'
+  mode: process.argv[2] || 'all', // 'all', 'reed', 'adzuna', 'lever'
   
   // Logging
   verbose: process.argv.includes('--verbose') || process.argv.includes('-v'),
@@ -197,11 +197,11 @@ async function main() {
     
     if (CONFIG.mode === 'all') {
       result = await runAllScrapers();
-    } else if (['reed', 'adzuna'].includes(CONFIG.mode)) {
+    } else if (['reed', 'adzuna', 'lever'].includes(CONFIG.mode)) {
       result = await runScraper(CONFIG.mode);
     } else {
       log(`❌ Unknown mode: ${CONFIG.mode}`, 'red');
-      log('Available modes: all, reed, adzuna', 'yellow');
+      log('Available modes: all, reed, adzuna, lever', 'yellow');
       process.exit(1);
     }
     
@@ -233,6 +233,7 @@ Modes:
   all       - Run all scrapers (default)
   reed      - Run Reed scraper only
   adzuna    - Run Adzuna scraper only
+  lever     - Run Lever scraper only
 
 Options:
   --verbose, -v    - Show detailed output
@@ -257,7 +258,7 @@ Examples:
   node run-standalone-scrapers.js --json
   
   # Custom scraper selection
-  SCRAPERS=reed,adzuna node run-standalone-scrapers.js
+  SCRAPERS=reed,adzuna,lever node run-standalone-scrapers.js
 `);
   process.exit(0);
 }

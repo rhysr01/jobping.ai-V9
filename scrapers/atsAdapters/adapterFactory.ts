@@ -1,5 +1,4 @@
 import { SourceAdapter } from '../types';
-import { LeverAdapter } from './leverAdapter';
 import { GreenhouseAdapter } from './greenhouseAdapter';
 
 export class AdapterFactory {
@@ -13,9 +12,6 @@ export class AdapterFactory {
     let adapter: SourceAdapter;
 
     switch (platform.toLowerCase()) {
-      case 'lever':
-        adapter = new LeverAdapter();
-        break;
       case 'greenhouse':
         adapter = new GreenhouseAdapter();
         break;
@@ -35,6 +31,6 @@ export class AdapterFactory {
   }
 
   static getSupportedPlatforms(): string[] {
-    return ['lever', 'greenhouse'];
+    return ['greenhouse'];
   }
 }

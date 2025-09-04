@@ -31,8 +31,40 @@ export default function PriceSelector() {
     }
   }, [params, selected]);
 
+  const handlePremiumClick = async () => {
+    try {
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'user@example.com', // TODO: Get from user context
+          priceId: 'price_premium_monthly', // TODO: Use your actual Stripe price ID
+          userId: 'current_user_id' // TODO: Get from user context
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+      
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (error) {
+      console.error('Checkout error:', error);
+      // Fallback to signup form
+      const el = document.getElementById('signup');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const onChoose = (plan: PlanKey) => {
     setSelected(plan);
+    
+    if (plan === 'premium') {
+      handlePremiumClick();
+      return;
+    }
+    
     // mirror selection in URL for Signup to read
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
@@ -45,11 +77,15 @@ export default function PriceSelector() {
   };
 
   return (
-    <section id="pricing" className="scroll-mt-[96px] border-t border-[#374151]">
+    <section id="pricing" className="scroll-mt-[96px] border-t border-[#374151] relative">
+      <div className="absolute inset-0 bg-pattern opacity-20"></div>
       <div className="container-frame py-24 md:py-32">
-        <h2 className="text-[#F8F9FA] font-bold text-4xl lg:text-5xl mb-20 text-center">
+        <h2 className="text-[#F8F9FA] font-bold text-4xl lg:text-5xl mb-8 text-center">
           Choose your plan
         </h2>
+
+        
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
           {(['free', 'premium'] as PlanKey[]).map((key) => (
@@ -67,10 +103,10 @@ export default function PriceSelector() {
         <div className="mt-16 flex justify-center">
           <button
             onClick={() => onChoose(selected)}
-            className="btn-primary text-lg px-8 py-4"
+            className="premium-button bg-white text-[#0B0B0F] px-8 py-4 rounded-2xl font-bold text-lg hover:bg-[#F9F9F9] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden group"
             aria-label="Get started with selected plan"
           >
-            Get Started Free
+            Get My First 5 Matches Free
           </button>
         </div>
       </div>
@@ -100,7 +136,7 @@ function PlanBubble({
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick()}
-      className={`p-8 md:p-12 transition-all duration-300 ease-out hover:-translate-y-2 cursor-pointer ${outline}`}
+      className={`premium-card p-8 md:p-12 transition-all duration-300 ease-out hover:-translate-y-2 cursor-pointer ${outline} relative overflow-hidden group`}
     >
       <div className="text-center">
         <h3 className="text-[#F8F9FA] font-bold text-3xl mb-2">{data.title}</h3>

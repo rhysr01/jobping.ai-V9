@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 // import { scrapeGreenhouse } from '../../../scrapers/greenhouse';
-// import { scrapeLever } from '../../../scrapers/lever';
 // import { scrapeWorkday } from '../../../scrapers/workday';
 // Removed RemoteOK import - it's poison for graduates
-import { ATSOrchestrator } from '../../../scrapers/ATSOrchestrator';
 import { atomicUpsertJobs } from '../../../Utils/jobMatching';
 import { runReliableScrapers } from '../../../Utils/reliableScrapers';
 import { coerceScraperResult } from '../../../Utils/robustJobCreation';
@@ -38,11 +36,6 @@ const COMPANIES = {
     name: employer.name,
     url: employer.url,
     platform: 'greenhouse' as const
-  })),
-  lever: getGraduateEmployersByPlatform('lever').map(employer => ({
-    name: employer.name,
-    url: employer.url,
-    platform: 'lever' as const
   })),
   workday: getGraduateEmployersByPlatform('workday').map(employer => ({
     name: employer.name,
@@ -86,31 +79,7 @@ export async function POST(req: NextRequest) {
 
     console.log(`🚀 Starting scrape run ${runId} for platforms: ${platforms.join(', ')}`);
 
-    // NEW: ATS-API Scraping System (most reliable)
-    if (platforms.includes('all') || platforms.includes('ats')) {
-      console.log('🎯 Running ATS-API scraping system...');
-      try {
-        const atsOrchestrator = new ATSOrchestrator();
-        const atsResults = await atsOrchestrator.scrapeAllCompanies();
-        
-        const totalJobs = atsResults.reduce((sum, r) => sum + r.jobsSaved, 0);
-        const totalErrors = atsResults.reduce((sum, r) => sum + r.errors.length, 0);
-        const successfulCompanies = atsResults.filter(r => r.jobsSaved > 0).length;
-        
-        results.ats = {
-          success: true,
-          companies: atsResults.length,
-          successfulCompanies,
-          totalJobs,
-          totalErrors,
-          results: atsResults
-        };
-        console.log(`✅ ATS-API: ${totalJobs} jobs from ${successfulCompanies}/${atsResults.length} companies`);
-      } catch (error: any) {
-        results.ats = { success: false, error: error.message };
-        console.error('❌ ATS-API scraping failed:', error.message);
-      }
-    }
+
 
     // NEW: Reliable Scrapers System (fast, no hanging)
     if ((platforms.includes('all') || platforms.includes('reliable')) && isPlatformEnabled('reliable')) {
@@ -226,57 +195,7 @@ export async function POST(req: NextRequest) {
       results.greenhouse = { success: false, error: 'Greenhouse scraper disabled by configuration' };
     }
 
-    // Scrape Lever companies with dynamic discovery
-    if (platforms.includes('all') || platforms.includes('lever')) {
-      console.log('📡 Discovering active Lever companies with early-career jobs...');
-      try {
-        let allLeverJobs: any[] = [];
-        
-        // Get active companies dynamically focused on early-career roles
-        const activeCompanies = await getActiveCompaniesForPlatform('lever', 5);
-        console.log(`🎯 Found ${activeCompanies.length} companies with early-career openings`);
-        
-        let totalRaw = 0;
-        let totalEligible = 0;
-        let totalInserted = 0;
-        let totalUpdated = 0;
-        let totalErrors: string[] = [];
-        let allSamples: string[] = [];
-        
-        for (const company of activeCompanies) {
-          try {
-            const result = await scrapeLever({ ...company, platform: 'lever' as const }, runId);
-            // Aggregate results from all companies
-            totalRaw += result.raw;
-            totalEligible += result.eligible;
-            totalInserted += result.inserted;
-            totalUpdated += result.updated;
-            totalErrors.push(...result.errors);
-            allSamples.push(...result.samples);
-            
-            console.log(`🏢 ${company.name}: Raw=${result.raw}, Eligible=${result.eligible}, Inserted=${result.inserted}, Updated=${result.updated}`);
-          } catch (error: any) {
-            console.error(`❌ ${company.name} failed:`, error.message);
-            totalErrors.push(`${company.name}: ${error.message}`);
-          }
-        }
-        
-        results.lever = {
-          success: true,
-          raw: totalRaw,
-          eligible: totalEligible,
-          inserted: totalInserted,
-          updated: totalUpdated,
-          errors: totalErrors,
-          samples: allSamples.slice(0, 10), // Keep top 10 samples
-          companies: activeCompanies.length
-        };
-        console.log(`✅ Lever: Raw=${totalRaw}, Eligible=${totalEligible}, Inserted=${totalInserted}, Updated=${totalUpdated} from ${activeCompanies.length} companies`);
-      } catch (error: any) {
-        results.lever = { success: false, error: error.message };
-        console.error('❌ Lever scrape failed:', error.message);
-      }
-    }
+
 
     // Scrape Workday companies
     if (platforms.includes('all') || platforms.includes('workday')) {

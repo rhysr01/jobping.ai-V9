@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { classifyEarlyCareer } from './utils.js';
 
 // Types
 interface IngestJob {
@@ -34,6 +35,8 @@ interface ReedResponse {
 const REED_CONFIG = {
   baseUrl: 'https://www.reed.co.uk/api/1.0/search',
   apiKey: process.env.REED_API_KEY || '',
+  // ✅ ADD MULTI-CITY SUPPORT
+  cities: ['London', 'Manchester', 'Birmingham', 'Edinburgh', 'Glasgow'],
   // UK business hours: 08:00-20:00 local time
   businessHours: {
     start: 8,
@@ -63,6 +66,15 @@ class ReedScraper {
   private seenJobs: Map<number, number> = new Map(); // jobId -> timestamp
   private lastRunType: RunType = 'A';
   private isRunning = false;
+
+  private getNextRunType(): RunType {
+    const runTypes: RunType[] = ['A', 'B', 'C', 'D', 'E'];
+    const currentIndex = runTypes.indexOf(this.lastRunType);
+    const nextIndex = (currentIndex + 1) % runTypes.length;
+    const runType = runTypes[nextIndex];
+    this.lastRunType = runType;
+    return runType;
+  }
 
   constructor() {
     this.cleanupSeenJobs();
@@ -142,23 +154,16 @@ class ReedScraper {
     };
   }
 
-  private async fetchLondonJobs(sinceIso?: string): Promise<IngestJob[]> {
+  private async fetchCityJobs(city: string, runType: RunType, sinceIso?: string): Promise<IngestJob[]> {
     const jobs: IngestJob[] = [];
-    
-    // Determine run type for this execution - rotate through 5 career paths
-    const runTypes: RunType[] = ['A', 'B', 'C', 'D', 'E'];
-    const currentIndex = runTypes.indexOf(this.lastRunType);
-    const nextIndex = (currentIndex + 1) % runTypes.length;
-    const runType = runTypes[nextIndex];
-    this.lastRunType = runType;
 
-    console.log(`🔄 Reed scraping London with Run ${runType}: ${RUN_QUERIES[runType]}`);
+    console.log(`🔄 Reed scraping ${city} with Run ${runType}: ${RUN_QUERIES[runType]}`);
 
     try {
       // Try permanent positions first
       const permanentParams = {
         keywords: RUN_QUERIES[runType],
-        locationName: 'London',
+        locationName: city,
         distanceFromLocation: 10,
         resultsToTake: 100,
         permanent: true,
@@ -171,7 +176,15 @@ class ReedScraper {
         if (!this.seenJobs.has(job.jobId)) {
           this.seenJobs.set(job.jobId, Date.now());
           const ingestJob = this.convertToIngestJob(job);
-          jobs.push(ingestJob);
+          
+          // ✅ ADD EARLY-CAREER FILTER HERE
+          const isEarlyCareer = classifyEarlyCareer(ingestJob);
+          if (isEarlyCareer) {
+            jobs.push(ingestJob);
+            console.log(`✅ Early-career: ${ingestJob.title} at ${ingestJob.company}`);
+          } else {
+            console.log(`🚫 Skipped senior: ${ingestJob.title} at ${ingestJob.company}`);
+          }
         }
       }
 
@@ -181,7 +194,7 @@ class ReedScraper {
       // Try contract/temporary positions
       const contractParams = {
         keywords: RUN_QUERIES[runType],
-        locationName: 'London',
+        locationName: city,
         distanceFromLocation: 10,
         resultsToTake: 100,
         permanent: false,
@@ -194,16 +207,77 @@ class ReedScraper {
         if (!this.seenJobs.has(job.jobId)) {
           this.seenJobs.set(job.jobId, Date.now());
           const ingestJob = this.convertToIngestJob(job);
-          jobs.push(ingestJob);
+          
+          // ✅ ADD EARLY-CAREER FILTER HERE
+          const isEarlyCareer = classifyEarlyCareer(ingestJob);
+          if (isEarlyCareer) {
+            jobs.push(ingestJob);
+            console.log(`✅ Early-career: ${ingestJob.title} at ${ingestJob.company}`);
+          } else {
+            console.log(`🚫 Skipped senior: ${ingestJob.title} at ${ingestJob.company}`);
+          }
         }
       }
 
     } catch (error: any) {
-      console.error('Error fetching Reed jobs:', error.message);
+      console.error(`Error fetching Reed jobs for ${city}:`, error.message);
       throw error;
     }
 
     return jobs;
+  }
+
+  public async scrapeAllCities(): Promise<{ jobs: IngestJob[]; metrics: any }> {
+    if (this.isRunning) {
+      throw new Error('Reed scraper is already running');
+    }
+
+    if (!this.isBusinessHours()) {
+      console.log('⏰ Outside business hours, skipping Reed scrape');
+      return { jobs: [], metrics: { reason: 'outside_business_hours' } };
+    }
+
+    this.isRunning = true;
+
+    try {
+      const allJobs: IngestJob[] = [];
+      const runType = this.getNextRunType();
+
+      // Get timestamp from 30 minutes ago for incremental pull
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+
+      for (const city of REED_CONFIG.cities) {
+        try {
+          console.log(`📍 Scraping ${city}...`);
+          const cityJobs = await this.fetchCityJobs(city, runType, thirtyMinutesAgo);
+          allJobs.push(...cityJobs);
+          console.log(`✅ ${city}: ${cityJobs.length} jobs`);
+          
+          // Delay between cities to be polite
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (error) {
+          console.error(`❌ Error scraping ${city}:`, error);
+        }
+      }
+      
+      const metrics = {
+        runType: this.lastRunType,
+        jobsFound: allJobs.length,
+        newJobs: allJobs.length,
+        duplicates: 0, // Already filtered out in fetch
+        seenJobsCount: this.seenJobs.size,
+        businessHours: true,
+        citiesProcessed: REED_CONFIG.cities.length,
+        timestamp: new Date().toISOString()
+      };
+
+      console.log(`✅ Reed scraping complete: ${allJobs.length} new jobs found from ${REED_CONFIG.cities.length} cities`);
+
+      return { jobs: allJobs, metrics };
+
+    } finally {
+      this.isRunning = false;
+    }
   }
 
   public async scrapeLondon(): Promise<{ jobs: IngestJob[]; metrics: any }> {
@@ -222,7 +296,8 @@ class ReedScraper {
       // Get timestamp from 30 minutes ago for incremental pull
       const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
       
-      const jobs = await this.fetchLondonJobs(thirtyMinutesAgo);
+      const runType = this.getNextRunType();
+      const jobs = await this.fetchCityJobs('London', runType, thirtyMinutesAgo);
       
       const metrics = {
         runType: this.lastRunType,
@@ -294,13 +369,15 @@ class ReedScraper {
     isRunning: boolean; 
     lastRunType: RunType; 
     seenJobsCount: number; 
-    businessHours: boolean 
+    businessHours: boolean;
+    cities: string[];
   } {
     return {
       isRunning: this.isRunning,
       lastRunType: this.lastRunType,
       seenJobsCount: this.seenJobs.size,
-      businessHours: this.isBusinessHours()
+      businessHours: this.isBusinessHours(),
+      cities: REED_CONFIG.cities
     };
   }
 

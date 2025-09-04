@@ -23,6 +23,7 @@ import { dogstatsd } from '@/Utils/datadogMetrics';
 import { createClient as createRedisClient } from 'redis';
 import crypto from 'crypto';
 import { resetLimiterForTests } from '@/Utils/productionRateLimiter';
+import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
 
 // Test mode detection and lock utilities
 const LOCK_KEY = (rid: string) => `${isTestOrPerfMode() ? 'jobping:test' : 'jobping:prod'}:lock:match-users:${rid}`;
@@ -179,9 +180,9 @@ async function performEnhancedAIMatchingWithCaching(
         continue;
       }
 
-      // TIME-BOX OpenAI
-      const aiCall = callOpenAIForCluster(cluster, jobs, openai);
-      const aiResult = await Promise.race([aiCall, timeout(8000, 'ai_timeout')]).catch(() => null) as JobMatch[] | null;
+      // Use consolidated matcher with 3s timeout
+      const aiCall = callConsolidatedMatcher(cluster, jobs, process.env.OPENAI_API_KEY!);
+      const aiResult = await Promise.race([aiCall, timeout(3000, 'ai_timeout')]).catch(() => null) as { matches: JobMatch[]; provenance: any } | null;
       
       if (!aiResult) {
         console.warn('⚠️ ai_timeout -> falling back to rules');
@@ -189,11 +190,11 @@ async function performEnhancedAIMatchingWithCaching(
         continue;
       }
       
-      // Cache the results
-      AIMatchingCache.setCachedMatches(cluster, aiResult);
+      // Cache the results (just the matches, not provenance)
+      AIMatchingCache.setCachedMatches(cluster, aiResult.matches);
       
       // Process matches for each user in the cluster
-      await processMatchingResults(cluster, aiResult, results);
+      await processMatchingResults(cluster, aiResult.matches, results);
       
     } catch (error) {
       console.error(`❌ Error processing cluster:`, error);
@@ -205,82 +206,50 @@ async function performEnhancedAIMatchingWithCaching(
   return results;
 }
 
-// FIXED: Helper function to call OpenAI for a cluster with better JSON prompting
-async function callOpenAIForCluster(userCluster: UserPreferences[], jobs: JobWithFreshness[], openai: OpenAI): Promise<JobMatch[]> {
-  const user = userCluster[0]; // Take first user for now
+// CONSOLIDATED: Use the new consolidated matching engine with provenance tracking
+async function callConsolidatedMatcher(
+  userCluster: UserPreferences[], 
+  jobs: JobWithFreshness[], 
+  openaiApiKey: string
+): Promise<{ matches: JobMatch[]; provenance: any }> {
+  const matcher = createConsolidatedMatcher(openaiApiKey);
+  const user = userCluster[0]; // Take first user for cluster
   
-  // FIXED: Much more explicit JSON-only prompt
-  const prompt = `Return ONLY valid JSON array. No explanations, no markdown, no additional text.
-
-User Profile:
-- Career: ${user.professional_expertise || 'Graduate'}
-- Level: ${user.entry_level_preference || 'entry-level'} 
-- Cities: ${(user.target_cities || []).join(', ') || 'Europe'}
-- Work: ${user.work_environment || 'any'}
-
-Available Jobs (select best 3-5):
-${jobs.slice(0, 8).map((job, i) => `${i+1}: ${job.title} at ${job.company} [${job.job_hash}] - ${job.location}`).join('\n')}
-
-Respond with ONLY this JSON format:
-[{"job_index":1,"job_hash":"actual-hash-from-above","match_score":75,"match_reason":"Career match in target city","match_quality":"good","match_tags":"career-match"}]
-
-Requirements:
-- job_index: 1-${jobs.length}
-- match_score: 50-100 (integer)
-- Use actual job_hash from jobs above
-- Max 5 matches
-- VALID JSON ONLY`;
+  // Convert jobs to compatible format
+  const compatibleJobs = jobs.map(job => ({
+    ...job,
+    id: parseInt(job.id),
+    description: job.description || '',
+  }));
   
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo', // FIXED: Use faster model
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a JSON API. Respond ONLY with valid JSON arrays. No explanations, no markdown.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.1, // FIXED: Lower temperature for consistency
-      max_tokens: 800    // FIXED: Smaller limit
-    });
+    const result = await matcher.performMatching(compatibleJobs, user);
+    console.log(`🎯 Matching result for ${user.email}: method=${result.method}, matches=${result.matches.length}, confidence=${result.confidence}`);
     
-    let response = completion.choices[0]?.message?.content || '';
+    // Create provenance data for consolidated matcher
+    const provenance = {
+      match_algorithm: result.method === 'ai_success' ? 'ai' : 
+                      result.method === 'rule_based' ? 'rules' : 'hybrid',
+      ai_model: 'gpt-4', // Default model for consolidated matcher
+      prompt_version: process.env.PROMPT_VERSION || 'v1',
+      cache_hit: false,
+      ai_latency_ms: 0, // Will be set by caller
+      ai_cost_usd: 0    // Will be calculated by caller
+    };
     
-    // FIXED: Better response cleaning and parsing
-    response = response.replace(/```json/gi, '').replace(/```/gi, '').trim();
-    
-    // Extract JSON if buried in text
-    const jsonMatch = response.match(/\[[\s\S]*?\]/);
-    if (jsonMatch) {
-      response = jsonMatch[0];
-    }
-    
-    try {
-      const matches = JSON.parse(response);
-      if (Array.isArray(matches) && matches.length > 0) {
-        return matches.slice(0, 5).map(match => ({
-          job_index: match.job_index,
-          job_hash: match.job_hash,
-          match_score: Math.min(100, Math.max(50, match.match_score || 60)),
-          match_reason: match.match_reason || 'AI suggested match',
-          match_quality: match.match_quality || 'fair',
-          match_tags: match.match_tags || 'ai-match'
-        }));
-      }
-    } catch (parseError) {
-      console.error('JSON parse failed, response was:', response.slice(0, 200));
-    }
-    
-    // If all parsing fails, return empty array (will trigger fallback)
-    return [];
-    
+    return { matches: result.matches, provenance };
   } catch (error) {
-    console.error('OpenAI API call failed:', error);
-    return [];
+    console.error('Consolidated matcher failed:', error);
+    
+    // Return fallback provenance
+    const fallbackProvenance = {
+      match_algorithm: 'rules',
+      fallback_reason: error instanceof Error ? error.message : 'consolidated_matcher_failed',
+      ai_latency_ms: 0,
+      ai_cost_usd: 0
+    };
+    
+    return { matches: [], provenance: fallbackProvenance };
   }
 }
 
@@ -1032,6 +1001,13 @@ export async function POST(req: NextRequest) {
         // AI matching with performance tracking (bypass AI in tests)
         let matches: JobMatch[] = [];
         let matchType: 'ai_success' | 'fallback' | 'ai_failed' = 'ai_success';
+        let userProvenance: any = {
+          match_algorithm: 'ai',
+          prompt_version: process.env.PROMPT_VERSION || 'v1',
+          cache_hit: false,
+          ai_latency_ms: 0,
+          ai_cost_usd: 0
+        };
         const aiMatchingStart = Date.now();
         lap('ai_or_rules');
 
@@ -1166,22 +1142,40 @@ export async function POST(req: NextRequest) {
         totalAIProcessingTime += aiMatchingTime;
         PerformanceMonitor.trackDuration('ai_matching', aiMatchingStart);
 
-        // Save matches with enhanced data
+        // Save matches with enhanced data and provenance tracking
         if (matches && matches.length > 0) {
+          // Update provenance data with actual timing and match type
+          userProvenance = {
+            ...userProvenance,
+            match_algorithm: matchType === 'ai_success' ? 'ai' : 'rules',
+            ai_latency_ms: aiMatchingTime,
+            fallback_reason: matchType !== 'ai_success' ? 'ai_failed_or_fallback' : undefined
+          };
+          
           const matchEntries = matches.map(match => {
             const originalJob = distributedJobs.find(job => job.job_hash === match.job_hash);
             
             return {
-            user_email: user.email,
-            job_hash: match.job_hash,
-            match_score: match.match_score,
-            match_reason: match.match_reason,
-            match_quality: match.match_quality,
-            match_tags: match.match_tags,
+              user_email: user.email,
+              job_hash: match.job_hash,
+              match_score: match.match_score,
+              match_reason: match.match_reason,
+              match_quality: match.match_quality,
+              match_tags: match.match_tags,
               freshness_tier: originalJob?.freshness_tier || 'comprehensive',
               processing_method: matchType,
-            matched_at: new Date().toISOString(),
-              created_at: new Date().toISOString()
+              matched_at: new Date().toISOString(),
+              created_at: new Date().toISOString(),
+              // Add provenance tracking fields
+              match_algorithm: userProvenance.match_algorithm,
+              ai_model: userProvenance.ai_model,
+              prompt_version: userProvenance.prompt_version,
+              ai_latency_ms: userProvenance.ai_latency_ms,
+              ai_cost_usd: userProvenance.ai_cost_usd,
+              cache_hit: userProvenance.cache_hit,
+              fallback_reason: userProvenance.fallback_reason,
+              retry_count: userProvenance.retry_count,
+              error_category: userProvenance.error_category
             };
           });
 
@@ -1199,8 +1193,12 @@ export async function POST(req: NextRequest) {
         await logMatchSession(
           user.email,
           matchType,
-          distributedJobs.length,
-          matches.length
+          matches.length,
+          {
+            userCareerPath: user.career_path?.[0],
+            userProfessionalExpertise: user.professional_expertise,
+            userWorkPreference: user.work_environment
+          }
         );
 
         // Calculate tier distribution for results

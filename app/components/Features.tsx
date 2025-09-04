@@ -47,7 +47,8 @@ export default function Features() {
   ];
 
   return (
-    <section id="features" className="py-24 md:py-32 px-6 bg-[#0B0B0F]">
+    <section id="features" className="py-24 md:py-32 px-6 bg-[#0B0B0F] relative">
+      <div className="absolute inset-0 bg-pattern opacity-20"></div>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-20">
@@ -83,8 +84,9 @@ export default function Features() {
               className="text-center"
             >
               <div className="mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-white/5 rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300 border border-white/10">
-                  <feature.icon className="w-8 h-8 text-white" />
+                <div className="inline-flex items-center justify-center w-16 h-16 premium-card rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#10B981]/10 to-transparent opacity-50"></div>
+                                      <feature.icon className="w-8 h-8 text-white relative z-10" />
                 </div>
                 <h3 className="text-[#F8F9FA] font-semibold text-2xl mb-4 leading-tight">
                   {feature.title}
@@ -102,6 +104,8 @@ export default function Features() {
           ))}
         </div>
 
+
+
         {/* Bottom CTA */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -111,15 +115,18 @@ export default function Features() {
           className="text-center mt-16"
         >
           <div className="bg-gradient-to-r from-[#151519] to-[#1F1F23] rounded-2xl p-8 border border-[#374151]">
+
             <h3 className="text-[#F8F9FA] font-bold text-2xl mb-4">
               Ready to Stop Job Hunting?
             </h3>
             <p className="text-[#9CA3AF] text-lg mb-6 max-w-2xl mx-auto">
-              Join the waitlist and be the first to receive AI-curated job matches delivered to your inbox.
+              No more endless scrolling - just quality opportunities delivered to your inbox.
             </p>
-            <button className="btn-primary px-8 py-3 text-lg">
-              Get Early Access
-            </button>
+            <a href="#signup" className="premium-button inline-flex items-center gap-3 bg-white text-[#0B0B0F] px-8 py-4 rounded-2xl font-bold text-lg hover:bg-[#F9F9F9] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden group">
+             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+              Get My First 5 Matches Free
+              <span>→</span>
+            </a>
           </div>
         </motion.div>
       </div>

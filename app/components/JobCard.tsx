@@ -356,7 +356,7 @@ export function JobCard({ index }: JobCardProps) {
                       <div className="flex items-center justify-between">
                         <a 
                           href="#" 
-                          className="px-8 py-3 rounded-lg font-bold text-lg transition-all duration-200 inline-flex items-center gap-2 text-white hover:transform hover:scale-105 shadow-lg hover:shadow-xl"
+                          className="px-8 py-4 rounded-lg font-bold text-lg transition-all duration-200 inline-flex items-center gap-2 text-white hover:transform hover:scale-105 shadow-lg hover:shadow-xl text-center justify-center min-w-[160px]"
                           style={{ backgroundColor: job.logoColor }}
                         >
                           🚀 APPLY NOW
@@ -369,6 +369,7 @@ export function JobCard({ index }: JobCardProps) {
                           <span className="text-[#10B981]">
                             ⏰ {job.posted}
                           </span>
+
                         </div>
                       </div>
                     </div>

@@ -1,1 +1,205 @@
-'use client';\n\nimport { motion } from 'framer-motion';\nimport { Check, X, Zap, Mail, Filter, Clock } from 'lucide-react';\n\ninterface ComparisonRow {\n  feature: string;\n  jobPing: string | boolean;\n  linkedin: string | boolean;\n  indeed: string | boolean;\n  icon?: React.ReactNode;\n}\n\nconst comparisonData: ComparisonRow[] = [\n  {\n    feature: \"Job Volume\",\n    jobPing: \"6-8 curated jobs\",\n    linkedin: \"100+ irrelevant jobs\",\n    indeed: \"Endless scrolling\",\n    icon: <Mail className=\"w-5 h-5\" />\n  },\n  {\n    feature: \"Time Investment\",\n    jobPing: \"2 minutes (check email)\",\n    linkedin: \"2+ hours daily searching\",\n    indeed: \"Hours of filtering\",\n    icon: <Clock className=\"w-5 h-5\" />\n  },\n  {\n    feature: \"EU/UK Focus\",\n    jobPing: true,\n    linkedin: false,\n    indeed: false,\n    icon: <Filter className=\"w-5 h-5\" />\n  },\n  {\n    feature: \"Visa Screening\",\n    jobPing: \"Pre-filtered visa-friendly\",\n    linkedin: \"You figure it out\",\n    indeed: \"Not mentioned\",\n    icon: <Check className=\"w-5 h-5\" />\n  },\n  {\n    feature: \"Application Rate\",\n    jobPing: \"Apply to 80% of jobs\",\n    linkedin: \"Apply to 10% of jobs\",\n    indeed: \"Apply to 5% of jobs\",\n    icon: <Zap className=\"w-5 h-5\" />\n  },\n  {\n    feature: \"Job Freshness\",\n    jobPing: \"24-72 hours old\",\n    linkedin: \"Mixed, often stale\",\n    indeed: \"Often weeks old\",\n    icon: <Clock className=\"w-5 h-5\" />\n  }\n];\n\nfunction ComparisonCell({ value, isJobPing = false }: { value: string | boolean; isJobPing?: boolean }) {\n  if (typeof value === 'boolean') {\n    return (\n      <div className={`flex items-center justify-center p-3 ${isJobPing ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>\n        {value ? (\n          <Check className={`w-6 h-6 ${isJobPing ? 'text-[#10B981]' : 'text-[#9CA3AF]'}`} />\n        ) : (\n          <X className=\"w-6 h-6 text-[#EF4444]\" />\n        )}\n      </div>\n    );\n  }\n\n  return (\n    <div className={`p-3 text-center font-medium ${\n      isJobPing \n        ? 'text-[#10B981] bg-[#10B981]/5 border border-[#10B981]/20 rounded-lg' \n        : 'text-[#9CA3AF]'\n    }`}>\n      {value}\n    </div>\n  );\n}\n\nexport default function Comparison() {\n  return (\n    <section className=\"py-24 bg-[#0B0B0F] relative\">\n      <div className=\"container-frame\">\n        {/* Header */}\n        <div className=\"text-center mb-16\">\n          <motion.h2\n            initial={{ opacity: 0, y: 20 }}\n            whileInView={{ opacity: 1, y: 0 }}\n            viewport={{ once: true }}\n            className=\"text-[#F8F9FA] font-bold text-4xl lg:text-5xl mb-6 tracking-tight\"\n          >\n            Stop Wasting Time on Job Boards\n          </motion.h2>\n          <motion.p\n            initial={{ opacity: 0, y: 20 }}\n            whileInView={{ opacity: 1, y: 0 }}\n            viewport={{ once: true }}\n            transition={{ delay: 0.1 }}\n            className=\"text-[#9CA3AF] text-xl max-w-3xl mx-auto leading-relaxed\"\n          >\n            Compare the old way (endless scrolling) vs the new way (curated delivery).\n          </motion.p>\n        </div>\n\n        {/* Comparison Table */}\n        <motion.div\n          initial={{ opacity: 0, y: 40 }}\n          whileInView={{ opacity: 1, y: 0 }}\n          viewport={{ once: true }}\n          transition={{ delay: 0.2 }}\n          className=\"max-w-5xl mx-auto\"\n        >\n          <div className=\"bg-[#151519] border border-[#374151] rounded-2xl overflow-hidden\">\n            {/* Header Row */}\n            <div className=\"grid grid-cols-4 gap-4 p-6 bg-[#1F1F23] border-b border-[#374151]\">\n              <div className=\"font-bold text-[#F8F9FA] text-lg\">Feature</div>\n              <div className=\"font-bold text-[#10B981] text-lg text-center\">\n                JobPing\n                <div className=\"text-xs font-normal text-[#10B981] mt-1\">✓ Smart Delivery</div>\n              </div>\n              <div className=\"font-bold text-[#9CA3AF] text-lg text-center\">\n                LinkedIn\n                <div className=\"text-xs font-normal text-[#9CA3AF] mt-1\">Manual Search</div>\n              </div>\n              <div className=\"font-bold text-[#9CA3AF] text-lg text-center\">\n                Indeed\n                <div className=\"text-xs font-normal text-[#9CA3AF] mt-1\">Manual Search</div>\n              </div>\n            </div>\n\n            {/* Data Rows */}\n            {comparisonData.map((row, index) => (\n              <motion.div\n                key={index}\n                initial={{ opacity: 0, x: -20 }}\n                whileInView={{ opacity: 1, x: 0 }}\n                viewport={{ once: true }}\n                transition={{ delay: 0.1 * index }}\n                className={`grid grid-cols-4 gap-4 p-6 hover:bg-[#1F1F23]/50 transition-colors ${\n                  index !== comparisonData.length - 1 ? 'border-b border-[#374151]' : ''\n                }`}\n              >\n                <div className=\"flex items-center gap-3 font-medium text-[#F8F9FA]\">\n                  <div className=\"text-[#9CA3AF]\">{row.icon}</div>\n                  {row.feature}\n                </div>\n                <ComparisonCell value={row.jobPing} isJobPing={true} />\n                <ComparisonCell value={row.linkedin} />\n                <ComparisonCell value={row.indeed} />\n              </motion.div>\n            ))}\n          </div>\n        </motion.div>\n\n        {/* Bottom Stats */}\n        <motion.div\n          initial={{ opacity: 0, y: 20 }}\n          whileInView={{ opacity: 1, y: 0 }}\n          viewport={{ once: true }}\n          transition={{ delay: 0.5 }}\n          className=\"grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 max-w-4xl mx-auto\"\n        >\n          <div className=\"text-center\">\n            <div className=\"text-3xl font-bold text-[#10B981] mb-2\">2,800+</div>\n            <div className=\"text-[#9CA3AF]\">Sources scraped daily</div>\n          </div>\n          <div className=\"text-center\">\n            <div className=\"text-3xl font-bold text-[#10B981] mb-2\">48hrs</div>\n            <div className=\"text-[#9CA3AF]\">Fresh delivery schedule</div>\n          </div>\n          <div className=\"text-center\">\n            <div className=\"text-3xl font-bold text-[#10B981] mb-2\">EU/UK</div>\n            <div className=\"text-[#9CA3AF]\">Exclusive geographic focus</div>\n          </div>\n        </motion.div>\n\n        {/* CTA */}\n        <motion.div\n          initial={{ opacity: 0, y: 20 }}\n          whileInView={{ opacity: 1, y: 0 }}\n          viewport={{ once: true }}\n          transition={{ delay: 0.6 }}\n          className=\"text-center mt-16\"\n        >\n          <p className=\"text-[#9CA3AF] mb-8 text-lg\">\n            Ready to switch from hunting to receiving?\n          </p>\n          <a\n            href=\"#signup\"\n            className=\"inline-flex items-center gap-3 bg-white text-[#0B0B0F] px-8 py-4 rounded-2xl font-bold text-lg hover:bg-[#F8F9FA] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98]\"\n          >\n            Start Getting Jobs Delivered\n            <span>→</span>\n          </a>\n        </motion.div>\n      </div>\n    </section>\n  );\n}\n"
+'use client';
+
+import { motion } from 'framer-motion';
+import { Check, X, Zap, Mail, Filter, Clock } from 'lucide-react';
+
+interface ComparisonRow {
+  feature: string;
+  jobPing: string | boolean;
+  linkedin: string | boolean;
+  indeed: string | boolean;
+  icon?: React.ReactNode;
+}
+
+const comparisonData: ComparisonRow[] = [
+  {
+    feature: "Job Volume",
+    jobPing: "6-8 curated jobs",
+    linkedin: "100+ irrelevant jobs",
+    indeed: "Endless scrolling",
+    icon: <Mail className="w-5 h-5" />
+  },
+  {
+    feature: "Time Investment",
+    jobPing: "2 minutes (check email)",
+    linkedin: "2+ hours daily searching",
+    indeed: "Hours of filtering",
+    icon: <Clock className="w-5 h-5" />
+  },
+  {
+    feature: "EU/UK Focus",
+    jobPing: true,
+    linkedin: false,
+    indeed: false,
+    icon: <Filter className="w-5 h-5" />
+  },
+  {
+    feature: "Visa Screening",
+    jobPing: "Pre-filtered visa-friendly",
+    linkedin: "You figure it out",
+    indeed: "Not mentioned",
+    icon: <Check className="w-5 h-5" />
+  },
+  {
+    feature: "Application Rate",
+    jobPing: "Apply to 80% of jobs",
+    linkedin: "Apply to 10% of jobs",
+    indeed: "Apply to 5% of jobs",
+    icon: <Zap className="w-5 h-5" />
+  },
+  {
+    feature: "Job Freshness",
+    jobPing: "24-72 hours old",
+    linkedin: "Mixed, often stale",
+    indeed: "Often weeks old",
+    icon: <Clock className="w-5 h-5" />
+  }
+];
+
+function ComparisonCell({ value, isJobPing = false }: { value: string | boolean; isJobPing?: boolean }) {
+  if (typeof value === 'boolean') {
+    return (
+      <div className={`flex items-center justify-center p-3 ${isJobPing ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
+        {value ? (
+          <Check className={`w-6 h-6 ${isJobPing ? 'text-[#10B981]' : 'text-[#9CA3AF]'}`} />
+        ) : (
+          <X className="w-6 h-6 text-[#EF4444]" />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`p-3 text-center font-medium ${
+      isJobPing 
+        ? 'text-[#10B981] bg-[#10B981]/5 border border-[#10B981]/20 rounded-lg' 
+        : 'text-[#9CA3AF]'
+    }`}>
+      {value}
+    </div>
+  );
+}
+
+export default function Comparison() {
+  return (
+    <section className="py-24 bg-[#0B0B0F] relative">
+      <div className="absolute inset-0 bg-pattern opacity-20"></div>
+      <div className="container-frame">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-[#F8F9FA] font-bold text-4xl lg:text-5xl mb-6 tracking-tight"
+          >
+            Stop Wasting Time on Job Boards
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-[#9CA3AF] text-xl max-w-3xl mx-auto leading-relaxed"
+          >
+            Compare the old way (endless scrolling) vs the new way (curated delivery).
+          </motion.p>
+        </div>
+
+        {/* Comparison Table */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+          className="max-w-5xl mx-auto"
+        >
+          <div className="premium-card bg-[#151519] border border-[#374151] rounded-2xl overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#10B981]/5 to-transparent opacity-30"></div>
+            {/* Header Row */}
+            <div className="grid grid-cols-4 gap-4 p-6 bg-[#1F1F23] border-b border-[#374151]">
+              <div className="font-bold text-[#F8F9FA] text-lg">Feature</div>
+              <div className="font-bold text-[#10B981] text-lg text-center">
+                JobPing
+                <div className="text-xs font-normal text-[#10B981] mt-1">✓ Smart Delivery</div>
+              </div>
+              <div className="font-bold text-[#9CA3AF] text-lg text-center">
+                LinkedIn
+                <div className="text-xs font-normal text-[#9CA3AF] mt-1">Manual Search</div>
+              </div>
+              <div className="font-bold text-[#9CA3AF] text-lg text-center">
+                Indeed
+                <div className="text-xs font-normal text-[#9CA3AF] mt-1">Manual Search</div>
+              </div>
+            </div>
+
+            {/* Data Rows */}
+            {comparisonData.map((row, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 * index }}
+                className={`grid grid-cols-4 gap-4 p-6 hover:bg-[#1F1F23]/50 transition-all duration-300 hover:scale-[1.01] relative group ${
+                  index !== comparisonData.length - 1 ? 'border-b border-[#374151]' : ''
+                }`}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#10B981]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="flex items-center gap-3 font-medium text-[#F8F9FA]">
+                  <div className="text-[#9CA3AF]">{row.icon}</div>
+                  {row.feature}
+                </div>
+                <ComparisonCell value={row.jobPing} isJobPing={true} />
+                <ComparisonCell value={row.linkedin} />
+                <ComparisonCell value={row.indeed} />
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Bottom Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.5 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 max-w-4xl mx-auto"
+        >
+          <div className="text-center">
+            <div className="text-3xl font-bold text-[#10B981] mb-2">2,800+</div>
+            <div className="text-[#9CA3AF]">Sources scraped daily</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-[#10B981] mb-2">48hrs</div>
+            <div className="text-[#9CA3AF]">Fresh delivery schedule</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-[#10B981] mb-2">EU/UK</div>
+            <div className="text-[#9CA3AF]">Exclusive geographic focus</div>
+          </div>
+        </motion.div>
+
+        {/* CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.6 }}
+          className="text-center mt-16"
+        >
+          <p className="text-[#9CA3AF] mb-8 text-lg">
+            Ready to switch from hunting to receiving?
+          </p>
+          <a
+            href="#signup"
+            className="premium-button inline-flex items-center gap-3 bg-white text-[#0B0B0F] px-8 py-4 rounded-2xl font-bold text-lg hover:bg-[#F9F9F9] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden group"
+          >
+            Start Getting Jobs Delivered
+            <span>→</span>
+          </a>
+        </motion.div>
+      </div>
+    </section>
+  );
+}

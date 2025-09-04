@@ -1,616 +1,254 @@
 [
   {
-    "company": "Spotify",
-    "platform": "lever",
-    "slug": "spotify",
+    "company": "Flow Traders",
+    "platform": "greenhouse",
+    "slug": "flowtraders",
     "priority": 1,
     "refresh_days": 1
   },
   {
-    "company": "Plaid",
-    "platform": "lever",
-    "slug": "plaid",
+    "company": "Squarepoint Capital",
+    "platform": "greenhouse",
+    "slug": "squarepointcapital",
     "priority": 1,
     "refresh_days": 1
   },
   {
-    "company": "Stripe",
-    "platform": "lever",
-    "slug": "stripe",
+    "company": "Jump Trading",
+    "platform": "greenhouse",
+    "slug": "jumptrading",
     "priority": 1,
     "refresh_days": 1
   },
   {
-    "company": "Datadog",
-    "platform": "lever",
-    "slug": "datadog",
+    "company": "Twilio",
+    "platform": "greenhouse",
+    "slug": "twiliostudents",
     "priority": 1,
     "refresh_days": 1
   },
   {
-    "company": "Notion",
-    "platform": "lever",
-    "slug": "notion",
+    "company": "Pinterest",
+    "platform": "greenhouse",
+    "slug": "pinterest",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "StepStone",
+    "platform": "greenhouse",
+    "slug": "stepstone",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "Charles River Associates",
+    "platform": "greenhouse",
+    "slug": "charlesriverassociates",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "Optiver",
+    "platform": "greenhouse",
+    "slug": "optiverus",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "IMC Trading",
+    "platform": "greenhouse",
+    "slug": "imc",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "Guerrilla Games",
+    "platform": "greenhouse",
+    "slug": "guerrilla-games",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "Ride Dott",
+    "platform": "greenhouse",
+    "slug": "ridedott",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "BlueCrest Capital Management",
+    "platform": "greenhouse",
+    "slug": "bluecrestcapitalmanagement",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "YouGov",
+    "platform": "greenhouse",
+    "slug": "yougov",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "Monzo",
+    "platform": "greenhouse",
+    "slug": "monzo",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "SumUp",
+    "platform": "greenhouse",
+    "slug": "sumup",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "Adyen",
+    "platform": "greenhouse",
+    "slug": "adyen",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "N26",
+    "platform": "greenhouse",
+    "slug": "n26",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "GetYourGuide",
+    "platform": "greenhouse",
+    "slug": "getyourguide",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "HelloFresh",
+    "platform": "greenhouse",
+    "slug": "hellofresh",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "Coinbase",
+    "platform": "greenhouse",
+    "slug": "coinbase",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "Asana",
+    "platform": "greenhouse",
+    "slug": "asana",
     "priority": 1,
     "refresh_days": 1
   },
   {
     "company": "Figma",
-    "platform": "lever",
+    "platform": "greenhouse",
     "slug": "figma",
     "priority": 1,
     "refresh_days": 1
   },
   {
-    "company": "Linear",
-    "platform": "lever",
-    "slug": "linear",
+    "company": "GitLab",
+    "platform": "greenhouse",
+    "slug": "gitlab",
+    "priority": 1,
+    "refresh_days": 1
+  },
+  {
+    "company": "HashiCorp",
+    "platform": "greenhouse",
+    "slug": "hashicorp",
     "priority": 1,
     "refresh_days": 1
   },
   {
     "company": "Vercel",
-    "platform": "lever",
+    "platform": "greenhouse",
     "slug": "vercel",
     "priority": 1,
     "refresh_days": 1
   },
   {
-    "company": "Netlify",
-    "platform": "lever",
-    "slug": "netlify",
+    "company": "Anthropic",
+    "platform": "greenhouse",
+    "slug": "anthropic",
     "priority": 1,
     "refresh_days": 1
   },
   {
-    "company": "Gopuff",
-    "platform": "lever",
-    "slug": "gopuff",
+    "company": "Stripe",
+    "platform": "greenhouse",
+    "slug": "stripe",
     "priority": 1,
     "refresh_days": 1
   },
   {
-    "company": "Ro",
-    "platform": "lever",
-    "slug": "ro",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Jobandtalent",
-    "platform": "lever",
-    "slug": "jobandtalent",
+    "company": "Airbnb",
+    "platform": "greenhouse",
+    "slug": "airbnb",
     "priority": 1,
     "refresh_days": 1
   },
   {
-    "company": "Dlocal",
-    "platform": "lever",
-    "slug": "dlocal",
+    "company": "Robinhood",
+    "platform": "greenhouse",
+    "slug": "robinhood",
     "priority": 1,
     "refresh_days": 1
   },
   {
-    "company": "Binance",
-    "platform": "lever",
-    "slug": "binance",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Mistral",
-    "platform": "lever",
-    "slug": "mistral",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Swile",
-    "platform": "lever",
-    "slug": "swile",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Loftorbital",
-    "platform": "lever",
-    "slug": "loftorbital",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Finn",
-    "platform": "lever",
-    "slug": "finn",
+    "company": "Dropbox",
+    "platform": "greenhouse",
+    "slug": "dropbox",
     "priority": 1,
     "refresh_days": 1
   },
   {
-    "company": "Insify",
-    "platform": "lever",
-    "slug": "insify",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Keyloop",
-    "platform": "lever",
-    "slug": "keyloop",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Companial",
-    "platform": "lever",
-    "slug": "companial",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Pipedrive",
-    "platform": "lever",
-    "slug": "pipedrive",
+    "company": "ClickUp",
+    "platform": "greenhouse",
+    "slug": "clickup",
     "priority": 1,
     "refresh_days": 1
   },
   {
-    "company": "Airslate",
-    "platform": "lever",
-    "slug": "airslate",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Farfetch",
-    "platform": "lever",
-    "slug": "farfetch",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Deliverect",
-    "platform": "lever",
-    "slug": "deliverect",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Palantir",
-    "platform": "lever",
-    "slug": "palantir",
+    "company": "Webflow",
+    "platform": "greenhouse",
+    "slug": "webflow",
     "priority": 1,
     "refresh_days": 1
   },
   {
-    "company": "Octopus Energy",
-    "platform": "lever",
-    "slug": "octopusenergy",
+    "company": "Airtable",
+    "platform": "greenhouse",
+    "slug": "airtable",
     "priority": 1,
     "refresh_days": 1
   },
   {
-    "company": "Sylvera",
-    "platform": "lever",
-    "slug": "sylvera",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Milltown Partners",
-    "platform": "lever",
-    "slug": "milltownpartners",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Qonto",
-    "platform": "lever",
-    "slug": "qonto",
+    "company": "Calendly",
+    "platform": "greenhouse",
+    "slug": "calendly",
     "priority": 1,
     "refresh_days": 1
-  },
-  {
-    "company": "Fluence",
-    "platform": "lever",
-    "slug": "fluence",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Bloom & Wild",
-    "platform": "lever",
-    "slug": "bloomandwild",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Netlight",
-    "platform": "lever",
-    "slug": "netlight",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "SafetyCulture",
-    "platform": "lever",
-    "slug": "safetyculture",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Nium",
-    "platform": "lever",
-    "slug": "nium",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Shield AI",
-    "platform": "lever",
-    "slug": "shieldai",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Numeral",
-    "platform": "lever",
-    "slug": "numeral",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Unlimit",
-    "platform": "lever",
-    "slug": "unlimit",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Trustly",
-    "platform": "lever",
-    "slug": "trustly",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Arc'teryx",
-    "platform": "lever",
-    "slug": "arcteryx",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "ANYbotics",
-    "platform": "lever",
-    "slug": "anybotics",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "DeepJudge",
-    "platform": "lever",
-    "slug": "deepjudge",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Welocalize",
-    "platform": "lever",
-    "slug": "welocalize",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Pennylane",
-    "platform": "lever",
-    "slug": "pennylane",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Whoop",
-    "platform": "lever",
-    "slug": "whoop",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Toptal",
-    "platform": "lever",
-    "slug": "toptal",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Lodgify",
-    "platform": "lever",
-    "slug": "lodgify",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Edpuzzle",
-    "platform": "lever",
-    "slug": "edpuzzle",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Quantummetric",
-    "platform": "lever",
-    "slug": "quantummetric",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Moonpay",
-    "platform": "lever",
-    "slug": "moonpay",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Partoo",
-    "platform": "lever",
-    "slug": "partoo",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Vestiairecollective",
-    "platform": "lever",
-    "slug": "vestiairecollective",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Contentsquare",
-    "platform": "lever",
-    "slug": "contentsquare",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Pigment",
-    "platform": "lever",
-    "slug": "pigment",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Blablacar",
-    "platform": "lever",
-    "slug": "blablacar",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Malt",
-    "platform": "lever",
-    "slug": "malt",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Hexa",
-    "platform": "lever",
-    "slug": "hexa",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Theodo",
-    "platform": "lever",
-    "slug": "theodo",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Valiantys",
-    "platform": "lever",
-    "slug": "valiantys",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Saviynt",
-    "platform": "lever",
-    "slug": "saviynt",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Mendix",
-    "platform": "lever",
-    "slug": "mendix",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Kitmanlabs",
-    "platform": "lever",
-    "slug": "kitmanlabs",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Megaport",
-    "platform": "lever",
-    "slug": "megaport",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Nekohealth",
-    "platform": "lever",
-    "slug": "nekohealth",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Clari",
-    "platform": "lever",
-    "slug": "clari",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Swordhealth",
-    "platform": "lever",
-    "slug": "swordhealth",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Xsolla",
-    "platform": "lever",
-    "slug": "xsolla",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Sysdig",
-    "platform": "lever",
-    "slug": "sysdig",
-    "priority": 2,
-    "refresh_days": 2
   },
   {
     "company": "Brex",
-    "platform": "lever",
+    "platform": "greenhouse",
     "slug": "brex",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Instacart",
-    "platform": "lever",
-    "slug": "instacart",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Chewy",
-    "platform": "lever",
-    "slug": "chewy",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Wayfair",
-    "platform": "lever",
-    "slug": "wayfair",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Etsy",
-    "platform": "lever",
-    "slug": "etsy",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Shopify",
-    "platform": "lever",
-    "slug": "shopify",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Peloton",
-    "platform": "lever",
-    "slug": "peloton",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Calm",
-    "platform": "lever",
-    "slug": "calm",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Headspace",
-    "platform": "lever",
-    "slug": "headspace",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Apple",
-    "platform": "workday",
-    "tenant": "apple",
-    "careerSite": "apple",
     "priority": 1,
     "refresh_days": 1
   },
   {
-    "company": "Intel",
-    "platform": "workday",
-    "tenant": "intel",
-    "careerSite": "External",
+    "company": "Retool",
+    "platform": "greenhouse",
+    "slug": "retool",
     "priority": 1,
     "refresh_days": 1
-  },
-  {
-    "company": "NVIDIA",
-    "platform": "workday",
-    "tenant": "nvidia",
-    "careerSite": "External",
-    "priority": 1,
-    "refresh_days": 1
-  },
-  {
-    "company": "JPMorgan Chase",
-    "platform": "workday",
-    "tenant": "jpmorganchase",
-    "careerSite": "External",
-    "priority": 1,
-    "refresh_days": 1
-  },
-  {
-    "company": "Goldman Sachs",
-    "platform": "workday",
-    "tenant": "goldmansachs",
-    "careerSite": "External",
-    "priority": 1,
-    "refresh_days": 1
-  },
-  {
-    "company": "BMW",
-    "platform": "smartrecruiters",
-    "slug": "bmw",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Volkswagen",
-    "platform": "smartrecruiters",
-    "slug": "volkswagen",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Wise",
-    "platform": "ashby",
-    "slug": "wise",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Mollie",
-    "platform": "recruitee",
-    "slug": "mollie",
-    "priority": 2,
-    "refresh_days": 2
-  },
-  {
-    "company": "Personio",
-    "platform": "personio",
-    "slug": "personio",
-    "priority": 2,
-    "refresh_days": 2
   }
 ]

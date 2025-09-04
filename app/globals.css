@@ -295,6 +295,91 @@ p {
   box-shadow: var(--shadow-sm);
 }
 
+.premium-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.premium-button {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(255, 255, 255, 0.3);
+}
+
+.bg-pattern {
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
+    linear-gradient(45deg, transparent 48%, rgba(255, 255, 255, 0.01) 50%, transparent 52%);
+  background-size: 200px 200px, 300px 300px, 100px 100px;
+}
+
+/* Premium Micro-interactions */
+.premium-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.6s ease;
+}
+
+.premium-card:hover::before {
+  left: 100%;
+}
+
+.premium-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.8s ease;
+}
+
+.premium-button:hover::before {
+  left: 100%;
+}
+
+/* Sophisticated Hover States */
+.interactive-element {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.interactive-element:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* Premium Focus States */
+.premium-card:focus-within,
+.premium-button:focus {
+  outline: 2px solid rgba(16, 185, 129, 0.5);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
 .card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
@@ -563,5 +648,46 @@ textarea:focus-visible {
   .email-cta-primary {
     width: 100% !important;
     min-width: 100% !important;
+  }
+}
+
+/* MOBILE PAYMENT OPTIMIZATION */
+@media only screen and (max-width: 768px) {
+  /* Payment form mobile optimization */
+  .payment-form input,
+  .payment-form .StripeElement {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    min-height: 48px !important; /* Touch target size */
+    padding: 12px 16px !important;
+  }
+  
+  /* Payment buttons mobile optimization */
+  .payment-button {
+    min-height: 48px !important;
+    font-size: 16px !important;
+    padding: 12px 24px !important;
+  }
+  
+  /* Card element mobile styling */
+  .StripeElement {
+    min-height: 48px !important;
+  }
+  
+  /* Payment form spacing on mobile */
+  .payment-form .space-y-4 > * + * {
+    margin-top: 16px !important;
+  }
+}
+
+/* Touch device optimization */
+@media (hover: none) and (pointer: coarse) {
+  .payment-form input:focus,
+  .payment-form .StripeElement:focus {
+    transform: scale(1.02);
+    transition: transform 0.2s ease;
+  }
+  
+  .payment-button:active {
+    transform: scale(0.98);
   }
 }

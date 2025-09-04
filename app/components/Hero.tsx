@@ -8,6 +8,9 @@ export default function Hero() {
     <section className="relative bg-[#0B0B0F] pt-32 pb-24 px-6 overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-radial from-[#1F1F23]/10 via-transparent to-transparent"></div>
+      <div className="absolute inset-0 bg-pattern opacity-30"></div>
+      <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-[#10B981]/20 to-transparent rounded-full blur-3xl"></div>
+      <div className="absolute bottom-20 right-10 w-40 h-40 bg-gradient-to-tl from-[#3B82F6]/20 to-transparent rounded-full blur-3xl"></div>
       
       <div className="max-w-5xl mx-auto text-center relative z-10">
         {/* Main Headline */}
@@ -30,14 +33,16 @@ export default function Hero() {
           className="text-[#9CA3AF] text-xl sm:text-2xl leading-relaxed mb-12 max-w-4xl mx-auto"
         >
           Stop the job search. Focus on the application.
-          <br />2,800+ sources scraped daily. Visa-friendly roles prioritized.
+          <br />2,800+ sources scraped daily.
         </motion.p>
+
+
 
         {/* Value Props */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.3 }}
+          transition={{ duration: 1, delay: 0.4 }}
           className="flex flex-wrap items-center justify-center gap-8 mb-16 text-[#D1D5DB] text-base font-medium"
         >
           <div className="flex items-center gap-3">
@@ -65,8 +70,9 @@ export default function Hero() {
           transition={{ duration: 1, delay: 0.4 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16"
         >
-          <a href="#signup" className="bg-white text-[#0B0B0F] px-12 py-6 rounded-2xl font-bold text-xl hover:bg-[#F8F9FA] transition-all duration-300 flex items-center gap-3 shadow-2xl hover:shadow-3xl transform hover:scale-[1.02] active:scale-[0.98]">
-            Get Jobs Delivered Daily
+          <a href="#signup" className="premium-button bg-white text-[#0B0B0F] px-12 py-6 rounded-2xl font-bold text-xl hover:bg-[#F8F9FA] transition-all duration-300 flex items-center gap-3 shadow-2xl hover:shadow-3xl transform hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+            Get My First 5 Matches Free
             <ArrowRight className="w-6 h-6" />
           </a>
           <a href="#preview" className="text-[#D1D5DB] hover:text-white font-medium text-xl flex items-center gap-3 transition-colors">

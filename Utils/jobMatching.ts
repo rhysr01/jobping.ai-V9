@@ -6,6 +6,15 @@
    Feature Flag: USE_NEW_MATCHING_ARCHITECTURE
    ============================ */
 
+// Import AI provenance tracking utilities
+import { 
+  aiMatchWithProvenance, 
+  type AiProvenance 
+} from './aiProvenance';
+
+// Import semantic matching system
+import { SemanticMatchingEngine } from './semanticMatching';
+
 // Feature flag for gradual migration
 const USE_NEW_MATCHING_ARCHITECTURE = process.env.USE_NEW_MATCHING_ARCHITECTURE === 'true';
 
@@ -1672,29 +1681,86 @@ IMPORTANT:
 Return ONLY a valid JSON array of matches. No additional text.`;
 }
 
-// 2. Perform Enhanced AI Matching
+// 2. Perform Enhanced AI Matching with Provenance Tracking
 export async function performEnhancedAIMatching(
   jobs: Job[],
   userPrefs: UserPreferences,
   openai: OpenAI
-): Promise<MatchResult[]> {
+): Promise<{ matches: MatchResult[]; provenance: AiProvenance }> {
   // PHASE 6: Feature flag integration
   if (USE_NEW_MATCHING_ARCHITECTURE && MatcherOrchestrator) {
     try {
       console.log('🚀 Using new matching architecture for AI matching');
       const orchestrator = new MatcherOrchestrator(openai, getSupabaseClient());
       const result = await orchestrator.generateMatchesWithStrategy(userPrefs, jobs, 'ai_only');
-      return result.matches;
+      // For new architecture, return with default provenance
+      return { 
+        matches: result.matches, 
+        provenance: { match_algorithm: 'ai', prompt_version: process.env.PROMPT_VERSION || 'v1' }
+      };
     } catch (error) {
       console.error('❌ New architecture failed, falling back to legacy:', error);
       // Fall through to legacy implementation
     }
   }
 
-  // Legacy implementation
+  // Legacy implementation with provenance tracking
   const startTime = Date.now(); // Track processing time for logging
   
   try {
+    // Check if semantic matching is enabled
+    const useSemanticMatching = process.env.USE_SEMANTIC_MATCHING === 'true';
+    
+    if (useSemanticMatching) {
+      console.log('🧠 Using semantic matching for enhanced understanding');
+      
+      try {
+        // Initialize semantic matching engine
+        const semanticEngine = new SemanticMatchingEngine(
+          openai,
+          process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+          process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+        );
+        
+        // Perform semantic matching
+        const semanticMatches = await semanticEngine.performSemanticMatching(
+          userPrefs,
+          jobs,
+          10 // Get top 10 semantic matches
+        );
+        
+        if (semanticMatches && semanticMatches.length > 0) {
+          // Convert semantic matches to robust format
+          const aiMatches = semanticMatches.map(match => ({
+            job_index: jobs.findIndex(j => j.job_hash === match.job_hash) + 1,
+            job_hash: match.job_hash,
+            match_score: Math.round(match.semantic_score * 100),
+            match_reason: match.explanation,
+            match_quality: match.semantic_score > 0.8 ? 'excellent' : 
+                          match.semantic_score > 0.8 ? 'good' : 'fair',
+            match_tags: 'semantic-ai-generated'
+          }));
+          
+          const robustMatches = convertToRobustMatches(aiMatches, userPrefs, jobs);
+          
+          // Create provenance for semantic matching
+          const semanticProvenance: AiProvenance = {
+            match_algorithm: 'ai',
+            ai_model: 'gpt-4 + embeddings',
+            prompt_version: process.env.PROMPT_VERSION || 'v1',
+            ai_latency_ms: Date.now() - startTime,
+            ai_cost_usd: 0, // Will be calculated by caller
+            cache_hit: false
+          };
+          
+          return { matches: robustMatches, provenance: semanticProvenance };
+        }
+      } catch (semanticError) {
+        console.warn('Semantic matching failed, falling back to traditional AI:', semanticError);
+        // Fall through to traditional AI matching
+      }
+    }
+    
     // C7: AI + Fallback orchestration
     // Include user single career path, top 3 cities, and eligibility notes
     const userCareerPath = reqFirst(userPrefs.career_path);
@@ -1704,20 +1770,31 @@ export async function performEnhancedAIMatching(
     // Build enhanced prompt with robust matching instructions
     const prompt = buildRobustMatchingPrompt(jobs, userPrefs, userCareerPath, topCities, eligibilityNotes);
     
-    const response = await openai.chat.completions.create({
+    // Use provenance tracking wrapper with function calling
+    const { scores: validatedMatches, prov } = await aiMatchWithProvenance({
+      openai,
       model: 'gpt-4',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
       max_tokens: 2000,
+      promptVersion: process.env.PROMPT_VERSION || 'v1',
+      maxRetries: 3
     });
     
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('No content in OpenAI response');
+    if (!validatedMatches) {
+      throw new Error('AI matching failed and no fallback content provided');
     }
     
-    // Parse AI response and convert to robust match format
-    const aiMatches = parseAndValidateMatches(content, jobs);
+    // Convert validated AI matches to robust format (no parsing needed)
+    const aiMatches = validatedMatches.map((match: any) => ({
+      job_index: match.job_index,
+      job_hash: jobs[match.job_index - 1]?.job_hash || '',
+      match_score: match.match_score,
+      match_reason: match.match_reason,
+      match_quality: match.match_quality || 'good',
+      match_tags: 'ai-generated'
+    }));
+    
     const robustMatches = convertToRobustMatches(aiMatches, userPrefs, jobs);
     
     // Log successful matching with enhanced details
@@ -1727,10 +1804,18 @@ export async function performEnhancedAIMatching(
       userWorkPreference: userPrefs.work_environment || undefined
     });
     
-    return robustMatches;
+    return { matches: robustMatches, provenance: prov };
     
   } catch (error) {
     console.error('AI matching failed:', error);
+    
+    // Create fallback provenance
+    const fallbackProvenance: AiProvenance = {
+      match_algorithm: 'rules',
+      fallback_reason: error instanceof Error ? error.message : 'unknown_error',
+      ai_latency_ms: Date.now() - startTime,
+      ai_cost_usd: 0
+    };
     
     // Log failure and use robust fallback
     await logMatchSession(userPrefs.email, 'ai_failed', 0, {
@@ -1740,7 +1825,8 @@ export async function performEnhancedAIMatching(
       errorMessage: error instanceof Error ? error.message : 'Unknown error'
     });
     
-    return generateRobustFallbackMatches(jobs, userPrefs);
+    const fallbackMatches = generateRobustFallbackMatches(jobs, userPrefs);
+    return { matches: fallbackMatches, provenance: fallbackProvenance };
   }
 }
 

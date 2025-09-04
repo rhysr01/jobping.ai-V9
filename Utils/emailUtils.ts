@@ -532,36 +532,93 @@ function generateJobCard(card: EmailJobCard, index: number, isPremium: boolean, 
           </div>
           ` : ''}
           
-          <!-- Feedback Buttons -->
+          <!-- Enhanced Feedback System -->
           <div style="
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
+            margin: 20px 0; 
+            padding: 15px; 
+            background: #f8f9fa; 
+            border-radius: 8px; 
+            border-left: 4px solid #007bff;
           ">
-            <a href="https://jobping.ai/feedback?email=${encodeURIComponent(userEmail || '')}&job=${job.job_hash}&verdict=relevant" target="_blank" style="
-              display: inline-block;
-              background: #4CAF50;
-              color: #FFFFFF;
-              padding: 6px 12px;
-              border-radius: 6px;
-              text-decoration: none;
-              font-size: 12px;
-              font-weight: 500;
-            ">
-              👍 Relevant
-            </a>
-            <a href="https://jobping.ai/feedback?email=${encodeURIComponent(userEmail || '')}&job=${job.job_hash}&verdict=not_relevant" target="_blank" style="
-              display: inline-block;
-              background: #F44336;
-              color: #FFFFFF;
-              padding: 6px 12px;
-              border-radius: 6px;
-              text-decoration: none;
-              font-size: 12px;
-              font-weight: 500;
-            ">
-              👎 Not Relevant
-            </a>
+            <h4 style="margin: 0 0 15px 0; color: #495057; font-size: 16px;">How relevant is this graduate role?</h4>
+            <div style="display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
+              <a href="/api/feedback/email?action=positive&score=5&job=${job.job_hash}&email=${encodeURIComponent(userEmail || '')}" target="_blank" style="
+                display: inline-block;
+                padding: 6px 12px;
+                background: #28a745;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+              ">
+                ⭐ Perfect match (5/5)
+              </a>
+              <a href="/api/feedback/email?action=positive&score=4&job=${job.job_hash}&email=${encodeURIComponent(userEmail || '')}" target="_blank" style="
+                display: inline-block;
+                padding: 6px 12px;
+                background: #20c997;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+              ">
+                👍 Good match (4/5)
+              </a>
+              <a href="/api/feedback/email?action=neutral&score=3&job=${job.job_hash}&email=${encodeURIComponent(userEmail || '')}" target="_blank" style="
+                display: inline-block;
+                padding: 6px 12px;
+                background: #ffc107;
+                color: #212529;
+                text-decoration: none;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+              ">
+                🤔 Maybe relevant (3/5)
+              </a>
+              <a href="/api/feedback/email?action=negative&score=2&job=${job.job_hash}&email=${encodeURIComponent(userEmail || '')}" target="_blank" style="
+                display: inline-block;
+                padding: 6px 12px;
+                background: #fd7e14;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+              ">
+                👎 Not really (2/5)
+              </a>
+              <a href="/api/feedback/email?action=negative&score=1&job=${job.job_hash}&email=${encodeURIComponent(userEmail || '')}" target="_blank" style="
+                display: inline-block;
+                padding: 6px 12px;
+                background: #dc3545;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+              ">
+                ❌ Completely wrong (1/5)
+              </a>
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+              <a href="/api/feedback/email?action=explain&job=${job.job_hash}&email=${encodeURIComponent(userEmail || '')}" target="_blank" style="
+                display: inline-block;
+                padding: 6px 12px;
+                background: #6c757d;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+                font-size: 12px;
+              ">
+                💬 Tell us more
+              </a>
+            </div>
+            <p style="margin: 10px 0 0 0; font-size: 12px; color: #6c757d;">
+              Your feedback helps us find better graduate jobs for students like you! 🎓
+            </p>
           </div>
           
           <!-- Apply Button -->
@@ -942,7 +999,7 @@ export async function sendMatchedJobsEmail({
     }
     const isPremium = subscriptionTier === 'premium';
     const jobLimit = isPremium ? 15 : 6; // Updated: Free tier now gets 6 matches per week instead of 5 every 48h
-    const emailTypeText = isSignupEmail ? 'Welcome! Here are your first' : 'Your fresh';
+    const emailTypeText = isSignupEmail ? 'Welcome! Here are your first' : 'Your fresh graduate';
     
     const html = `
       <!DOCTYPE html>
@@ -951,7 +1008,7 @@ export async function sendMatchedJobsEmail({
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>🎯 ${jobs.length} Fresh EU/UK Jobs - JobPing</title>
+        <title>🎯 ${jobs.length} Fresh Graduate Jobs in EU/UK - JobPing</title>
         <!--[if mso]>
         <noscript>
           <xml>
@@ -1026,7 +1083,7 @@ export async function sendMatchedJobsEmail({
                             font-weight: 500;
                             letter-spacing: 0.5px;
                           ">
-                            AI-Powered Job Matching
+                            AI-Powered Graduate Job Matching
                           </p>
                         </td>
                       </tr>
@@ -1082,8 +1139,8 @@ export async function sendMatchedJobsEmail({
                             color: #4a4a4a;
                             font-weight: 400;
                           " class="mobile-text">
-                            ${isSignupEmail ? 'Welcome to <strong style="color: #1a1a1a;">JobPing</strong>! 🎉' : 'Your fresh job matches are here!'}<br>
-                            ${emailTypeText} <strong style="color: #1a1a1a;">${jobs.length} ${isPremium ? 'premium ' : ''}AI-matched opportunities</strong>:
+                            ${isSignupEmail ? 'Welcome to <strong style="color: #1a1a1a;">JobPing</strong>! 🎉' : 'Your fresh graduate job matches are here!'}<br>
+                            ${emailTypeText} <strong style="color: #1a1a1a;">${jobs.length} ${isPremium ? 'premium ' : ''}graduate opportunities</strong>:
                           </p>
                         </td>
                       </tr>
@@ -1429,16 +1486,16 @@ export async function sendMatchedJobsEmail({
     </html>
   `;
 
-    try {
+  try {
       // Dynamic subject line optimized for opens
       const getSubjectLine = () => {
         const urgencyPhrases = ['Fresh', 'Hot', 'New', 'Latest'];
         const urgency = urgencyPhrases[Math.floor(Math.random() * urgencyPhrases.length)];
         
         if (isSignupEmail) {
-          return `🎯 Your ${jobs.length} EU/UK jobs are ready!`;
+          return `🎯 Your ${jobs.length} EU/UK graduate jobs are ready!`;
         } else {
-          return `${urgency} ${jobs.length} EU/UK jobs (visa-friendly) 🏺`;
+          return `${urgency} ${jobs.length} EU/UK graduate jobs (visa-friendly) 🎓`;
         }
       };
 
@@ -1568,7 +1625,7 @@ export async function sendWelcomeEmail({
             letter-spacing: 0.5px;
             text-transform: uppercase;
           ">
-            AI-Powered Job Matching
+            AI-Powered Graduate Job Matching
           </div>
         </div>
         
@@ -1596,7 +1653,7 @@ export async function sendWelcomeEmail({
             color: #333333;
             font-weight: 400;
           ">
-            Your AI career assistant is now active and has found <strong style="color: #000000;">${matchCount} perfect job matches</strong> for you.
+            Your AI career assistant is now active and has found <strong style="color: #000000;">${matchCount} perfect graduate job matches</strong> for you.
           </p>
           
           <p style="
@@ -1606,7 +1663,7 @@ export async function sendWelcomeEmail({
             color: #666666;
             font-weight: 400;
           ">
-            Check your inbox for your first batch of AI-matched opportunities. You'll receive new matches every 48 hours.
+            Check your inbox for your first batch of AI-matched graduate opportunities. You'll receive new matches every 48 hours.
           </p>
           
           <!-- Next Steps -->

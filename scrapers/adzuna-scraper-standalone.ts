@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { classifyEarlyCareer } from './utils.js';
 
 // Types
 interface IngestJob {
@@ -43,13 +44,24 @@ const ADZUNA_CONFIG = {
   appId: process.env.ADZUNA_APP_ID || '',
   appKey: process.env.ADZUNA_APP_KEY || '',
   countries: {
+    // Current cities
     'London': 'gb',
     'Madrid': 'es', 
     'Berlin': 'de',
     'Barcelona': 'es',
-    'Amsterdam': 'nl'
-  },
-  dailyBudget: 33, // 1,000 calls/month ≈ 33/day
+    'Amsterdam': 'nl',
+    
+    // ✅ ADD 7 NEW CITIES
+    'Dublin': 'ie',
+    'Munich': 'de',
+    'Stockholm': 'se',
+    'Copenhagen': 'dk',
+    'Zurich': 'ch',
+    'Vienna': 'at',
+    'Paris': 'fr'
+    // Now 12 cities total!
+  } as Record<string, string>,
+  dailyBudget: 50, // Was 33, now 50 for 12 cities
   reserveCalls: 3
 };
 
@@ -197,7 +209,15 @@ class AdzunaScraper {
           if (!this.seenJobs.has(jobKey)) {
             this.seenJobs.add(jobKey);
             const ingestJob = this.convertToIngestJob(job, city);
-            jobs.push(ingestJob);
+            
+            // ✅ ADD EARLY-CAREER FILTER HERE
+            const isEarlyCareer = classifyEarlyCareer(ingestJob);
+            if (isEarlyCareer) {
+              jobs.push(ingestJob);
+              console.log(`✅ Early-career: ${ingestJob.title} at ${ingestJob.company}`);
+            } else {
+              console.log(`🚫 Skipped senior: ${ingestJob.title} at ${ingestJob.company}`);
+            }
           }
         }
 

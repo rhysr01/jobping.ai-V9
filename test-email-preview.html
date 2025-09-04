@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 JobPing Email with Enhanced Feedback System</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+        .email-container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); color: white; padding: 40px 30px; text-align: center; }
+        .content { padding: 30px; }
+        .job-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin: 20px 0; background: #fafafa; }
+        .feedback-section { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff; }
+        .feedback-buttons { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        .feedback-btn { padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 12px; font-weight: 500; }
+        .btn-perfect { background: #28a745; color: white; }
+        .btn-good { background: #20c997; color: white; }
+        .btn-ok { background: #ffc107; color: #212529; }
+        .btn-poor { background: #fd7e14; color: white; }
+        .btn-terrible { background: #dc3545; color: white; }
+        .btn-comment { background: #6c757d; color: white; }
+        .apply-btn { display: inline-block; background: linear-gradient(135deg, #000000 0%, #1A1A1A 100%); color: #FFFFFF; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1 style="margin: 0; font-size: 28px;">JOBPING</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.8;">AI-Powered Job Matching</p>
+        </div>
+        
+        <div class="content">
+            <h2>🎯 Fresh Graduate Jobs in EU/UK</h2>
+            <p>Hi Rhys! Here are your latest graduate job matches:</p>
+            
+            <div class="job-card">
+                <h3>Graduate Software Engineer</h3>
+                <p><strong>Company:</strong> Tech Corp</p>
+                <p><strong>Location:</strong> Dublin, Ireland</p>
+                <p><strong>Description:</strong> Perfect graduate role! Join a fast-growing tech company and kickstart your career in software development.</p>
+                
+                <!-- Enhanced Feedback System -->
+                <div class="feedback-section">
+                    <h4 style="margin: 0 0 15px 0; color: #495057; font-size: 16px;">How relevant is this graduate role?</h4>
+                    <div class="feedback-buttons">
+                        <a href="/api/feedback/email?action=positive&score=5&job=test_job_1&email=rrowlands@student.ie.edu" class="feedback-btn btn-perfect">
+                            ⭐ Perfect match (5/5)
+                        </a>
+                        <a href="/api/feedback/email?action=positive&score=4&job=test_job_1&email=rrowlands@student.ie.edu" class="feedback-btn btn-good">
+                            👍 Good match (4/5)
+                        </a>
+                        <a href="/api/feedback/email?action=neutral&score=3&job=test_job_1&email=rrowlands@student.ie.edu" class="feedback-btn btn-ok">
+                            🤔 Maybe relevant (3/5)
+                        </a>
+                        <a href="/api/feedback/email?action=negative&score=2&job=test_job_1&email=rrowlands@student.ie.edu" class="feedback-btn btn-poor">
+                            👎 Not really (2/5)
+                        </a>
+                        <a href="/api/feedback/email?action=negative&score=1&job=test_job_1&email=rrowlands@student.ie.edu" class="feedback-btn btn-terrible">
+                            ❌ Completely wrong (1/5)
+                        </a>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <a href="/api/feedback/email?action=explain&job=test_job_1&email=rrowlands@student.ie.edu" class="feedback-btn btn-comment">
+                            💬 Tell us more
+                        </a>
+                    </div>
+                    <p style="margin: 10px 0 0 0; font-size: 12px; color: #6c757d;">
+                        Your feedback helps us find better graduate jobs for students like you! 🎓
+                    </p>
+                </div>
+                
+                <a href="https://example.com/job1" class="apply-btn">Apply Now</a>
+            </div>
+            
+            <div class="job-card">
+                <h3>Graduate Product Associate</h3>
+                <p><strong>Company:</strong> Innovation Ltd</p>
+                <p><strong>Location:</strong> London, UK</p>
+                <p><strong>Description:</strong> Amazing opportunity for recent grads! Learn product strategy and work on cutting-edge solutions.</p>
+                
+                <!-- Enhanced Feedback System -->
+                <div class="feedback-section">
+                    <h4 style="margin: 0 0 15px 0; color: #495057; font-size: 16px;">How relevant is this graduate role?</h4>
+                    <div class="feedback-buttons">
+                        <a href="/api/feedback/email?action=positive&score=5&job=test_job_2&email=rrowlands@student.ie.edu" class="feedback-btn btn-perfect">
+                            ⭐ Perfect match (5/5)
+                        </a>
+                        <a href="/api/feedback/email?action=positive&score=4&job=test_job_2&email=rrowlands@student.ie.edu" class="feedback-btn btn-good">
+                            👍 Good match (4/5)
+                        </a>
+                        <a href="/api/feedback/email?action=neutral&score=3&job=test_job_2&email=rrowlands@student.ie.edu" class="feedback-btn btn-ok">
+                            🤔 Maybe relevant (3/5)
+                        </a>
+                        <a href="/api/feedback/email?action=negative&score=2&job=test_job_2&email=rrowlands@student.ie.edu" class="feedback-btn btn-poor">
+                            👎 Not really (2/5)
+                        </a>
+                        <a href="/api/feedback/email?action=negative&score=1&job=test_job_2&email=rrowlands@student.ie.edu" class="feedback-btn btn-terrible">
+                            ❌ Completely wrong (1/5)
+                        </a>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <a href="/api/feedback/email?action=explain&job=test_job_2&email=rrowlands@student.ie.edu" class="feedback-btn btn-comment">
+                            💬 Tell us more
+                        </a>
+                    </div>
+                    <p style="margin: 10px 0 0 0; font-size: 12px; color: #6c757d;">
+                        Your feedback helps us find better graduate jobs for students like you! 🎓
+                    </p>
+                </div>
+                
+                <a href="https://example.com/job2" class="apply-btn">Apply Now</a>
+            </div>
+            
+            <div class="job-card">
+                <h3>Graduate Data Analyst</h3>
+                <p><strong>Company:</strong> Analytics Inc</p>
+                <p><strong>Location:</strong> Amsterdam, Netherlands</p>
+                <p><strong>Description:</strong> Perfect entry-level role! Build your data skills and work on exciting machine learning projects.</p>
+                
+                <!-- Enhanced Feedback System -->
+                <div class="feedback-section">
+                    <h4 style="margin: 0 0 15px 0; color: #495057; font-size: 16px;">How relevant is this graduate role?</h4>
+                    <div class="feedback-buttons">
+                        <a href="/api/feedback/email?action=positive&score=5&job=test_job_3&email=rrowlands@student.ie.edu" class="feedback-btn btn-perfect">
+                            ⭐ Perfect match (5/5)
+                        </a>
+                        <a href="/api/feedback/email?action=positive&score=4&job=test_job_3&email=rrowlands@student.ie.edu" class="feedback-btn btn-good">
+                            👍 Good match (4/5)
+                        </a>
+                        <a href="/api/feedback/email?action=neutral&score=3&job=test_job_3&email=rrowlands@student.ie.edu" class="feedback-btn btn-ok">
+                            🤔 Maybe relevant (3/5)
+                        </a>
+                        <a href="/api/feedback/email?action=negative&score=2&job=test_job_3&email=rrowlands@student.ie.edu" class="feedback-btn btn-poor">
+                            👎 Not really (2/5)
+                        </a>
+                        <a href="/api/feedback/email?action=negative&score=1&job=test_job_3&email=rrowlands@student.ie.edu" class="feedback-btn btn-terrible">
+                            ❌ Completely wrong (1/5)
+                        </a>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <a href="/api/feedback/email?action=explain&job=test_job_3&email=rrowlands@student.ie.edu" class="feedback-btn btn-comment">
+                            💬 Tell us more
+                        </a>
+                    </div>
+                    <p style="margin: 10px 0 0 0; font-size: 12px; color: #6c757d;">
+                        Your feedback helps us find better graduate jobs for students like you! 🎓
+                    </p>
+                </div>
+                
+                <a href="https://example.com/job3" class="apply-btn">Apply Now</a>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <p style="margin: 0; color: #6c757d;">Your feedback helps us find better graduate jobs for students like you! 🎓</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
