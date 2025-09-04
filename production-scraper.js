@@ -17,7 +17,7 @@ const CONFIG = {
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   ENABLE_MONITORING: process.env.ENABLE_MONITORING === 'true',
   API_BASE_URL: process.env.RAILWAY_STATIC_URL || process.env.NEXT_PUBLIC_URL || 'http://localhost:3002',
-  API_KEY: process.env.JOBPING_API_KEY || 'test-api-key',
+  API_KEY: process.env.JOBPING_API_KEY || '',
   // Railway-specific settings
   IS_RAILWAY: process.env.RAILWAY_ENVIRONMENT === 'production',
   DISABLE_PUPPETEER: process.env.DISABLE_PUPPETEER === 'true' || process.env.RAILWAY_ENVIRONMENT === 'production',

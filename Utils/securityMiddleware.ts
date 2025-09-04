@@ -38,12 +38,22 @@ export class SecurityMiddleware {
       // Extract API key
       const apiKey = this.extractAPIKey(req);
       
-      // Allow test API key for development
-      if (apiKey === 'test-api-key') {
+      // Allow test API key ONLY in test/development mode
+      if (apiKey === 'test-api-key' && isTestMode) {
         return {
           success: true,
           userData: { userId: 'test-user', tier: 'free' },
           rateLimit: { allowed: true, remaining: 100 }
+        };
+      }
+      
+      // REJECT test API key in production
+      if (apiKey === 'test-api-key' && !isTestMode) {
+        console.error('🚨 SECURITY ALERT: Test API key attempted in production mode');
+        return {
+          success: false,
+          error: 'Test API key not allowed in production',
+          status: 401
         };
       }
       

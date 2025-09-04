@@ -180,7 +180,7 @@ export class ResilientOrchestrator {
       }, {
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': process.env.JOBPING_API_KEY || 'test-api-key'
+          'x-api-key': process.env.JOBPING_API_KEY || ''
         }
       });
 
@@ -210,10 +210,10 @@ export class ResilientOrchestrator {
           const response = await httpClient.post(`/api/scrape/${scraper}`, {
             companies: []
           }, {
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': process.env.JOBPING_API_KEY || 'test-api-key'
-            }
+                      headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': process.env.JOBPING_API_KEY || ''
+          }
           });
 
           if (response.data.success && response.data.jobs) {

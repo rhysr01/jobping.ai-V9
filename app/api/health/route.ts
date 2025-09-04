@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-import { createClient } from '@supabase/supabase-js';
-import { createClient as createRedisClient } from 'redis';
-import OpenAI from 'openai';
-import { PerformanceMonitor } from '@/Utils/performanceMonitor';
-import { getScraperConfig, logScraperConfig } from '@/Utils/scraperConfig';
+import { productionMonitor } from '@/Utils/productionMonitoring';
+import { getDatabaseClient } from '@/Utils/databasePool';
+import { httpClient } from '@/Utils/httpClient';
+import { tokenManager } from '@/Utils/tokenManager';
 
 // Helper function to check Supabase health
 async function checkSupabaseHealth(): Promise<'healthy' | 'degraded' | 'critical'> {
@@ -165,25 +163,136 @@ function getPerformanceMetrics() {
   };
 }
 
-// Add Vercel-specific health check
+// Comprehensive production health check
 export async function GET() {
-  const isVercel = process.env.VERCEL === '1';
-  
-  // Import Railway config
-  const { CFG } = await import('@/Utils/railwayConfig');
-  
-  return NextResponse.json({
-    ok: true,
-    env: CFG.env,
-    mode: CFG.useBrowser ? 'puppeteer' : 'axios',
-    rateLimit: CFG.rateLimitEnabled ? 'on' : 'off',
-    rpm: CFG.rpm,
-    rph: CFG.rph,
-    ts: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-    version: process.env.VERCEL_GIT_COMMIT_SHA || 'local',
-    platform: isVercel ? 'vercel' : 'local',
-    region: process.env.VERCEL_REGION || 'unknown',
-    uptime: process.uptime()
-  });
+  try {
+    const startTime = Date.now();
+    
+    // Get comprehensive system health from production monitor
+    const systemHealth = await productionMonitor.getSystemHealth();
+    
+    // Get additional component statuses
+    const dbStatus = await checkDatabaseStatus();
+    const httpStatus = await checkHttpClientStatus();
+    const tokenStatus = await checkTokenManagerStatus();
+    
+    const responseTime = Date.now() - startTime;
+    
+    return NextResponse.json({
+      // Overall system status
+      ok: systemHealth.ok,
+      timestamp: new Date().toISOString(),
+      responseTime: `${responseTime}ms`,
+      
+      // System health summary
+      system: {
+        overall: systemHealth.ok ? 'healthy' : 'critical',
+        criticalIssues: systemHealth.criticalIssues.length,
+        warnings: systemHealth.warnings.length,
+        lastCheck: new Date(systemHealth.lastHealthCheck).toISOString()
+      },
+      
+      // Component health
+      components: {
+        database: {
+          status: systemHealth.components.database.status,
+          responseTime: `${systemHealth.components.database.responseTime}ms`,
+          details: dbStatus
+        },
+        httpClient: {
+          status: systemHealth.components.httpClient.status,
+          responseTime: `${systemHealth.components.httpClient.responseTime}ms`,
+          details: httpStatus
+        },
+        email: {
+          status: systemHealth.components.email.status,
+          responseTime: `${systemHealth.components.email.responseTime}ms`,
+          details: systemHealth.components.email.details
+        },
+        scrapers: {
+          status: systemHealth.components.scrapers.status,
+          responseTime: `${systemHealth.components.scrapers.responseTime}ms`,
+          details: systemHealth.components.scrapers.details
+        },
+        matching: {
+          status: systemHealth.components.matching.status,
+          responseTime: `${systemHealth.components.matching.responseTime}ms`,
+          details: systemHealth.components.matching.details
+        }
+      },
+      
+      // Performance metrics
+      performance: {
+        memoryUsage: `${Math.round(systemHealth.performance.memoryUsage / 1024 / 1024)}MB`,
+        activeConnections: systemHealth.performance.activeConnections,
+        uptime: `${Math.round(process.uptime())}s`
+      },
+      
+      // Environment info
+      environment: {
+        nodeEnv: process.env.NODE_ENV,
+        railway: !!process.env.RAILWAY_ENVIRONMENT,
+        vercel: process.env.VERCEL === '1',
+        region: process.env.VERCEL_REGION || 'unknown'
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('Health check failed:', error);
+    
+    return NextResponse.json({
+      ok: false,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+      status: 'critical'
+    }, { status: 500 });
+  }
+}
+
+// Helper function to check database status
+async function checkDatabaseStatus() {
+  try {
+    const db = getDatabaseClient();
+    const { data, error } = await db
+      .from('jobs')
+      .select('count')
+      .limit(1)
+      .timeout(5000);
+    
+    if (error) {
+      return { error: error.message, connected: false };
+    }
+    
+    return { connected: true, tableAccess: true };
+  } catch (error: any) {
+    return { error: error.message, connected: false };
+  }
+}
+
+// Helper function to check HTTP client status
+async function checkHttpClientStatus() {
+  try {
+    const status = httpClient.getStatus();
+    return {
+      circuitBreaker: status.circuitBreaker.state,
+      domains: status.domains.length,
+      healthy: true
+    };
+  } catch (error: any) {
+    return { error: error.message, healthy: false };
+  }
+}
+
+// Helper function to check token manager status
+async function checkTokenManagerStatus() {
+  try {
+    const stats = tokenManager.getUsageStats();
+    return {
+      dailyTokensRemaining: stats.tokens.dailyRemaining,
+      dailyCostRemaining: stats.costs.dailyRemaining,
+      healthy: true
+    };
+  } catch (error: any) {
+    return { error: error.message, healthy: false };
+  }
 }

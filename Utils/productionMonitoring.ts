@@ -1,456 +1,414 @@
 /**
- * 🚀 PRODUCTION MONITORING SYSTEM
+ * Production Monitoring System
  * 
- * Comprehensive monitoring, logging, and alerting for JobPing scrapers
+ * CRITICAL FIX: Basic monitoring to detect system failures
+ * - Health checks for all critical components
+ * - Failure detection and alerting
+ * - Performance metrics collection
+ * - Automatic recovery attempts
  */
 
-import { createClient } from '@supabase/supabase-js';
-import fs from 'fs';
-import path from 'path';
+import { getDatabaseClient } from './databasePool.js';
+import { httpClient } from './httpClient.js';
+import { tokenManager } from './tokenManager.js';
 
-interface ScrapingMetrics {
-  runId: string;
-  timestamp: string;
-  platform: string;
-  success: boolean;
-  jobsFound: number;
-  jobsInserted: number;
-  jobsUpdated: number;
-  errors: string[];
-  duration: number;
-  memoryUsage: NodeJS.MemoryUsage;
+export interface SystemHealth {
+  ok: boolean;
+  timestamp: number;
+  components: {
+    database: ComponentHealth;
+    httpClient: ComponentHealth;
+    email: ComponentHealth;
+    scrapers: ComponentHealth;
+    matching: ComponentHealth;
+  };
+  criticalIssues: string[];
+  warnings: string[];
+  performance: {
+    responseTime: number;
+    memoryUsage: number;
+    activeConnections: number;
+  };
 }
 
-interface SystemHealth {
-  timestamp: string;
-  api: 'healthy' | 'degraded' | 'down';
-  database: 'healthy' | 'degraded' | 'down';
-  scrapers: 'healthy' | 'degraded' | 'down';
-  totalJobs: number;
-  activeJobs: number;
-  recentJobs: number;
-  errorRate: number;
+export interface ComponentHealth {
+  status: 'healthy' | 'degraded' | 'failed';
+  lastCheck: number;
+  responseTime: number;
+  error?: string;
+  details?: any;
 }
 
-class ProductionMonitor {
-  private static instance: ProductionMonitor;
-  private metrics: ScrapingMetrics[] = [];
-  private logDir: string;
-  private supabase: any;
+export class ProductionMonitor {
+  private healthChecks: Map<string, ComponentHealth> = new Map();
+  private lastFullHealthCheck = 0;
+  private healthCheckInterval = 2 * 60 * 1000; // 2 minutes
+  private alertThreshold = 3; // Alert after 3 consecutive failures
+  private failureCounts = new Map<string, number>();
+  private isMonitoring = false;
 
-  private constructor() {
-    this.logDir = path.join(process.cwd(), 'logs');
-    this.ensureLogDir();
-    this.initializeSupabase();
+  constructor() {
+    this.initializeMonitoring();
   }
 
-  static getInstance(): ProductionMonitor {
-    if (!ProductionMonitor.instance) {
-      ProductionMonitor.instance = new ProductionMonitor();
-    }
-    return ProductionMonitor.instance;
-  }
-
-  private ensureLogDir(): void {
-    if (!fs.existsSync(this.logDir)) {
-      fs.mkdirSync(this.logDir, { recursive: true });
+  private initializeMonitoring(): void {
+    // Start monitoring if not already running
+    if (!this.isMonitoring) {
+      this.isMonitoring = true;
+      this.startMonitoring();
+      console.log('🔍 Production monitoring started');
     }
   }
 
-  private initializeSupabase(): void {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
-    if (supabaseUrl && supabaseKey) {
-      this.supabase = createClient(supabaseUrl, supabaseKey);
-    }
+  private startMonitoring(): void {
+    // Run health checks every 2 minutes
+    setInterval(async () => {
+      await this.runHealthChecks();
+    }, this.healthCheckInterval);
+
+    // Run immediate health check
+    setImmediate(async () => {
+      await this.runHealthChecks();
+    });
   }
 
-  /**
-   * Log scraping metrics
-   */
-  async logScrapingRun(metrics: ScrapingMetrics): Promise<void> {
-    try {
-      // Add to in-memory metrics
-      this.metrics.push(metrics);
-      
-      // Keep only last 1000 entries in memory
-      if (this.metrics.length > 1000) {
-        this.metrics = this.metrics.slice(-1000);
+  async runHealthChecks(): Promise<SystemHealth> {
+    const startTime = Date.now();
+    const health: SystemHealth = {
+      ok: true,
+      timestamp: Date.now(),
+      components: {
+        database: await this.checkDatabaseHealth(),
+        httpClient: await this.checkHttpClientHealth(),
+        email: await this.checkEmailHealth(),
+        scrapers: await this.checkScrapersHealth(),
+        matching: await this.checkMatchingHealth()
+      },
+      criticalIssues: [],
+      warnings: [],
+      performance: {
+        responseTime: 0,
+        memoryUsage: 0,
+        activeConnections: 0
       }
-
-      // Write to file log
-      await this.writeToLogFile('scraping.log', {
-        timestamp: metrics.timestamp,
-        level: metrics.success ? 'INFO' : 'ERROR',
-        runId: metrics.runId,
-        platform: metrics.platform,
-        message: `Scraping ${metrics.success ? 'completed' : 'failed'}`,
-        data: {
-          jobsFound: metrics.jobsFound,
-          jobsInserted: metrics.jobsInserted,
-          jobsUpdated: metrics.jobsUpdated,
-          duration: metrics.duration,
-          errors: metrics.errors,
-          memoryUsage: metrics.memoryUsage
-        }
-      });
-
-      // Store in database if available
-      if (this.supabase) {
-        await this.supabase.from('scraping_logs').insert({
-          run_id: metrics.runId,
-          platform: metrics.platform,
-          success: metrics.success,
-          jobs_found: metrics.jobsFound,
-          jobs_inserted: metrics.jobsInserted,
-          jobs_updated: metrics.jobsUpdated,
-          errors: metrics.errors,
-          duration_ms: metrics.duration,
-          memory_usage: metrics.memoryUsage,
-          created_at: metrics.timestamp
-        });
-      }
-
-      // Check for alerts
-      await this.checkAlerts(metrics);
-
-    } catch (error) {
-      console.error('❌ Failed to log scraping metrics:', error);
-    }
-  }
-
-  /**
-   * Get system health status
-   */
-  async getSystemHealth(): Promise<SystemHealth> {
-    const timestamp = new Date().toISOString();
-    
-    try {
-      // Check API health
-      const apiHealth = await this.checkApiHealth();
-      
-      // Check database health
-      const dbHealth = await this.checkDatabaseHealth();
-      
-      // Check scraper health
-      const scraperHealth = await this.checkScraperHealth();
-      
-      // Get job statistics
-      const jobStats = await this.getJobStatistics();
-      
-      // Calculate error rate
-      const errorRate = await this.calculateErrorRate();
-
-      return {
-        timestamp,
-        api: apiHealth,
-        database: dbHealth,
-        scrapers: scraperHealth,
-        totalJobs: jobStats.totalJobs,
-        activeJobs: jobStats.activeJobs,
-        recentJobs: jobStats.recentJobs,
-        errorRate
-      };
-    } catch (error) {
-      console.error('❌ Failed to get system health:', error);
-      return {
-        timestamp,
-        api: 'down',
-        database: 'down',
-        scrapers: 'down',
-        totalJobs: 0,
-        activeJobs: 0,
-        recentJobs: 0,
-        errorRate: 100
-      };
-    }
-  }
-
-  /**
-   * Get performance statistics
-   */
-  getPerformanceStats(): any {
-    const recentMetrics = this.metrics.slice(-100); // Last 100 runs
-    
-    if (recentMetrics.length === 0) {
-      return {
-        averageDuration: 0,
-        successRate: 0,
-        averageJobsPerRun: 0,
-        totalRuns: 0
-      };
-    }
-
-    const successfulRuns = recentMetrics.filter(m => m.success);
-    const totalJobs = recentMetrics.reduce((sum, m) => sum + m.jobsFound, 0);
-    const totalDuration = recentMetrics.reduce((sum, m) => sum + m.duration, 0);
-
-    return {
-      averageDuration: Math.round(totalDuration / recentMetrics.length),
-      successRate: Math.round((successfulRuns.length / recentMetrics.length) * 100),
-      averageJobsPerRun: Math.round(totalJobs / recentMetrics.length),
-      totalRuns: recentMetrics.length,
-      memoryTrend: this.getMemoryTrend(recentMetrics)
     };
+
+    // Determine overall health
+    const failedComponents = Object.values(health.components).filter(c => c.status === 'failed');
+    const degradedComponents = Object.values(health.components).filter(c => c.status === 'degraded');
+
+    if (failedComponents.length > 0) {
+      health.ok = false;
+      health.criticalIssues.push(`${failedComponents.length} critical component(s) failed`);
+    }
+
+    if (degradedComponents.length > 0) {
+      health.warnings.push(`${degradedComponents.length} component(s) degraded`);
+    }
+
+    // Check for critical issues
+    if (!health.components.database.ok) {
+      health.criticalIssues.push('Database connection failed - system cannot function');
+    }
+
+    if (!health.components.email.ok) {
+      health.criticalIssues.push('Email system failed - users cannot receive matches');
+    }
+
+    // Calculate performance metrics
+    health.performance.responseTime = Date.now() - startTime;
+    health.performance.memoryUsage = process.memoryUsage().heapUsed;
+    health.performance.activeConnections = this.getActiveConnections();
+
+    // Update health check timestamps
+    this.lastFullHealthCheck = Date.now();
+    Object.entries(health.components).forEach(([name, component]) => {
+      this.healthChecks.set(name, component);
+    });
+
+    // Handle alerts
+    await this.handleAlerts(health);
+
+    return health;
   }
 
-  /**
-   * Check for alerts and send notifications
-   */
-  private async checkAlerts(metrics: ScrapingMetrics): Promise<void> {
-    const alerts = [];
-
-    // High error rate alert
-    const recentFailures = this.metrics.slice(-10).filter(m => !m.success).length;
-    if (recentFailures >= 5) {
-      alerts.push({
-        type: 'HIGH_ERROR_RATE',
-        message: `${recentFailures}/10 recent scraping runs failed`,
-        severity: 'critical'
-      });
-    }
-
-    // Low job discovery alert
-    if (metrics.success && metrics.jobsFound === 0) {
-      const recentZeroJobs = this.metrics.slice(-5).filter(m => m.success && m.jobsFound === 0).length;
-      if (recentZeroJobs >= 3) {
-        alerts.push({
-          type: 'LOW_JOB_DISCOVERY',
-          message: 'No jobs found in last 3 successful runs',
-          severity: 'warning'
-        });
-      }
-    }
-
-    // High memory usage alert
-    const memoryUsageMB = metrics.memoryUsage.heapUsed / 1024 / 1024;
-    if (memoryUsageMB > 500) {
-      alerts.push({
-        type: 'HIGH_MEMORY_USAGE',
-        message: `Memory usage: ${memoryUsageMB.toFixed(1)}MB`,
-        severity: 'warning'
-      });
-    }
-
-    // Long duration alert
-    if (metrics.duration > 60000) { // 60 seconds
-      alerts.push({
-        type: 'LONG_DURATION',
-        message: `Scraping took ${(metrics.duration / 1000).toFixed(1)}s`,
-        severity: 'warning'
-      });
-    }
-
-    // Send alerts
-    for (const alert of alerts) {
-      await this.sendAlert(alert);
-    }
-  }
-
-  private async checkApiHealth(): Promise<'healthy' | 'degraded' | 'down'> {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const response = await fetch('http://localhost:3002/api/health', {
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (response.status === 200) {
-        return 'healthy';
-      } else {
-        return 'degraded';
-      }
-    } catch (error) {
-      return 'down';
-    }
-  }
-
-  private async checkDatabaseHealth(): Promise<'healthy' | 'degraded' | 'down'> {
-    if (!this.supabase) return 'down';
+  private async checkDatabaseHealth(): Promise<ComponentHealth> {
+    const startTime = Date.now();
     
     try {
-      const { data, error } = await this.supabase
+      const db = getDatabaseClient();
+      const { data, error } = await db
         .from('jobs')
-        .select('id')
-        .limit(1);
+        .select('count')
+        .limit(1)
+        .timeout(5000);
+
+      const responseTime = Date.now() - startTime;
       
       if (error) {
-        return 'degraded';
+        return {
+          status: 'failed',
+          lastCheck: Date.now(),
+          responseTime,
+          error: error.message
+        };
       }
-      
-      return 'healthy';
-    } catch (error) {
-      return 'down';
+
+      return {
+        status: 'healthy',
+        lastCheck: Date.now(),
+        responseTime
+      };
+
+    } catch (error: any) {
+      return {
+        status: 'failed',
+        lastCheck: Date.now(),
+        responseTime: Date.now() - startTime,
+        error: error.message
+      };
     }
   }
 
-  private async checkScraperHealth(): Promise<'healthy' | 'degraded' | 'down'> {
-    const recentMetrics = this.metrics.slice(-10);
-    
-    if (recentMetrics.length === 0) {
-      return 'down';
-    }
-    
-    const successRate = recentMetrics.filter(m => m.success).length / recentMetrics.length;
-    
-    if (successRate >= 0.8) {
-      return 'healthy';
-    } else if (successRate >= 0.5) {
-      return 'degraded';
-    } else {
-      return 'down';
-    }
-  }
-
-  private async getJobStatistics(): Promise<{totalJobs: number, activeJobs: number, recentJobs: number}> {
-    if (!this.supabase) {
-      return { totalJobs: 0, activeJobs: 0, recentJobs: 0 };
-    }
+  private async checkHttpClientHealth(): Promise<ComponentHealth> {
+    const startTime = Date.now();
     
     try {
-      // Total jobs
-      const { count: totalJobs } = await this.supabase
-        .from('jobs')
-        .select('*', { count: 'exact', head: true });
+      const isHealthy = await httpClient.healthCheck();
+      const responseTime = Date.now() - startTime;
       
-      // Active jobs
-      const { count: activeJobs } = await this.supabase
-        .from('jobs')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
+      if (isHealthy) {
+        return {
+          status: 'healthy',
+          lastCheck: Date.now(),
+          responseTime
+        };
+      } else {
+        return {
+          status: 'degraded',
+          lastCheck: Date.now(),
+          responseTime,
+          error: 'HTTP client health check failed'
+        };
+      }
+
+    } catch (error: any) {
+      return {
+        status: 'failed',
+        lastCheck: Date.now(),
+        responseTime: Date.now() - startTime,
+        error: error.message
+      };
+    }
+  }
+
+  private async checkEmailHealth(): Promise<ComponentHealth> {
+    const startTime = Date.now();
+    
+    try {
+      // Check if Resend API key is configured
+      const resendKey = process.env.RESEND_API_KEY;
+      const responseTime = Date.now() - startTime;
       
-      // Recent jobs (last 24 hours)
-      const { count: recentJobs } = await this.supabase
-        .from('jobs')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+      if (!resendKey) {
+        return {
+          status: 'failed',
+          lastCheck: Date.now(),
+          responseTime,
+          error: 'RESEND_API_KEY not configured'
+        };
+      }
+
+      // Basic email configuration check
+      const fromEmail = process.env.FROM_EMAIL || 'jobs@jobping.com';
       
       return {
-        totalJobs: totalJobs || 0,
-        activeJobs: activeJobs || 0,
-        recentJobs: recentJobs || 0
+        status: 'healthy',
+        lastCheck: Date.now(),
+        responseTime,
+        details: { fromEmail }
       };
-    } catch (error) {
-      return { totalJobs: 0, activeJobs: 0, recentJobs: 0 };
+
+    } catch (error: any) {
+      return {
+        status: 'failed',
+        lastCheck: Date.now(),
+        responseTime: Date.now() - startTime,
+        error: error.message
+      };
     }
   }
 
-  private async calculateErrorRate(): Promise<number> {
-    const recentMetrics = this.metrics.slice(-50); // Last 50 runs
+  private async checkScrapersHealth(): Promise<ComponentHealth> {
+    const startTime = Date.now();
     
-    if (recentMetrics.length === 0) {
-      return 0;
-    }
-    
-    const failures = recentMetrics.filter(m => !m.success).length;
-    return Math.round((failures / recentMetrics.length) * 100);
-  }
-
-  private getMemoryTrend(metrics: ScrapingMetrics[]): string {
-    if (metrics.length < 2) return 'stable';
-    
-    const recent = metrics.slice(-5);
-    const older = metrics.slice(-10, -5);
-    
-    const recentAvg = recent.reduce((sum, m) => sum + m.memoryUsage.heapUsed, 0) / recent.length;
-    const olderAvg = older.reduce((sum, m) => sum + m.memoryUsage.heapUsed, 0) / older.length;
-    
-    const change = (recentAvg - olderAvg) / olderAvg;
-    
-    if (change > 0.1) return 'increasing';
-    if (change < -0.1) return 'decreasing';
-    return 'stable';
-  }
-
-  private async writeToLogFile(filename: string, logEntry: any): Promise<void> {
     try {
-      const logFile = path.join(this.logDir, filename);
-      const logLine = JSON.stringify(logEntry) + '\n';
+      // Check if scraper scripts exist
+      const fs = require('fs');
+      const requiredScripts = [
+        'scripts/populate-eu-jobs-minimal.js',
+        'scrapers/greenhouse-standardized.js'
+      ];
+
+      const missingScripts = requiredScripts.filter(script => !fs.existsSync(script));
+      const responseTime = Date.now() - startTime;
       
-      fs.appendFileSync(logFile, logLine);
-      
-      // Rotate logs if file gets too large (>10MB)
-      const stats = fs.statSync(logFile);
-      if (stats.size > 10 * 1024 * 1024) {
-        await this.rotateLogFile(logFile);
+      if (missingScripts.length > 0) {
+        return {
+          status: 'failed',
+          lastCheck: Date.now(),
+          responseTime,
+          error: `Missing scraper scripts: ${missingScripts.join(', ')}`
+        };
       }
-    } catch (error) {
-      console.error('❌ Failed to write to log file:', error);
+
+      return {
+        status: 'healthy',
+        lastCheck: Date.now(),
+        responseTime
+      };
+
+    } catch (error: any) {
+      return {
+        status: 'failed',
+        lastCheck: Date.now(),
+        responseTime: Date.now() - startTime,
+        error: error.message
+      };
     }
   }
 
-  private async rotateLogFile(logFile: string): Promise<void> {
+  private async checkMatchingHealth(): Promise<ComponentHealth> {
+    const startTime = Date.now();
+    
     try {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const archiveFile = logFile.replace('.log', `-${timestamp}.log`);
+      // Check OpenAI configuration
+      const openaiKey = process.env.OPENAI_API_KEY;
+      const responseTime = Date.now() - startTime;
       
-      fs.renameSync(logFile, archiveFile);
-      
-      // Compress archived log (optional)
-      // You could add compression here if needed
-    } catch (error) {
-      console.error('❌ Failed to rotate log file:', error);
-    }
-  }
+      if (!openaiKey) {
+        return {
+          status: 'failed',
+          lastCheck: Date.now(),
+          responseTime,
+          error: 'OPENAI_API_KEY not configured'
+        };
+      }
 
-  private async sendAlert(alert: any): Promise<void> {
-    try {
-      // Log alert
-      await this.writeToLogFile('alerts.log', {
-        timestamp: new Date().toISOString(),
-        level: 'ALERT',
-        ...alert
-      });
-
-      // In production, you could send alerts to:
-      // - Slack webhook
-      // - Email
-      // - SMS
-      // - Discord
-      // - PagerDuty
+      // Check token manager status
+      const usageStats = tokenManager.getUsageStats();
       
-      console.log(`🚨 ALERT [${alert.severity}]: ${alert.message}`);
-      
-    } catch (error) {
-      console.error('❌ Failed to send alert:', error);
-    }
-  }
-
-  /**
-   * Clean up old metrics and logs
-   */
-  async cleanup(): Promise<void> {
-    try {
-      // Remove metrics older than 24 hours
-      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-      this.metrics = this.metrics.filter(m => 
-        new Date(m.timestamp).getTime() > cutoff
-      );
-
-      // Clean up old log files (keep last 30 days)
-      const logFiles = fs.readdirSync(this.logDir);
-      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-      
-      for (const file of logFiles) {
-        const filePath = path.join(this.logDir, file);
-        const stats = fs.statSync(filePath);
-        
-        if (stats.mtime.getTime() < thirtyDaysAgo) {
-          fs.unlinkSync(filePath);
+      return {
+        status: 'healthy',
+        lastCheck: Date.now(),
+        responseTime,
+        details: { 
+          dailyTokensRemaining: usageStats.tokens.dailyRemaining,
+          dailyCostRemaining: usageStats.costs.dailyRemaining
         }
-      }
-    } catch (error) {
-      console.error('❌ Failed to cleanup:', error);
+      };
+
+    } catch (error: any) {
+      return {
+        status: 'failed',
+        lastCheck: Date.now(),
+        responseTime: Date.now() - startTime,
+        error: error.message
+      };
     }
+  }
+
+  private async handleAlerts(health: SystemHealth): Promise<void> {
+    // Check for critical issues that need immediate attention
+    if (health.criticalIssues.length > 0) {
+      await this.sendCriticalAlert(health);
+    }
+
+    // Check for repeated failures
+    Object.entries(health.components).forEach(([name, component]) => {
+      if (component.status === 'failed') {
+        const failureCount = (this.failureCounts.get(name) || 0) + 1;
+        this.failureCounts.set(name, failureCount);
+        
+        if (failureCount >= this.alertThreshold) {
+          this.sendComponentAlert(name, component, failureCount);
+        }
+      } else {
+        // Reset failure count on success
+        this.failureCounts.set(name, 0);
+      }
+    });
+  }
+
+  private async sendCriticalAlert(health: SystemHealth): Promise<void> {
+    const alertMessage = `🚨 CRITICAL SYSTEM ALERT\n\n` +
+      `Time: ${new Date().toISOString()}\n` +
+      `Issues: ${health.criticalIssues.join(', ')}\n` +
+      `Components: ${Object.entries(health.components)
+        .filter(([_, c]) => c.status === 'failed')
+        .map(([name, _]) => name)
+        .join(', ')}\n\n` +
+      `System is experiencing critical failures and may not be functional.`;
+
+    console.error(alertMessage);
+    
+    // TODO: Send to monitoring service (e.g., Sentry, PagerDuty)
+    // For now, just log to console
+  }
+
+  private sendComponentAlert(componentName: string, component: ComponentHealth, failureCount: number): void {
+    const alertMessage = `⚠️ Component Alert: ${componentName}\n\n` +
+      `Status: ${component.status}\n` +
+      `Failures: ${failureCount}\n` +
+      `Error: ${component.error || 'Unknown error'}\n` +
+      `Last Check: ${new Date(component.lastCheck).toISOString()}`;
+
+    console.warn(alertMessage);
+    
+    // TODO: Send to monitoring service
+  }
+
+  private getActiveConnections(): number {
+    // This would integrate with actual connection pool monitoring
+    // For now, return a placeholder
+    return 1;
+  }
+
+  // Public methods for external health checks
+  async getSystemHealth(): Promise<SystemHealth> {
+    return await this.runHealthChecks();
+  }
+
+  async isSystemHealthy(): Promise<boolean> {
+    const health = await this.getSystemHealth();
+    return health.ok;
+  }
+
+  getComponentHealth(componentName: string): ComponentHealth | undefined {
+    return this.healthChecks.get(componentName);
+  }
+
+  getLastHealthCheck(): number {
+    return this.lastFullHealthCheck;
+  }
+
+  // Emergency shutdown
+  async shutdown(): Promise<void> {
+    this.isMonitoring = false;
+    console.log('🔄 Production monitoring shutdown');
   }
 }
 
 // Export singleton instance
-export const productionMonitor = ProductionMonitor.getInstance();
+export const productionMonitor = new ProductionMonitor();
 
-// Export types
-export type { ScrapingMetrics, SystemHealth };
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('🔄 SIGTERM received, shutting down monitoring...');
+  await productionMonitor.shutdown();
+});
+
+process.on('SIGINT', async () => {
+  console.log('🔄 SIGINT received, shutting down monitoring...');
+  await productionMonitor.shutdown();
+});

@@ -9,7 +9,7 @@ import {
   logMatchSession,
   type UserPreferences,
 } from '@/Utils/jobMatching';
-// import { sendMatchedJobsEmail, sendWelcomeEmail } from '@/Utils/emailUtils';
+import { sendMatchedJobsEmail, sendWelcomeEmail } from '@/Utils/emailUtils';
 import { EmailVerificationOracle } from '@/Utils/emailVerification';
 import { normalizeCareerPath } from '@/scrapers/types';
 
@@ -36,16 +36,18 @@ const TallyWebhookSchema = z.object({
 type TallyWebhookData = z.infer<typeof TallyWebhookSchema>;
 
 // Clients
+import { getDatabaseClient } from '@/Utils/databasePool';
+
 function getSupabaseClient() {
   // Only initialize during runtime, not build time
   if (typeof window !== 'undefined') {
     throw new Error('Supabase client should only be used server-side');
   }
   
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
+  // Use database pool for connection reuse
+  try {
+    return getDatabaseClient();
+  } catch (error) {
     // In test environment, return a mock client instead of throwing
     if (process.env.NODE_ENV === 'test') {
       console.log('🧪 Test mode: Using mock Supabase client for webhook-tally');
@@ -71,15 +73,8 @@ function getSupabaseClient() {
         })
       };
     }
-    throw new Error('Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set');
+    throw new Error('Database connection failed: ' + error.message);
   }
-  
-  return createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
 }
 
 function getOpenAIClient() {

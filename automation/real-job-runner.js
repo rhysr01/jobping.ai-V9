@@ -75,7 +75,8 @@ class RealJobRunner {
     try {
       console.log('🔄 Running standardized Greenhouse scraper...');
       
-      const { stdout } = await execAsync('npx tsx scrapers/greenhouse-standardized.ts', {
+      // Use the working JavaScript version instead of tsx
+      const { stdout } = await execAsync('node scrapers/greenhouse-standardized.js', {
         cwd: process.cwd(),
         timeout: 300000
       });
@@ -93,7 +94,8 @@ class RealJobRunner {
     try {
       console.log('🔄 Running Indeed scraper...');
       
-      const { stdout } = await execAsync('npx tsx scrapers/indeed-scraper.ts', {
+      // Use the working JavaScript version instead of tsx
+      const { stdout } = await execAsync('node scrapers/indeed-scraper.js', {
         cwd: process.cwd(),
         timeout: 300000
       });
@@ -111,13 +113,18 @@ class RealJobRunner {
     try {
       console.log('🔄 Running Muse scraper...');
       
-      const { stdout } = await execAsync('npx tsx scrapers/muse-scraper.ts', {
-        cwd: process.cwd(),
-        timeout: 300000
-      });
-      
-      console.log(`✅ Muse: Jobs processed`);
-      return 1; // Assume success
+      // Use the working JavaScript version instead of tsx
+      if (fs.existsSync('scrapers/muse-scraper.js')) {
+        const { stdout } = await execAsync('node scrapers/muse-scraper.js', {
+          cwd: process.cwd(),
+          timeout: 300000
+        });
+        console.log(`✅ Muse: Jobs processed`);
+        return 1;
+      } else {
+        console.log('⚠️ Muse scraper not available, skipping');
+        return 0;
+      }
     } catch (error) {
       console.error('❌ Muse scraper failed:', error.message);
       return 0;
@@ -129,7 +136,7 @@ class RealJobRunner {
     try {
       console.log('🔄 Running JSearch scraper...');
       
-      const { stdout } = await execAsync('npx tsx scrapers/jsearch-scraper.ts', {
+      const { stdout } = await execAsync('node scrapers/jsearch-scraper.js', {
         cwd: process.cwd(),
         timeout: 300000
       });
