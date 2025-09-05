@@ -69,21 +69,21 @@ class RealJobRunner {
     }
   }
 
-  // Run Reed scraper
+  // Run Reed scraper with real API
   async runReedScraper() {
     try {
-      console.log('🔄 Running Reed scraper...');
+      console.log('🔄 Running Reed scraper with real API...');
       
-      // Use the working script we just tested
-      const { stdout } = await execAsync('node scripts/populate-eu-jobs-minimal.js', {
+      // Use the real Reed scraper that gets actual jobs
+      const { stdout } = await execAsync('node scripts/reed-real-scraper.js', {
         cwd: process.cwd(),
         timeout: 300000 // 5 minutes
       });
       
-      const jobMatch = stdout.match(/Total NEW jobs saved: (\d+)/);
+      const jobMatch = stdout.match(/Total jobs saved: (\d+)/);
       const jobsSaved = jobMatch ? parseInt(jobMatch[1]) : 0;
       
-      console.log(`✅ Reed: ${jobsSaved} jobs processed`);
+      console.log(`✅ Reed: ${jobsSaved} real jobs processed`);
       return jobsSaved;
     } catch (error) {
       console.error('❌ Reed scraper failed:', error.message);
