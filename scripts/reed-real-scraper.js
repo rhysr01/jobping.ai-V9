@@ -17,11 +17,18 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Reed API Configuration
+// Reed API Configuration - Expanded UK cities + Dublin
 const REED_CONFIG = {
   baseUrl: 'https://www.reed.co.uk/api/1.0/search',
   apiKey: process.env.REED_API_KEY,
-  cities: ['London', 'Manchester', 'Birmingham', 'Edinburgh', 'Glasgow'],
+  cities: [
+    // Major UK cities
+    'London', 'Manchester', 'Birmingham', 'Edinburgh', 'Glasgow',
+    // Additional UK cities with jobs
+    'Leeds', 'Cardiff', 'Cambridge', 'Oxford',
+    // EU cities (Ireland)
+    'Dublin'
+  ],
   queries: [
     'graduate analyst',
     'junior consultant', 
@@ -37,9 +44,16 @@ function makeJobHash(job) {
   return crypto.createHash('sha256').update(content).digest('hex');
 }
 
-// Helper function to classify early career
+// Helper function to classify early career and filter out remote jobs
 function isEarlyCareer(job) {
   const text = `${job.title} ${job.description}`.toLowerCase();
+  
+  // Exclude remote jobs
+  const remoteKeywords = ['remote', 'work from home', 'wfh', 'hybrid', 'flexible'];
+  const isRemote = remoteKeywords.some(keyword => text.includes(keyword));
+  if (isRemote) {
+    return false;
+  }
   
   const earlyCareerKeywords = [
     'graduate', 'new grad', 'entry level', 'intern', 'internship',
