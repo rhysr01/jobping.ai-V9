@@ -5,6 +5,11 @@ import Stripe from 'stripe';
 
 // Initialize Stripe only when needed and with proper error handling
 function getStripeClient() {
+  // Prevent execution during build time
+  if (typeof window !== 'undefined') {
+    throw new Error('Stripe client should only be used server-side');
+  }
+  
   if (!process.env.STRIPE_SECRET_KEY) {
     throw new Error('STRIPE_SECRET_KEY environment variable is required');
   }

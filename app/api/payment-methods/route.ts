@@ -2,15 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-07-30.basil',
-  typescript: true,
-});
+// Initialize Stripe only when needed and with proper error handling
+function getStripeClient() {
+  // Prevent execution during build time
+  if (typeof window !== 'undefined') {
+    throw new Error('Stripe client should only be used server-side');
+  }
+  
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY environment variable is required');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-07-30.basil',
+    typescript: true,
+  });
+}
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Initialize Supabase only when needed
+function getSupabaseClient() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Supabase environment variables are required');
+  }
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
 
 // POST: Add new payment method
 export async function POST(req: NextRequest) {
@@ -22,6 +39,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get user's Stripe customer ID
+    const supabase = getSupabaseClient();
     const { data: user } = await supabase
       .from('users')
       .select('stripe_customer_id')
@@ -37,6 +55,7 @@ export async function POST(req: NextRequest) {
     const fullYear = expYear.length === 2 ? `20${expYear}` : expYear;
 
     // Create payment method
+    const stripe = getStripeClient();
     const paymentMethod = await stripe.paymentMethods.create({
       type: 'card',
       card: {
@@ -109,6 +128,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Get user's Stripe customer ID
+    const supabase = getSupabaseClient();
     const { data: user } = await supabase
       .from('users')
       .select('stripe_customer_id')
@@ -120,6 +140,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Get payment methods
+    const stripe = getStripeClient();
     const paymentMethods = await stripe.paymentMethods.list({
       customer: user.stripe_customer_id,
       type: 'card',
@@ -156,6 +177,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Get user's Stripe customer ID
+    const supabase = getSupabaseClient();
     const { data: user } = await supabase
       .from('users')
       .select('stripe_customer_id')
@@ -167,6 +189,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Verify the payment method belongs to the user
+    const stripe = getStripeClient();
     const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
     if (paymentMethod.customer !== user.stripe_customer_id) {
       return NextResponse.json({ error: 'Payment method not found' }, { status: 404 });
