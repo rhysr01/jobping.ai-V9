@@ -19,48 +19,18 @@ export interface IngestJob {
  */
 export function classifyEarlyCareer(job: IngestJob): boolean {
   const { title, description } = job;
-  const text = `${title} ${description}`.toLowerCase();
-
-  // Early career indicators
-  const earlyCareerKeywords = [
-    'graduate', 'entry level', 'entry-level', 'junior', 'trainee', 'intern',
-    'student', 'new grad', 'new graduate', 'recent graduate', 'first job',
-    'no experience', '0-1 years', '0-2 years', '1-2 years', 'starter',
-    'beginner', 'apprentice', 'associate', 'assistant'
-  ];
-
-  // Check for early career keywords
-  const hasEarlyCareerKeyword = earlyCareerKeywords.some(keyword => 
-    text.includes(keyword)
-  );
-
-  // Check for experience requirements that indicate early career
-  const experiencePatterns = [
-    /(?:0|1|2)\s*(?:years?|yrs?)\s*(?:of\s+)?experience/i,
-    /no\s+experience\s+required/i,
-    /entry\s+level/i,
-    /junior\s+level/i
-  ];
-
-  const hasEarlyCareerExperience = experiencePatterns.some(pattern => 
-    pattern.test(text)
-  );
-
-  // Check for education requirements that indicate early career
-  const educationPatterns = [
-    /bachelor['']?s?\s+degree/i,
-    /master['']?s?\s+degree/i,
-    /university\s+degree/i,
-    /recent\s+graduate/i,
-    /new\s+graduate/i
-  ];
-
-  const hasEducationRequirement = educationPatterns.some(pattern => 
-    pattern.test(text)
-  );
-
-  // If any early career indicators are present, classify as early career
-  return hasEarlyCareerKeyword || hasEarlyCareerExperience || hasEducationRequirement;
+  const text = `${title} ${description}`;
+  
+  // ✅ COMPREHENSIVE: Multilingual early career detection based on user research
+  const graduateRegex = /(graduate|new.?grad|recent.?graduate|campus.?hire|graduate.?scheme|graduate.?program|rotational.?program|university.?hire|college.?hire|entry.?level|junior|trainee|intern|internship|placement|analyst|assistant|fellowship|apprenticeship|apprentice|stagiaire|alternant|alternance|d[ée]butant|formation|dipl[oô]m[eé]|apprenti|poste.?d.?entr[ée]e|niveau.?d[ée]butant|praktikum|praktikant|traineeprogramm|berufseinstieg|absolvent|absolventenprogramm|ausbildung|auszubildende|werkstudent|einsteiger|becario|pr[aá]cticas|programa.?de.?graduados|reci[eé]n.?titulado|aprendiz|nivel.?inicial|puesto.?de.?entrada|j[uú]nior|formaci[oó]n.?dual|tirocinio|stagista|apprendista|apprendistato|neolaureato|formazione|inserimento.?lavorativo|stage|stagiair|starterfunctie|traineeship|afgestudeerde|leerwerkplek|instapfunctie|fresher|nyuddannet|nyutdannet|nyexaminerad|neo.?laureato|nuovo.?laureato|recién.?graduado|nuevo.?graduado|joven.?profesional|nieuwe.?medewerker)/i;
+  
+  // ✅ FIXED: More precise senior role exclusion - don't exclude "specialist" or "expert" in junior roles
+  const seniorRegex = /(senior|lead|principal|manager|director|head.?of|vp|chief|executive|5\+.?years|7\+.?years|10\+.?years|experienced|architect|consultant|advisory|strategic|executive|management|team.?lead|tech.?lead|staff|distinguished)/i;
+  
+  // ✅ FIXED: Only exclude roles requiring significant experience (3+ years), not 1-2 years
+  const experienceRegex = /(proven.?track.?record|extensive.?experience|minimum.?3.?years|minimum.?5.?years|minimum.?7.?years|prior.?experience|relevant.?experience|3\+.?years|5\+.?years|7\+.?years|10\+.?years)/i;
+  
+  return graduateRegex.test(text) && !seniorRegex.test(text) && !experienceRegex.test(text);
 }
 
 /**

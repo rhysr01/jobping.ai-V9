@@ -2,7 +2,6 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { ReactNode } from 'react';
 import { Inter } from 'next/font/google';
-import * as Sentry from '@sentry/nextjs';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -102,22 +101,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className="bg-[#0B0B0F] text-white overflow-x-hidden font-inter selection:bg-white selection:text-black">
-        <Sentry.ErrorBoundary fallback={({ error, resetError }) => (
-          <div className="min-h-screen flex items-center justify-center bg-[#0B0B0F]">
-            <div className="text-center p-8">
-              <h1 className="text-2xl font-bold text-white mb-4">Something went wrong</h1>
-              <p className="text-gray-400 mb-6">We're sorry, but something unexpected happened.</p>
-              <button 
-                onClick={resetError}
-                className="bg-white text-black px-6 py-2 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Try again
-              </button>
-            </div>
-          </div>
-        )}>
-          {children}
-        </Sentry.ErrorBoundary>
+        {children}
       </body>
     </html>
   );

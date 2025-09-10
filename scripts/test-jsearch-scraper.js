@@ -23,7 +23,7 @@ console.log('🔑 API Key:', '***' + rapidApiKey.slice(-4));
 // Test the JSearch scraper
 console.log('\n🔍 Testing JSearch scraper...');
 
-import('../scrapers/jsearch-scraper.ts').then((module) => {
+import('../scrapers/jsearch-scraper.js').then((module) => {
   const JSearchScraper = module.default.default || module.default;
   
   try {

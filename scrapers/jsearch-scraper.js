@@ -1,68 +1,47 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const httpClient_js_1 = require("../Utils/httpClient.js");
+// ✅ FIXED JSearch Scraper - Optimized for EU Early Career Jobs
 const utils_js_1 = require("./utils.js");
-// JSearch API Configuration
+// ✅ OPTIMIZED JSearch Configuration
 const JSEARCH_CONFIG = {
     baseUrl: 'https://jsearch.p.rapidapi.com/search',
     apiKey: process.env.RAPIDAPI_KEY || '',
-    // EU cities and countries for targeting
+    // Core EU cities - aligned with JobPing user preferences
     locations: [
         'London, United Kingdom',
         'Dublin, Ireland',
         'Berlin, Germany',
-        'Munich, Germany',
         'Amsterdam, Netherlands',
-        'Rotterdam, Netherlands',
         'Paris, France',
         'Madrid, Spain',
-        'Barcelona, Spain',
+        'Munich, Germany',
         'Stockholm, Sweden',
-        'Copenhagen, Denmark',
         'Zurich, Switzerland',
-        'Vienna, Austria',
-        'Milan, Italy',
-        'Rome, Italy',
-        'Brussels, Belgium',
-        'Prague, Czech Republic',
-        'Warsaw, Poland'
+        'Copenhagen, Denmark',
+        'Barcelona, Spain',
+        'Milan, Italy'
     ],
-    // Early-career focused search queries
-    queries: [
-        'graduate program',
-        'junior developer',
-        'entry level analyst',
-        'trainee consultant',
-        'associate marketing',
-        'graduate scheme',
-        'junior data analyst',
-        'entry level finance',
-        'trainee operations',
-        'graduate engineer'
-    ],
-    // Rate limiting (Free tier: 2,500 requests/month ≈ 83/day ≈ 3.5/hour)
-    requestInterval: 1200000, // 20 minutes between requests to be very conservative
-    monthlyBudget: 2000, // Leave buffer under 2,500 limit  
-    dailyBudget: 65, // ~83/day but be conservative
-    seenJobTTL: 7 * 24 * 60 * 60 * 1000, // 7 days (JSearch has good freshness)
-    // Results per page (max 10 for free tier)
+    // ✅ FIXED: Much more reasonable rate limiting
+    requestInterval: 300000, // 5 minutes instead of 20 minutes (4x faster!)
+    monthlyBudget: 2000,
+    dailyBudget: 65,
+    seenJobTTL: 7 * 24 * 60 * 60 * 1000,
     resultsPerPage: 10,
-    // Date filter (only recent jobs)
-    datePosted: 'week' // today, 3days, week, month
+    datePosted: 'week'
 };
 const TRACK_QUERIES = {
-    A: 'graduate program OR junior developer', // Tech focus
-    B: 'entry level analyst OR trainee consultant', // Business focus
-    C: 'associate marketing OR graduate sales', // Marketing/Sales focus  
-    D: 'junior data analyst OR entry level finance', // Analytics/Finance focus
-    E: 'trainee operations OR graduate engineer' // Operations/Engineering focus
+    A: 'graduate scheme OR new grad OR campus hire OR recent graduate',
+    B: 'graduate program OR junior analyst OR trainee consultant OR entry level',
+    C: 'graduate marketing OR junior sales OR new grad business OR campus hire',
+    D: 'graduate data analyst OR junior finance OR new grad operations OR trainee',
+    E: 'graduate engineer OR junior developer OR new grad tech OR campus hire'
 };
 const TRACK_LOCATIONS = {
-    A: ['London, United Kingdom', 'Berlin, Germany', 'Amsterdam, Netherlands'], // Tech hubs
-    B: ['Dublin, Ireland', 'Paris, France', 'Zurich, Switzerland'], // Business centers
-    C: ['Madrid, Spain', 'Stockholm, Sweden', 'Milan, Italy'], // Creative hubs
-    D: ['Copenhagen, Denmark', 'Vienna, Austria', 'Brussels, Belgium'], // Finance/Analytics
-    E: ['Munich, Germany', 'Barcelona, Spain', 'Prague, Czech Republic'] // Engineering/Ops
+    A: ['London, United Kingdom', 'Berlin, Germany', 'Amsterdam, Netherlands', 'Stockholm, Sweden'],
+    B: ['Dublin, Ireland', 'Paris, France', 'Zurich, Switzerland', 'London, United Kingdom'],
+    C: ['Madrid, Spain', 'Barcelona, Spain', 'Milan, Italy', 'Copenhagen, Denmark'],
+    D: ['London, United Kingdom', 'Amsterdam, Netherlands', 'Zurich, Switzerland', 'Munich, Germany'],
+    E: ['Berlin, Germany', 'Dublin, Ireland', 'Paris, France', 'Munich, Germany']
 };
 class JSearchScraper {
     constructor() {
@@ -71,10 +50,9 @@ class JSearchScraper {
         this.monthlyRequestCount = 0;
         this.lastRequestTime = 0;
         this.lastDayReset = '';
-        this.seenJobs = new Map(); // jobId -> timestamp
+        this.seenJobs = new Map();
         this.resetDailyCounts();
         this.cleanupSeenJobs();
-        // Clean up seen jobs every 12 hours
         setInterval(() => this.cleanupSeenJobs(), 12 * 60 * 60 * 1000);
     }
     resetDailyCounts() {
@@ -93,30 +71,27 @@ class JSearchScraper {
         }
     }
     getTrackForRun() {
-        // Rotate based on day of week and hour to get good diversity
         const now = new Date();
-        const dayOfWeek = now.getDay(); // 0-6
-        const hour = now.getHours(); // 0-23
+        const dayOfWeek = now.getDay();
+        const hour = now.getHours();
         const tracks = ['A', 'B', 'C', 'D', 'E'];
-        const trackIndex = (dayOfWeek + Math.floor(hour / 5)) % 5; // Rotate every ~5 hours
+        const trackIndex = (dayOfWeek + Math.floor(hour / 5)) % 5;
         return tracks[trackIndex];
     }
     async throttleRequest() {
         this.resetDailyCounts();
-        // Check daily budget
         if (this.dailyRequestCount >= JSEARCH_CONFIG.dailyBudget) {
-            throw new Error('Daily API budget exceeded - JSearch free tier limit reached');
+            throw new Error('Daily API budget exceeded');
         }
-        // Check monthly budget  
         if (this.monthlyRequestCount >= JSEARCH_CONFIG.monthlyBudget) {
-            throw new Error('Monthly API budget exceeded - JSearch free tier limit reached');
+            throw new Error('Monthly API budget exceeded');
         }
-        // Enforce minimum time between requests (20 minutes)
+        // ✅ FIXED: Much more reasonable rate limiting (5 minutes instead of 20)
         const now = Date.now();
         const timeSinceLastRequest = now - this.lastRequestTime;
         if (timeSinceLastRequest < JSEARCH_CONFIG.requestInterval) {
             const delay = JSEARCH_CONFIG.requestInterval - timeSinceLastRequest;
-            console.log(`⏰ Rate limiting: waiting ${Math.round(delay / 1000 / 60)} minutes before next request...`);
+            console.log(`⏰ Rate limiting: waiting ${Math.round(delay / 1000 / 60)} minutes...`);
             await new Promise(resolve => setTimeout(resolve, delay));
         }
         this.lastRequestTime = Date.now();
@@ -124,53 +99,45 @@ class JSearchScraper {
     async makeRequest(params) {
         await this.throttleRequest();
         try {
-            const response = await httpClient_js_1.httpClient.get(JSEARCH_CONFIG.baseUrl, {
-                params: {
-                    query: params.query,
-                    page: params.page || 1,
-                    num_pages: params.num_pages || 1,
-                    date_posted: params.date_posted || JSEARCH_CONFIG.datePosted,
-                    remote_jobs_only: params.remote_jobs_only || false,
-                    employment_types: params.employment_types || 'FULLTIME,PARTTIME,CONTRACTOR',
-                    job_requirements: params.job_requirements || 'under_3_years_experience,no_degree',
-                    ...params
-                },
+            const queryParams = new URLSearchParams({
+                query: params.query,
+                page: (params.page || 1).toString(),
+                num_pages: (params.num_pages || 1).toString(),
+                date_posted: params.datePosted || JSEARCH_CONFIG.datePosted,
+                remote_jobs_only: (params.remote_jobs_only || false).toString(),
+                employment_types: params.employment_types || 'FULLTIME,PARTTIME,CONTRACTOR',
+                job_requirements: params.job_requirements || 'under_3_years_experience,no_degree'
+            });
+            const url = `${JSEARCH_CONFIG.baseUrl}?${queryParams.toString()}`;
+            const response = await fetch(url, {
+                method: 'GET',
                 headers: {
                     'X-RapidAPI-Key': JSEARCH_CONFIG.apiKey,
                     'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'User-Agent': 'JobPing/1.0 (https://jobping.com)'
                 }
-            }, {
-                dailyLimit: JSEARCH_CONFIG.dailyBudget,
-                minInterval: JSEARCH_CONFIG.requestInterval
             });
+            if (!response.ok) {
+                if (response.status === 429) {
+                    console.warn('🚫 Rate limited, backing off...');
+                    await new Promise(resolve => setTimeout(resolve, 60000));
+                    return this.makeRequest(params);
+                }
+                throw new Error(`JSearch API error: ${response.status} ${response.statusText}`);
+            }
             this.requestCount++;
             this.dailyRequestCount++;
             this.monthlyRequestCount++;
-            return response.data;
+            const data = await response.json();
+            return data;
         }
         catch (error) {
-            if (error.response?.status === 429) {
-                console.warn('🚫 Rate limited by JSearch API, backing off...');
-                await new Promise(resolve => setTimeout(resolve, 30000)); // 30 second backoff
-                return this.makeRequest(params);
-            }
-            if (error.response?.status === 403) {
-                throw new Error('JSearch API access denied - check your RapidAPI key and subscription');
-            }
-            if (error.response?.status === 402) {
-                throw new Error('JSearch API quota exceeded - upgrade your RapidAPI plan');
-            }
-            console.error('JSearch API error:', {
-                status: error.response?.status,
-                statusText: error.response?.statusText,
-                data: error.response?.data
-            });
+            console.error('JSearch API error:', error);
             throw error;
         }
     }
     convertToIngestJob(jSearchJob) {
-        // Build comprehensive location
         let location = 'Remote';
         if (jSearchJob.job_city && jSearchJob.job_country) {
             location = `${jSearchJob.job_city}, ${jSearchJob.job_country}`;
@@ -181,7 +148,6 @@ class JSearchScraper {
         else if (jSearchJob.job_city) {
             location = jSearchJob.job_city;
         }
-        // Handle remote jobs
         if (jSearchJob.job_is_remote) {
             location = `Remote, ${jSearchJob.job_country || 'EU'}`;
         }
@@ -196,30 +162,33 @@ class JSearchScraper {
         };
     }
     async searchJobs(query, location) {
+        var _a;
         const jobs = [];
         console.log(`🔍 Searching JSearch: "${query}" ${location ? `in ${location}` : ''}`);
         try {
-            // Build search query - combine job query with location if provided
-            const searchQuery = location ? `${query} location:${location}` : query;
+            // ✅ IMPROVED: Better search query construction
+            let searchQuery = query;
+            if (location) {
+                const city = location.split(',')[0].trim();
+                searchQuery = `${query} ${city}`;
+            }
             const params = {
                 query: searchQuery,
                 page: 1,
-                num_pages: 1, // Only fetch 1 page to conserve API quota
+                num_pages: 1,
                 date_posted: JSEARCH_CONFIG.datePosted,
-                job_requirements: 'under_3_years_experience,no_degree' // Focus on early career
+                job_requirements: 'under_3_years_experience,no_degree'
             };
             const response = await this.makeRequest(params);
-            console.log(`📊 Found ${response.data?.length || 0} jobs for "${query}"`);
+            console.log(`📊 Found ${((_a = response.data) === null || _a === void 0 ? void 0 : _a.length) || 0} jobs for "${query}"`);
             if (response.data && response.data.length > 0) {
                 for (const job of response.data) {
                     if (!this.seenJobs.has(job.job_id)) {
                         this.seenJobs.set(job.job_id, Date.now());
                         try {
                             const ingestJob = this.convertToIngestJob(job);
-                            // ✅ Apply early-career filtering
                             const isEarlyCareer = (0, utils_js_1.classifyEarlyCareer)(ingestJob);
                             if (isEarlyCareer) {
-                                // ✅ ADD EU LOCATION FILTERING - Only accept EU jobs
                                 if (this.isEULocation(job)) {
                                     jobs.push(ingestJob);
                                     console.log(`✅ Early-career EU: ${ingestJob.title} at ${ingestJob.company} (${ingestJob.location})`);
@@ -244,65 +213,79 @@ class JSearchScraper {
         }
         return jobs;
     }
-    // ✅ NEW METHOD: EU Location Filtering
+    // ✅ ENHANCED: Much more comprehensive EU location detection
     isEULocation(job) {
-        // EU countries list
-        const euCountries = [
-            'United Kingdom', 'UK', 'GB',
-            'Ireland', 'IE',
-            'Germany', 'DE',
-            'Netherlands', 'NL',
-            'France', 'FR',
-            'Spain', 'ES',
-            'Sweden', 'SE',
-            'Denmark', 'DK',
-            'Switzerland', 'CH',
-            'Austria', 'AT',
-            'Italy', 'IT',
-            'Belgium', 'BE',
-            'Czech Republic', 'CZ',
-            'Poland', 'PL',
-            'Finland', 'FI',
-            'Norway', 'NO',
-            'Portugal', 'PT',
-            'Greece', 'GR',
-            'Hungary', 'HU',
-            'Romania', 'RO',
-            'Bulgaria', 'BG',
-            'Croatia', 'HR',
-            'Slovenia', 'SI',
-            'Slovakia', 'SK',
-            'Estonia', 'EE',
-            'Latvia', 'LV',
-            'Lithuania', 'LT',
-            'Luxembourg', 'LU',
-            'Malta', 'MT',
-            'Cyprus', 'CY'
+        const euPatterns = [
+            'united kingdom', 'uk', 'great britain', 'britain', 'england', 'scotland', 'wales',
+            'ireland', 'republic of ireland', 'ie',
+            'germany', 'deutschland', 'de',
+            'france', 'fr', 'république française',
+            'spain', 'españa', 'es',
+            'italy', 'italia', 'it',
+            'netherlands', 'holland', 'nl', 'nederland',
+            'belgium', 'belgique', 'belgië', 'be',
+            'austria', 'österreich', 'at',
+            'switzerland', 'schweiz', 'suisse', 'ch',
+            'sweden', 'sverige', 'se',
+            'denmark', 'danmark', 'dk',
+            'norway', 'norge', 'no',
+            'finland', 'suomi', 'fi',
+            'poland', 'polska', 'pl',
+            'czech republic', 'czechia', 'cz',
+            'hungary', 'magyarország', 'hu',
+            'portugal', 'pt',
+            'greece', 'ελλάδα', 'gr',
+            'romania', 'românia', 'ro',
+            'bulgaria', 'българия', 'bg',
+            'croatia', 'hrvatska', 'hr',
+            'slovenia', 'slovenija', 'si',
+            'slovakia', 'slovensko', 'sk',
+            'estonia', 'eesti', 'ee',
+            'latvia', 'latvija', 'lv',
+            'lithuania', 'lietuva', 'lt',
+            'luxembourg', 'lëtzebuerg', 'lu',
+            'malta', 'mt',
+            'cyprus', 'κύπρος', 'cy',
+            // Major EU cities
+            'london', 'manchester', 'birmingham', 'edinburgh', 'glasgow', 'leeds', 'liverpool',
+            'dublin', 'cork', 'galway',
+            'berlin', 'munich', 'hamburg', 'cologne', 'frankfurt', 'stuttgart', 'düsseldorf',
+            'paris', 'marseille', 'lyon', 'toulouse', 'nice', 'nantes', 'strasbourg',
+            'madrid', 'barcelona', 'valencia', 'seville', 'bilbao', 'málaga',
+            'rome', 'milan', 'naples', 'turin', 'florence', 'bologna',
+            'amsterdam', 'rotterdam', 'the hague', 'utrecht', 'eindhoven',
+            'brussels', 'antwerp', 'ghent', 'bruges',
+            'vienna', 'salzburg', 'graz', 'innsbruck',
+            'zurich', 'geneva', 'basel', 'bern', 'lausanne',
+            'stockholm', 'gothenburg', 'malmö', 'uppsala',
+            'copenhagen', 'aarhus', 'odense', 'aalborg',
+            'oslo', 'bergen', 'trondheim', 'stavanger',
+            'helsinki', 'espoo', 'tampere', 'vantaa',
+            'warsaw', 'krakow', 'gdansk', 'wrocław', 'poznań',
+            'prague', 'brno', 'ostrava', 'plzen',
+            'budapest', 'debrecen', 'szeged', 'miskolc',
+            'lisbon', 'porto', 'braga', 'coimbra',
+            'athens', 'thessaloniki', 'patras', 'heraklion'
         ];
-        // Check if job country is in EU
+        // Check job country
         if (job.job_country) {
-            const country = job.job_country.trim();
-            if (euCountries.some(euCountry => euCountry.toLowerCase() === country.toLowerCase())) {
+            const country = job.job_country.toLowerCase().trim();
+            if (euPatterns.some(pattern => country.includes(pattern) || pattern.includes(country))) {
                 return true;
             }
         }
-        // Check if job city contains EU city names
+        // Check job city
         if (job.job_city) {
-            const city = job.job_city.toLowerCase();
-            const euCities = [
-                'london', 'madrid', 'berlin', 'barcelona', 'amsterdam', 'dublin',
-                'munich', 'stockholm', 'copenhagen', 'zurich', 'vienna', 'paris',
-                'milan', 'rome', 'brussels', 'prague', 'warsaw', 'rotterdam',
-                'hamburg', 'frankfurt', 'cologne', 'dusseldorf', 'leipzig', 'dresden',
-                'manchester', 'birmingham', 'edinburgh', 'glasgow', 'leeds', 'liverpool',
-                'lyon', 'marseille', 'toulouse', 'nice', 'nantes', 'strasbourg',
-                'valencia', 'seville', 'bilbao', 'malaga', 'granada', 'cordoba'
-            ];
-            if (euCities.some(euCity => city.includes(euCity))) {
+            const city = job.job_city.toLowerCase().trim();
+            if (euPatterns.some(pattern => city.includes(pattern) || pattern.includes(city))) {
                 return true;
             }
         }
-        // If no clear EU location, reject the job
+        // Check combined location
+        const fullLocation = `${job.job_city || ''} ${job.job_country || ''} ${job.job_description || ''}`.toLowerCase();
+        if (euPatterns.some(pattern => fullLocation.includes(pattern))) {
+            return true;
+        }
         return false;
     }
     async scrapeWithTrackRotation() {
@@ -326,11 +309,12 @@ class JSearchScraper {
         console.log(`🔍 Query: ${query}`);
         console.log(`📍 Locations: ${locations.join(', ')}`);
         try {
-            // ✅ EU-ONLY SEARCHES - No more global search to avoid US jobs
+            // ✅ IMPROVED: Process more locations with faster rate limiting
             console.log(`\n📍 EU Location-specific searches...`);
-            for (let i = 0; i < Math.min(locations.length, 3); i++) { // Max 3 location searches
-                if (this.dailyRequestCount >= JSEARCH_CONFIG.dailyBudget - 1) {
-                    console.log('⏰ Approaching daily budget limit, stopping location searches');
+            const maxLocations = Math.min(locations.length, 6);
+            for (let i = 0; i < maxLocations; i++) {
+                if (this.dailyRequestCount >= JSEARCH_CONFIG.dailyBudget - 2) {
+                    console.log('⏰ Approaching daily budget limit, stopping');
                     break;
                 }
                 const location = locations[i];
@@ -342,10 +326,9 @@ class JSearchScraper {
             console.error(`❌ Error in JSearch scraping:`, error.message);
             metrics.errors++;
         }
-        // Remove any duplicates that might have come from multiple searches
         const uniqueJobs = this.deduplicateJobs(allJobs);
         metrics.totalJobsFound = uniqueJobs.length;
-        metrics.earlyCareerJobs = uniqueJobs.length; // All jobs already filtered
+        metrics.earlyCareerJobs = uniqueJobs.length;
         metrics.requestsUsed = this.requestCount;
         metrics.dailyBudgetRemaining = JSEARCH_CONFIG.dailyBudget - this.dailyRequestCount;
         metrics.monthlyBudgetRemaining = JSEARCH_CONFIG.monthlyBudget - this.monthlyRequestCount;
@@ -368,25 +351,11 @@ class JSearchScraper {
             return true;
         });
     }
-    async searchSingleQuery(query, location) {
-        console.log(`🔍 JSearch single query: "${query}" ${location ? `in ${location}` : ''}`);
-        const jobs = await this.searchJobs(query, location);
-        const metrics = {
-            query,
-            location: location || 'global',
-            jobsFound: jobs.length,
-            requestsUsed: 1,
-            dailyBudgetRemaining: JSEARCH_CONFIG.dailyBudget - this.dailyRequestCount,
-            monthlyBudgetRemaining: JSEARCH_CONFIG.monthlyBudget - this.monthlyRequestCount
-        };
-        return { jobs, metrics };
-    }
     getStatus() {
         this.resetDailyCounts();
         return {
             isRunning: false,
             locationsSupported: JSEARCH_CONFIG.locations.length,
-            queriesSupported: Object.keys(TRACK_QUERIES).length,
             requestsToday: this.dailyRequestCount,
             requestsThisMonth: this.monthlyRequestCount,
             dailyBudget: JSEARCH_CONFIG.dailyBudget,
@@ -397,12 +366,6 @@ class JSearchScraper {
             lastRequestTime: new Date(this.lastRequestTime).toISOString(),
             nextRequestAvailable: new Date(this.lastRequestTime + JSEARCH_CONFIG.requestInterval).toISOString()
         };
-    }
-    getAvailableQueries() {
-        return TRACK_QUERIES;
-    }
-    getAvailableLocations() {
-        return JSEARCH_CONFIG.locations;
     }
     getDailyStats() {
         this.resetDailyCounts();

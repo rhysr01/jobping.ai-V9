@@ -5,8 +5,20 @@
 const axios = require('axios');
 const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
+const { normalize } = require('../scrapers/utils.js');
 
 console.log('🎯 REED REAL SCRAPER - Getting Actual Jobs\n');
+
+// DRY_RUN support
+const DRY_RUN = process.env.DRY_RUN === 'true';
+if (DRY_RUN) {
+  console.log('🧪 DRY RUN MODE - No jobs will be saved to database\n');
+}
+
+// Freshness cutoff to avoid processing old jobs
+const FRESHNESS_DAYS = +(process.env.FRESHNESS_DAYS || 28);
+const FRESHNESS_CUTOFF = Date.now() - FRESHNESS_DAYS * 24 * 60 * 60 * 1000;
+console.log(`📅 Freshness cutoff: ${FRESHNESS_DAYS} days (${new Date(FRESHNESS_CUTOFF).toISOString()})\n`);
 
 // Load environment variables
 require('dotenv').config({ path: '.env.local' });
@@ -17,24 +29,49 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// Batch upsert function for performance
+async function upsertBatched(supabase, rows, size = 150) {
+  for (let i = 0; i < rows.length; i += size) {
+    const batch = rows.slice(i, i + size);
+    const { error } = await supabase
+      .from('jobs')
+      .upsert(batch, { onConflict: 'dedupe_key' });
+    if (error) throw error;
+  }
+}
+
 // Reed API Configuration - Expanded UK cities + Dublin
+// IMPROVEMENT #1: Query rotation for variety
+const REED_QUERY_ROTATION = [
+  'graduate analyst',
+  'graduate scheme',
+  'junior consultant',
+  'trainee',
+  'entry level analyst',
+  'business graduate',
+  'management trainee',
+  'junior business analyst'
+];
+
+// IMPROVEMENT #2: Better city configuration with country codes
 const REED_CONFIG = {
   baseUrl: 'https://www.reed.co.uk/api/1.0/search',
   apiKey: process.env.REED_API_KEY,
   cities: [
-    // Major UK cities
-    'London', 'Manchester', 'Birmingham', 'Edinburgh', 'Glasgow',
-    // Additional UK cities with jobs
-    'Leeds', 'Cardiff', 'Cambridge', 'Oxford',
+    // Major UK cities with country codes
+    { city: 'London', country: 'GB' },
+    { city: 'Manchester', country: 'GB' },
+    { city: 'Birmingham', country: 'GB' },
+    { city: 'Edinburgh', country: 'GB' },
+    { city: 'Glasgow', country: 'GB' },
+    { city: 'Leeds', country: 'GB' },
+    { city: 'Bristol', country: 'GB' },
+    { city: 'Cardiff', country: 'GB' },
+    { city: 'Cambridge', country: 'GB' },
+    { city: 'Oxford', country: 'GB' },
     // EU cities (Ireland)
-    'Dublin'
-  ],
-  queries: [
-    'graduate analyst',
-    'junior consultant', 
-    'entry level analyst',
-    'trainee consultant',
-    'assistant analyst'
+    { city: 'Dublin', country: 'IE' },
+    { city: 'Cork', country: 'IE' }
   ]
 };
 
@@ -75,42 +112,51 @@ function isEarlyCareer(job) {
 async function saveJobsToDatabase(jobs) {
   const savedJobs = [];
   
+  // Convert all jobs to database format
+  const dbJobs = [];
   for (const job of jobs) {
     try {
-      const jobData = {
-        job_hash: makeJobHash(job),
-        title: job.title,
-        company: job.company,
-        location: job.location,
-        job_url: job.url,
-        description: job.description,
-        source: 'reed',
-        status: 'active',
-        is_sent: false,
-        created_at: new Date().toISOString(),
-        posted_at: job.posted_at || new Date().toISOString()
-      };
-      
-      const { data, error } = await supabase
-        .from('jobs')
-        .upsert(jobData, { 
-          onConflict: 'job_hash',
-          ignoreDuplicates: true 
-        })
-        .select();
-      
-      if (error) {
-        console.log(`  ❌ Save failed: ${job.title} - ${error.message}`);
-      } else if (data && data.length > 0) {
-        savedJobs.push(job);
-        console.log(`  ✅ Saved: ${job.title} at ${job.company}`);
+      // Filter by freshness cutoff
+      const postedAt = new Date(job.datePosted).getTime();
+      if (postedAt < FRESHNESS_CUTOFF) {
+        continue; // Skip old jobs
       }
+      
+      const normalizedJob = normalize({
+        title: job.jobTitle,
+        company: job.employerName,
+        location: job.locationName,
+        description: job.jobDescription,
+        url: job.jobUrl,
+        posted_at: job.datePosted
+      }, 'reed');
+      
+      dbJobs.push(normalizedJob);
     } catch (err) {
-      console.log(`  ❌ Save failed: ${job.title} - ${err.message}`);
+      console.log(`  ❌ Failed to normalize job: ${job.jobTitle} - ${err.message}`);
     }
   }
   
-  return savedJobs;
+  if (dbJobs.length === 0) {
+    console.log(`  ⚠️ No fresh jobs to save for Reed`);
+    return [];
+  }
+  
+  if (DRY_RUN) {
+    console.log(`  🧪 DRY RUN: Would save ${dbJobs.length} jobs to database`);
+    console.log('Sample job:', JSON.stringify(dbJobs[0], null, 2));
+    return dbJobs;
+  }
+  
+  try {
+    // Use batch upsert for performance
+    await upsertBatched(supabase, dbJobs);
+    console.log(`  ✅ Successfully upserted ${dbJobs.length} Reed jobs`);
+    return dbJobs;
+  } catch (error) {
+    console.log(`  ❌ Batch upsert failed: ${error.message}`);
+    return [];
+  }
 }
 
 // Main scraping function
@@ -122,23 +168,30 @@ async function scrapeReedJobs() {
     }
     
     console.log('✅ Reed API key found');
-    console.log(`📍 Scraping ${REED_CONFIG.cities.length} UK cities`);
-    console.log(`🔍 Using ${REED_CONFIG.queries.length} search queries\n`);
+    console.log(`📍 Scraping ${REED_CONFIG.cities.length} cities`);
+    console.log(`🔍 Using ${REED_QUERY_ROTATION.length} rotating queries\n`);
     
     let totalJobsFound = 0;
     let totalJobsSaved = 0;
     
-    for (const city of REED_CONFIG.cities) {
-      console.log(`📍 Scraping ${city}...`);
+    // IMPROVEMENT #3: Hour-based query rotation
+    const hourIndex = new Date().getHours();
+    
+    for (let i = 0; i < REED_CONFIG.cities.length; i++) {
+      const cityConfig = REED_CONFIG.cities[i];
+      console.log(`📍 Scraping ${cityConfig.city} (${cityConfig.country})...`);
       
-      for (const query of REED_CONFIG.queries) {
-        try {
+      // Rotate queries based on hour and city index for variety
+      const query = REED_QUERY_ROTATION[(hourIndex + i) % REED_QUERY_ROTATION.length];
+      
+      try {
           const url = REED_CONFIG.baseUrl;
           const params = {
             keywords: query,
-            locationName: city,
-            distanceFromLocation: 10,
-            resultsToTake: 10
+            locationName: cityConfig.city,
+            distanceFromLocation: 15,
+            resultsToTake: 20,
+            sortBy: 'date'
           };
           
           const response = await axios.get(url, {
@@ -157,20 +210,24 @@ async function scrapeReedJobs() {
             
             // Convert to our format and filter for early career
             const ingestJobs = jobs
+              .filter(job => job.jobTitle && job.employerName) // Filter out jobs with missing required fields
               .map(job => ({
                 title: job.jobTitle,
                 company: job.employerName,
-                location: `${city}, UK`,
+                location: `${cityConfig.city}, ${cityConfig.country === 'IE' ? 'Ireland' : 'UK'}`,
                 description: job.jobDescription || 'Early-career position',
                 url: job.jobUrl,
-                posted_at: job.datePosted
+                posted_at: job.datePosted,
+                // Add country and city for proper normalization
+                country: cityConfig.country,
+                city: cityConfig.city
               }))
               .filter(job => isEarlyCareer(job));
             
             console.log(`  ✅ ${ingestJobs.length} early-career jobs after filtering`);
             
             if (ingestJobs.length > 0) {
-              const savedJobs = await saveJobsToDatabase(ingestJobs);
+              const savedJobs = await saveJobsToDatabase(jobs.filter(job => job.jobTitle && job.employerName));
               totalJobsFound += jobs.length;
               totalJobsSaved += savedJobs.length;
               
@@ -184,12 +241,11 @@ async function scrapeReedJobs() {
           // Rate limiting
           await new Promise(resolve => setTimeout(resolve, 1000));
           
-        } catch (error) {
-          console.log(`  ❌ "${query}" failed: ${error.message}`);
-        }
+      } catch (error) {
+        console.log(`  ❌ "${query}" failed: ${error.message}`);
       }
       
-      console.log(`✅ ${city} complete\n`);
+      console.log(`✅ ${cityConfig.city} complete\n`);
     }
     
     console.log('🎉 REED SCRAPING COMPLETE');
@@ -204,11 +260,32 @@ async function scrapeReedJobs() {
   }
 }
 
-// Run the scraper
-scrapeReedJobs().then(() => {
-  console.log('\n🎯 Reed real scraper completed!');
-  process.exit(0);
-}).catch(error => {
-  console.error('❌ Scraper error:', error);
+// Add error handlers
+process.on('unhandledRejection', (e) => {
+  console.error('[unhandled]', e);
   process.exit(1);
 });
+
+process.on('uncaughtException', (e) => {
+  console.error('[uncaught]', e);
+  process.exit(1);
+});
+
+// Run the scraper with proper exit handling
+async function main() {
+  const startTime = Date.now();
+  let totalJobsFound = 0;
+  let totalJobsSaved = 0;
+  
+  try {
+    await scrapeReedJobs();
+    const duration = Date.now() - startTime;
+    console.log(`\n[scraper] source=reed found=${totalJobsFound} saved=${totalJobsSaved} dry=${DRY_RUN} duration_ms=${duration}`);
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Main execution failed:', error);
+    process.exit(1);
+  }
+}
+
+main();

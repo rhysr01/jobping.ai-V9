@@ -1,3 +1,4 @@
+// ✅ FIXED Muse Scraper - Optimized for EU Early Career Jobs
 import axios from 'axios';
 import { classifyEarlyCareer, convertToDatabaseFormat } from './utils.js';
 
@@ -52,26 +53,28 @@ interface MuseResponse {
   total: number;
 }
 
-// The Muse API Configuration
+// ✅ OPTIMIZED Muse API Configuration
 const MUSE_CONFIG = {
   baseUrl: 'https://www.themuse.com/api/public/jobs',
-  apiKey: process.env.MUSE_API_KEY || '', // Optional - works without key but has lower limits
+  apiKey: process.env.MUSE_API_KEY || '', // Optional but recommended
   
-  // Core EU cities for graduating students - standardized across all scrapers
+  // ✅ CORRECTED: Use simple city names that Muse API expects
   locations: [
-    'London, United Kingdom',    // Financial hub, tech, consulting
-    'Berlin, Germany',           // Tech startup capital, affordable
-    'Amsterdam, Netherlands',    // International business, English-friendly
-    'Dublin, Ireland',           // Tech giants (Google, Facebook, etc.)
-    'Paris, France',             // Consulting, luxury, finance
-    'Munich, Germany',           // Engineering, automotive, high salaries
-    'Madrid, Spain',             // Business hub, growing tech scene
-    'Stockholm, Sweden',         // Tech innovation, work-life balance
-    'Zurich, Switzerland',       // Finance, high salaries
-    'Copenhagen, Denmark'        // Design, sustainability, quality of life
+    'London',              // UK financial hub
+    'Dublin',              // Ireland tech center
+    'Berlin',              // Germany startup capital
+    'Amsterdam',           // Netherlands business center
+    'Paris',               // France consulting hub
+    'Madrid',              // Spain business center
+    'Munich',              // Germany engineering hub
+    'Stockholm',           // Sweden tech innovation
+    'Zurich',              // Switzerland finance
+    'Copenhagen',          // Denmark design hub
+    'Barcelona',           // Spain startup ecosystem
+    'Milan'                // Italy fashion/finance
   ],
   
-  // Early-career focused categories
+  // ✅ CORRECTED: Use exact category names from Muse API
   categories: [
     'Engineering',
     'Data Science', 
@@ -82,23 +85,23 @@ const MUSE_CONFIG = {
     'Operations',
     'Product',
     'Design',
-    'Customer Success'
+    'Customer Success',
+    'Editorial',
+    'HR & Recruiting'
   ],
   
-  // Early-career levels (The Muse has good level filtering)
+  // ✅ CORRECTED: Use exact level names from Muse API
   levels: [
     'Entry Level',
     'Internship',
-    'Mid Level' // Include mid-level as some are still early-career
+    'Mid Level'  // Some mid-level roles are still early career
   ],
   
-  // Rate limiting (The Muse: 500 requests/hour, 10,000/month)
-  requestInterval: 8000, // ~7 requests per minute to stay safe
-  maxRequestsPerHour: 400, // Leave buffer under 500 limit
-  seenJobTTL: 72 * 60 * 60 * 1000, // 72 hours (Muse jobs change slowly)
-  
-  // Results per page (max 20 for The Muse)
-  resultsPerPage: 20
+  // ✅ OPTIMIZED: Better rate limiting for 500 req/hour limit
+  requestInterval: 8000, // 8 seconds = 450 requests/hour (safe buffer)
+  maxRequestsPerHour: 450, // Leave buffer under 500 limit
+  seenJobTTL: 72 * 60 * 60 * 1000, // 72 hours
+  resultsPerPage: 20 // Max for Muse API
 };
 
 // Career path rotation for diverse job discovery
@@ -125,12 +128,10 @@ class MuseScraper {
   private hourlyRequestCount = 0;
   private lastRequestTime = 0;
   private lastHourReset = Date.now();
-  private seenJobs: Map<number, number> = new Map(); // jobId -> timestamp
+  private seenJobs: Map<number, number> = new Map();
 
   constructor() {
     this.cleanupSeenJobs();
-    
-    // Clean up seen jobs every 4 hours
     setInterval(() => this.cleanupSeenJobs(), 4 * 60 * 60 * 1000);
   }
 
@@ -145,14 +146,13 @@ class MuseScraper {
 
   private resetHourlyCount(): void {
     const now = Date.now();
-    if (now - this.lastHourReset > 60 * 60 * 1000) { // 1 hour
+    if (now - this.lastHourReset > 60 * 60 * 1000) {
       this.hourlyRequestCount = 0;
       this.lastHourReset = now;
     }
   }
 
   private getTrackForRun(): Track {
-    // Simple rotation based on hour of day
     const hour = new Date().getHours();
     const tracks: Track[] = ['A', 'B', 'C', 'D', 'E'];
     return tracks[hour % 5];
@@ -161,7 +161,6 @@ class MuseScraper {
   private async throttleRequest(): Promise<void> {
     this.resetHourlyCount();
     
-    // Check hourly limit
     if (this.hourlyRequestCount >= MUSE_CONFIG.maxRequestsPerHour) {
       console.log('⏰ Hourly rate limit reached, waiting...');
       const waitTime = 60 * 60 * 1000 - (Date.now() - this.lastHourReset);
@@ -171,7 +170,6 @@ class MuseScraper {
       }
     }
     
-    // Throttle individual requests
     const now = Date.now();
     const timeSinceLastRequest = now - this.lastRequestTime;
     
@@ -187,21 +185,32 @@ class MuseScraper {
     await this.throttleRequest();
 
     try {
+      // ✅ CORRECTED: Build proper query parameters for Muse API
+      const queryParams: Record<string, any> = {
+        page: params.page || 1,
+        descending: true
+      };
+
+      if (params.location) {
+        queryParams.location = params.location;
+      }
+
+      if (params.categories && params.categories.length > 0) {
+        queryParams.category = params.categories.join(',');
+      }
+
+      if (params.levels && params.levels.length > 0) {
+        queryParams.level = params.levels.join(',');
+      }
+
+      if (MUSE_CONFIG.apiKey) {
+        queryParams.api_key = MUSE_CONFIG.apiKey;
+      }
+
+      console.log(`🔗 Muse API request: ${MUSE_CONFIG.baseUrl}`, queryParams);
+
       const response = await axios.get(MUSE_CONFIG.baseUrl, {
-        params: {
-          // Core parameters
-          category: params.category,
-          level: params.level,
-          location: params.location,
-          page: params.page || 1,
-          descending: true, // Most recent first
-          
-          // Optional API key for higher limits
-          ...(MUSE_CONFIG.apiKey && { api_key: MUSE_CONFIG.apiKey }),
-          
-          // Fixed parameters
-          ...params
-        },
+        params: queryParams,
         headers: {
           'User-Agent': 'JobPing/1.0 (https://jobping.com)',
           'Accept': 'application/json'
@@ -212,26 +221,34 @@ class MuseScraper {
       this.requestCount++;
       this.hourlyRequestCount++;
       
+      console.log(`📊 Muse API response: ${response.data.results?.length || 0} jobs found`);
+      
       return response.data;
 
     } catch (error: any) {
       if (error.response?.status === 429) {
         console.warn('🚫 Rate limited by The Muse, backing off...');
-        await new Promise(resolve => setTimeout(resolve, 10000)); // 10 second backoff
+        await new Promise(resolve => setTimeout(resolve, 10000));
         return this.makeRequest(params);
       }
       
       if (error.response?.status === 400) {
         console.warn('⚠️ Bad request to The Muse API:', error.response.data);
+        console.warn('⚠️ Parameters used:', params);
         throw new Error(`Bad request: ${error.response.data?.message || 'Invalid parameters'}`);
       }
       
+      console.error('❌ Muse API error:', error.message);
+      if (error.response) {
+        console.error('❌ Response status:', error.response.status);
+        console.error('❌ Response data:', error.response.data);
+      }
       throw error;
     }
   }
 
   private convertToIngestJob(museJob: MuseJob): IngestJob {
-    // Handle location - prefer job location, fallback to company location
+    // ✅ IMPROVED: Better location handling
     let location = 'Remote';
     if (museJob.locations && museJob.locations.length > 0) {
       location = museJob.locations[0].name;
@@ -251,12 +268,16 @@ class MuseScraper {
   }
 
   private stripHtmlTags(html: string): string {
+    if (!html) return '';
+    
     return html
       .replace(/<[^>]*>/g, '') // Remove HTML tags
       .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
       .replace(/&amp;/g, '&') // Replace &amp; with &
       .replace(/&lt;/g, '<') // Replace &lt; with <
       .replace(/&gt;/g, '>') // Replace &gt; with >
+      .replace(/&quot;/g, '"') // Replace &quot; with "
+      .replace(/&#39;/g, "'") // Replace &#39; with '
       .replace(/\s+/g, ' ') // Replace multiple whitespace with single space
       .trim();
   }
@@ -268,18 +289,32 @@ class MuseScraper {
   ): Promise<IngestJob[]> {
     const jobs: IngestJob[] = [];
     
-    console.log(`📍 Scraping ${location} for categories: ${categories.join(', ')}`);
+    console.log(`📍 Scraping ${location} for categories: ${categories.join(', ')}, levels: ${levels.join(', ')}`);
 
     try {
-      // The Muse API takes comma-separated values
-      const params = {
+      // ✅ FIXED: Only include non-empty parameters to avoid API issues
+      const params: any = {
         location: location,
-        category: categories.join(','),
-        level: levels.join(','),
         page: 1
       };
+      
+      // Only add categories if not empty
+      if (categories.length > 0) {
+        params.categories = categories;
+      }
+      
+      // Only add levels if not empty
+      if (levels.length > 0) {
+        params.levels = levels;
+      }
 
       const response = await this.makeRequest(params);
+      
+      if (!response.results || response.results.length === 0) {
+        console.log(`📭 No jobs found for ${location}`);
+        return jobs;
+      }
+
       console.log(`📊 Found ${response.results.length} jobs in ${location}`);
 
       for (const job of response.results) {
@@ -289,11 +324,19 @@ class MuseScraper {
           try {
             const ingestJob = this.convertToIngestJob(job);
             
-            // ✅ Apply early-career filtering
-            const isEarlyCareer = classifyEarlyCareer(ingestJob);
+            // ✅ Apply early-career filtering with correct object structure
+            const isEarlyCareer = classifyEarlyCareer({
+              title: ingestJob.title || "",
+              description: ingestJob.description || "",
+              company: ingestJob.company,
+              location: ingestJob.location,
+              url: ingestJob.url,
+              posted_at: ingestJob.posted_at,
+              source: ingestJob.source
+            } as IngestJob);
             if (isEarlyCareer) {
               jobs.push(ingestJob);
-              console.log(`✅ Early-career: ${ingestJob.title} at ${ingestJob.company}`);
+              console.log(`✅ Early-career: ${ingestJob.title} at ${ingestJob.company} (${ingestJob.location})`);
             } else {
               console.log(`🚫 Skipped senior: ${ingestJob.title} at ${ingestJob.company}`);
             }
@@ -303,8 +346,8 @@ class MuseScraper {
         }
       }
 
-      // If there are more pages and we have budget, fetch page 2
-      if (response.page_count > 1 && this.hourlyRequestCount < MUSE_CONFIG.maxRequestsPerHour - 10) {
+      // ✅ OPTIMIZED: Fetch page 2 if there are more results and we have budget
+      if (response.page_count > 1 && this.hourlyRequestCount < MUSE_CONFIG.maxRequestsPerHour - 5) {
         console.log(`📄 Fetching page 2 for ${location}...`);
         
         const page2Response = await this.makeRequest({
@@ -318,7 +361,15 @@ class MuseScraper {
             
             try {
               const ingestJob = this.convertToIngestJob(job);
-              const isEarlyCareer = classifyEarlyCareer(ingestJob);
+              const isEarlyCareer = classifyEarlyCareer({
+                title: ingestJob.title || "",
+                description: ingestJob.description || "",
+                company: ingestJob.company,
+                location: ingestJob.location,
+                url: ingestJob.url,
+                posted_at: ingestJob.posted_at,
+                source: ingestJob.source
+              } as IngestJob);
               if (isEarlyCareer) {
                 jobs.push(ingestJob);
                 console.log(`✅ Early-career (p2): ${ingestJob.title} at ${ingestJob.company}`);
@@ -338,15 +389,15 @@ class MuseScraper {
   }
 
   public async scrapeAllLocations(): Promise<{ jobs: IngestJob[]; metrics: any }> {
-    const track = this.getTrackForRun();
-    const categories = TRACK_CATEGORIES[track];
-    const levels = TRACK_LEVELS[track];
+    // ✅ OPTIMIZED: Get ALL jobs, filter with multilingual early career detection
+    const categories: string[] = []; // Empty = no category filter
+    const levels: string[] = []; // Empty = no level filter - get ALL jobs
     const allJobs: IngestJob[] = [];
     
     const metrics = {
-      track,
-      categories: categories.join(', '),
-      levels: levels.join(', '),
+      track: 'All',
+      categories: 'All Categories',
+      levels: 'All Levels (filtered locally)',
       locationsProcessed: 0,
       totalJobsFound: 0,
       earlyCareerJobs: 0,
@@ -356,12 +407,12 @@ class MuseScraper {
       startTime: new Date().toISOString()
     };
 
-    console.log(`🔄 The Muse scraping with Track ${track}`);
-    console.log(`📋 Categories: ${categories.join(', ')}`);
-    console.log(`🎯 Levels: ${levels.join(', ')}`);
+    console.log(`🔄 The Muse scraping - All Categories, All Levels (multilingual filtering)`);
+    console.log(`📋 Categories: All (no filter)`);
+    console.log(`🎯 Levels: All (filtered with multilingual early career detection)`);
 
-    // Process locations in batches to manage rate limits
-    const batchSize = 5;
+    // ✅ OPTIMIZED: Process more locations with better batching
+    const batchSize = 3; // Smaller batches for better rate limit management
     const locationBatches = [];
     
     for (let i = 0; i < MUSE_CONFIG.locations.length; i += batchSize) {
@@ -389,13 +440,19 @@ class MuseScraper {
         } catch (error: any) {
           console.error(`❌ Error processing ${location}:`, error.message);
           metrics.errors++;
+          
+          // If we get repeated errors, wait longer before continuing
+          if (error.response?.status >= 400) {
+            console.log('⏸️ API error encountered, waiting 30s before continuing...');
+            await new Promise(resolve => setTimeout(resolve, 30000));
+          }
         }
       }
 
       // Small delay between batches
       if (locationBatches.indexOf(batch) < locationBatches.length - 1) {
         console.log('⏸️ Brief pause between location batches...');
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
     }
 
@@ -413,19 +470,19 @@ class MuseScraper {
   }
 
   public async scrapeSingleLocation(location: string): Promise<{ jobs: IngestJob[]; metrics: any }> {
-    const track = this.getTrackForRun();
-    const categories = TRACK_CATEGORIES[track];
-    const levels = TRACK_LEVELS[track];
+    // ✅ OPTIMIZED: Get ALL jobs, filter with multilingual early career detection
+    const categories: string[] = []; // Empty = no category filter
+    const levels: string[] = []; // Empty = no level filter - get ALL jobs
     
-    console.log(`📍 The Muse scraping ${location} with Track ${track}`);
+    console.log(`📍 The Muse scraping ${location} - All Categories, All Levels (multilingual filtering)`);
     
     const jobs = await this.fetchLocationJobs(location, categories, levels);
     
     const metrics = {
       location,
-      track,
-      categories: categories.join(', '),
-      levels: levels.join(', '),
+      track: 'All',
+      categories: 'All Categories',
+      levels: 'All Levels (filtered locally)',
       jobsFound: jobs.length,
       requestsUsed: this.requestCount,
       hourlyBudgetRemaining: MUSE_CONFIG.maxRequestsPerHour - this.hourlyRequestCount
@@ -445,7 +502,8 @@ class MuseScraper {
       hourlyBudget: MUSE_CONFIG.maxRequestsPerHour,
       hourlyBudgetRemaining: MUSE_CONFIG.maxRequestsPerHour - this.hourlyRequestCount,
       seenJobsCount: this.seenJobs.size,
-      lastRequestTime: new Date(this.lastRequestTime).toISOString()
+      lastRequestTime: new Date(this.lastRequestTime).toISOString(),
+      apiKeyConfigured: !!MUSE_CONFIG.apiKey
     };
   }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import HowItWorks from './components/HowItWorks';
@@ -16,34 +16,7 @@ const PriceSelector = lazy(() => import('./components/PriceSelector'));
 const SignupHeader = lazy(() => import('./components/SignupHeader').then(module => ({ default: module.SignupHeader })));
 
 export default function Home() {
-  const [isLoaded, setIsLoaded] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
-  useEffect(() => {
-    setIsLoaded(true);
-  }, []);
-
-  const validateField = (name: string, value: string): string => {
-    if (name === 'email') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!value) return 'Email is required';
-      if (!emailRegex.test(value)) return 'Please enter a valid email address';
-    }
-    if (name === 'name') {
-      if (!value.trim()) return 'Name is required';
-      if (value.trim().length < 2) return 'Name must be at least 2 characters';
-    }
-    return '';
-  };
-
-  const handleInputChange = (name: string, value: string) => {
-    const error = validateField(name, value);
-    setErrors(prev => ({
-      ...prev,
-      [name]: error
-    }));
-  };
 
   return (
     <div className="min-h-screen bg-[#0B0B0F] relative overflow-hidden">

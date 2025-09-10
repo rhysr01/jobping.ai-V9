@@ -1,6 +1,9 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const axios_1 = require("axios");
+const axios_1 = __importDefault(require("axios"));
 // Greenhouse API Configuration - STANDARDIZED
 const GREENHOUSE_CONFIG = {
     baseUrl: 'https://boards-api.greenhouse.io/v1/boards',
@@ -59,6 +62,7 @@ class GreenhouseScraper {
         this.lastRequestTime = Date.now();
     }
     async makeRequest(url) {
+        var _a;
         await this.throttleRequest();
         try {
             const response = await axios_1.default.get(url, {
@@ -76,7 +80,7 @@ class GreenhouseScraper {
             return response.data;
         }
         catch (error) {
-            if (error.response?.status === 429) {
+            if (((_a = error.response) === null || _a === void 0 ? void 0 : _a.status) === 429) {
                 console.warn('🚫 Rate limited by Greenhouse, backing off...');
                 await new Promise(resolve => setTimeout(resolve, 10000));
                 return this.makeRequest(url);
@@ -85,9 +89,10 @@ class GreenhouseScraper {
         }
     }
     convertToIngestJob(ghJob, company) {
+        var _a;
         // Build location string
         let location = 'Remote';
-        if (ghJob.location?.name) {
+        if ((_a = ghJob.location) === null || _a === void 0 ? void 0 : _a.name) {
             location = ghJob.location.name;
         }
         else if (ghJob.offices && ghJob.offices.length > 0) {
@@ -116,20 +121,22 @@ class GreenhouseScraper {
             .trim();
     }
     isEarlyCareer(job) {
+        var _a, _b, _c;
         const hay = [
             job.title,
-            ...(job.departments?.map(d => d.name) ?? []),
-            job.content ?? ""
+            ...((_b = (_a = job.departments) === null || _a === void 0 ? void 0 : _a.map(d => d.name)) !== null && _b !== void 0 ? _b : []),
+            (_c = job.content) !== null && _c !== void 0 ? _c : ""
         ].join(" ").toLowerCase();
         const inc = /(graduate|new\s?grad|entry[-\s]?level|intern(ship)?|apprentice|early\s?career|junior|campus|working\sstudent|trainee|associate)/i;
         const excl = /(senior|staff|principal|lead|manager|director|head|vp|chief|executive)/i;
         return inc.test(hay) && !excl.test(hay);
     }
     isEU(job) {
+        var _a, _b, _c, _d, _e;
         const txt = [
-            job.location?.name ?? "",
-            ...(job.offices?.map(o => o.name) ?? []),
-            job.content ?? ""
+            (_b = (_a = job.location) === null || _a === void 0 ? void 0 : _a.name) !== null && _b !== void 0 ? _b : "",
+            ...((_d = (_c = job.offices) === null || _c === void 0 ? void 0 : _c.map(o => o.name)) !== null && _d !== void 0 ? _d : []),
+            (_e = job.content) !== null && _e !== void 0 ? _e : ""
         ].join(" ");
         const euHints = [
             'UK', 'United Kingdom', 'Ireland', 'Germany', 'France', 'Spain', 'Portugal', 'Italy',
@@ -267,111 +274,3 @@ class GreenhouseScraper {
     }
 }
 exports.default = GreenhouseScraper;
-
-// Add execution and database saving logic
-const { createClient } = require('@supabase/supabase-js');
-const crypto = require('crypto');
-
-// Load environment variables
-require('dotenv').config({ path: '.env.local' });
-require('dotenv').config();
-
-// Initialize Supabase
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-// Helper function to create job hash
-function makeJobHash(job) {
-  const content = `${job.title}${job.company}${job.location}`;
-  return crypto.createHash('sha256').update(content).digest('hex');
-}
-
-// Helper function to save jobs to database
-async function saveJobsToDatabase(jobs) {
-  if (jobs.length === 0) return 0;
-  
-  console.log(`💾 Saving ${jobs.length} jobs to database...`);
-  
-  const jobData = jobs.map(job => ({
-    job_hash: makeJobHash(job),
-    source: 'greenhouse',
-    title: job.title,
-    company: job.company,
-    location: job.location,
-    job_url: job.url,
-    description: job.description,
-    created_at: new Date().toISOString(),
-    is_sent: false,
-    status: 'active',
-    freshness_tier: 'fresh',
-    original_posted_date: job.posted ? new Date(job.posted).toISOString() : new Date().toISOString(),
-    last_seen_at: new Date().toISOString()
-  }));
-
-  try {
-    const { data, error } = await supabase
-      .from('jobs')
-      .upsert(jobData, {
-        onConflict: 'job_hash',
-        ignoreDuplicates: true
-      })
-      .select();
-
-    if (error) {
-      console.error('❌ Database error:', error);
-      return 0;
-    }
-
-    console.log(`✅ Successfully saved ${data.length} new jobs to database`);
-    return data.length;
-  } catch (error) {
-    console.error('❌ Error saving jobs:', error);
-    return 0;
-  }
-}
-
-// Main execution function
-async function runGreenhouseScraper() {
-  console.log('🚀 Starting Greenhouse Job Scraper...\n');
-  
-  const scraper = new GreenhouseScraper();
-  const allJobs = [];
-  
-  try {
-    // Scrape jobs from all companies
-    for (const company of GREENHOUSE_CONFIG.companies.slice(0, 5)) { // Limit to 5 companies for testing
-      console.log(`🏢 Scraping ${company}...`);
-      
-      const jobs = await scraper.scrapeSingleCompany(company);
-      if (jobs && jobs.length > 0) {
-        console.log(`   ✅ Found ${jobs.length} jobs`);
-        allJobs.push(...jobs);
-      } else {
-        console.log(`   ⚠️  No jobs found`);
-      }
-      
-      // Rate limiting
-      await new Promise(resolve => setTimeout(resolve, GREENHOUSE_CONFIG.requestInterval));
-    }
-    
-    console.log(`\n📊 Total jobs collected: ${allJobs.length}`);
-    
-    // Save to database
-    if (allJobs.length > 0) {
-      const savedCount = await saveJobsToDatabase(allJobs);
-      console.log(`💾 Total jobs saved to database: ${savedCount}`);
-    }
-    
-    console.log('\n✅ Greenhouse scraper completed successfully!');
-    
-  } catch (error) {
-    console.error('❌ Greenhouse scraper failed:', error);
-  }
-}
-
-// Run if this file is executed directly
-if (require.main === module) {
-  runGreenhouseScraper().catch(console.error);
-}

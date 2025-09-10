@@ -18,6 +18,7 @@ import('https').then(https => {
     reed: { jobs: [], total: 0, earlyCareer: 0 },
     greenhouse: { jobs: [], total: 0, earlyCareer: 0 },
     indeed: { jobs: [], total: 0, earlyCareer: 0 },
+
     muse: { jobs: [], total: 0, earlyCareer: 0 },
     jsearch: { jobs: [], total: 0, earlyCareer: 0 }
   };

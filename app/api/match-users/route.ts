@@ -252,11 +252,12 @@ async function callConsolidatedMatcher(
     console.log(`🎯 Matching result for ${user.email}: method=${result.method}, matches=${result.matches.length}, confidence=${result.confidence}`);
     
     // Track OpenAI usage and costs
-    if (result.method === 'ai_success' && result.usage) {
-      const cost = calculateOpenAICost(result.usage);
+    if (result.method === 'ai_success' && (result as any).usage) {
+      const usage = (result as any).usage;
+      const cost = calculateOpenAICost(usage);
       await criticalAlerts.trackOpenAIUsage(
-        result.usage.model || 'gpt-4',
-        result.usage.total_tokens || 0,
+        usage.model || 'gpt-4',
+        usage.total_tokens || 0,
         cost
       );
     }
@@ -265,11 +266,11 @@ async function callConsolidatedMatcher(
     const provenance = {
       match_algorithm: result.method === 'ai_success' ? 'ai' : 
                       result.method === 'rule_based' ? 'rules' : 'hybrid',
-      ai_model: result.usage?.model || 'gpt-4',
+      ai_model: (result as any).usage?.model || 'gpt-4',
       prompt_version: process.env.PROMPT_VERSION || 'v1',
       cache_hit: false,
       ai_latency_ms: 0, // Will be set by caller
-      ai_cost_usd: result.usage ? calculateOpenAICost(result.usage) : 0
+      ai_cost_usd: (result as any).usage ? calculateOpenAICost((result as any).usage) : 0
     };
     
     return { matches: result.matches, provenance };
@@ -721,7 +722,7 @@ export async function POST(req: NextRequest) {
   const requestId = crypto.randomUUID();
   
   // Start Sentry transaction for performance monitoring
-  const transaction = Sentry.startTransaction({
+  const transaction = (Sentry as any).startTransaction?.({
     name: 'match-users-api',
     op: 'api.request',
     tags: {
@@ -743,8 +744,7 @@ export async function POST(req: NextRequest) {
     if (isTestOrPerfMode()) {
       try { await resetLimiterForTests?.(); } catch {}
     }
-
-      const performanceTracker = trackPerformance();
+    const performanceTracker = trackPerformance();
   const reservationId = `batch_${Date.now()}`;
   const requestStartTime = Date.now();
   
@@ -1471,9 +1471,16 @@ export async function POST(req: NextRequest) {
       }
     }
   }
+} catch (error) {
+  console.error('❌ Critical error in POST handler:', error);
+  return NextResponse.json({ 
+    error: 'Internal server error', 
+    message: error instanceof Error ? error.message : 'Unknown error' 
+  }, { status: 500 });
+}
 }
 
-// Enhanced GET endpoint with tier analytics
+// Enhanced GET endpoint with tier analytics  
 export async function GET(req: NextRequest) {
   // Return 405 for GET method as this endpoint is primarily for POST
   return NextResponse.json({ 

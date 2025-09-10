@@ -63,8 +63,8 @@ class DatabasePool {
             operation: 'initialization'
           },
           extra: {
-            supabaseUrl: supabaseUrl ? 'configured' : 'missing',
-            supabaseKey: supabaseKey ? 'configured' : 'missing'
+            supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'configured' : 'missing',
+            supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'configured' : 'missing'
           }
         });
         

@@ -7,6 +7,10 @@ const { promisify } = require('util');
 const execAsync = promisify(exec);
 const { createClient } = require('@supabase/supabase-js');
 const path = require('path');
+const fs = require('fs');
+
+// Initialize language detection (simple version)
+// const { initLang } = require('../scrapers/lang');
 
 // Load environment variables (Railway will provide these)
 // require('dotenv').config({ path: '.env.local' });
@@ -51,18 +55,29 @@ class RealJobRunner {
     try {
       console.log('🔄 Running Adzuna scraper...');
       
-      // Use the working script we just tested
-      const { stdout } = await execAsync('node scripts/populate-eu-jobs-minimal.js', {
-        cwd: process.cwd(),
-        timeout: 300000 // 5 minutes
-      });
-      
-      // Parse the output to get job count
-      const jobMatch = stdout.match(/Total NEW jobs saved: (\d+)/);
-      const jobsSaved = jobMatch ? parseInt(jobMatch[1]) : 0;
-      
-      console.log(`✅ Adzuna: ${jobsSaved} jobs processed`);
-      return jobsSaved;
+      // Check if JavaScript file exists, otherwise use the script
+      if (fs.existsSync('scrapers/adzuna-scraper-standalone.js')) {
+        const { stdout } = await execAsync('node scrapers/adzuna-scraper-standalone.js', {
+          cwd: process.cwd(),
+          timeout: 300000 // 5 minutes
+        });
+        
+        console.log(`✅ Adzuna: Jobs processed`);
+        return 1; // Assume success
+      } else {
+        // Fallback to the working script
+        const { stdout } = await execAsync('node scripts/populate-eu-jobs-minimal.js', {
+          cwd: process.cwd(),
+          timeout: 300000 // 5 minutes
+        });
+        
+        // Parse the output to get job count
+        const jobMatch = stdout.match(/Total NEW jobs saved: (\d+)/);
+        const jobsSaved = jobMatch ? parseInt(jobMatch[1]) : 0;
+        
+        console.log(`✅ Adzuna: ${jobsSaved} jobs processed`);
+        return jobsSaved;
+      }
     } catch (error) {
       console.error('❌ Adzuna scraper failed:', error.message);
       return 0;
@@ -74,17 +89,28 @@ class RealJobRunner {
     try {
       console.log('🔄 Running Reed scraper with real API...');
       
-      // Use the real Reed scraper that gets actual jobs
-      const { stdout } = await execAsync('node scripts/reed-real-scraper.js', {
-        cwd: process.cwd(),
-        timeout: 300000 // 5 minutes
-      });
-      
-      const jobMatch = stdout.match(/Total jobs saved: (\d+)/);
-      const jobsSaved = jobMatch ? parseInt(jobMatch[1]) : 0;
-      
-      console.log(`✅ Reed: ${jobsSaved} real jobs processed`);
-      return jobsSaved;
+      // Check if JavaScript file exists, otherwise use the script
+      if (fs.existsSync('scrapers/reed-scraper-standalone.js')) {
+        const { stdout } = await execAsync('node scrapers/reed-scraper-standalone.js', {
+          cwd: process.cwd(),
+          timeout: 300000 // 5 minutes
+        });
+        
+        console.log(`✅ Reed: Jobs processed`);
+        return 1; // Assume success
+      } else {
+        // Fallback to the working script
+        const { stdout } = await execAsync('node scripts/reed-real-scraper.js', {
+          cwd: process.cwd(),
+          timeout: 300000 // 5 minutes
+        });
+        
+        const jobMatch = stdout.match(/Total jobs saved: (\d+)/);
+        const jobsSaved = jobMatch ? parseInt(jobMatch[1]) : 0;
+        
+        console.log(`✅ Reed: ${jobsSaved} real jobs processed`);
+        return jobsSaved;
+      }
     } catch (error) {
       console.error('❌ Reed scraper failed:', error.message);
       return 0;
@@ -94,7 +120,42 @@ class RealJobRunner {
   // Run standardized Greenhouse scraper
   async runGreenhouseScraper() {
     try {
-      console.log('🔄 Running standardized Greenhouse scraper...');
+      console.log('🔄 Running verified Greenhouse scraper (10 companies only)...');
+      
+      // Check if verified scraper exists
+      if (!fs.existsSync('scrapers/verified-greenhouse-scraper.js')) {
+        console.log('⚠️ Verified Greenhouse scraper not found, falling back to standard');
+        return this.runStandardGreenhouseScraper();
+      }
+      
+      // Use the verified scraper with only the 10 companies worth scraping
+      const { stdout } = await execAsync('node scrapers/verified-greenhouse-scraper.js', {
+        cwd: process.cwd(),
+        timeout: 300000
+      });
+      
+      // Parse output to get job count
+      const jobMatch = stdout.match(/✅ Greenhouse: (\d+) jobs saved to database/);
+      const jobsSaved = jobMatch ? parseInt(jobMatch[1]) : 0;
+      
+      console.log(`✅ Greenhouse: ${jobsSaved} jobs processed`);
+      return jobsSaved;
+    } catch (error) {
+      console.error('❌ Greenhouse scraper failed:', error.message);
+      return 0;
+    }
+  }
+
+  // Fallback to standard Greenhouse scraper
+  async runStandardGreenhouseScraper() {
+    try {
+      console.log('🔄 Running standard Greenhouse scraper...');
+      
+      // Check if JavaScript file exists
+      if (!fs.existsSync('scrapers/greenhouse-standardized.js')) {
+        console.log('⚠️ Greenhouse scraper JavaScript file not found, skipping');
+        return 0;
+      }
       
       // Use the working JavaScript version instead of tsx
       const { stdout } = await execAsync('node scrapers/greenhouse-standardized.js', {
@@ -102,32 +163,41 @@ class RealJobRunner {
         timeout: 300000
       });
       
-      console.log(`✅ Greenhouse: Jobs processed`);
-      return 1; // Assume success
+      // Parse output to get job count
+      const jobMatch = stdout.match(/✅ Greenhouse: (\d+) jobs saved to database/);
+      const jobsSaved = jobMatch ? parseInt(jobMatch[1]) : 0;
+      
+      console.log(`✅ Standard Greenhouse: ${jobsSaved} jobs saved to database`);
+      return jobsSaved;
+      
     } catch (error) {
-      console.error('❌ Greenhouse scraper failed:', error.message);
+      console.error('❌ Standard Greenhouse scraper failed:', error.message);
       return 0;
     }
   }
 
   // Run Indeed scraper
-  // Indeed scraper removed - not working properly
+oka  // Indeed scraper removed - not working properly
 
   // Run Muse scraper
   async runMuseScraper() {
     try {
       console.log('🔄 Running Muse scraper...');
       
-      // Use the working JavaScript version instead of tsx
-      if (fs.existsSync('scrapers/muse-scraper.js')) {
-        const { stdout } = await execAsync('node scrapers/muse-scraper.js', {
+      // Use the new optimized location-based Muse scraper
+      if (fs.existsSync('scripts/muse-location-based.js')) {
+        const { stdout } = await execAsync('node scripts/muse-location-based.js', {
           cwd: process.cwd(),
           timeout: 300000
         });
-        console.log(`✅ Muse: Jobs processed`);
-        return 1;
+        // Parse output to get job count
+        const jobMatch = stdout.match(/✅ Muse: (\d+) jobs saved to database/);
+        const jobsSaved = jobMatch ? parseInt(jobMatch[1]) : 0;
+        
+        console.log(`✅ Muse: ${jobsSaved} jobs processed`);
+        return jobsSaved;
       } else {
-        console.log('⚠️ Muse scraper not available, skipping');
+        console.log('⚠️ Muse location-based scraper not available, skipping');
         return 0;
       }
     } catch (error) {
@@ -141,13 +211,47 @@ class RealJobRunner {
     try {
       console.log('🔄 Running JSearch scraper...');
       
-      const { stdout } = await execAsync('node scrapers/jsearch-scraper.js', {
+      // Use the minimal JSearch scraper (optimized version has loop issues)
+      if (!fs.existsSync('scripts/jsearch-minimal.js')) {
+        console.log('⚠️ JSearch minimal scraper not found, skipping');
+        return 0;
+      }
+      
+      // Cost control: Check if we should run (once per day)
+      const now = new Date();
+      const today = now.toDateString();
+      const lastRunFile = '/tmp/jsearch_last_run.txt';
+      
+      try {
+        if (fs.existsSync(lastRunFile)) {
+          const lastRunDate = fs.readFileSync(lastRunFile, 'utf8');
+          if (lastRunDate === today) {
+            console.log(`⏭️ JSearch skipped: Already ran today (cost control)`);
+            return 0;
+          }
+        }
+      } catch (e) {
+        // File system check failed, continue anyway
+      }
+      
+      const { stdout } = await execAsync('node scripts/jsearch-minimal.js', {
         cwd: process.cwd(),
         timeout: 300000
       });
       
-      console.log(`✅ JSearch: Jobs processed`);
-      return 1; // Assume success
+      // Parse output to get job count
+      const jobMatch = stdout.match(/✅ JSearch: (\d+) jobs saved to database/);
+      const jobsSaved = jobMatch ? parseInt(jobMatch[1]) : 0;
+      
+      // Record that we ran today
+      try {
+        fs.writeFileSync(lastRunFile, today);
+      } catch (e) {
+        // File system write failed, continue anyway
+      }
+      
+      console.log(`✅ JSearch: ${jobsSaved} jobs processed`);
+      return jobsSaved;
     } catch (error) {
       console.error('❌ JSearch scraper failed:', error.message);
       return 0;
@@ -249,8 +353,8 @@ class RealJobRunner {
       
       const jsearchJobs = await this.runJSearchScraper();
       
-      // Update stats
-      this.totalJobsSaved += (adzunaJobs + reedJobs + greenhouseJobs + indeedJobs + museJobs + jsearchJobs);
+      // Update stats (indeedJobs removed since Indeed scraper was removed)
+      this.totalJobsSaved += (adzunaJobs + reedJobs + greenhouseJobs + museJobs + jsearchJobs);
       this.runCount++;
       this.lastRun = new Date();
       
@@ -264,7 +368,7 @@ class RealJobRunner {
       console.log('\n✅ SCRAPING CYCLE COMPLETE');
       console.log('============================');
       console.log(`⏱️  Duration: ${duration.toFixed(1)} seconds`);
-      console.log(`📊 Jobs processed this cycle: ${adzunaJobs + reedJobs + greenhouseJobs + indeedJobs + museJobs + jsearchJobs}`);
+      console.log(`📊 Jobs processed this cycle: ${adzunaJobs + reedJobs + greenhouseJobs + museJobs + jsearchJobs}`);
       console.log(`📈 Total jobs processed: ${this.totalJobsSaved}`);
       console.log(`🔄 Total cycles run: ${this.runCount}`);
       console.log(`📅 Last run: ${this.lastRun.toISOString()}`);
@@ -325,7 +429,17 @@ const jobRunner = new RealJobRunner();
 
 // Start if this file is run directly
 if (require.main === module) {
-  jobRunner.start();
+  (async () => {
+    try {
+      await initLang();  // 👈 load CLD3 WASM once
+      console.log('✅ Language detection initialized');
+    } catch (e) {
+      console.warn('[lang] init failed, falling back to franc-only', e);
+    }
+    
+    // Start the job runner
+    jobRunner.start();
+  })();
   
   // Handle graceful shutdown
   process.on('SIGINT', () => {

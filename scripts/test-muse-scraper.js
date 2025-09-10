@@ -21,7 +21,7 @@ if (museApiKey) {
 // Test the Muse scraper
 console.log('\n🔍 Testing Muse scraper...');
 
-import('../scrapers/muse-scraper.ts').then((module) => {
+import('../scrapers/muse-scraper.js').then((module) => {
   const MuseScraper = module.default.default || module.default;
   try {
     const scraper = new MuseScraper();

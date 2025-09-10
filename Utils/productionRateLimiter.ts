@@ -34,8 +34,8 @@ export const RATE_LIMIT_CONFIG = {
     skipSuccessfulRequests: true
   },
   'match-users': {
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes default
-    maxRequests: 5, // 5 matching requests per 15 minutes
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '300000'), // 5 minutes default (faster for users)
+    maxRequests: 3, // 3 matching requests per 5 minutes (reasonable for testing)
     skipSuccessfulRequests: false
   },
   'send-scheduled-emails': {
