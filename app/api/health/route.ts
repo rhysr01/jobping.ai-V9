@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { criticalAlerts } from '@/Utils/criticalAlerts';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const startTime = Date.now();
   
   try {
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     const supabase = createSupabaseClient(supabaseUrl, supabaseKey);
     
     // Simple database health check
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('users')
       .select('count')
       .limit(1);

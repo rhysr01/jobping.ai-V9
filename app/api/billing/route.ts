@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
 // PUT: Manage subscription
 export async function PUT(req: NextRequest) {
   try {
-    const { userId, action, subscriptionId, newTier } = await req.json();
+    const { userId, action, newTier } = await req.json();
 
     if (!userId || !action) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });

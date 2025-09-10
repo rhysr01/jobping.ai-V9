@@ -8,20 +8,16 @@ import {
   generateRobustFallbackMatches,
   logMatchSession,
   AIMatchingCache,
-  parseAndValidateMatches,
   isTestOrPerfMode,
   timeout,
   type UserPreferences,
 } from '@/Utils/jobMatching';
-import type { Job } from '@/scrapers/types';
-// import { EnhancedRateLimiter } from '@/Utils/enhancedRateLimiter';
 import { PerformanceMonitor } from '@/Utils/performanceMonitor';
 import { AdvancedMonitoringOracle } from '@/Utils/advancedMonitoring';
 import { AutoScalingOracle } from '@/Utils/autoScaling';
 import { UserSegmentationOracle } from '@/Utils/userSegmentation';
 import type { JobMatch } from '@/Utils/jobMatching';
 import { dogstatsd } from '@/Utils/datadogMetrics';
-import { createClient as createRedisClient } from 'redis';
 import crypto from 'crypto';
 import { criticalAlerts } from '@/Utils/criticalAlerts';
 import { resetLimiterForTests } from '@/Utils/productionRateLimiter';
