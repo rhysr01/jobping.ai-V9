@@ -7,13 +7,13 @@
    ============================ */
 
 // Import AI provenance tracking utilities
-import { 
-  aiMatchWithProvenance, 
-  type AiProvenance 
-} from './aiProvenance';
+// import { 
+//   aiMatchWithProvenance, 
+//   type AiProvenance 
+// } from './aiProvenance';
 
 // Import semantic matching system
-import { SemanticMatchingEngine } from './semanticMatching';
+// import { SemanticMatchingEngine } from './semanticMatching';
 
 // Feature flag for gradual migration
 const USE_NEW_MATCHING_ARCHITECTURE = process.env.USE_NEW_MATCHING_ARCHITECTURE === 'true';
@@ -765,7 +765,7 @@ export function performRobustMatching(jobs: Job[], userPrefs: UserPreferences): 
 }
 
 // Enhanced AI Matching Cache with Redis persistence (new implementation)
-export { EnhancedAIMatchingCache, enhancedAIMatchingCache } from './enhancedCache';
+// export { EnhancedAIMatchingCache, enhancedAIMatchingCache } from './enhancedCache';
 
 // ================================
 // ORIGINAL TYPES + target_cities ADDED
@@ -2594,9 +2594,9 @@ export async function atomicUpsertJobs(jobs: Job[]): Promise<JobUpsertResult> {
       
       // 3. Normalize URL before hashing
       if (preparedJob.job_url) {
-        const { createJobUrl } = require('./robustJobCreation');
-        const urlResult = createJobUrl(preparedJob.job_url, preparedJob.company_profile_url || '', preparedJob.title || '');
-        preparedJob.job_url = urlResult.url;
+        // const { createJobUrl } = require('./robustJobCreation');
+        // const urlResult = createJobUrl(preparedJob.job_url, preparedJob.company_profile_url || '', preparedJob.title || '');
+        // preparedJob.job_url = urlResult.url;
       }
       
       // 4. Validate required fields

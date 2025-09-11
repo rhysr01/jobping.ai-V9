@@ -16,9 +16,6 @@ export class AdapterFactory {
         adapter = new GreenhouseAdapter();
         break;
       // Add more adapters as they're implemented
-      // case 'workday':
-      //   adapter = new WorkdayAdapter();
-      //   break;
       // case 'smartrecruiters':
       //   adapter = new SmartRecruitersAdapter();
       //   break;

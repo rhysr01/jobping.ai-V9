@@ -1,6 +1,6 @@
 // 🔄 FEEDBACK SYSTEM INTEGRATION - BRIDGES EXISTING SYSTEM WITH NEW EMAIL STRUCTURE
 
-import { enhancedFeedbackSystem, type EmailFeedbackData } from '../enhancedFeedback';
+// import { enhancedFeedbackSystem, type EmailFeedbackData } from '../enhancedFeedback';
 
 /**
  * Enhanced feedback integration for email system

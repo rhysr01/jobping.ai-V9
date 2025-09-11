@@ -93,8 +93,19 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
-  return NextResponse.json({ 
-    error: 'Method not allowed. This endpoint is designed for POST requests only.'
-  }, { status: 405 });
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const cycle = searchParams.get('cycle') as 'monthly' | 'quarterly' | null;
+
+    // Minimal demo: redirect to a checkout page without collecting email/userId here.
+    // In production, you should create a session server-side with the authenticated user.
+    const priceId = cycle === 'quarterly'
+      ? STRIPE_CONFIG.PRODUCTS.PREMIUM_QUARTERLY
+      : STRIPE_CONFIG.PRODUCTS.PREMIUM_MONTHLY;
+
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/api/billing/checkout?priceId=${priceId}`);
+  } catch (error) {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  }
 }

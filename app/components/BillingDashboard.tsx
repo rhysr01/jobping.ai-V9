@@ -152,7 +152,7 @@ export default function BillingDashboard({ userId }: BillingDashboardProps) {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-        active: { color: 'bg-green-500/20 text-green-500 border-green-500/30', icon: CheckCircle },
+        active: { color: 'bg-white/20 text-white border-white/30', icon: CheckCircle },
   past_due: { color: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30', icon: AlertCircle },
   canceled: { color: 'bg-red-500/20 text-red-500 border-red-500/30', icon: XCircle },
   paused: { color: 'bg-gray-500/20 text-gray-500 border-gray-500/30', icon: Pause }
@@ -180,12 +180,14 @@ export default function BillingDashboard({ userId }: BillingDashboardProps) {
   if (error) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-[#EF4444] mx-auto mb-4" />
-          <p className="text-[#EF4444]">{error}</p>
+        <div className="text-center max-w-md">
+          <div className="error-state rounded-lg p-6 mb-4">
+            <AlertCircle className="w-8 h-8 mx-auto mb-3" />
+            <p className="text-sm font-medium">{error}</p>
+          </div>
           <button 
             onClick={fetchBillingInfo} 
-            className="mt-4 btn-primary px-6 py-2 text-sm"
+            className="btn-primary px-6 py-2 text-sm"
           >
             Retry
           </button>
@@ -232,17 +234,17 @@ export default function BillingDashboard({ userId }: BillingDashboardProps) {
 
       {/* Payment Recovery Banner */}
       {currentSubscription?.status === 'past_due' && (
-        <div className="bg-[#EF4444]/10 border border-[#EF4444]/30 rounded-2xl p-6 mb-6">
+        <div className="error-state rounded-2xl p-6 mb-6">
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-6 w-6 text-[#EF4444] mt-0.5 flex-shrink-0" />
+            <AlertCircle className="h-6 w-6 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <h3 className="text-[#EF4444] font-semibold text-lg mb-2">Payment Failed - Update Required</h3>
-              <p className="text-[#EF4444] text-sm mb-4">
+              <h3 className="font-semibold text-lg mb-2">Payment Failed - Update Required</h3>
+              <p className="text-sm mb-4 opacity-90">
                 Your subscription payment failed. Please update your payment method to continue receiving job matches.
               </p>
               <button
                 onClick={() => setActiveTab('payment')}
-                className="bg-[#EF4444] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#DC2626] transition-colors"
+                className="bg-white text-black px-4 py-2 rounded-lg text-sm font-medium hover:bg-zinc-100 transition-colors"
               >
                 Update Payment Method
               </button>
@@ -293,7 +295,7 @@ export default function BillingDashboard({ userId }: BillingDashboardProps) {
                   )}
                   {currentSubscription.status === 'paused' && (
                                       <button
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    className="bg-white hover:bg-zinc-100 text-black px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                     onClick={() => handleSubscriptionAction('resume')}
                     disabled={actionLoading === 'resume'}
                   >
@@ -439,7 +441,7 @@ export default function BillingDashboard({ userId }: BillingDashboardProps) {
                 )}
                 {currentSubscription.status === 'paused' && (
                   <button
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    className="bg-white hover:bg-zinc-100 text-black px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                     onClick={() => handleSubscriptionAction('resume')}
                     disabled={actionLoading === 'resume'}
                   >

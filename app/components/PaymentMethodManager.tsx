@@ -123,7 +123,7 @@ function PaymentMethodForm({ userId, onPaymentMethodAdded }: PaymentMethodManage
               <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#6B7280] pointer-events-none" />
             </div>
             {cardError && (
-              <p className="text-[#EF4444] text-sm mt-1">{cardError}</p>
+              <p className="text-red-500 text-sm mt-1">{cardError}</p>
             )}
           </div>
 
@@ -152,25 +152,31 @@ function PaymentMethodForm({ userId, onPaymentMethodAdded }: PaymentMethodManage
 
           {/* Error Message */}
           {error && (
-            <div className="flex items-start gap-3 p-4 bg-[#EF4444]/10 border border-[#EF4444]/30 rounded-lg">
-              <AlertCircle className="h-5 w-5 text-[#EF4444] mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-[#EF4444] text-sm mb-3">{error}</p>
-                <button
-                  onClick={() => setError(null)}
-                  className="text-[#EF4444] text-sm underline hover:no-underline"
-                >
-                  Try again
-                </button>
+            <div className="error-state rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm mb-3">{error}</p>
+                  <button
+                    onClick={() => setError(null)}
+                    className="text-sm underline hover:no-underline opacity-80 hover:opacity-100 transition-opacity"
+                  >
+                    Try again
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
           {/* Success Message */}
           {success && (
-            <div className="flex items-start gap-3 p-4 bg-[#10B981]/10 border border-[#10B981]/30 rounded-lg">
-              <AlertCircle className="h-5 w-5 text-[#10B981] mt-0.5 flex-shrink-0" />
-              <p className="text-[#10B981] text-sm">{success}</p>
+            <div className="success-state rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <svg className="h-5 w-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <p className="text-sm">{success}</p>
+              </div>
             </div>
           )}
 

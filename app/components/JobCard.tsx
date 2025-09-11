@@ -1,16 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { 
   Menu, Search, Settings, Grid3X3, Edit, Inbox, Star, Send, FileText, 
   ChevronDown, Archive, Trash2, Mail, Clock, ChevronLeft, ChevronRight,
   MapPin, Check, ExternalLink, Reply, MoreVertical
 } from 'lucide-react';
 
-interface JobCardProps {
-  index: number;
-}
+interface JobCardProps {}
 
 // Loading component for better UX
 function JobCardLoading() {
@@ -32,7 +29,7 @@ function JobCardLoading() {
   );
 }
 
-export function JobCard({ index }: JobCardProps) {
+export function JobCard({}: JobCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -84,12 +81,7 @@ export function JobCard({ index }: JobCardProps) {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
-      className="max-w-5xl mx-auto"
-    >
+    <div className="max-w-5xl mx-auto">
       <div className="text-center mb-12 sm:mb-16">
         <h2 className="text-[#F8F9FA] font-bold text-3xl sm:text-4xl lg:text-5xl mb-4 sm:mb-6 tracking-tight">
           What Gets Delivered to Your Email
@@ -366,7 +358,7 @@ export function JobCard({ index }: JobCardProps) {
                           <span className="text-[#FBBC04] font-medium bg-[#FBBC04]/10 px-2 py-1 rounded-full">
                             ⚡ Only {job.applicants} applied
                           </span>
-                          <span className="text-[#10B981]">
+                          <span className="text-white">
                             ⏰ {job.posted}
                           </span>
 
@@ -420,6 +412,6 @@ export function JobCard({ index }: JobCardProps) {
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

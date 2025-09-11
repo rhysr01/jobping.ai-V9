@@ -5,9 +5,10 @@ import { Inter } from 'next/font/google';
 
 const inter = Inter({
   subsets: ['latin'],
-  weight: ['200', '300', '400', '500', '600', '700', '800', '900'],
+  weight: ['400', '500', '600'],
   display: 'swap',
-  variable: '--font-inter'
+  variable: '--font-inter',
+  preload: true
 });
 
 export const metadata: Metadata = {
@@ -77,7 +78,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <meta name="theme-color" content="#0B0B0F" />
+        <meta name="theme-color" content="#000000" />
         <meta name="color-scheme" content="dark" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
         <script
@@ -100,7 +101,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
       </head>
-      <body className="bg-[#0B0B0F] text-white overflow-x-hidden font-inter selection:bg-white selection:text-black">
+      <body className="bg-black text-white overflow-x-hidden font-inter selection:bg-white selection:text-black">
         {children}
       </body>
     </html>

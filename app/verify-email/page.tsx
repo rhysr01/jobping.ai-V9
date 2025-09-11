@@ -51,11 +51,11 @@ function VerifyEmailContent() {
 
   if (status === 'verifying') {
     return (
-      <div className="min-h-screen bg-[#0B0B0F] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-6"></div>
           <h1 className="text-2xl font-bold text-white mb-4">Verifying Your Email...</h1>
-          <p className="text-white/70">Please wait while we activate your account.</p>
+          <p className="text-zinc-500">Please wait while we activate your account.</p>
         </div>
       </div>
     );
@@ -63,7 +63,7 @@ function VerifyEmailContent() {
 
   if (status === 'success') {
     return (
-      <div className="min-h-screen bg-[#0B0B0F] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
           <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,35 +72,35 @@ function VerifyEmailContent() {
           </div>
           
           <h1 className="text-2xl font-bold text-white mb-4">🎉 Welcome to JobPing!</h1>
-          <p className="text-white/70 mb-6">{message}</p>
+          <p className="text-zinc-500 mb-6">{message}</p>
           
           {user && (
-            <div className="bg-white/5 rounded-lg p-6 mb-6 text-left">
+            <div className="bg-white/5 rounded-lg p-6 mb-6 text-left border border-white/10">
               <h2 className="text-lg font-semibold text-white mb-3">Your Profile is Active</h2>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-white/60">Name:</span>
+                  <span className="text-zinc-500">Name:</span>
                   <span className="text-white">{user.full_name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/60">Email:</span>
+                  <span className="text-zinc-500">Email:</span>
                   <span className="text-white">{user.email}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/60">Career Path:</span>
+                  <span className="text-zinc-500">Career Path:</span>
                   <span className="text-white capitalize">{user.career_path || 'Not specified'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/60">Status:</span>
+                  <span className="text-zinc-500">Status:</span>
                   <span className="text-green-400">✅ Verified & Active</span>
                 </div>
               </div>
             </div>
           )}
           
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-6">
+          <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-6">
             <h3 className="text-white font-semibold mb-2">What's Next?</h3>
-            <ul className="text-white/70 text-sm space-y-1 text-left">
+            <ul className="text-zinc-500 text-sm space-y-1 text-left">
               <li>📊 AI is analyzing your profile</li>
               <li>🔍 Finding your perfect job matches</li>
               <li>📧 First matches arriving tomorrow at 11:11 AM</li>
@@ -110,7 +110,7 @@ function VerifyEmailContent() {
           
           <Link 
             href="/"
-            className="inline-block bg-white text-[#0B0B0F] px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+            className="inline-block bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-zinc-100 transition-colors"
           >
             Return to Homepage
           </Link>
@@ -121,22 +121,22 @@ function VerifyEmailContent() {
 
   // Error state
   return (
-    <div className="min-h-screen bg-[#0B0B0F] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center">
-        <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="error-state rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </div>
         
         <h1 className="text-2xl font-bold text-white mb-4">Verification Failed</h1>
-        <p className="text-white/70 mb-6">{message}</p>
+        <p className="text-zinc-500 mb-6">{message}</p>
         
-        <div className="bg-white/5 rounded-lg p-4 mb-6">
-          <p className="text-white/70 text-sm">
+        <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-6">
+          <p className="text-zinc-500 text-sm">
             Common issues:
           </p>
-          <ul className="text-white/60 text-sm mt-2 space-y-1">
+          <ul className="text-zinc-400 text-sm mt-2 space-y-1">
             <li>• Link has expired (valid for 24 hours)</li>
             <li>• Email already verified</li>
             <li>• Invalid verification token</li>
@@ -146,14 +146,14 @@ function VerifyEmailContent() {
         <div className="space-y-3">
           <button
             onClick={() => window.location.reload()}
-            className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            className="w-full bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-zinc-100 transition-colors"
           >
             Try Again
           </button>
           
           <Link 
             href="/"
-            className="block text-white/70 hover:text-white transition-colors"
+            className="block text-zinc-500 hover:text-white transition-colors"
           >
             Return to Homepage
           </Link>
@@ -166,7 +166,7 @@ function VerifyEmailContent() {
 export default function VerifyEmailPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0B0B0F] flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
       </div>
     }>

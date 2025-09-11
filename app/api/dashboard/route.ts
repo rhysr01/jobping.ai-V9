@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { createClient } from '@supabase/supabase-js';
-import { PerformanceMonitor } from '@/Utils/performanceMonitor';
-import { getScraperConfig } from '@/Utils/scraperConfig';
+// import { PerformanceMonitor } from '@/Utils/performanceMonitor';
+// import { getScraperConfig } from '@/Utils/scraperConfig';
 
 // Helper function to get database metrics
 async function getDatabaseMetrics() {

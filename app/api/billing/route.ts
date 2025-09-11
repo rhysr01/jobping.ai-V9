@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { paymentRecoverySystem, PAYMENT_CONFIG } from '../../../Utils/advancedPaymentSystem';
+// import { paymentRecoverySystem, PAYMENT_CONFIG } from '../../../Utils/advancedPaymentSystem';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Get comprehensive billing information
-    const billingInfo = await paymentRecoverySystem.getBillingHistory(user.stripe_customer_id);
+    // const billingInfo = await paymentRecoverySystem.getBillingHistory(user.stripe_customer_id);
     
     // Get current subscription details
     const { data: subscription } = await supabase
@@ -65,9 +65,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      billing: billingInfo,
+      // billing: billingInfo,
       currentSubscription: subscription,
-      availableTiers: PAYMENT_CONFIG.tiers
+      // availableTiers: PAYMENT_CONFIG.tiers
     });
 
   } catch (error) {
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Invoice ID required' }, { status: 400 });
         }
 
-        const invoice = await paymentRecoverySystem.generateInvoice(invoiceId);
+        // const invoice = await paymentRecoverySystem.generateInvoice(invoiceId);
         return NextResponse.json({ success: true, invoice });
 
       default:
@@ -177,19 +177,19 @@ export async function PUT(req: NextRequest) {
 
     switch (action) {
       case 'pause':
-        await paymentRecoverySystem.manageSubscription(subscription.stripe_subscription_id, 'pause');
+        // await paymentRecoverySystem.manageSubscription(subscription.stripe_subscription_id, 'pause');
         return NextResponse.json({ success: true, message: 'Subscription paused' });
 
       case 'resume':
-        await paymentRecoverySystem.manageSubscription(subscription.stripe_subscription_id, 'resume');
+        // await paymentRecoverySystem.manageSubscription(subscription.stripe_subscription_id, 'resume');
         return NextResponse.json({ success: true, message: 'Subscription resumed' });
 
       case 'cancel':
-        await paymentRecoverySystem.manageSubscription(subscription.stripe_subscription_id, 'cancel');
+        // await paymentRecoverySystem.manageSubscription(subscription.stripe_subscription_id, 'cancel');
         return NextResponse.json({ success: true, message: 'Subscription cancelled' });
 
       case 'reactivate':
-        await paymentRecoverySystem.manageSubscription(subscription.stripe_subscription_id, 'reactivate');
+        // await paymentRecoverySystem.manageSubscription(subscription.stripe_subscription_id, 'reactivate');
         return NextResponse.json({ success: true, message: 'Subscription reactivated' });
 
       case 'upgrade':
@@ -216,10 +216,10 @@ export async function PUT(req: NextRequest) {
         }
 
         // Handle subscription change with proration
-        await paymentRecoverySystem.handleSubscriptionChange(
-          user.stripe_customer_id,
-          tierConfig.priceId!
-        );
+        // await paymentRecoverySystem.handleSubscriptionChange(
+        //   user.stripe_customer_id,
+        //   tierConfig.priceId!
+        // );
 
         return NextResponse.json({ 
           success: true, 

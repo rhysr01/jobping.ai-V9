@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 
 interface FAQItem {
@@ -11,28 +10,20 @@ interface FAQItem {
 
 const faqData: FAQItem[] = [
   {
-    question: "How many jobs do I get?",
-    answer: "6-8 curated EU/UK jobs every 48 hours. No spam or irrelevant listings - just quality opportunities you can actually get."
+    question: "What's the difference between Free and Premium?",
+    answer: "Free users get 5 personalised job matches daily via email. Premium users receive 15 matches daily, with priority sourcing and advanced filtering, also via email."
   },
   {
-    question: "Are jobs really visa-friendly?",
-    answer: "Yes. We prioritize roles that sponsor visas or hire international students. Every job is screened for visa requirements before delivery."
+    question: "Where do jobs come from?",
+    answer: "We source jobs from major job boards and directly from company career pages and official APIs to ensure freshness and accuracy."
   },
   {
-    question: "What makes this different from LinkedIn/Indeed?",
-    answer: "No endless scrolling. No applying to 100+ jobs. We deliver pre-filtered, relevant opportunities straight to your email. Focus on applications, not searching."
-  },
-  {
-    question: "How fresh are the jobs?",
-    answer: "Most jobs are posted within 24-72 hours. We scrape 2,800+ sources daily and deliver the newest opportunities first."
+    question: "Is there a dashboard?",
+    answer: "No. JobPing is designed to be email-only. We deliver curated opportunities straight to your inbox so you can focus on applying, not searching."
   },
   {
     question: "Can I cancel anytime?",
-    answer: "Absolutely. No contracts, no fees. Simply reply 'unsubscribe' to any email or manage your preferences online."
-  },
-  {
-    question: "Which countries/cities do you cover?",
-    answer: "EU focus: London, Amsterdam, Berlin, Paris, Madrid, Barcelona, Dublin, Stockholm, Zurich, Milan, plus remote EU positions."
+    answer: "Yes. You can cancel your Premium subscription or unsubscribe from Free emails at any time, directly from your email or account settings. No contracts or hidden fees."
   }
 ];
 
@@ -50,100 +41,41 @@ export default function FAQ() {
   };
 
   return (
-    <section className="py-24 bg-[#0B0B0F] relative">
-      <div className="absolute inset-0 bg-pattern opacity-20"></div>
-      <div className="container-frame">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-[#F8F9FA] font-bold text-4xl lg:text-5xl mb-6 tracking-tight"
-          >
-            Questions About Getting Jobs Delivered?
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-[#9CA3AF] text-xl max-w-2xl mx-auto leading-relaxed"
-          >
-            Everything you need to know about our EU/UK job delivery service.
-          </motion.p>
-        </div>
+    <section className="py-20 md:py-28 bg-black scroll-mt-20 md:scroll-mt-28">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
+        <div className="bg-white/5 rounded-xl p-6 md:p-8 border border-white/10">
+          <h2 className="text-white font-semibold text-lg md:text-xl mb-6 text-center">
+            Frequently Asked Questions
+          </h2>
 
-        {/* FAQ Items */}
-        <div className="max-w-3xl mx-auto">
-          {faqData.map((item, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="mb-4"
-            >
-              <div className="premium-card bg-[#151519] border border-[#374151] rounded-xl overflow-hidden hover:border-[#4B5563] transition-colors relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#10B981]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="space-y-4">
+            {faqData.map((item, index) => (
+              <div key={index} className="border-b border-white/10 last:border-b-0 pb-4 last:pb-0">
                 <button
                   onClick={() => toggleItem(index)}
-                  className="w-full px-6 py-5 text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#0B0B0F]"
+                  className="w-full text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-white/20 rounded-lg p-2 -m-2"
                 >
-                  <h3 className="text-[#F8F9FA] font-semibold text-lg pr-8">
+                  <h3 className="text-white font-medium text-sm md:text-base pr-4">
                     {item.question}
                   </h3>
-                  <motion.div
-                    animate={{ rotate: openItems.has(index) ? 180 : 0 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="flex-shrink-0"
-                  >
-                    <ChevronDown className="w-5 h-5 text-[#9CA3AF]" />
-                  </motion.div>
+                  <ChevronDown 
+                    className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${
+                      openItems.has(index) ? 'rotate-180' : ''
+                    }`} 
+                  />
                 </button>
                 
-                <AnimatePresence>
-                  {openItems.has(index) && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-6 pb-6 border-t border-[#374151]">
-                        <p className="text-[#D1D5DB] leading-relaxed pt-4">
-                          {item.answer}
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {openItems.has(index) && (
+                  <div className="mt-3 pl-2">
+                    <p className="text-zinc-400 text-xs md:text-sm leading-relaxed">
+                      {item.answer}
+                    </p>
+                  </div>
+                )}
               </div>
-            </motion.div>
-          ))}
+            ))}
+          </div>
         </div>
-
-        {/* CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.5 }}
-          className="text-center mt-16"
-        >
-          <p className="text-[#9CA3AF] mb-8 text-lg">
-            Ready to stop job hunting and start getting opportunities delivered?
-          </p>
-          <a
-            href="#signup"
-            className="inline-flex items-center gap-3 bg-white text-[#0B0B0F] px-8 py-4 rounded-2xl font-bold text-lg hover:bg-[#F9F9F9] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98]"
-          >
-            Get Your First Jobs Delivered
-            <span>→</span>
-          </a>
-        </motion.div>
       </div>
     </section>
   );

@@ -10,20 +10,19 @@ const utils_js_1 = require("./utils.js");
 const MUSE_CONFIG = {
     baseUrl: 'https://www.themuse.com/api/public/jobs',
     apiKey: process.env.MUSE_API_KEY || '', // Optional but recommended
-    // ✅ CORRECTED: Use simple city names that Muse API expects
+    // ✅ FIXED: Use EU cities that actually have jobs in Muse
     locations: [
-        'London', // UK financial hub
-        'Dublin', // Ireland tech center
-        'Berlin', // Germany startup capital
-        'Amsterdam', // Netherlands business center
-        'Paris', // France consulting hub
-        'Madrid', // Spain business center
-        'Munich', // Germany engineering hub
-        'Stockholm', // Sweden tech innovation
-        'Zurich', // Switzerland finance
-        'Copenhagen', // Denmark design hub
-        'Barcelona', // Spain startup ecosystem
-        'Milan' // Italy fashion/finance
+        'Dublin, Ireland',
+        'Berlin, Germany',
+        'Amsterdam, Netherlands',
+        'Paris, France',
+        'Madrid, Spain',
+        'Munich, Germany',
+        'Stockholm, Sweden',
+        'Zurich, Switzerland',
+        'Copenhagen, Denmark',
+        'Barcelona, Spain',
+        'Milan, Italy'
     ],
     // ✅ CORRECTED: Use exact category names from Muse API
     categories: [
@@ -50,7 +49,10 @@ const MUSE_CONFIG = {
     requestInterval: 8000, // 8 seconds = 450 requests/hour (safe buffer)
     maxRequestsPerHour: 450, // Leave buffer under 500 limit
     seenJobTTL: 72 * 60 * 60 * 1000, // 72 hours
-    resultsPerPage: 20 // Max for Muse API
+    resultsPerPage: 20, // Max for Muse API
+    // Prefer API early-career filter; will fallback to local regex if sparse
+    preferApiEarlyCareer: true,
+    apiEarlyLevels: ['Entry Level', 'Internship']
 };
 const TRACK_CATEGORIES = {
     A: ['Engineering', 'Data Science'], // Tech focus
@@ -83,6 +85,68 @@ class MuseScraper {
                 this.seenJobs.delete(jobId);
             }
         }
+    }
+    // ✅ FIXED: EU location detection for Muse jobs (comprehensive)
+    isEULocation(job) {
+        var _a;
+        const location = ((_a = job.location) === null || _a === void 0 ? void 0 : _a.toLowerCase()) || '';
+        const euPatterns = [
+            // Countries
+            'united kingdom', 'uk', 'great britain', 'britain', 'england', 'scotland', 'wales',
+            'ireland', 'republic of ireland', 'ie',
+            'germany', 'deutschland', 'de',
+            'france', 'fr', 'république française',
+            'spain', 'españa', 'es',
+            'italy', 'italia', 'it',
+            'netherlands', 'holland', 'nl', 'nederland',
+            'belgium', 'belgique', 'belgië', 'be',
+            'austria', 'österreich', 'at',
+            'switzerland', 'schweiz', 'suisse', 'ch',
+            'sweden', 'sverige', 'se',
+            'denmark', 'danmark', 'dk',
+            'norway', 'norge', 'no',
+            'finland', 'suomi', 'fi',
+            'poland', 'polska', 'pl',
+            'czech republic', 'czechia', 'cz',
+            'hungary', 'magyarország', 'hu',
+            'portugal', 'pt',
+            'greece', 'ελλάδα', 'gr',
+            'romania', 'românia', 'ro',
+            'bulgaria', 'българия', 'bg',
+            'croatia', 'hrvatska', 'hr',
+            'slovenia', 'slovenija', 'si',
+            'slovakia', 'slovensko', 'sk',
+            'estonia', 'eesti', 'ee',
+            'latvia', 'latvija', 'lv',
+            'lithuania', 'lietuva', 'lt',
+            'luxembourg', 'lëtzebuerg', 'lu',
+            'malta', 'mt',
+            'cyprus', 'κύπρος', 'cy',
+            // Major EU Cities
+            'london', 'manchester', 'birmingham', 'leeds', 'glasgow', 'edinburgh',
+            'dublin', 'cork', 'galway',
+            'berlin', 'munich', 'hamburg', 'frankfurt', 'cologne', 'stuttgart',
+            'paris', 'lyon', 'marseille', 'toulouse', 'nice',
+            'madrid', 'barcelona', 'valencia', 'seville', 'bilbao',
+            'rome', 'milan', 'naples', 'turin', 'florence', 'bologna',
+            'amsterdam', 'rotterdam', 'the hague', 'utrecht',
+            'brussels', 'antwerp', 'ghent',
+            'vienna', 'salzburg', 'graz',
+            'zurich', 'geneva', 'basel', 'bern',
+            'stockholm', 'gothenburg', 'malmö',
+            'copenhagen', 'aarhus', 'odense',
+            'oslo', 'bergen', 'trondheim',
+            'helsinki', 'tampere', 'turku',
+            'warsaw', 'krakow', 'gdansk', 'wroclaw',
+            'prague', 'brno', 'ostrava',
+            'budapest', 'debrecen', 'szeged',
+            'lisbon', 'porto', 'braga',
+            'athens', 'thessaloniki', 'patras',
+            'bucharest', 'cluj-napoca', 'timisoara',
+            'sofia', 'plovdiv', 'varna'
+        ];
+        // Check if location contains any EU pattern
+        return euPatterns.some(pattern => location.includes(pattern));
     }
     resetHourlyCount() {
         const now = Date.now();
@@ -205,7 +269,7 @@ class MuseScraper {
         const jobs = [];
         console.log(`📍 Scraping ${location} for categories: ${categories.join(', ')}, levels: ${levels.join(', ')}`);
         try {
-            // ✅ FIXED: Only include non-empty parameters to avoid API issues
+            // ✅ Only include non-empty parameters to avoid API issues
             const params = {
                 location: location,
                 page: 1
@@ -217,6 +281,11 @@ class MuseScraper {
             // Only add levels if not empty
             if (levels.length > 0) {
                 params.levels = levels;
+            }
+            // Prefer API early-career levels if configured
+            const initialLevels = (MUSE_CONFIG.preferApiEarlyCareer ? MUSE_CONFIG.apiEarlyLevels : levels);
+            if (initialLevels && initialLevels.length > 0) {
+                params.levels = initialLevels;
             }
             const response = await this.makeRequest(params);
             if (!response.results || response.results.length === 0) {
@@ -239,9 +308,14 @@ class MuseScraper {
                             posted_at: ingestJob.posted_at,
                             source: ingestJob.source
                         });
-                        if (isEarlyCareer) {
+                        // ✅ FIXED: Filter for EU locations only
+                        const isEULocation = this.isEULocation(ingestJob);
+                        if (isEarlyCareer && isEULocation) {
                             jobs.push(ingestJob);
-                            console.log(`✅ Early-career: ${ingestJob.title} at ${ingestJob.company} (${ingestJob.location})`);
+                            console.log(`✅ Early-career EU: ${ingestJob.title} at ${ingestJob.company} (${ingestJob.location})`);
+                        }
+                        else if (isEarlyCareer && !isEULocation) {
+                            console.log(`🚫 Skipped non-EU: ${ingestJob.title} at ${ingestJob.company} (${ingestJob.location})`);
                         }
                         else {
                             console.log(`🚫 Skipped senior: ${ingestJob.title} at ${ingestJob.company}`);
@@ -252,18 +326,55 @@ class MuseScraper {
                     }
                 }
             }
-            // ✅ OPTIMIZED: Fetch page 2 if there are more results and we have budget
-            if (response.page_count > 1 && this.hourlyRequestCount < MUSE_CONFIG.maxRequestsPerHour - 5) {
-                console.log(`📄 Fetching page 2 for ${location}...`);
-                const page2Response = await this.makeRequest(Object.assign(Object.assign({}, params), { page: 2 }));
-                for (const job of page2Response.results) {
+            // ✅ OPTIMIZED: Fetch all remaining pages if available and within budget
+            if (response.page_count && response.page_count > 1) {
+                const maxExtraPages = Math.min(response.page_count, 5); // safety cap
+                for (let page = 2; page <= maxExtraPages; page++) {
+                    if (this.hourlyRequestCount >= MUSE_CONFIG.maxRequestsPerHour - 2) {
+                        console.log('⏰ Approaching hourly rate limit during pagination, stopping.');
+                        break;
+                    }
+                    console.log(`📄 Fetching page ${page} for ${location}...`);
+                    const pageResponse = await this.makeRequest(Object.assign(Object.assign({}, params), { page }));
+                    for (const job of pageResponse.results || []) {
+                        if (!this.seenJobs.has(job.id)) {
+                            this.seenJobs.set(job.id, Date.now());
+                            try {
+                                const ingestJob = this.convertToIngestJob(job);
+                                const isEarlyCareer = (0, utils_js_1.classifyEarlyCareer)({
+                                    title: ingestJob.title || "",
+                                    description: ingestJob.description || "",
+                                    company: ingestJob.company,
+                                    location: ingestJob.location,
+                                    url: ingestJob.url,
+                                    posted_at: ingestJob.posted_at,
+                                    source: ingestJob.source
+                                });
+                                if (isEarlyCareer) {
+                                    jobs.push(ingestJob);
+                                    console.log(`✅ Early-career (p${page}): ${ingestJob.title} at ${ingestJob.company}`);
+                                }
+                            }
+                            catch (error) {
+                                console.warn(`Failed to process job ${job.id} from page ${page}:`, error);
+                            }
+                        }
+                    }
+                }
+            }
+            // Fallback: if very few early-career jobs, retry without API level filter and rely on local regex
+            if (jobs.length < 3 && MUSE_CONFIG.preferApiEarlyCareer && initialLevels && initialLevels.length > 0) {
+                console.log(`↩️  Sparse results with API levels for ${location}, retrying without level filter...`);
+                const retryParams = { location, page: 1 };
+                const retryResponse = await this.makeRequest(retryParams);
+                for (const job of retryResponse.results || []) {
                     if (!this.seenJobs.has(job.id)) {
                         this.seenJobs.set(job.id, Date.now());
                         try {
                             const ingestJob = this.convertToIngestJob(job);
                             const isEarlyCareer = (0, utils_js_1.classifyEarlyCareer)({
-                                title: ingestJob.title || "",
-                                description: ingestJob.description || "",
+                                title: ingestJob.title || '',
+                                description: ingestJob.description || '',
                                 company: ingestJob.company,
                                 location: ingestJob.location,
                                 url: ingestJob.url,
@@ -272,12 +383,10 @@ class MuseScraper {
                             });
                             if (isEarlyCareer) {
                                 jobs.push(ingestJob);
-                                console.log(`✅ Early-career (p2): ${ingestJob.title} at ${ingestJob.company}`);
+                                console.log(`✅ Early-career (fallback): ${ingestJob.title} at ${ingestJob.company}`);
                             }
                         }
-                        catch (error) {
-                            console.warn(`Failed to process job ${job.id} from page 2:`, error);
-                        }
+                        catch (_e) { }
                     }
                 }
             }

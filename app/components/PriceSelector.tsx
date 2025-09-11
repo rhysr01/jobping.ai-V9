@@ -1,158 +1,123 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState } from 'react';
 
-type PlanKey = 'free' | 'premium';
+type BillingCycle = 'monthly' | 'quarterly';
 
-const PLANS: Record<PlanKey, { title: string; price: string; bullets: string[] }> = {
-  free: {
-    title: 'Free',
+const PLANS = [
+  {
+    name: 'Free',
     price: '€0',
-    bullets: ['6 jobs/week', 'Email delivery', 'Basic filters'],
+    features: [
+      '5 jobs/day',
+      'Early-career targeting',
+      'Cancel anytime'
+    ],
+    cta: 'Get started free',
+    ctaAction: 'free'
   },
-  premium: {
-    title: 'Premium',
-    price: '€15',
-    bullets: ['15 jobs every 2 days', 'Priority AI matching', 'Advanced filters'],
-  },
-};
+  {
+    name: 'Premium',
+    price: '€15/month',
+    features: [
+      '15 jobs/day',
+      'Priority sources & filtering',
+      'Cancel anytime'
+    ],
+    cta: 'Upgrade to Premium',
+    ctaAction: 'premium'
+  }
+];
 
 export default function PriceSelector() {
-  const params = useSearchParams();
-  const initial = (params.get('plan') as PlanKey) || 'free';
-  const [selected, setSelected] = useState<PlanKey>(initial);
+  const [billing, setBilling] = useState<BillingCycle>('monthly');
 
-  useEffect(() => {
-    // keep URL in sync if navigated directly
-    if ((params.get('plan') as PlanKey) !== selected) {
-      // no-op: selection is the source of truth here
-    }
-  }, [params, selected]);
-
-  const handlePremiumClick = async () => {
-    try {
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: 'user@example.com', // TODO: Get from user context
-          priceId: 'price_premium_monthly', // TODO: Use your actual Stripe price ID
-          userId: 'current_user_id' // TODO: Get from user context
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to create checkout session');
-      }
-      
-      const { url } = await response.json();
+  const handlePlanClick = (action: string) => {
+    if (action === 'premium') {
+      const cycle = billing === 'quarterly' ? 'quarterly' : 'monthly';
+      const url = `/api/create-checkout-session?cycle=${cycle}`;
       window.location.href = url;
-    } catch (error) {
-      console.error('Checkout error:', error);
-      // Fallback to signup form
+    } else {
       const el = document.getElementById('signup');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
-  const onChoose = (plan: PlanKey) => {
-    setSelected(plan);
-    
-    if (plan === 'premium') {
-      handlePremiumClick();
-      return;
-    }
-    
-    // mirror selection in URL for Signup to read
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      url.searchParams.set('plan', plan);
-      window.history.replaceState(null, '', url.toString());
-    }
-    // smooth scroll to signup
-    const el = document.getElementById('signup');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
   return (
-    <section id="pricing" className="scroll-mt-[96px] border-t border-[#374151] relative">
-      <div className="absolute inset-0 bg-pattern opacity-20"></div>
-      <div className="container-frame py-24 md:py-32">
-        <h2 className="text-[#F8F9FA] font-bold text-4xl lg:text-5xl mb-8 text-center">
-          Choose your plan
-        </h2>
-
-        
-
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
-          {(['free', 'premium'] as PlanKey[]).map((key) => (
-            <PlanBubble
-              key={key}
-              k={key}
-              data={PLANS[key]}
-              selected={selected === key}
-              onClick={() => onChoose(key)}
-            />
-          ))}
-        </div>
-
-        {/* Central CTA as a secondary affordance */}
-        <div className="mt-16 flex justify-center">
-          <button
-            onClick={() => onChoose(selected)}
-            className="premium-button bg-white text-[#0B0B0F] px-8 py-4 rounded-2xl font-bold text-lg hover:bg-[#F9F9F9] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden group"
-            aria-label="Get started with selected plan"
-          >
-            Get My First 5 Matches Free
-          </button>
+    <section id="pricing" className="py-20 md:py-28 bg-black scroll-mt-20 md:scroll-mt-28">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
+        <div className="bg-white/5 rounded-2xl p-8 border border-white/10 shadow-lg">
+          {/* Minimal billing toggle */}
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <button
+              onClick={() => setBilling('monthly')}
+              className={`text-sm font-medium transition-colors ${billing === 'monthly' ? 'text-white' : 'text-zinc-400 hover:text-zinc-300'}`}
+              aria-pressed={billing === 'monthly'}
+            >
+              Monthly (€15)
+            </button>
+            <span className="w-px h-4 bg-white/20" />
+            <button
+              onClick={() => setBilling('quarterly')}
+              className={`text-sm font-medium transition-colors ${billing === 'quarterly' ? 'text-white' : 'text-zinc-400 hover:text-zinc-300'}`}
+              aria-pressed={billing === 'quarterly'}
+            >
+              3 months (€30)
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {PLANS.map((plan) => (
+              <div key={plan.name} className="text-center">
+                <h3 className="text-white font-semibold text-2xl mb-2 tracking-[-0.01em]">
+                  {plan.name}
+                </h3>
+                
+                <div className="mb-6">
+                  {plan.name === 'Premium' ? (
+                    <>
+                      <span className="text-white text-4xl font-semibold tracking-[-0.02em]">
+                        {billing === 'monthly' ? '€15' : '€30'}
+                      </span>
+                      <span className="text-zinc-400 ml-2">
+                        {billing === 'monthly' ? '/month' : '/3 months'}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-white text-4xl font-semibold tracking-[-0.02em]">
+                      {plan.price}
+                    </span>
+                  )}
+                </div>
+                
+                <ul className="space-y-3 mb-8 text-left">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="text-zinc-400 text-sm flex items-center">
+                      <span className="w-1.5 h-1.5 bg-white rounded-full mr-3 flex-shrink-0"></span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                
+                <button
+                  onClick={() => handlePlanClick(plan.ctaAction)}
+                  className={`w-full py-3 px-6 rounded-2xl font-medium transition-colors ${
+                    plan.name === 'Free'
+                      ? 'bg-white text-black hover:bg-zinc-100 shadow-lg hover:shadow-xl'
+                      : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
+                  }`}
+                  data-testid={`pricing-cta-${plan.name.toLowerCase()}`}
+                  data-analytics="cta_click"
+                  data-cta-type={plan.name === 'Free' ? 'free' : 'premium'}
+                  data-cta-location="pricing"
+                  data-plan-name={plan.name}
+                >
+                  {plan.cta}
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
-  );
-}
-
-function PlanBubble({
-  k,
-  data,
-  selected,
-  onClick,
-}: {
-  k: PlanKey;
-  data: { title: string; price: string; bullets: string[] };
-  selected: boolean;
-  onClick: () => void;
-}) {
-  const outline = selected ? 'ring-2 ring-white/20' : '';
-  const label = k === 'free' ? 'Choose Free plan' : 'Choose Premium plan';
-
-  return (
-    <div
-      role="button"
-      aria-pressed={selected}
-      aria-label={label}
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick()}
-      className={`premium-card p-8 md:p-12 transition-all duration-300 ease-out hover:-translate-y-2 cursor-pointer ${outline} relative overflow-hidden group`}
-    >
-      <div className="text-center">
-        <h3 className="text-[#F8F9FA] font-bold text-3xl mb-2">{data.title}</h3>
-        <p className="text-[#D1D5DB] text-2xl mb-8">{data.price}</p>
-        
-        <ul className="space-y-4 mb-8">
-          {data.bullets.map((b) => (
-            <li key={b} className="text-[#D1D5DB] text-lg">
-              {b}
-            </li>
-          ))}
-        </ul>
-
-        <div className="text-center">
-          <span className="text-[#9CA3AF] text-sm">Choose plan</span>
-        </div>
-      </div>
-    </div>
   );
 }

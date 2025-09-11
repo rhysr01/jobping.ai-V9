@@ -5,7 +5,9 @@ const utils_js_1 = require("./utils.js");
 // ✅ OPTIMIZED JSearch Configuration
 const JSEARCH_CONFIG = {
     baseUrl: 'https://jsearch.p.rapidapi.com/search',
-    apiKey: process.env.RAPIDAPI_KEY || '',
+    // ✅ Auth: Support either RAPIDAPI_KEY or JSEARCH_API_KEY; configurable host
+    apiKey: process.env.RAPIDAPI_KEY || process.env.JSEARCH_API_KEY || '',
+    apiHost: process.env.JSEARCH_HOST || 'jsearch.p.rapidapi.com',
     // Core EU cities - aligned with JobPing user preferences
     locations: [
         'London, United Kingdom',
@@ -22,7 +24,7 @@ const JSEARCH_CONFIG = {
         'Milan, Italy'
     ],
     // ✅ FIXED: Much more reasonable rate limiting
-    requestInterval: 300000, // 5 minutes instead of 20 minutes (4x faster!)
+    requestInterval: 300000, // 5 minutes default (reduced in test mode)
     monthlyBudget: 2000,
     dailyBudget: 65,
     seenJobTTL: 7 * 24 * 60 * 60 * 1000,
@@ -86,11 +88,12 @@ class JSearchScraper {
         if (this.monthlyRequestCount >= JSEARCH_CONFIG.monthlyBudget) {
             throw new Error('Monthly API budget exceeded');
         }
-        // ✅ FIXED: Much more reasonable rate limiting (5 minutes instead of 20)
+        // ✅ FIXED: Reasonable rate limiting; in test mode, reduce to 5 seconds
         const now = Date.now();
         const timeSinceLastRequest = now - this.lastRequestTime;
-        if (timeSinceLastRequest < JSEARCH_CONFIG.requestInterval) {
-            const delay = JSEARCH_CONFIG.requestInterval - timeSinceLastRequest;
+        const interval = (process.env.JOBPING_TEST_MODE === '1') ? 5000 : JSEARCH_CONFIG.requestInterval;
+        if (timeSinceLastRequest < interval) {
+            const delay = interval - timeSinceLastRequest;
             console.log(`⏰ Rate limiting: waiting ${Math.round(delay / 1000 / 60)} minutes...`);
             await new Promise(resolve => setTimeout(resolve, delay));
         }
@@ -113,7 +116,7 @@ class JSearchScraper {
                 method: 'GET',
                 headers: {
                     'X-RapidAPI-Key': JSEARCH_CONFIG.apiKey,
-                    'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
+                    'X-RapidAPI-Host': JSEARCH_CONFIG.apiHost,
                     'Accept': 'application/json',
                     'User-Agent': 'JobPing/1.0 (https://jobping.com)'
                 }

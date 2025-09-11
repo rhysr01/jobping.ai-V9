@@ -32,7 +32,7 @@ export const STRIPE_CONFIG = {
   // Product IDs - you'll need to create these in your Stripe dashboard
   PRODUCTS: {
     PREMIUM_MONTHLY: process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID || 'price_premium_monthly',
-    PREMIUM_YEARLY: process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID || 'price_premium_yearly',
+    PREMIUM_QUARTERLY: process.env.STRIPE_PREMIUM_QUARTERLY_PRICE_ID || 'price_premium_quarterly',
   },
   
   // Webhook endpoint secret

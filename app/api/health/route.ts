@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
-import { criticalAlerts } from '@/Utils/criticalAlerts';
+// import { criticalAlerts } from '@/Utils/criticalAlerts';
 
 export async function GET() {
   const startTime = Date.now();
