@@ -1,5 +1,6 @@
 import axios from "axios";
-import crypto from "crypto";
+import * as crypto from "crypto";
+import { getSmartDateStrategy, getSmartPaginationStrategy, withFallback } from './smart-strategies.js';
 
 const BASE = "https://boards-api.greenhouse.io/v1/boards";
 
@@ -61,6 +62,9 @@ export async function verifyBoard(board: string): Promise<boolean> {
 
 /** Fetch jobs with content=true; return [] for 404 (board not found). */
 export async function fetchGreenhouseJobs(board: string): Promise<GHJob[]> {
+  // Use smart date strategy for filtering
+  const smartMaxDays = withFallback(() => getSmartDateStrategy('greenhouse'), '7');
+  
   const url = `${BASE}/${board}/jobs?content=true`;
   const r = await axios.get(url, {
     timeout: 20000,
@@ -72,6 +76,19 @@ export async function fetchGreenhouseJobs(board: string): Promise<GHJob[]> {
   });
   if (r.status === 404) return [];
   const jobs = (r.data?.jobs ?? []) as GHJob[];
+  
+  // Apply date filtering based on smart strategy
+  if (smartMaxDays && smartMaxDays !== '7') {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - parseInt(smartMaxDays));
+    
+    return jobs.filter(job => {
+      if (!job.updated_at) return true; // Keep jobs without date info
+      const jobDate = new Date(job.updated_at);
+      return jobDate >= cutoffDate;
+    });
+  }
+  
   return jobs;
 }
 

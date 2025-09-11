@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 // ✅ FIXED JSearch Scraper - Optimized for EU Early Career Jobs
 const utils_js_1 = require("./utils.js");
+const smart_strategies_js_1 = require("./smart-strategies.js");
 // ✅ OPTIMIZED JSearch Configuration
 const JSEARCH_CONFIG = {
     baseUrl: 'https://jsearch.p.rapidapi.com/search',
@@ -29,7 +30,7 @@ const JSEARCH_CONFIG = {
     dailyBudget: 65,
     seenJobTTL: 7 * 24 * 60 * 60 * 1000,
     resultsPerPage: 10,
-    datePosted: 'week'
+    datePosted: (0, smart_strategies_js_1.withFallback)(() => (0, smart_strategies_js_1.getSmartDateStrategy)('jsearch'), 'week')
 };
 const TRACK_QUERIES = {
     A: 'graduate scheme OR new grad OR campus hire OR recent graduate',
@@ -102,11 +103,14 @@ class JSearchScraper {
     async makeRequest(params) {
         await this.throttleRequest();
         try {
+            // Use smart pagination strategy
+            const pagination = (0, smart_strategies_js_1.withFallback)(() => (0, smart_strategies_js_1.getSmartPaginationStrategy)('jsearch'), { startPage: 1, endPage: 3 });
+            const smartDatePosted = (0, smart_strategies_js_1.withFallback)(() => (0, smart_strategies_js_1.getSmartDateStrategy)('jsearch'), 'week');
             const queryParams = new URLSearchParams({
                 query: params.query,
-                page: (params.page || 1).toString(),
-                num_pages: (params.num_pages || 1).toString(),
-                date_posted: params.datePosted || JSEARCH_CONFIG.datePosted,
+                page: (params.page || pagination.startPage).toString(),
+                num_pages: (params.num_pages || (pagination.endPage - pagination.startPage + 1)).toString(),
+                date_posted: params.datePosted || smartDatePosted,
                 remote_jobs_only: (params.remote_jobs_only || false).toString(),
                 employment_types: params.employment_types || 'FULLTIME,PARTTIME,CONTRACTOR',
                 job_requirements: params.job_requirements || 'under_3_years_experience,no_degree'
@@ -165,7 +169,6 @@ class JSearchScraper {
         };
     }
     async searchJobs(query, location) {
-        var _a;
         const jobs = [];
         console.log(`🔍 Searching JSearch: "${query}" ${location ? `in ${location}` : ''}`);
         try {
@@ -183,7 +186,7 @@ class JSearchScraper {
                 job_requirements: 'under_3_years_experience,no_degree'
             };
             const response = await this.makeRequest(params);
-            console.log(`📊 Found ${((_a = response.data) === null || _a === void 0 ? void 0 : _a.length) || 0} jobs for "${query}"`);
+            console.log(`📊 Found ${response.data?.length || 0} jobs for "${query}"`);
             if (response.data && response.data.length > 0) {
                 for (const job of response.data) {
                     if (!this.seenJobs.has(job.job_id)) {

@@ -1,11 +1,9 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 // ✅ FIXED Muse Scraper - Optimized for EU Early Career Jobs
-const axios_1 = __importDefault(require("axios"));
+const axios_1 = require("axios");
 const utils_js_1 = require("./utils.js");
+const smart_strategies_js_1 = require("./smart-strategies.js");
 // ✅ OPTIMIZED Muse API Configuration
 const MUSE_CONFIG = {
     baseUrl: 'https://www.themuse.com/api/public/jobs',
@@ -88,8 +86,7 @@ class MuseScraper {
     }
     // ✅ FIXED: EU location detection for Muse jobs (comprehensive)
     isEULocation(job) {
-        var _a;
-        const location = ((_a = job.location) === null || _a === void 0 ? void 0 : _a.toLowerCase()) || '';
+        const location = job.location?.toLowerCase() || '';
         const euPatterns = [
             // Countries
             'united kingdom', 'uk', 'great britain', 'britain', 'england', 'scotland', 'wales',
@@ -179,7 +176,6 @@ class MuseScraper {
         this.lastRequestTime = Date.now();
     }
     async makeRequest(params) {
-        var _a, _b, _c, _d;
         await this.throttleRequest();
         try {
             // ✅ CORRECTED: Build proper query parameters for Muse API
@@ -210,19 +206,19 @@ class MuseScraper {
             });
             this.requestCount++;
             this.hourlyRequestCount++;
-            console.log(`📊 Muse API response: ${((_a = response.data.results) === null || _a === void 0 ? void 0 : _a.length) || 0} jobs found`);
+            console.log(`📊 Muse API response: ${response.data.results?.length || 0} jobs found`);
             return response.data;
         }
         catch (error) {
-            if (((_b = error.response) === null || _b === void 0 ? void 0 : _b.status) === 429) {
+            if (error.response?.status === 429) {
                 console.warn('🚫 Rate limited by The Muse, backing off...');
                 await new Promise(resolve => setTimeout(resolve, 10000));
                 return this.makeRequest(params);
             }
-            if (((_c = error.response) === null || _c === void 0 ? void 0 : _c.status) === 400) {
+            if (error.response?.status === 400) {
                 console.warn('⚠️ Bad request to The Muse API:', error.response.data);
                 console.warn('⚠️ Parameters used:', params);
-                throw new Error(`Bad request: ${((_d = error.response.data) === null || _d === void 0 ? void 0 : _d.message) || 'Invalid parameters'}`);
+                throw new Error(`Bad request: ${error.response.data?.message || 'Invalid parameters'}`);
             }
             console.error('❌ Muse API error:', error.message);
             if (error.response) {
@@ -267,13 +263,20 @@ class MuseScraper {
     }
     async fetchLocationJobs(location, categories, levels) {
         const jobs = [];
-        console.log(`📍 Scraping ${location} for categories: ${categories.join(', ')}, levels: ${levels.join(', ')}`);
+        // Use smart strategies for date filtering and pagination
+        const smartMaxDays = (0, smart_strategies_js_1.withFallback)(() => (0, smart_strategies_js_1.getSmartDateStrategy)('muse'), '7');
+        const pagination = (0, smart_strategies_js_1.withFallback)(() => (0, smart_strategies_js_1.getSmartPaginationStrategy)('muse'), { startPage: 1, endPage: 5 });
+        console.log(`📍 Scraping ${location} for categories: ${categories.join(', ')}, levels: ${levels.join(', ')} (max ${smartMaxDays} days, pages ${pagination.startPage}-${pagination.endPage})`);
         try {
             // ✅ Only include non-empty parameters to avoid API issues
             const params = {
                 location: location,
                 page: 1
             };
+            // Add date filtering if Muse API supports it
+            if (smartMaxDays && smartMaxDays !== '7') {
+                params.max_days_old = smartMaxDays;
+            }
             // Only add categories if not empty
             if (categories.length > 0) {
                 params.categories = categories;
@@ -326,16 +329,19 @@ class MuseScraper {
                     }
                 }
             }
-            // ✅ OPTIMIZED: Fetch all remaining pages if available and within budget
+            // ✅ OPTIMIZED: Fetch remaining pages using smart pagination strategy
             if (response.page_count && response.page_count > 1) {
-                const maxExtraPages = Math.min(response.page_count, 5); // safety cap
-                for (let page = 2; page <= maxExtraPages; page++) {
+                const maxExtraPages = Math.min(response.page_count, pagination.endPage); // Use smart pagination
+                for (let page = pagination.startPage + 1; page <= maxExtraPages; page++) {
                     if (this.hourlyRequestCount >= MUSE_CONFIG.maxRequestsPerHour - 2) {
                         console.log('⏰ Approaching hourly rate limit during pagination, stopping.');
                         break;
                     }
                     console.log(`📄 Fetching page ${page} for ${location}...`);
-                    const pageResponse = await this.makeRequest(Object.assign(Object.assign({}, params), { page }));
+                    const pageResponse = await this.makeRequest({
+                        ...params,
+                        page
+                    });
                     for (const job of pageResponse.results || []) {
                         if (!this.seenJobs.has(job.id)) {
                             this.seenJobs.set(job.id, Date.now());
@@ -397,7 +403,6 @@ class MuseScraper {
         return jobs;
     }
     async scrapeAllLocations() {
-        var _a;
         // ✅ OPTIMIZED: Get ALL jobs, filter with multilingual early career detection
         const categories = []; // Empty = no category filter
         const levels = []; // Empty = no level filter - get ALL jobs
@@ -442,7 +447,7 @@ class MuseScraper {
                     console.error(`❌ Error processing ${location}:`, error.message);
                     metrics.errors++;
                     // If we get repeated errors, wait longer before continuing
-                    if (((_a = error.response) === null || _a === void 0 ? void 0 : _a.status) >= 400) {
+                    if (error.response?.status >= 400) {
                         console.log('⏸️ API error encountered, waiting 30s before continuing...');
                         await new Promise(resolve => setTimeout(resolve, 30000));
                     }

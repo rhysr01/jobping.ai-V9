@@ -10,6 +10,7 @@ require('dotenv').config({ path: '.env.local' });
 require('dotenv').config();
 
 const axios = require('axios');
+const { getSmartDateStrategy, getSmartPaginationStrategy, withFallback } = require('../scrapers/smart-strategies.js');
 
 // Enhanced target cities with expanded keywords
 const TARGET_CITIES = [
@@ -73,6 +74,10 @@ async function scrapeCityJobs(cityName, countryCode, keywords, options = {}) {
     verbose = false
   } = options;
 
+  // Use smart strategies for date filtering and pagination
+  const smartMaxDays = withFallback(() => getSmartDateStrategy('adzuna'), '7');
+  const pagination = withFallback(() => getSmartPaginationStrategy('adzuna'), { startPage: 1, endPage: 2 });
+
   if (!appId || !appKey) {
     throw new Error('Missing Adzuna credentials');
   }
@@ -81,23 +86,25 @@ async function scrapeCityJobs(cityName, countryCode, keywords, options = {}) {
   
   for (const keyword of keywords) {
     try {
-      if (verbose) console.log(`📍 Searching ${cityName} for: ${keyword}`);
+      if (verbose) console.log(`📍 Searching ${cityName} for: ${keyword} (max ${smartMaxDays} days, pages ${pagination.startPage}-${pagination.endPage})`);
       
-      const url = `https://api.adzuna.com/v1/api/jobs/${countryCode}/search/1?app_id=${appId}&app_key=${appKey}&what=${encodeURIComponent(keyword)}&where=${encodeURIComponent(cityName)}&results_per_page=${resultsPerPage}&sort_by=date`;
-      
-      const response = await axios.get(url, {
-        headers: {
-          'User-Agent': 'JobPing/1.0 (https://jobping.com)',
-          'Accept': 'application/json'
-        },
-        timeout
-      });
-
-      if (response.data.results && response.data.results.length > 0) {
-        if (verbose) console.log(`   ✅ Found ${response.data.results.length} jobs for "${keyword}"`);
+      // Loop through pages using smart pagination
+      for (let page = pagination.startPage; page <= pagination.endPage; page++) {
+        const url = `https://api.adzuna.com/v1/api/jobs/${countryCode}/search/${page}?app_id=${appId}&app_key=${appKey}&what=${encodeURIComponent(keyword)}&where=${encodeURIComponent(cityName)}&results_per_page=${resultsPerPage}&sort_by=date&max_days_old=${smartMaxDays}`;
         
-        // Process and format jobs
-        response.data.results.forEach(job => {
+        const response = await axios.get(url, {
+          headers: {
+            'User-Agent': 'JobPing/1.0 (https://jobping.com)',
+            'Accept': 'application/json'
+          },
+          timeout
+        });
+
+        if (response.data.results && response.data.results.length > 0) {
+          if (verbose) console.log(`   ✅ Found ${response.data.results.length} jobs for "${keyword}" (page ${page})`);
+          
+          // Process and format jobs
+          response.data.results.forEach(job => {
           const formattedJob = {
             title: job.title,
             company: job.company?.display_name || 'Company not specified',
@@ -117,13 +124,20 @@ async function scrapeCityJobs(cityName, countryCode, keywords, options = {}) {
             source: 'adzuna'
           };
           
-          jobs.push(formattedJob);
-        });
-      } else {
-        if (verbose) console.log(`   ⚠️  No jobs found for "${keyword}"`);
-      }
+            jobs.push(formattedJob);
+          });
+        } else {
+          if (verbose) console.log(`   ⚠️  No jobs found for "${keyword}" (page ${page})`);
+          break; // No more pages available
+        }
+        
+        // Delay between pages
+        if (delay > 0 && page < pagination.endPage) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      } // End of pagination loop
       
-      // Delay between requests
+      // Delay between keywords
       if (delay > 0) {
         await new Promise(resolve => setTimeout(resolve, delay));
       }

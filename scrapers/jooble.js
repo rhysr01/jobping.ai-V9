@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // ✅ Jooble Scraper - EU Early Career Jobs
 const axios_1 = require("axios");
 const utils_js_1 = require("./utils.js");
+const smart_strategies_js_1 = require("./smart-strategies.js");
 // ✅ Jooble Configuration
 const JOOBLE_CONFIG = {
     baseUrl: 'https://jooble.org/api',
@@ -44,7 +45,7 @@ const JOOBLE_CONFIG = {
     dailyBudget: 1000, // 1000 requests per day
     seenJobTTL: 7 * 24 * 60 * 60 * 1000, // 7 days
     resultsPerPage: 20,
-    maxPagesPerSearch: 3
+    maxPagesPerSearch: (0, smart_strategies_js_1.withFallback)(() => (0, smart_strategies_js_1.getSmartPaginationStrategy)('jooble').endPage, 3)
 };
 class JoobleScraper {
     constructor() {
@@ -140,11 +141,13 @@ class JoobleScraper {
                     console.log('⏰ Approaching daily budget limit, stopping');
                     break;
                 }
+                // Use smart date strategy
+                const smartDateCreated = (0, smart_strategies_js_1.withFallback)(() => (0, smart_strategies_js_1.getSmartDateStrategy)('jooble'), '7');
                 const request = {
                     keywords: keywords,
                     location: location,
                     page: page.toString(),
-                    datecreatedfrom: '7' // Last 7 days
+                    datecreatedfrom: smartDateCreated // Smart date rotation
                 };
                 const response = await this.makeRequest(request);
                 if (!response.jobs || response.jobs.length === 0) {

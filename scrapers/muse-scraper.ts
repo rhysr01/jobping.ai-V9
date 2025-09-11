@@ -1,6 +1,7 @@
 // ✅ FIXED Muse Scraper - Optimized for EU Early Career Jobs
 import axios from 'axios';
 import { classifyEarlyCareer, convertToDatabaseFormat } from './utils.js';
+import { getSmartDateStrategy, getSmartPaginationStrategy, withFallback } from './smart-strategies.js';
 
 // Types
 interface IngestJob {
@@ -354,7 +355,11 @@ class MuseScraper {
   ): Promise<IngestJob[]> {
     const jobs: IngestJob[] = [];
     
-    console.log(`📍 Scraping ${location} for categories: ${categories.join(', ')}, levels: ${levels.join(', ')}`);
+    // Use smart strategies for date filtering and pagination
+    const smartMaxDays = withFallback(() => getSmartDateStrategy('muse'), '7');
+    const pagination = withFallback(() => getSmartPaginationStrategy('muse'), { startPage: 1, endPage: 5 });
+    
+    console.log(`📍 Scraping ${location} for categories: ${categories.join(', ')}, levels: ${levels.join(', ')} (max ${smartMaxDays} days, pages ${pagination.startPage}-${pagination.endPage})`);
 
     try {
       // ✅ Only include non-empty parameters to avoid API issues
@@ -362,6 +367,11 @@ class MuseScraper {
         location: location,
         page: 1
       };
+      
+      // Add date filtering if Muse API supports it
+      if (smartMaxDays && smartMaxDays !== '7') {
+        params.max_days_old = smartMaxDays;
+      }
       
       // Only add categories if not empty
       if (categories.length > 0) {
@@ -422,10 +432,10 @@ class MuseScraper {
         }
       }
 
-      // ✅ OPTIMIZED: Fetch all remaining pages if available and within budget
+      // ✅ OPTIMIZED: Fetch remaining pages using smart pagination strategy
       if (response.page_count && response.page_count > 1) {
-        const maxExtraPages = Math.min(response.page_count, 5); // safety cap
-        for (let page = 2; page <= maxExtraPages; page++) {
+        const maxExtraPages = Math.min(response.page_count, pagination.endPage); // Use smart pagination
+        for (let page = pagination.startPage + 1; page <= maxExtraPages; page++) {
           if (this.hourlyRequestCount >= MUSE_CONFIG.maxRequestsPerHour - 2) {
             console.log('⏰ Approaching hourly rate limit during pagination, stopping.');
             break;

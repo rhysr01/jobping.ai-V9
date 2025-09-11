@@ -1,5 +1,6 @@
 // ✅ FIXED JSearch Scraper - Optimized for EU Early Career Jobs
 import { classifyEarlyCareer, convertToDatabaseFormat } from './utils.js';
+import { getSmartDateStrategy, getSmartPaginationStrategy, withFallback } from './smart-strategies.js';
 
 // Types
 interface IngestJob {
@@ -119,7 +120,7 @@ const JSEARCH_CONFIG = {
   dailyBudget: 65,
   seenJobTTL: 7 * 24 * 60 * 60 * 1000,
   resultsPerPage: 10,
-  datePosted: 'week'
+  datePosted: withFallback(() => getSmartDateStrategy('jsearch'), 'week')
 };
 
 // Query rotation for diverse job discovery  
@@ -210,11 +211,15 @@ class JSearchScraper {
     await this.throttleRequest();
 
     try {
+      // Use smart pagination strategy
+      const pagination = withFallback(() => getSmartPaginationStrategy('jsearch'), { startPage: 1, endPage: 3 });
+      const smartDatePosted = withFallback(() => getSmartDateStrategy('jsearch'), 'week');
+      
       const queryParams = new URLSearchParams({
         query: params.query,
-        page: (params.page || 1).toString(),
-        num_pages: (params.num_pages || 1).toString(),
-        date_posted: params.datePosted || JSEARCH_CONFIG.datePosted,
+        page: (params.page || pagination.startPage).toString(),
+        num_pages: (params.num_pages || (pagination.endPage - pagination.startPage + 1)).toString(),
+        date_posted: params.datePosted || smartDatePosted,
         remote_jobs_only: (params.remote_jobs_only || false).toString(),
         employment_types: params.employment_types || 'FULLTIME,PARTTIME,CONTRACTOR',
         job_requirements: params.job_requirements || 'under_3_years_experience,no_degree'

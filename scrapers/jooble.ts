@@ -1,6 +1,7 @@
 // ✅ Jooble Scraper - EU Early Career Jobs
 import axios from 'axios';
 import { classifyEarlyCareer, convertToDatabaseFormat } from './utils.js';
+import { getSmartDateStrategy, getSmartPaginationStrategy, withFallback } from './smart-strategies.js';
 
 // Types
 interface IngestJob {
@@ -85,7 +86,7 @@ const JOOBLE_CONFIG = {
   dailyBudget: 1000, // 1000 requests per day
   seenJobTTL: 7 * 24 * 60 * 60 * 1000, // 7 days
   resultsPerPage: 20,
-  maxPagesPerSearch: 3
+  maxPagesPerSearch: withFallback(() => getSmartPaginationStrategy('jooble').endPage, 3)
 };
 
 class JoobleScraper {
@@ -204,11 +205,14 @@ class JoobleScraper {
           break;
         }
 
+        // Use smart date strategy
+        const smartDateCreated = withFallback(() => getSmartDateStrategy('jooble'), '7');
+        
         const request: JoobleRequest = {
           keywords: keywords,
           location: location,
           page: page.toString(),
-          datecreatedfrom: '7' // Last 7 days
+          datecreatedfrom: smartDateCreated // Smart date rotation
         };
 
         const response = await this.makeRequest(request);
