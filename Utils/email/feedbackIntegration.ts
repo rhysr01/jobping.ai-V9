@@ -1,6 +1,21 @@
-// 🔄 FEEDBACK SYSTEM INTEGRATION - BRIDGES EXISTING SYSTEM WITH NEW EMAIL STRUCTURE
+// 🔄 SIMPLE FEEDBACK SYSTEM INTEGRATION - DIRECT DATABASE STORAGE
 
-// import { enhancedFeedbackSystem, type EmailFeedbackData } from '../enhancedFeedback';
+import { createClient } from '@supabase/supabase-js';
+
+// Simple feedback data interface
+interface SimpleFeedbackData {
+  userEmail: string;
+  jobHash: string;
+  feedbackType: string;
+  verdict: 'positive' | 'negative' | 'neutral';
+  relevanceScore?: number;
+  matchQualityScore?: number;
+  explanation?: string;
+  userPreferencesSnapshot?: any;
+  jobContext?: any;
+  matchContext?: any;
+  timestamp: Date;
+}
 
 /**
  * Enhanced feedback integration for email system
@@ -9,8 +24,7 @@
 export class EmailFeedbackIntegration {
   
   /**
-   * Generate feedback buttons for a specific job in emails
-   * Uses the existing enhanced feedback system for consistency
+   * Generate simple feedback buttons for a specific job in emails
    */
   static generateFeedbackButtons(
     jobHash: string,
@@ -22,24 +36,41 @@ export class EmailFeedbackIntegration {
       includeScoring?: boolean;
     } = {}
   ): string {
-    const { style = 'detailed', includeExplanation = true, includeScoring = true } = options;
+    const { style = 'detailed' } = options;
     
-    // Use the existing enhanced feedback system
-    return enhancedFeedbackSystem.generateEmailFeedbackButtons(
-      jobHash,
-      userEmail,
-      matchContext,
-      {
-        includeExplanation,
-        includeScoring,
-        buttonStyle: style
-      }
-    );
+    // Generate simple feedback buttons
+    const baseUrl = 'https://jobping.ai/api/feedback/email';
+    const encodedEmail = encodeURIComponent(userEmail);
+    
+    if (style === 'minimal') {
+      return `
+        <div style="text-align: center; margin: 16px 0;">
+          <a href="${baseUrl}?action=positive&job=${jobHash}&email=${encodedEmail}" style="background: #FFFFFF; color: #000000; padding: 8px 16px; border-radius: 6px; text-decoration: none; margin: 0 4px; font-size: 12px; font-weight: 500; transition: all 0.2s ease;">👍</a>
+          <a href="${baseUrl}?action=neutral&job=${jobHash}&email=${encodedEmail}" style="background: #888888; color: #FFFFFF; padding: 8px 16px; border-radius: 6px; text-decoration: none; margin: 0 4px; font-size: 12px; font-weight: 500; transition: all 0.2s ease;">🤔</a>
+          <a href="${baseUrl}?action=negative&job=${jobHash}&email=${encodedEmail}" style="background: #666666; color: #FFFFFF; padding: 8px 16px; border-radius: 6px; text-decoration: none; margin: 0 4px; font-size: 12px; font-weight: 500; transition: all 0.2s ease;">👎</a>
+        </div>
+      `;
+    }
+    
+    // Default detailed style - minimalist
+    return `
+      <div style="margin-top: 16px; padding: 16px; background: #111111; border-radius: 8px; border: 1px solid #333333;">
+        <div style="font-size: 14px; font-weight: 500; color: #FFFFFF; margin-bottom: 12px; text-align: center;">How was this match?</div>
+        <div style="text-align: center; margin-bottom: 12px;">
+          <a href="${baseUrl}?action=positive&score=5&job=${jobHash}&email=${encodedEmail}" style="background: #FFFFFF; color: #000000; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 500; margin: 0 4px; transition: all 0.2s ease;">⭐ Perfect</a>
+          <a href="${baseUrl}?action=positive&score=4&job=${jobHash}&email=${encodedEmail}" style="background: #FFFFFF; color: #000000; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 500; margin: 0 4px; transition: all 0.2s ease;">👍 Good</a>
+          <a href="${baseUrl}?action=neutral&score=3&job=${jobHash}&email=${encodedEmail}" style="background: #888888; color: #FFFFFF; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 500; margin: 0 4px; transition: all 0.2s ease;">🤔 OK</a>
+          <a href="${baseUrl}?action=negative&score=2&job=${jobHash}&email=${encodedEmail}" style="background: #666666; color: #FFFFFF; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 500; margin: 0 4px; transition: all 0.2s ease;">👎 Poor</a>
+          <a href="${baseUrl}?action=negative&score=1&job=${jobHash}&email=${encodedEmail}" style="background: #666666; color: #FFFFFF; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 500; margin: 0 4px; transition: all 0.2s ease;">❌ Bad</a>
+        </div>
+        <div style="font-size: 11px; color: #888888; text-align: center; margin-top: 8px;">Your feedback helps improve job matching</div>
+      </div>
+    `;
   }
 
   /**
    * Process feedback from email buttons
-   * Routes to the existing enhanced feedback system
+   * Records directly to database
    */
   static async processEmailFeedback(feedbackData: {
     userEmail: string;
@@ -53,8 +84,8 @@ export class EmailFeedbackIntegration {
       // Convert action to verdict
       const verdict = this.convertActionToVerdict(feedbackData.action);
       
-      // Create enhanced feedback data
-      const enhancedData: EmailFeedbackData = {
+      // Create simple feedback data
+      const simpleData: SimpleFeedbackData = {
         userEmail: feedbackData.userEmail,
         jobHash: feedbackData.jobHash,
         feedbackType: 'job_relevance',
@@ -62,11 +93,15 @@ export class EmailFeedbackIntegration {
         relevanceScore: feedbackData.score as any,
         explanation: feedbackData.explanation,
         jobContext: feedbackData.matchContext,
+        matchContext: {
+          feedback_source: 'email_integration',
+          timestamp: new Date().toISOString()
+        },
         timestamp: new Date()
       };
 
-      // Record using existing system
-      await enhancedFeedbackSystem.recordEmailFeedback(enhancedData);
+      // Record directly to database
+      await this.recordFeedbackToDatabase(simpleData);
       
       console.log(`📝 Email feedback processed: ${verdict} for job ${feedbackData.jobHash}`);
       
@@ -92,37 +127,87 @@ export class EmailFeedbackIntegration {
   }
 
   /**
+   * Record feedback directly to database
+   */
+  private static async recordFeedbackToDatabase(feedbackData: SimpleFeedbackData): Promise<void> {
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Missing Supabase configuration');
+      }
+      
+      const supabase = createClient(supabaseUrl, supabaseKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      });
+      
+      // Insert feedback into database
+      const { error } = await supabase
+        .from('feedback')
+        .insert({
+          user_email: feedbackData.userEmail,
+          job_hash: feedbackData.jobHash,
+          feedback_type: feedbackData.feedbackType,
+          verdict: feedbackData.verdict,
+          relevance_score: feedbackData.relevanceScore,
+          match_quality_score: feedbackData.matchQualityScore,
+          explanation: feedbackData.explanation,
+          user_preferences_snapshot: feedbackData.userPreferencesSnapshot,
+          job_context: feedbackData.jobContext,
+          match_context: feedbackData.matchContext,
+          created_at: feedbackData.timestamp.toISOString()
+        });
+
+      if (error) {
+        console.error('Failed to record feedback:', error);
+        // Don't throw - we want feedback to work even if DB fails
+      } else {
+        console.log(`✅ Feedback recorded: ${feedbackData.verdict} for job ${feedbackData.jobHash}`);
+      }
+    } catch (error) {
+      console.error('Error recording feedback to database:', error);
+      // Don't throw - we want feedback to work even if DB fails
+    }
+  }
+
+  /**
    * Get feedback insights for email personalization
    */
   static async getFeedbackInsights(userEmail: string): Promise<any[]> {
     try {
-      return await enhancedFeedbackSystem.getUserFeedbackInsights(userEmail);
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        return [];
+      }
+      
+      const supabase = createClient(supabaseUrl, supabaseKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      });
+      
+      const { data, error } = await supabase
+        .from('feedback')
+        .select('*')
+        .eq('user_email', userEmail)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) {
+        console.error('Failed to get feedback insights:', error);
+        return [];
+      }
+      
+      return data || [];
     } catch (error) {
       console.error('Failed to get feedback insights:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Generate feedback summary for AI improvement
-   */
-  static async generateAIImprovementSummary(): Promise<string> {
-    try {
-      return await enhancedFeedbackSystem.generateAIImprovementSummary();
-    } catch (error) {
-      console.error('Failed to generate AI improvement summary:', error);
-      return 'Error generating feedback summary';
-    }
-  }
-
-  /**
-   * Get feedback analytics for email optimization
-   */
-  static async getFeedbackAnalytics(period: 'day' | 'week' | 'month' = 'week'): Promise<any[]> {
-    try {
-      return await enhancedFeedbackSystem.getFeedbackAnalytics(period);
-    } catch (error) {
-      console.error('Failed to get feedback analytics:', error);
       return [];
     }
   }

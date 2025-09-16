@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createCheckoutSession, STRIPE_CONFIG } from '@/Utils/stripe';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
+import { errorJson } from '@/Utils/errorResponse';
 import { createClient } from '@supabase/supabase-js';
 
 let _supabaseClient: any = null;
@@ -43,17 +44,13 @@ export async function POST(req: NextRequest) {
 
     // Validate required fields
     if (!email || !priceId || !userId) {
-      return NextResponse.json({
-        error: 'Missing required fields: email, priceId, userId'
-      }, { status: 400 });
+      return errorJson(req, 'VALIDATION_ERROR', 'Missing required fields: email, priceId, userId', 400);
     }
 
     // Validate price ID
     const validPriceIds = Object.values(STRIPE_CONFIG.PRODUCTS);
     if (!validPriceIds.includes(priceId)) {
-      return NextResponse.json({
-        error: 'Invalid price ID'
-      }, { status: 400 });
+      return errorJson(req, 'VALIDATION_ERROR', 'Invalid price ID', 400);
     }
 
     // Verify user exists and is email verified
@@ -66,9 +63,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (userError || !user) {
-      return NextResponse.json({
-        error: 'User not found or email not verified'
-      }, { status: 404 });
+      return errorJson(req, 'NOT_FOUND', 'User not found or email not verified', 404);
     }
 
     // Create checkout session
@@ -86,10 +81,7 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error('Failed to create checkout session:', error);
-    return NextResponse.json({
-      error: 'Failed to create checkout session',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return errorJson(req, 'INTERNAL_ERROR', 'Failed to create checkout session', 500, error instanceof Error ? error.message : 'Unknown error');
   }
 }
 
@@ -106,6 +98,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/api/billing/checkout?priceId=${priceId}`);
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    return errorJson(req, 'VALIDATION_ERROR', 'Invalid request', 400);
   }
 }

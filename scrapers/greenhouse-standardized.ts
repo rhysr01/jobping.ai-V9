@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { pathToFileURL } from 'url';
-// Local helpers to avoid cross-module import issues
+import { GREENHOUSE_COMPANIES, COMPANY_TRACKS, GREENHOUSE_CONFIG } from './config/greenhouse-companies';
+import { redisState } from '../Utils/redis-state.service';
 function localMakeJobHash(job: { title: string; company: string; location: string }): string {
   const normalizedTitle = (job.title || '').toLowerCase().trim().replace(/\s+/g, ' ');
   const normalizedCompany = (job.company || '').toLowerCase().trim().replace(/\s+/g, ' ');
@@ -87,87 +88,12 @@ interface GreenhouseResponse {
   };
 }
 
-// Greenhouse API Configuration - STANDARDIZED
-const GREENHOUSE_CONFIG = {
-  baseUrl: 'https://boards-api.greenhouse.io/v1/boards',
-  
-  // EU companies with proven job boards (expanded with Wave 2 EU employers)
-  companies: [
-    // Existing set
-    'deloitte', 'pwc', 'ey', 'kpmg', 'accenture', 'capgemini',
-    'bain', 'bcg', 'mckinsey', 'oliverwyman', 'rolandberger',
-    'google', 'microsoft', 'amazon', 'meta', 'apple', 'netflix',
-    'spotify', 'uber', 'airbnb', 'stripe', 'plaid', 'robinhood',
-    'unilever', 'loreal', 'nestle', 'danone', 'heineken',
-    'hsbc', 'barclays', 'deutschebank', 'bnpparibas', 'santander',
-
-    // Wave 2 EU employers (slugs)
-    'wise', 'checkoutcom', 'gocardless', 'onfido', 'cloudflare', 'thoughtmachine', 'snyk', 'palantir', 'improbable', 'globalwebindex',
-    'workhuman', 'miro', 'udemy', 'zendesk',
-    'hellofresh', 'deliveryhero', 'getyourguide', 'babbel', 'mambu', 'tiermobility', 'sennder', 'forto', 'solarisbank', 'raisin', 'coachhub', 'grover', 'getquin',
-    'mollie', 'picnic', 'messagebird', 'backbase', 'bynder', 'bitvavo',
-    'qonto', 'backmarket', 'contentsquare', 'payfit', 'alan', 'ledger', 'swile', 'vestiairecollective', 'mirakl', 'exotec', 'malt',
-    'typeform', 'factorialhr', 'wallbox', 'redpoints', 'seedtag', 'carto', 'bankingcircle',
-    'klarna', 'northvolt', 'epidemicsound', 'tink', 'voiscooters',
-    'proton', 'scandit', 'nexthink', 'smallpdf',
-    'personio', 'lilium', 'freeletics', 'demodesk',
-    'bendingspoons', 'satispay',
-    'toogoodtogo', 'pleo',
-    'bitpanda', 'gostudent', 'adverity', 'collibra', 'showpad',
-    'gitlab', 'remotecom', 'datadog', 'twilio', 'snowplow', 'thoughtworks', 'elastic', 'canonical',
-    'n26', 'tradeledger', 'wefox', 'primer', 'saltpay', 'wayflyer', 'klaxoon', 'soldo', 'sumup',
-    'deepl', 'graphcore', 'hazy', 'commercetools',
-    // Wave 3 additions
-    'oaknorth', 'ziglu', 'worldremit', 'mongodb', 'snowflakeinc', 'taxfix', 'adjust', 'contentful', 'solarwatt',
-    'adyen', 'deptagency', 'wetransfer', 'tomtom', 'aircall', 'spendesk', 'sorare', 'doctolib', 'manomano', 'algolia', 'dataiku',
-    'amenitiz', 'jobandtalent', 'paack', 'lodgify', 'glovo', 'travelperk', 'cabify',
-    'einride', 'kry', 'mentimeter', 'onrunning', 'dfinity', 'frontify', 'sonarsource', 'avawomen',
-    'idnow', 'navvis', 'tado', 'thefork', 'ylventures', 'templafy', 'deliverect', 'intersystems',
-    'databricks', 'segment', 'confluent', 'hashicorp', 'vercel', 'teamviewer', 'nagarro'
-  ],
-  
-  // Rate limiting (be respectful to Greenhouse)
-  requestInterval: 2000, // 2 seconds between requests
-  maxRequestsPerCompany: 3, // Max 3 requests per company
-  seenJobTTL: 72 * 60 * 60 * 1000 // 72 hours
-};
+// Using imported GREENHOUSE_CONFIG from config file
 
 // Freshness policy
 const FRESHNESS_DAYS = 28;
 
-// Company-to-track mapping (A–E). This is a lightweight, curated start.
-// A: Eng/Tech/Product, B: Consulting/Strategy/BD, C: Data/Analytics/Research
-// D: Marketing/Sales/CS,  E: Operations/Finance/Legal
-const COMPANY_TRACKS: Record<string, Track[]> = {
-  // Big tech and platforms → A,C
-  google: ['A','C'], microsoft: ['A','C'], amazon: ['A','C','E'], meta: ['A','C'], apple: ['A','C'],
-  spotify: ['A','C','D'], uber: ['A','C','D'], airbnb: ['A','C','D'], stripe: ['A','C','E'], plaid: ['A','C'],
-  databricks: ['A','C'], vercel: ['A','A','D'], hashicorp: ['A','C'], elastic: ['A','C'], canonical: ['A','C','E'],
-  gitlab: ['A','C','D'], cloudflare: ['A','C','D'], snowflakeinc: ['A','C'], mongodb: ['A','C'],
-
-  // Consulting → B,E
-  deloitte: ['B','E'], pwc: ['B','E'], ey: ['B','E'], kpmg: ['B','E'],
-  bain: ['B'], bcg: ['B'], mckinsey: ['B'], oliverwyman: ['B'], rolandberger: ['B'],
-
-  // Fintech and scaleups → A,C,E,D depending
-  wise: ['A','C','E'], checkoutcom: ['A','C','E','D'], gocardless: ['A','C','E'], onfido: ['A','C'],
-  klarna: ['A','C','D'], n26: ['A','C','E'], adyen: ['A','C','D'], mollie: ['A','C','D'], sumup: ['A','D','E'],
-  payfit: ['A','D','E'], qonto: ['E','B','A'], contentsquare: ['A','C','D'], dataiku: ['A','C'], algolia: ['A','C','D'],
-
-  // Product SaaS → A,C,D
-  zendesk: ['D','A'], miro: ['A','D'], udemy: ['D','A'], messagebird: ['D','A'], backbase: ['A','D'], bynder: ['D','A'],
-  contentful: ['A','D'], commercetools: ['A','D'],
-
-  // Ops/Industrial/Logistics → E,A
-  hellofresh: ['E','A','D'], deliveryhero: ['E','D','A'], getyourguide: ['D','A'], wallbox: ['A','E'], northvolt: ['E','A'],
-  onrunning: ['E','D','A'],
-
-  // Security/Infra → A,C
-  snyk: ['A','C'], thoughtworks: ['B','A'], palantir: ['A','C'],
-
-  // EU scaleups (sales-heavy) → D,E
-  toogoodtogo: ['D','E'], pleo: ['D','E'],
-};
+// Using imported COMPANY_TRACKS from config file
 
 // Career path rotation strategy
 type Track = 'A' | 'B' | 'C' | 'D' | 'E';
@@ -212,8 +138,8 @@ class GreenhouseScraper {
     const now = Date.now();
     const timeSinceLastRequest = now - this.lastRequestTime;
     
-    if (timeSinceLastRequest < GREENHOUSE_CONFIG.requestInterval) {
-      const delay = GREENHOUSE_CONFIG.requestInterval - timeSinceLastRequest;
+    if (timeSinceLastRequest < GREENHOUSE_CONFIG.rateLimitDelay) {
+      const delay = GREENHOUSE_CONFIG.rateLimitDelay - timeSinceLastRequest;
       await new Promise(resolve => setTimeout(resolve, delay));
     }
     
@@ -352,8 +278,9 @@ class GreenhouseScraper {
         console.log(`    📊 Found ${response.jobs.length} jobs`);
         
         for (const job of response.jobs) {
-          if (!this.seenJobs.has(job.id)) {
-            this.seenJobs.set(job.id, Date.now());
+          const isSeen = await redisState.isJobSeen(job.id);
+          if (!isSeen) {
+            await redisState.markJobAsSeen(job.id, 72); // 72 hours TTL
             
             // Apply early-career and EU filtering
             if (this.isEarlyCareer(job) && this.isEU(job)) {
@@ -398,10 +325,10 @@ class GreenhouseScraper {
 
     console.log(`🔄 Greenhouse scraping with Track ${track}`);
     console.log(`📋 Departments: ${departments.join(', ')}`);
-    console.log(`🏢 Companies: ${GREENHOUSE_CONFIG.companies.length} total`);
+    console.log(`🏢 Companies: ${GREENHOUSE_COMPANIES.length} total`);
 
     // Filter companies by track if mapping exists; fallback to all
-    const eligibleCompanies = GREENHOUSE_CONFIG.companies.filter(c => {
+    const eligibleCompanies = GREENHOUSE_COMPANIES.filter((c: string) => {
       const tracks = COMPANY_TRACKS[c];
       return !tracks || tracks.includes(track);
     });
@@ -462,24 +389,24 @@ class GreenhouseScraper {
     return { jobs, metrics };
   }
 
-  public getStatus(): any {
+  public async getStatus(): Promise<any> {
     return {
       isRunning: false,
-      companiesSupported: GREENHOUSE_CONFIG.companies.length,
+      companiesSupported: GREENHOUSE_COMPANIES.length,
       requestsUsed: this.requestCount,
-      seenJobsCount: this.seenJobs.size,
+      seenJobsCount: await redisState.getSeenJobsCount(),
       lastRequestTime: new Date(this.lastRequestTime).toISOString()
     };
   }
 
   public getSupportedCompanies(): string[] {
-    return GREENHOUSE_CONFIG.companies;
+    return GREENHOUSE_COMPANIES;
   }
 
-  public getDailyStats(): { requestsUsed: number; seenJobsCount: number } {
+  public async getDailyStats(): Promise<{ requestsUsed: number; seenJobsCount: number }> {
     return {
       requestsUsed: this.requestCount,
-      seenJobsCount: this.seenJobs.size
+      seenJobsCount: await redisState.getSeenJobsCount()
     };
   }
 }

@@ -29,7 +29,7 @@ export default function Features() {
               <h3 className="text-white font-semibold text-lg mb-2">
                 {feature.title}
               </h3>
-              <p className="text-zinc-500 text-sm leading-relaxed">
+              <p className="text-[#888888] text-sm leading-relaxed">
                 {feature.description}
               </p>
             </div>

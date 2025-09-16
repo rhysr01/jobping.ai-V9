@@ -35,29 +35,7 @@ exports.extractProfessionalExpertise = extractProfessionalExpertise;
 exports.extractCareerPath = extractCareerPath;
 exports.extractStartDate = extractStartDate;
 exports.timeout = timeout;
-// Import AI provenance tracking utilities
-// import { 
-//   aiMatchWithProvenance, 
-//   type AiProvenance 
-// } from './aiProvenance';
-// Import semantic matching system
-// import { SemanticMatchingEngine } from './semanticMatching';
-// Feature flag for gradual migration
-const USE_NEW_MATCHING_ARCHITECTURE = process.env.USE_NEW_MATCHING_ARCHITECTURE === 'true';
-// Import new services when feature flag is enabled
-let MatcherOrchestrator = null;
-let newScoringService = null;
-if (USE_NEW_MATCHING_ARCHITECTURE) {
-    try {
-        const { MatcherOrchestrator: Orchestrator } = require('./matching/matcher.orchestrator');
-        const { ScoringService } = require('./matching/scoring.service');
-        MatcherOrchestrator = Orchestrator;
-        newScoringService = ScoringService;
-    }
-    catch (error) {
-        console.warn('⚠️ New matching architecture not available, falling back to legacy:', error instanceof Error ? error.message : 'Unknown error');
-    }
-}
+// Legacy implementation only
 // ---------- Safe converters (bulletproof against string | string[] | undefined) ----------
 const toStringArray = (v, fallback = []) => {
     if (Array.isArray(v)) {
@@ -352,17 +330,6 @@ function applyHardGates(job, userPrefs) {
 }
 // C3: Scoring model
 function calculateMatchScore(job, userPrefs) {
-    // PHASE 6: Feature flag integration
-    if (USE_NEW_MATCHING_ARCHITECTURE && newScoringService) {
-        try {
-            const scoringService = new newScoringService();
-            return scoringService.calculateMatchScore(job, userPrefs);
-        }
-        catch (error) {
-            console.error('❌ New scoring service failed, falling back to legacy:', error instanceof Error ? error.message : 'Unknown error');
-            // Fall through to legacy implementation
-        }
-    }
     // Legacy implementation
     const categories = normalizeToString(job.categories);
     const tags = (0, exports.normalizeCategoriesForRead)(categories);
@@ -594,8 +561,6 @@ function performRobustMatching(jobs, userPrefs) {
     });
     return matches;
 }
-// Enhanced AI Matching Cache with Redis persistence (new implementation)
-// export { EnhancedAIMatchingCache, enhancedAIMatchingCache } from './enhancedCache';
 // ================================
 // ORIGINAL TYPES + target_cities ADDED
 // ================================
@@ -1343,23 +1308,6 @@ Return ONLY a valid JSON array of matches. No additional text.`;
 }
 // 2. Perform Enhanced AI Matching with Provenance Tracking
 async function performEnhancedAIMatching(jobs, userPrefs, openai) {
-    // PHASE 6: Feature flag integration
-    if (USE_NEW_MATCHING_ARCHITECTURE && MatcherOrchestrator) {
-        try {
-            console.log('🚀 Using new matching architecture for AI matching');
-            const orchestrator = new MatcherOrchestrator(openai, getSupabaseClient());
-            const result = await orchestrator.generateMatchesWithStrategy(userPrefs, jobs, 'ai_only');
-            // For new architecture, return with default provenance
-            return {
-                matches: result.matches,
-                provenance: { match_algorithm: 'ai', prompt_version: process.env.PROMPT_VERSION || 'v1' }
-            };
-        }
-        catch (error) {
-            console.error('❌ New architecture failed, falling back to legacy:', error);
-            // Fall through to legacy implementation
-        }
-    }
     // Legacy implementation with provenance tracking
     const startTime = Date.now(); // Track processing time for logging
     try {
@@ -1488,19 +1436,6 @@ function parseAndValidateMatches(response, jobs) {
 }
 // C7: Robust fallback matching
 function generateRobustFallbackMatches(jobs, userPrefs) {
-    // PHASE 6: Feature flag integration
-    if (USE_NEW_MATCHING_ARCHITECTURE && MatcherOrchestrator) {
-        try {
-            console.log('🚀 Using new matching architecture for fallback matching');
-            const orchestrator = new MatcherOrchestrator(null, getSupabaseClient());
-            const result = orchestrator.generateMatchesWithStrategy(userPrefs, jobs, 'fallback_only');
-            return result.matches;
-        }
-        catch (error) {
-            console.error('❌ New architecture failed, falling back to legacy:', error instanceof Error ? error.message : 'Unknown error');
-            // Fall through to legacy implementation
-        }
-    }
     // Legacy implementation
     console.log(`🧠 Using legacy robust fallback for ${userPrefs.email}`);
     // Use the robust matching system

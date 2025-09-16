@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import OpenAI from 'openai';
 import { z } from 'zod';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
+import { errorJson } from '@/Utils/errorResponse';
 import {
-  performEnhancedAIMatching,
-  generateRobustFallbackMatches,
-  logMatchSession,
-  type UserPreferences,
+  performEnhancedAIMatching
 } from '@/Utils/jobMatching';
+import {
+  generateRobustFallbackMatches
+} from '@/Utils/matching/fallback.service';
+import {
+  logMatchSession
+} from '@/Utils/matching/logging.service';
+import type { UserPreferences } from '@/Utils/matching/types';
 import { sendMatchedJobsEmail, sendWelcomeEmail } from '@/Utils/email';
 import { EmailVerificationOracle } from '@/Utils/emailVerification';
-import { normalizeCareerPath } from '@/scrapers/types';
+// import { normalizeCareerPath } from '@/scrapers/types';
 
 // Test mode helper
 const isTestMode = () => process.env.NODE_ENV === 'test' || process.env.JOBPING_TEST_MODE === '1';
@@ -155,7 +161,7 @@ function extractUserData(fields: NonNullable<TallyWebhookData['data']>['fields']
       }
     } else if (key.includes('career_path') || key.includes('career')) {
       // Career path - normalize to canonical slugs (TEXT[] in database)
-      userData.career_path = normalizeCareerPath(field.value);
+      userData.career_path = Array.isArray(field.value) ? field.value : [field.value];
     } else if (key.includes('roles') || key.includes('target_roles')) {
       // Roles selected (JSONB in database)
       if (Array.isArray(field.value)) {
@@ -191,16 +197,54 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Signature verification (skip in test mode)
+    let rawBody = '';
+    try {
+      rawBody = await req.text();
+    } catch {}
+
+    if (!isTestMode()) {
+      const signature = req.headers.get('x-tally-signature') || req.headers.get('x-signature');
+      const timestampHeader = req.headers.get('x-tally-timestamp') || req.headers.get('x-timestamp');
+      const secret = process.env.TALLY_WEBHOOK_SECRET;
+
+      if (!secret) {
+        return errorJson(req, 'INTERNAL_ERROR', 'Webhook secret not configured', 500);
+      }
+
+      if (!signature || !timestampHeader) {
+        return errorJson(req, 'UNAUTHORIZED', 'Missing webhook signature headers', 401);
+      }
+
+      const timestamp = Number(timestampHeader);
+      const fiveMinutesMs = 5 * 60 * 1000;
+      if (!Number.isFinite(timestamp) || Math.abs(Date.now() - timestamp) > fiveMinutesMs) {
+        return errorJson(req, 'UNAUTHORIZED', 'Stale webhook timestamp', 401);
+      }
+
+      // Compute HMAC over `${timestamp}.${rawBody}`
+      const hmac = crypto.createHmac('sha256', secret);
+      hmac.update(`${timestamp}.${rawBody}`);
+      const expected = hmac.digest('hex');
+
+      const provided = signature.replace(/^sha256=/, '');
+      const expectedBuf = Buffer.from(expected);
+      const providedBuf = Buffer.from(provided);
+      if (
+        expectedBuf.length !== providedBuf.length ||
+        !crypto.timingSafeEqual(expectedBuf, providedBuf)
+      ) {
+        return errorJson(req, 'UNAUTHORIZED', 'Invalid webhook signature', 401);
+      }
+    }
+
     // Parse and validate
-    const rawPayload = await req.json();
+    const rawPayload = rawBody ? JSON.parse(rawBody) : await req.json();
     
     // Handle cases where data might be undefined
     if (!rawPayload || !rawPayload.data) {
       console.warn('Webhook received without data field:', rawPayload);
-      return NextResponse.json({ 
-        error: 'Invalid webhook payload: missing data field',
-        received: rawPayload 
-      }, { status: 400 });
+      return errorJson(req, 'VALIDATION_ERROR', 'Invalid webhook payload: missing data field', 400, { received: rawPayload });
     }
     
     const payload = TallyWebhookSchema.parse(rawPayload);
@@ -216,13 +260,13 @@ export async function POST(req: NextRequest) {
     console.log('🧪 Test mode: User data extracted:', userData);
     
     if (!userData.email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+      return errorJson(req, 'VALIDATION_ERROR', 'Email is required', 400);
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(userData.email as string)) {
-      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
+      return errorJson(req, 'VALIDATION_ERROR', 'Invalid email format', 400);
     }
 
     console.log(`Processing submission for: ${userData.email}`);
@@ -254,7 +298,13 @@ export async function POST(req: NextRequest) {
     if (isNewUser) {
       console.log('🧪 Test mode: Generating verification token for new user...');
       try {
-        verificationToken = EmailVerificationOracle.generateVerificationToken();
+        if (isTestMode()) {
+          // Use legacy method for test mode
+          verificationToken = EmailVerificationOracle.generateVerificationTokenLegacy();
+        } else {
+          // Use new bcrypt-based method for production
+          verificationToken = await EmailVerificationOracle.generateVerificationToken(userData.email as string);
+        }
         console.log(`Generated verification token for new user: ${userData.email}`);
       } catch (tokenError) {
         console.error('❌ Token generation failed:', tokenError);
@@ -270,12 +320,12 @@ export async function POST(req: NextRequest) {
       // Handle arrays properly for your actual database schema
       languages_spoken: Array.isArray(userData.languages_spoken) ? userData.languages_spoken : (userData.languages_spoken ? [userData.languages_spoken] : []),
       company_types: Array.isArray(userData.company_types) ? userData.company_types : (userData.company_types ? [userData.company_types] : []),
-      career_path: normalizeCareerPath(userData.career_path as string | string[] | null | undefined),
+      career_path: Array.isArray(userData.career_path) ? userData.career_path : (userData.career_path ? [userData.career_path] : []),
       target_cities: Array.isArray(userData.target_cities) ? userData.target_cities : (userData.target_cities ? [userData.target_cities] : []),
       roles_selected: userData.roles_selected, // This is JSONB in your schema
       updated_at: now,
       email_verified: isNewUser ? (process.env.JOBPING_PILOT_TESTING === '1' ? true : false) : ((existingUser as any)?.email_verified || false),
-      verification_token: isNewUser ? verificationToken : ((existingUser as any)?.verification_token || null),
+      verification_token: isNewUser && verificationToken && isTestMode() ? verificationToken : ((existingUser as any)?.verification_token || null),
       active: true,
       subscription_active: false,
       ...(isNewUser && { created_at: now })
@@ -505,10 +555,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       console.error('❌ Tally webhook validation error:', error.issues);
-      return NextResponse.json({
-        error: 'Invalid webhook payload structure',
-        details: error.issues
-      }, { status: 400 });
+      return errorJson(req, 'VALIDATION_ERROR', 'Invalid webhook payload structure', 400, error.issues);
     }
     
     console.error('❌ Tally webhook internal error:', {
@@ -519,10 +566,7 @@ export async function POST(req: NextRequest) {
       fullError: error
     });
     
-    return NextResponse.json({
-      error: 'Registration failed',
-      details: error instanceof Error ? error.message : JSON.stringify(error)
-    }, { status: 500 });
+    return errorJson(req, 'INTERNAL_ERROR', 'Registration failed', 500, error instanceof Error ? error.message : JSON.stringify(error));
   }
 }
 
@@ -539,7 +583,7 @@ async function handleEmailVerificationTest(req: NextRequest) {
     
     if (type === 'verification') {
       // Test verification email sending
-      const token = EmailVerificationOracle.generateVerificationToken();
+      const token = await EmailVerificationOracle.generateVerificationToken(email);
       const success = await EmailVerificationOracle.sendVerificationEmail(
         email, 
         token, 

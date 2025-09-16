@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import PaymentModal from './PaymentModal';
+import { createCheckoutSessionWithRetry } from '@/Utils/paymentRetry';
 
 type BillingCycle = 'monthly' | 'quarterly';
 
@@ -9,7 +11,7 @@ const PLANS = [
     name: 'Free',
     price: '€0',
     features: [
-      '5 jobs/day',
+      '3 jobs per send (Thursdays)',
       'Early-career targeting',
       'Cancel anytime'
     ],
@@ -20,8 +22,8 @@ const PLANS = [
     name: 'Premium',
     price: '€15/month',
     features: [
-      '15 jobs/day',
-      'Priority sources & filtering',
+      '6 jobs per send (Tue/Sat)',
+      '24hr early access to fresh jobs',
       'Cancel anytime'
     ],
     cta: 'Upgrade to Premium',
@@ -31,15 +33,47 @@ const PLANS = [
 
 export default function PriceSelector() {
   const [billing, setBilling] = useState<BillingCycle>('monthly');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const handlePlanClick = (action: string) => {
     if (action === 'premium') {
-      const cycle = billing === 'quarterly' ? 'quarterly' : 'monthly';
-      const url = `/api/create-checkout-session?cycle=${cycle}`;
-      window.location.href = url;
+      setShowPaymentModal(true);
     } else {
       const el = document.getElementById('signup');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handlePaymentConfirm = async (email: string) => {
+    setIsLoading(true);
+    
+    try {
+      const cycle = billing === 'quarterly' ? 'quarterly' : 'monthly';
+      const priceId = cycle === 'quarterly' 
+        ? process.env.NEXT_PUBLIC_STRIPE_PREMIUM_QUARTERLY_PRICE_ID
+        : process.env.NEXT_PUBLIC_STRIPE_PREMIUM_MONTHLY_PRICE_ID;
+      
+      if (!priceId) {
+        throw new Error('Payment configuration error. Please try again later.');
+      }
+
+      const result = await createCheckoutSessionWithRetry(
+        email,
+        priceId,
+        'temp-user-id' // Replace with actual user ID when you have auth
+      );
+      
+      if (result.success && result.url) {
+        window.location.href = result.url;
+      } else {
+        throw new Error(result.error || 'Payment setup failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      throw error; // Re-throw to let the modal handle the error display
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -51,7 +85,7 @@ export default function PriceSelector() {
           <div className="flex items-center justify-center gap-4 mb-8">
             <button
               onClick={() => setBilling('monthly')}
-              className={`text-sm font-medium transition-colors ${billing === 'monthly' ? 'text-white' : 'text-zinc-400 hover:text-zinc-300'}`}
+              className={`text-sm font-medium transition-colors ${billing === 'monthly' ? 'text-white' : 'text-[#888888] hover:text-white'}`}
               aria-pressed={billing === 'monthly'}
             >
               Monthly (€15)
@@ -59,7 +93,7 @@ export default function PriceSelector() {
             <span className="w-px h-4 bg-white/20" />
             <button
               onClick={() => setBilling('quarterly')}
-              className={`text-sm font-medium transition-colors ${billing === 'quarterly' ? 'text-white' : 'text-zinc-400 hover:text-zinc-300'}`}
+              className={`text-sm font-medium transition-colors ${billing === 'quarterly' ? 'text-white' : 'text-[#888888] hover:text-white'}`}
               aria-pressed={billing === 'quarterly'}
             >
               3 months (€30)
@@ -78,7 +112,7 @@ export default function PriceSelector() {
                       <span className="text-white text-4xl font-semibold tracking-[-0.02em]">
                         {billing === 'monthly' ? '€15' : '€30'}
                       </span>
-                      <span className="text-zinc-400 ml-2">
+                      <span className="text-[#888888] ml-2">
                         {billing === 'monthly' ? '/month' : '/3 months'}
                       </span>
                     </>
@@ -91,7 +125,7 @@ export default function PriceSelector() {
                 
                 <ul className="space-y-3 mb-8 text-left">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="text-zinc-400 text-sm flex items-center">
+                    <li key={feature} className="text-[#888888] text-sm flex items-center">
                       <span className="w-1.5 h-1.5 bg-white rounded-full mr-3 flex-shrink-0"></span>
                       {feature}
                     </li>
@@ -100,24 +134,33 @@ export default function PriceSelector() {
                 
                 <button
                   onClick={() => handlePlanClick(plan.ctaAction)}
-                  className={`w-full py-3 px-6 rounded-2xl font-medium transition-colors ${
+                  disabled={isLoading && plan.ctaAction === 'premium'}
+                  className={`w-full py-3 px-6 rounded-2xl font-medium transition-all duration-300 ${
                     plan.name === 'Free'
-                      ? 'bg-white text-black hover:bg-zinc-100 shadow-lg hover:shadow-xl'
-                      : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
-                  }`}
+                      ? 'bg-white text-black hover:bg-[#CCCCCC] shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:-translate-y-1'
+                      : 'bg-[#111111] text-white border border-[#1A1A1A] hover:bg-[#1A1A1A] hover:border-[#333333] shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]'
+                  } ${isLoading && plan.ctaAction === 'premium' ? 'opacity-50 cursor-not-allowed' : ''}`}
                   data-testid={`pricing-cta-${plan.name.toLowerCase()}`}
                   data-analytics="cta_click"
                   data-cta-type={plan.name === 'Free' ? 'free' : 'premium'}
                   data-cta-location="pricing"
                   data-plan-name={plan.name}
                 >
-                  {plan.cta}
+                  {isLoading && plan.ctaAction === 'premium' ? 'Processing...' : plan.cta}
                 </button>
               </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onConfirm={handlePaymentConfirm}
+        isLoading={isLoading}
+      />
     </section>
   );
 }

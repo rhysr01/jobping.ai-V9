@@ -5,26 +5,29 @@ import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import OpenAI from 'openai';
 import * as Sentry from '@sentry/nextjs';
 import {
-  generateRobustFallbackMatches,
-  logMatchSession,
-  AIMatchingCache,
-  isTestOrPerfMode,
-  timeout,
-  type UserPreferences,
-} from '@/Utils/jobMatching';
-// import { PerformanceMonitor } from '@/Utils/performanceMonitor';
-// import { AdvancedMonitoringOracle } from '@/Utils/advancedMonitoring';
-// import { AutoScalingOracle } from '@/Utils/autoScaling';
-// import { UserSegmentationOracle } from '@/Utils/userSegmentation';
-import type { JobMatch } from '@/Utils/jobMatching';
-// import { dogstatsd } from '@/Utils/datadogMetrics';
+  generateRobustFallbackMatches
+} from '@/Utils/matching/fallback.service';
+import {
+  logMatchSession
+} from '@/Utils/matching/logging.service';
+import type { UserPreferences, JobMatch } from '@/Utils/matching/types';
 import crypto from 'crypto';
-// import { criticalAlerts } from '@/Utils/criticalAlerts';
-import { resetLimiterForTests } from '@/Utils/productionRateLimiter';
 import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
+import { 
+  SEND_PLAN
+} from '@/Utils/sendConfiguration';
 
-// Test mode detection and lock utilities
-const LOCK_KEY = (rid: string) => `${isTestOrPerfMode() ? 'jobping:test' : 'jobping:prod'}:lock:match-users:${rid}`;
+// Environment flags and limits
+const IS_TEST = process.env.NODE_ENV === 'test';
+const USER_LIMIT = IS_TEST ? 3 : 50;
+const JOB_LIMIT = IS_TEST ? 300 : 1200;
+
+// Lock key helper
+const LOCK_KEY = (rid: string) => `${IS_TEST ? 'jobping:test' : 'jobping:prod'}:lock:match-users:${rid}`;
+
+// Basic AI circuit breaker
+let aiFailureCount = 0;
+const AI_FAILURE_THRESHOLD = 3;
 
 // Helper function to safely normalize string/array fields
 function normalizeStringToArray(value: any): string[] {
@@ -72,36 +75,26 @@ interface PerformanceMetrics {
   memoryUsage: number;
 }
 
-// Simple in-memory rate limiting - upgrade to Redis when you scale
-const rateLimitMap = new Map<string, number>();
-const jobReservationMap = new Map<string, number>(); // Job locking mechanism
-
-// Clear in-memory reservations safely for test mode
-function clearInMemoryReservationsSafely() {
-  if (isTestOrPerfMode()) {
-    rateLimitMap.clear();
-    jobReservationMap.clear();
-    console.log('🧪 Test mode: Cleared in-memory reservations');
-  }
-}
+// Removed in-memory rate limiting and job reservation maps
 
 // Configuration from environment variables with sensible defaults
-const RATE_LIMIT_WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'); // 15 minutes default
-const RATE_LIMIT_MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_MAX || '3'); // Max 3 requests per 15 minutes default
+const RATE_LIMIT_WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000');
+const RATE_LIMIT_MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_MAX || '3');
 
-// Performance and cost optimization settings
+
+// Legacy settings (deprecated - using SEND_PLAN now)
 const MAX_JOBS_PER_USER = {
-  free: parseInt(process.env.SEND_DAILY_FREE || '50'),      // Free tier jobs per day
-  premium: parseInt(process.env.SEND_DAILY_PREMIUM || '100')   // Premium tier jobs per day
+  free: SEND_PLAN.free.perSend,      // Now 3 per send
+  premium: SEND_PLAN.premium.perSend // Now 6 per send
 };
 
 // Freshness tier distribution with fallback logic
 const TIER_DISTRIBUTION = {
   free: {
-    ultra_fresh: parseInt(process.env.FREE_ULTRA_FRESH || '2'),
-    fresh: parseInt(process.env.FREE_FRESH || '3'),
-    comprehensive: parseInt(process.env.FREE_COMPREHENSIVE || '1'),
-    fallback_order: ['fresh', 'comprehensive', 'ultra_fresh'] // If tier is empty, try these
+    ultra_fresh: parseInt(process.env.FREE_ULTRA_FRESH || '1'),
+    fresh: parseInt(process.env.FREE_FRESH || '2'),
+    comprehensive: parseInt(process.env.FREE_COMPREHENSIVE || '0'),
+    fallback_order: ['fresh', 'ultra_fresh', 'comprehensive'] // If tier is empty, try these
   },
   premium: {
     ultra_fresh: parseInt(process.env.PREMIUM_ULTRA_FRESH || '5'),
@@ -128,8 +121,6 @@ interface JobWithFreshness {
   last_seen_at: string | null;
 }
 
-// NEW: Enhanced rate limiter instance - TEMPORARILY DISABLED FOR TESTS
-// const enhancedRateLimiter = new EnhancedRateLimiter();
 
 // NEW: User clustering functionality
 interface User extends UserPreferences {
@@ -167,283 +158,10 @@ function clusterSimilarUsers(users: UserPreferences[], maxClusterSize: number = 
   return clusters;
 }
 
-// NEW: Enhanced AI matching with clustering and caching
-async function performEnhancedAIMatchingWithCaching(
-  users: UserPreferences[],
-  jobs: JobWithFreshness[],
-  openai: OpenAI,
-  isNewUser: boolean = false
-): Promise<Map<string, JobMatch[]>> {
-  console.log(`🤖 Starting enhanced AI matching for ${users.length} users with ${jobs.length} jobs`);
 
-  // FAST PATH for tests / perf mode
-  if (isTestOrPerfMode()) {
-    console.log('⚡ fast_path_rule_based');
-    const results = new Map<string, JobMatch[]>();
-    await performRuleBasedMatching(users, jobs, results);
-    return results;
-  }
 
-  // Cluster users to reduce API calls
-  const userClusters = clusterSimilarUsers(users, 3);
-  console.log(`👥 Created ${userClusters.length} clusters from ${users.length} users`);
 
-  const results = new Map<string, JobMatch[]>();
 
-  for (const cluster of userClusters) {
-    try {
-      // Check cache first
-      const cachedMatches = await AIMatchingCache.getCachedMatches(cluster);
-      
-      if (cachedMatches && !isNewUser) {
-        console.log(`🎯 Using cached matches for cluster of ${cluster.length} users`);
-        await processCachedMatches(cluster, cachedMatches, jobs, results);
-        continue;
-      }
-
-      // Use consolidated matcher with 3s timeout
-      const aiCall = callConsolidatedMatcher(cluster, jobs, process.env.OPENAI_API_KEY!);
-      const aiResult = await Promise.race([aiCall, timeout(3000, 'ai_timeout')]).catch(() => null) as { matches: JobMatch[]; provenance: any } | null;
-      
-      if (!aiResult) {
-        console.warn('⚠️ ai_timeout -> falling back to rules');
-        await performRuleBasedMatching(cluster, jobs, results);
-        continue;
-      }
-      
-      // Cache the results (just the matches, not provenance)
-      AIMatchingCache.setCachedMatches(cluster, aiResult.matches);
-      
-      // Process matches for each user in the cluster
-      await processMatchingResults(cluster, aiResult.matches, results);
-      
-    } catch (error) {
-      console.error(`❌ Error processing cluster:`, error);
-      // Fallback logic
-      await performRuleBasedMatching(cluster, jobs, results);
-    }
-  }
-
-  return results;
-}
-
-// CONSOLIDATED: Use the new consolidated matching engine with provenance tracking
-async function callConsolidatedMatcher(
-  userCluster: UserPreferences[], 
-  jobs: JobWithFreshness[], 
-  openaiApiKey: string
-): Promise<{ matches: JobMatch[]; provenance: any }> {
-  const matcher = createConsolidatedMatcher(openaiApiKey);
-  const user = userCluster[0]; // Take first user for cluster
-  
-  // Convert jobs to compatible format
-  const compatibleJobs = jobs.map(job => ({
-    ...job,
-    id: parseInt(job.id),
-    description: job.description || '',
-  }));
-  
-  try {
-    const result = await matcher.performMatching(compatibleJobs, user);
-    console.log(`🎯 Matching result for ${user.email}: method=${result.method}, matches=${result.matches.length}, confidence=${result.confidence}`);
-    
-    // Track OpenAI usage and costs
-    if (result.method === 'ai_success' && (result as any).usage) {
-      const usage = (result as any).usage;
-      const cost = calculateOpenAICost(usage);
-      await criticalAlerts.trackOpenAIUsage(
-        usage.model || 'gpt-4',
-        usage.total_tokens || 0,
-        cost
-      );
-    }
-    
-    // Create provenance data for consolidated matcher
-    const provenance = {
-      match_algorithm: result.method === 'ai_success' ? 'ai' : 
-                      result.method === 'rule_based' ? 'rules' : 'hybrid',
-      ai_model: (result as any).usage?.model || 'gpt-4',
-      prompt_version: process.env.PROMPT_VERSION || 'v1',
-      cache_hit: false,
-      ai_latency_ms: 0, // Will be set by caller
-      ai_cost_usd: (result as any).usage ? calculateOpenAICost((result as any).usage) : 0
-    };
-    
-    return { matches: result.matches, provenance };
-  } catch (error) {
-    console.error('Consolidated matcher failed:', error);
-    
-    // Return fallback provenance
-    const fallbackProvenance = {
-      match_algorithm: 'rules',
-      fallback_reason: error instanceof Error ? error.message : 'consolidated_matcher_failed',
-      ai_latency_ms: 0,
-      ai_cost_usd: 0
-    };
-    
-    return { matches: [], provenance: fallbackProvenance };
-  }
-}
-
-// NEW: Process cached matches
-async function processCachedMatches(
-  userCluster: UserPreferences[], 
-  cachedMatches: any[], 
-  allJobs: JobWithFreshness[], 
-  results: Map<string, JobMatch[]>
-): Promise<void> {
-  // Adapt cached matches to current job set
-  for (const clusterResult of cachedMatches) {
-    const userEmail = clusterResult.user_email;
-    const userMatches = clusterResult.matches || [];
-    
-    // Filter matches to jobs that still exist
-    const validMatches = userMatches.filter((match: any) => 
-      allJobs.some(job => job.job_hash === match.job_hash)
-    );
-
-    if (validMatches.length > 0) {
-      results.set(userEmail, validMatches);
-    }
-  }
-}
-
-// NEW: Process matching results for a cluster
-async function processMatchingResults(
-  userCluster: UserPreferences[], 
-  matchingResults: any[], 
-  results: Map<string, JobMatch[]>
-): Promise<void> {
-  for (const clusterResult of matchingResults) {
-    const userEmail = clusterResult.user_email;
-    const userMatches = clusterResult.matches || [];
-    
-    if (userMatches.length > 0) {
-      results.set(userEmail, userMatches);
-    }
-  }
-}
-
-// IMPROVED: Rule-based fallback matching with better scoring
-async function performRuleBasedMatching(
-  userCluster: UserPreferences[], 
-  jobs: JobWithFreshness[], 
-  results: Map<string, JobMatch[]>
-): Promise<void> {
-  for (const user of userCluster) {
-    console.log(`🔧 Rule-based matching for ${user.email} with ${jobs.length} jobs`);
-    
-    const matches = [];
-    const userCities = user.target_cities || [];
-    const userCareer = user.professional_expertise || '';
-    
-    // Score each job using simple but effective rules
-    for (let i = 0; i < Math.min(jobs.length, 20); i++) {
-      const job = jobs[i];
-      let score = 50; // Base score
-      let reasons = [];
-      
-      // Title-based scoring (most reliable)
-      const title = job.title?.toLowerCase() || '';
-      if (title.includes('junior') || title.includes('graduate') || title.includes('entry')) {
-        score += 25;
-        reasons.push('entry-level title');
-      }
-      
-      if (title.includes('intern') || title.includes('trainee') || title.includes('associate')) {
-        score += 30;
-        reasons.push('early-career role');
-      }
-      
-      // Career matching (broad)
-      if (userCareer) {
-        const careerLower = userCareer.toLowerCase();
-        if (title.includes(careerLower) || job.description?.toLowerCase().includes(careerLower)) {
-          score += 20;
-          reasons.push('career match');
-        }
-        
-        // Broader career matching
-        const careerMappings: Record<string, string[]> = {
-          'backend': ['developer', 'engineer', 'software'],
-          'frontend': ['developer', 'engineer', 'ui', 'web'],
-          'data': ['analyst', 'science', 'analytics'],
-          'marketing': ['marketing', 'brand', 'digital'],
-          'sales': ['sales', 'business development', 'account'],
-          'consulting': ['consultant', 'advisory', 'strategy']
-        };
-        
-        for (const [career, keywords] of Object.entries(careerMappings)) {
-          if (careerLower.includes(career) && keywords.some(kw => title.includes(kw))) {
-            score += 15;
-            reasons.push('career alignment');
-            break;
-          }
-        }
-      }
-      
-      // Location matching
-      if (userCities.length > 0 && job.location) {
-        const location = job.location.toLowerCase();
-        if (userCities.some(city => location.includes(city.toLowerCase()))) {
-          score += 15;
-          reasons.push('location match');
-        } else if (location.includes('remote') || location.includes('europe')) {
-          score += 10;
-          reasons.push('remote/flexible');
-        }
-      }
-      
-      // Freshness bonus (recent jobs are better)
-      if (job.original_posted_date) {
-        const daysDiff = (Date.now() - new Date(job.original_posted_date).getTime()) / (1000 * 60 * 60 * 24);
-        if (daysDiff < 7) {
-          score += 10;
-          reasons.push('recent posting');
-        }
-      }
-      
-      // Company quality indicators
-      if (job.company && job.company.length > 3) { // Not just initials
-        score += 5;
-      }
-      
-      // Only include jobs that meet minimum threshold
-      if (score >= 65) {
-        matches.push({
-          job_index: i + 1,
-          job_hash: job.job_hash,
-          match_score: score,
-          match_reason: reasons.join(', ') || 'Rule-based match',
-          match_quality: score >= 80 ? 'good' : 'fair',
-          match_tags: 'rule-based'
-        });
-      }
-    }
-    
-    // Sort by score and take top matches
-    matches.sort((a, b) => b.match_score - a.match_score);
-    const topMatches = matches.slice(0, 6);
-    
-    results.set(user.email, topMatches);
-    console.log(`✅ Rule-based matching generated ${topMatches.length} matches for ${user.email}`);
-    
-    // If still no matches, create emergency fallback
-    if (topMatches.length === 0) {
-      console.log(`🚨 Emergency fallback for ${user.email}`);
-      const emergencyMatches = jobs.slice(0, 3).map((job, i) => ({
-        job_index: i + 1,
-        job_hash: job.job_hash,
-        match_score: 55,
-        match_reason: 'Emergency match - recent job posting',
-        match_quality: 'fair',
-        match_tags: 'emergency-fallback'
-      }));
-      results.set(user.email, emergencyMatches);
-      console.log(`🚨 Emergency fallback generated ${emergencyMatches.length} matches`);
-    }
-  }
-}
 
 // Database schema validation
 async function validateDatabaseSchema(supabase: any): Promise<boolean> {
@@ -475,41 +193,13 @@ async function validateDatabaseSchema(supabase: any): Promise<boolean> {
 
 // Enhanced rate limiting with job reservation
 function isRateLimited(identifier: string): boolean {
-  const now = Date.now();
-  const lastCallTime = rateLimitMap.get(identifier) || 0;
-  
-  if (now - lastCallTime < RATE_LIMIT_WINDOW_MS) {
-    console.log(`Rate limit hit for ${identifier}. Last call: ${new Date(lastCallTime).toISOString()}`);
-    return true;
-  }
-  
-  rateLimitMap.set(identifier, now);
+  // Delegated to production rate limiter middleware; keep placeholder for API compatibility
   return false;
 }
 
 // Job reservation system to prevent race conditions
 function reserveJobs(jobIds: string[], reservationId: string): boolean {
-  // Test-only bypass: skip reservation in test environment
-  if (process.env.NODE_ENV === 'test' || process.env.JOBPING_TEST_MODE === '1') {
-    return true; // test-only bypass
-  }
-  
-  const now = Date.now();
-  
-  // Check if any jobs are already reserved
-  for (const jobId of jobIds) {
-    const existingReservation = jobReservationMap.get(jobId);
-    if (existingReservation && (now - existingReservation) < 300000) { // 5 minute reservation
-      console.log(`Job ${jobId} already reserved`);
-      return false;
-    }
-  }
-  
-  // Reserve all jobs
-  for (const jobId of jobIds) {
-    jobReservationMap.set(jobId, now);
-  }
-  
+  // Reservations managed by Redis global lock in this handler
   return true;
 }
 
@@ -736,10 +426,6 @@ export async function POST(req: NextRequest) {
   });
 
   try {
-    // At the very top of handler (first lines), nuke any lingering test keys (safe, fast)
-    if (isTestOrPerfMode()) {
-      try { await resetLimiterForTests?.(); } catch {}
-    }
     const performanceTracker = trackPerformance();
   const reservationId = `batch_${Date.now()}`;
   const requestStartTime = Date.now();
@@ -766,7 +452,7 @@ export async function POST(req: NextRequest) {
   
   // Acquire lock (prod only)
   try {
-    if (!isTestOrPerfMode()) {
+    if (!IS_TEST) {
       // lazy get redis from your limiter or a central redis helper you already have
       const limiter = getProductionRateLimiter();
       await limiter.initializeRedis();
@@ -782,16 +468,13 @@ export async function POST(req: NextRequest) {
         haveRedisLock = true;
       }
       // If no redis, we just proceed (best effort).
-    } else {
-      // In test mode, also bypass any local reservation maps
-      clearInMemoryReservationsSafely();
     }
   } catch (error) {
     console.warn('Redis lock acquisition failed, continuing with hard caps:', error);
   }
 
   // PRODUCTION: Enhanced rate limiting with Redis fallback
-  if (process.env.NODE_ENV !== 'test') {
+  if (!IS_TEST) {
     const rateLimitResult = await getProductionRateLimiter().middleware(req, 'match-users');
     
     if (rateLimitResult) {
@@ -799,7 +482,6 @@ export async function POST(req: NextRequest) {
       return rateLimitResult;
     }
   }
-  PerformanceMonitor.trackDuration('rate_limit_check', Date.now());
 
   try {
     console.log(`Processing match-users request from IP: ${ip}`);
@@ -846,9 +528,8 @@ export async function POST(req: NextRequest) {
 
     const { limit = 1000, forceReprocess = false } = requestBody || {};
     
-    // Apply small caps in tests to keep everything snappy
-    const userCap = isTestOrPerfMode() ? 3 : 50;
-    const jobCap = isTestOrPerfMode() ? 300 : 1200;
+    const userCap = USER_LIMIT;
+    const jobCap = JOB_LIMIT;
     
     const supabase = getSupabaseClient();
     
@@ -863,13 +544,13 @@ export async function POST(req: NextRequest) {
     // ADVANCED: Check scaling needs before processing
     let scalingRecommendations: any[] = [];
     try {
-      scalingRecommendations = await AutoScalingOracle.checkScalingNeeds();
+      // scalingRecommendations = await AutoScalingOracle.checkScalingNeeds();
       if (scalingRecommendations.length > 0) {
         console.log('🔧 Scaling recommendations detected:', scalingRecommendations);
         // Implement critical recommendations automatically
-        for (const recommendation of scalingRecommendations.filter(r => r.priority === 'high')) {
-          await AutoScalingOracle.implementRecommendation(recommendation);
-        }
+        // for (const recommendation of scalingRecommendations.filter(r => r.priority === 'high')) {
+        //   await AutoScalingOracle.implementRecommendation(recommendation);
+        // }
       }
     } catch (error) {
       console.warn('Scaling check failed:', error);
@@ -899,13 +580,10 @@ export async function POST(req: NextRequest) {
       usersError = result.error;
     }
     
-    PerformanceMonitor.trackDuration('user_fetch', userFetchStart);
 
     if (usersError) {
       console.error('Failed to fetch users:', usersError);
       
-      // Critical alert for database failure
-      await criticalAlerts.alertDatabaseIssue('fetch_users', usersError.message);
       
       return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
     }
@@ -931,8 +609,7 @@ export async function POST(req: NextRequest) {
     const userSegmentationStart = Date.now();
     let userSegments: any = { error: 'Not available' };
     try {
-      userSegments = await UserSegmentationOracle.analyzeUserBehavior(supabase);
-      PerformanceMonitor.trackDuration('user_segmentation', userSegmentationStart);
+      // userSegments = await UserSegmentationOracle.analyzeUserBehavior(supabase);
 
       if (userSegments.error) {
         console.warn('User segmentation failed:', userSegments.error);
@@ -941,7 +618,6 @@ export async function POST(req: NextRequest) {
       }
     } catch (error) {
       console.warn('User segmentation failed:', error);
-      PerformanceMonitor.trackDuration('user_segmentation', userSegmentationStart);
     }
 
     // 2. Fetch jobs with UTC-safe date calculation and EU/Early Career filtering
@@ -977,37 +653,19 @@ export async function POST(req: NextRequest) {
 
     const { data: jobs, error: jobsError } = await supabase
       .from('jobs')
-      .select(`
-        id,
-        title,
-        company,
-        location,
-        job_url,
-        description,
-        created_at,
-        job_hash,
-        is_sent,
-        status,
-        freshness_tier,
-        original_posted_date,
-        last_seen_at
-      `)
-      .gte('created_at', thirtyDaysAgo.toISOString())
+      .select('*')
       .eq('is_sent', false)
       .eq('status', 'active')
-      .or(euLocationFilter)
-      .or(`${earlyCareerTitleFilter},${earlyCareerDescFilter}`)
-      .order('original_posted_date', { ascending: false })
+      .gte('created_at', thirtyDaysAgo.toISOString())
+      .in('freshness_tier', ['ultra_fresh', 'fresh'])
+      .order('original_posted_date', { ascending: false, nullsFirst: false })
       .limit(jobCap);
 
     const jobFetchTime = Date.now() - jobFetchStart;
-    PerformanceMonitor.trackDuration('job_fetch', jobFetchStart);
 
     if (jobsError) {
       console.error('Failed to fetch jobs:', jobsError);
       
-      // Critical alert for database failure
-      await criticalAlerts.alertDatabaseIssue('fetch_jobs', jobsError.message);
       
       return NextResponse.json({ error: 'Failed to fetch jobs' }, { status: 500 });
     }
@@ -1036,14 +694,7 @@ export async function POST(req: NextRequest) {
       console.log(`   • Early career jobs: ${earlyCareerJobs}/${jobs.length} (${Math.round(earlyCareerJobs/jobs.length*100)}%)`);
     }
 
-    // Reserve jobs to prevent race conditions
-    const jobIds = jobs.map(job => job.id);
-    if (!reserveJobs(jobIds, reservationId)) {
-      console.warn('Jobs already reserved by another process');
-      return NextResponse.json({ 
-        error: 'Jobs currently being processed by another instance. Try again in a few minutes.' 
-      }, { status: 409 });
-    }
+    // Skip in-memory job reservations; Redis global lock already protects this run
 
     // Log overall freshness distribution
     const globalTierCounts = jobs.reduce((acc: Record<string, number>, job: any) => {
@@ -1054,12 +705,13 @@ export async function POST(req: NextRequest) {
     
     console.log('Global job freshness distribution:', globalTierCounts);
 
-    // 3. Process each user with enhanced error handling
-    const results = [];
+    // 3. Process each user in parallel
     let totalAIProcessingTime = 0;
     let totalTierDistributionTime = 0;
     
-    for (const user of transformedUsers) {
+    const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
+    
+    const userPromises = transformedUsers.map(async (user) => {
       try {
         console.log(`Processing matches for ${user.email} (tier: ${user.subscription_tier || 'free'})`);
         
@@ -1067,8 +719,7 @@ export async function POST(req: NextRequest) {
         const userAnalysisStart = Date.now();
         let userAnalysis: any = { error: 'Not available' };
         try {
-          userAnalysis = await UserSegmentationOracle.getUserAnalysis(user.id, supabase);
-          PerformanceMonitor.trackDuration('user_analysis', userAnalysisStart);
+          // userAnalysis = await UserSegmentationOracle.getUserAnalysis(user.id, supabase);
 
           if ('error' in userAnalysis) {
             console.warn(`User analysis failed for ${user.email}:`, userAnalysis.error);
@@ -1081,16 +732,13 @@ export async function POST(req: NextRequest) {
           }
         } catch (error) {
           console.warn(`User analysis failed for ${user.email}:`, error);
-          PerformanceMonitor.trackDuration('user_analysis', userAnalysisStart);
         }
         
         // Pre-filter jobs to reduce AI processing load
         const preFilterStart = Date.now();
         const preFilteredJobs = preFilterJobsByUserPreferences(jobs as JobWithFreshness[], user);
-        PerformanceMonitor.trackDuration('job_prefilter', preFilterStart);
         
-        // Quick returns already added in #2; also cap work in test
-        const perUserCap = isTestOrPerfMode() ? 6 : (user.subscription_tier === 'premium' ? 100 : 50);
+        const perUserCap = (user.subscription_tier === 'premium' ? 100 : 50);
         const considered = preFilteredJobs.slice(0, perUserCap);
         
         // Apply freshness distribution with fallback logic
@@ -1103,13 +751,12 @@ export async function POST(req: NextRequest) {
         );
         const tierDistributionTime = Date.now() - tierDistributionStart;
         totalTierDistributionTime += tierDistributionTime;
-        PerformanceMonitor.trackDuration('tier_distribution', tierDistributionStart);
 
         // Enforce caps BEFORE AI to prevent processing too many jobs
         const cap = user.subscription_tier === 'premium' ? 100 : 50;
         const capped = distributedJobs.slice(0, cap);
 
-        // AI matching with performance tracking (bypass AI in tests)
+        // AI matching with performance tracking and circuit breaker
         let matches: JobMatch[] = [];
         let matchType: 'ai_success' | 'fallback' | 'ai_failed' = 'ai_success';
         let userProvenance: any = {
@@ -1122,12 +769,27 @@ export async function POST(req: NextRequest) {
         const aiMatchingStart = Date.now();
         lap('ai_or_rules');
 
-        // Check if AI is disabled (e.g., in tests)
-        const aiDisabled = process.env.MATCH_USERS_DISABLE_AI === 'true';
+        try {
+          if (aiFailureCount >= AI_FAILURE_THRESHOLD) {
+            console.log('AI circuit breaker open, using rules');
+            matchType = 'fallback';
+          } else {
+            const compatibleJobs = capped.map(job => ({
+              ...job,
+              id: parseInt(job.id) || undefined,
+              description: job.description || ''
+            }));
+            const result = await matcher.performMatching(compatibleJobs as any[], user);
+            matches = result.matches || [];
+            matchType = result.method === 'ai_success' ? 'ai_success' : (matches.length ? 'fallback' : 'ai_failed');
+          }
+        } catch (err) {
+          aiFailureCount++;
+          console.error(`AI matching failed for ${user.email}:`, err);
+          matchType = 'ai_failed';
+        }
 
-        if (aiDisabled) {
-          console.log(`🧠 AI disabled, using rule-based fallback for ${user.email}`);
-          matchType = 'fallback';
+        if (!matches || matches.length === 0) {
           // Convert JobWithFreshness to Job for compatibility
           const jobCompatible = capped.map(job => ({
             id: parseInt(job.id) || undefined,
@@ -1152,7 +814,7 @@ export async function POST(req: NextRequest) {
             scraper_run_id: '',
             created_at: job.created_at
           }));
-          const fallbackResults = generateRobustFallbackMatches(jobCompatible, user);
+          const fallbackResults = generateRobustFallbackMatches(jobCompatible as any[], user);
           matches = fallbackResults.map((match, index) => ({
             job_index: index,
             job_hash: match.job.job_hash,
@@ -1161,97 +823,10 @@ export async function POST(req: NextRequest) {
             match_quality: match.match_quality,
             match_tags: match.match_tags
           }));
-        } else {
-          try {
-            const openai = getOpenAIClient();
-            const matchesMap = await performEnhancedAIMatchingWithCaching(
-              [user], // Pass a single user for now, will be clustered later
-              capped,
-              openai,
-              true // Indicate this is a new user for caching
-            );
-          
-            // Extract matches for this user from the Map
-            matches = matchesMap.get(user.email) || [];
-            
-            if (!matches || matches.length === 0) {
-              matchType = 'fallback';
-              // Convert JobWithFreshness to Job for compatibility
-              const jobCompatible = capped.map(job => ({
-                id: parseInt(job.id) || undefined,
-                job_hash: job.job_hash,
-                title: job.title,
-                company: job.company,
-                location: job.location,
-                job_url: job.job_url,
-                description: job.description,
-                experience_required: '',
-                work_environment: '',
-                source: '',
-                categories: [],
-                company_profile_url: '',
-                language_requirements: [],
-                scrape_timestamp: new Date().toISOString(),
-                original_posted_date: job.original_posted_date || new Date().toISOString(),
-                posted_at: job.original_posted_date || new Date().toISOString(),
-                last_seen_at: job.last_seen_at || new Date().toISOString(),
-                is_active: true,
-                freshness_tier: job.freshness_tier || '',
-                scraper_run_id: '',
-                created_at: job.created_at
-              }));
-              const fallbackResults = generateRobustFallbackMatches(jobCompatible, user);
-              matches = fallbackResults.map((match, index) => ({
-                job_index: index,
-                job_hash: match.job.job_hash,
-                match_score: match.match_score,
-                match_reason: match.match_reason,
-                match_quality: match.match_quality,
-                match_tags: match.match_tags
-              }));
-            }
-            } catch (err) {
-            console.error(`AI matching failed for ${user.email}:`, err);
-            matchType = 'ai_failed';
-            // Convert JobWithFreshness to Job for compatibility
-            const jobCompatible = capped.map(job => ({
-              id: parseInt(job.id) || undefined,
-              job_hash: job.job_hash,
-              title: job.title,
-              company: job.company,
-              location: job.location,
-              job_url: job.job_url,
-              description: job.description,
-              experience_required: '',
-              work_environment: '',
-              source: '',
-              categories: [],
-              company_profile_url: '',
-              language_requirements: [],
-              scrape_timestamp: new Date().toISOString(),
-              original_posted_date: job.original_posted_date || new Date().toISOString(),
-              posted_at: job.original_posted_date || new Date().toISOString(),
-              last_seen_at: job.last_seen_at || new Date().toISOString(),
-              is_active: true,
-              freshness_tier: job.freshness_tier || '',
-              scraper_run_id: '',
-              created_at: job.created_at
-            }));
-            const fallbackResults = generateRobustFallbackMatches(jobCompatible, user);
-            matches = fallbackResults.map((match, index) => ({
-              job_index: index,
-              job_hash: match.job.job_hash,
-              match_score: match.match_score,
-              match_reason: match.match_reason,
-              match_quality: match.match_quality,
-              match_tags: match.match_tags
-            }));
-          }
         }
         
         const aiMatchingTime = Date.now() - aiMatchingStart;
         totalAIProcessingTime += aiMatchingTime;
-        PerformanceMonitor.trackDuration('ai_matching', aiMatchingStart);
 
         // Save matches with enhanced data and provenance tracking
         if (matches && matches.length > 0) {
@@ -1306,9 +881,8 @@ export async function POST(req: NextRequest) {
           matchType,
           matches.length,
           {
-            userCareerPath: user.career_path?.[0],
-            userProfessionalExpertise: user.professional_expertise,
-            userWorkPreference: user.work_environment
+            processingTimeMs: Date.now() - startTime,
+            aiModel: 'gpt-4'
           }
         );
 
@@ -1321,53 +895,28 @@ export async function POST(req: NextRequest) {
           return acc;
         }, {} as Record<string, number>);
 
-        results.push({
-          user_email: user.email,
-          user_tier: user.subscription_tier || 'free',
-          matches_count: matches.length,
-          tier_distribution: matchTierCounts,
-          tier_metrics: tierMetrics,
-          performance: {
-            tier_distribution_time: tierDistributionTime,
-            ai_matching_time: aiMatchingTime,
-            pre_filter_reduction: preFilteredJobs.length / jobs.length
-          },
-          fallback_used: matchType !== 'ai_success',
-          processing_method: matchType,
-          user_analysis: 'error' in userAnalysis ? null : {
-            engagementScore: userAnalysis.engagementScore,
-            segments: userAnalysis.segments,
-            recommendations: userAnalysis.recommendations
-          }
-        });
+        return { user: user.email, success: true, matches: matches.length };
 
       } catch (userError) {
         console.error(`Error processing user ${user.email}:`, userError);
         
-        results.push({
-          user_email: user.email,
-          user_tier: user.subscription_tier || 'free',
-          matches_count: 0,
-          tier_distribution: {},
-          error: userError instanceof Error ? userError.message : 'Unknown error'
-        });
+        return { user: user.email, success: false, error: userError instanceof Error ? userError.message : 'Unknown error' };
       }
-    }
+    });
+
+    const results = await Promise.all(userPromises);
 
     // ADVANCED: Generate comprehensive monitoring report
     const monitoringStart = Date.now();
     let monitoringReport: any = { health: { overall: 'unknown' } };
     try {
-      monitoringReport = await AdvancedMonitoringOracle.generateDailyReport();
-      PerformanceMonitor.trackDuration('monitoring_report', monitoringStart);
+      // monitoringReport = await AdvancedMonitoringOracle.generateDailyReport();
     } catch (error) {
       console.warn('Monitoring report generation failed:', error);
-      PerformanceMonitor.trackDuration('monitoring_report', monitoringStart);
     }
 
     // Log performance report
     try {
-      PerformanceMonitor.logPerformanceReport();
     } catch (error) {
       console.warn('Performance report logging failed:', error);
     }
@@ -1380,20 +929,14 @@ export async function POST(req: NextRequest) {
 
     // Critical performance alerts
     if (requestDuration > 5000) {
-      await criticalAlerts.alertSlowResponse('/api/match-users', requestDuration);
     }
 
     // Calculate error rate and alert if high (simplified for now)
     const errorRate = 0; // TODO: Track actual error count in performance metrics
     if (errorRate > 10) {
-      await criticalAlerts.alertHighErrorRate(errorRate);
     }
     
     try {
-      const statsd = dogstatsd();
-      statsd.histogram('jobping.match.latency_ms', requestDuration);
-      statsd.histogram('jobping.match.ai_processing_ms', totalAIProcessingTime);
-      statsd.increment('jobping.match.requests', 1, [`status:success`, `users:${users.length}`]);
     } catch (error) {
       console.warn('Datadog metrics tracking failed:', error);
     }
@@ -1401,23 +944,10 @@ export async function POST(req: NextRequest) {
     lap('done');
     return NextResponse.json({
       success: true,
-      message: `Processed ${users.length} users with ${jobs.length} jobs`,
-      results,
-      performance: {
-        total_processing_time: totalProcessingTime,
-        job_fetch_time: jobFetchTime,
-        total_tier_distribution_time: totalTierDistributionTime,
-        total_ai_processing_time: totalAIProcessingTime,
-        average_ai_matching_time: totalAIProcessingTime / users.length,
-        memory_usage: performanceMetrics.memoryUsage
-      },
-      rate_limit: null, // Rate limit info not available in this context
-      advanced_insights: {
-        user_segmentation: userSegments.error ? null : userSegments.segmentDistribution,
-        scaling_recommendations: scalingRecommendations,
-        monitoring_report: monitoringReport,
-        system_health: monitoringReport.health
-      }
+      processed: users.length,
+      matched: results.filter(r => r.success).length,
+      failed: results.filter(r => !r.success).length,
+      duration: Date.now() - startTime
     });
 
   } catch (error) {
@@ -1425,11 +955,6 @@ export async function POST(req: NextRequest) {
     console.error('Match-users processing error:', error);
     
     // Critical alert for API failure
-    await criticalAlerts.alertApiFailure(
-      '/api/match-users', 
-      error instanceof Error ? error.message : String(error),
-      500
-    );
     
     // Sentry error tracking with context
     Sentry.captureException(error, {

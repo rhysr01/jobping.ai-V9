@@ -1,68 +1,148 @@
 /**
- * Type Safety Layer for JobPing Matching System
- * 
- * This file provides type-safe interfaces and utilities for the matching system,
- * eliminating the need for dangerous type workarounds like anyIndex.
+ * Core types for the JobPing matching system
+ * Extracted from the massive jobMatching.ts file
  */
 
-// Re-export shared types from scrapers
-// Re-export types from scrapers
-export type {
-  User,
-  Match,
-  MatchLog,
-  JobUpsertResult,
-  DateExtractionResult,
-  FreshnessTier,
-} from '../../scrapers/types';
+// AI timeout configuration
+export const AI_TIMEOUT_MS = 20000; // 20 seconds for better reliability
+export const AI_MAX_RETRIES = 3;
+export const AI_RETRY_DELAY_MS = 1000;
 
-// Import Job type but extend it for our needs
-import { Job as BaseJob } from '../../scrapers/types';
-
-// Extended Job interface for matching system - aligned with database schema
-export interface Job {
-  // Core fields from database
-  id: number;
-  title: string;
-  company: string;
-  location: string;  // Single text field, not array
-  categories: string[];
-  description: string;  // Required text field, not optional
-  experience_required: string;
-  work_environment: string;
-  source: string;
-  job_hash: string;
-  posted_at: string;
-  language_requirements: string[];
-  scrape_timestamp: string;
-  created_at: string;
-  updated_at: string;
-  
-  // Additional fields from database
-  freshness_tier: string;
-  ai_labels: string[];
-  work_location: string;
-  city: string;
-  country: string;
-  company_name: string;
-  
-  // Optional fields
-  company_profile_url?: string;
-  is_active?: boolean;
-  job_hash_score?: number;
-  is_sent?: boolean;
-  status?: string;
-  last_seen_at?: string;
-  original_posted_date?: string;
+// AI Provenance interface for tracking
+export interface AiProvenance {
+  match_algorithm: 'ai' | 'rules' | 'hybrid';
+  ai_model?: string;
+  prompt_version?: string;
+  ai_latency_ms?: number;
+  ai_cost_usd?: number;
+  cache_hit?: boolean;
+  fallback_reason?: string;
 }
 
-// Matching-specific types
+// ---------- DB row shapes (match your Postgres schema) ----------
+export interface JobRow {
+  id: string;
+  title: string;
+  company: string;
+  location: string | null;               // "Berlin, DE" | "EU Remote" | null
+  description: string | null;
+  categories: string[];                  // IMPORTANT: text[] in Postgres
+  languages_required: string[] | null;   // text[]
+  work_environment: string | null;       // "remote" | "hybrid" | "on-site" | null
+  source: string | null;
+  job_hash: string;
+  posted_at: string | null;              // timestamptz ISO
+  created_at: string;
+  updated_at: string;
+  last_run_at: string | null;
+  last_parsed_at: string | null;
+  company_profile_url: string | null;
+  job_url: string;
+}
+
+export interface MatchRow {
+  id: string;
+  user_email: string;
+  job_hash: string;
+  match_reason: string | null;
+  match_score: number | null;
+  match_quality: string | null;
+  match_tags: any;                       // jsonb
+  matched_at: string;                    // timestamptz ISO
+  freshness_law: string | null;
+}
+
+export interface UserRow {
+  id: string;
+  email: string;
+  full_name: string | null;
+  professional_experience: string | null;
+  languages_spoken: string[] | null;     // text[]
+  start_date: string | null;             // date ISO
+  work_authorization: string | null;
+  visa_related: boolean | null;
+  entry_level_preference: string | null; // "internship" | "graduate" | ...
+  company_types: string[] | null;        // text[]
+  career_path: string[] | null;          // text[]
+  roles_selected: any | null;            // jsonb
+  target_cities: string[] | null;        // text[]
+  work_environment: string | null;       // "remote" | "hybrid" | "on-site"
+  target_employment_start_date: string | null;
+  professional_expertise: string | null;
+  email_verified: boolean | null;
+  active: boolean | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ---------- Normalized user profile used by matcher ----------
+export interface NormalizedUser {
+  email: string;
+
+  // arrays normalized (never undefined)
+  career_path: string[];
+  target_cities: string[];
+  languages_spoken: string[];
+  company_types: string[];
+  roles_selected: string[];
+
+  // scalar preferences normalized to string|null
+  professional_expertise: string | null;
+  entry_level_preference: string | null;
+  work_environment: 'remote' | 'hybrid' | 'on-site' | null;
+  start_date: string | null;
+
+  // convenience field: first career path or "unknown"
+  careerFocus: string;
+}
+
+export type NormalizedUserProfile = NormalizedUser;
+
+// ---------- User preferences interface (used by API routes) ----------
+export interface UserPreferences {
+  email: string;
+  target_cities: string[];
+  languages_spoken: string[];
+  company_types: string[];
+  roles_selected: string[];
+  professional_expertise: string;
+  work_environment: string;
+  career_path: string[];
+  entry_level_preference: string;
+}
+
+// ---------- Job interface (from scrapers) ----------
+export interface Job {
+  id?: string;
+  title: string;
+  company: string;
+  location: string;
+  description: string;
+  job_url: string;
+  source: string;
+  job_hash: string;
+  posted_at?: string;
+  created_at?: string;
+  categories?: string[];
+  languages_required?: string[];
+  work_environment?: string;
+  company_profile_url?: string;
+  original_posted_date?: string;
+  last_seen_at?: string;
+  is_active?: boolean;
+}
+
+// ---------- Matching interfaces ----------
 export interface MatchScore {
-  overall: number;
-  eligibility: number;
-  careerPath: number;
-  location: number;
-  freshness: number;
+  total: number;
+  breakdown: {
+    location: number;
+    career: number;
+    experience: number;
+    company: number;
+    freshness: number;
+    eligibility: number;
+  };
   confidence: number;
 }
 
@@ -72,276 +152,54 @@ export interface MatchResult {
   match_reason: string;
   match_quality: string;
   match_tags: string;
-  confidence_score: number;
-  scoreBreakdown: MatchScore;
-}
-
-export interface EnrichedJob extends Job {
-  visaFriendly: boolean;
-  experienceLevel: 'entry' | 'junior' | 'mid' | 'senior';
-  workEnvironment: 'remote' | 'hybrid' | 'office' | 'unclear';
-  languageRequirements: string[];
-  complexityScore: number;
-}
-
-export interface UserPreferences {
-  // Core fields from database
-  id: string;  // UUID from database
-  email: string;
-  full_name: string;
-  professional_expertise: string;
-  visa_status: string;
-  start_date: string;
-  work_environment: string;
-  languages_spoken: string[];
-  company_types: string[];
-  roles_selected: string[];
-  career_path: string;  // Single text field, not array
-  entry_level_preference: string;
-  target_cities: string[];
-  
-  // Additional fields from database
-  verification_token?: string;
-  email_verified?: boolean;
-  active?: boolean;
-  subscription_active?: boolean;
-  target_employment_date?: string;
-  last_email_sent?: string;
-  email_count?: number;
-  onboarding_complete?: boolean;
-  email_phase?: string;
-  cv_url?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface AIMatchResponse {
-  matches: JobMatch[];
-  reasoning: string;
   confidence: number;
 }
 
 export interface JobMatch {
-  job_id: string;
+  job_index: number;
+  job_hash: string;
   match_score: number;
   match_reason: string;
-  confidence_score: number;
+  match_quality: string;
+  match_tags: string;
 }
 
-export interface MatchingContext {
-  user: UserPreferences;
-  availableJobs: Job[];
-  userCap: number;
-  jobCap: number;
-  perUserCap: number;
-  isTestMode: boolean;
+export interface EnrichedJob extends Job {
+  freshness_tier: FreshnessTier;
+  professional_expertise: string;
+  career_path: string;
+  start_date: string;
+  complexity_score: number;
+  visa_friendly: boolean;
+  experience_level: 'entry' | 'junior' | 'mid' | 'senior';
+  work_environment_detected: 'remote' | 'hybrid' | 'office' | 'unclear';
+  language_requirements: string[];
 }
 
-export interface MatchingResult {
-  user: string;
-  matches: MatchResult[];
-  matchCount: number;
-  aiSuccess: boolean;
-  fallbackUsed: boolean;
-  processingTime: number;
-  errors?: string[];
+export type FreshnessTier = 'fresh' | 'recent' | 'stale' | 'very_stale';
+
+export interface DateExtractionResult {
+  success: boolean;
+  date?: Date;
+  confidence: number;
+  method?: string;
+  error?: string;
 }
 
-
-
-// Type-safe property accessors (replaces anyIndex function)
-export function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
-  return obj[key];
+// ---------- AI Matching Cache ----------
+export interface AIMatchingCache {
+  get(key: string): any;
+  set(key: string, value: any, ttl?: number): void;
+  has(key: string): boolean;
+  clear(): void;
+  size(): number;
 }
 
-export function hasProperty<T extends object, K extends PropertyKey>(
-  obj: T,
-  key: K
-): obj is T & Record<K, unknown> {
-  return key in obj;
-}
-
-export function safeGetProperty<T extends object, K extends PropertyKey>(
-  obj: T,
-  key: K,
-  defaultValue?: unknown
-): unknown {
-  return hasProperty(obj, key) ? obj[key] : defaultValue;
-}
-
-// Type guards for validation
-export function isJob(obj: unknown): obj is Job {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    hasProperty(obj, 'title') &&
-    hasProperty(obj, 'company') &&
-    hasProperty(obj, 'job_url')
-  );
-}
-
-export function isUserPreferences(obj: unknown): obj is UserPreferences {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    hasProperty(obj, 'email') &&
-    typeof getProperty(obj, 'email') === 'string'
-  );
-}
-
-export function isMatchResult(obj: unknown): obj is MatchResult {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    hasProperty(obj, 'job') &&
-    hasProperty(obj, 'match_score') &&
-    isJob(getProperty(obj, 'job'))
-  );
-}
-
-// Array type utilities
-export function ensureArray<T>(value: T | T[] | null | undefined): T[] {
-  if (value === null || value === undefined) return [];
-  if (Array.isArray(value)) return value;
-  return [value];
-}
-
-export function filterValidJobs(jobs: unknown[]): Job[] {
-  return jobs.filter(isJob);
-}
-
-export function filterValidUsers(users: unknown[]): UserPreferences[] {
-  return users.filter(isUserPreferences);
-}
-
-// Score calculation types
-export interface ScoreBreakdown {
-  eligibility: number;
-  careerPath: number;
-  location: number;
-  freshness: number;
-  bonus: number;
-  penalty: number;
-}
-
+// ---------- Scoring Context ----------
 export interface ScoringContext {
+  userPrefs: UserPreferences;
   job: Job;
-  user: UserPreferences;
-  weights: {
-    eligibility: number;
-    careerPath: number;
-    location: number;
-    freshness: number;
-  };
-  thresholds: {
-    confident: number;
-    minimum: number;
-    excellent: number;
-    good: number;
-    fair: number;
-  };
+  allJobs: Job[];
+  userIndex: number;
+  totalUsers: number;
 }
-
-// Cache types
-export interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-  ttl: number;
-  accessCount: number;
-}
-
-export interface CacheStats {
-  hits: number;
-  misses: number;
-  size: number;
-  maxSize: number;
-  hitRate: number;
-}
-
-// Error types
-export interface MatchingError {
-  code: string;
-  message: string;
-  details?: unknown;
-  timestamp: string;
-  userId?: string;
-}
-
-export class MatchingServiceError extends Error {
-  constructor(
-    message: string,
-    public code: string,
-    public details?: unknown
-  ) {
-    super(message);
-    this.name = 'MatchingServiceError';
-  }
-}
-
-// Performance monitoring types
-export interface PerformanceMetrics {
-  operation: string;
-  duration: number;
-  timestamp: string;
-  metadata?: Record<string, unknown>;
-}
-
-export interface MatchingPerformanceMetrics extends PerformanceMetrics {
-  userId: string;
-  jobCount: number;
-  matchCount: number;
-  aiSuccess: boolean;
-  fallbackUsed: boolean;
-}
-
-// Configuration types
-export interface MatchingConfig {
-  ai: {
-    model: string;
-    maxTokens: number;
-    temperature: number;
-    timeout: number;
-    retryAttempts: number;
-    retryDelay: number;
-  };
-  scoring: {
-    weights: {
-      eligibility: number;
-      careerPath: number;
-      location: number;
-      freshness: number;
-    };
-    thresholds: {
-      confident: number;
-      minimum: number;
-      excellent: number;
-      good: number;
-      fair: number;
-    };
-  };
-  fallback: {
-    maxMatches: number;
-    lowConfidenceThreshold: number;
-    diversityFactor: number;
-    freshnessWeight: number;
-  };
-}
-
-// Utility types for working with partial data
-export type PartialJob = Partial<Job>;
-export type PartialUserPreferences = Partial<UserPreferences>;
-export type PartialMatchResult = Partial<MatchResult>;
-
-// Type for function that can be awaited
-export type Awaitable<T> = T | Promise<T>;
-
-// Type for functions that can be called with different signatures
-export type FlexibleFunction<TArgs extends unknown[], TReturn> = 
-  | ((...args: TArgs) => TReturn)
-  | ((...args: TArgs) => Promise<TReturn>);
-
-// Export commonly used type combinations
-export type JobArray = Job[];
-export type UserPreferencesArray = UserPreferences[];
-export type MatchResultArray = MatchResult[];
-export type JobMatchArray = JobMatch[];

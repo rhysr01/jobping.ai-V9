@@ -2,35 +2,23 @@
    JobPing Types & Normalizers
    (single source of truth)
    
-   PHASE 6: Integration & Migration
-   Feature Flag: USE_NEW_MATCHING_ARCHITECTURE
+   STABLE AI MATCHING SYSTEM
    ============================ */
 
-// Import AI provenance tracking utilities
-// import { 
-//   aiMatchWithProvenance, 
-//   type AiProvenance 
-// } from './aiProvenance';
+// AI timeout configuration - increased for reliability
+const AI_TIMEOUT_MS = 20000; // 20 seconds for better reliability
+const AI_MAX_RETRIES = 3;
+const AI_RETRY_DELAY_MS = 1000;
 
-// Import semantic matching system
-// import { SemanticMatchingEngine } from './semanticMatching';
-
-// Feature flag for gradual migration
-const USE_NEW_MATCHING_ARCHITECTURE = process.env.USE_NEW_MATCHING_ARCHITECTURE === 'true';
-
-// Import new services when feature flag is enabled
-let MatcherOrchestrator: any = null;
-let newScoringService: any = null;
-
-if (USE_NEW_MATCHING_ARCHITECTURE) {
-  try {
-    const { MatcherOrchestrator: Orchestrator } = require('./matching/matcher.orchestrator');
-    const { ScoringService } = require('./matching/scoring.service');
-    MatcherOrchestrator = Orchestrator;
-    newScoringService = ScoringService;
-  } catch (error) {
-    console.warn('⚠️ New matching architecture not available, falling back to legacy:', error instanceof Error ? error.message : 'Unknown error');
-  }
+// AI Provenance interface for tracking
+export interface AiProvenance {
+  match_algorithm: 'ai' | 'rules' | 'hybrid';
+  ai_model?: string;
+  prompt_version?: string;
+  ai_latency_ms?: number;
+  ai_cost_usd?: number;
+  cache_hit?: boolean;
+  fallback_reason?: string;
 }
 
 // ---------- DB row shapes (match your Postgres schema) ----------
@@ -493,16 +481,6 @@ export function applyHardGates(job: Job, userPrefs: UserPreferences): { passed: 
 
 // C3: Scoring model
 export function calculateMatchScore(job: Job, userPrefs: UserPreferences): MatchScore {
-  // PHASE 6: Feature flag integration
-  if (USE_NEW_MATCHING_ARCHITECTURE && newScoringService) {
-    try {
-      const scoringService = new newScoringService();
-      return scoringService.calculateMatchScore(job, userPrefs);
-    } catch (error) {
-      console.error('❌ New scoring service failed, falling back to legacy:', error instanceof Error ? error.message : 'Unknown error');
-      // Fall through to legacy implementation
-    }
-  }
 
   // Legacy implementation
   const categories = normalizeToString(job.categories);
@@ -764,8 +742,6 @@ export function performRobustMatching(jobs: Job[], userPrefs: UserPreferences): 
   return matches;
 }
 
-// Enhanced AI Matching Cache with Redis persistence (new implementation)
-// export { EnhancedAIMatchingCache, enhancedAIMatchingCache } from './enhancedCache';
 
 // ================================
 // ORIGINAL TYPES + target_cities ADDED
@@ -1687,81 +1663,9 @@ export async function performEnhancedAIMatching(
   userPrefs: UserPreferences,
   openai: OpenAI
 ): Promise<{ matches: MatchResult[]; provenance: AiProvenance }> {
-  // PHASE 6: Feature flag integration
-  if (USE_NEW_MATCHING_ARCHITECTURE && MatcherOrchestrator) {
-    try {
-      console.log('🚀 Using new matching architecture for AI matching');
-      const orchestrator = new MatcherOrchestrator(openai, getSupabaseClient());
-      const result = await orchestrator.generateMatchesWithStrategy(userPrefs, jobs, 'ai_only');
-      // For new architecture, return with default provenance
-      return { 
-        matches: result.matches, 
-        provenance: { match_algorithm: 'ai', prompt_version: process.env.PROMPT_VERSION || 'v1' }
-      };
-    } catch (error) {
-      console.error('❌ New architecture failed, falling back to legacy:', error);
-      // Fall through to legacy implementation
-    }
-  }
-
-  // Legacy implementation with provenance tracking
-  const startTime = Date.now(); // Track processing time for logging
+  const startTime = Date.now();
   
   try {
-    // Check if semantic matching is enabled
-    const useSemanticMatching = process.env.USE_SEMANTIC_MATCHING === 'true';
-    
-    if (useSemanticMatching) {
-      console.log('🧠 Using semantic matching for enhanced understanding');
-      
-      try {
-        // Initialize semantic matching engine
-        const semanticEngine = new SemanticMatchingEngine(
-          openai,
-          process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-          process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-        );
-        
-        // Perform semantic matching
-        const semanticMatches = await semanticEngine.performSemanticMatching(
-          userPrefs,
-          jobs,
-          10 // Get top 10 semantic matches
-        );
-        
-        if (semanticMatches && semanticMatches.length > 0) {
-          // Convert semantic matches to robust format
-          const aiMatches = semanticMatches.map(match => ({
-            job_index: jobs.findIndex(j => j.job_hash === match.job_hash) + 1,
-            job_hash: match.job_hash,
-            match_score: Math.round(match.semantic_score * 100),
-            match_reason: match.explanation,
-            match_quality: match.semantic_score > 0.8 ? 'excellent' : 
-                          match.semantic_score > 0.8 ? 'good' : 'fair',
-            match_tags: 'semantic-ai-generated'
-          }));
-          
-          const robustMatches = convertToRobustMatches(aiMatches, userPrefs, jobs);
-          
-          // Create provenance for semantic matching
-          const semanticProvenance: AiProvenance = {
-            match_algorithm: 'ai',
-            ai_model: 'gpt-4 + embeddings',
-            prompt_version: process.env.PROMPT_VERSION || 'v1',
-            ai_latency_ms: Date.now() - startTime,
-            ai_cost_usd: 0, // Will be calculated by caller
-            cache_hit: false
-          };
-          
-          return { matches: robustMatches, provenance: semanticProvenance };
-        }
-      } catch (semanticError) {
-        console.warn('Semantic matching failed, falling back to traditional AI:', semanticError);
-        // Fall through to traditional AI matching
-      }
-    }
-    
-    // C7: AI + Fallback orchestration
     // Include user single career path, top 3 cities, and eligibility notes
     const userCareerPath = reqFirst(userPrefs.career_path);
     const topCities = (userPrefs.target_cities || []).slice(0, 3);
@@ -1770,41 +1674,45 @@ export async function performEnhancedAIMatching(
     // Build enhanced prompt with robust matching instructions
     const prompt = buildRobustMatchingPrompt(jobs, userPrefs, userCareerPath, topCities, eligibilityNotes);
     
-    // Use provenance tracking wrapper with function calling
-    const { scores: validatedMatches, prov } = await aiMatchWithProvenance({
-      openai,
-      model: 'gpt-4',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
-      max_tokens: 2000,
-      promptVersion: process.env.PROMPT_VERSION || 'v1',
-      maxRetries: 3
+    // Use retry logic for AI calls
+    const response = await callAIWithRetry(async () => {
+      return await openai.chat.completions.create({
+        model: 'gpt-4',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+        max_tokens: 2000,
+        response_format: { type: "json_object" }
+      });
     });
     
-    if (!validatedMatches) {
-      throw new Error('AI matching failed and no fallback content provided');
+    if (!response.choices?.[0]?.message?.content) {
+      throw new Error('AI returned empty response');
     }
     
-    // Convert validated AI matches to robust format (no parsing needed)
-    const aiMatches = validatedMatches.map((match: any) => ({
-      job_index: match.job_index,
-      job_hash: jobs[match.job_index - 1]?.job_hash || '',
-      match_score: match.match_score,
-      match_reason: match.match_reason,
-      match_quality: match.match_quality || 'good',
-      match_tags: 'ai-generated'
-    }));
+    // Parse and validate AI response
+    const aiMatches = parseAndValidateMatches(response.choices[0].message.content, jobs);
     
+    // Convert to robust format
     const robustMatches = convertToRobustMatches(aiMatches, userPrefs, jobs);
     
-    // Log successful matching with enhanced details
+    // Create provenance for successful AI matching
+    const aiProvenance: AiProvenance = {
+      match_algorithm: 'ai',
+      ai_model: 'gpt-4',
+      prompt_version: process.env.PROMPT_VERSION || 'v1',
+      ai_latency_ms: Date.now() - startTime,
+      ai_cost_usd: calculateOpenAICost(response.usage),
+      cache_hit: false
+    };
+    
+    // Log successful matching
     await logMatchSession(userPrefs.email, 'ai_success', robustMatches.length, {
       userCareerPath: userPrefs.career_path?.[0] || undefined,
       userProfessionalExpertise: userPrefs.professional_expertise || undefined,
       userWorkPreference: userPrefs.work_environment || undefined
     });
     
-    return { matches: robustMatches, provenance: prov };
+    return { matches: robustMatches, provenance: aiProvenance };
     
   } catch (error) {
     console.error('AI matching failed:', error);
@@ -1817,12 +1725,14 @@ export async function performEnhancedAIMatching(
       ai_cost_usd: 0
     };
     
-    // Log failure and use robust fallback
+    // Add proper monitoring
     await logMatchSession(userPrefs.email, 'ai_failed', 0, {
+      errorType: error instanceof Error ? error.name : 'UnknownError',
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      fallbackUsed: true,
       userCareerPath: userPrefs.career_path?.[0] || undefined,
       userProfessionalExpertise: userPrefs.professional_expertise || undefined,
-      userWorkPreference: userPrefs.work_environment || undefined,
-      errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      userWorkPreference: userPrefs.work_environment || undefined
     });
     
     const fallbackMatches = generateRobustFallbackMatches(jobs, userPrefs);
@@ -1863,20 +1773,7 @@ export function parseAndValidateMatches(response: string, jobs: Job[]): JobMatch
 
 // C7: Robust fallback matching
 export function generateRobustFallbackMatches(jobs: Job[], userPrefs: UserPreferences): MatchResult[] {
-  // PHASE 6: Feature flag integration
-  if (USE_NEW_MATCHING_ARCHITECTURE && MatcherOrchestrator) {
-    try {
-      console.log('🚀 Using new matching architecture for fallback matching');
-      const orchestrator = new MatcherOrchestrator(null, getSupabaseClient());
-      const result = orchestrator.generateMatchesWithStrategy(userPrefs, jobs, 'fallback_only');
-      return result.matches;
-    } catch (error) {
-      console.error('❌ New architecture failed, falling back to legacy:', error instanceof Error ? error.message : 'Unknown error');
-      // Fall through to legacy implementation
-    }
-  }
-
-  // Legacy implementation
+  console.log('🔄 Using rule-based fallback matching');
   console.log(`🧠 Using legacy robust fallback for ${userPrefs.email}`);
   
   // Use the robust matching system
@@ -3098,7 +2995,60 @@ export function extractStartDate(description: string): string {
 export const isTestOrPerfMode = () =>
   process.env.NODE_ENV === 'test' || process.env.JOBPING_TEST_MODE === '1';
 
-// Timeout utility for AI calls
+// Enhanced timeout utility with retry logic
 export function timeout<T>(ms: number, label='timeout'): Promise<T> {
   return new Promise((_r, rej) => setTimeout(() => rej(new Error(label)), ms));
+}
+
+// OpenAI cost calculation - CRITICAL for budget monitoring
+function calculateOpenAICost(usage: any): number {
+  if (!usage) return 0;
+  
+  // GPT-4 pricing (as of 2024)
+  const PRICING = {
+    'gpt-4': { input: 0.03 / 1000, output: 0.06 / 1000 },
+    'gpt-4-turbo': { input: 0.01 / 1000, output: 0.03 / 1000 },
+    'gpt-3.5-turbo': { input: 0.001 / 1000, output: 0.002 / 1000 }
+  };
+  
+  const model = usage.model || 'gpt-4';
+  const pricing = PRICING[model as keyof typeof PRICING] || PRICING['gpt-4'];
+  
+  const inputTokens = usage.prompt_tokens || 0;
+  const outputTokens = usage.completion_tokens || 0;
+  
+  const inputCost = inputTokens * pricing.input;
+  const outputCost = outputTokens * pricing.output;
+  
+  return inputCost + outputCost;
+}
+
+// AI call with retry logic
+async function callAIWithRetry<T>(
+  aiCall: () => Promise<T>,
+  maxRetries: number = AI_MAX_RETRIES,
+  delayMs: number = AI_RETRY_DELAY_MS
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await Promise.race([
+        aiCall(),
+        timeout<T>(AI_TIMEOUT_MS, 'AI_TIMEOUT')
+      ]);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Unknown error');
+      
+      if (attempt === maxRetries) {
+        console.error(`❌ AI call failed after ${maxRetries} attempts:`, lastError.message);
+        throw lastError;
+      }
+      
+      console.warn(`⚠️ AI call attempt ${attempt} failed, retrying in ${delayMs}ms:`, lastError.message);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  
+  throw lastError!;
 }

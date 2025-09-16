@@ -37,13 +37,13 @@ export default function Header() {
           <nav className="hidden md:flex items-center space-x-8">
             <button 
               onClick={() => scrollToSection('pricing')}
-              className="text-zinc-300 hover:text-white transition-colors text-sm font-medium underline decoration-white/10 underline-offset-4 hover:decoration-white/40"
+              className="text-[#888888] hover:text-white transition-colors text-sm font-medium underline decoration-white/10 underline-offset-4 hover:decoration-white/40"
             >
               Pricing
             </button>
             <button 
               onClick={() => scrollToSection('signup')}
-              className="bg-white text-black px-6 py-2 rounded-xl font-semibold hover:bg-zinc-100 transition-colors text-sm flex items-center gap-2 shadow-sm"
+              className="bg-white text-black px-6 py-2 rounded-xl font-semibold hover:bg-[#CCCCCC] transition-all duration-300 text-sm flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:-translate-y-0.5"
               data-testid="header-cta"
               data-analytics="cta_click"
               data-cta-type="primary"
@@ -57,7 +57,7 @@ export default function Header() {
           {/* Mobile Menu Button */}
           <button 
             onClick={toggleMobileMenu}
-            className="md:hidden text-[#9CA3AF] hover:text-white p-2 transition-colors"
+            className="md:hidden text-[#888888] hover:text-white p-2 transition-colors"
             aria-label="Toggle mobile menu"
           >
             {isMobileMenuOpen ? (
@@ -74,13 +74,13 @@ export default function Header() {
             <nav className="flex flex-col space-y-4 py-6 px-6">
               <button 
                 onClick={() => { scrollToSection('pricing'); closeMobileMenu(); }}
-                className="text-zinc-300 hover:text-white transition-colors text-sm font-medium py-2 text-left underline decoration-white/10 underline-offset-4 hover:decoration-white/40"
+                className="text-[#888888] hover:text-white transition-colors text-sm font-medium py-2 text-left underline decoration-white/10 underline-offset-4 hover:decoration-white/40"
               >
                 Pricing
               </button>
               <button 
                 onClick={() => { scrollToSection('signup'); closeMobileMenu(); }}
-                className="bg-white text-black px-6 py-3 rounded-xl font-semibold hover:bg-zinc-100 transition-colors text-sm flex items-center justify-center gap-2 w-full shadow-sm"
+                className="bg-white text-black px-6 py-3 rounded-xl font-semibold hover:bg-[#CCCCCC] transition-all duration-300 text-sm flex items-center justify-center gap-2 w-full shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.15)]"
               >
                 Get started free
                 <ArrowRight className="w-4 h-4" />

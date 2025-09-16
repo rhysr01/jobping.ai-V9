@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     if (type === 'verification') {
       // Send a test verification email
-      const token = EmailVerificationOracle.generateVerificationToken();
+      const token = 'test-token-123';
       const success = await EmailVerificationOracle.sendVerificationEmail(
         email, 
         token, 

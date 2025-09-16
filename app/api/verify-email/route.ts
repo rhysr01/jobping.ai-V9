@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { EmailVerificationOracle } from '@/Utils/emailVerification';
+import { errorJson } from '@/Utils/errorResponse';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 
 // Test mode helper
@@ -44,10 +45,7 @@ export async function POST(request: NextRequest) {
     const { token } = await request.json();
     
     if (!token) {
-      return NextResponse.json(
-        { success: false, error: 'Verification token required' }, 
-        { status: 400 }
-      );
+      return errorJson(request, 'VALIDATION_ERROR', 'Verification token required', 400);
     }
 
     const supabase = getSupabaseClient();
@@ -59,10 +57,7 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     console.error('❌ Verify email API error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Verification failed' }, 
-      { status: 500 }
-    );
+    return errorJson(request, 'INTERNAL_ERROR', 'Verification failed', 500);
   }
 }
 

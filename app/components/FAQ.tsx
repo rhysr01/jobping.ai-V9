@@ -11,7 +11,7 @@ interface FAQItem {
 const faqData: FAQItem[] = [
   {
     question: "What's the difference between Free and Premium?",
-    answer: "Free users get 5 personalised job matches daily via email. Premium users receive 15 matches daily, with priority sourcing and advanced filtering, also via email."
+    answer: "Free users get 3 personalised job matches per send on Thursdays. Premium users receive 6 matches per send on Tuesdays and Saturdays, with 24-hour early access to fresh job postings."
   },
   {
     question: "Where do jobs come from?",
@@ -59,7 +59,7 @@ export default function FAQ() {
                     {item.question}
                   </h3>
                   <ChevronDown 
-                    className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${
+                    className={`w-4 h-4 text-[#888888] transition-transform duration-200 ${
                       openItems.has(index) ? 'rotate-180' : ''
                     }`} 
                   />
@@ -67,7 +67,7 @@ export default function FAQ() {
                 
                 {openItems.has(index) && (
                   <div className="mt-3 pl-2">
-                    <p className="text-zinc-400 text-xs md:text-sm leading-relaxed">
+                    <p className="text-[#888888] text-xs md:text-sm leading-relaxed">
                       {item.answer}
                     </p>
                   </div>

@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import { enhancedFeedbackSystem, type EmailFeedbackData } from '../../../../Utils/enhancedFeedback';
 import { createClient } from '@supabase/supabase-js';
+
+// Simple feedback data interface
+interface SimpleFeedbackData {
+  userEmail: string;
+  jobHash: string;
+  feedbackType: string;
+  verdict: 'positive' | 'negative' | 'neutral';
+  relevanceScore?: number;
+  matchQualityScore?: number;
+  explanation?: string;
+  userPreferencesSnapshot?: any;
+  jobContext?: any;
+  matchContext?: any;
+  timestamp: Date;
+}
 
 // Initialize Supabase client
 function getSupabaseClient() {
@@ -109,7 +123,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     // Create feedback data
-    const feedbackData: EmailFeedbackData = {
+    const feedbackData: SimpleFeedbackData = {
       userEmail: email,
       jobHash,
       feedbackType: feedbackType || 'job_relevance',
@@ -126,8 +140,8 @@ export async function POST(request: NextRequest) {
       timestamp: new Date()
     };
 
-    // Record feedback
-    await enhancedFeedbackSystem.recordEmailFeedback(feedbackData);
+    // Record feedback directly to database
+    await recordFeedbackToDatabase(feedbackData);
 
     return NextResponse.json({ 
       success: true, 
@@ -152,7 +166,7 @@ async function handleSimpleFeedback(
   const verdict = action === 'positive' ? 'positive' : action === 'negative' ? 'negative' : 'neutral';
   const relevanceScore = score ? parseInt(score) as 1|2|3|4|5 : undefined;
 
-  const feedbackData: EmailFeedbackData = {
+  const feedbackData: SimpleFeedbackData = {
     userEmail: email,
     jobHash,
     feedbackType: 'job_relevance',
@@ -168,7 +182,7 @@ async function handleSimpleFeedback(
     timestamp: new Date()
   };
 
-  await enhancedFeedbackSystem.recordEmailFeedback(feedbackData);
+  await recordFeedbackToDatabase(feedbackData);
 }
 
 async function handleScoredFeedback(
@@ -181,7 +195,7 @@ async function handleScoredFeedback(
   const scoreNum = parseInt(score) as 1|2|3|4|5;
   const verdict = scoreNum >= 4 ? 'positive' : scoreNum <= 2 ? 'negative' : 'neutral';
 
-  const feedbackData: EmailFeedbackData = {
+  const feedbackData: SimpleFeedbackData = {
     userEmail: email,
     jobHash,
     feedbackType: 'job_relevance',
@@ -198,7 +212,41 @@ async function handleScoredFeedback(
     timestamp: new Date()
   };
 
-  await enhancedFeedbackSystem.recordEmailFeedback(feedbackData);
+  await recordFeedbackToDatabase(feedbackData);
+}
+
+// Simple database recording function
+async function recordFeedbackToDatabase(feedbackData: SimpleFeedbackData) {
+  try {
+    const supabase = getSupabaseClient();
+    
+    // Insert feedback into database
+    const { error } = await supabase
+      .from('feedback')
+      .insert({
+        user_email: feedbackData.userEmail,
+        job_hash: feedbackData.jobHash,
+        feedback_type: feedbackData.feedbackType,
+        verdict: feedbackData.verdict,
+        relevance_score: feedbackData.relevanceScore,
+        match_quality_score: feedbackData.matchQualityScore,
+        explanation: feedbackData.explanation,
+        user_preferences_snapshot: feedbackData.userPreferencesSnapshot,
+        job_context: feedbackData.jobContext,
+        match_context: feedbackData.matchContext,
+        created_at: feedbackData.timestamp.toISOString()
+      });
+
+    if (error) {
+      console.error('Failed to record feedback:', error);
+      // Don't throw - we want feedback to work even if DB fails
+    } else {
+      console.log(`✅ Feedback recorded: ${feedbackData.verdict} for job ${feedbackData.jobHash}`);
+    }
+  } catch (error) {
+    console.error('Error recording feedback to database:', error);
+    // Don't throw - we want feedback to work even if DB fails
+  }
 }
 
 function generateThankYouPage(action: string, jobHash: string, email: string, score?: string) {
@@ -221,43 +269,114 @@ function generateThankYouPage(action: string, jobHash: string, email: string, sc
       <title>Feedback Received</title>
       <style>
         body { 
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; 
           margin: 0; 
-          padding: 40px 20px; 
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          padding: 0; 
+          background: #000000;
           min-height: 100vh;
           display: flex;
           align-items: center;
           justify-content: center;
+          color: #FFFFFF;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
         }
         .container {
-          background: white;
-          padding: 40px;
-          border-radius: 12px;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+          background: #111111;
+          padding: 48px 40px;
+          border-radius: 20px;
+          border: 1px solid #1A1A1A;
           text-align: center;
-          max-width: 500px;
+          max-width: 480px;
+          box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+          backdrop-filter: blur(8px);
         }
-        h1 { color: #333; margin-bottom: 20px; }
-        p { color: #666; line-height: 1.6; margin-bottom: 30px; }
-        .close-btn {
-          background: #667eea;
-          color: white;
-          border: none;
-          padding: 12px 24px;
-          border-radius: 6px;
-          cursor: pointer;
+        h1 { 
+          color: #FFFFFF; 
+          margin-bottom: 20px; 
+          font-size: 28px;
+          font-weight: 600;
+          letter-spacing: -0.02em;
+        }
+        p { 
+          color: #E5E5E5; 
+          line-height: 1.6; 
+          margin-bottom: 40px; 
           font-size: 16px;
         }
-        .close-btn:hover { background: #5a6fd8; }
+        .buttons {
+          display: flex;
+          gap: 12px;
+          justify-content: center;
+          margin-bottom: 24px;
+        }
+        .btn {
+          padding: 12px 24px;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
+          text-decoration: none;
+          display: inline-block;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .close-btn {
+          background: #1F1F1F;
+          color: #FFFFFF;
+          border: 1px solid #262626;
+        }
+        .close-btn:hover { 
+          background: #262626; 
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .view-jobs-btn {
+          background: linear-gradient(135deg, #FFFFFF 0%, #CCCCCC 100%);
+          color: #000000;
+          box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+        .view-jobs-btn:hover { 
+          transform: translateY(-2px);
+          box-shadow: 0 0 30px rgba(255,255,255,0.15);
+        }
+        .auto-close-notice {
+          font-size: 12px;
+          color: #A3A3A3;
+          margin-top: 20px;
+        }
       </style>
     </head>
     <body>
       <div class="container">
         <h1>${title}</h1>
         <p>${message}</p>
-        <button class="close-btn" onclick="window.close()">Close</button>
+        <div class="buttons">
+          <button class="btn close-btn" onclick="window.close()">Close</button>
+          <a href="https://jobping.ai/dashboard" class="btn view-jobs-btn">View More Jobs</a>
+        </div>
+        <div class="auto-close-notice">This window will close automatically in 5 seconds</div>
       </div>
+      
+      <script>
+        // Auto-close after 5 seconds
+        setTimeout(() => {
+          try {
+            window.close();
+          } catch (e) {
+            // If can't close (not a popup), redirect to dashboard
+            window.location.href = 'https://jobping.ai/dashboard';
+          }
+        }, 5000);
+        
+        // Popup blocker detection
+        if (window.opener) {
+          console.log('Opened as popup - will auto-close');
+        } else {
+          console.log('Opened in same window - will redirect');
+          document.querySelector('.auto-close-notice').textContent = 'Redirecting to dashboard in 5 seconds...';
+        }
+      </script>
     </body>
     </html>
   `, {
@@ -277,59 +396,98 @@ function generateExplanationForm(jobHash: string, email: string, job: any) {
       <title>Tell us more</title>
       <style>
         body { 
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; 
           margin: 0; 
-          padding: 40px 20px; 
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          padding: 0; 
+          background: #000000;
           min-height: 100vh;
           display: flex;
           align-items: center;
           justify-content: center;
+          color: #FFFFFF;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
         }
         .container {
-          background: white;
-          padding: 40px;
-          border-radius: 12px;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-          max-width: 500px;
+          background: #111111;
+          padding: 48px 40px;
+          border-radius: 20px;
+          border: 1px solid #1A1A1A;
+          max-width: 480px;
           width: 100%;
+          box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+          backdrop-filter: blur(8px);
         }
-        h1 { color: #333; margin-bottom: 20px; text-align: center; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; }
+        h1 { 
+          color: #FFFFFF; 
+          margin-bottom: 40px; 
+          text-align: center; 
+          font-size: 28px;
+          font-weight: 600;
+          letter-spacing: -0.02em;
+        }
+        .form-group { margin-bottom: 32px; }
+        label { 
+          display: block; 
+          margin-bottom: 12px; 
+          color: #E5E5E5; 
+          font-weight: 500; 
+          font-size: 14px;
+        }
         select, textarea { 
           width: 100%; 
-          padding: 12px; 
-          border: 2px solid #e1e5e9; 
-          border-radius: 6px; 
-          font-size: 16px; 
+          padding: 16px 20px; 
+          border: 1px solid #262626; 
+          border-radius: 12px; 
+          font-size: 14px; 
           font-family: inherit;
+          background: #1A1A1A;
+          color: #FFFFFF;
+          transition: all 0.2s ease;
         }
         select:focus, textarea:focus { 
           outline: none; 
-          border-color: #667eea; 
+          border-color: #00D4AA; 
+          box-shadow: 0 0 0 3px rgba(0,212,170,0.1);
         }
         textarea { 
-          min-height: 100px; 
+          min-height: 80px; 
           resize: vertical; 
         }
         .buttons {
           display: flex;
-          gap: 15px;
+          gap: 12px;
           justify-content: center;
-          margin-top: 30px;
+          margin-top: 32px;
         }
         .btn {
           padding: 12px 24px;
           border: none;
-          border-radius: 6px;
+          border-radius: 8px;
           cursor: pointer;
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 500;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .btn-primary { background: #667eea; color: white; }
-        .btn-secondary { background: #6c757d; color: white; }
-        .btn:hover { opacity: 0.9; }
+        .btn-primary { 
+          background: linear-gradient(135deg, #FFFFFF 0%, #CCCCCC 100%);
+          color: #000000;
+          box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+        .btn-primary:hover { 
+          transform: translateY(-2px);
+          box-shadow: 0 0 30px rgba(255,255,255,0.15);
+        }
+        .btn-secondary { 
+          background: #1F1F1F; 
+          color: #FFFFFF; 
+          border: 1px solid #262626;
+        }
+        .btn-secondary:hover { 
+          background: #262626;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
       </style>
     </head>
     <body>

@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate a test verification token
-    const token = EmailVerificationOracle.generateVerificationToken();
+    const token = EmailVerificationOracle.generateVerificationToken(email);
     
     return NextResponse.json({ 
       success: true, 

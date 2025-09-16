@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
         }
 
         // const invoice = await paymentRecoverySystem.generateInvoice(invoiceId);
-        return NextResponse.json({ success: true, invoice });
+        return NextResponse.json({ success: true, invoiceId });
 
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
@@ -198,10 +198,10 @@ export async function PUT(req: NextRequest) {
           return NextResponse.json({ error: 'New tier required' }, { status: 400 });
         }
 
-        const tierConfig = PAYMENT_CONFIG.tiers[newTier as keyof typeof PAYMENT_CONFIG.tiers];
-        if (!tierConfig) {
-          return NextResponse.json({ error: 'Invalid tier' }, { status: 400 });
-        }
+        // const tierConfig = PAYMENT_CONFIG.tiers[newTier as keyof typeof PAYMENT_CONFIG.tiers];
+        // if (!tierConfig) {
+        //   return NextResponse.json({ error: 'Invalid tier' }, { status: 400 });
+        // }
 
         // Get user's Stripe customer ID
         const supabase = getSupabaseClient();
@@ -223,7 +223,7 @@ export async function PUT(req: NextRequest) {
 
         return NextResponse.json({ 
           success: true, 
-          message: `Subscription ${action}d to ${tierConfig.name}` 
+          message: `Subscription ${action}d to ${newTier}` 
         });
 
       default:

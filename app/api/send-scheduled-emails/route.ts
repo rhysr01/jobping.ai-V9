@@ -3,11 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { sendMatchedJobsEmail } from '@/Utils/email';
 import { 
-  performEnhancedAIMatching, 
-  generateRobustFallbackMatches,
-  logMatchSession,
-  type UserPreferences 
-} from '@/Utils/jobMatching';
+  generateRobustFallbackMatches
+} from '@/Utils/matching/fallback.service';
+import { 
+  logMatchSession
+} from '@/Utils/matching/logging.service';
+import type { UserPreferences } from '@/Utils/matching/types';
+import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
+import { aiCostManager } from '@/Utils/ai-cost-manager';
+import { jobQueue } from '@/Utils/job-queue.service';
 import OpenAI from 'openai';
 
 // Helper function to safely normalize string/array fields
@@ -182,57 +186,84 @@ export async function POST(req: NextRequest) {
 
     console.log(`📋 Found ${jobs.length} active jobs for matching`);
 
-    const openai = getOpenAIClient();
-    let successCount = 0;
-    let errorCount = 0;
+    const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
 
-    // Process each user
-    for (const user of eligibleUsers) {
-      try {
-        console.log(`🎯 Processing user: ${user.email}`);
+    const userResults = await Promise.all(
+      eligibleUsers.map(async (user) => {
+        try {
+          console.log(`🎯 Processing user: ${user.email}`);
 
-        // Convert user data to UserPreferences format
-        // Parse comma-separated text fields into arrays per database schema
-        const userPreferences: UserPreferences = {
-          email: user.email,
-          target_cities: normalizeStringToArray(user.target_cities),
-          languages_spoken: normalizeStringToArray(user.languages_spoken),
-          company_types: [], // Default empty array since field not available
-          roles_selected: [], // Default empty array since field not available
-          professional_expertise: user.professional_expertise || 'entry',
-          work_environment: 'any', // Default since field not available
-          career_path: [], // Default empty array since field not available
-          entry_level_preference: user.entry_level_preference || 'entry'
-        };
+          const userPreferences: UserPreferences = {
+            email: user.email,
+            target_cities: normalizeStringToArray(user.target_cities),
+            languages_spoken: normalizeStringToArray(user.languages_spoken),
+            company_types: [],
+            roles_selected: [],
+            professional_expertise: user.professional_expertise || 'entry',
+            work_environment: 'any',
+            career_path: [],
+            entry_level_preference: user.entry_level_preference || 'entry'
+          };
 
-        // Perform matching (bypass AI in tests)
-        let matches;
-        let matchType: 'ai_success' | 'ai_failed' | 'fallback' = 'ai_success';
-        
-        // Check if AI is disabled (e.g., in tests)
-        const aiDisabled = process.env.MATCH_USERS_DISABLE_AI === 'true';
-        
-        if (aiDisabled) {
-          console.log(`🧠 AI disabled, using rule-based fallback for ${user.email}`);
-          matchType = 'fallback';
-          const fallbackResults = generateRobustFallbackMatches(jobs, userPreferences);
-          // Convert MatchResult[] to the format expected by sendMatchedJobsEmail
-          matches = fallbackResults.map((result, index) => ({
-            ...result.job,
-            match_score: result.match_score,
-            match_reason: result.match_reason,
-            match_quality: result.match_quality,
-            match_tags: result.match_tags
-          }));
-        } else {
-          try {
-            const aiResult = await performEnhancedAIMatching(jobs, userPreferences, openai);
-            matches = aiResult.matches;
-            
-            if (!matches || matches.length === 0) {
-              matchType = 'fallback';
+          let matches;
+          let matchType: 'ai_success' | 'ai_failed' | 'fallback' = 'ai_success';
+
+          const aiDisabled = process.env.MATCH_USERS_DISABLE_AI === 'true';
+
+          if (aiDisabled) {
+            console.log(`🧠 AI disabled, using rule-based fallback for ${user.email}`);
+            matchType = 'fallback';
+            const fallbackResults = generateRobustFallbackMatches(jobs, userPreferences);
+            matches = fallbackResults.map((result) => ({
+              ...result.job,
+              match_score: result.match_score,
+              match_reason: result.match_reason,
+              match_quality: result.match_quality,
+              match_tags: result.match_tags
+            }));
+          } else {
+            try {
+              // Check AI cost limits before making call
+              const estimatedCost = aiCostManager.estimateCost('gpt-4', jobs.length);
+              const costCheck = await aiCostManager.canMakeAICall(user.email, estimatedCost);
+              
+              if (!costCheck.allowed) {
+                console.log(`💰 AI call blocked for ${user.email}: ${costCheck.reason}`);
+                matchType = 'fallback';
+                const fallbackResults = generateRobustFallbackMatches(jobs, userPreferences);
+                matches = fallbackResults.map((result) => ({
+                  ...result.job,
+                  match_score: result.match_score,
+                  match_reason: result.match_reason,
+                  match_quality: result.match_quality,
+                  match_tags: result.match_tags
+                }));
+              } else {
+                // Use suggested model if provided
+                const model = costCheck.suggestedModel || 'gpt-4';
+                const aiRes = await matcher.performMatching(jobs as any[], userPreferences);
+                matches = aiRes.matches;
+                
+                // Record AI usage for cost tracking
+                await aiCostManager.recordAICall(user.email, model, estimatedCost, 0);
+                
+                if (!matches || matches.length === 0) {
+                  matchType = 'fallback';
+                  const fallbackResults = generateRobustFallbackMatches(jobs, userPreferences);
+                  matches = fallbackResults.map((result) => ({
+                    ...result.job,
+                    match_score: result.match_score,
+                    match_reason: result.match_reason,
+                    match_quality: result.match_quality,
+                    match_tags: result.match_tags
+                  }));
+                }
+              }
+            } catch (aiError) {
+              console.error(`❌ AI matching failed for ${user.email}:`, aiError);
+              matchType = 'ai_failed';
               const fallbackResults = generateRobustFallbackMatches(jobs, userPreferences);
-              matches = fallbackResults.map((result, index) => ({
+              matches = fallbackResults.map((result) => ({
                 ...result.job,
                 match_score: result.match_score,
                 match_reason: result.match_reason,
@@ -240,101 +271,72 @@ export async function POST(req: NextRequest) {
                 match_tags: result.match_tags
               }));
             }
-          } catch (aiError) {
-            console.error(`❌ AI matching failed for ${user.email}:`, aiError);
-            matchType = 'ai_failed';
-            const fallbackResults = generateRobustFallbackMatches(jobs, userPreferences);
-            matches = fallbackResults.map((result, index) => ({
-              ...result.job,
-              match_score: result.match_score,
-              match_reason: result.match_reason,
-              match_quality: result.match_quality,
-              match_tags: result.match_tags
-            }));
           }
-        }
 
-        // Determine match limits based on user's phase and tier
-        const userTier = user.subscription_tier || 'free';
-        const signupTime = new Date(user.created_at);
-        const timeSinceSignup = now.getTime() - signupTime.getTime();
-        
-        let maxMatches: number;
-        let isOnboardingPhase = false;
-        
-        // Phase 2: 48-hour follow-up (all users get 5 matches)
-        if (timeSinceSignup >= 48 * 60 * 60 * 1000 && timeSinceSignup < 72 * 60 * 60 * 1000) {
-          maxMatches = 5;
-          isOnboardingPhase = true;
-        }
-        // Phase 3: Regular distribution (tier-based)
-        else if (timeSinceSignup >= 72 * 60 * 60 * 1000) {
-          if (userTier === 'premium') {
-            maxMatches = 15; // Premium: 15 jobs every 48 hours
+          const userTier = user.subscription_tier || 'free';
+          const signupTime = new Date(user.created_at);
+          const timeSinceSignup = now.getTime() - signupTime.getTime();
+
+          let maxMatches: number;
+          let isOnboardingPhase = false;
+          if (timeSinceSignup >= 48 * 60 * 60 * 1000 && timeSinceSignup < 72 * 60 * 60 * 1000) {
+            maxMatches = 5;
+            isOnboardingPhase = true;
+          } else if (timeSinceSignup >= 72 * 60 * 60 * 1000) {
+            maxMatches = userTier === 'premium' ? 15 : 6;
           } else {
-            maxMatches = 6; // Free: 6 jobs per week
+            maxMatches = 5;
           }
-        }
-        // Fallback for edge cases
-        else {
-          maxMatches = 5;
-        }
-        
-        matches = matches.slice(0, maxMatches);
 
-        // Log match session
-        await logMatchSession(
-          user.email,
-          matchType,
-          matches.length
-        );
+          matches = matches.slice(0, maxMatches);
 
-        // Send email if we have matches
-        if (matches.length > 0) {
-          await sendMatchedJobsEmail({
-            to: user.email,
-            jobs: matches,
-            userName: user.email.split('@')[0], // Use email prefix as name
-            subscriptionTier: userTier,
-            isSignupEmail: false
-          });
-          
-          // Update tracking fields
-          const updateData: any = {
-            last_email_sent: new Date().toISOString(),
-            email_count: (user.email_count || 0) + 1
-          };
+          await logMatchSession(
+            user.email,
+            matchType,
+            matches.length
+          );
 
-          // Update email phase based on current state
-          if (isOnboardingPhase) {
-            // This is the 48-hour follow-up email
-            updateData.email_phase = 'regular';
-            updateData.onboarding_complete = true;
+          if (matches.length > 0) {
+            await sendMatchedJobsEmail({
+              to: user.email,
+              jobs: matches,
+              userName: user.email.split('@')[0],
+              subscriptionTier: userTier,
+              isSignupEmail: false
+            });
+
+            const updateData: any = {
+              last_email_sent: new Date().toISOString(),
+              email_count: (user.email_count || 0) + 1
+            };
+
+            if (isOnboardingPhase) {
+              updateData.email_phase = 'regular';
+              updateData.onboarding_complete = true;
+            }
+
+            const { error: updateError } = await supabase
+              .from('users')
+              .update(updateData)
+              .eq('email', user.email);
+            if (updateError) {
+              console.error(`❌ Failed to update tracking fields for ${user.email}:`, updateError);
+            }
+            console.log(`✅ Email sent to ${user.email} with ${matches.length} matches (${userTier} tier, ${isOnboardingPhase ? 'onboarding' : 'regular'} phase)`);
+            return { success: true, email: user.email };
+          } else {
+            console.log(`⚠️ No matches found for ${user.email}`);
+            return { success: true, email: user.email, noMatches: true };
           }
-          
-          const { error: updateError } = await supabase
-            .from('users')
-            .update(updateData)
-            .eq('email', user.email);
-          
-          if (updateError) {
-            console.error(`❌ Failed to update tracking fields for ${user.email}:`, updateError);
-          }
-          
-          console.log(`✅ Email sent to ${user.email} with ${matches.length} matches (${userTier} tier, ${isOnboardingPhase ? 'onboarding' : 'regular'} phase)`);
-          successCount++;
-        } else {
-          console.log(`⚠️ No matches found for ${user.email}`);
+        } catch (error) {
+          console.error(`❌ Failed to process user ${user.email}:`, error);
+          return { success: false, email: user.email, error };
         }
+      })
+    );
 
-        // Add small delay to avoid overwhelming the email service
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-      } catch (error) {
-        console.error(`❌ Failed to process user ${user.email}:`, error);
-        errorCount++;
-      }
-    }
+    const successCount = userResults.filter(r => r.success && !r.noMatches).length;
+    const errorCount = userResults.filter(r => !r.success).length;
 
     console.log(`📊 Scheduled email delivery completed:`);
     console.log(`   ✅ Success: ${successCount}`);

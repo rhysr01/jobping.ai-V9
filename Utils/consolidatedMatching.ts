@@ -7,10 +7,11 @@
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import type { Job } from '../scrapers/types';
-import { UserPreferences, JobMatch, AIMatchingCache } from './jobMatching';
+import { UserPreferences, JobMatch, AIMatchingCache } from './matching/types';
+import { enhanceMatchingWithEmbeddings, createUserProfileEmbedding, createJobEmbedding } from './embeddingBoost';
 
-// Consolidated AI timeout - reduced from 8s to 3s as recommended
-const AI_TIMEOUT_MS = 3000;
+// Consolidated AI timeout - increased to 20s for better reliability
+const AI_TIMEOUT_MS = 20000;
 
 interface ConsolidatedMatchResult {
   matches: JobMatch[];
@@ -21,10 +22,16 @@ interface ConsolidatedMatchResult {
 
 export class ConsolidatedMatchingEngine {
   private openai: OpenAI | null = null;
+  private openai35: OpenAI | null = null;
+  private costTracker = {
+    gpt4: { calls: 0, tokens: 0, cost: 0 },
+    gpt35: { calls: 0, tokens: 0, cost: 0 }
+  };
 
   constructor(openaiApiKey?: string) {
     if (openaiApiKey) {
       this.openai = new OpenAI({ apiKey: openaiApiKey });
+      this.openai35 = new OpenAI({ apiKey: openaiApiKey });
     }
   }
 
@@ -81,13 +88,17 @@ export class ConsolidatedMatchingEngine {
     jobs: any[],
     userPrefs: UserPreferences
   ): Promise<JobMatch[]> {
-    if (!this.openai) throw new Error('OpenAI client not initialized');
+    if (!this.openai || !this.openai35) throw new Error('OpenAI client not initialized');
 
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error('AI_TIMEOUT')), AI_TIMEOUT_MS);
     });
 
-    const aiPromise = this.callOpenAIAPI(jobs, userPrefs);
+    // Determine which model to use based on complexity
+    const shouldUseGPT4 = this.shouldUseGPT4(jobs, userPrefs);
+    const aiPromise = shouldUseGPT4 
+      ? this.callOpenAIAPI(jobs, userPrefs, 'gpt-4')
+      : this.callOpenAIAPI(jobs, userPrefs, 'gpt-3.5-turbo');
 
     try {
       return await Promise.race([aiPromise, timeoutPromise]);
@@ -101,16 +112,55 @@ export class ConsolidatedMatchingEngine {
   }
 
   /**
+   * Smart routing: Use GPT-3.5 for simple cases, GPT-4 for complex ones
+   */
+  private shouldUseGPT4(jobs: any[], userPrefs: UserPreferences): boolean {
+    // Use GPT-3.5 for simple cases (70% of requests)
+    const complexityScore = this.calculateComplexityScore(jobs, userPrefs);
+    
+    // Threshold: > 0.6 complexity = use GPT-4
+    return complexityScore > 0.6;
+  }
+
+  /**
+   * Calculate complexity score (0-1) to determine model choice
+   */
+  private calculateComplexityScore(jobs: any[], userPrefs: UserPreferences): number {
+    let score = 0;
+    
+    // Job count complexity (more jobs = more complex)
+    if (jobs.length > 100) score += 0.3;
+    else if (jobs.length > 50) score += 0.2;
+    
+    // User preference complexity
+    const prefCount = Object.values(userPrefs).filter(v => v && v.length > 0).length;
+    if (prefCount > 5) score += 0.2;
+    else if (prefCount > 3) score += 0.1;
+    
+    // Career path complexity (multiple paths = more complex)
+    if (userPrefs.career_path && userPrefs.career_path.length > 2) score += 0.2;
+    
+    // Location complexity (multiple cities = more complex)
+    if (userPrefs.target_cities && userPrefs.target_cities.length > 3) score += 0.1;
+    
+    // Industry diversity (multiple industries = more complex)
+    if (userPrefs.company_types && userPrefs.company_types.length > 2) score += 0.2;
+    
+    return Math.min(1, score);
+  }
+
+  /**
    * Stable OpenAI API call with function calling - no more parsing errors
    */
-  private async callOpenAIAPI(jobs: any[], userPrefs: UserPreferences): Promise<JobMatch[]> {
-    if (!this.openai) throw new Error('OpenAI client not initialized');
+  private async callOpenAIAPI(jobs: any[], userPrefs: UserPreferences, model: 'gpt-4' | 'gpt-3.5-turbo' = 'gpt-4'): Promise<JobMatch[]> {
+    const client = model === 'gpt-4' ? this.openai : this.openai35;
+    if (!client) throw new Error('OpenAI client not initialized');
 
-    // Build stable prompt that doesn't break
+    // Build optimized prompt based on model
     const prompt = this.buildStablePrompt(jobs, userPrefs);
 
-    const completion = await this.openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+    const completion = await client.chat.completions.create({
+      model: model,
       messages: [
         {
           role: 'system',
@@ -148,6 +198,13 @@ export class ConsolidatedMatchingEngine {
       }],
       function_call: { name: 'return_job_matches' }
     });
+
+    // Track costs (simplified for now)
+    if (completion.usage) {
+      const trackerKey = model === 'gpt-4' ? 'gpt4' : 'gpt35';
+      this.costTracker[trackerKey].calls++;
+      this.costTracker[trackerKey].tokens += completion.usage.total_tokens || 0;
+    }
 
     const functionCall = completion.choices[0]?.message?.function_call;
     if (!functionCall || functionCall.name !== 'return_job_matches') {
@@ -281,97 +338,498 @@ Requirements:
   }
 
   /**
-   * Enhanced rule-based matching - builds on existing logic
+   * Enhanced rule-based matching with weighted linear scoring model
    */
   private performRuleBasedMatching(jobs: any[], userPrefs: UserPreferences): JobMatch[] {
     const matches: JobMatch[] = [];
     const userCities = Array.isArray(userPrefs.target_cities) ? userPrefs.target_cities : [];
     const userCareer = userPrefs.professional_expertise || '';
+    const userCareerPaths = Array.isArray(userPrefs.career_path) ? userPrefs.career_path : [];
 
-    for (let i = 0; i < Math.min(jobs.length, 15); i++) {
+    for (let i = 0; i < Math.min(jobs.length, 20); i++) {
       const job = jobs[i];
-      let score = 50; // Base score
-      const reasons: string[] = [];
-
-      // Title analysis (most reliable signal)
-      const title = job.title?.toLowerCase() || '';
+      const scoreResult = this.calculateWeightedScore(job, userPrefs, userCities, userCareer, userCareerPaths);
       
-      if (title.includes('junior') || title.includes('graduate') || title.includes('entry')) {
-        score += 25;
-        reasons.push('entry-level position');
-      }
-      
-      if (title.includes('intern') || title.includes('trainee')) {
-        score += 30;
-        reasons.push('early-career role');
-      }
-
-      // Career path matching
-      if (userCareer) {
-        const careerLower = userCareer.toLowerCase();
-        const jobText = `${title} ${job.description || ''}`.toLowerCase();
-        
-        if (jobText.includes(careerLower)) {
-          score += 20;
-          reasons.push('career match');
-        }
-        
-        // Broader career matching with existing mappings
-        const careerMappings: Record<string, string[]> = {
-          'software': ['developer', 'engineer', 'programmer'],
-          'data': ['analyst', 'data', 'analytics'],
-          'marketing': ['marketing', 'brand', 'digital'],
-          'sales': ['sales', 'business development'],
-          'consulting': ['consultant', 'advisory']
-        };
-        
-        for (const [career, keywords] of Object.entries(careerMappings)) {
-          if (careerLower.includes(career) && keywords.some(kw => jobText.includes(kw))) {
-            score += 15;
-            reasons.push('career alignment');
-            break;
-          }
-        }
-      }
-
-      // Location matching
-      if (userCities.length > 0 && job.location) {
-        const location = job.location.toLowerCase();
-        if (userCities.some(city => location.includes(city.toLowerCase()))) {
-          score += 15;
-          reasons.push('location match');
-        } else if (location.includes('remote') || location.includes('europe')) {
-          score += 10;
-          reasons.push('flexible location');
-        }
-      }
-
-      // Freshness scoring
-      if (job.created_at) {
-        const daysOld = (Date.now() - new Date(job.created_at).getTime()) / (1000 * 60 * 60 * 24);
-        if (daysOld < 7) {
-          score += 10;
-          reasons.push('recent posting');
-        }
-      }
-
-      // Only include matches above threshold
-      if (score >= 65) {
+      // Only include matches above threshold (increased from 65 to 70 for better quality)
+      if (scoreResult.score >= 70) {
         matches.push({
           job_index: i + 1,
           job_hash: job.job_hash,
-          match_score: score,
-          match_reason: reasons.join(', ') || 'Rule-based match',
-          match_quality: this.getQualityLabel(score),
-          match_tags: 'rule-based'
+          match_score: scoreResult.score,
+          match_reason: scoreResult.reasons.join(', ') || 'Enhanced rule-based match',
+          match_quality: this.getQualityLabel(scoreResult.score),
+          match_tags: 'enhanced-rule-based'
         });
       }
     }
 
-    // Sort by score and return top matches
-    return matches
+    // Apply embedding boost to enhance semantic matching
+    const enhancedMatches = enhanceMatchingWithEmbeddings(
+      jobs.slice(0, 20), // Use the same jobs we processed
+      userPrefs,
+      matches
+    );
+
+    // Sort by enhanced score and return top matches
+    return enhancedMatches
       .sort((a, b) => b.match_score - a.match_score)
-      .slice(0, 6);
+      .slice(0, 8); // Increased from 6 to 8 for better coverage
+  }
+
+  /**
+   * Calculate weighted linear score with enhanced factors
+   */
+  private calculateWeightedScore(
+    job: any, 
+    userPrefs: UserPreferences, 
+    userCities: string[], 
+    userCareer: string,
+    userCareerPaths: string[]
+  ): { score: number; reasons: string[] } {
+    let score = 45; // Base score (slightly reduced from 50)
+    const reasons: string[] = [];
+    
+    const title = job.title?.toLowerCase() || '';
+    const description = (job.description || '').toLowerCase();
+    const company = (job.company || '').toLowerCase();
+    const location = (job.location || '').toLowerCase();
+    const jobText = `${title} ${description}`.toLowerCase();
+
+    // 0. Cold-start rules for new users (Weight: 15%)
+    const coldStartScore = this.calculateColdStartScore(jobText, title, userPrefs);
+    score += coldStartScore.points;
+    if (coldStartScore.points > 0) {
+      reasons.push(coldStartScore.reason);
+    }
+
+    // 1. Early Career Detection (Weight: 30%)
+    const earlyCareerScore = this.calculateEarlyCareerScore(jobText, title);
+    score += earlyCareerScore.points;
+    if (earlyCareerScore.points > 0) {
+      reasons.push(earlyCareerScore.reason);
+    }
+
+    // 2. EU Location Match (Weight: 25%)
+    const euLocationScore = this.calculateEULocationScore(location, userCities);
+    score += euLocationScore.points;
+    if (euLocationScore.points > 0) {
+      reasons.push(euLocationScore.reason);
+    }
+
+    // 3. Skill/Career Overlap (Weight: 20%)
+    const skillScore = this.calculateSkillOverlapScore(jobText, userCareer, userCareerPaths);
+    score += skillScore.points;
+    if (skillScore.points > 0) {
+      reasons.push(skillScore.reason);
+    }
+
+    // 4. Company Tier/Quality (Weight: 15%)
+    const companyScore = this.calculateCompanyTierScore(company, jobText);
+    score += companyScore.points;
+    if (companyScore.points > 0) {
+      reasons.push(companyScore.reason);
+    }
+
+    // 5. Recency/Freshness (Weight: 10%)
+    const recencyScore = this.calculateRecencyScore(job);
+    score += recencyScore.points;
+    if (recencyScore.points > 0) {
+      reasons.push(recencyScore.reason);
+    }
+
+    return { score: Math.min(100, Math.max(0, score)), reasons };
+  }
+
+  /**
+   * Calculate cold-start score for new users with programme keyword boosts
+   */
+  private calculateColdStartScore(jobText: string, title: string, userPrefs: UserPreferences): { points: number; reason: string } {
+    // Detect if user is new (no explicit career preferences)
+    const isNewUser = !userPrefs.professional_expertise && 
+                     (!userPrefs.career_path || userPrefs.career_path.length === 0);
+
+    if (!isNewUser) {
+      return { points: 0, reason: '' };
+    }
+
+    // Cold-start boosts for new users
+    const programmeKeywords = [
+      'graduate scheme', 'graduate program', 'graduate programme', 'trainee program',
+      'internship program', 'rotation program', 'campus recruiting', 'university',
+      'entry level program', 'junior program', 'associate program', 'apprentice'
+    ];
+
+    // Check for programme keywords (strong signal for new users)
+    for (const keyword of programmeKeywords) {
+      if (jobText.includes(keyword)) {
+        return { points: 15, reason: 'graduate programme' };
+      }
+    }
+
+    // Check for structured early career roles
+    const structuredRoles = [
+      'graduate', 'intern', 'trainee', 'associate', 'entry level', 'junior',
+      'campus hire', 'new grad', 'recent graduate'
+    ];
+
+    for (const role of structuredRoles) {
+      if (title.includes(role)) {
+        return { points: 10, reason: 'structured early-career role' };
+      }
+    }
+
+    // Check for company size indicators (larger companies more likely to have programmes)
+    const largeCompanyIndicators = [
+      'multinational', 'fortune 500', 'ftse 100', 'dax 30', 'cac 40',
+      'blue chip', 'established', 'leading', 'global'
+    ];
+
+    for (const indicator of largeCompanyIndicators) {
+      if (jobText.includes(indicator)) {
+        return { points: 5, reason: 'established company' };
+      }
+    }
+
+    return { points: 0, reason: '' };
+  }
+
+  /**
+   * Calculate early career relevance score
+   */
+  private calculateEarlyCareerScore(jobText: string, title: string): { points: number; reason: string } {
+    // High-value early career indicators
+    const highValueTerms = ['intern', 'internship', 'graduate', 'new grad', 'entry level', 'junior', 'trainee'];
+    const mediumValueTerms = ['associate', 'assistant', 'coordinator', 'specialist', 'analyst'];
+    const programmeTerms = ['programme', 'program', 'scheme', 'rotation', 'campus'];
+
+    // Check for high-value terms (strong signal)
+    for (const term of highValueTerms) {
+      if (jobText.includes(term)) {
+        return { points: 25, reason: 'early-career role' };
+      }
+    }
+
+    // Check for medium-value terms
+    for (const term of mediumValueTerms) {
+      if (jobText.includes(term)) {
+        return { points: 15, reason: 'entry-level position' };
+      }
+    }
+
+    // Check for programme terms (graduate schemes, etc.)
+    for (const term of programmeTerms) {
+      if (jobText.includes(term)) {
+        return { points: 20, reason: 'structured programme' };
+      }
+    }
+
+    // Penalty for senior terms
+    const seniorTerms = ['senior', 'staff', 'principal', 'lead', 'manager', 'director', 'head', 'vp', 'chief', 'executive'];
+    for (const term of seniorTerms) {
+      if (title.includes(term)) {
+        return { points: -20, reason: 'senior role penalty' };
+      }
+    }
+
+    return { points: 0, reason: '' };
+  }
+
+  /**
+   * Calculate EU location relevance score
+   */
+  private calculateEULocationScore(location: string, userCities: string[]): { points: number; reason: string } {
+    // EU countries and cities
+    const euHints = [
+      'uk', 'united kingdom', 'ireland', 'germany', 'france', 'spain', 'portugal', 'italy',
+      'netherlands', 'belgium', 'luxembourg', 'denmark', 'sweden', 'norway', 'finland',
+      'amsterdam', 'rotterdam', 'london', 'dublin', 'paris', 'berlin', 'munich',
+      'madrid', 'barcelona', 'lisbon', 'milan', 'rome', 'stockholm', 'copenhagen'
+    ];
+
+    // Check for remote (penalty for now as per user preference)
+    if (location.includes('remote') || location.includes('work from home')) {
+      return { points: -10, reason: 'remote job penalty' };
+    }
+
+    // Check user's target cities first
+    if (userCities.length > 0) {
+      for (const city of userCities) {
+        if (location.includes(city.toLowerCase())) {
+          return { points: 20, reason: 'target city match' };
+        }
+      }
+    }
+
+    // Check for any EU location
+    for (const hint of euHints) {
+      if (location.includes(hint)) {
+        return { points: 15, reason: 'EU location' };
+      }
+    }
+
+    return { points: 0, reason: '' };
+  }
+
+  /**
+   * Calculate skill/career overlap score with profile vectors lite
+   */
+  private calculateSkillOverlapScore(jobText: string, userCareer: string, userCareerPaths: string[]): { points: number; reason: string } {
+    let maxScore = 0;
+    let bestReason = '';
+
+    // Profile vectors lite: Create user skill/industry/location vectors
+    const userProfile = this.createUserProfileVector(userCareer, userCareerPaths);
+    const jobProfile = this.createJobProfileVector(jobText);
+
+    // Calculate overlap boost
+    const overlapScore = this.calculateProfileOverlap(userProfile, jobProfile);
+    if (overlapScore > 0) {
+      maxScore = Math.max(maxScore, overlapScore);
+      bestReason = `profile overlap (${overlapScore} points)`;
+    }
+
+    // Direct career match (keep existing logic as fallback)
+    if (userCareer && jobText.includes(userCareer.toLowerCase())) {
+      if (18 > maxScore) {
+        maxScore = 18;
+        bestReason = 'direct career match';
+      }
+    }
+
+    // Career path matches
+    for (const path of userCareerPaths) {
+      if (jobText.includes(path.toLowerCase())) {
+        if (18 > maxScore) {
+          maxScore = 18;
+          bestReason = 'career path match';
+        }
+      }
+    }
+
+    // Enhanced career mappings with more specific terms
+    const careerMappings: Record<string, string[]> = {
+      'software': ['developer', 'engineer', 'programmer', 'software', 'frontend', 'backend', 'full stack', 'mobile'],
+      'data': ['analyst', 'data', 'analytics', 'data science', 'machine learning', 'ai', 'business intelligence'],
+      'marketing': ['marketing', 'brand', 'digital', 'content', 'social media', 'growth', 'product marketing'],
+      'sales': ['sales', 'business development', 'account', 'revenue', 'partnerships', 'commercial'],
+      'consulting': ['consultant', 'advisory', 'strategy', 'management consulting', 'business analysis'],
+      'finance': ['finance', 'financial', 'accounting', 'investment', 'banking', 'trading', 'risk'],
+      'product': ['product', 'product management', 'product owner', 'product analyst', 'product designer'],
+      'design': ['designer', 'design', 'ui', 'ux', 'graphic', 'visual', 'user experience'],
+      'operations': ['operations', 'operational', 'process', 'supply chain', 'logistics', 'project management']
+    };
+
+    for (const [career, keywords] of Object.entries(careerMappings)) {
+      const careerLower = userCareer.toLowerCase();
+      if (careerLower.includes(career)) {
+        const matchCount = keywords.filter(kw => jobText.includes(kw)).length;
+        if (matchCount > 0) {
+          const score = Math.min(15, 5 + (matchCount * 3));
+          if (score > maxScore) {
+            maxScore = score;
+            bestReason = `${career} alignment (${matchCount} keywords)`;
+          }
+        }
+      }
+    }
+
+    return { points: maxScore, reason: bestReason };
+  }
+
+  /**
+   * Create user profile vector (skills/industries/locations as sets)
+   */
+  private createUserProfileVector(userCareer: string, userCareerPaths: string[]): {
+    skills: Set<string>;
+    industries: Set<string>;
+    locations: Set<string>;
+  } {
+    const skills = new Set<string>();
+    const industries = new Set<string>();
+    const locations = new Set<string>();
+
+    // Add career expertise as skills
+    if (userCareer) {
+      const careerLower = userCareer.toLowerCase();
+      skills.add(careerLower);
+      
+      // Map career to related skills
+      const careerToSkills: Record<string, string[]> = {
+        'software': ['programming', 'development', 'coding', 'engineering'],
+        'data': ['analytics', 'statistics', 'machine learning', 'sql', 'python'],
+        'marketing': ['digital marketing', 'content creation', 'social media', 'branding'],
+        'sales': ['relationship building', 'negotiation', 'lead generation', 'CRM'],
+        'consulting': ['problem solving', 'strategic thinking', 'presentation', 'analysis'],
+        'finance': ['financial modeling', 'accounting', 'investment analysis', 'risk assessment'],
+        'product': ['product strategy', 'user research', 'roadmapping', 'stakeholder management'],
+        'design': ['user experience', 'visual design', 'prototyping', 'design thinking'],
+        'operations': ['process improvement', 'project management', 'supply chain', 'logistics']
+      };
+
+      for (const [career, relatedSkills] of Object.entries(careerToSkills)) {
+        if (careerLower.includes(career)) {
+          relatedSkills.forEach(skill => skills.add(skill));
+        }
+      }
+    }
+
+    // Add career paths as industries
+    userCareerPaths.forEach(path => {
+      const pathLower = path.toLowerCase();
+      industries.add(pathLower);
+    });
+
+    return { skills, industries, locations };
+  }
+
+  /**
+   * Create job profile vector from job text
+   */
+  private createJobProfileVector(jobText: string): {
+    skills: Set<string>;
+    industries: Set<string>;
+    locations: Set<string>;
+  } {
+    const skills = new Set<string>();
+    const industries = new Set<string>();
+    const locations = new Set<string>();
+
+    // Extract skills from job text
+    const skillKeywords = [
+      'programming', 'development', 'coding', 'engineering', 'analytics', 'statistics',
+      'machine learning', 'sql', 'python', 'javascript', 'react', 'node', 'aws',
+      'digital marketing', 'content creation', 'social media', 'branding',
+      'relationship building', 'negotiation', 'lead generation', 'CRM',
+      'problem solving', 'strategic thinking', 'presentation', 'analysis',
+      'financial modeling', 'accounting', 'investment analysis', 'risk assessment',
+      'product strategy', 'user research', 'roadmapping', 'stakeholder management',
+      'user experience', 'visual design', 'prototyping', 'design thinking',
+      'process improvement', 'project management', 'supply chain', 'logistics'
+    ];
+
+    skillKeywords.forEach(skill => {
+      if (jobText.includes(skill)) {
+        skills.add(skill);
+      }
+    });
+
+    // Extract industries from job text
+    const industryKeywords = [
+      'technology', 'fintech', 'healthcare', 'e-commerce', 'consulting', 'finance',
+      'marketing', 'advertising', 'media', 'entertainment', 'retail', 'manufacturing',
+      'automotive', 'aerospace', 'energy', 'real estate', 'education', 'government'
+    ];
+
+    industryKeywords.forEach(industry => {
+      if (jobText.includes(industry)) {
+        industries.add(industry);
+      }
+    });
+
+    return { skills, industries, locations };
+  }
+
+  /**
+   * Calculate profile overlap boost (≥2 overlaps = boost)
+   */
+  private calculateProfileOverlap(
+    userProfile: { skills: Set<string>; industries: Set<string>; locations: Set<string> },
+    jobProfile: { skills: Set<string>; industries: Set<string>; locations: Set<string> }
+  ): number {
+    let overlapCount = 0;
+
+    // Count skill overlaps
+    for (const userSkill of userProfile.skills) {
+      if (jobProfile.skills.has(userSkill)) {
+        overlapCount++;
+      }
+    }
+
+    // Count industry overlaps
+    for (const userIndustry of userProfile.industries) {
+      if (jobProfile.industries.has(userIndustry)) {
+        overlapCount++;
+      }
+    }
+
+    // Count location overlaps
+    for (const userLocation of userProfile.locations) {
+      if (jobProfile.locations.has(userLocation)) {
+        overlapCount++;
+      }
+    }
+
+    // Boost if ≥2 overlaps
+    if (overlapCount >= 2) {
+      return Math.min(20, 5 + (overlapCount * 2)); // 7-20 points based on overlap count
+    }
+
+    return 0;
+  }
+
+  /**
+   * Calculate company tier/quality score
+   */
+  private calculateCompanyTierScore(company: string, jobText: string): { points: number; reason: string } {
+    // Tier 1 companies (known tech/consulting/finance)
+    const tier1Companies = [
+      'google', 'microsoft', 'apple', 'amazon', 'meta', 'netflix', 'spotify', 'uber', 'airbnb',
+      'mckinsey', 'bain', 'bcg', 'deloitte', 'pwc', 'ey', 'kpmg',
+      'goldman sachs', 'jpmorgan', 'morgan stanley', 'blackrock'
+    ];
+
+    // Tier 2 companies (strong EU players)
+    const tier2Companies = [
+      'klarna', 'spotify', 'zalando', 'delivery hero', 'hellofresh', 'n26', 'revolut',
+      'sap', 'siemens', 'bosch', 'adidas', 'bmw', 'mercedes', 'volkswagen'
+    ];
+
+    // Check tier 1
+    for (const tier1 of tier1Companies) {
+      if (company.includes(tier1)) {
+        return { points: 12, reason: 'tier-1 company' };
+      }
+    }
+
+    // Check tier 2
+    for (const tier2 of tier2Companies) {
+      if (company.includes(tier2)) {
+        return { points: 8, reason: 'tier-2 company' };
+      }
+    }
+
+    // Startup/scaleup indicators
+    const startupIndicators = ['startup', 'scaleup', 'series a', 'series b', 'unicorn', 'venture'];
+    for (const indicator of startupIndicators) {
+      if (jobText.includes(indicator)) {
+        return { points: 6, reason: 'startup/scaleup' };
+      }
+    }
+
+    // Company size indicators
+    if (company.length > 3 && !company.includes('ltd') && !company.includes('inc')) {
+      return { points: 3, reason: 'established company' };
+    }
+
+    return { points: 0, reason: '' };
+  }
+
+  /**
+   * Calculate recency/freshness score
+   */
+  private calculateRecencyScore(job: any): { points: number; reason: string } {
+    const postedDate = job.original_posted_date || job.created_at;
+    if (!postedDate) return { points: 0, reason: '' };
+
+    const daysOld = (Date.now() - new Date(postedDate).getTime()) / (1000 * 60 * 60 * 24);
+    
+    if (daysOld < 1) return { points: 10, reason: 'posted today' };
+    if (daysOld < 3) return { points: 8, reason: 'posted this week' };
+    if (daysOld < 7) return { points: 6, reason: 'posted recently' };
+    if (daysOld < 14) return { points: 4, reason: 'posted within 2 weeks' };
+    if (daysOld < 28) return { points: 2, reason: 'posted this month' };
+    
+    return { points: 0, reason: '' };
   }
 
   /**

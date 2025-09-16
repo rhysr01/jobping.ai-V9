@@ -1,14 +1,88 @@
 // EMAIL VERIFICATION SYSTEM
 import { Resend } from 'resend';
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
+import { createClient } from '@supabase/supabase-js';
 
 export class EmailVerificationOracle {
   private static getResendClient() {
     return new Resend(process.env.RESEND_API_KEY);
   }
 
-  static generateVerificationToken(): string {
+  private static getSupabaseClient() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase configuration');
+    }
+    
+    return createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+  }
+
+  // Step 1: Generate and hash token before storage
+  static async generateVerificationToken(email: string): Promise<string> {
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = await bcrypt.hash(rawToken, 12);
+    
+    // Store hashed token in database
+    const supabase = this.getSupabaseClient();
+    const { error } = await supabase
+      .from('users')
+      .update({ 
+        verification_token: hashedToken,
+        verification_token_expires: new Date(Date.now() + 24 * 60 * 60 * 1000)
+      })
+      .eq('email', email);
+      
+    if (error) throw error;
+      
+    // Return raw token for email link
+    return rawToken;
+  }
+
+  // Legacy method for backward compatibility
+  static generateVerificationTokenLegacy(): string {
     return crypto.randomBytes(32).toString('hex');
+  }
+
+  // Step 2: Verify hashed token
+  static async verifyEmailToken(token: string): Promise<boolean> {
+    const supabase = this.getSupabaseClient();
+    const { data: user } = await supabase
+      .from('users')
+      .select('verification_token, verification_token_expires, email')
+      .not('verification_token', 'is', null)
+      .single();
+      
+    if (!user?.verification_token) return false;
+      
+    // Check expiry
+    if (new Date() > new Date(user.verification_token_expires)) {
+      return false;
+    }
+      
+    // Compare hashed token
+    const isValid = await bcrypt.compare(token, user.verification_token);
+      
+    if (isValid) {
+      // Clear token after successful verification
+      await supabase
+        .from('users')
+        .update({ 
+          verification_token: null,
+          verification_token_expires: null,
+          email_verified: true
+        })
+        .eq('verification_token', user.verification_token);
+    }
+      
+    return isValid;
   }
 
   static async sendVerificationEmail(email: string, token: string, userName: string) {
@@ -62,53 +136,33 @@ export class EmailVerificationOracle {
         return { success: true, user: { email: 'test@example.com', email_verified: true } };
       }
 
-      // Find user with this verification token
-      const { data: user, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('verification_token', token)
-        .eq('email_verified', false)
-        .single();
-
-      if (error || !user) {
-        console.log(`❌ Verification failed: ${error ? error.message : 'User not found'}`);
+      // Use new bcrypt-based verification
+      const isValid = await this.verifyEmailToken(token);
+      
+      if (!isValid) {
+        console.log('❌ Verification failed: Invalid or expired token');
         return { success: false, error: 'Invalid or expired verification token' };
       }
 
-      // Check if token is expired (24 hours)
-      const tokenAge = Date.now() - new Date(user.created_at).getTime();
-      const expirationTime = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-      
-      if (tokenAge > expirationTime) {
-        console.log(`❌ Token expired: ${tokenAge}ms > ${expirationTime}ms`);
-        return { success: false, error: 'Verification token has expired' };
-      }
-
-      console.log(`✅ Token valid: ${tokenAge}ms < ${expirationTime}ms`);
-
-      // Activate user
-      const { data: updatedUser, error: updateError } = await supabase
+      // Get the verified user
+      const { data: user, error: userError } = await supabase
         .from('users')
-        .update({ 
-          email_verified: true, 
-          verification_token: null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id)
-        .select()
+        .select('*')
+        .eq('email_verified', true)
+        .not('verification_token', 'is', null)
         .single();
 
-      if (updateError) {
-        console.error('❌ Failed to update user verification status:', updateError);
+      if (userError || !user) {
+        console.error('❌ Failed to fetch verified user:', userError);
         return { success: false, error: 'Failed to verify email' };
       }
 
-      console.log(`✅ User ${updatedUser.email} verified successfully`);
+      console.log(`✅ User ${user.email} verified successfully`);
 
       // Trigger initial matching for verified user
-      await this.triggerWelcomeSequence(updatedUser);
+      await this.triggerWelcomeSequence(user);
 
-      return { success: true, user: updatedUser };
+      return { success: true, user };
     } catch (error) {
       console.error('❌ Email verification error:', error);
       return { success: false, error: 'Verification failed' };
@@ -135,6 +189,18 @@ export class EmailVerificationOracle {
 
   private static async sendWelcomeEmail(user: any) {
     const resend = this.getResendClient();
+
+    // Compute a user-friendly local time string for "first matches"
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    // Keep 11:11 to preserve brand voice, but show user's local TZ abbreviation
+    tomorrow.setHours(11, 11, 0, 0);
+    const timeString = tomorrow.toLocaleString('en-GB', {
+      weekday: 'long',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    });
     await resend.emails.send({
       from: 'JobPing <noreply@jobping.ai>',
       to: [user.email],
@@ -149,7 +215,7 @@ export class EmailVerificationOracle {
             <ul>
               <li>📊 We're analyzing your profile</li>
               <li>🤖 AI is finding your perfect matches</li>
-              <li>📧 First matches arriving at <strong>11:11 AM tomorrow</strong></li>
+              <li>📧 First matches arriving <strong>${timeString}</strong></li>
             </ul>
           </div>
           

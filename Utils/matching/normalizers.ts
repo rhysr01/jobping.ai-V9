@@ -1,266 +1,157 @@
 /**
- * Data Normalization Utilities for JobPing Matching System
- * 
- * This file contains all normalization functions for converting and standardizing
- * data formats. Initially re-exports from jobMatching.ts, then will be migrated
- * here for better organization.
+ * Data normalization utilities for the JobPing matching system
+ * Extracted from the massive jobMatching.ts file
  */
 
-// Re-export existing normalization functions from jobMatching.ts
-// TODO: After testing, move implementations here
-// Import functions from jobMatching
-import { 
-  toStringArray,
-  toOptString,
-  toWorkEnv,
-  reqString,
-  reqFirst,
-  normalizeUser,
-  normalizeCategoriesForRead,
-  mapCategories,
-  mapCities,
-} from '../jobMatching';
+import type { UserRow, NormalizedUser, Job } from './types';
 
-// Re-export all functions
-export { 
-  toStringArray,
-  toOptString,
-  toWorkEnv,
-  reqString,
-  reqFirst,
-  normalizeUser,
-  normalizeCategoriesForRead,
-  mapCategories,
-  mapCities,
+// ---------- Array normalization utilities ----------
+export const toStringArray = (v: unknown, fallback: string[] = []): string[] => {
+  if (!v) return fallback;
+  if (Array.isArray(v)) return v.filter(item => typeof item === 'string');
+  if (typeof v === 'string') {
+    // Handle both comma-separated and pipe-separated strings
+    if (v.includes('|')) {
+      return v.split('|').map(s => s.trim()).filter(Boolean);
+    }
+    return v.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  return fallback;
 };
 
-// Additional normalization utilities
-export function normalizeEmail(email: unknown): string {
-  if (typeof email === 'string') {
-    return email.toLowerCase().trim();
-  }
-  throw new Error('Email must be a string');
-}
+export const toOptString = (v: unknown): string | null =>
+  typeof v === 'string' ? v : null;
 
-export function normalizeCareerPath(careerPath: unknown): string {
-  if (typeof careerPath === 'string') {
-    return careerPath.toLowerCase().trim();
-  }
-  if (Array.isArray(careerPath)) {
-    return careerPath[0]?.toLowerCase().trim() || 'general';
-  }
-  return 'general';
-}
-
-export function normalizeLocation(location: unknown): string[] {
-  if (typeof location === 'string') {
-    return [location.toLowerCase().trim()];
-  }
-  if (Array.isArray(location)) {
-    return location
-      .filter((loc): loc is string => typeof loc === 'string')
-      .map(loc => loc.toLowerCase().trim());
-  }
-  return [];
-}
-
-export function normalizeCompanyType(companyType: unknown): string[] {
-  if (typeof companyType === 'string') {
-    return [companyType.toLowerCase().trim()];
-  }
-  if (Array.isArray(companyType)) {
-    return companyType
-      .filter((type): type is string => typeof type === 'string')
-      .map(type => type.toLowerCase().trim());
-  }
-  return [];
-}
-
-export function normalizeRole(role: unknown): string[] {
-  if (typeof role === 'string') {
-    return [role.toLowerCase().trim()];
-  }
-  if (Array.isArray(role)) {
-    return role
-      .filter((r): r is string => typeof r === 'string')
-      .map(r => r.toLowerCase().trim());
-  }
-  return [];
-}
-
-export function normalizeLanguage(language: unknown): string[] {
-  if (typeof language === 'string') {
-    return [language.toLowerCase().trim()];
-  }
-  if (Array.isArray(language)) {
-    return language
-      .filter((lang): lang is string => typeof lang === 'string')
-      .map(lang => lang.toLowerCase().trim());
-  }
-  return [];
-}
-
-export function normalizeWorkEnvironment(env: unknown): string {
-  if (typeof env === 'string') {
-    const normalized = env.toLowerCase().trim();
-    if (['remote', 'hybrid', 'office', 'onsite'].includes(normalized)) {
-      return normalized;
-    }
-  }
-  return 'unclear';
-}
-
-export function normalizeVisaStatus(status: unknown): string {
-  if (typeof status === 'string') {
-    const normalized = status.toLowerCase().trim();
-    if (['eu citizen', 'uk citizen', 'visa required', 'sponsorship available'].includes(normalized)) {
-      return normalized;
-    }
-  }
-  return 'unknown';
-}
-
-export function normalizeStartDate(date: unknown): string | null {
-  if (typeof date === 'string') {
-    const trimmed = date.trim();
-    if (trimmed) {
-      // Basic date validation
-      const parsed = new Date(trimmed);
-      if (!isNaN(parsed.getTime())) {
-        return trimmed;
-      }
-    }
-  }
+export const toWorkEnv = (v: unknown): 'remote' | 'hybrid' | 'on-site' | null => {
+  const s = toOptString(v);
+  if (!s) return null;
+  const lower = s.toLowerCase();
+  if (lower.includes('remote')) return 'remote';
+  if (lower.includes('hybrid')) return 'hybrid';
+  if (lower.includes('on-site') || lower.includes('office')) return 'on-site';
   return null;
+};
+
+// ---------- String utilities ----------
+export const reqString = (s: string | null | undefined, fallback = ''): string =>
+  s || fallback;
+
+export const reqFirst = (arr: string[] | null | undefined, fallback = 'unknown'): string =>
+  (arr && arr.length > 0) ? arr[0] : fallback;
+
+// ---------- Category normalization ----------
+export const normalizeCategoriesForRead = (v: unknown): string[] => toStringArray(v);
+
+export const mapCategories = <T>(categories: unknown, fn: (c: string) => T): T[] =>
+  normalizeCategoriesForRead(categories).map(fn);
+
+// ---------- Object utilities ----------
+export const anyIndex = (obj: unknown): Record<string, any> => (obj as Record<string, any>);
+
+type UnknownObj = Record<string, unknown>;
+
+// ---------- Job validation ----------
+export function isJob(v: unknown): v is Job {
+  if (!v || typeof v !== 'object') return false;
+  const obj = v as UnknownObj;
+  return (
+    typeof obj.title === 'string' &&
+    typeof obj.company === 'string' &&
+    typeof obj.location === 'string' &&
+    typeof obj.description === 'string' &&
+    typeof obj.job_url === 'string' &&
+    typeof obj.source === 'string' &&
+    typeof obj.job_hash === 'string'
+  );
 }
 
-export function normalizeEntryLevel(level: unknown): string {
-  if (typeof level === 'string') {
-    const normalized = level.toLowerCase().trim();
-    if (['graduate', 'entry', 'junior', 'mid', 'senior'].includes(normalized)) {
-      return normalized;
+// ---------- Convenience functions ----------
+export const cats = (v: unknown): string[] => normalizeCategoriesForRead(v);
+
+export const mapCats = <T>(v: unknown, fn: (c: string) => T): T[] =>
+  mapCategories(v, fn);
+
+export const mapCities = <T>(v: unknown, fn: (city: string) => T): T[] =>
+  toStringArray(v).map(fn);
+
+export const idx = (o: unknown) => o as Record<string, any>;
+
+// ---------- User normalization ----------
+export const normalizeUser = (u: Partial<UserRow> & { email: string }): NormalizedUser => ({
+  email: u.email,
+  career_path: toStringArray(u.career_path),
+  target_cities: toStringArray(u.target_cities),
+  languages_spoken: toStringArray(u.languages_spoken),
+  company_types: toStringArray(u.company_types),
+  roles_selected: toStringArray(u.roles_selected),
+  professional_expertise: toOptString(u.professional_expertise),
+  entry_level_preference: toOptString(u.entry_level_preference),
+  work_environment: toWorkEnv(u.work_environment),
+  start_date: toOptString(u.start_date),
+  careerFocus: reqFirst(toStringArray(u.career_path))
+});
+
+// ---------- Eligibility and filtering ----------
+export const hasEligibility = (v: unknown) => {
+  const cats = normalizeCategoriesForRead(v);
+  return cats.some(c => c.startsWith('eligibility:'));
+};
+
+export const careerSlugs = (v: unknown) => cats(v).filter((c: string) => c.startsWith('career:'));
+export const locTag = (v: unknown) => cats(v).find((c: string) => c.startsWith('loc:')) ?? 'loc:unknown';
+
+// ---------- Internal normalization functions ----------
+function normalizeToString(value: any): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return value.toString();
+  if (Array.isArray(value)) return value.join(', ');
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
+function normalizeStringToArray(value: any): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.map(normalizeToString).filter(Boolean);
+  if (typeof value === 'string') {
+    if (value.includes('|')) {
+      return value.split('|').map(s => s.trim()).filter(Boolean);
     }
+    return value.split(',').map(s => s.trim()).filter(Boolean);
   }
-  return 'entry';
+  return [normalizeToString(value)].filter(Boolean);
 }
 
-// Batch normalization for user preferences - aligned with database schema
-export function normalizeUserPreferences(userData: Record<string, unknown>): {
-  email: string;
-  full_name: string;
-  professional_expertise: string;
-  visa_status: string;
-  start_date: string;
-  work_environment: string;
-  languages_spoken: string[];
-  company_types: string[];
-  roles_selected: string[];
-  career_path: string;
-  entry_level_preference: string;
-  target_cities: string[];
-} {
+// ---------- Job normalization for matching ----------
+export function normalizeJobForMatching(job: Job): Job {
   return {
-    email: normalizeEmail(userData.email),
-    full_name: toOptString(userData.full_name) || 'Unknown User',
-    professional_expertise: toOptString(userData.professional_expertise) || 'General',
-    visa_status: normalizeVisaStatus(userData.visa_status),
-    start_date: normalizeStartDate(userData.start_date) || new Date().toISOString().split('T')[0],
-    work_environment: normalizeWorkEnvironment(userData.work_environment),
-    languages_spoken: normalizeLanguage(userData.languages_spoken),
-    company_types: normalizeCompanyType(userData.company_types),
-    roles_selected: normalizeRole(userData.roles_selected),
-    career_path: normalizeCareerPath(userData.career_path),
-    entry_level_preference: normalizeEntryLevel(userData.entry_level_preference),
-    target_cities: normalizeLocation(userData.target_cities),
+    ...job,
+    title: reqString(job.title),
+    company: reqString(job.company),
+    location: reqString(job.location),
+    description: reqString(job.description),
+    job_url: reqString(job.job_url),
+    source: reqString(job.source),
+    job_hash: reqString(job.job_hash),
+    categories: normalizeCategoriesForRead(job.categories),
+    languages_required: toStringArray(job.languages_required),
+    work_environment: toOptString(job.work_environment)
   };
 }
 
-// Job data normalization - aligned with database schema
-export function normalizeJobData(jobData: Record<string, unknown>): {
-  title: string;
-  company: string;
-  job_url: string;
-  categories: string[];
-  location: string;  // Single string, not array
-  description: string;  // Required string, not optional
-  experience_required: string;
-  work_environment: string;
-  source: string;
-  job_hash: string;
-  posted_at: string;
-  language_requirements: string[];
-  scrape_timestamp: string;
-  created_at: string;
-  updated_at: string;
-  freshness_tier: string;
-  ai_labels: string[];
-  work_location: string;
-  city: string;
-  country: string;
-  company_name: string;
-} {
+// ---------- User preferences normalization ----------
+export function normalizeUserPreferences(userPrefs: UserPreferences): NormalizedUser {
   return {
-    title: reqString(jobData.title as any),
-    company: reqString(jobData.company as any),
-    job_url: reqString(jobData.job_url as any),
-    categories: toStringArray(jobData.categories),
-    location: reqString(jobData.location as any),  // Single string
-    description: reqString(jobData.description as any),  // Required string
-    experience_required: toOptString(jobData.experience_required) || 'entry',
-    work_environment: toOptString(jobData.work_environment) || 'unclear',
-    source: toOptString(jobData.source) || 'unknown',
-    job_hash: reqString(jobData.job_hash as any),
-    posted_at: toOptString(jobData.posted_at) || new Date().toISOString(),
-    language_requirements: toStringArray(jobData.language_requirements),
-    scrape_timestamp: toOptString(jobData.scrape_timestamp) || new Date().toISOString(),
-    created_at: toOptString(jobData.created_at) || new Date().toISOString(),
-    updated_at: toOptString(jobData.updated_at) || new Date().toISOString(),
-    freshness_tier: toOptString(jobData.freshness_tier) || 'recent',
-    ai_labels: toStringArray(jobData.ai_labels),
-    work_location: toOptString(jobData.work_location) || 'unclear',
-    city: toOptString(jobData.city) || 'unknown',
-    country: toOptString(jobData.country) || 'unknown',
-    company_name: toOptString(jobData.company_name) || 'unknown',
+    email: userPrefs.email,
+    career_path: toStringArray(userPrefs.career_path),
+    target_cities: toStringArray(userPrefs.target_cities),
+    languages_spoken: toStringArray(userPrefs.languages_spoken),
+    company_types: toStringArray(userPrefs.company_types),
+    roles_selected: toStringArray(userPrefs.roles_selected),
+    professional_expertise: toOptString(userPrefs.professional_expertise),
+    entry_level_preference: toOptString(userPrefs.entry_level_preference),
+    work_environment: toWorkEnv(userPrefs.work_environment),
+    start_date: null, // Not available in UserPreferences
+    careerFocus: reqFirst(toStringArray(userPrefs.career_path))
   };
 }
-
-// Validation helpers
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-export function isValidUrl(url: string): boolean {
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function isValidDate(date: string): boolean {
-  const parsed = new Date(date);
-  return !isNaN(parsed.getTime());
-}
-
-// Sanitization helpers
-export function sanitizeString(input: unknown): string {
-  if (typeof input === 'string') {
-    return input.trim().replace(/[<>]/g, '');
-  }
-  return '';
-}
-
-export function sanitizeArray(input: unknown): string[] {
-  if (Array.isArray(input)) {
-    return input
-      .filter((item): item is string => typeof item === 'string')
-      .map(sanitizeString)
-      .filter(Boolean);
-  }
-  return [];
-}
-
-// Export type for normalization functions
-export type NormalizerFunction<T> = (input: unknown) => T;

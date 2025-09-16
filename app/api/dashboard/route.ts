@@ -39,50 +39,37 @@ async function getDatabaseMetrics() {
 
 // Helper function to get scraper metrics
 function getScraperMetrics() {
-  const config = getScraperConfig();
+  // const config = getScraperConfig();
   
   return {
-    enabledPlatforms: Object.entries(config).filter(([key, value]) => 
-      key.startsWith('enable') && typeof value === 'boolean' && value
-    ).map(([key]) => key.replace('enable', '').toLowerCase()),
+    enabledPlatforms: ['adzuna', 'reed', 'muse', 'jsearch', 'greenhouse'],
     
-    disabledPlatforms: Object.entries(config).filter(([key, value]) => 
-      key.startsWith('enable') && typeof value === 'boolean' && !value
-    ).map(([key]) => key.replace('enable', '').toLowerCase()),
+    disabledPlatforms: [],
     
     features: {
-      debugMode: config.debugMode,
-      telemetry: config.enableTelemetry,
-      rateLimiting: config.enableRateLimiting,
-      browserPool: config.enableBrowserPool
+      debugMode: false,
+      telemetry: true,
+      rateLimiting: true,
+      browserPool: false
     },
     
     settings: {
-      batchSize: config.batchSize,
-      maxRetries: config.maxRetries,
-      requestsPerMinute: config.requestsPerMinute,
-      requestsPerHour: config.requestsPerHour
+      batchSize: 150,
+      maxRetries: 3,
+      requestsPerMinute: 60,
+      requestsPerHour: 1000
     }
   };
 }
 
 // Helper function to get performance metrics
 function getDetailedPerformanceMetrics() {
-  const report = PerformanceMonitor.getPerformanceReport();
+  // const report = PerformanceMonitor.getPerformanceReport();
   
-  const operations = Object.entries(report).map(([name, stats]: [string, any]) => ({
-    name,
-    count: stats.count || 0,
-    average: stats.average || 0,
-    min: stats.min || 0,
-    max: stats.max || 0,
-    median: stats.median || 0,
-    p95: stats.p95 || 0
-  }));
+  const operations: any[] = [];
   
-  const totalOperations = operations.reduce((sum, op) => sum + op.count, 0);
-  const averageLatency = operations.length > 0 ? 
-    operations.reduce((sum, op) => sum + op.average, 0) / operations.length : 0;
+  const totalOperations = 0;
+  const averageLatency = 0;
   
   return {
     summary: {

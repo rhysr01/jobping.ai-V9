@@ -167,18 +167,7 @@ jest.mock('@/Utils/datadogMetrics', () => ({
   },
 }));
 
-// Mock EnhancedAIMatchingCache to prevent hanging
-jest.mock('@/Utils/enhancedCache', () => ({
-  EnhancedAIMatchingCache: {
-    getInstance: jest.fn(() => ({
-      close: jest.fn(() => Promise.resolve()),
-      log: jest.fn(),
-      startMaintenance: jest.fn(),
-      sweepInterval: null, // Prevent setInterval from running
-      sweep: jest.fn(),
-    })),
-  },
-}));
+// EnhancedAIMatchingCache removed - no longer needed
 
 // Global test utilities
 global.fetch = jest.fn();

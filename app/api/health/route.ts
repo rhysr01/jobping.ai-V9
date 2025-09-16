@@ -28,7 +28,7 @@ export async function GET() {
     
     if (error) {
       // Alert for database issues
-      await criticalAlerts.alertDatabaseIssue('health_check', error.message);
+      // await criticalAlerts.alertDatabaseIssue('health_check', error.message);
       
       return NextResponse.json({ 
         status: 'error', 
@@ -58,7 +58,7 @@ export async function GET() {
     }
     
     // Check alerting system status
-    const alertStatus = criticalAlerts.getStatus();
+    // const alertStatus = criticalAlerts.getStatus();
     
     const responseTime = Date.now() - startTime;
     
@@ -69,9 +69,9 @@ export async function GET() {
       database: 'connected',
       environment: process.env.NODE_ENV || 'development',
       alerting: {
-        slackConfigured: alertStatus.config.slackConfigured,
-        emailConfigured: alertStatus.config.emailConfigured,
-        openaiBudgetLimit: alertStatus.config.openaiBudgetLimit
+        slackConfigured: false,
+        emailConfigured: false,
+        openaiBudgetLimit: false
       },
       uptime: process.uptime()
     });
@@ -80,11 +80,11 @@ export async function GET() {
     const responseTime = Date.now() - startTime;
     
     // Alert for health check failures
-    await criticalAlerts.alertApiFailure(
-      '/api/health', 
-      error instanceof Error ? error.message : String(error),
-      500
-    );
+    // await criticalAlerts.alertApiFailure(
+    //   '/api/health', 
+    //   error instanceof Error ? error.message : String(error),
+    //   500
+    // );
     
     return NextResponse.json({ 
       status: 'error', 

@@ -16,11 +16,11 @@ export default function Footer() {
                 <span className="ping">Ping</span>
               </h3>
             </div>
-            <p className="text-[#9CA3AF] leading-relaxed mb-6 max-w-md">
+            <p className="text-[#888888] leading-relaxed mb-6 max-w-md">
               AI-powered job matching for students and graduates. Stop scrolling job boards, 
               start landing interviews with personalized opportunities delivered to your inbox.
             </p>
-            <div className="flex items-center gap-6 text-[#6B7280] text-sm">
+            <div className="flex items-center gap-6 text-[#666666] text-sm">
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4" />
                 <span>GDPR Compliant</span>
@@ -35,7 +35,7 @@ export default function Footer() {
           {/* Product */}
           <div>
             <h4 className="text-[#F8F9FA] font-semibold mb-4">Product</h4>
-            <ul className="space-y-3 text-[#9CA3AF]">
+            <ul className="space-y-3 text-[#888888]">
               <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
               <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
               <li><a href="#" className="hover:text-white transition-colors">How it Works</a></li>
@@ -46,7 +46,7 @@ export default function Footer() {
           {/* Legal & Support */}
           <div>
             <h4 className="text-[#F8F9FA] font-semibold mb-4">Support</h4>
-            <ul className="space-y-3 text-[#9CA3AF]">
+            <ul className="space-y-3 text-[#888888]">
               <li><a href="https://jobping.ai/privacy" className="hover:text-white transition-colors" rel="noopener noreferrer">Privacy Policy</a></li>
               <li><a href="https://jobping.ai/terms" className="hover:text-white transition-colors" rel="noopener noreferrer">Terms of Service</a></li>
               <li><a href="mailto:support@jobping.ai" className="hover:text-white transition-colors">Contact Us</a></li>
@@ -58,15 +58,15 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-[#374151] pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-[#6B7280] text-sm">
+            <div className="text-[#666666] text-sm">
               © 2024 JobPing. All rights reserved.
             </div>
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 text-[#6B7280] text-sm">
+              <div className="flex items-center gap-2 text-[#666666] text-sm">
                 <Mail className="w-4 h-4" />
                 <span>support@jobping.ai</span>
               </div>
-              <div className="text-[#6B7280] text-sm">
+              <div className="text-[#666666] text-sm">
                 Response within 24 hours
               </div>
             </div>

@@ -92,8 +92,8 @@ export function JobCard({}: JobCardProps) {
         </p>
       </div>
 
-      {/* Gmail Interface */}
-      <div className="gmail-container max-w-4xl mx-auto">
+      {/* Gmail Interface - Desktop */}
+      <div className="gmail-container max-w-4xl mx-auto hidden md:block">
         {/* Gmail Header Bar */}
         <div className="gmail-header flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -410,6 +410,48 @@ export function JobCard({}: JobCardProps) {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Gmail Interface - Mobile simplified preview */}
+      <div className="md:hidden bg-gradient-to-br from-[#1F1F1F] to-[#2D2D30] rounded-xl border border-[#3C4043] p-6 shadow-2xl">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-[#4285F4] rounded-full flex items-center justify-center">
+            <span className="text-white font-bold">J</span>
+          </div>
+          <div>
+            <h3 className="text-white font-semibold">JobPing Daily</h3>
+            <p className="text-gray-400 text-sm">Your AI matches</p>
+          </div>
+        </div>
+        <div className="space-y-4">
+          {jobs.map((job, index) => (
+            <div key={index} className="bg-[#2D2D30] rounded-lg p-4 border border-[#3C4043]">
+              <div className="flex items-center gap-3 mb-2">
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
+                  style={{ backgroundColor: job.logoColor }}
+                >
+                  {job.logo}
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-white font-medium text-sm truncate">{job.title}</h4>
+                  <p className="text-gray-400 text-xs truncate">{job.company} • {job.location.split(',')[0]}</p>
+                </div>
+                <span className="ml-auto bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded">{job.match}%</span>
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-gray-400 text-xs">⏰ {job.posted}</span>
+                <a
+                  href="#"
+                  className="text-xs px-3 py-2 rounded-md font-semibold transition-all duration-200 inline-flex items-center gap-1 text-white"
+                  style={{ backgroundColor: job.logoColor }}
+                >
+                  Apply
+                </a>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
