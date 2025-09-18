@@ -166,7 +166,7 @@ export class BusinessMetricsCollector {
       .gte('created_at', cutoffDate.toISOString());
 
     const userSatisfactionScore = feedback?.length > 0 
-      ? feedback.reduce((sum, f) => sum + f.rating, 0) / feedback.length 
+      ? (feedback as Array<{ rating: number }>).reduce((sum: number, f: { rating: number }) => sum + (f.rating || 0), 0) / feedback.length 
       : 0;
 
     return {
@@ -192,8 +192,10 @@ export class BusinessMetricsCollector {
     const timeframeMs = this.getTimeframeMs(timeframe);
     const cutoffDate = new Date(now.getTime() - timeframeMs);
 
-    const totalJobs = jobs.length;
-    const newJobs = jobs.filter(j => new Date(j.created_at) > cutoffDate).length;
+    type JobRow = { id: string; created_at: string; posted_at?: string | null; categories?: any };
+    const jobRows = jobs as unknown as JobRow[];
+    const totalJobs = jobRows.length;
+    const newJobs = jobRows.filter((j: JobRow) => new Date(j.created_at) > cutoffDate).length;
 
     // Get matched jobs
     const { data: matches } = await this.supabase
@@ -205,8 +207,8 @@ export class BusinessMetricsCollector {
 
     // Calculate job freshness (jobs posted within last 7 days)
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const freshJobs = jobs.filter(j => 
-      j.posted_at && new Date(j.posted_at) > sevenDaysAgo
+    const freshJobs = jobRows.filter((j: JobRow) => 
+      j.posted_at != null && new Date(j.posted_at as string) > sevenDaysAgo
     ).length;
     const jobFreshnessScore = totalJobs > 0 ? (freshJobs / totalJobs) * 100 : 0;
 
@@ -229,16 +231,19 @@ export class BusinessMetricsCollector {
 
     if (error) throw error;
 
-    const totalMatches = matches.length;
-    const aiMatches = matches.filter(m => m.match_algorithm === 'ai').length;
-    const ruleBasedMatches = matches.filter(m => m.match_algorithm === 'rules').length;
+    type MatchRow = { match_score?: number; match_algorithm?: string; created_at?: string };
+    const matchRows = matches as unknown as MatchRow[];
+
+    const totalMatches = matchRows.length;
+    const aiMatches = matchRows.filter((m: MatchRow) => m.match_algorithm === 'ai').length;
+    const ruleBasedMatches = matchRows.filter((m: MatchRow) => m.match_algorithm === 'rules').length;
     
-    const averageMatchScore = matches.length > 0 
-      ? matches.reduce((sum, m) => sum + (m.match_score || 0), 0) / matches.length 
+    const averageMatchScore = matchRows.length > 0 
+      ? matchRows.reduce((sum: number, m: MatchRow) => sum + (m.match_score || 0), 0) / matchRows.length 
       : 0;
 
     // Calculate match success rate (matches with score > 70)
-    const successfulMatches = matches.filter(m => (m.match_score || 0) > 70).length;
+    const successfulMatches = matchRows.filter((m: MatchRow) => (m.match_score || 0) > 70).length;
     const matchSuccessRate = totalMatches > 0 ? (successfulMatches / totalMatches) * 100 : 0;
 
     return {
