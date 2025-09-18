@@ -11,12 +11,12 @@ export {
   EMAIL_PERFORMANCE_METRICS 
 } from './optimizedSender';
 
-// Templates - OPTIMIZED VERSION (87-91% size reduction)
+// Templates - BRAND CONSISTENT VERSION (Black & White Design)
 export { 
   createWelcomeEmail, 
   createJobMatchesEmail,
-  EMAIL_OPTIMIZATION_METRICS 
-} from './optimizedTemplates';
+  EMAIL_BRAND_METRICS 
+} from './brandConsistentTemplates';
 
 // Clients (if needed externally)
 export { getResendClient, getSupabaseClient, EMAIL_CONFIG } from './clients';

@@ -1,7 +1,7 @@
 // ✅ FIXED Muse Scraper - Optimized for EU Early Career Jobs
 import axios from 'axios';
-import { classifyEarlyCareer, convertToDatabaseFormat } from './utils.js';
-import { getSmartDateStrategy, getSmartPaginationStrategy, withFallback } from './smart-strategies.js';
+import { classifyEarlyCareer, convertToDatabaseFormat } from './utils';
+import { getSmartDateStrategy, getSmartPaginationStrategy, withFallback } from './smart-strategies';
 
 // Types
 interface IngestJob {
@@ -111,7 +111,7 @@ const MUSE_CONFIG = {
   ],
   
   // ✅ OPTIMIZED: Better rate limiting for 500 req/hour limit
-  requestInterval: 8000, // 8 seconds = 450 requests/hour (safe buffer)
+  requestInterval: process.env.JOBPING_TEST_MODE === '1' ? 1000 : 3000, // 1s test, 3s prod
   maxRequestsPerHour: 450, // Leave buffer under 500 limit
   seenJobTTL: 72 * 60 * 60 * 1000, // 72 hours
   resultsPerPage: 20, // Max for Muse API
@@ -450,6 +450,11 @@ class MuseScraper {
         for (const job of response.results) {
           const ingestJob = this.convertToIngestJob(job);
           
+              // Skip remote per policy
+              if ((ingestJob.location || '').toLowerCase().includes('remote')) {
+                continue;
+              }
+
           // Apply EU location filtering
           if (this.isEULocation(ingestJob)) {
             // Apply early-career filtering

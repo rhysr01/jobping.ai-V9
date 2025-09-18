@@ -184,7 +184,7 @@ export class AICostManager {
       .gte('created_at', today);
 
     if (data) {
-      this.costMetrics.dailyCost = data.reduce((sum, log) => sum + log.cost_usd, 0);
+      this.costMetrics.dailyCost = data.reduce((sum: number, log: any) => sum + log.cost_usd, 0);
       this.costMetrics.dailyCalls = data.length;
       
       // Count per-user calls

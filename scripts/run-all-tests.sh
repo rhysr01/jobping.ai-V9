@@ -1,9 +1,12 @@
 #!/bin/bash
 
-# 🚀 JobPing Complete Pilot Test Suite
-# Runs all pilot testing scripts and provides comprehensive summary
+# JobPing Test Runner
+# Runs all test suites with proper configuration
 
-set -e  # Exit on any error
+set -e
+
+echo "🧪 Starting JobPing Test Suite"
+echo "================================"
 
 # Colors for output
 RED='\033[0;31m'
@@ -12,130 +15,143 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Configuration
-BASE_URL=${1:-"http://localhost:3000"}
-TEST_MODE=${2:-"test"}
+# Test configuration
+COVERAGE_THRESHOLD=75
+TIMEOUT=30000
 
-echo -e "${BLUE}🚀 JobPing Complete Pilot Test Suite${NC}"
-echo -e "${BLUE}=====================================${NC}"
-echo -e "Base URL: ${BASE_URL}"
-echo -e "Test Mode: ${TEST_MODE}"
-echo ""
-
-# Function to run test and capture results
-run_test() {
-    local test_name="$1"
-    local test_command="$2"
-    local test_file="$3"
-    
-    echo -e "${BLUE}Running ${test_name}...${NC}"
-    
-    if eval "$test_command"; then
-        echo -e "${GREEN}✅ ${test_name}: PASSED${NC}"
-        return 0
-    else
-        echo -e "${RED}❌ ${test_name}: FAILED${NC}"
-        return 1
-    fi
+# Function to print colored output
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
 }
 
-# Initialize counters
-total_tests=0
-passed_tests=0
-failed_tests=0
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
 
-# Test 1: Pilot Smoke Test
-total_tests=$((total_tests + 1))
-if run_test "Pilot Smoke Test" "JOBPING_TEST_MODE=1 NODE_ENV=test npx tsx scripts/pilot-smoke.ts --base ${BASE_URL}" "PILOT_SMOKE.md"; then
-    passed_tests=$((passed_tests + 1))
-else
-    failed_tests=$((failed_tests + 1))
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check if we're in the right directory
+if [ ! -f "package.json" ]; then
+    print_error "Please run this script from the project root directory"
+    exit 1
 fi
 
-echo ""
-
-# Test 2: Lock & Rate Limit Harness
-total_tests=$((total_tests + 1))
-if run_test "Lock & Rate Limit Harness" "JOBPING_TEST_MODE=1 NODE_ENV=test npx tsx scripts/lock-and-rl-check.ts --base ${BASE_URL}"; then
-    passed_tests=$((passed_tests + 1))
-else
-    failed_tests=$((failed_tests + 1))
+# Check if node_modules exists
+if [ ! -d "node_modules" ]; then
+    print_status "Installing dependencies..."
+    npm install
 fi
 
-echo ""
+# Set test environment
+export NODE_ENV=test
+export MATCH_USERS_DISABLE_AI=true
+export BYPASS_RESERVATION=1
 
-# Test 3: Legacy Pilot Testing
-total_tests=$((total_tests + 1))
-if run_test "Legacy Pilot Testing" "JOBPING_TEST_MODE=1 NODE_ENV=test node scripts/pilot-testing.js"; then
-    passed_tests=$((passed_tests + 1))
-else
-    failed_tests=$((failed_tests + 1))
-fi
+print_status "Environment: $NODE_ENV"
+print_status "AI Matching: Disabled"
+print_status "Reservation Bypass: Enabled"
 
-echo ""
-echo -e "${BLUE}📊 FINAL SUMMARY${NC}"
-echo -e "${BLUE}================${NC}"
-echo -e "Total Tests: ${total_tests}"
-echo -e "${GREEN}✅ Passed: ${passed_tests}${NC}"
-echo -e "${RED}❌ Failed: ${failed_tests}${NC}"
+# Run different test suites
+run_unit_tests() {
+    print_status "Running Unit Tests..."
+    npm test -- --testPathPattern=unit --coverage --coverageReporters=text --coverageReporters=html
+}
 
-# Calculate success rate
-if [ $total_tests -gt 0 ]; then
-    success_rate=$((passed_tests * 100 / total_tests))
-    echo -e "Success Rate: ${success_rate}%"
-else
-    success_rate=0
-    echo -e "Success Rate: 0%"
-fi
+run_integration_tests() {
+    print_status "Running Integration Tests..."
+    npm test -- --testPathPattern=integration --coverage --coverageReporters=text
+}
 
-echo ""
+run_performance_tests() {
+    print_status "Running Performance Tests..."
+    npm test -- --testPathPattern=performance --testTimeout=60000
+}
 
-# Determine pilot readiness
-if [ $success_rate -ge 90 ]; then
-    echo -e "${GREEN}🎉 PILOT READY! Success rate: ${success_rate}%${NC}"
-    echo -e "${GREEN}System is ready for 150-user pilot launch.${NC}"
-    exit_code=0
-elif [ $success_rate -ge 70 ]; then
-    echo -e "${YELLOW}⚠️ PILOT READY WITH CAUTION. Success rate: ${success_rate}%${NC}"
-    echo -e "${YELLOW}Consider fixing failed tests before proceeding.${NC}"
-    exit_code=0
-else
-    echo -e "${RED}❌ NOT READY FOR PILOT. Success rate: ${success_rate}%${NC}"
-    echo -e "${RED}Fix critical issues before proceeding with pilot.${NC}"
-    exit_code=1
-fi
+run_api_tests() {
+    print_status "Running API Tests..."
+    npm test -- --testPathPattern=api --coverage --coverageReporters=text
+}
 
-echo ""
+run_all_tests() {
+    print_status "Running All Tests..."
+    npm test -- --coverage --coverageReporters=text --coverageReporters=html --testTimeout=$TIMEOUT
+}
 
-# Show generated reports
-if [ -f "PILOT_SMOKE.md" ]; then
-    echo -e "${BLUE}📄 Generated Reports:${NC}"
-    echo -e "  - PILOT_SMOKE.md (Comprehensive smoke test report)"
+# Parse command line arguments
+case "${1:-all}" in
+    "unit")
+        run_unit_tests
+        ;;
+    "integration")
+        run_integration_tests
+        ;;
+    "performance")
+        run_performance_tests
+        ;;
+    "api")
+        run_api_tests
+        ;;
+    "all")
+        run_all_tests
+        ;;
+    "quick")
+        print_status "Running Quick Tests (no coverage)..."
+        npm test -- --testPathPattern="unit|integration" --testTimeout=15000
+        ;;
+    "ci")
+        print_status "Running CI Tests..."
+        npm test -- --coverage --coverageReporters=text --coverageReporters=lcov --testTimeout=$TIMEOUT --ci --watchAll=false
+        ;;
+    *)
+        echo "Usage: $0 [unit|integration|performance|api|all|quick|ci]"
+        echo ""
+        echo "Test suites:"
+        echo "  unit        - Unit tests only"
+        echo "  integration - Integration tests only"
+        echo "  performance - Performance tests only"
+        echo "  api         - API tests only"
+        echo "  all         - All tests (default)"
+        echo "  quick       - Quick tests without coverage"
+        echo "  ci          - CI-optimized tests"
+        exit 1
+        ;;
+esac
+
+# Check test results
+if [ $? -eq 0 ]; then
+    print_success "All tests passed! ✅"
+    
+    # Check coverage if coverage was generated
+    if [ -f "coverage/coverage-summary.txt" ]; then
+        COVERAGE=$(grep -o 'All files[^0-9]*[0-9]*\.[0-9]*' coverage/coverage-summary.txt | grep -o '[0-9]*\.[0-9]*$')
+        if [ ! -z "$COVERAGE" ]; then
+            COVERAGE_INT=$(echo $COVERAGE | cut -d. -f1)
+            if [ $COVERAGE_INT -ge $COVERAGE_THRESHOLD ]; then
+                print_success "Coverage: ${COVERAGE}% (meets threshold of ${COVERAGE_THRESHOLD}%)"
+            else
+                print_warning "Coverage: ${COVERAGE}% (below threshold of ${COVERAGE_THRESHOLD}%)"
+            fi
+        fi
+    fi
+    
     echo ""
-    echo -e "${BLUE}📋 Quick Report Preview:${NC}"
-    echo "----------------------------------------"
-    head -20 PILOT_SMOKE.md
-    echo "----------------------------------------"
-fi
-
-echo ""
-echo -e "${BLUE}🔧 Next Steps:${NC}"
-if [ $failed_tests -gt 0 ]; then
-    echo -e "1. Review failed tests and fix underlying issues"
-    echo -e "2. Check system logs for detailed error information"
-    echo -e "3. Verify environment configuration and API keys"
-    echo -e "4. Test individual components to isolate issues"
-    echo -e "5. Re-run test suite after fixes are applied"
+    print_success "Test suite completed successfully!"
+    echo "📊 Coverage report: coverage/index.html"
+    echo "📈 Test results: Check console output above"
+    
 else
-    echo -e "1. ✅ All tests passed successfully"
-    echo -e "2. 🚀 System is ready for pilot launch"
-    echo -e "3. 📊 Monitor system performance during pilot"
-    echo -e "4. 📈 Scale up gradually based on pilot results"
+    print_error "Some tests failed! ❌"
+    echo ""
+    print_error "Please check the test output above for details."
+    echo "💡 Tips:"
+    echo "   - Run 'npm test -- --verbose' for detailed output"
+    echo "   - Run 'npm test -- --testNamePattern=<test-name>' for specific tests"
+    echo "   - Check jest.setup.ts for test configuration"
+    exit 1
 fi
-
-echo ""
-echo -e "${BLUE}📚 Documentation:${NC}"
-echo -e "  - scripts/README.md (Complete documentation)"
-echo -e "  - PILOT_SMOKE.md (Detailed test report)"
-
-exit $exit_code

@@ -1,0 +1,46 @@
+./app/api/create-checkout-session/route.ts:45:    // Validate required fields
+./app/api/scrape/rapidapi-internships/route.ts:14:    // Dynamic import to avoid build-time issues
+./app/api/scrape/jooble/route.ts:17:    // Dynamic imports to avoid build-time issues
+./app/api/scrape/jooble/route.ts:70:    // Dynamic import to avoid build-time issues
+./app/api/match-users/route.ts:6:// Removed unused import: generateRobustFallbackMatches - now handled by ConsolidatedMatchingEngine
+./app/api/match-users/route.ts:108:    // Check if required columns exist by attempting a sample query
+./app/api/webhooks/stripe/route.ts:289:    // Example implementation with Resend (you'd need to import and configure)
+./jest.setup.js:3:// Polyfill for TextEncoder/TextDecoder (required for cheerio and other web APIs)
+./jest.setup.js:8:// Polyfill for crypto.randomUUID (required for Node.js < 19)
+./jest.setup.js:15:// Polyfill for ReadableStream (required for undici/fetch)
+./jest.setup.js:24:// Polyfill for WritableStream (required for undici/fetch)
+./jest.setup.js:33:// Polyfill for TransformStream (required for undici/fetch)
+./jest.setup.js:42:// Polyfill for MessagePort (required for undici/fetch)
+./jest.setup.js:51:// Polyfill for MessageChannel (required for undici/fetch)
+./dist/scrapers/greenhouse-standardized.js:19:// Local helpers to avoid cross-module import issues
+./dist/scrapers/greenhouse-standardized.js:481:// Note: entrypoint removed; invoke runGreenhouseAndSave() via import in the runner or CLI.
+./api-health-check.js:95:        // Add API key header if authentication is required
+./identify-jobs-to-delete.js:95:      // Check for very obvious senior experience requirements
+./tests/form-resilience.spec.ts:31:    // Try to submit without required fields
+./Utils/matching/validators.ts:18:  // Gate 1: Job must have required fields
+./Utils/security/webhookSecurity.ts:60:      // Validate timestamp if required
+./Utils/security/webhookSecurity.ts:68:      // Validate signature if required
+./Utils/auth/middleware.ts:55:      // Skip auth if not required
+./Utils/auth/middleware.ts:86:      // Check email verification if required
+./Utils/auth/middleware.ts:98:      // Check subscription tier if required
+./Utils/auth/middleware.ts:288:// Check if user is authorized for required level
+./Utils/auth/middleware.ts:311:// Public endpoints (no auth required)
+./Utils/errorResponse.ts:33:    // eslint-disable-next-line @typescript-eslint/no-var-requires
+./Utils/performance/memoryManager.ts:188:    // Clear require cache for non-essential modules
+./Utils/validation/schemas.ts:252:// Export all schemas for easy importing
+./jest.setup.ts:4:// Polyfill for TextEncoder/TextDecoder (required for cheerio and other web APIs)
+./jest.setup.ts:8:// Polyfill for crypto.randomUUID (required for Node.js < 19)
+./jest.setup.ts:161:// import { teardownDatadog } from './Utils/datadogMetrics'; // TODO: Implement datadog metrics
+./scripts/test-verification-direct.js:60:      // Create user with minimal required fields
+./lib/monitoring.ts:477:// Initialize monitoring when module is imported
+./scrapers/greenhouse-standardized.js:19:// Local helpers to avoid cross-module import issues
+./scrapers/greenhouse-standardized.js:481:// Note: entrypoint removed; invoke runGreenhouseAndSave() via import in the runner or CLI.
+./scrapers/Utils/jobMatching.js:2002:            // Ensure all required fields are present
+./scrapers/Utils/jobMatching.js:2061:                // const { createJobUrl } = require('./robustJobCreation');
+./scrapers/Utils/jobMatching.js:2065:            // 4. Validate required fields
+./scrapers/greenhouse-standardized.ts:91:// Using imported GREENHOUSE_CONFIG from config file
+./scrapers/greenhouse-standardized.ts:96:// Using imported COMPANY_TRACKS from config file
+./scrapers/greenhouse-standardized.ts:493:// Note: entrypoint removed; invoke runGreenhouseAndSave() via import in the runner or CLI.
+./automation/real-job-runner.js:13:// const { initLang } = require('../scrapers/lang');
+./automation/real-job-runner.js:18:// Check required environment variables (support both public and server URL vars)
+./automation/real-job-runner.js:207:      // Execute the TS module directly via dynamic import and run persistence entry

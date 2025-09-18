@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
-// import { criticalAlerts } from '@/Utils/criticalAlerts';
+import { HTTP_STATUS } from '@/Utils/constants';
 
 export async function GET() {
   const startTime = Date.now();
@@ -15,7 +15,7 @@ export async function GET() {
         status: 'error', 
         message: 'Database configuration missing',
         timestamp: new Date().toISOString()
-      }, { status: 500 });
+      }, { status: HTTP_STATUS.INTERNAL_ERROR });
     }
     
     const supabase = createSupabaseClient(supabaseUrl, supabaseKey);
@@ -35,7 +35,7 @@ export async function GET() {
         message: 'Database connection failed',
         error: error.message,
         timestamp: new Date().toISOString()
-      }, { status: 500 });
+      }, { status: HTTP_STATUS.INTERNAL_ERROR });
     }
     
     // Check environment variables
@@ -54,7 +54,7 @@ export async function GET() {
         message: 'Missing required environment variables',
         missing: missingEnvVars,
         timestamp: new Date().toISOString()
-      }, { status: 500 });
+      }, { status: HTTP_STATUS.INTERNAL_ERROR });
     }
     
     // Check alerting system status

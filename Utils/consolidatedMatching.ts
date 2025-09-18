@@ -7,7 +7,8 @@
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import type { Job } from '../scrapers/types';
-import { UserPreferences, JobMatch, AIMatchingCache } from './matching/types';
+import { UserPreferences, JobMatch } from './matching/types';
+import { AIMatchingCache } from './matching/ai-matching.service';
 import { enhanceMatchingWithEmbeddings, createUserProfileEmbedding, createJobEmbedding } from './embeddingBoost';
 
 // Consolidated AI timeout - increased to 20s for better reliability
@@ -39,7 +40,7 @@ export class ConsolidatedMatchingEngine {
    * Main matching function - tries AI first, falls back gracefully
    */
   async performMatching(
-    jobs: any[],
+    jobs: Job[],
     userPrefs: UserPreferences,
     forceRulesBased: boolean = false
   ): Promise<ConsolidatedMatchResult> {
@@ -85,7 +86,7 @@ export class ConsolidatedMatchingEngine {
    * AI matching with proper timeout and stable prompt
    */
   private async performAIMatchingWithTimeout(
-    jobs: any[],
+    jobs: Job[],
     userPrefs: UserPreferences
   ): Promise<JobMatch[]> {
     if (!this.openai || !this.openai35) throw new Error('OpenAI client not initialized');
@@ -114,7 +115,7 @@ export class ConsolidatedMatchingEngine {
   /**
    * Smart routing: Use GPT-3.5 for simple cases, GPT-4 for complex ones
    */
-  private shouldUseGPT4(jobs: any[], userPrefs: UserPreferences): boolean {
+  private shouldUseGPT4(jobs: Job[], userPrefs: UserPreferences): boolean {
     // Use GPT-3.5 for simple cases (70% of requests)
     const complexityScore = this.calculateComplexityScore(jobs, userPrefs);
     
@@ -125,7 +126,7 @@ export class ConsolidatedMatchingEngine {
   /**
    * Calculate complexity score (0-1) to determine model choice
    */
-  private calculateComplexityScore(jobs: any[], userPrefs: UserPreferences): number {
+  private calculateComplexityScore(jobs: Job[], userPrefs: UserPreferences): number {
     let score = 0;
     
     // Job count complexity (more jobs = more complex)
@@ -152,7 +153,7 @@ export class ConsolidatedMatchingEngine {
   /**
    * Stable OpenAI API call with function calling - no more parsing errors
    */
-  private async callOpenAIAPI(jobs: any[], userPrefs: UserPreferences, model: 'gpt-4' | 'gpt-3.5-turbo' = 'gpt-4'): Promise<JobMatch[]> {
+  private async callOpenAIAPI(jobs: Job[], userPrefs: UserPreferences, model: 'gpt-4' | 'gpt-3.5-turbo' = 'gpt-4'): Promise<JobMatch[]> {
     const client = model === 'gpt-4' ? this.openai : this.openai35;
     if (!client) throw new Error('OpenAI client not initialized');
 
@@ -222,7 +223,7 @@ export class ConsolidatedMatchingEngine {
   /**
    * Stable prompt that works consistently - no more emergency fixes
    */
-  private buildStablePrompt(jobs: any[], userPrefs: UserPreferences): string {
+  private buildStablePrompt(jobs: Job[], userPrefs: UserPreferences): string {
     const userCities = Array.isArray(userPrefs.target_cities) 
       ? userPrefs.target_cities.join(', ') 
       : (userPrefs.target_cities || 'Europe');
@@ -253,7 +254,7 @@ Requirements:
   /**
    * Robust response parsing - handles common failure cases
    */
-  private parseAIResponse(response: string, jobs: any[]): JobMatch[] {
+  private parseAIResponse(response: string, jobs: Job[]): JobMatch[] {
     try {
       // Clean common formatting issues
       let cleaned = response
@@ -282,8 +283,7 @@ Requirements:
           job_hash: match.job_hash,
           match_score: Math.min(100, Math.max(50, match.match_score)),
           match_reason: match.match_reason || 'AI match',
-          match_quality: this.getQualityLabel(match.match_score),
-          match_tags: 'ai-generated'
+          confidence_score: 0.8
         }));
 
     } catch (error) {
@@ -295,7 +295,7 @@ Requirements:
   /**
    * Parse function call response - much more reliable than text parsing
    */
-  private parseFunctionCallResponse(matches: any[], jobs: any[]): JobMatch[] {
+  private parseFunctionCallResponse(matches: any[], jobs: Job[]): JobMatch[] {
     try {
       if (!Array.isArray(matches)) {
         throw new Error('Response is not an array');
@@ -310,8 +310,7 @@ Requirements:
           job_hash: match.job_hash,
           match_score: Math.min(100, Math.max(50, match.match_score)),
           match_reason: match.match_reason || 'AI match',
-          match_quality: this.getQualityLabel(match.match_score),
-          match_tags: 'ai-generated'
+          confidence_score: 0.8
         }));
 
     } catch (error) {
@@ -340,7 +339,7 @@ Requirements:
   /**
    * Enhanced rule-based matching with weighted linear scoring model
    */
-  private performRuleBasedMatching(jobs: any[], userPrefs: UserPreferences): JobMatch[] {
+  private performRuleBasedMatching(jobs: Job[], userPrefs: UserPreferences): JobMatch[] {
     const matches: JobMatch[] = [];
     const userCities = Array.isArray(userPrefs.target_cities) ? userPrefs.target_cities : [];
     const userCareer = userPrefs.professional_expertise || '';
@@ -357,8 +356,7 @@ Requirements:
           job_hash: job.job_hash,
           match_score: scoreResult.score,
           match_reason: scoreResult.reasons.join(', ') || 'Enhanced rule-based match',
-          match_quality: this.getQualityLabel(scoreResult.score),
-          match_tags: 'enhanced-rule-based'
+          confidence_score: 0.7
         });
       }
     }

@@ -1,32 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { EmailVerificationOracle } from '@/Utils/emailVerification';
-import { errorJson } from '@/Utils/errorResponse';
+import { errorResponse } from '@/Utils/errorResponse';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
+import { getSupabaseClient } from '@/Utils/supabase';
+import { ENV } from '@/Utils/constants';
 
-// Test mode helper
-const isTestMode = () => process.env.NODE_ENV === 'test' || process.env.JOBPING_TEST_MODE === '1';
-
-function getSupabaseClient() {
-  // Only initialize during runtime, not build time
-  if (typeof window !== 'undefined') {
-    throw new Error('Supabase client should only be used server-side');
-  }
-  
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase configuration');
-  }
-  
-  return createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
-}
+// Test mode helper - using professional pattern
+const isTestMode = () => ENV.isTest();
 
 export async function POST(request: NextRequest) {
   // PRODUCTION: Rate limiting for email verification (prevent abuse)
@@ -45,7 +25,7 @@ export async function POST(request: NextRequest) {
     const { token } = await request.json();
     
     if (!token) {
-      return errorJson(request, 'VALIDATION_ERROR', 'Verification token required', 400);
+      return errorResponse.badRequest(request, 'Verification token required');
     }
 
     const supabase = getSupabaseClient();
@@ -57,7 +37,7 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     console.error('❌ Verify email API error:', error);
-    return errorJson(request, 'INTERNAL_ERROR', 'Verification failed', 500);
+    return errorResponse.internal(request, 'Verification failed');
   }
 }
 

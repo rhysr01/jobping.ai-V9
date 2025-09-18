@@ -3,20 +3,21 @@ import crypto from 'crypto';
 import OpenAI from 'openai';
 import { z } from 'zod';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-import { errorJson } from '@/Utils/errorResponse';
+import { errorResponse } from '@/Utils/errorResponse';
+import { validateTallyWebhook, getSecurityHeaders } from '@/Utils/security/webhookSecurity';
+import { performMemoryCleanup } from '@/Utils/performance/memoryManager';
 import {
   performEnhancedAIMatching
 } from '@/Utils/jobMatching';
 import {
   generateRobustFallbackMatches
-} from '@/Utils/matching/fallback.service';
+} from '@/Utils/matching';
 import {
   logMatchSession
 } from '@/Utils/matching/logging.service';
 import type { UserPreferences } from '@/Utils/matching/types';
 import { sendMatchedJobsEmail, sendWelcomeEmail } from '@/Utils/email';
 import { EmailVerificationOracle } from '@/Utils/emailVerification';
-// import { normalizeCareerPath } from '@/scrapers/types';
 
 // Test mode helper
 const isTestMode = () => process.env.NODE_ENV === 'test' || process.env.JOBPING_TEST_MODE === '1';
@@ -197,54 +198,21 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Signature verification (skip in test mode)
-    let rawBody = '';
-    try {
-      rawBody = await req.text();
-    } catch {}
-
+    // Enhanced webhook security validation
     if (!isTestMode()) {
-      const signature = req.headers.get('x-tally-signature') || req.headers.get('x-signature');
-      const timestampHeader = req.headers.get('x-tally-timestamp') || req.headers.get('x-timestamp');
-      const secret = process.env.TALLY_WEBHOOK_SECRET;
-
-      if (!secret) {
-        return errorJson(req, 'INTERNAL_ERROR', 'Webhook secret not configured', 500);
-      }
-
-      if (!signature || !timestampHeader) {
-        return errorJson(req, 'UNAUTHORIZED', 'Missing webhook signature headers', 401);
-      }
-
-      const timestamp = Number(timestampHeader);
-      const fiveMinutesMs = 5 * 60 * 1000;
-      if (!Number.isFinite(timestamp) || Math.abs(Date.now() - timestamp) > fiveMinutesMs) {
-        return errorJson(req, 'UNAUTHORIZED', 'Stale webhook timestamp', 401);
-      }
-
-      // Compute HMAC over `${timestamp}.${rawBody}`
-      const hmac = crypto.createHmac('sha256', secret);
-      hmac.update(`${timestamp}.${rawBody}`);
-      const expected = hmac.digest('hex');
-
-      const provided = signature.replace(/^sha256=/, '');
-      const expectedBuf = Buffer.from(expected);
-      const providedBuf = Buffer.from(provided);
-      if (
-        expectedBuf.length !== providedBuf.length ||
-        !crypto.timingSafeEqual(expectedBuf, providedBuf)
-      ) {
-        return errorJson(req, 'UNAUTHORIZED', 'Invalid webhook signature', 401);
+      const validationResult = await validateTallyWebhook(req);
+      if (!validationResult.isValid) {
+        return errorResponse.unauthorized(req, validationResult.error || 'Webhook validation failed');
       }
     }
 
     // Parse and validate
-    const rawPayload = rawBody ? JSON.parse(rawBody) : await req.json();
+    const rawPayload = await req.json();
     
     // Handle cases where data might be undefined
     if (!rawPayload || !rawPayload.data) {
       console.warn('Webhook received without data field:', rawPayload);
-      return errorJson(req, 'VALIDATION_ERROR', 'Invalid webhook payload: missing data field', 400, { received: rawPayload });
+      return errorResponse.badRequest(req, 'Invalid webhook payload: missing data field', { received: rawPayload });
     }
     
     const payload = TallyWebhookSchema.parse(rawPayload);
@@ -260,13 +228,13 @@ export async function POST(req: NextRequest) {
     console.log('🧪 Test mode: User data extracted:', userData);
     
     if (!userData.email) {
-      return errorJson(req, 'VALIDATION_ERROR', 'Email is required', 400);
+      return errorResponse.badRequest(req, 'Email is required');
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(userData.email as string)) {
-      return errorJson(req, 'VALIDATION_ERROR', 'Invalid email format', 400);
+      return errorResponse.badRequest(req, 'Invalid email format');
     }
 
     console.log(`Processing submission for: ${userData.email}`);
@@ -429,8 +397,8 @@ export async function POST(req: NextRequest) {
         
         try {
           const openai = getOpenAIClient();
-          const aiResult = await performEnhancedAIMatching(jobs, userData as unknown as UserPreferences, openai);
-          matches = aiResult.matches;
+          const aiResult = await performEnhancedAIMatching(jobs, userData as unknown as UserPreferences);
+          matches = aiResult;
           matchType = 'ai_success';
           
           if (!matches || matches.length === 0) {
@@ -468,8 +436,8 @@ export async function POST(req: NextRequest) {
         
         try {
           const openai = getOpenAIClient();
-          const aiResult = await performEnhancedAIMatching(jobs, userData as unknown as UserPreferences, openai);
-          matches = aiResult.matches;
+          const aiResult = await performEnhancedAIMatching(jobs, userData as unknown as UserPreferences);
+          matches = aiResult;
           matchType = 'ai_success';
           
           if (!matches || matches.length === 0) {
@@ -544,7 +512,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ 
+    // Perform memory cleanup after processing
+    performMemoryCleanup();
+
+    const response = NextResponse.json({ 
       success: true, 
       message: isNewUser ? 'User registered successfully' : 'User updated successfully',
       email: userData.email,
@@ -552,10 +523,18 @@ export async function POST(req: NextRequest) {
       requiresVerification: isNewUser && !((existingUser as any)?.email_verified || false)
     });
 
+    // Add security headers
+    const securityHeaders = getSecurityHeaders();
+    Object.entries(securityHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+
+    return response;
+
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       console.error('❌ Tally webhook validation error:', error.issues);
-      return errorJson(req, 'VALIDATION_ERROR', 'Invalid webhook payload structure', 400, error.issues);
+      return errorResponse.badRequest(req, 'Invalid webhook payload structure', error.issues);
     }
     
     console.error('❌ Tally webhook internal error:', {
@@ -566,7 +545,7 @@ export async function POST(req: NextRequest) {
       fullError: error
     });
     
-    return errorJson(req, 'INTERNAL_ERROR', 'Registration failed', 500, error instanceof Error ? error.message : JSON.stringify(error));
+    return errorResponse.internal(req, 'Registration failed', error instanceof Error ? error.message : JSON.stringify(error));
   }
 }
 

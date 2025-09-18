@@ -1,27 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-
-function getSupabaseClient() {
-  // Only initialize during runtime, not build time
-  if (typeof window !== 'undefined') {
-    throw new Error('Supabase client should only be used server-side');
-  }
-  
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase configuration');
-  }
-  
-  return createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
-}
+import { HTTP_STATUS } from '@/Utils/constants';
+import { getSupabaseClient } from '@/Utils/supabase';
 
 export async function GET(req: NextRequest) {
   // PRODUCTION: Rate limiting for user matches endpoint
@@ -94,6 +74,6 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     console.error('User matches API error:', error);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Server error' }, { status: HTTP_STATUS.INTERNAL_ERROR });
   }
 }

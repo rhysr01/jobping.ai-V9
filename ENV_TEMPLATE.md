@@ -47,12 +47,25 @@ NEXT_PUBLIC_STRIPE_PREMIUM_QUARTERLY_PRICE_ID=price_xxx
 # Redis (for production rate limiting)
 REDIS_URL=redis://localhost:6379
 
-# Sentry (error monitoring)
+# Sentry Error Monitoring (HIGHLY RECOMMENDED for production)
 SENTRY_DSN=your-sentry-dsn
+NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
+
+# Structured Logging Configuration
+LOG_LEVEL=info                    # debug, info, warn, error, critical
+STRUCTURED_LOGS=true             # Enable JSON structured logging
 
 # Rate Limiting Configuration
 RATE_LIMIT_WINDOW_MS=300000
 RATE_LIMIT_MAX=3
+
+# Database Cleanup Configuration
+CLEANUP_MAX_AGE_DAYS=90          # Delete jobs older than this
+CLEANUP_BATCH_SIZE=500           # Batch size for cleanup operations
+CLEANUP_MAX_DELETIONS=10000      # Maximum deletions per run
+CLEANUP_SAFETY_THRESHOLD=0.15    # Don't delete more than 15% of jobs
+CLEANUP_SECRET=your-cleanup-secret # Secret for cleanup API authentication
+ADMIN_API_KEY=your-admin-api-key  # Admin API key for secure operations
 
 # Job Distribution
 SEND_DAILY_FREE=50

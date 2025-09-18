@@ -318,7 +318,7 @@ async function getUserBehaviorInsights(userEmail: string) {
 
     // Analyze preferred job types from clicked jobs
     const clickedJobs = signals.filter(s => s.signal_type === 'click' && s.jobs).map(s => s.jobs);
-    const jobTitles = clickedJobs.map(job => job.title?.toLowerCase() || '');
+    const jobTitles = clickedJobs.flat().map(job => job.title?.toLowerCase() || '');
     
     // Simple keyword extraction for job types
     const jobTypeKeywords = ['developer', 'analyst', 'consultant', 'manager', 'designer', 'marketing', 'sales', 'finance'];

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { HTTP_STATUS } from '@/Utils/constants';
+import { errorResponse } from '@/Utils/errorResponse';
 
 // Simple scrape endpoint for production
 export async function POST(req: NextRequest) {
@@ -19,11 +21,7 @@ export async function POST(req: NextRequest) {
     
   } catch (error) {
     console.error('Scrape request failed:', error);
-    return NextResponse.json({
-      success: false,
-      error: 'Scrape request failed',
-      message: 'Please try again later or contact support'
-    }, { status: 500 });
+    return errorResponse.internal(req, 'Scrape request failed', 'Please try again later or contact support');
   }
 }
 

@@ -4,32 +4,34 @@ export default function Features() {
   const features = [
     {
       icon: Search,
-      title: "Daily curation",
-      description: "We scan top sources + company pages."
+      title: "Curated",
+      description: "Hand-picked from hundreds of sources."
     },
     {
       icon: Mail,
-      title: "Email delivery only",
-      description: "No dashboards, just clean daily emails."
+      title: "Delivered",
+      description: "Clean emails. No dashboards."
     },
     {
       icon: Target,
-      title: "Early-career focus",
-      description: "Internships, grad & junior roles."
+      title: "Graduate-focused",
+      description: "Entry-level and junior roles only."
     }
   ];
 
   return (
-    <section id="features" className="py-20 md:py-28 bg-black scroll-mt-20 md:scroll-mt-28">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
+    <section id="features" className="py-16 md:py-20 bg-black scroll-mt-20">
+      <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
           {features.map((feature, index) => (
-            <div key={index} className="text-left md:text-center space-y-3">
-              <feature.icon className="w-5 h-5 text-white mb-4 inline-block" />
-              <h3 className="text-white font-semibold text-lg mb-2">
+            <div key={index} className="text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-[#0F0F0F] border border-[#1F1F1F] rounded-lg mb-4">
+                <feature.icon className="w-5 h-5 text-[#CCCCCC]" />
+              </div>
+              <h3 className="text-[#BBBBBB] font-light text-base mb-2 leading-tight">
                 {feature.title}
               </h3>
-              <p className="text-[#888888] text-sm leading-relaxed">
+              <p className="text-[#777777] text-sm leading-relaxed">
                 {feature.description}
               </p>
             </div>

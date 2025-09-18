@@ -1,36 +1,35 @@
 export default function Hero() {
   return (
-    <section className="bg-black py-20 md:py-28 relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] via-transparent to-transparent pointer-events-none"></div>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 text-center relative">
-        <h1 className="text-4xl md:text-5xl font-semibold text-white leading-tight tracking-[-0.03em] mb-6">
-          AI finds your perfect job matches—delivered daily
-        </h1>
-        
-        <p className="text-lg text-[#888888] leading-7 mb-8 max-w-2xl mx-auto">
-          Stop scrolling job boards. Get personalized opportunities from top companies delivered straight to your inbox.
-        </p>
-        
-        <div className="mb-6">
-          <span className="inline-block bg-[#111111] border border-[#1A1A1A] rounded-full px-4 py-2 text-sm text-[#CCCCCC]">
-            ⚡ Start getting matches today
-          </span>
+    <section className="bg-black py-20 md:py-24 lg:py-28 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] via-transparent to-transparent pointer-events-none"></div>
+      <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 text-center relative">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold text-white leading-[0.9] tracking-[-0.04em] mb-4">
+            JobPing
+          </h1>
+          <div className="text-xl md:text-2xl text-[#CCCCCC] font-light tracking-wide">
+            Graduate jobs that don't suck
+          </div>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <p className="text-base text-[#999999] leading-relaxed mb-8 max-w-sm mx-auto">
+          5 jobs. Every 48 hours. No spam.
+        </p>
+        
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <a
             href="#signup"
-            className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-white px-8 py-4 text-black font-medium hover:bg-[#CCCCCC] transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:-translate-y-1"
+            className="inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 text-black font-medium text-sm hover:bg-[#F8F8F8] transition-colors duration-150"
             data-testid="hero-cta-primary"
             data-analytics="cta_click"
             data-cta-type="primary"
             data-cta-location="hero"
           >
-            Get My First Job Matches
+            Find My Dream Job
           </a>
           <a
             href="#pricing"
-            className="text-white hover:text-[#CCCCCC] font-medium transition-colors"
+            className="text-[#999999] hover:text-[#CCCCCC] font-normal text-sm transition-colors duration-150"
             data-testid="hero-cta-secondary"
             data-analytics="cta_click"
             data-cta-type="secondary"

@@ -1,6 +1,6 @@
 // ✅ Ashby Scraper - EU-Focused Companies
 import axios from 'axios';
-import { classifyEarlyCareer, convertToDatabaseFormat } from './utils.js';
+import { classifyEarlyCareer, convertToDatabaseFormat } from './utils';
 
 // Types
 interface IngestJob {
@@ -182,9 +182,9 @@ class AshbyScraper {
   private isEUJob(ashbyJob: AshbyJobPosting, company: AshbyCompany): boolean {
     const location = ashbyJob.location.locationName.toLowerCase();
     
-    // Check if it's remote and company has EU presence
-    if (ashbyJob.isRemote && company.euOffices) {
-      return true;
+    // Skip remote per policy
+    if (ashbyJob.isRemote || /\b(remote|work\s*from\s*home|wfh|anywhere|distributed|virtual)\b/i.test(location)) {
+      return false;
     }
     
     // Check EU office locations

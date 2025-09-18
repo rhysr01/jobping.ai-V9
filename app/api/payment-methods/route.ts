@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
+import { getSupabaseClient } from '@/Utils/supabase';
 
 // Initialize Stripe only when needed and with proper error handling
 function getStripeClient() {
@@ -19,15 +19,6 @@ function getStripeClient() {
 }
 
 // Initialize Supabase only when needed
-function getSupabaseClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Supabase environment variables are required');
-  }
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
-}
 
 // POST: Add new payment method
 export async function POST(req: NextRequest) {

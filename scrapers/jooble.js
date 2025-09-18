@@ -1,12 +1,9 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 // ✅ Jooble Scraper - EU Early Career Jobs
-const axios_1 = __importDefault(require("axios"));
-const utils_js_1 = require("./utils.js");
-const smart_strategies_js_1 = require("./smart-strategies.js");
+const axios_1 = require("axios");
+const utils_1 = require("./utils");
+const smart_strategies_1 = require("./smart-strategies");
 // ✅ Jooble Configuration
 const JOOBLE_CONFIG = {
     baseUrl: 'https://jooble.org/api',
@@ -91,7 +88,6 @@ class JoobleScraper {
         this.lastRequestTime = Date.now();
     }
     async makeRequest(request) {
-        var _a, _b;
         await this.throttleRequest();
         try {
             const url = `${JOOBLE_CONFIG.baseUrl}/${JOOBLE_CONFIG.apiKey}`;
@@ -105,11 +101,11 @@ class JoobleScraper {
             });
             this.requestCount++;
             this.dailyRequestCount++;
-            console.log(`📊 Jooble API response: ${((_a = response.data.jobs) === null || _a === void 0 ? void 0 : _a.length) || 0} jobs found`);
+            console.log(`📊 Jooble API response: ${response.data.jobs?.length || 0} jobs found`);
             return response.data;
         }
         catch (error) {
-            if (((_b = error.response) === null || _b === void 0 ? void 0 : _b.status) === 429) {
+            if (error.response?.status === 429) {
                 console.warn('🚫 Jooble rate limited, backing off...');
                 await new Promise(resolve => setTimeout(resolve, 10000));
                 return this.makeRequest(request);
@@ -133,6 +129,17 @@ class JoobleScraper {
             source: 'jooble'
         };
     }
+    isEULocation(location) {
+        const euCountries = [
+            'United Kingdom', 'Ireland', 'Germany', 'France', 'Spain',
+            'Italy', 'Netherlands', 'Belgium', 'Poland', 'Sweden',
+            'Denmark', 'Finland', 'Austria', 'Portugal', 'Greece',
+            'Switzerland', 'Norway', 'Czech', 'Romania', 'Bulgaria',
+            'Croatia', 'Slovenia', 'Slovakia', 'Estonia', 'Latvia', 'Lithuania', 'Luxembourg', 'Malta', 'Cyprus'
+        ];
+        const loc = (location || '').toLowerCase();
+        return euCountries.some(country => loc.includes(country.toLowerCase()));
+    }
     generateJobHash(job) {
         return `${job.title.toLowerCase()}-${job.company.toLowerCase()}-${job.location.toLowerCase()}`.replace(/\s+/g, '-');
     }
@@ -146,7 +153,7 @@ class JoobleScraper {
                     break;
                 }
                 // Use smart date strategy
-                const smartDateCreated = (0, smart_strategies_js_1.withFallback)(() => (0, smart_strategies_js_1.getSmartDateStrategy)('jooble'), '7');
+                const smartDateCreated = (0, smart_strategies_1.withFallback)(() => (0, smart_strategies_1.getSmartDateStrategy)('jooble'), '7');
                 const request = {
                     keywords: keywords,
                     location: location,
@@ -165,7 +172,16 @@ class JoobleScraper {
                         this.seenJobs.set(jobHash, Date.now());
                         try {
                             const ingestJob = this.convertToIngestJob(job);
-                            const isEarlyCareer = (0, utils_js_1.classifyEarlyCareer)(ingestJob);
+                            // Skip remote per policy
+                            if ((ingestJob.location || '').toLowerCase().includes('remote')) {
+                                continue;
+                            }
+                            // EU-only filter
+                            if (!this.isEULocation(ingestJob.location)) {
+                                console.log(`🚫 Skipped non-EU: ${ingestJob.title} at ${ingestJob.company} (${ingestJob.location})`);
+                                continue;
+                            }
+                            const isEarlyCareer = (0, utils_1.classifyEarlyCareer)(ingestJob);
                             if (isEarlyCareer) {
                                 jobs.push(ingestJob);
                                 console.log(`✅ Early-career: ${ingestJob.title} at ${ingestJob.company} (${ingestJob.location})`);
@@ -191,10 +207,9 @@ class JoobleScraper {
         return jobs;
     }
     async scrapeAllLocations() {
-        var _a;
         // Apply smart pagination strategy at runtime
-        const pagination = (0, smart_strategies_js_1.withFallback)(() => (0, smart_strategies_js_1.getSmartPaginationStrategy)('jooble'), { startPage: 1, endPage: 3 });
-        this.JOOBLE_CONFIG.maxPagesPerSearch = pagination.endPage;
+        const pagination = (0, smart_strategies_1.withFallback)(() => (0, smart_strategies_1.getSmartPaginationStrategy)('jooble'), { startPage: 1, endPage: 3 });
+        // this.JOOBLE_CONFIG.maxPagesPerSearch = pagination.endPage; // TODO: Fix config reference
         const allJobs = [];
         const metrics = {
             locationsProcessed: 0,
@@ -238,7 +253,7 @@ class JoobleScraper {
                         console.error(`❌ Error processing ${location}:`, error.message);
                         metrics.errors++;
                         // If we get repeated errors, wait longer before continuing
-                        if (((_a = error.response) === null || _a === void 0 ? void 0 : _a.status) >= 400) {
+                        if (error.response?.status >= 400) {
                             console.log('⏸️ API error encountered, waiting 30s before continuing...');
                             await new Promise(resolve => setTimeout(resolve, 30000));
                         }

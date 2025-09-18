@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { HTTP_STATUS } from '@/Utils/constants';
+import { errorResponse } from '@/Utils/errorResponse';
+import { getSupabaseClient } from '@/Utils/supabase';
 
 // Enhanced feedback data interface
 interface EnhancedFeedbackData {
@@ -10,31 +12,15 @@ interface EnhancedFeedbackData {
   relevance_score?: number; // 1-5 scale
   match_quality_score?: number; // 1-5 scale
   reason?: string; // Why not relevant, etc.
-  user_preferences_snapshot?: any;
-  job_context?: any;
-  match_context?: any;
+  user_preferences_snapshot?: Record<string, unknown>;
+  job_context?: Record<string, unknown>;
+  match_context?: Record<string, unknown>;
   timestamp: string;
   source: 'email' | 'web' | 'mobile';
   session_id?: string;
   dwell_time_ms?: number;
 }
 
-// Initialize Supabase client
-function getSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase configuration');
-  }
-  
-  return createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
-}
 
 // POST endpoint for capturing explicit feedback
 export async function POST(request: NextRequest) {

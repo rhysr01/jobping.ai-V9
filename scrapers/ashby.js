@@ -1,11 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 // ✅ Ashby Scraper - EU-Focused Companies
-const axios_1 = __importDefault(require("axios"));
-const utils_js_1 = require("./utils.js");
+const axios_1 = require("axios");
+const utils_1 = require("./utils");
 // ✅ Ashby Configuration
 const ASHBY_CONFIG = {
     baseUrl: 'https://api.ashbyhq.com/posting-api/job-board',
@@ -58,7 +55,6 @@ class AshbyScraper {
         this.lastRequestTime = Date.now();
     }
     async makeRequest(url, retries = 0) {
-        var _a, _b, _c;
         await this.throttleRequest();
         try {
             console.log(`🔗 Ashby API request: ${url}`);
@@ -70,18 +66,18 @@ class AshbyScraper {
                 timeout: 15000
             });
             this.requestCount++;
-            console.log(`📊 Ashby API response: ${((_a = response.data) === null || _a === void 0 ? void 0 : _a.length) || 0} jobs found`);
+            console.log(`📊 Ashby API response: ${response.data?.length || 0} jobs found`);
             return response.data || [];
         }
         catch (error) {
-            if (((_b = error.response) === null || _b === void 0 ? void 0 : _b.status) === 429) {
+            if (error.response?.status === 429) {
                 console.warn('🚫 Ashby rate limited, backing off...');
                 await new Promise(resolve => setTimeout(resolve, 5000));
                 if (retries < ASHBY_CONFIG.maxRetries) {
                     return this.makeRequest(url, retries + 1);
                 }
             }
-            if (((_c = error.response) === null || _c === void 0 ? void 0 : _c.status) === 404) {
+            if (error.response?.status === 404) {
                 console.warn(`⚠️ Company board not found: ${url}`);
                 return [];
             }
@@ -122,9 +118,9 @@ class AshbyScraper {
     }
     isEUJob(ashbyJob, company) {
         const location = ashbyJob.location.locationName.toLowerCase();
-        // Check if it's remote and company has EU presence
-        if (ashbyJob.isRemote && company.euOffices) {
-            return true;
+        // Skip remote per policy
+        if (ashbyJob.isRemote || /\b(remote|work\s*from\s*home|wfh|anywhere|distributed|virtual)\b/i.test(location)) {
+            return false;
         }
         // Check EU office locations
         if (company.euOffices) {
@@ -162,7 +158,7 @@ class AshbyScraper {
                             continue;
                         }
                         const ingestJob = this.convertToIngestJob(ashbyJob, company.name);
-                        const isEarlyCareer = (0, utils_js_1.classifyEarlyCareer)(ingestJob);
+                        const isEarlyCareer = (0, utils_1.classifyEarlyCareer)(ingestJob);
                         if (isEarlyCareer) {
                             jobs.push(ingestJob);
                             console.log(`✅ Early-career EU: ${ingestJob.title} at ${ingestJob.company} (${ingestJob.location})`);
@@ -183,7 +179,6 @@ class AshbyScraper {
         return jobs;
     }
     async scrapeAllCompanies() {
-        var _a;
         const allJobs = [];
         const metrics = {
             companiesProcessed: 0,
@@ -214,7 +209,7 @@ class AshbyScraper {
                     console.error(`❌ Error processing ${company.name}:`, error.message);
                     metrics.errors++;
                     // If we get repeated errors, wait longer before continuing
-                    if (((_a = error.response) === null || _a === void 0 ? void 0 : _a.status) >= 400) {
+                    if (error.response?.status >= 400) {
                         console.log('⏸️ API error encountered, waiting 10s before continuing...');
                         await new Promise(resolve => setTimeout(resolve, 10000));
                     }

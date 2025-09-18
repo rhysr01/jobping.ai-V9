@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { HTTP_STATUS, ERROR_CODES } from '@/Utils/constants';
+import { errorResponse } from '@/Utils/errorResponse';
+import { getSupabaseClient } from '@/Utils/supabase';
 
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
     
     if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+      return errorResponse.badRequest(request, 'Email is required');
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = getSupabaseClient();
 
     console.log(`🗑️  Processing data deletion request for: ${email}`);
 

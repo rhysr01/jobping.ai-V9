@@ -4,9 +4,9 @@ import { Mail, Shield, Globe } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0B0B0F] border-t border-[#374151] py-16 px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+    <footer className="bg-[#0B0B0F] border-t border-[#1A1A1A] py-24 md:py-32 px-6 sm:px-8 md:px-12">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-16 mb-16 md:mb-20">
           
           {/* Company Info */}
           <div className="md:col-span-2">
@@ -16,11 +16,10 @@ export default function Footer() {
                 <span className="ping">Ping</span>
               </h3>
             </div>
-            <p className="text-[#888888] leading-relaxed mb-6 max-w-md">
-              AI-powered job matching for students and graduates. Stop scrolling job boards, 
-              start landing interviews with personalized opportunities delivered to your inbox.
+            <p className="text-[#AAAAAA] text-base leading-relaxed mb-8 max-w-md">
+              Job matching for graduates.
             </p>
-            <div className="flex items-center gap-6 text-[#666666] text-sm">
+            <div className="flex items-center gap-8 text-[#888888] text-sm">
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4" />
                 <span>GDPR Compliant</span>
@@ -56,18 +55,18 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-[#374151] pt-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-[#666666] text-sm">
+        <div className="border-t border-[#1A1A1A] pt-12 md:pt-16">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-[#777777] text-sm">
               © 2024 JobPing. All rights reserved.
             </div>
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 text-[#666666] text-sm">
+              <div className="flex items-center gap-2 text-[#777777] text-sm">
                 <Mail className="w-4 h-4" />
                 <span>support@jobping.ai</span>
               </div>
-              <div className="text-[#666666] text-sm">
-                Response within 24 hours
+              <div className="text-[#777777] text-sm">
+                24h response
               </div>
             </div>
           </div>

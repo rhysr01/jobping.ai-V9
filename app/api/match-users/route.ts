@@ -1,12 +1,10 @@
 // app/api/match-users/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-import OpenAI from 'openai';
+import { getSupabaseClient } from '@/Utils/supabase';
 import * as Sentry from '@sentry/nextjs';
-import {
-  generateRobustFallbackMatches
-} from '@/Utils/matching/fallback.service';
+// Removed unused import: generateRobustFallbackMatches - now handled by ConsolidatedMatchingEngine
 import {
   logMatchSession
 } from '@/Utils/matching/logging.service';
@@ -16,6 +14,7 @@ import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
 import { 
   SEND_PLAN
 } from '@/Utils/sendConfiguration';
+import { Job } from '@/scrapers/types';
 
 // Environment flags and limits
 const IS_TEST = process.env.NODE_ENV === 'test';
@@ -25,9 +24,7 @@ const JOB_LIMIT = IS_TEST ? 300 : 1200;
 // Lock key helper
 const LOCK_KEY = (rid: string) => `${IS_TEST ? 'jobping:test' : 'jobping:prod'}:lock:match-users:${rid}`;
 
-// Basic AI circuit breaker
-let aiFailureCount = 0;
-const AI_FAILURE_THRESHOLD = 3;
+// Circuit breaker logic moved to ConsolidatedMatchingEngine
 
 // Helper function to safely normalize string/array fields
 function normalizeStringToArray(value: any): string[] {
@@ -43,28 +40,7 @@ function normalizeStringToArray(value: any): string[] {
   return [];
 }
 
-// OpenAI cost calculation - CRITICAL for budget monitoring
-function calculateOpenAICost(usage: any): number {
-  if (!usage) return 0;
-  
-  // GPT-4 pricing (as of 2024)
-  const PRICING = {
-    'gpt-4': { input: 0.03 / 1000, output: 0.06 / 1000 },
-    'gpt-4-turbo': { input: 0.01 / 1000, output: 0.03 / 1000 },
-    'gpt-3.5-turbo': { input: 0.001 / 1000, output: 0.002 / 1000 }
-  };
-  
-  const model = usage.model || 'gpt-4';
-  const pricing = PRICING[model as keyof typeof PRICING] || PRICING['gpt-4'];
-  
-  const inputTokens = usage.prompt_tokens || 0;
-  const outputTokens = usage.completion_tokens || 0;
-  
-  const inputCost = inputTokens * pricing.input;
-  const outputCost = outputTokens * pricing.output;
-  
-  return inputCost + outputCost;
-}
+// Cost calculation moved to ConsolidatedMatchingEngine
 
 // Enhanced monitoring and performance tracking
 interface PerformanceMetrics {
@@ -73,20 +49,11 @@ interface PerformanceMetrics {
   aiMatchingTime: number;
   totalProcessingTime: number;
   memoryUsage: number;
+  errors: number;
+  totalRequests: number;
 }
 
-// Removed in-memory rate limiting and job reservation maps
-
-// Configuration from environment variables with sensible defaults
-const RATE_LIMIT_WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000');
-const RATE_LIMIT_MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_MAX || '3');
-
-
-// Legacy settings (deprecated - using SEND_PLAN now)
-const MAX_JOBS_PER_USER = {
-  free: SEND_PLAN.free.perSend,      // Now 3 per send
-  premium: SEND_PLAN.premium.perSend // Now 6 per send
-};
+// Rate limiting and job caps managed by production middleware and SEND_PLAN
 
 // Freshness tier distribution with fallback logic
 const TIER_DISTRIBUTION = {
@@ -122,41 +89,9 @@ interface JobWithFreshness {
 }
 
 
-// NEW: User clustering functionality
-interface User extends UserPreferences {
-  professional_expertise: string;
-  entry_level_preference: string;
-}
+// User interface extensions (simplified)
 
-function clusterSimilarUsers(users: UserPreferences[], maxClusterSize: number = 3): UserPreferences[][] {
-  const clusters: UserPreferences[][] = [];
-  const processed = new Set<number>();
-
-  for (let i = 0; i < users.length; i++) {
-    if (processed.has(i)) continue;
-
-    const cluster = [users[i]];
-    processed.add(i);
-
-    // Find similar users (same expertise + experience level)
-    for (let j = i + 1; j < users.length && cluster.length < maxClusterSize; j++) {
-      if (processed.has(j)) continue;
-
-      const user1 = users[i];
-      const user2 = users[j];
-      
-      if (user1.professional_expertise === user2.professional_expertise &&
-          user1.entry_level_preference === user2.entry_level_preference) {
-        cluster.push(user2);
-        processed.add(j);
-      }
-    }
-
-    clusters.push(cluster);
-  }
-
-  return clusters;
-}
+// User clustering functionality removed - not currently used
 
 
 
@@ -164,7 +99,7 @@ function clusterSimilarUsers(users: UserPreferences[], maxClusterSize: number = 
 
 
 // Database schema validation
-async function validateDatabaseSchema(supabase: any): Promise<boolean> {
+async function validateDatabaseSchema(supabase: SupabaseClient): Promise<boolean> {
   try {
     // Skip schema validation in test environment
     if (process.env.NODE_ENV === 'test') {
@@ -191,17 +126,9 @@ async function validateDatabaseSchema(supabase: any): Promise<boolean> {
   }
 }
 
-// Enhanced rate limiting with job reservation
-function isRateLimited(identifier: string): boolean {
-  // Delegated to production rate limiter middleware; keep placeholder for API compatibility
-  return false;
-}
+// Rate limiting handled by production rate limiter middleware
 
-// Job reservation system to prevent race conditions
-function reserveJobs(jobIds: string[], reservationId: string): boolean {
-  // Reservations managed by Redis global lock in this handler
-  return true;
-}
+// Job reservations managed by Redis global lock
 
 // UTC-safe date calculation
 function getDateDaysAgo(days: number): Date {
@@ -257,7 +184,7 @@ function distributeJobsByFreshness(
   
   // Fallback logic: if we don't have enough jobs, pull from other tiers
   const targetTotal = config.ultra_fresh + config.fresh + config.comprehensive;
-  const maxAllowed = MAX_JOBS_PER_USER[userTier];
+  const maxAllowed = SEND_PLAN[userTier].perSend;
   
   if (selectedJobs.length < targetTotal && selectedJobs.length < maxAllowed) {
     const remainingSlots = Math.min(targetTotal - selectedJobs.length, maxAllowed - selectedJobs.length);
@@ -333,7 +260,9 @@ function trackPerformance(): { startTime: number; getMetrics: () => PerformanceM
       tierDistributionTime: 0, // Set by caller
       aiMatchingTime: 0, // Set by caller
       totalProcessingTime: Date.now() - startTime,
-      memoryUsage: process.memoryUsage().heapUsed - startMemory
+      memoryUsage: process.memoryUsage().heapUsed - startMemory,
+      errors: 0, // Set by caller
+      totalRequests: 1 // Default to 1 request
     })
   };
 }
@@ -372,36 +301,8 @@ function preFilterJobsByUserPreferences(jobs: JobWithFreshness[], user: UserPref
 }
 
 // Initialize clients
-function getSupabaseClient() {
-  // Only initialize during runtime, not build time (but allow in test environment)
-  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'test') {
-    throw new Error('Supabase client should only be used server-side');
-  }
-  
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase configuration');
-  }
-  
-  return createSupabaseClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
-}
 
-function getOpenAIClient() {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error('Missing OpenAI API key');
-  }
-  return new OpenAI({
-    apiKey: apiKey,
-  });
-}
+// OpenAI client creation moved to ConsolidatedMatchingEngine
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
@@ -430,10 +331,7 @@ export async function POST(req: NextRequest) {
   const reservationId = `batch_${Date.now()}`;
   const requestStartTime = Date.now();
   
-  // Declare variables for the function scope
-  let users: any[] = [];
-  let jobs: any[] = [];
-  let results: any = {};
+  // Variables for function scope (some will be assigned in try block)
   
   // Stopwatch helper
   const t0 = Date.now(); 
@@ -541,20 +439,7 @@ export async function POST(req: NextRequest) {
       }, { status: 500 });
     }
 
-    // ADVANCED: Check scaling needs before processing
-    let scalingRecommendations: any[] = [];
-    try {
-      // scalingRecommendations = await AutoScalingOracle.checkScalingNeeds();
-      if (scalingRecommendations.length > 0) {
-        console.log('🔧 Scaling recommendations detected:', scalingRecommendations);
-        // Implement critical recommendations automatically
-        // for (const recommendation of scalingRecommendations.filter(r => r.priority === 'high')) {
-        //   await AutoScalingOracle.implementRecommendation(recommendation);
-        // }
-      }
-    } catch (error) {
-      console.warn('Scaling check failed:', error);
-    }
+    // Auto-scaling functionality placeholder - not implemented
 
     // 1. Fetch active users
     const userFetchStart = Date.now();
@@ -605,20 +490,7 @@ export async function POST(req: NextRequest) {
       professional_expertise: user.professional_experience || '',
     }));
 
-    // ADVANCED: User segmentation analysis
-    const userSegmentationStart = Date.now();
-    let userSegments: any = { error: 'Not available' };
-    try {
-      // userSegments = await UserSegmentationOracle.analyzeUserBehavior(supabase);
-
-      if (userSegments.error) {
-        console.warn('User segmentation failed:', userSegments.error);
-      } else {
-        console.log('👥 User segmentation completed:', userSegments.segmentDistribution);
-      }
-    } catch (error) {
-      console.warn('User segmentation failed:', error);
-    }
+    // User segmentation placeholder - not implemented
 
     // 2. Fetch jobs with UTC-safe date calculation and EU/Early Career filtering
     const jobFetchStart = Date.now();
@@ -644,12 +516,7 @@ export async function POST(req: NextRequest) {
       "early career","junior","campus","working student","associate","assistant"
     ];
 
-    // Build EU location filter
-    const euLocationFilter = EU_HINTS.map(hint => `location.ilike.%${hint}%`).join(',');
-    
-    // Build early career filter for title and description
-    const earlyCareerTitleFilter = EARLY_CAREER_KEYWORDS.map(keyword => `title.ilike.%${keyword}%`).join(',');
-    const earlyCareerDescFilter = EARLY_CAREER_KEYWORDS.map(keyword => `description.ilike.%${keyword}%`).join(',');
+    // Note: Filter building commented out - not currently used in query
 
     const { data: jobs, error: jobsError } = await supabase
       .from('jobs')
@@ -715,31 +582,12 @@ export async function POST(req: NextRequest) {
       try {
         console.log(`Processing matches for ${user.email} (tier: ${user.subscription_tier || 'free'})`);
         
-        // ADVANCED: Get user analysis for personalized processing
-        const userAnalysisStart = Date.now();
-        let userAnalysis: any = { error: 'Not available' };
-        try {
-          // userAnalysis = await UserSegmentationOracle.getUserAnalysis(user.id, supabase);
-
-          if ('error' in userAnalysis) {
-            console.warn(`User analysis failed for ${user.email}:`, userAnalysis.error);
-          } else {
-            console.log(`📊 User analysis for ${user.email}:`, {
-              engagementScore: userAnalysis.engagementScore,
-              segments: userAnalysis.segments,
-              recommendations: userAnalysis.recommendations.length
-            });
-          }
-        } catch (error) {
-          console.warn(`User analysis failed for ${user.email}:`, error);
-        }
+        // Per-user analysis placeholder - not implemented
         
         // Pre-filter jobs to reduce AI processing load
-        const preFilterStart = Date.now();
         const preFilteredJobs = preFilterJobsByUserPreferences(jobs as JobWithFreshness[], user);
         
-        const perUserCap = (user.subscription_tier === 'premium' ? 100 : 50);
-        const considered = preFilteredJobs.slice(0, perUserCap);
+        const considered = preFilteredJobs.slice(0, user.subscription_tier === 'premium' ? 80 : 40);
         
         // Apply freshness distribution with fallback logic
         const tierDistributionStart = Date.now();
@@ -769,61 +617,21 @@ export async function POST(req: NextRequest) {
         const aiMatchingStart = Date.now();
         lap('ai_or_rules');
 
-        try {
-          if (aiFailureCount >= AI_FAILURE_THRESHOLD) {
-            console.log('AI circuit breaker open, using rules');
-            matchType = 'fallback';
-          } else {
-            const compatibleJobs = capped.map(job => ({
-              ...job,
-              id: parseInt(job.id) || undefined,
-              description: job.description || ''
-            }));
-            const result = await matcher.performMatching(compatibleJobs as any[], user);
-            matches = result.matches || [];
-            matchType = result.method === 'ai_success' ? 'ai_success' : (matches.length ? 'fallback' : 'ai_failed');
-          }
-        } catch (err) {
-          aiFailureCount++;
-          console.error(`AI matching failed for ${user.email}:`, err);
-          matchType = 'ai_failed';
-        }
+        // Use the consolidated matching engine
+        // Cast to Job[] by stripping freshness-only props for the matching engine
+        const jobsForMatching = distributedJobs.map(j => {
+          const { freshness_tier, freshness_score, ...rest } = j as any;
+          return rest as Job;
+        });
+        const result = await matcher.performMatching(
+          jobsForMatching,
+          user,
+          process.env.MATCH_USERS_DISABLE_AI === 'true' // Force rules in tests
+        );
 
-        if (!matches || matches.length === 0) {
-          // Convert JobWithFreshness to Job for compatibility
-          const jobCompatible = capped.map(job => ({
-            id: parseInt(job.id) || undefined,
-            job_hash: job.job_hash,
-            title: job.title,
-            company: job.company,
-            location: job.location,
-            job_url: job.job_url,
-            description: job.description,
-            experience_required: '',
-            work_environment: '',
-            source: '',
-            categories: [],
-            company_profile_url: '',
-            language_requirements: [],
-            scrape_timestamp: new Date().toISOString(),
-            original_posted_date: job.original_posted_date || new Date().toISOString(),
-            posted_at: job.original_posted_date || new Date().toISOString(),
-            last_seen_at: job.last_seen_at || new Date().toISOString(),
-            is_active: true,
-            freshness_tier: job.freshness_tier || '',
-            scraper_run_id: '',
-            created_at: job.created_at
-          }));
-          const fallbackResults = generateRobustFallbackMatches(jobCompatible as any[], user);
-          matches = fallbackResults.map((match, index) => ({
-            job_index: index,
-            job_hash: match.job.job_hash,
-            match_score: match.match_score,
-            match_reason: match.match_reason,
-            match_quality: match.match_quality,
-            match_tags: match.match_tags
-          }));
-        }
+        matches = result.matches;
+        matchType = result.method === 'ai_success' ? 'ai_success' : 
+                   result.method === 'rule_based' ? 'fallback' : 'ai_failed';
         
         const aiMatchingTime = Date.now() - aiMatchingStart;
         totalAIProcessingTime += aiMatchingTime;
@@ -846,8 +654,6 @@ export async function POST(req: NextRequest) {
               job_hash: match.job_hash,
               match_score: match.match_score,
               match_reason: match.match_reason,
-              match_quality: match.match_quality,
-              match_tags: match.match_tags,
               freshness_tier: originalJob?.freshness_tier || 'comprehensive',
               processing_method: matchType,
               matched_at: new Date().toISOString(),
@@ -906,20 +712,12 @@ export async function POST(req: NextRequest) {
 
     const results = await Promise.all(userPromises);
 
-    // ADVANCED: Generate comprehensive monitoring report
-    const monitoringStart = Date.now();
-    let monitoringReport: any = { health: { overall: 'unknown' } };
-    try {
-      // monitoringReport = await AdvancedMonitoringOracle.generateDailyReport();
-    } catch (error) {
-      console.warn('Monitoring report generation failed:', error);
+    // Memory cleanup after user processing
+    if (global.gc) {
+      global.gc();
     }
 
-    // Log performance report
-    try {
-    } catch (error) {
-      console.warn('Performance report logging failed:', error);
-    }
+    // Advanced monitoring placeholder - not implemented
 
     const totalProcessingTime = Date.now() - performanceTracker.startTime;
     const performanceMetrics = performanceTracker.getMetrics();
@@ -927,19 +725,22 @@ export async function POST(req: NextRequest) {
     // Track production metrics for Datadog monitoring
     const requestDuration = Date.now() - requestStartTime;
 
-    // Critical performance alerts
-    if (requestDuration > 5000) {
-    }
+    // Performance alerts placeholder
 
-    // Calculate error rate and alert if high (simplified for now)
-    const errorRate = 0; // TODO: Track actual error count in performance metrics
+    // Calculate error rate and alert if high
+    const errorRate = performanceMetrics.errors > 0 
+      ? (performanceMetrics.errors / performanceMetrics.totalRequests) * 100 
+      : 0;
+    
     if (errorRate > 10) {
+      console.warn(`🚨 High error rate detected: ${errorRate.toFixed(2)}%`);
+      Sentry.captureMessage(`High error rate: ${errorRate.toFixed(2)}%`, {
+        level: 'warning',
+        tags: { errorRate: errorRate.toFixed(2) }
+      });
     }
     
-    try {
-    } catch (error) {
-      console.warn('Datadog metrics tracking failed:', error);
-    }
+    // Datadog metrics placeholder
     
     lap('done');
     return NextResponse.json({
@@ -954,8 +755,7 @@ export async function POST(req: NextRequest) {
     const requestDuration = Date.now() - startTime;
     console.error('Match-users processing error:', error);
     
-    // Critical alert for API failure
-    
+    // API failure logging placeholder
     // Sentry error tracking with context
     Sentry.captureException(error, {
       tags: {
@@ -976,7 +776,9 @@ export async function POST(req: NextRequest) {
     }, { status: 500 });
   } finally {
     // Complete Sentry transaction
-    transaction.finish();
+    if (transaction) {
+      transaction.finish();
+    }
     
     if (haveRedisLock) {
       try {

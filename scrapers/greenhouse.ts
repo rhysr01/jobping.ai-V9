@@ -1,6 +1,6 @@
 import axios from "axios";
 import * as crypto from "crypto";
-import { getSmartDateStrategy, getSmartPaginationStrategy, withFallback } from './smart-strategies.js';
+import { getSmartDateStrategy, getSmartPaginationStrategy, withFallback } from './smart-strategies';
 
 const BASE = "https://boards-api.greenhouse.io/v1/boards";
 
@@ -147,7 +147,7 @@ export function normalize(board: string, j: GHJob, company: string | null = null
 }
 
 /** One-shot for a board slug → normalized, filtered jobs. */
-export async function scrapeGreenhouseBoard(board: string, opts?: { company?: string; euOnly?: boolean; earlyOnly?: boolean }): Promise<NormalizedJob[]> {
+export async function scrapeGreenhouseBoard(board: string, opts?: { company?: string | null; euOnly?: boolean; earlyOnly?: boolean }): Promise<NormalizedJob[]> {
   if (!(await verifyBoard(board))) return [];
   const raw = await fetchGreenhouseJobs(board);
 
@@ -156,4 +156,17 @@ export async function scrapeGreenhouseBoard(board: string, opts?: { company?: st
   if (opts?.euOnly !== false)    jobs = jobs.filter(isEU);
 
   return jobs.map(j => normalize(board, j, opts?.company ?? null));
+}
+
+/**
+ * Backwards-compatible API used by tests: scrapeGreenhouse(company, runId)
+ * Accepts a company object with at least a 'board' field and optional name.
+ */
+export async function scrapeGreenhouse(
+  company: { board: string; name?: string },
+  _runId?: string
+): Promise<NormalizedJob[]> {
+  const board = company.board;
+  const companyName = company.name ?? undefined;
+  return scrapeGreenhouseBoard(board, { company: companyName ?? null, euOnly: true, earlyOnly: true });
 }

@@ -9,10 +9,9 @@ export function SignupHeader() {
   return (
     <div className="mb-8">
       <div className="text-center">
-        <h2 className="text-[#F8F9FA] font-bold text-3xl lg:text-4xl mb-4">
-          {plan === 'Premium' ? 'Get started — Premium' : 'Get started — Free'}
+        <h2 className="text-[#CCCCCC] font-light text-lg md:text-xl mb-6 tracking-wide">
+          Get started
         </h2>
-
       </div>
     </div>
   );

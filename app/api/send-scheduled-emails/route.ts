@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
+import { HTTP_STATUS, ERROR_CODES } from '@/Utils/constants';
+import { errorResponse } from '@/Utils/errorResponse';
+import { getSupabaseClient } from '@/Utils/supabase';
 import { sendMatchedJobsEmail } from '@/Utils/email';
-import { 
+import {
   generateRobustFallbackMatches
-} from '@/Utils/matching/fallback.service';
+} from '@/Utils/matching';
 import { 
   logMatchSession
 } from '@/Utils/matching/logging.service';
@@ -15,7 +17,7 @@ import { jobQueue } from '@/Utils/job-queue.service';
 import OpenAI from 'openai';
 
 // Helper function to safely normalize string/array fields
-function normalizeStringToArray(value: any): string[] {
+function normalizeStringToArray(value: unknown): string[] {
   if (!value) return [];
   if (Array.isArray(value)) return value;
   if (typeof value === 'string') {
@@ -28,26 +30,6 @@ function normalizeStringToArray(value: any): string[] {
   return [];
 }
 
-function getSupabaseClient() {
-  // Only initialize during runtime, not build time (but allow in test environment)
-  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'test') {
-    throw new Error('Supabase client should only be used server-side');
-  }
-  
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase configuration');
-  }
-  
-  return createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
-}
 
 function getOpenAIClient() {
   return new OpenAI({
@@ -200,7 +182,7 @@ export async function POST(req: NextRequest) {
             company_types: [],
             roles_selected: [],
             professional_expertise: user.professional_expertise || 'entry',
-            work_environment: 'any',
+            work_environment: 'unclear',
             career_path: [],
             entry_level_preference: user.entry_level_preference || 'entry'
           };
@@ -219,7 +201,6 @@ export async function POST(req: NextRequest) {
               match_score: result.match_score,
               match_reason: result.match_reason,
               match_quality: result.match_quality,
-              match_tags: result.match_tags
             }));
           } else {
             try {
@@ -236,7 +217,6 @@ export async function POST(req: NextRequest) {
                   match_score: result.match_score,
                   match_reason: result.match_reason,
                   match_quality: result.match_quality,
-                  match_tags: result.match_tags
                 }));
               } else {
                 // Use suggested model if provided
@@ -255,7 +235,6 @@ export async function POST(req: NextRequest) {
                     match_score: result.match_score,
                     match_reason: result.match_reason,
                     match_quality: result.match_quality,
-                    match_tags: result.match_tags
                   }));
                 }
               }
@@ -268,7 +247,6 @@ export async function POST(req: NextRequest) {
                 match_score: result.match_score,
                 match_reason: result.match_reason,
                 match_quality: result.match_quality,
-                match_tags: result.match_tags
               }));
             }
           }
@@ -337,6 +315,11 @@ export async function POST(req: NextRequest) {
 
     const successCount = userResults.filter(r => r.success && !r.noMatches).length;
     const errorCount = userResults.filter(r => !r.success).length;
+
+    // Memory cleanup after batch processing
+    if (global.gc) {
+      global.gc();
+    }
 
     console.log(`📊 Scheduled email delivery completed:`);
     console.log(`   ✅ Success: ${successCount}`);

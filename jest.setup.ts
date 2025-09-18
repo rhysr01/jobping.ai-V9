@@ -108,45 +108,12 @@ jest.mock('redis', () => ({
   })),
 }));
 
-// Mock EnhancedRateLimiter
-jest.mock('@/Utils/enhancedRateLimiter', () => ({
-  EnhancedRateLimiter: {
-    getInstance: jest.fn(() => ({
-      checkLimit: jest.fn(() => Promise.resolve({ allowed: true, remaining: 10 })),
-    })),
-  },
-}));
-
-// Mock PerformanceMonitor
-jest.mock('@/Utils/performanceMonitor', () => ({
-  PerformanceMonitor: {
-    trackDuration: jest.fn(),
-    logPerformanceReport: jest.fn(),
-  },
-}));
-
-// Mock AdvancedMonitoring
-jest.mock('@/Utils/advancedMonitoring', () => ({
-  AdvancedMonitoringOracle: {
-    analyzeSystemHealth: jest.fn(() => Promise.resolve({ status: 'healthy' })),
-    generateDailyReport: jest.fn(() => Promise.resolve({ health: { overall: 'healthy' } })),
-  },
-}));
-
-// Mock AutoScaling
-jest.mock('@/Utils/autoScaling', () => ({
-  AutoScalingOracle: {
-    checkScalingNeeds: jest.fn(() => Promise.resolve([])),
-    implementRecommendation: jest.fn(() => Promise.resolve()),
-  },
-}));
-
-// Mock UserSegmentation
-jest.mock('@/Utils/userSegmentation', () => ({
-  UserSegmentationOracle: {
-    analyzeUserBehavior: jest.fn(() => Promise.resolve({ segmentDistribution: {} })),
-    getUserAnalysis: jest.fn(() => Promise.resolve({ engagementScore: 0.5, segments: [], recommendations: [] })),
-  },
+// Mock ProductionRateLimiter (exists)
+jest.mock('@/Utils/productionRateLimiter', () => ({
+  getProductionRateLimiter: jest.fn(() => ({
+    checkLimit: jest.fn(() => Promise.resolve({ allowed: true, remaining: 10 })),
+    teardown: jest.fn(() => Promise.resolve()),
+  })),
 }));
 
 // Mock Resend (no-op in test mode)
@@ -158,13 +125,14 @@ jest.mock('resend', () => ({
   })),
 }));
 
-// Mock DataDog metrics (no-op in test mode)
-jest.mock('@/Utils/datadogMetrics', () => ({
-  dogstatsd: {
-    histogram: jest.fn(),
-    increment: jest.fn(),
-    gauge: jest.fn(),
-  },
+// Mock Sentry (no-op in test mode)
+jest.mock('@sentry/nextjs', () => ({
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+  withScope: jest.fn(),
+  setContext: jest.fn(),
+  setTag: jest.fn(),
+  setUser: jest.fn(),
 }));
 
 // EnhancedAIMatchingCache removed - no longer needed
@@ -190,7 +158,7 @@ global.console = {
 
 // Import teardown functions
 import { getProductionRateLimiter } from './Utils/productionRateLimiter';
-import { teardownDatadog } from './Utils/datadogMetrics';
+// import { teardownDatadog } from './Utils/datadogMetrics'; // TODO: Implement datadog metrics
 
 // Global teardown to close all connections
 afterAll(async () => {
@@ -200,8 +168,8 @@ afterAll(async () => {
     // Teardown rate limiter
     await getProductionRateLimiter().teardown();
     
-    // Teardown Datadog
-    await teardownDatadog();
+  // Teardown Datadog
+  // await teardownDatadog(); // TODO: Implement datadog metrics
     
     // Cache teardown is handled by mocks
     

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseClient } from '@/Utils/databasePool';
-import { convertToDatabaseFormat } from '@/scrapers/utils';
-
-// Import the Jooble scraper
-const JoobleScraper = require('@/scrapers/jooble.js').default;
+import { HTTP_STATUS } from '@/Utils/constants';
+import { errorResponse } from '@/Utils/errorResponse';
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,8 +13,12 @@ export async function POST(req: NextRequest) {
         success: false,
         error: 'Jooble API key not configured',
         message: 'Please set JOOBLE_API_KEY environment variable'
-      }, { status: 400 });
+      }, { status: HTTP_STATUS.BAD_REQUEST });
     }
+
+    // Dynamic imports to avoid build-time issues
+    const { default: JoobleScraper } = await import('../../../../scrapers/jooble');
+    const { convertToDatabaseFormat } = await import('../../../../scrapers/utils');
 
     const scraper = new JoobleScraper();
     const { jobs, metrics } = await scraper.scrapeAllLocations();
@@ -55,11 +57,12 @@ export async function POST(req: NextRequest) {
       message: `Successfully scraped ${jobs.length} jobs from Jooble`
     });
     
-  } catch (error: any) {
-    console.error('❌ Jooble scraper failed:', error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Jooble scraper failed:', message);
     return NextResponse.json({
       success: false,
-      error: error.message || 'Unknown error',
+      error: message,
       message: 'Jooble scraping failed'
     }, { status: 500 });
   }
@@ -67,6 +70,8 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   try {
+    // Dynamic import to avoid build-time issues
+    const { default: JoobleScraper } = await import('../../../../scrapers/jooble');
     const scraper = new JoobleScraper();
     const status = scraper.getStatus();
     
@@ -76,11 +81,12 @@ export async function GET() {
       message: 'Jooble scraper status retrieved'
     });
     
-  } catch (error: any) {
-    console.error('❌ Error getting Jooble status:', error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Error getting Jooble status:', message);
     return NextResponse.json({
       success: false,
-      error: error.message || 'Unknown error',
+      error: message,
       message: 'Failed to get Jooble scraper status'
     }, { status: 500 });
   }

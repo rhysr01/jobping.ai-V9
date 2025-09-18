@@ -1,7 +1,7 @@
 // ✅ Jooble Scraper - EU Early Career Jobs
 import axios from 'axios';
-import { classifyEarlyCareer, convertToDatabaseFormat } from './utils.js';
-import { getSmartDateStrategy, getSmartPaginationStrategy, withFallback } from './smart-strategies.js';
+import { classifyEarlyCareer, convertToDatabaseFormat } from './utils';
+import { getSmartDateStrategy, getSmartPaginationStrategy, withFallback } from './smart-strategies';
 
 // Types
 interface IngestJob {
@@ -189,6 +189,18 @@ class JoobleScraper {
     };
   }
 
+  private isEULocation(location: string): boolean {
+    const euCountries = [
+      'United Kingdom', 'Ireland', 'Germany', 'France', 'Spain',
+      'Italy', 'Netherlands', 'Belgium', 'Poland', 'Sweden',
+      'Denmark', 'Finland', 'Austria', 'Portugal', 'Greece',
+      'Switzerland', 'Norway', 'Czech', 'Romania', 'Bulgaria',
+      'Croatia', 'Slovenia', 'Slovakia', 'Estonia', 'Latvia', 'Lithuania', 'Luxembourg', 'Malta', 'Cyprus'
+    ];
+    const loc = (location || '').toLowerCase();
+    return euCountries.some(country => loc.includes(country.toLowerCase()));
+  }
+
   private generateJobHash(job: JoobleJob): string {
     return `${job.title.toLowerCase()}-${job.company.toLowerCase()}-${job.location.toLowerCase()}`.replace(/\s+/g, '-');
   }
@@ -232,6 +244,15 @@ class JoobleScraper {
             
             try {
               const ingestJob = this.convertToIngestJob(job);
+                // Skip remote per policy
+                if ((ingestJob.location || '').toLowerCase().includes('remote')) {
+                  continue;
+                }
+                // EU-only filter
+                if (!this.isEULocation(ingestJob.location)) {
+                  console.log(`🚫 Skipped non-EU: ${ingestJob.title} at ${ingestJob.company} (${ingestJob.location})`);
+                  continue;
+                }
               
               const isEarlyCareer = classifyEarlyCareer(ingestJob);
               if (isEarlyCareer) {
@@ -262,7 +283,7 @@ class JoobleScraper {
   public async scrapeAllLocations(): Promise<{ jobs: IngestJob[]; metrics: any }> {
     // Apply smart pagination strategy at runtime
     const pagination = withFallback(() => getSmartPaginationStrategy('jooble'), { startPage: 1, endPage: 3 });
-    this.JOOBLE_CONFIG.maxPagesPerSearch = pagination.endPage;
+    // this.JOOBLE_CONFIG.maxPagesPerSearch = pagination.endPage; // TODO: Fix config reference
     
     const allJobs: IngestJob[] = [];
     

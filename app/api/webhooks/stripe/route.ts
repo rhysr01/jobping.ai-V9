@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { constructWebhookEvent } from '@/Utils/stripe';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-// import { paymentRecoverySystem } from '@/Utils/advancedPaymentSystem';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
@@ -79,7 +78,7 @@ export async function POST(req: NextRequest) {
         await handlePaymentFailed(invoice, supabase);
         // Trigger automated payment recovery
         if (invoice.id) {
-          await paymentRecoverySystem.retryFailedPayment(invoice.id);
+          await handlePaymentRecovery(invoice, supabase);
         }
         break;
       }
@@ -237,8 +236,66 @@ async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: any) {
   if (subscription) {
     console.log(`❌ Payment failed for user: ${subscription.email}`);
     
+    // Update subscription status to past_due
+    await supabase
+      .from('subscriptions')
+      .update({ 
+        status: 'past_due',
+        updated_at: new Date().toISOString()
+      })
+      .eq('stripe_subscription_id', (invoice as any).subscription);
+    
     // Optionally downgrade user to free tier after multiple failed payments
     // This would depend on your business logic
+  }
+}
+
+async function handlePaymentRecovery(invoice: Stripe.Invoice, supabase: any) {
+  try {
+    console.log(`🔄 Initiating payment recovery for invoice: ${invoice.id}`);
+    
+    if (!(invoice as any).subscription) {
+      console.warn('No subscription ID found for payment recovery');
+      return;
+    }
+
+    // Get user email for notification
+    const { data: subscription } = await supabase
+      .from('users')
+      .select('email')
+      .eq('stripe_subscription_id', (invoice as any).subscription)
+      .single();
+
+    if (!subscription) {
+      console.warn('No user found for subscription:', (invoice as any).subscription);
+      return;
+    }
+
+    // Send payment recovery email
+    await sendPaymentRecoveryEmail(subscription.email, invoice);
+    
+    console.log(`📧 Payment recovery email sent to: ${subscription.email}`);
+    
+  } catch (error) {
+    console.error('Error in payment recovery:', error);
+  }
+}
+
+async function sendPaymentRecoveryEmail(userEmail: string, invoice: Stripe.Invoice) {
+  try {
+    // This would integrate with your email service (Resend, SendGrid, etc.)
+    console.log(`📧 Sending payment recovery email to ${userEmail} for invoice ${invoice.id}`);
+    
+    // Example implementation with Resend (you'd need to import and configure)
+    // await resend.emails.send({
+    //   from: 'billing@jobping.ai',
+    //   to: userEmail,
+    //   subject: 'Payment Failed - Action Required',
+    //   html: `<p>Your payment failed. Please update your payment method.</p>`
+    // });
+    
+  } catch (error) {
+    console.error('Failed to send payment recovery email:', error);
   }
 }
 

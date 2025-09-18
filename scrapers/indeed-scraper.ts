@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { classifyEarlyCareer, convertToDatabaseFormat } from './utils.js';
+import { classifyEarlyCareer, convertToDatabaseFormat } from './utils';
 
 // Types
 interface IngestJob {

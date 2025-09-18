@@ -1,7 +1,7 @@
 // ✅ RapidAPI Internships Scraper - Properly Integrated with JobPing Pipeline
 import axios from 'axios';
-import { classifyEarlyCareer, convertToDatabaseFormat } from './utils.js';
-import { getSmartDateStrategy, getSmartPaginationStrategy, withFallback } from './smart-strategies.js';
+import { classifyEarlyCareer, convertToDatabaseFormat } from './utils';
+import { getSmartDateStrategy, getSmartPaginationStrategy, withFallback } from './smart-strategies';
 import { createClient } from '@supabase/supabase-js';
 // Simple location normalization function
 function normalizeLocation(location: string): string[] {

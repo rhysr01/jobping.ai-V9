@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseClient } from '@/Utils/supabase';
 
 // Simple feedback data interface
 interface SimpleFeedbackData {
@@ -10,28 +10,12 @@ interface SimpleFeedbackData {
   relevanceScore?: number;
   matchQualityScore?: number;
   explanation?: string;
-  userPreferencesSnapshot?: any;
-  jobContext?: any;
-  matchContext?: any;
+  userPreferencesSnapshot?: Record<string, unknown>;
+  jobContext?: Record<string, unknown>;
+  matchContext?: Record<string, unknown>;
   timestamp: Date;
 }
 
-// Initialize Supabase client
-function getSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase configuration');
-  }
-  
-  return createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
-}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

@@ -51,38 +51,69 @@ export class EmailVerificationOracle {
     return crypto.randomBytes(32).toString('hex');
   }
 
-  // Step 2: Verify hashed token
-  static async verifyEmailToken(token: string): Promise<boolean> {
+  // Step 2: Verify hashed token (OPTIMIZED)
+  static async verifyEmailToken(token: string, email?: string): Promise<{ success: boolean; user?: any; error?: string }> {
     const supabase = this.getSupabaseClient();
-    const { data: user } = await supabase
-      .from('users')
-      .select('verification_token, verification_token_expires, email')
-      .not('verification_token', 'is', null)
-      .single();
+    
+    try {
+      // Get all users with verification tokens (if no email specified, find by token)
+      let query = supabase
+        .from('users')
+        .select('verification_token, verification_token_expires, email, id, full_name')
+        .not('verification_token', 'is', null)
+        .gt('verification_token_expires', new Date().toISOString()); // Only non-expired tokens
       
-    if (!user?.verification_token) return false;
+      if (email) {
+        query = query.eq('email', email);
+      }
       
-    // Check expiry
-    if (new Date() > new Date(user.verification_token_expires)) {
-      return false;
-    }
+      const { data: users, error: fetchError } = await query;
       
-    // Compare hashed token
-    const isValid = await bcrypt.compare(token, user.verification_token);
+      if (fetchError) {
+        return { success: false, error: `Database error: ${fetchError.message}` };
+      }
       
-    if (isValid) {
-      // Clear token after successful verification
-      await supabase
+      if (!users || users.length === 0) {
+        return { success: false, error: 'No valid verification token found' };
+      }
+      
+      // Find the user with the matching token
+      let matchedUser = null;
+      for (const user of users) {
+        const isValid = await bcrypt.compare(token, user.verification_token);
+        if (isValid) {
+          matchedUser = user;
+          break;
+        }
+      }
+      
+      if (!matchedUser) {
+        return { success: false, error: 'Invalid verification token' };
+      }
+      
+      // Clear token and verify user atomically
+      const { data: updatedUser, error: updateError } = await supabase
         .from('users')
         .update({ 
           verification_token: null,
           verification_token_expires: null,
-          email_verified: true
+          email_verified: true,
+          email_phase: 'welcome',
+          onboarding_complete: false,
+          last_email_sent: new Date().toISOString()
         })
-        .eq('verification_token', user.verification_token);
-    }
+        .eq('id', matchedUser.id)
+        .select()
+        .single();
       
-    return isValid;
+      if (updateError) {
+        return { success: false, error: `Failed to verify user: ${updateError.message}` };
+      }
+      
+      return { success: true, user: updatedUser };
+    } catch (error) {
+      return { success: false, error: `Verification failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
   }
 
   static async sendVerificationEmail(email: string, token: string, userName: string) {
@@ -95,26 +126,122 @@ export class EmailVerificationOracle {
         to: [email],
         subject: '🎯 Verify your JobPing account',
         html: `
-          <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
-            <h2>Welcome to JobPing, ${userName}! 🚀</h2>
-            <p>You're one step away from receiving personalized job matches every 48 hours!</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${verificationUrl}" 
-                 style="background: #2563eb; color: white; padding: 12px 24px; 
-                        text-decoration: none; border-radius: 6px; font-weight: bold;">
-                Verify Email & Activate Account
-              </a>
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Verify Your JobPing Account</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+            <style>
+              body {
+                margin: 0;
+                padding: 20px;
+                background: #000000;
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+                line-height: 1.5;
+                color: #FFFFFF;
+                -webkit-font-smoothing: antialiased;
+              }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background: #0A0A0A;
+                border: 1px solid #1A1A1A;
+                border-radius: 12px;
+                overflow: hidden;
+              }
+              .header {
+                background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+                border-bottom: 1px solid #1A1A1A;
+                padding: 32px 24px;
+                text-align: center;
+              }
+              .logo {
+                font-size: 28px;
+                font-weight: 600;
+                color: #FFFFFF;
+                margin-bottom: 8px;
+              }
+              .tagline {
+                color: #AAAAAA;
+                font-size: 16px;
+              }
+              .content {
+                padding: 48px 32px;
+                text-align: center;
+              }
+              .title {
+                font-size: 28px;
+                font-weight: 600;
+                color: #FFFFFF;
+                margin-bottom: 20px;
+                letter-spacing: -0.02em;
+              }
+              .text {
+                color: #AAAAAA;
+                margin-bottom: 32px;
+                line-height: 1.6;
+                font-size: 18px;
+              }
+              .cta-button {
+                display: inline-block;
+                background: #FFFFFF;
+                color: #000000;
+                padding: 20px 40px;
+                border-radius: 12px;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 18px;
+                margin: 32px 0;
+                box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+                transition: all 0.3s ease;
+              }
+              .cta-button:hover {
+                background: #CCCCCC;
+                transform: translateY(-2px);
+              }
+              .footer-text {
+                color: #666666;
+                font-size: 12px;
+                margin-top: 24px;
+                line-height: 1.4;
+              }
+              @media (max-width: 600px) {
+                body { padding: 10px; }
+                .container { margin: 0; border-radius: 0; }
+                .header, .content { padding: 24px 16px; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <div class="logo">🎯 JobPing</div>
+                <div class="tagline">AI-Powered Career Intelligence</div>
+              </div>
+              
+              <div class="content">
+                <h1 class="title">Welcome, ${userName}</h1>
+                <p class="text">Click to verify your email and start receiving job matches.</p>
+                
+                <a href="${verificationUrl}" class="cta-button">
+                  Verify Email
+                </a>
+                
+                <p class="footer-text">
+                  This link expires in 24 hours. If you didn't sign up for JobPing, ignore this email.
+                </p>
+                
+                <p class="footer-text">
+                  Can't click the button? Copy this link: ${verificationUrl}
+                </p>
+              </div>
             </div>
-            
-            <p style="color: #666; font-size: 14px;">
-              This link expires in 24 hours. If you didn't sign up for JobPing, ignore this email.
-            </p>
-            
-            <p style="color: #666; font-size: 12px;">
-              Can't click the button? Copy this link: ${verificationUrl}
-            </p>
-          </div>
+          </body>
+          </html>
         `
       });
       
@@ -136,31 +263,21 @@ export class EmailVerificationOracle {
         return { success: true, user: { email: 'test@example.com', email_verified: true } };
       }
 
-      // Use new bcrypt-based verification
-      const isValid = await this.verifyEmailToken(token);
+      // Use optimized verification with improved error handling
+      const verificationResult = await this.verifyEmailToken(token);
       
-      if (!isValid) {
-        console.log('❌ Verification failed: Invalid or expired token');
-        return { success: false, error: 'Invalid or expired verification token' };
+      if (!verificationResult.success) {
+        console.log(`❌ Verification failed: ${verificationResult.error}`);
+        return { success: false, error: verificationResult.error };
       }
 
-      // Get the verified user
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email_verified', true)
-        .not('verification_token', 'is', null)
-        .single();
-
-      if (userError || !user) {
-        console.error('❌ Failed to fetch verified user:', userError);
-        return { success: false, error: 'Failed to verify email' };
-      }
-
+      const user = verificationResult.user;
       console.log(`✅ User ${user.email} verified successfully`);
 
-      // Trigger initial matching for verified user
-      await this.triggerWelcomeSequence(user);
+      // Trigger welcome sequence for verified user (non-blocking)
+      this.triggerWelcomeSequence(user).catch(error => {
+        console.error('⚠️ Welcome sequence failed (non-critical):', error);
+      });
 
       return { success: true, user };
     } catch (error) {
@@ -206,30 +323,164 @@ export class EmailVerificationOracle {
       to: [user.email],
       subject: '🎉 Welcome to JobPing - Your job hunt starts now!',
       html: `
-        <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
-          <h2>Welcome aboard, ${user.full_name}! 🚀</h2>
-          <p>Your JobPing account is now <strong>active</strong>!</p>
-          
-          <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="margin-top: 0;">What happens next?</h3>
-            <ul>
-              <li>📊 We're analyzing your profile</li>
-              <li>🤖 AI is finding your perfect matches</li>
-              <li>📧 First matches arriving <strong>${timeString}</strong></li>
-            </ul>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Welcome to JobPing</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+          <style>
+            body {
+              margin: 0;
+              padding: 20px;
+              background: #000000;
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+              line-height: 1.5;
+              color: #FFFFFF;
+              -webkit-font-smoothing: antialiased;
+            }
+            .container {
+              max-width: 600px;
+              margin: 0 auto;
+              background: #0A0A0A;
+              border: 1px solid #1A1A1A;
+              border-radius: 12px;
+              overflow: hidden;
+            }
+            .header {
+              background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+              border-bottom: 1px solid #1A1A1A;
+              padding: 32px 24px;
+              text-align: center;
+            }
+            .logo {
+              font-size: 28px;
+              font-weight: 600;
+              color: #FFFFFF;
+              margin-bottom: 8px;
+            }
+            .tagline {
+              color: #AAAAAA;
+              font-size: 16px;
+            }
+            .content {
+              padding: 48px 32px;
+            }
+            .title {
+              font-size: 24px;
+              font-weight: 600;
+              color: #FFFFFF;
+              margin-bottom: 16px;
+              text-align: center;
+            }
+            .text {
+              color: #888888;
+              margin-bottom: 16px;
+              line-height: 1.6;
+              text-align: center;
+            }
+            .highlight-box {
+              background: #111111;
+              border: 1px solid #333333;
+              padding: 24px;
+              border-radius: 8px;
+              margin: 24px 0;
+              box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+            }
+            .highlight-title {
+              font-size: 18px;
+              font-weight: 600;
+              color: #FFFFFF;
+              margin-bottom: 16px;
+            }
+            .list {
+              list-style: none;
+              padding: 0;
+              margin: 0;
+            }
+            .list li {
+              color: #888888;
+              margin-bottom: 8px;
+              padding-left: 0;
+            }
+            .profile-section {
+              margin-top: 24px;
+            }
+            .profile-title {
+              font-size: 16px;
+              font-weight: 600;
+              color: #FFFFFF;
+              margin-bottom: 12px;
+            }
+            .cta-button {
+              display: inline-block;
+              background: #FFFFFF;
+              color: #000000;
+              padding: 16px 32px;
+              border-radius: 8px;
+              text-decoration: none;
+              font-weight: 500;
+              font-size: 16px;
+              margin: 24px auto;
+              box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+              transition: all 0.3s ease;
+              display: block;
+              text-align: center;
+              max-width: 280px;
+            }
+            .cta-button:hover {
+              background: #CCCCCC;
+              transform: translateY(-2px);
+            }
+            .footer-text {
+              color: #666666;
+              font-size: 14px;
+              text-align: center;
+              margin-top: 24px;
+              line-height: 1.4;
+            }
+            @media (max-width: 600px) {
+              body { padding: 10px; }
+              .container { margin: 0; border-radius: 0; }
+              .header, .content { padding: 24px 16px; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="logo">🎯 JobPing</div>
+              <div class="tagline">AI-Powered Career Intelligence</div>
+            </div>
+            
+            <div class="content">
+              <h1 class="title">Welcome, ${user.full_name}</h1>
+              <p class="text">Your account is active. First job matches arrive <strong style="color: #FFFFFF;">${timeString}</strong>.</p>
+              
+              <div class="profile-section">
+                <div class="profile-title">Your Profile Summary:</div>
+                <ul class="list">
+                  <li><strong style="color: #FFFFFF;">Career Path:</strong> ${user.career_path || 'Not specified'}</li>
+                  <li><strong style="color: #FFFFFF;">Target Cities:</strong> ${Array.isArray(user.target_cities) ? user.target_cities.join(', ') : user.target_cities || 'Not specified'}</li>
+                  <li><strong style="color: #FFFFFF;">Start Date:</strong> ${user.start_date || 'Not specified'}</li>
+                  <li><strong style="color: #FFFFFF;">Work Style:</strong> ${user.work_environment || 'Not specified'}</li>
+                </ul>
+              </div>
+              
+              <a href="https://jobping.ai/dashboard" class="cta-button">
+                View Dashboard →
+              </a>
+              
+              <p class="footer-text">
+                Questions? Reply to this email.
+              </p>
+            </div>
           </div>
-          
-          <p><strong>Your Profile Summary:</strong></p>
-          <ul>
-            <li>Career Path: ${user.career_path || 'Not specified'}</li>
-            <li>Target Cities: ${Array.isArray(user.target_cities) ? user.target_cities.join(', ') : user.target_cities || 'Not specified'}</li>
-            <li>Start Date: ${user.start_date || 'Not specified'}</li>
-            <li>Work Style: ${user.work_environment || 'Not specified'}</li>
-          </ul>
-          
-          <p>Need to update anything? Reply to this email!</p>
-          <p>Save time, stress less, apply more! 💪</p>
-        </div>
+        </body>
+        </html>
       `
     });
   }

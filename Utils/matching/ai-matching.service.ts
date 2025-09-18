@@ -1,46 +1,81 @@
 /**
- * AI matching service with OpenAI integration
- * Extracted from the massive jobMatching.ts file
+ * AI Matching Service
+ * Extracted from jobMatching.ts for better organization
  */
 
 import OpenAI from 'openai';
-import type { Job, UserPreferences, JobMatch, EnrichedJob, NormalizedUserProfile } from './types';
-// Import job enrichment functions
-const { enrichJobData, normalizeUserPreferences } = require('./job-enrichment.service');
+import { Job, FreshnessTier } from '../../scrapers/types';
+import { 
+  EnrichedJob, 
+  NormalizedUserProfile, 
+  JobMatch, 
+  AiProvenance 
+} from './types';
+import { enrichJobData, calculateFreshnessTier } from './job-enrichment.service';
+import { timeout } from './normalizers';
 
-// ---------- AI Matching Cache ----------
-export class AIMatchingCache {
-  private cache = new Map<string, { value: any; expiry: number }>();
-  private maxSize = 1000;
+// ================================
+// AI MATCHING CACHE SYSTEM
+// ================================
 
-  get(key: string): any {
-    const item = this.cache.get(key);
-    if (!item) return null;
-    
-    if (Date.now() > item.expiry) {
-      this.cache.delete(key);
-      return null;
-    }
-    
-    return item.value;
+interface LRUCacheEntry<T> {
+  value: T;
+  timestamp: number;
+  accessCount: number;
+}
+
+class LRUCache<K, V> {
+  private cache = new Map<K, LRUCacheEntry<V>>();
+  private maxSize: number;
+  private ttl: number;
+
+  constructor(maxSize: number, ttlMs: number) {
+    this.maxSize = maxSize;
+    this.ttl = ttlMs;
   }
 
-  set(key: string, value: any, ttl: number = 3600000): void { // 1 hour default
-    if (this.cache.size >= this.maxSize) {
-      const firstKey = this.cache.keys().next().value;
-      if (firstKey) {
-        this.cache.delete(firstKey);
-      }
+  get(key: K): V | undefined {
+    const entry = this.cache.get(key);
+    if (!entry) return undefined;
+
+    const now = Date.now();
+    if (now - entry.timestamp > this.ttl) {
+      this.cache.delete(key);
+      return undefined;
     }
+
+    entry.accessCount++;
+    return entry.value;
+  }
+
+  set(key: K, value: V): void {
+    const now = Date.now();
     
+    if (this.cache.size >= this.maxSize) {
+      this.evictLeastUsed();
+    }
+
     this.cache.set(key, {
       value,
-      expiry: Date.now() + ttl
+      timestamp: now,
+      accessCount: 1
     });
   }
 
-  has(key: string): boolean {
-    return this.get(key) !== null;
+  private evictLeastUsed(): void {
+    let leastUsedKey: K | undefined;
+    let leastUsedCount = Infinity;
+
+    for (const [key, entry] of this.cache.entries()) {
+      if (entry.accessCount < leastUsedCount) {
+        leastUsedCount = entry.accessCount;
+        leastUsedKey = key;
+      }
+    }
+
+    if (leastUsedKey !== undefined) {
+      this.cache.delete(leastUsedKey);
+    }
   }
 
   clear(): void {
@@ -52,195 +87,224 @@ export class AIMatchingCache {
   }
 }
 
-// ---------- AI Matching Service ----------
-export class AIMatchingService {
-  private openai: OpenAI | null = null;
-  private cache: AIMatchingCache;
-  private costTracker = {
-    gpt4: { calls: 0, tokens: 0, cost: 0 },
-    gpt35: { calls: 0, tokens: 0, cost: 0 }
-  };
+export class AIMatchingCache {
+  private static cache = new LRUCache<string, any[]>(10000, 1000 * 60 * 30); // 10k entries, 30 minutes TTL
 
-  constructor(apiKey?: string) {
-    if (apiKey) {
-      this.openai = new OpenAI({ apiKey });
-    } else {
-      this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || '' });
-    }
-    this.cache = new AIMatchingCache();
+  static get(key: string): any[] | undefined {
+    return this.cache.get(key);
+  }
+
+  static set(key: string, value: any[]): void {
+    this.cache.set(key, value);
+  }
+
+  static clear(): void {
+    this.cache.clear();
+  }
+
+  static size(): number {
+    return this.cache.size();
+  }
+}
+
+// ================================
+// AI MATCHING SERVICE
+// ================================
+
+export class AIMatchingService {
+  private openai: OpenAI;
+  private cache: AIMatchingCache;
+
+  constructor() {
+    this.openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY!,
+    });
+    this.cache = AIMatchingCache;
   }
 
   async performEnhancedAIMatching(
     jobs: Job[], 
-    userPrefs: UserPreferences, 
-    openai?: OpenAI
-  ): Promise<{ matches: JobMatch[] }> {
-    const client = openai || this.openai;
-    if (!client) {
-      throw new Error('OpenAI client not available');
-    }
-
+    userPrefs: NormalizedUserProfile
+  ): Promise<JobMatch[]> {
     const startTime = Date.now();
     
     try {
-      // Enrich jobs and user profile
-      const enrichedJobs = jobs.slice(0, 20).map(job => enrichJobData(job));
-      const userProfile = normalizeUserPreferences(userPrefs);
+      // Check cache first
+      const cacheKey = this.generateCacheKey(jobs, userPrefs);
+      const cachedResult = AIMatchingCache.get(cacheKey);
+      
+      if (cachedResult) {
+        console.log('🎯 Cache hit for AI matching');
+        return cachedResult;
+      }
+
+      // Enrich jobs with additional data
+      const enrichedJobs = jobs.map(job => enrichJobData(job));
       
       // Build prompt
-      const prompt = this.buildMatchingPrompt(enrichedJobs, userProfile);
+      const prompt = this.buildMatchingPrompt(enrichedJobs, userPrefs);
       
-      // Make API call with timeout
-      const completion = await Promise.race([
-        client.chat.completions.create({
-          model: 'gpt-4',
+      // Call OpenAI with timeout
+      const response = await Promise.race([
+        this.openai.chat.completions.create({
+          model: 'gpt-4-turbo',
           messages: [
             {
               role: 'system',
-              content: 'You are a job matching expert. Analyze jobs and return the best matches using the provided function.'
+              content: 'You are an expert job matching AI. Analyze jobs and return JSON matches.'
             },
             {
               role: 'user',
               content: prompt
             }
           ],
-          temperature: 0.1,
-          max_tokens: 1000,
-          functions: [{
-            name: 'return_job_matches',
-            description: 'Return job matches in structured format',
-            parameters: {
-              type: 'object',
-              properties: {
-                matches: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      job_index: { type: 'number', minimum: 1 },
-                      job_hash: { type: 'string' },
-                      match_score: { type: 'number', minimum: 50, maximum: 100 },
-                      match_reason: { type: 'string', maxLength: 200 }
-                    },
-                    required: ['job_index', 'job_hash', 'match_score', 'match_reason']
-                  }
-                }
-              },
-              required: ['matches']
-            }
-          }],
-          function_call: { name: 'return_job_matches' }
+          temperature: 0.3,
+          max_tokens: 2000,
         }),
-        new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('AI_TIMEOUT')), 20000)
-        )
+        timeout<OpenAI.Chat.Completions.ChatCompletion>(20000, 'AI matching timeout')
       ]);
 
-      // Track costs
-      this.trackCost(completion.usage, 'gpt-4');
+      // Parse and validate response
+      const matches = this.parseAndValidateMatches(
+        response.choices[0]?.message?.content || '',
+        jobs
+      );
 
-      const functionCall = completion.choices[0]?.message?.function_call;
-      if (!functionCall || functionCall.name !== 'return_job_matches') {
-        throw new Error('Invalid function call response');
-      }
+      // Cache result
+      AIMatchingCache.set(cacheKey, matches);
 
-      const functionArgs = JSON.parse(functionCall.arguments);
-      const matches = this.parseFunctionCallResponse(functionArgs.matches, jobs);
-      
-      return { matches };
-      
+      const latency = Date.now() - startTime;
+      console.log(`🤖 AI matching completed in ${latency}ms, found ${matches.length} matches`);
+
+      return matches;
+
     } catch (error) {
-      if (error instanceof Error && error.message === 'AI_TIMEOUT') {
-        console.warn('AI matching timed out after 20s');
-        return { matches: [] };
-      }
-      throw error;
+      console.error('AI matching failed:', error);
+      throw new Error(`AI matching failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  private buildMatchingPrompt(jobs: EnrichedJob[], userProfile: NormalizedUserProfile): string {
-    const userCities = userProfile.target_cities.join(', ') || 'Europe';
-    const userCareer = userProfile.professional_expertise || 'Graduate';
-    const userLevel = userProfile.entry_level_preference || 'entry-level';
-
-    const jobList = jobs.slice(0, 10).map((job, i) => 
-      `${i+1}: ${job.title} at ${job.company} [${job.job_hash}]`
-    ).join('\n');
-
-    return `User seeks ${userLevel} ${userCareer} roles in ${userCities}.
-
-Jobs:
-${jobList}
-
-Return JSON array with top 5 matches:
-[{"job_index":1,"job_hash":"actual-hash","match_score":75,"match_reason":"Brief reason"}]
-
-Requirements:
-- job_index: 1-${jobs.length}
-- match_score: 50-100
-- Use actual job_hash from above
-- Max 5 matches
-- Valid JSON only`;
+  private generateCacheKey(jobs: Job[], userPrefs: NormalizedUserProfile): string {
+    const jobHashes = jobs.map(j => j.job_hash).sort().join(',');
+    const userKey = `${userPrefs.email}-${userPrefs.careerFocus}`;
+    return `ai-match:${userKey}:${jobHashes}`;
   }
 
-  private parseFunctionCallResponse(matches: any[], jobs: Job[]): JobMatch[] {
+  private buildMatchingPrompt(jobs: EnrichedJob[], userProfile: NormalizedUserProfile): string {
+    const userContext = this.buildUserContext(userProfile);
+    const jobsContext = this.buildJobsContext(jobs);
+    
+    return `
+${userContext}
+
+${jobsContext}
+
+Analyze each job and return a JSON array of matches. For each match, provide:
+- job_index: Index in the jobs array (0-based)
+- match_score: Score from 1-100
+- match_reason: Brief explanation
+- confidence_score: Confidence from 0.0-1.0
+
+Return only valid JSON, no other text.
+`;
+  }
+
+  private buildUserContext(profile: NormalizedUserProfile): string {
+    return `
+USER PROFILE:
+- Email: ${profile.email}
+- Career Focus: ${profile.careerFocus || 'Not specified'}
+- Target Cities: ${profile.target_cities?.join(', ') || 'Not specified'}
+- Languages: ${profile.languages_spoken?.join(', ') || 'Not specified'}
+- Work Environment: ${profile.work_environment || 'flexible'}
+- Experience Level: ${profile.entry_level_preference || 'entry'}
+- Start Date: ${profile.start_date || 'flexible'}
+- Company Types: ${profile.company_types?.join(', ') || 'Not specified'}
+- Roles: ${profile.roles_selected?.join(', ') || 'Not specified'}
+`;
+  }
+
+  private buildJobsContext(jobs: EnrichedJob[]): string {
+    return jobs.map((job, index) => `
+JOB ${index}:
+- Title: ${job.title}
+- Company: ${job.company}
+- Location: ${job.location}
+- Description: ${job.description?.substring(0, 500)}...
+- Categories: ${job.categories?.join(', ')}
+- Experience Level: ${job.experienceLevel}
+- Remote Flexibility: ${job.remoteFlexibility}/10
+- Market Demand: ${job.marketDemand}/10
+`).join('\n');
+  }
+
+  parseAndValidateMatches(response: string, jobs: Job[]): JobMatch[] {
     try {
+      // Clean up response
+      const cleanedResponse = response
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
+
+      const matches = JSON.parse(cleanedResponse);
+      
       if (!Array.isArray(matches)) {
         throw new Error('Response is not an array');
       }
 
       return matches
-        .filter(match => this.isValidMatch(match, jobs.length))
-        .slice(0, 5)
+        .filter(match => 
+          typeof match.job_index === 'number' &&
+          match.job_index >= 0 &&
+          match.job_index < jobs.length &&
+          typeof match.match_score === 'number' &&
+          match.match_score >= 1 &&
+          match.match_score <= 100
+        )
         .map(match => ({
           job_index: match.job_index,
-          job_hash: match.job_hash,
-          match_score: Math.min(100, Math.max(50, match.match_score)),
+          job_hash: jobs[match.job_index].job_hash,
+          match_score: match.match_score,
           match_reason: match.match_reason || 'AI match',
-          match_quality: this.getQualityLabel(match.match_score),
-          match_tags: 'ai-generated'
+          confidence_score: match.confidence_score || 0.8
         }));
 
     } catch (error) {
-      console.error('Failed to parse function call response:', error);
-      return [];
+      console.error('Failed to parse AI response:', error);
+      throw new Error('Invalid AI response format');
     }
   }
 
-  private isValidMatch(match: any, maxJobIndex: number): boolean {
-    return (
-      match &&
-      typeof match.job_index === 'number' &&
-      typeof match.job_hash === 'string' &&
-      typeof match.match_score === 'number' &&
-      match.job_index >= 1 &&
-      match.job_index <= maxJobIndex &&
-      match.match_score >= 0 &&
-      match.match_score <= 100 &&
-      match.job_hash.length > 0
-    );
+  convertToRobustMatches(aiMatches: any[], user: NormalizedUserProfile, jobs: Job[]): any[] {
+    return aiMatches
+      .filter(match => match.job_index >= 0 && match.job_index < jobs.length)
+      .map(match => ({
+        job: jobs[match.job_index],
+        match_score: match.match_score,
+        match_reason: match.match_reason,
+        confidence_score: match.confidence_score
+      }));
   }
 
-  private getQualityLabel(score: number): string {
-    if (score >= 85) return 'excellent';
-    if (score >= 75) return 'good';
-    if (score >= 65) return 'fair';
-    return 'poor';
+  async testConnection(): Promise<boolean> {
+    try {
+      await this.openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: 'test' }],
+        max_tokens: 1
+      });
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
-  private trackCost(usage: any, model: 'gpt-4' | 'gpt-3.5-turbo'): void {
-    if (!usage) return;
-    
-    const key = model === 'gpt-4' ? 'gpt4' : 'gpt35';
-    this.costTracker[key].calls++;
-    this.costTracker[key].tokens += usage.total_tokens || 0;
-    
-    // Rough cost calculation (approximate)
-    const costPerToken = model === 'gpt-4' ? 0.00003 : 0.000002;
-    this.costTracker[key].cost += (usage.total_tokens || 0) * costPerToken;
-  }
-
-  getCostSummary() {
-    return this.costTracker;
+  getStats(): any {
+    return {
+      model: 'gpt-4-turbo',
+      maxTokens: 4000,
+      temperature: 0.7,
+      timeout: 20000
+    };
   }
 }

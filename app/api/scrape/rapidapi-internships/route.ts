@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import RapidAPIInternshipsScraper from '@/scrapers/rapidapi-internships';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,6 +11,9 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
     
+    // Dynamic import to avoid build-time issues
+    const { default: RapidAPIInternshipsScraper } = await import('../../../../scrapers/rapidapi-internships');
+    
     // Run the scraper
     const results = await RapidAPIInternshipsScraper.scrapeAllQueries();
     
@@ -22,12 +24,13 @@ export async function GET(request: NextRequest) {
       results
     });
     
-  } catch (error: any) {
-    console.error('❌ RapidAPI Internships scraper error:', error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ RapidAPI Internships scraper error:', message);
     
     return NextResponse.json({
       success: false,
-      error: error.message,
+      error: message,
       source: 'rapidapi-internships',
       timestamp: new Date().toISOString()
     }, { status: 500 });

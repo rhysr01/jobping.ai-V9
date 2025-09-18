@@ -3,7 +3,7 @@
 // Implements PRD: €75/month plan, 167 daily searches, EU early-career focus
 
 import axios from 'axios';
-import { classifyEarlyCareer, convertToDatabaseFormat, parseLocation, validateJob, type IngestJob } from './utils.js';
+import { classifyEarlyCareer, convertToDatabaseFormat, parseLocation, validateJob, type IngestJob } from './utils';
 // Smart strategies not available - using basic configuration
 
 // Types matching existing scraper patterns

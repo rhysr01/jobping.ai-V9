@@ -31,7 +31,7 @@ export class SimpleAIMatcher {
       });
 
       this.dailyCallCount++;
-      return this.parseMatches(response.choices[0].message.content);
+      return this.parseMatches(response.choices[0].message.content || '');
     } catch (error) {
       return this.fallbackMatching(jobs, user);
     }

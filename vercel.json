@@ -5,6 +5,12 @@
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 60
+    },
+    "app/api/send-scheduled-emails/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/match-users/route.ts": {
+      "maxDuration": 120
     }
   },
   "env": {

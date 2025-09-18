@@ -145,7 +145,7 @@ export function parseLocation(location: string): {
     city: city || location,
     country: country,
     isRemote,
-    isEU: isEU || isRemote // Consider remote jobs as potentially EU (filtered elsewhere if needed)
+    isEU // Never treat remote as EU; remote must be excluded by policy
   };
 }
 

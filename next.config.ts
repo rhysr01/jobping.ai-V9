@@ -10,6 +10,63 @@ const nextConfig: NextConfig = {
   // Add Vercel-specific optimizations
   compress: true,
   poweredByHeader: false,
+  
+  // Security headers
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin'
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()'
+          },
+          // HTTPS enforcement in production
+          ...(process.env.NODE_ENV === 'production' ? [{
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload'
+          }] : [])
+        ]
+      }
+    ];
+  },
+  
+  // Redirect HTTP to HTTPS in production
+  async redirects() {
+    if (process.env.NODE_ENV === 'production') {
+      return [
+        {
+          source: '/(.*)',
+          has: [
+            {
+              type: 'header',
+              key: 'x-forwarded-proto',
+              value: 'http'
+            }
+          ],
+          destination: 'https://jobping.ai/:path*',
+          permanent: true
+        }
+      ];
+    }
+    return [];
+  },
   webpack: (config, { isServer, webpack }) => {
     // Always exclude problematic modules
     config.externals = config.externals || [];

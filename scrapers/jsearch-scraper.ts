@@ -1,6 +1,6 @@
 // ✅ FIXED JSearch Scraper - Optimized for EU Early Career Jobs
-import { classifyEarlyCareer, convertToDatabaseFormat } from './utils.js';
-import { getSmartDateStrategy, getSmartPaginationStrategy, withFallback } from './smart-strategies.js';
+import { classifyEarlyCareer, convertToDatabaseFormat } from './utils';
+import { getSmartDateStrategy, getSmartPaginationStrategy, withFallback } from './smart-strategies';
 
 // Types
 interface IngestJob {
@@ -115,7 +115,7 @@ const JSEARCH_CONFIG = {
   ],
   
   // ✅ FIXED: Much more reasonable rate limiting
-  requestInterval: 300000, // 5 minutes default (reduced in test mode)
+  requestInterval: process.env.JOBPING_TEST_MODE === '1' ? 5000 : 30000, // 5s test, 30s prod
   monthlyBudget: 2000,
   dailyBudget: 65,
   seenJobTTL: 7 * 24 * 60 * 60 * 1000,
@@ -316,6 +316,12 @@ class JSearchScraper {
             try {
               const ingestJob = this.convertToIngestJob(job);
               
+            // Skip remote per policy
+            if ((ingestJob.location || '').toLowerCase().includes('remote')) {
+              console.log(`🚫 Skipped remote: ${ingestJob.title} at ${ingestJob.company}`);
+              continue;
+            }
+
               const isEarlyCareer = classifyEarlyCareer(ingestJob);
               if (isEarlyCareer) {
                 if (this.isEULocation(job)) {

@@ -335,7 +335,54 @@ if (require.main === module) {
     try {
       require('dotenv').config({ path: '.env.local' });
       const { createClient } = require('@supabase/supabase-js');
-      const { convertToDatabaseFormat, makeJobHash } = require('../scrapers/utils.js');
+      // Local helpers to avoid ESM/CJS interop issues
+      function localParseLocation(location) {
+        const loc = String(location || '').toLowerCase();
+        const isRemote = /\b(remote|work\s*from\s*home|wfh|anywhere|distributed|virtual)\b/i.test(loc);
+        return { isRemote };
+      }
+      function localIsEarlyCareer(title, description) {
+        const hay = `${title || ''} ${(description || '')}`.toLowerCase();
+        const inc = /(graduate|new\s?grad|entry[-\s]?level|intern(ship)?|apprentice|early\s?career|junior|campus|working\sstudent|trainee|associate|analyst|coordinator|specialist|assistant|representative|consultant|researcher)/i;
+        const excl = /(senior|staff|principal|lead|manager|director|head\b|vp\b|vice\s+president|chief|executive|c-level|cto|ceo|cfo|coo)/i;
+        return inc.test(hay) && !excl.test(hay);
+      }
+      function localMakeJobHash(job) {
+        const normalizedTitle = (job.title || '').toLowerCase().trim().replace(/\s+/g, ' ');
+        const normalizedCompany = (job.company || '').toLowerCase().trim().replace(/\s+/g, ' ');
+        const normalizedLocation = (job.location || '').toLowerCase().trim().replace(/\s+/g, ' ');
+        const hashString = `${normalizedTitle}|${normalizedCompany}|${normalizedLocation}`;
+        let hash = 0;
+        for (let i = 0; i < hashString.length; i++) {
+          const c = hashString.charCodeAt(i);
+          hash = ((hash << 5) - hash) + c;
+          hash |= 0;
+        }
+        return Math.abs(hash).toString(36);
+      }
+      function convertToDatabaseFormat(job) {
+        const { isRemote } = localParseLocation(job.location);
+        const isEarly = localIsEarlyCareer(job.title, job.description);
+        const job_hash = localMakeJobHash(job);
+        const nowIso = new Date().toISOString();
+        return {
+          job_hash,
+          title: (job.title || '').trim(),
+          company: (job.company || '').trim(),
+          location: (job.location || '').trim(),
+          description: (job.description || '').trim(),
+          job_url: (job.url || '').trim(),
+          source: (job.source || 'adzuna').trim(),
+          posted_at: job.posted_at || nowIso,
+          categories: [isEarly ? 'early-career' : 'experienced'],
+          work_environment: isRemote ? 'remote' : 'on-site',
+          experience_required: isEarly ? 'entry-level' : 'experienced',
+          original_posted_date: job.posted_at || nowIso,
+          last_seen_at: nowIso,
+          is_active: true,
+          created_at: nowIso
+        };
+      }
       
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -345,7 +392,10 @@ if (require.main === module) {
       const results = await scrapeAllCitiesCategories({ verbose: true });
       
       // Convert and deduplicate jobs by job_hash before saving
-      const dbJobs = results.jobs.map(job => {
+      // Respect remote exclusion preference
+      const includeRemote = String(process.env.INCLUDE_REMOTE || '').toLowerCase() !== 'false' ? true : false;
+      const filteredJobs = includeRemote ? results.jobs : results.jobs.filter(j => !localParseLocation(j.location).isRemote);
+      const dbJobs = filteredJobs.map(job => {
         const dbJob = convertToDatabaseFormat(job);
         const { metadata, ...clean } = dbJob;
         return clean;

@@ -29,7 +29,7 @@ export const SEND_PLAN = {
     pullsPerWeek: 2,
     earlyAccessHours: 24
   }
-} as const;
+};
 
 // Match quality rules
 export const MATCH_RULES = {
@@ -103,7 +103,7 @@ export function getCurrentWeekStart(): string {
  * Check if today is a send day for the tier
  */
 export function isSendDay(tier: 'free' | 'premium'): boolean {
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'short' }) as string;
   const plan = SEND_PLAN[tier];
   return plan.days.includes(today);
 }

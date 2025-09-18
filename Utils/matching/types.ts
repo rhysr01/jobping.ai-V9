@@ -1,14 +1,24 @@
 /**
- * Core types for the JobPing matching system
- * Extracted from the massive jobMatching.ts file
+ * Core Types for Job Matching System
+ * Extracted from jobMatching.ts for better organization
  */
 
-// AI timeout configuration
-export const AI_TIMEOUT_MS = 20000; // 20 seconds for better reliability
-export const AI_MAX_RETRIES = 3;
-export const AI_RETRY_DELAY_MS = 1000;
+import { Job } from '../../scrapers/types';
 
-// AI Provenance interface for tracking
+// Re-export Job type for convenience
+export type { Job } from '../../scrapers/types';
+
+// Freshness tiers for job prioritization
+export enum FreshnessTier {
+  ULTRA_FRESH = 'ultra_fresh',    // < 24 hours
+  FRESH = 'fresh',                // 1-3 days
+  COMPREHENSIVE = 'comprehensive' // > 3 days
+}
+
+// ================================
+// CORE INTERFACES
+// ================================
+
 export interface AiProvenance {
   match_algorithm: 'ai' | 'rules' | 'hybrid';
   ai_model?: string;
@@ -19,19 +29,18 @@ export interface AiProvenance {
   fallback_reason?: string;
 }
 
-// ---------- DB row shapes (match your Postgres schema) ----------
 export interface JobRow {
   id: string;
   title: string;
   company: string;
-  location: string | null;               // "Berlin, DE" | "EU Remote" | null
+  location: string | null;
   description: string | null;
-  categories: string[];                  // IMPORTANT: text[] in Postgres
-  languages_required: string[] | null;   // text[]
-  work_environment: string | null;       // "remote" | "hybrid" | "on-site" | null
+  categories: string[];
+  languages_required: string[] | null;
+  work_environment: string | null;
   source: string | null;
   job_hash: string;
-  posted_at: string | null;              // timestamptz ISO
+  posted_at: string | null;
   created_at: string;
   updated_at: string;
   last_run_at: string | null;
@@ -47,8 +56,8 @@ export interface MatchRow {
   match_reason: string | null;
   match_score: number | null;
   match_quality: string | null;
-  match_tags: any;                       // jsonb
-  matched_at: string;                    // timestamptz ISO
+  match_tags: any;
+  matched_at: string;
   freshness_law: string | null;
 }
 
@@ -57,16 +66,16 @@ export interface UserRow {
   email: string;
   full_name: string | null;
   professional_experience: string | null;
-  languages_spoken: string[] | null;     // text[]
-  start_date: string | null;             // date ISO
+  languages_spoken: string[] | null;
+  start_date: string | null;
   work_authorization: string | null;
   visa_related: boolean | null;
-  entry_level_preference: string | null; // "internship" | "graduate" | ...
-  company_types: string[] | null;        // text[]
-  career_path: string[] | null;          // text[]
-  roles_selected: any | null;            // jsonb
-  target_cities: string[] | null;        // text[]
-  work_environment: string | null;       // "remote" | "hybrid" | "on-site"
+  entry_level_preference: string | null;
+  company_types: string[] | null;
+  career_path: string[] | null;
+  roles_selected: any | null;
+  target_cities: string[] | null;
+  work_environment: string | null;
   target_employment_start_date: string | null;
   professional_expertise: string | null;
   email_verified: boolean | null;
@@ -75,84 +84,67 @@ export interface UserRow {
   updated_at: string;
 }
 
-// ---------- Normalized user profile used by matcher ----------
+// ================================
+// NORMALIZED USER PROFILE
+// ================================
+
 export interface NormalizedUser {
   email: string;
-
-  // arrays normalized (never undefined)
   career_path: string[];
   target_cities: string[];
   languages_spoken: string[];
   company_types: string[];
   roles_selected: string[];
-
-  // scalar preferences normalized to string|null
   professional_expertise: string | null;
   entry_level_preference: string | null;
   work_environment: 'remote' | 'hybrid' | 'on-site' | null;
   start_date: string | null;
-
-  // convenience field: first career path or "unknown"
   careerFocus: string;
 }
 
 export type NormalizedUserProfile = NormalizedUser;
 
-// ---------- User preferences interface (used by API routes) ----------
+// ================================
+// USER PREFERENCES
+// ================================
+
 export interface UserPreferences {
   email: string;
-  target_cities: string[];
-  languages_spoken: string[];
-  company_types: string[];
-  roles_selected: string[];
-  professional_expertise: string;
-  work_environment: string;
-  career_path: string[];
-  entry_level_preference: string;
+  professional_expertise?: string;
+  full_name?: string;
+  start_date?: string;
+  work_environment?: 'remote' | 'hybrid' | 'on-site' | 'unclear';
+  visa_status?: string;
+  entry_level_preference?: 'entry' | 'mid' | 'senior';
+  career_path?: string[];
+  target_cities?: string[];
+  languages_spoken?: string[];
+  company_types?: string[];
+  roles_selected?: string[];
 }
 
-// ---------- Job interface (from scrapers) ----------
-export interface Job {
-  id?: string;
-  title: string;
-  company: string;
-  location: string;
-  description: string;
-  job_url: string;
-  source: string;
-  job_hash: string;
-  posted_at?: string;
-  created_at?: string;
-  categories?: string[];
-  languages_required?: string[];
-  work_environment?: string;
-  company_profile_url?: string;
-  original_posted_date?: string;
-  last_seen_at?: string;
-  is_active?: boolean;
-}
+// ================================
+// MATCHING RESULTS
+// ================================
 
-// ---------- Matching interfaces ----------
 export interface MatchScore {
-  total: number;
-  breakdown: {
-    location: number;
-    career: number;
-    experience: number;
-    company: number;
-    freshness: number;
-    eligibility: number;
-  };
-  confidence: number;
+  overall: number;
+  eligibility: number;
+  location: number;
+  experience: number;
+  skills: number;
+  company: number;
+  timing: number;
 }
 
 export interface MatchResult {
   job: Job;
   match_score: number;
   match_reason: string;
+  confidence_score: number;
   match_quality: string;
-  match_tags: string;
-  confidence: number;
+  score_breakdown: MatchScore;
+  provenance: AiProvenance;
 }
 
 export interface JobMatch {
@@ -160,46 +152,75 @@ export interface JobMatch {
   job_hash: string;
   match_score: number;
   match_reason: string;
-  match_quality: string;
-  match_tags: string;
+  confidence_score: number;
 }
+
+// ================================
+// ENRICHED JOB DATA
+// ================================
 
 export interface EnrichedJob extends Job {
-  freshness_tier: FreshnessTier;
-  professional_expertise: string;
-  career_path: string;
-  start_date: string;
-  complexity_score: number;
-  visa_friendly: boolean;
-  experience_level: 'entry' | 'junior' | 'mid' | 'senior';
-  work_environment_detected: 'remote' | 'hybrid' | 'office' | 'unclear';
-  language_requirements: string[];
+  visaFriendly: boolean;
+  experienceLevel: 'entry' | 'junior' | 'mid' | 'senior';
+  marketDemand: number;
+  salaryRange: string;
+  companySize: string;
+  remoteFlexibility: number;
+  growthPotential: number;
+  culturalFit: number;
+  skillAlignment: number;
+  locationScore: number;
+  timingScore: number;
+  overallScore: number;
 }
 
-export type FreshnessTier = 'fresh' | 'recent' | 'stale' | 'very_stale';
+// ================================
+// MARKET DATA
+// ================================
 
-export interface DateExtractionResult {
-  success: boolean;
-  date?: Date;
-  confidence: number;
-  method?: string;
-  error?: string;
+export interface CityMarketData {
+  city: string;
+  demandScore: number;
+  salaryMultiplier: number;
+  competitionLevel: number;
+  visaFriendliness: number;
+  techHub: boolean;
+  startupEcosystem: boolean;
+  corporatePresence: boolean;
 }
 
-// ---------- AI Matching Cache ----------
-export interface AIMatchingCache {
-  get(key: string): any;
-  set(key: string, value: any, ttl?: number): void;
-  has(key: string): boolean;
-  clear(): void;
-  size(): number;
+export interface CompanyProfile {
+  name: string;
+  size: 'startup' | 'scaleup' | 'enterprise';
+  industry: string;
+  culture: string[];
+  benefits: string[];
+  growthStage: 'early' | 'growth' | 'mature';
+  remotePolicy: 'remote-first' | 'hybrid' | 'office-first';
+  visaSponsorship: boolean;
+  diversityScore: number;
+  workLifeBalance: number;
 }
 
-// ---------- Scoring Context ----------
-export interface ScoringContext {
-  userPrefs: UserPreferences;
-  job: Job;
-  allJobs: Job[];
-  userIndex: number;
-  totalUsers: number;
+export interface SkillDemand {
+  skill: string;
+  demandLevel: 'high' | 'medium' | 'low';
+  growthTrend: 'rising' | 'stable' | 'declining';
+  marketValue: number;
+  futureRelevance: number;
+}
+
+// ================================
+// UTILITY TYPES
+// ================================
+
+export type UnknownObj = Record<string, unknown>;
+
+export interface MatchingConfig {
+  minMatchScore: number;
+  maxResults: number;
+  enableAI: boolean;
+  enableFallback: boolean;
+  cacheEnabled: boolean;
+  timeoutMs: number;
 }

@@ -196,7 +196,7 @@ export async function generateFreshInternshipsBlock(
 
     const isInterestedInInternships = 
       user?.entry_level_preference === 'internship' ||
-      user?.career_path?.some(path => path.toLowerCase().includes('intern')) ||
+      user?.career_path?.some((path: string) => path.toLowerCase().includes('intern')) ||
       context.engagementScore < 50; // New users more likely to want internships
 
     if (!isInterestedInInternships) {
@@ -207,7 +207,7 @@ export async function generateFreshInternshipsBlock(
     const { data: internships } = await supabase
       .from('jobs')
       .select('*')
-      .or('title.ilike.%intern%', 'title.ilike.%trainee%', 'title.ilike.%graduate%')
+      .or('title.ilike.%intern%,title.ilike.%trainee%,title.ilike.%graduate%')
       .eq('is_sent', false)
       .gte('created_at', new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
       .limit(3);

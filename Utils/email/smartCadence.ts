@@ -110,7 +110,7 @@ export async function getUserEmailProfile(userEmail: string): Promise<UserEmailP
 
     // Calculate negative feedback rate
     const negativeFeedback = feedback?.filter(f => f.match_quality === 'negative').length || 0;
-    const negativeFeedbackRate = feedback?.length > 0 ? (negativeFeedback / feedback.length) * 100 : 0;
+    const negativeFeedbackRate = feedback && feedback.length > 0 ? (negativeFeedback / feedback.length) * 100 : 0;
 
     // Determine preferred time of day
     const hourCounts = new Array(24).fill(0);
@@ -142,7 +142,7 @@ export async function getUserEmailProfile(userEmail: string): Promise<UserEmailP
       daysSinceSignup,
       totalEmailsSent,
       totalEmailsOpened,
-      totalEmailsClicked
+      totalEmailsClicked: 0
     };
 
   } catch (error) {
