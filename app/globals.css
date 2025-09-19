@@ -9,7 +9,8 @@
     background: radial-gradient(circle, var(--tw-gradient-stops));
   }
   /* Convert utility classes to plain CSS to avoid build-time unknown utility errors */
-  .section-spacing { padding-top: 4rem; padding-bottom: 4rem; }
+  .section-spacing { padding-top: 4rem; padding-bottom: 4rem; border-top: 1px solid rgba(255, 255, 255, 0.03); }
+  .section-spacing:first-child { border-top: none; }
   @media (min-width: 768px) { .section-spacing { padding-top: 6rem; padding-bottom: 6rem; } }
   .btn-primary { background:#fff; color:#000; padding: 0.875rem 1.5rem; border-radius:0.5rem; font-weight:600; transition: background-color 200ms ease-out; }
   .btn-primary:hover { background:#e5e7eb; }
@@ -36,6 +37,13 @@
   --spacing-md: 2rem;
   --spacing-lg: 4rem;
   --spacing-xl: 6rem;
+
+  /* Visual hierarchy additions */
+  --bg-primary: #000000;
+  --bg-secondary: #050505;
+  --bg-card-hover: #0f0f0f;
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-visible: rgba(255,255,255,0.12);
   
   /* FUTURISTIC SHADOWS - WHITE GLOW */
   --shadow: 0 0 20px rgba(255, 255, 255, 0.05);
@@ -44,6 +52,30 @@
   
   /* SMOOTH TRANSITIONS */
   --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Quick visual improvements */
+.text-primary { color: #ffffff; }
+.text-secondary { color: #b0b0b0; }
+.text-tertiary { color: #707070; }
+.text-muted { color: #505050; }
+
+.shadow-subtle { box-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+.shadow-card {
+  box-shadow: 
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 2px 12px rgba(0,0,0,0.8);
+}
+
+/* Section rhythm and separators */
+section + section { border-top: 1px solid rgba(255,255,255,0.03); }
+section:nth-child(odd) { background: var(--bg-secondary); }
+section:nth-child(even) { background: var(--bg-primary); }
+
+/* Optional dot pattern */
+.pattern-dots {
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 /* PERFORMANCE OPTIMIZATIONS */

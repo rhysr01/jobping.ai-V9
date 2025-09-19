@@ -26,9 +26,9 @@ export default function Features() {
           {features.map((feature, index) => (
             <div key={index} className="text-center">
               <div className="relative group mb-4 inline-block">
-                <div className="absolute inset-0 bg-white/5 rounded-xl blur-xl group-hover:bg-white/10 transition" />
-                <div className="relative w-14 h-14 bg-gradient-to-br from-[#111] to-[#0a0a0a] border border-white/10 rounded-xl flex items-center justify-center">
-                  <feature.icon className="w-6 h-6 text-white/70" />
+                <div className="absolute inset-0 bg-white/[0.02] rounded-xl blur-xl group-hover:bg-white/[0.04] transition duration-300" />
+                <div className="relative inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-[#111] to-[#0a0a0a] border border-white/10 rounded-xl group-hover:border-white/20 transition-all duration-200">
+                  <feature.icon className="w-6 h-6 text-white/70 group-hover:text-white/90 transition-colors" />
                 </div>
               </div>
               <h3 className="text-[#BBBBBB] font-light text-base mb-2 leading-tight">

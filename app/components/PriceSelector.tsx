@@ -85,7 +85,7 @@ export default function PriceSelector() {
   };
 
   return (
-    <section id="pricing" className="section-spacing bg-black scroll-mt-20 md:scroll-mt-28">
+    <section id="pricing" className="section-spacing bg-[#030303] scroll-mt-20 md:scroll-mt-28">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
         <div className="">
           {/* Minimal billing toggle */}
@@ -108,7 +108,7 @@ export default function PriceSelector() {
           </div>
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {/* Free tier */}
-            <div className="relative bg-[#0a0a0a] rounded-2xl p-8 border border-white/5">
+            <div className="relative bg-black rounded-2xl p-8 border border-white/[0.06]">
               <h3 className="text-2xl font-bold mb-2">Free</h3>
               <div className="text-5xl font-bold mb-6">€0</div>
               <ul className="space-y-3 mb-8 text-[#a0a0a0]">
@@ -122,12 +122,15 @@ export default function PriceSelector() {
             </div>
 
             {/* Premium tier - highlighted */}
-            <div className="relative bg-gradient-to-b from-[#111111] to-[#0a0a0a] rounded-2xl p-8 border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.02)]">
+            <div className="relative bg-[#0a0a0a] rounded-2xl p-8 border border-white/[0.12]">
+              <div className="absolute -inset-1 bg-gradient-to-r from-white/[0.04] to-white/[0.02] rounded-2xl blur-lg" />
               <div className="absolute -top-3 left-8 bg-white/10 backdrop-blur text-white text-xs px-3 py-1 rounded-full border border-white/20">
                 MOST POPULAR
               </div>
-              <h3 className="text-2xl font-bold mb-2">Premium</h3>
-              <div className="text-5xl font-bold mb-6">
+              <div className="relative">
+                <h3 className="text-2xl font-bold mb-2">Premium</h3>
+              </div>
+              <div className="text-5xl font-bold mb-6 relative">
                 €15<span className="text-lg text-[#707070] font-normal">/month</span>
               </div>
               <ul className="space-y-3 mb-8 text-[#a0a0a0]">

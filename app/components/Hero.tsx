@@ -21,9 +21,12 @@ export default function Hero() {
 
       {/* Content */}
       <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
-        <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent">
-          Graduate jobs that don't suck
+        <h1 className="text-6xl md:text-8xl font-bold mb-4 tracking-tight bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
+          JobPing
         </h1>
+        <h2 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent">
+          Graduate jobs that don't suck
+        </h2>
         <p className="text-xl text-[#a0a0a0] mb-8">
           5 jobs. Every 48 hours. No spam.
         </p>

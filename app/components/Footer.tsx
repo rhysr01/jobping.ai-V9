@@ -4,13 +4,18 @@ import { Mail, Shield, Globe } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0B0B0F] border-t border-[#1A1A1A] section-spacing px-6 sm:px-8 md:px-12">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="text-[#777777] text-sm">© 2024 JobPing. All rights reserved.</div>
-        <div className="flex items-center gap-6">
-          <a href="https://jobping.ai/privacy" className="text-[#777777] text-sm hover:text-white transition-colors" rel="noopener noreferrer">Privacy</a>
-          <a href="https://jobping.ai/terms" className="text-[#777777] text-sm hover:text-white transition-colors" rel="noopener noreferrer">Terms</a>
-          <a href="mailto:support@jobping.ai" className="text-[#777777] text-sm hover:text-white transition-colors">Contact</a>
+    <footer className="bg-[#050505] border-t border-white/[0.06] py-12">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
+            <div className="text-2xl font-bold text-white">JobPing</div>
+            <div className="text-[#606060] text-sm">© 2024 JobPing. All rights reserved.</div>
+          </div>
+          <div className="flex items-center gap-8">
+            <a href="/privacy" className="text-[#808080] hover:text-white text-sm transition-colors">Privacy</a>
+            <a href="/terms" className="text-[#808080] hover:text-white text-sm transition-colors">Terms</a>
+            <a href="mailto:support@jobping.ai" className="text-[#808080] hover:text-white text-sm transition-colors">Contact</a>
+          </div>
         </div>
       </div>
     </footer>
