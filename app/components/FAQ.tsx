@@ -26,13 +26,13 @@ export default function FAQ() {
           <div key={index} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
             <button
               onClick={() => toggleItem(index)}
-              className="w-full text-left flex items-center justify-between p-6 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-xl group"
+              className="w-full text-left flex items-center justify-between p-5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-xl group"
             >
-              <h3 className="text-gray-900 font-semibold text-lg pr-4 group-hover:text-blue-600 transition-colors">
+              <h3 className="text-gray-900 font-medium text-base pr-4 group-hover:text-blue-600 transition-colors">
                 {item.question}
               </h3>
               <ChevronDown
-                className={`w-5 h-5 text-gray-500 group-hover:text-blue-600 transition-all duration-300 ${
+                className={`w-4 h-4 text-gray-500 group-hover:text-blue-600 transition-all duration-300 ${
                   openItems.has(index) ? 'rotate-180' : ''
                 }`}
               />
@@ -41,8 +41,8 @@ export default function FAQ() {
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
               openItems.has(index) ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
             }`}>
-              <div className="px-6 pb-6">
-                <p className="text-gray-600 leading-relaxed">
+              <div className="px-5 pb-5">
+                <p className="text-gray-600 text-sm leading-relaxed">
                   {item.answer}
                 </p>
               </div>

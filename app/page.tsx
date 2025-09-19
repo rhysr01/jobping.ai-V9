@@ -118,8 +118,8 @@ export default function Home() {
         <section className="section-spacing bg-gray-50">
           <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-12">
             <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
-              <p className="text-xl text-gray-600">Everything you need to know about JobPing</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+              <p className="text-lg text-gray-600">Everything you need to know about JobPing</p>
             </div>
             <FAQ />
           </div>
