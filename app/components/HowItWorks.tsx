@@ -9,7 +9,7 @@ export default function HowItWorks() {
         </h2>
 
         <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 group">
             <div className="w-12 h-12 bg-gradient-to-br from-[#111] to-[#0a0a0a] rounded-xl flex items-center justify-center border border-white/10 group-hover:border-white/20 transition-all duration-200">
               <User size={20} className="text-white" />
             </div>
@@ -18,7 +18,7 @@ export default function HowItWorks() {
           
           <div className="hidden md:block w-8 h-px bg-white/20"></div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 group">
             <div className="w-12 h-12 bg-gradient-to-br from-[#111] to-[#0a0a0a] rounded-xl flex items-center justify-center border border-white/10 group-hover:border-white/20 transition-all duration-200">
               <Search size={20} className="text-white" />
             </div>
@@ -27,7 +27,7 @@ export default function HowItWorks() {
           
           <div className="hidden md:block w-8 h-px bg-white/20"></div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 group">
             <div className="w-12 h-12 bg-gradient-to-br from-[#111] to-[#0a0a0a] rounded-xl flex items-center justify-center border border-white/10 group-hover:border-white/20 transition-all duration-200">
               <Mail size={20} className="text-white" />
             </div>
