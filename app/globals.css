@@ -8,10 +8,33 @@
   .bg-gradient-radial {
     background: radial-gradient(circle, var(--tw-gradient-stops));
   }
-  /* Convert utility classes to plain CSS to avoid build-time unknown utility errors */
-  .section-spacing { padding-top: 4rem; padding-bottom: 4rem; border-top: 1px solid rgba(255, 255, 255, 0.03); }
+  /* Consistent Spacing System */
+  .section-spacing { 
+    padding-top: 5rem; 
+    padding-bottom: 5rem; 
+    border-top: 1px solid rgba(255, 255, 255, 0.03); 
+  }
   .section-spacing:first-child { border-top: none; }
-  @media (min-width: 768px) { .section-spacing { padding-top: 6rem; padding-bottom: 6rem; } }
+  @media (min-width: 768px) { 
+    .section-spacing { 
+      padding-top: 8rem; 
+      padding-bottom: 8rem; 
+    } 
+  }
+  
+  /* Spacing Utilities */
+  .spacing-section-header { margin-bottom: 4rem; }
+  .spacing-content { margin-bottom: 3rem; }
+  .spacing-large { margin-bottom: 2rem; }
+  .spacing-medium { margin-bottom: 1.5rem; }
+  .spacing-small { margin-bottom: 1rem; }
+  .spacing-xs { margin-bottom: 0.5rem; }
+  
+  @media (min-width: 768px) {
+    .spacing-section-header { margin-bottom: 5rem; }
+    .spacing-content { margin-bottom: 4rem; }
+    .spacing-large { margin-bottom: 2.5rem; }
+  }
   .btn-primary { 
     background:#fff; 
     color:#000; 

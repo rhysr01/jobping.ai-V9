@@ -88,7 +88,7 @@ export default function PriceSelector() {
     <>
     <div className="max-w-4xl mx-auto">
       {/* Minimal billing toggle */}
-      <div className="flex items-center justify-center gap-4 mb-12">
+      <div className="flex items-center justify-center gap-4 spacing-content">
         <button
           onClick={() => setBilling('monthly')}
           className={`text-sm font-medium transition-colors px-4 py-2 rounded-lg ${billing === 'monthly' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'}`}
@@ -106,13 +106,13 @@ export default function PriceSelector() {
         </button>
       </div>
       
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="grid md:grid-cols-2 gap-12">
         {/* Free tier */}
         <div className="relative bg-white rounded-2xl p-8 border border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-400 to-gray-600 rounded-t-2xl"></div>
-          <h3 className="text-2xl font-bold mb-2 text-gray-900">Free</h3>
-          <div className="text-5xl font-bold mb-6 text-gray-900">€0</div>
-          <ul className="space-y-3 mb-8 text-gray-600">
+          <h3 className="text-2xl font-bold spacing-small text-gray-900">Free</h3>
+          <div className="text-5xl font-bold spacing-large text-gray-900">€0</div>
+          <ul className="space-y-4 spacing-content text-gray-600">
             <li className="flex items-center gap-2"><span className="text-green-500">✓</span> 3 jobs per send</li>
             <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Early-career targeting</li>
             <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Cancel anytime</li>
