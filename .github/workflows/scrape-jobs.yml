@@ -42,12 +42,21 @@ jobs:
       
     - name: Run scraping
       env:
-        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        # Database (both formats for compatibility)
+        NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+        SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        
+        # API Keys
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
         ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
         REED_API_KEY: ${{ secrets.REED_API_KEY }}
+        MUSE_API_KEY: ${{ secrets.MUSE_API_KEY }}
+        GREENHOUSE_API_KEY: ${{ secrets.GREENHOUSE_API_KEY }}
+        
+        # Environment
         NODE_ENV: production
         JOBPING_PRODUCTION_MODE: 'true'
         CITY: ${{ github.event.inputs.city }}
@@ -100,8 +109,8 @@ jobs:
       
     - name: Run cleanup
       env:
-        SCRAPE_API_URL: ${{ secrets.SCRAPE_API_URL }}
-        CLEANUP_API_URL: ${{ secrets.CLEANUP_API_URL }}
-        SCRAPE_API_KEY: ${{ secrets.SCRAPE_API_KEY }}
-        CLEANUP_THRESHOLD_DAYS: '7'
-      run: node scripts/schedule-scraping.js cleanup
+        NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+        SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        NODE_ENV: production
+      run: node scripts/cleanup-old-jobs.js
