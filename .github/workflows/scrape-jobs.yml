@@ -46,6 +46,7 @@ jobs:
         NEXT_PUBLIC_SUPABASE_URL: https://kpecjbjtdjzgkzywylhn.supabase.co
         SUPABASE_URL: https://kpecjbjtdjzgkzywylhn.supabase.co
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         
         # API Keys
