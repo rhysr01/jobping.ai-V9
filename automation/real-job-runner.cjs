@@ -21,10 +21,10 @@ require('dotenv').config({ path: '.env.local' });
 
 // Check required environment variables (support both public and server URL vars)
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
 const requiredEnvVars = {
-  SUPABASE_URL,
-  SUPABASE_KEY
+  'SUPABASE_URL': SUPABASE_URL,
+  'SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_KEY)': SUPABASE_KEY
 };
 
 // Validate environment variables
@@ -37,11 +37,11 @@ for (const [key, value] of Object.entries(requiredEnvVars)) {
 }
 
 console.log('✅ Environment variables loaded successfully');
-console.log(`📡 Supabase URL: ${requiredEnvVars.SUPABASE_URL ? 'Set' : 'Missing'}`);
-console.log(`🔑 Supabase Key: ${requiredEnvVars.SUPABASE_KEY ? 'Set' : 'Missing'}`);
+console.log(`📡 Supabase URL: ${SUPABASE_URL ? 'Set' : 'Missing'}`);
+console.log(`🔑 Supabase Key: ${SUPABASE_KEY ? 'Set' : 'Missing'}`);
 
 // Initialize Supabase
-const supabase = createClient(requiredEnvVars.SUPABASE_URL, requiredEnvVars.SUPABASE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 console.log('✅ Supabase client initialized successfully');
 
