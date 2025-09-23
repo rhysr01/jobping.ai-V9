@@ -67,7 +67,7 @@ function convertToDatabaseFormat(job) {
 }
 
 const REED_API = 'https://www.reed.co.uk/api/1.0/search';
-const LOCATIONS = [ 'London','Manchester','Birmingham','Edinburgh','Dublin' ];
+const LOCATIONS = [ 'Belfast','Dublin','London','Manchester','Birmingham' ];
 const EARLY_TERMS = [ 'graduate','entry level','junior','trainee','intern','internship' ];
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 

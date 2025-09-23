@@ -501,6 +501,7 @@ class RealJobRunner {
     try {
       console.log('\n🚀 STARTING AUTOMATED SCRAPING CYCLE');
       console.log('=====================================');
+      console.log('🎯 Running streamlined scrapers: JobSpy, Adzuna, Reed, Muse');
       
       // Run JobSpy first for fast signal
       let jobspyJobs = 0;
@@ -535,15 +536,6 @@ class RealJobRunner {
       }
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      let greenhouseJobs = 0;
-      try {
-        greenhouseJobs = await this.runGreenhouseScraper();
-        console.log(`✅ Greenhouse completed: ${greenhouseJobs} jobs`);
-      } catch (error) {
-        console.error('❌ Greenhouse scraper failed, continuing with other scrapers:', error.message);
-      }
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       let museJobs = 0;
       try {
         museJobs = await this.runMuseScraper();
@@ -551,54 +543,9 @@ class RealJobRunner {
       } catch (error) {
         console.error('❌ Muse scraper failed, continuing with other scrapers:', error.message);
       }
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      let jsearchJobs = 0;
-      try {
-        jsearchJobs = await this.runJSearchScraper();
-        console.log(`✅ JSearch completed: ${jsearchJobs} jobs`);
-      } catch (error) {
-        console.error('❌ JSearch scraper failed, continuing with other scrapers:', error.message);
-      }
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      let joobleJobs = 0;
-      try {
-        joobleJobs = await this.runJoobleScraper();
-        console.log(`✅ Jooble completed: ${joobleJobs} jobs`);
-      } catch (error) {
-        console.error('❌ Jooble scraper failed, continuing with other scrapers:', error.message);
-      }
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      let ashbyJobs = 0;
-      try {
-        ashbyJobs = await this.runAshbyScraper();
-        console.log(`✅ Ashby completed: ${ashbyJobs} jobs`);
-      } catch (error) {
-        console.error('❌ Ashby scraper failed, continuing with other scrapers:', error.message);
-      }
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      let rapidapiInternshipsJobs = 0;
-      try {
-        rapidapiInternshipsJobs = await this.runRapidAPIInternshipsScraper();
-        console.log(`✅ RapidAPI Internships completed: ${rapidapiInternshipsJobs} jobs`);
-      } catch (error) {
-        console.error('❌ RapidAPI Internships scraper failed, continuing with other scrapers:', error.message);
-      }
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      let serpApiJobs = 0;
-      try {
-        serpApiJobs = await this.runSerpAPIScraper();
-        console.log(`✅ SERP API completed: ${serpApiJobs} jobs`);
-      } catch (error) {
-        console.error('❌ SERP API scraper failed, continuing with other scrapers:', error.message);
-      }
-      
-      // Update stats with all enhanced scrapers including JobSpy
-      this.totalJobsSaved += (adzunaJobs + jobspyJobs + reedJobs + greenhouseJobs + museJobs + jsearchJobs + joobleJobs + ashbyJobs + rapidapiInternshipsJobs + serpApiJobs);
+      // Update stats with all scrapers
+      this.totalJobsSaved += (adzunaJobs + jobspyJobs + reedJobs + museJobs);
       this.runCount++;
       this.lastRun = new Date();
       
@@ -612,15 +559,18 @@ class RealJobRunner {
       console.log('\n✅ SCRAPING CYCLE COMPLETE');
       console.log('============================');
       console.log(`⏱️  Duration: ${duration.toFixed(1)} seconds`);
-      console.log(`📊 Jobs processed this cycle: ${adzunaJobs + jobspyJobs + reedJobs + greenhouseJobs + museJobs + jsearchJobs + joobleJobs + ashbyJobs + rapidapiInternshipsJobs + serpApiJobs}`);
+      console.log(`📊 Jobs processed this cycle: ${adzunaJobs + jobspyJobs + reedJobs + museJobs}`);
       console.log(`📈 Total jobs processed: ${this.totalJobsSaved}`);
       console.log(`🔄 Total cycles run: ${this.runCount}`);
       console.log(`📅 Last run: ${this.lastRun.toISOString()}`);
       console.log(`💾 Database total: ${dbStats.totalJobs} jobs`);
       console.log(`🆕 Database recent (24h): ${dbStats.recentJobs} jobs`);
       console.log(`🏷️  Sources: ${JSON.stringify(dbStats.sourceBreakdown)}`);
-      console.log(`🔍 JobSpy contribution: ${jobspyJobs} jobs`);
-      console.log(`🔍 SERP API contribution: ${serpApiJobs} jobs`);
+      console.log(`🎯 Core scrapers breakdown:`);
+      console.log(`   - JobSpy: ${jobspyJobs} jobs`);
+      console.log(`   - Adzuna: ${adzunaJobs} jobs`);
+      console.log(`   - Reed: ${reedJobs} jobs`);
+      console.log(`   - Muse: ${museJobs} jobs`);
       
     } catch (error) {
       console.error('❌ Scraping cycle failed:', error);
@@ -670,7 +620,7 @@ class RealJobRunner {
     console.log('   - 3x daily scraping cycles (8am, 1pm, 6pm)');
     console.log('   - Daily health checks');
     console.log('   - Database monitoring');
-    console.log('   - All 10 working scrapers integrated (including JobSpy)');
+    console.log('   - 4 core scrapers: JobSpy, Adzuna, Reed, Muse');
   }
 
   // Get status

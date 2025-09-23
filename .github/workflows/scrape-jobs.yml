@@ -65,16 +65,9 @@ jobs:
         CITY: ${{ github.event.inputs.city }}
       run: |
         echo "🚀 Starting JobPing scraping..."
-        echo "🔍 Debug: Environment variables check:"
-        echo "NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-MISSING}"
-        echo "SUPABASE_URL: ${SUPABASE_URL:-MISSING}"
-        echo "SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:+SET}"
-        echo "SUPABASE_KEY: ${SUPABASE_KEY:+SET}"
-        echo "NODE_ENV: ${NODE_ENV:-MISSING}"
-        echo ""
         SCRAPERS_INPUT="${{ github.event.inputs.scrapers }}"
         if [ -z "$SCRAPERS_INPUT" ] || [ "$SCRAPERS_INPUT" = "orchestrator" ]; then
-          echo "▶️ Running full orchestrator (single cycle)"
+          echo "▶️ Running streamlined orchestrator (4 core scrapers)"
           node automation/real-job-runner.cjs --single-run
         else
           IFS=',' read -ra NAMES <<< "$SCRAPERS_INPUT"

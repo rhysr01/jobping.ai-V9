@@ -9,56 +9,38 @@ const EU_CITIES_CATEGORIES = [
   { name: 'Amsterdam', country: 'nl' }, // ✅ Moderate performer
   { name: 'Paris', country: 'fr' },     // ✅ High performer (522 jobs)
   { name: 'Zurich', country: 'ch' },    // ✅ Moderate performer
-  { name: 'Milan', country: 'it' }      // ✅ High performer (470 jobs)
+  { name: 'Milan', country: 'it' },     // ✅ High performer (470 jobs)
+  { name: 'Dublin', country: 'ie' }      // ✅ Added - English only (tech/finance hub)
   // REMOVED: Dublin ('ie' not supported by Adzuna - returns HTML error)
   // REMOVED: Brussels ('be' not supported by Adzuna - returns HTML error)
   // REMOVED: Rome (0 jobs across all searches)
 ];
 
-// Core English early-career terms (PRIORITIZED - internships first)
+// Core English early-career terms (SAME AS JOBSPY - 5 terms only)
 const CORE_ENGLISH_TERMS = [
-  // 🥇 HIGHEST PRIORITY: Internship terms (100% early-career)
-  'internship',
-  'intern',
-  'summer internship',
-  'graduate internship', 
-  'business internship',
-  
-  // 🥈 HIGH PRIORITY: Graduate/trainee terms  
-  'graduate programme',
-  'graduate program', 
-  'graduate analyst',
-  'trainee',
-  'management trainee',
-  'graduate trainee',
-  
-  // 🥉 GOOD: Entry-level terms
-  'junior associate',
-  'entry level',
-  'early careers'
+  'internship', 'graduate programme', 'junior', 'entry level', 'trainee'
 ];
 
-// Local language terms by country (VERIFIED working countries only)
+// Local language terms by country (SAME AS JOBSPY - max 6 per city)
 const LOCAL_EARLY_CAREER_TERMS = {
-  'gb': ['graduate scheme', 'graduate trainee', 'junior role', 'entry level position', 'campus hire'],
+  'gb': [], // English only set is CORE_ENGLISH_TERMS
   'es': ['programa de graduados', 'becario', 'prácticas', 'junior', 'recién graduado', 'nivel inicial'],
   'de': ['absolvent', 'trainee', 'praktikant', 'junior', 'berufseinsteiger', 'nachwuchskraft'],
   'nl': ['afgestudeerde', 'traineeship', 'starter', 'junior', 'beginnend', 'werkstudent'],
   'fr': ['jeune diplômé', 'stagiaire', 'alternance', 'junior', 'débutant', 'programme graduate'],
-  'ch': ['absolvent', 'trainee', 'praktikant', 'junior', 'einstiegsstelle', 'nachwuchs'],
-  'it': ['neolaureato', 'stage', 'tirocinio', 'junior', 'primo lavoro', 'laureato']
+  'ch': ['absolvent', 'trainee', 'praktikant', 'junior', 'jeune diplômé', 'stagiaire'],
+  'it': ['neolaureato', 'stage', 'tirocinio', 'junior', 'primo lavoro', 'laureato'],
+  'ie': [] // English only set is CORE_ENGLISH_TERMS
 };
-// REMOVED: 'ie' and 'be' (unsupported country codes)
+// ADDED: 'ie' (Dublin) - English only terms
+// REMOVED: 'be' (unsupported country codes)
 
 // Target sectors for IE graduates
-// Target sectors (ULTRA-LEAN - only verified performers across multiple cities)
+// Target sectors (TOP 3 PERFORMERS ONLY - reduced from 6 to 3)
 const HIGH_PERFORMING_SECTORS = [
   'finance',         // ✅ Proven: junior finance (9 jobs Madrid), prácticas finance (8 jobs Madrid)
-  'strategy',        // ✅ Proven: prácticas strategy (7 jobs Madrid), strategy consultant (15 jobs Paris)
   'marketing',       // ✅ Proven: prácticas marketing (24 jobs Madrid!)
-  'operations',      // ✅ Proven: prácticas operations (10 jobs Madrid)
-  'commercial',      // ✅ Good performer in London
-  'business'         // ✅ Good performer in London
+  'strategy'         // ✅ Proven: prácticas strategy (7 jobs Madrid), strategy consultant (15 jobs Paris)
 ];
 
 // REMOVED UNIVERSAL ZEROS: consulting (0 Madrid), tech (0 London, 0 Madrid), 
@@ -176,7 +158,9 @@ function generateCityQueries(countryCode) {
     'associate program'               // ✅ Entry-level programs
   );
   
-  return [...new Set(queries)]; // Remove duplicates
+  // Limit to 15 queries per city (optimized for 250 daily API limit)
+  const limitedQueries = [...new Set(queries)].slice(0, 15);
+  return limitedQueries;
 }
 
 /**
@@ -262,6 +246,7 @@ async function scrapeAllCitiesCategories(options = {}) {
   console.log(`📅 Time range: Last 28 days for wider coverage`);
   console.log(`🌍 Languages: English + local terms per country`);
   console.log(`🏢 Target sectors: ${HIGH_PERFORMING_SECTORS.join(', ')}`);
+  console.log(`📊 API Usage: ~${EU_CITIES_CATEGORIES.length * 15} calls (optimized for 250 daily limit)`);
   if (verbose) {
     console.log(`🔍 Core English terms: ${CORE_ENGLISH_TERMS.join(', ')}`);
   }

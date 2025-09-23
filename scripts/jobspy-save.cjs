@@ -107,154 +107,49 @@ function pickPythonCommand() {
 }
 
 async function main() {
-  // City-specific graduate/early-career search terms
-  const CITY_TERMS = {
-    'London': [
-      'Graduate Programme',
-      'Graduate Scheme',
-      'Graduate Analyst',
-      'Management Trainee',
-      'Audit Graduate Trainee',
-      'Finance Graduate Programme',
-      'Strategy Graduate Analyst',
-      'Consulting Graduate Scheme',
-      'Summer Internship',
-      'Industrial Placement'
-    ],
-    'Dublin': [
-      'Graduate Programme',
-      'Graduate Analyst',
-      'Finance Graduate Programme',
-      'Audit Graduate Trainee',
-      'Consulting Graduate Programme',
-      'Risk Graduate Analyst',
-      'Marketing Graduate Programme',
-      'Operations Graduate Trainee',
-      'Summer Internship',
-      'Internship Dublin (Paid)'
-    ],
-    'Amsterdam': [
-      'Graduate Programme',
-      'Traineeship',
-      'Junior Analyst (Graduate)',
-      'Data & Analytics Graduate Programme',
-      'Operations Graduate Trainee',
-      'Marketing Graduate Programme',
-      'Meewerkstage',
-      'Afstudeerstage',
-      'Summer Internship',
-      'Internship Amsterdam (Paid)'
-    ],
-    'Brussels': [
-      'Young Graduate Program',
-      'Graduate Programme',
-      'Consulting Graduate Programme',
-      'Finance Graduate Programme',
-      'Audit Graduate Trainee',
-      'Strategy Graduate Analyst',
-      'Stage rémunéré',
-      'Stagiair (betaald)',
-      'Summer Internship',
-      'Internship Brussels (Paid)'
-    ],
-    'Berlin': [
-      'Trainee Programm',
-      'Absolventenprogramm',
-      'Graduate Analyst',
-      'Consulting Graduate Programme',
-      'Finance Graduate Programme',
-      'Audit Graduate Trainee',
-      'Praktikum (bezahlt)',
-      'Werkstudent (Teilzeit)',
-      'Summer Internship',
-      'Internship Berlin (Paid)'
-    ],
-    'Paris': [
-      'Programme Jeune Diplômé',
-      'Graduate Programme',
-      'Analyste Graduate',
-      'Consulting Graduate Programme',
-      'Finance Graduate Programme',
-      'Audit Graduate (Auditeur Junior)',
-      'Stage rémunéré',
-      'Alternance (apprentissage)',
-      'VIE (Volontariat International)',
-      'Summer Internship Paris'
-    ],
-    'Madrid': [
-      'Programa de Graduados',
-      'Programa Jóvenes Talentos',
-      'Graduate Programme',
-      'Analista Junior (Graduate)',
-      'Consultoría Programa Graduate',
-      'Finanzas Programa Graduate',
-      'Prácticas remuneradas',
-      'Becario (pagado)',
-      'Summer Internship Madrid',
-      'Internship Madrid (Paid)'
-    ]
-  };
-
-  // Multilingual early-career equivalents per country
-  const MULTI = {
-    'united kingdom': [ 'graduate', 'entry level', 'junior', 'trainee', 'associate', 'internship' ],
-    'ireland': [ 'graduate', 'entry level', 'junior', 'trainee', 'associate', 'internship' ],
-    'spain': [ 'graduado', 'junior', 'becario', 'prácticas', 'nivel inicial', 'trainee', 'asociado' ],
-    'germany': [ 'absolvent', 'junior', 'praktikum', 'werkstudent', 'einsteiger', 'trainee', 'associate' ],
-    'netherlands': [ 'starter', 'junior', 'trainee', 'afgestudeerd', 'associate', 'stage' ],
-    'france': [ 'jeune diplômé', 'junior', 'stagiaire', 'alternance', 'débutant', 'apprenti', 'associate' ],
-    'switzerland': [ 'junior', 'praktikum', 'absolvent', 'stage', 'jeune diplômé', 'trainee' ],
-    'italy': [ 'neolaureato', 'junior', 'tirocinio', 'stage', 'entry level', 'apprendista', 'trainee' ]
-  };
-  const cities = [
-    ['London','united kingdom'],
-    ['Dublin','ireland'],
-    ['Madrid','spain'],
-    ['Berlin','germany'],
-    ['Amsterdam','netherlands'],
-    ['Paris','france'],
-    ['Zurich','switzerland'],
-    ['Milan','italy']
+  // Core and localized multilingual early‑career terms per city (spec)
+  const CORE_EN = [
+    'internship', 'graduate programme', 'junior', 'entry level', 'trainee'
   ];
+  const CITY_LOCAL = {
+    'London': [], // English only set is CORE_EN
+    'Madrid': [ 'programa de graduados','becario','prácticas','junior','recién graduado','nivel inicial' ],
+    'Berlin': [ 'absolvent','trainee','praktikant','junior','berufseinsteiger','nachwuchskraft' ],
+    'Amsterdam': [ 'afgestudeerde','traineeship','starter','junior','beginnend','werkstudent' ],
+    'Paris': [ 'jeune diplômé','stagiaire','alternance','junior','débutant','programme graduate' ],
+    'Zurich': [ 'absolvent','trainee','praktikant','junior','jeune diplômé','stagiaire' ],
+    'Milan': [ 'neolaureato','stage','tirocinio','junior','primo lavoro','laureato' ],
+    'Dublin': [] // English only set is CORE_EN
+  };
+  const cities = [ 'London','Madrid','Berlin','Amsterdam','Paris','Zurich','Milan','Dublin' ];
+  const MAX_Q_PER_CITY = parseInt(process.env.JOBSPY_MAX_Q_PER_CITY || '8', 10);
 
   const collected = [];
-  // Build at most 10 searches across all cities using round-robin
-  const combos = [];
-  const cityPriority = [
-    ['Dublin','ireland'],
-    ['London','united kingdom'],
-    ['Madrid','spain'],
-    ['Berlin','germany'],
-    ['Amsterdam','netherlands'],
-    ['Paris','france'],
-    ['Brussels','belgium'],
-    ['Zurich','switzerland'],
-    ['Milan','italy']
-  ];
-  // No generic localization; terms are already city-appropriate
-
-  // Dynamic generation: keep trying until we have 10 non-empty fetches, with fallbacks
-  const usedLondon = { used: false };
-  const successes = [];
-  let attempts = 0;
-  let round = 0;
   const pythonCmd = pickPythonCommand();
-  outer: while (successes.length < 10 && attempts < 40) {
-    for (const [city, country] of cityPriority) {
-      if (successes.length >= 10 || attempts >= 40) break outer;
-      if (city === 'London') { if (usedLondon.used) continue; usedLondon.used = true; }
-      const cityTerms = CITY_TERMS[city] || ['Graduate Programme'];
-      const base = cityTerms[round % cityTerms.length];
-      const variants = [ base ];
-      for (const term of variants) {
-        attempts++;
-        console.log(`\n🔎 Fetching: ${term} in ${city}, ${country}`);
-        let py;
-        let tries = 0;
-        const maxTries = 2;
-        while (tries < maxTries) {
-          tries++;
-          py = spawnSync(pythonCmd, ['-c', `
+  for (const city of cities) {
+    const localized = CITY_LOCAL[city] || [];
+    // Combine core + localized, internship-first prioritization
+    const combined = [...CORE_EN, ...localized];
+    const prioritized = [
+      ...combined.filter(q => /internship|stagiaire|prácticas|stage|praktik/i.test(q)),
+      ...combined.filter(q => !/internship|stagiaire|prácticas|stage|praktik/i.test(q))
+    ];
+    const toRun = prioritized.slice(0, MAX_Q_PER_CITY);
+    const country = city === 'London' ? 'united kingdom'
+                  : city === 'Paris' ? 'france'
+                  : city === 'Madrid' ? 'spain'
+                  : city === 'Berlin' ? 'germany'
+                  : city === 'Amsterdam' ? 'netherlands'
+                  : city === 'Zurich' ? 'switzerland'
+                  : 'italy';
+    for (const term of toRun) {
+      console.log(`\n🔎 Fetching: ${term} in ${city}, ${country}`);
+      let py;
+      let tries = 0;
+      const maxTries = 2;
+      while (tries < maxTries) {
+        tries++;
+        py = spawnSync(pythonCmd, ['-c', `
 from jobspy import scrape_jobs
 import pandas as pd
 df = scrape_jobs(
@@ -262,7 +157,7 @@ df = scrape_jobs(
   search_term='''${term.replace(/'/g, "''")}''',
   location='''${city}''',
   country_indeed='''${country}''',
-  results_wanted=${city === 'London' ? 50 : 100},
+  results_wanted=15,
   hours_old=504,
   distance=20,
   sort='date'
@@ -272,21 +167,15 @@ print('Available columns:', list(df.columns), file=sys.stderr)
 cols=[c for c in ['title','company','location','job_url','company_description','skills'] if c in df.columns]
 print(df[cols].to_csv(index=False))
 `], { encoding: 'utf8', timeout: 20000 });
-          if (py.status === 0) break;
-          console.error('Python error:', (py.stderr && py.stderr.trim()) || (py.stdout && py.stdout.trim()) || `status ${py.status}`);
-          if (tries < maxTries) console.log('↻ Retrying...');
-        }
-        if (!py || py.status !== 0) continue;
-        const rows = parseCsv(py.stdout);
-        console.log(`→ Collected ${rows.length} rows`);
-        if (rows.length > 0) {
-          rows.forEach(r => collected.push(r));
-          successes.push({ city, country, term, count: rows.length });
-          break; // move to next city
-        }
+        if (py.status === 0) break;
+        console.error('Python error:', (py.stderr && py.stderr.trim()) || (py.stdout && py.stdout.trim()) || `status ${py.status}`);
+        if (tries < maxTries) console.log('↻ Retrying...');
       }
+      if (!py || py.status !== 0) continue;
+      const rows = parseCsv(py.stdout);
+      console.log(`→ Collected ${rows.length} rows`);
+      if (rows.length > 0) rows.forEach(r => collected.push(r));
     }
-    round++;
   }
 
   // Quality gate: required fields and description length
