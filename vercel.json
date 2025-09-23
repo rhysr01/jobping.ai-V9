@@ -9,10 +9,4 @@
       "maxDuration": 60
     }
   },
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "@next_public_supabase_url",
-    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
-    "OPENAI_API_KEY": "@openai_api_key",
-    "RAPIDAPI_KEY": "@rapidapi_key"
-  }
 }
