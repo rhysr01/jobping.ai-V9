@@ -34,7 +34,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
         
     - name: Install dependencies
@@ -42,9 +42,9 @@ jobs:
       
     - name: Run scraping
       env:
-        # Database (both formats for compatibility)
-        NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
-        SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+        # Database (use existing secret for now)
+        NEXT_PUBLIC_SUPABASE_URL: https://kpecjbjtdjzgkzywylhn.supabase.co
+        SUPABASE_URL: https://kpecjbjtdjzgkzywylhn.supabase.co
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         
@@ -101,7 +101,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
         
     - name: Install dependencies
@@ -109,8 +109,8 @@ jobs:
       
     - name: Run cleanup
       env:
-        NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
-        SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+        NEXT_PUBLIC_SUPABASE_URL: https://kpecjbjtdjzgkzywylhn.supabase.co
+        SUPABASE_URL: https://kpecjbjtdjzgkzywylhn.supabase.co
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         NODE_ENV: production
       run: node scripts/cleanup-old-jobs.js
