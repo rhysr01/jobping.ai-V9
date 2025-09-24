@@ -103,7 +103,7 @@ export default function TermsOfService() {
                 If you have questions about these terms, please contact us at:
               </p>
               <p className="text-zinc-300 mb-2">
-                <strong className="text-white">Email:</strong> legal@jobping.ai
+                <strong className="text-white">Email:</strong> legal@getjobping.com
               </p>
               <p className="text-zinc-300 mb-2">
                 <strong className="text-white">Address:</strong> [Your Business Address]

@@ -2,31 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* SaaS Color System - 3 Color Pop */
-  --bg: #000;               /* page background */
-  --fg: #fff;               /* primary text */
-  --muted: rgba(255,255,255,0.65);
-  --subtle: rgba(255,255,255,0.45);
+:root{
+  --indigo: #6366F1;       /* accent (Indigo 500) */
+  --indigo-600:#5457F0;    /* hover/darker */
+  --border: rgba(255,255,255,0.12);
+  --muted: rgba(255,255,255,0.70);
+  --subtle: rgba(255,255,255,0.50);
   --surface-1: rgba(255,255,255,0.02);
   --surface-2: rgba(255,255,255,0.04);
-  --border: rgba(255,255,255,0.12);
-  --ring: rgba(255,255,255,0.22);
-  --shadow: 0 10px 25px rgba(0,0,0,0.5);
-  
-  /* SaaS 3-Color System: Black + White + Indigo */
-  --primary: #6366f1;       /* indigo - main brand color */
-  --primary-hover: #5855eb;
-  --primary-light: rgba(99, 102, 241, 0.1);
-  --primary-glow: rgba(99, 102, 241, 0.25);
-  
-  /* Clean Gradient */
-  --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
 }
 
+/* readability bump */
+html { font-size: 17px; }
+@media (min-width:1024px){ html { font-size: 18px; } }
+
+/* no underlines site-wide; we'll show emphasis via weight/size */
+a { text-decoration: none; }
+
+.btn { @apply inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold transition; }
+.btn-primary { background: var(--indigo); color: #000; }
+.btn-primary:hover { background: var(--indigo-600); }
+.btn-ghost { background: transparent; color: #fff; border: 1px solid var(--border); }
+.btn-ghost:hover { background: rgba(255,255,255,0.05); }
+
+.kicker { @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs tracking-wide;
+  background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.35); color: #C7C9FF; }
+
+.card { background: var(--surface-1); border:1px solid var(--border); border-radius: 1.25rem; }
+.container-x { @apply mx-auto px-6 sm:px-8 lg:px-12; max-width: 1200px; }
+.section-y { @apply py-24 sm:py-28 md:py-32; }
+.muted { color: var(--muted); }
+.subtle { color: var(--subtle); }
+
+/* soft indigo orbs (the "bubbles") */
+.bg-orb{position:absolute;width:42rem;height:42rem;filter:blur(120px);border-radius:50%;opacity:.25;pointer-events:none;}
+.bg-orb--tl{top:-12rem;left:-10rem;background:radial-gradient(closest-side,var(--indigo),transparent 70%);}
+.bg-orb--br{bottom:-14rem;right:-12rem;background:radial-gradient(closest-side,var(--indigo-600),transparent 70%);}
+
 body {
-  background: var(--bg);
-  color: var(--fg);
+  background: #000;
+  color: #fff;
 }
 
 /* Layout helpers */
@@ -72,7 +87,7 @@ body {
     background: var(--surface-1);
     border: 1px solid var(--border);
     border-radius: 1.25rem; /* ~2xl */
-    box-shadow: var(--shadow);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
   }
   .card-ghost { background: var(--surface-2); }
 
@@ -93,13 +108,13 @@ body {
     }
   }
   .btn-primary {
-    background: var(--gradient-primary); 
-    color: #fff; 
+    background: var(--indigo); 
+    color: #000; 
     border: 1px solid transparent;
     box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
   }
   .btn-primary:hover { 
-    background: var(--primary-hover);
+    background: var(--indigo-600);
     box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
     transform: translateY(-1px);
   }
@@ -110,10 +125,10 @@ body {
   }
   .btn-ghost:hover { 
     background: rgba(255,255,255,0.05); 
-    border-color: var(--primary);
+    border-color: var(--indigo);
   }
   .btn-success {
-    background: var(--gradient-success);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: #fff;
     border: 1px solid transparent;
     box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
@@ -133,15 +148,15 @@ body {
     border-radius: 9999px;
     font-size: 0.75rem;
     letter-spacing: 0.05em;
-    background: var(--primary-light);
-    border: 1px solid var(--primary);
-    color: var(--primary);
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    color: #C7C9FF;
   }
 
   /* Lovable.dev Style Ribbons */
   .ribbon {
     position: relative;
-    background: var(--gradient-primary);
+    background: linear-gradient(135deg, var(--indigo) 0%, var(--indigo-600) 100%);
     color: white;
     padding: 0.375rem 1rem;
     border-radius: 9999px;
@@ -149,10 +164,10 @@ body {
     font-weight: 600;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    box-shadow: 0 4px 14px var(--primary-glow);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
   }
   .ribbon-popular {
-    background: var(--gradient-primary);
+    background: linear-gradient(135deg, var(--indigo) 0%, var(--indigo-600) 100%);
     animation: pulse-glow 2s ease-in-out infinite alternate;
   }
   .ribbon-new {
@@ -161,7 +176,7 @@ body {
   }
 
   @keyframes pulse-glow {
-    from { box-shadow: 0 4px 14px var(--primary-glow); }
+    from { box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25); }
     to { box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4); }
   }
 }

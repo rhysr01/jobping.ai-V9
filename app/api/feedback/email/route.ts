@@ -337,7 +337,7 @@ function generateThankYouPage(action: string, jobHash: string, email: string, sc
         <p>${message}</p>
         <div class="buttons">
           <button class="btn close-btn" onclick="window.close()">Close</button>
-          <a href="https://jobping.ai/dashboard" class="btn view-jobs-btn">View More Jobs</a>
+          <a href="https://www.getjobping.com/dashboard" class="btn view-jobs-btn">View More Jobs</a>
         </div>
         <div class="auto-close-notice">This window will close automatically in 5 seconds</div>
       </div>
@@ -349,7 +349,7 @@ function generateThankYouPage(action: string, jobHash: string, email: string, sc
             window.close();
           } catch (e) {
             // If can't close (not a popup), redirect to dashboard
-            window.location.href = 'https://jobping.ai/dashboard';
+            window.location.href = 'https://www.getjobping.com/dashboard';
           }
         }, 5000);
         

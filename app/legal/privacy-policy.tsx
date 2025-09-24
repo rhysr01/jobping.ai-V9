@@ -90,7 +90,7 @@ export default function PrivacyPolicy() {
                 If you have questions about this privacy policy or our data practices, please contact us at:
               </p>
               <p className="text-zinc-300 mb-2">
-                <strong className="text-white">Email:</strong> privacy@jobping.ai
+                <strong className="text-white">Email:</strong> privacy@getjobping.com
               </p>
               <p className="text-zinc-300 mb-2">
                 <strong className="text-white">Data Deletion:</strong>{' '}

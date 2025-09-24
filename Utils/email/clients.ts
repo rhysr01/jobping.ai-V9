@@ -35,6 +35,6 @@ export const EMAIL_CONFIG = {
   from: 'JobPing <noreply@jobping.ai>',
   maxRetries: 3,
   retryDelay: 2000, // 2 seconds base delay,
-  unsubscribeBase: 'https://jobping.ai/api/unsubscribe',
+  unsubscribeBase: 'https://www.getjobping.com/api/unsubscribe',
   listUnsubscribeEmail: 'unsubscribe@jobping.ai'
 } as const;

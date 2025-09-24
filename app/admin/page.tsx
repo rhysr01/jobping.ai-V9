@@ -73,7 +73,7 @@ export default function PilotAdminDashboard() {
           <h2 className="text-xl font-semibold text-white mb-4 tracking-tight">System Status</h2>
           <div className="flex items-center space-x-4">
             <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+              <div className="w-3 h-3 bg-white/80 rounded-full mr-2"></div>
               <span className="text-white">All Systems Operational</span>
             </div>
             <div className="text-sm text-zinc-400">
@@ -128,9 +128,9 @@ function MetricCard({ title, value, subtitle, color }: {
 }) {
   const colorClasses = {
     blue: 'bg-blue-500',
-    green: 'bg-green-500',
-    purple: 'bg-purple-500',
-    orange: 'bg-orange-500'
+    green: 'bg-white/60',
+    purple: 'bg-white/80',
+    orange: 'bg-white/40'
   };
 
   return (
@@ -205,7 +205,7 @@ function SystemHealth({ metrics }: { metrics: PilotMetrics | null }) {
               ))}
             </div>
           ) : (
-            <div className="text-green-400 text-sm">No recent errors</div>
+            <div className="text-white/80 text-sm">No recent errors</div>
           )}
         </div>
         <div>

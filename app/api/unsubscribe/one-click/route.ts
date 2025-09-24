@@ -153,7 +153,7 @@ export async function GET(req: NextRequest) {
           </p>
           <p style="color: #6b7280; font-size: 14px;">
             If you change your mind, you can always sign up again at 
-            <a href="https://jobping.ai" style="color: #667eea;">jobping.ai</a>
+            <a href="https://www.getjobping.com" style="color: #667eea;">www.getjobping.com</a>
           </p>
         </div>
       </body>

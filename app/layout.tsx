@@ -10,7 +10,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   // Force new deployment
-  metadataBase: new URL('https://jobping.ai'),
+  metadataBase: new URL('https://www.getjobping.com'),
   alternates: {
     canonical: '/',
   },
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'JobPing - Stop searching for jobs',
     description: 'Real personalised jobs into your inbox for EU students and graduates. AI-curated opportunities delivered every 48 hours.',
-    url: 'https://jobping.ai',
+    url: 'https://www.getjobping.com',
     siteName: 'JobPing',
     images: [
       {
@@ -46,6 +46,7 @@ export const metadata: Metadata = {
     title: 'JobPing - AI-powered job matching for students',
     description: 'AI-curated job opportunities delivered every 48 hours to ambitious students and graduates.',
     images: ['/og-image.png'],
+    site: '@jobping'
   },
   icons: {
     icon: [
@@ -85,7 +86,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               "@type": "SoftwareApplication",
               "name": "JobPing",
               "description": "AI-powered job matching for students and graduates",
-              "url": "https://jobping.ai",
+              "url": "https://www.getjobping.com",
               "applicationCategory": "BusinessApplication",
               "operatingSystem": "Web",
               "offers": {

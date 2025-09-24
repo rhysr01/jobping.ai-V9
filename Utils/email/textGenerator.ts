@@ -40,14 +40,14 @@ Your AI career assistant is now active and ready to find opportunities.
 
 We'll send personalized recommendations every 48 hours.
 
-View Your Matches: https://jobping.ai/dashboard
+View Your Matches: https://www.getjobping.com/dashboard
 
 ---
 
 You're receiving this because you signed up for JobPing.
 
-Unsubscribe: https://jobping.ai/legal/unsubscribe
-Email Preferences: https://jobping.ai/dashboard/preferences`;
+Unsubscribe: https://www.getjobping.com/legal/unsubscribe
+Email Preferences: https://www.getjobping.com/dashboard/preferences`;
 }
 
 export function createJobMatchesEmailText(
@@ -91,12 +91,12 @@ JOB MATCHES:
      'Description: Unknown'
    }
    
-   Feedback: https://jobping.ai/api/feedback/email?job=${job.job_hash || 'unknown'}&email=${encodeURIComponent(job.user_email || '')}
+   Feedback: https://www.getjobping.com/api/feedback/email?job=${job.job_hash || 'unknown'}&email=${encodeURIComponent(job.user_email || '')}
 `;
   }).join('\n');
 
   const footer = `
-View All Matches: https://jobping.ai/dashboard
+View All Matches: https://www.getjobping.com/dashboard
 
 ${personalization?.role || personalization?.location || personalization?.salaryRange ? 
   `These matches are based on your preferences: ${[personalization.location, personalization.role, personalization.salaryRange, personalization.entryLevelLabel].filter(Boolean).join(', ')}\n\n` : 
@@ -105,8 +105,8 @@ ${personalization?.role || personalization?.location || personalization?.salaryR
 
 You're receiving this because you signed up for JobPing.
 
-Unsubscribe: https://jobping.ai/legal/unsubscribe
-Email Preferences: https://jobping.ai/dashboard/preferences`;
+Unsubscribe: https://www.getjobping.com/legal/unsubscribe
+Email Preferences: https://www.getjobping.com/dashboard/preferences`;
 
   return header + jobsText + footer;
 }
