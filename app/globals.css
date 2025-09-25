@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Typography optimizations */
 html { 
   text-rendering: optimizeLegibility; 
 }
