@@ -51,7 +51,7 @@ const getPerformanceHandler = async (request: NextRequest) => {
 
     // Add recommendations if requested
     if (includeRecommendations) {
-      performanceData.recommendations = generatePerformanceRecommendations(performanceData);
+      (performanceData as any).recommendations = generatePerformanceRecommendations(performanceData);
     }
 
     return NextResponse.json(performanceData);

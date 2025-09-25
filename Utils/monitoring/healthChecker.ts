@@ -177,7 +177,7 @@ export class HealthChecker {
       }
 
       const hasRecentEmails = recentEmails && recentEmails.length > 0;
-      const failedEmails = recentEmails?.filter(email => email.status === 'failed').length || 0;
+      const failedEmails = recentEmails?.filter((email: any) => email.status === 'failed').length || 0;
 
       return {
         status: failedEmails > 0 ? 'degraded' : 'healthy',

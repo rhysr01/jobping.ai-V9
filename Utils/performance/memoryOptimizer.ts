@@ -209,8 +209,8 @@ export class MemoryOptimizer {
     }
     
     // Clear any global caches
-    if (global.cache) {
-      global.cache.clear();
+    if ((global as any).cache) {
+      (global as any).cache.clear();
     }
     
     console.log('🗑️ Caches cleared');

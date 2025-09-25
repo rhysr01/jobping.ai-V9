@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 
 // Analytics tracking
 const trackEvent = (eventName: string, properties?: Record<string, any>) => {
-  if (typeof window !== 'undefined' && window.gtag) {
-    window.gtag('event', eventName, properties);
+  if (typeof window !== 'undefined' && (window as any).gtag) {
+    (window as any).gtag('event', eventName, properties);
   }
   // Fallback for other analytics providers
   console.log('Analytics:', eventName, properties);

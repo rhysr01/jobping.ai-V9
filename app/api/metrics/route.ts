@@ -23,7 +23,7 @@ const getMetricsHandler = async (request: NextRequest) => {
     const currentMetrics = await metricsCollector.collectMetrics();
     
     // Get historical metrics if requested
-    let historicalMetrics = [];
+    let historicalMetrics: any[] = [];
     if (hours > 1) {
       historicalMetrics = await metricsCollector.getMetricsHistory(hours);
     }
