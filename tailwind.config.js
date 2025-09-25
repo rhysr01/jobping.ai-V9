@@ -1,10 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    './app/**/*.{ts,tsx,mdx}',
-    './components/**/*.{ts,tsx}',
-    './pages/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
+    './public/*.html',
   ],
   safelist: [
     // Dynamic classes that might get purged
