@@ -108,8 +108,19 @@ function pickPythonCommand() {
 
 async function main() {
   // Core and localized multilingual early‑career terms per city (spec)
+  const EXTRA_TERMS = (process.env.JOBSPY_EXTRA_TERMS || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
   const CORE_EN = [
-    'internship', 'graduate programme', 'junior', 'entry level', 'trainee'
+    // Internship variants
+    'internship', 'intern', 'placement',
+    // Graduate programme variants
+    'graduate programme', 'graduate program', 'graduate scheme', 'graduate',
+    // Early career common
+    'entry level', 'junior', 'trainee', 'analyst', 'business analyst',
+    // Business axes
+    'finance graduate', 'sales graduate', 'marketing graduate', 'consulting graduate', 'operations graduate'
   ];
   const CITY_LOCAL = {
     'London': [], // English only set is CORE_EN
@@ -122,18 +133,19 @@ async function main() {
     'Dublin': [] // English only set is CORE_EN
   };
   const cities = [ 'London','Madrid','Berlin','Amsterdam','Paris','Zurich','Milan','Dublin' ];
-  const MAX_Q_PER_CITY = parseInt(process.env.JOBSPY_MAX_Q_PER_CITY || '8', 10);
+  const MAX_Q_PER_CITY = parseInt(process.env.JOBSPY_MAX_Q_PER_CITY || '12', 10);
   const RESULTS_WANTED = parseInt(process.env.JOBSPY_RESULTS_WANTED || '15', 10);
+  const JOBSPY_TIMEOUT_MS = parseInt(process.env.JOBSPY_TIMEOUT_MS || '20000', 10);
 
   const collected = [];
   const pythonCmd = pickPythonCommand();
   for (const city of cities) {
     const localized = CITY_LOCAL[city] || [];
-    // Combine core + localized, internship-first prioritization
-    const combined = [...CORE_EN, ...localized];
+    // Combine core + extras + localized, internship/graduate-first prioritization
+    const combined = [...CORE_EN, ...EXTRA_TERMS, ...localized];
     const prioritized = [
-      ...combined.filter(q => /internship|stagiaire|prácticas|stage|praktik/i.test(q)),
-      ...combined.filter(q => !/internship|stagiaire|prácticas|stage|praktik/i.test(q))
+      ...combined.filter(q => /(intern|internship|placement|stagiaire|prácticas|stage|praktik|graduate(\s+(scheme|program(me)?))?)/i.test(q)),
+      ...combined.filter(q => !/(intern|internship|placement|stagiaire|prácticas|stage|praktik|graduate(\s+(scheme|program(me)?))?)/i.test(q))
     ];
     const toRun = prioritized.slice(0, MAX_Q_PER_CITY);
     const country = city === 'London' ? 'united kingdom'
@@ -147,7 +159,7 @@ async function main() {
       console.log(`\n🔎 Fetching: ${term} in ${city}, ${country}`);
       let py;
       let tries = 0;
-      const maxTries = 2;
+      const maxTries = 3;
       while (tries < maxTries) {
         tries++;
         py = spawnSync(pythonCmd, ['-c', `
@@ -167,10 +179,13 @@ import sys
 print('Available columns:', list(df.columns), file=sys.stderr)
 cols=[c for c in ['title','company','location','job_url','company_description','skills'] if c in df.columns]
 print(df[cols].to_csv(index=False))
-`], { encoding: 'utf8', timeout: 20000 });
+`], { encoding: 'utf8', timeout: JOBSPY_TIMEOUT_MS });
         if (py.status === 0) break;
         console.error('Python error:', (py.stderr && py.stderr.trim()) || (py.stdout && py.stdout.trim()) || `status ${py.status}`);
-        if (tries < maxTries) console.log('↻ Retrying...');
+        if (tries < maxTries) {
+          console.log(`↻ Retrying (${tries}/${maxTries}) after backoff...`);
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
+        }
       }
       if (!py || py.status !== 0) continue;
       const rows = parseCsv(py.stdout);

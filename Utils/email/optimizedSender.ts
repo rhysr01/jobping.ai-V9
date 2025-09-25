@@ -48,14 +48,33 @@ function generateUnsubscribeToken(email: string): string {
     .digest('hex').slice(0, 16);
 }
 
-// Create List-Unsubscribe headers
-function createUnsubscribeHeaders(email: string): Record<string, string> {
+// Generate List-Unsubscribe and One-Click headers for deliverability
+function generateDeliverabilityHeaders(email: string): Record<string, string> {
+  const unsubscribeToken = generateUnsubscribeToken(email);
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.getjobping.com';
+  
+  return {
+    'List-Unsubscribe': `<${baseUrl}/legal/unsubscribe?token=${unsubscribeToken}>, <mailto:unsubscribe@getjobping.com?subject=Unsubscribe%20${email}>`,
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    'X-Mailer': 'JobPing Email System v1.0',
+    'X-Priority': '3',
+    'X-MSMail-Priority': 'Normal',
+    'Importance': 'Normal'
+  };
+}
+
+// Create enhanced deliverability headers with plain-text support
+function createDeliverabilityHeaders(email: string): Record<string, string> {
   const token = generateUnsubscribeToken(email);
   const oneClickUrl = `${EMAIL_CONFIG.unsubscribeBase}/one-click?u=${encodeURIComponent(email)}&t=${token}`;
   
   return {
     'List-Unsubscribe': `<mailto:${EMAIL_CONFIG.listUnsubscribeEmail}>, <${oneClickUrl}>`,
-    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    'X-Mailer': 'JobPing Email System v1.0',
+    'X-Priority': '3',
+    'X-MSMail-Priority': 'Normal',
+    'Importance': 'Normal'
   };
 }
 
@@ -111,7 +130,7 @@ export async function sendWelcomeEmail({
     const cacheKey = `welcome_${userName}_${matchCount}`;
     const html = getCachedEmail(cacheKey, () => createWelcomeEmail(userName, matchCount));
     const text = createWelcomeEmailText(userName, matchCount);
-    const unsubscribeHeaders = createUnsubscribeHeaders(to);
+    const unsubscribeHeaders = createDeliverabilityHeaders(to);
     
     const { data, error } = await resend.emails.send({
       from: EMAIL_CONFIG.from,
@@ -188,7 +207,7 @@ export async function sendMatchedJobsEmail({
       createJobMatchesEmail(jobCards, userName, subscriptionTier, isSignupEmail, personalization)
     );
     const text = createJobMatchesEmailText(jobs, userName, subscriptionTier, isSignupEmail, personalization);
-    const unsubscribeHeaders = createUnsubscribeHeaders(to);
+    const unsubscribeHeaders = createDeliverabilityHeaders(to);
     
     const subject = subjectOverride ?? (isSignupEmail 
       ? `🎯 Welcome to JobPing - ${jobs.length} Job Matches Found!`
@@ -206,7 +225,7 @@ export async function sendMatchedJobsEmail({
           subject: subject,
           html: html,
           text: text,
-          headers: unsubscribeHeaders,
+          headers: createDeliverabilityHeaders(to),
         });
 
         if (error) throw error;
