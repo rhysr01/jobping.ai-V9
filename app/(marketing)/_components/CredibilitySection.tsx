@@ -2,10 +2,10 @@ export default function CredibilitySection() {
   return (
     <section className="mx-auto max-w-[80rem] px-6 md:px-8 py-20 md:py-24">
       <div className="text-center">
-        <h2 className="font-semibold text-3xl md:text-4xl tracking-tight leading-[1.05] mb-6">
+        <h2 className="font-bold text-4xl md:text-5xl tracking-tight leading-[1.05] mb-8">
           Built for students, by a student
         </h2>
-        <p className="text-lg text-zinc-300 max-w-[70ch] mx-auto leading-7">
+        <p className="text-xl text-zinc-200 max-w-[70ch] mx-auto leading-8 font-medium">
           We find the best early-career roles across Europe's job boards, then we use AI to match them to your personalised goals and location. Stop searching, start applying.
         </p>
         

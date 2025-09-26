@@ -108,8 +108,9 @@ function getOpenAIClient() {
 }
 
 // Extract user data with business rules - UPDATED FOR ACTUAL SCHEMA
-function extractUserData(fields: NonNullable<TallyWebhookData['data']>['fields']) {
+function extractUserData(fields: NonNullable<TallyWebhookData['data']>['fields'], referrerUrl?: string) {
   console.log('🧪 Test mode: Extracting user data from fields:', fields);
+  console.log('🧪 Test mode: Referrer URL:', referrerUrl);
   
   const userData: Record<string, string | string[] | boolean> = { 
     email: ''
@@ -178,7 +179,19 @@ function extractUserData(fields: NonNullable<TallyWebhookData['data']>['fields']
     }
   });
 
+  // Determine subscription tier based on referrer URL
+  let subscriptionTier = 'free'; // default
+  if (referrerUrl) {
+    if (referrerUrl.includes('utm_campaign=premium') || referrerUrl.includes('campaign=premium')) {
+      subscriptionTier = 'premium';
+    } else if (referrerUrl.includes('utm_campaign=free') || referrerUrl.includes('campaign=free')) {
+      subscriptionTier = 'free';
+    }
+  }
+  
+  userData.subscriptionTier = subscriptionTier;
   console.log('🧪 Test mode: Final user data:', userData);
+  console.log('🧪 Test mode: Subscription tier determined:', subscriptionTier);
   return userData;
 }
 
@@ -225,7 +238,11 @@ export async function POST(req: NextRequest) {
     const supabase = getSupabaseClient();
     console.log('🧪 Test mode: Supabase client created successfully');
     
-    const userData = extractUserData(payload.data?.fields || []);
+    // Get referrer URL from headers
+    const referrerUrl = req.headers.get('referer') || req.headers.get('referrer') || '';
+    console.log('🧪 Test mode: Referrer URL from headers:', referrerUrl);
+    
+    const userData = extractUserData(payload.data?.fields || [], referrerUrl);
     console.log('🧪 Test mode: User data extracted:', userData);
     
     if (!userData.email) {
@@ -500,7 +517,7 @@ export async function POST(req: NextRequest) {
           to: userData.email as string,
           jobs: matches,
           userName: userData.full_name as string,
-          subscriptionTier: 'free', // New users start as free
+          subscriptionTier: (userData.subscriptionTier as 'free' | 'premium') || 'free', // Use extracted tier or default to free
           isSignupEmail: true,
           subjectOverride: subject,
           personalization: {

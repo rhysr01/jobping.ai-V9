@@ -5,7 +5,7 @@ export default function CTASection() {
         href="https://tally.so/r/wLqWxQ?utm_source=landing&utm_medium=cta&utm_campaign=hero"
         target="_blank"
         rel="noopener noreferrer"
-        className="btn-primary"
+        className="btn-primary text-xl px-8 py-4"
       >
         Get 5 instant matches — Free
       </a>
