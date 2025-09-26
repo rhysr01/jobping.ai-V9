@@ -12,13 +12,13 @@ export default function Page() {
       <NavbarMinimal />
       <HeroMinimal />
       <CredibilityStripe />
-      <hr className="mx-auto my-16 w-full max-w-[80rem] border-t border-white/10" />
+      <hr className="mx-auto my-12 w-full max-w-[80rem] border-t border-white/10" />
       <CTASection />
-      <hr className="mx-auto my-16 w-full max-w-[80rem] border-t border-white/10" />
+      <hr className="mx-auto my-12 w-full max-w-[80rem] border-t border-white/10" />
       <HowItWorks />
-      <hr className="mx-auto my-16 w-full max-w-[80rem] border-t border-white/10" />
+      <hr className="mx-auto my-12 w-full max-w-[80rem] border-t border-white/10" />
       <CredibilitySection />
-      <hr className="mx-auto my-16 w-full max-w-[80rem] border-t border-white/10" />
+      <hr className="mx-auto my-12 w-full max-w-[80rem] border-t border-white/10" />
       <PricingSection />
     </div>
   );

@@ -138,7 +138,7 @@ async function scrapeLocation(location) {
           if (valid) jobs.push(j);
         }
         console.log(`   ✓ accumulated ${jobs.length} valid jobs so far for ${location}`);
-        await sleep(800);
+        await sleep(400); // Reduced from 800ms to 400ms for speed
         // Stop paginating if fewer than a full page returned
         if (items.length < resultsPerPage) break;
         page++;

@@ -187,45 +187,59 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
     try {
       if (verbose) console.log(`📍 Searching ${cityName} for: "${query}" (max ${maxDaysOld} days)`);
       
-      // Search only page 1 for each query to avoid too many duplicates
-      const url = `https://api.adzuna.com/v1/api/jobs/${countryCode}/search/1?app_id=${appId}&app_key=${appKey}&what=${encodeURIComponent(query)}&where=${encodeURIComponent(cityName)}&results_per_page=${resultsPerPage}&sort_by=date&max_days_old=${maxDaysOld}`;
+      // Search multiple pages for more results
+      let page = 1;
+      let hasMorePages = true;
+      const maxPages = 3; // Limit to 3 pages for speed
       
-      const response = await axios.get(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-        },
-        timeout
-      });
+      while (hasMorePages && page <= maxPages) {
+        const url = `https://api.adzuna.com/v1/api/jobs/${countryCode}/search/${page}?app_id=${appId}&app_key=${appKey}&what=${encodeURIComponent(query)}&where=${encodeURIComponent(cityName)}&results_per_page=${resultsPerPage}&sort_by=date&max_days_old=${maxDaysOld}`;
+      
+        const response = await axios.get(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+          },
+          timeout
+        });
 
-      const jobs = response.data.results || [];
-      
-      if (jobs.length > 0) {
-        if (verbose) console.log(`   ✅ Found ${jobs.length} jobs for "${query}"`);
+        const jobs = response.data.results || [];
         
-        // Transform jobs to our format
-        const transformedJobs = jobs.map(job => ({
-          title: job.title?.trim() || 'Unknown Title',
-          company: job.company?.display_name?.trim() || 'Unknown Company',
-          location: `${cityName}, ${countryCode.toUpperCase()}`,
-          description: job.description?.trim() || '',
-          url: job.redirect_url || job.url || '',
-          posted_at: job.created ? new Date(job.created).toISOString() : new Date().toISOString(),
-          source: 'adzuna',
-          source_job_id: job.id?.toString() || '',
-          salary_min: job.salary_min || null,
-          salary_max: job.salary_max || null,
-          category: query, // Track which search term found this job
-          search_location: cityName,
-          search_country: countryCode
-        }));
+        if (jobs.length > 0) {
+          if (verbose) console.log(`   ✅ Found ${jobs.length} jobs for "${query}" (page ${page})`);
+          
+          // Transform jobs to our format
+          const transformedJobs = jobs.map(job => ({
+            title: job.title?.trim() || 'Unknown Title',
+            company: job.company?.display_name?.trim() || 'Unknown Company',
+            location: `${cityName}, ${countryCode.toUpperCase()}`,
+            description: job.description?.trim() || '',
+            url: job.redirect_url || job.url || '',
+            posted_at: job.created ? new Date(job.created).toISOString() : new Date().toISOString(),
+            source: 'adzuna',
+            source_job_id: job.id?.toString() || '',
+            salary_min: job.salary_min || null,
+            salary_max: job.salary_max || null,
+            category: query, // Track which search term found this job
+            search_location: cityName,
+            search_country: countryCode
+          }));
+          
+          allJobs.push(...transformedJobs);
+          
+          // Stop if we got fewer results than requested (last page)
+          if (jobs.length < resultsPerPage) {
+            hasMorePages = false;
+          }
+        } else {
+          if (verbose) console.log(`   ⚠️  No jobs found for "${query}" (page ${page})`);
+          hasMorePages = false;
+        }
         
-        allJobs.push(...transformedJobs);
-      } else {
-        if (verbose) console.log(`   ⚠️  No jobs found for "${query}"`);
+        page++;
+        
+        // Delay between requests (reduced from 1000ms to 500ms for speed)
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
-      
-      // Delay between requests
-      await new Promise(resolve => setTimeout(resolve, delay));
       
     } catch (error) {
       console.error(`❌ Error searching ${cityName} for "${query}":`, error.message);
