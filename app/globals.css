@@ -55,34 +55,6 @@ body {
   }
   
   /* Premium black background layers */
-  body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-      radial-gradient(ellipse at top, rgba(99,102,241,0.03) 0%, transparent 50%),
-      radial-gradient(ellipse at bottom, rgba(99,102,241,0.02) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: -3;
-  }
-  
-  body::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: 
-      radial-gradient(circle at 1px 1px, rgba(255,255,255,0.02) 1px, transparent 0);
-    background-size: 20px 20px;
-    opacity: 0.3;
-    pointer-events: none;
-    z-index: -2;
-  }
 
   /* skip-link (was showing on screen) */
   .skip-link{
@@ -113,27 +85,7 @@ body {
 
 @layer utilities {
   /* soft indigo orbs (the "bubbles") */
-  .bg-orb{position:absolute;width:42rem;height:42rem;filter:blur(120px);border-radius:50%;opacity:.25;pointer-events:none;z-index:-1;}
-  .bg-orb--tl{top:-12rem;left:-10rem;background:radial-gradient(closest-side,var(--indigo),transparent 70%);}
-  .bg-orb--br{bottom:-14rem;right:-12rem;background:radial-gradient(closest-side,var(--indigo-600),transparent 70%);}
   
-  /* Premium depth utilities */
-  .bg-vignette {
-    background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.1) 100%);
-  }
-  
-  .bg-noise {
-    background-image: 
-      radial-gradient(circle at 1px 1px, rgba(255,255,255,0.02) 1px, transparent 0);
-    background-size: 20px 20px;
-    opacity: 0.3;
-  }
-  
-  .bg-softlight {
-    background: 
-      radial-gradient(ellipse at top, rgba(99,102,241,0.03) 0%, transparent 50%),
-      radial-gradient(ellipse at bottom, rgba(99,102,241,0.02) 0%, transparent 50%);
-  }
 }
 
 /* Motion preferences */

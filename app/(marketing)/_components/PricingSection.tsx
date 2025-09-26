@@ -5,7 +5,7 @@ export default function PricingSection() {
         Choose your plan
       </h2>
       <p className="mt-4 text-[15px] md:text-base leading-7 md:leading-8 text-zinc-300 max-w-[65ch] mx-auto text-center">
-        Start free and upgrade when you're ready for more opportunities.
+        Get 5 instant matches when you sign up, then weekly deliveries.
       </p>
       
       <div className="grid md:grid-cols-2 gap-8 mt-16">
@@ -14,9 +14,10 @@ export default function PricingSection() {
           <h3 className="font-display text-xl font-semibold">Free</h3>
           <p className="mt-2 text-zinc-300">Perfect for getting started</p>
           <ul className="mt-6 space-y-3 text-sm text-zinc-300">
-            <li>• 5 job matches per day</li>
-            <li>• Weekly delivery</li>
-            <li>• Basic matching</li>
+            <li>• 5 instant matches on signup</li>
+            <li>• 5 jobs per week</li>
+            <li>• Weekly email delivery</li>
+            <li>• Basic matching algorithm</li>
             <li>• Email support</li>
           </ul>
           <a 
@@ -37,8 +38,9 @@ export default function PricingSection() {
           <h3 className="font-display text-xl font-semibold">Premium</h3>
           <p className="mt-2 text-zinc-300">For serious job seekers</p>
           <ul className="mt-6 space-y-3 text-sm text-zinc-300">
-            <li>• 15 job matches per day</li>
-            <li>• Daily delivery</li>
+            <li>• 5 instant matches on signup</li>
+            <li>• 15 jobs per week</li>
+            <li>• Weekly email delivery</li>
             <li>• AI-powered matching</li>
             <li>• Priority support</li>
             <li>• Advanced filters</li>
