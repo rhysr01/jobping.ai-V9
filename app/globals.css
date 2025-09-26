@@ -21,17 +21,17 @@ body {
 body::before{
   content:"";
   position: fixed;
-  inset: 10px;               /* safe margin; feels premium */
-  border-radius: 24px;
-  border: 1px solid rgba(99,102,241,0.35);            /* brand indigo */
+  inset: 8px;                 /* tighter margin */
+  border-radius: var(--frame-radius, 28px);
+  border: 2px solid rgba(99,102,241,0.55); /* thicker outline */
   box-shadow:
-    0 0 0 1px rgba(99,102,241,0.15),
-    inset 0 0 40px rgba(99,102,241,0.08);
+    0 0 0 2px rgba(99,102,241,0.18),       /* outer ring */
+    inset 0 0 70px rgba(99,102,241,0.12);  /* inner glow */
   pointer-events: none;
   z-index: 50;
 }
 @media (max-width: 768px){
-  body::before{ inset: 8px; border-radius: 18px; }
+  body::before{ inset: 6px; border-radius: 22px; }
 }
 
 /* Skip link for accessibility */
@@ -113,4 +113,17 @@ body::before{
 /* Motion preferences */
 @media (prefers-reduced-motion: no-preference) {
   .btn:hover { transform: translateY(-1px); }
+}
+
+/* Shared utility classes for pill styles */
+.btn-primary {
+  @apply inline-block rounded-2xl px-6 py-3.5 text-lg font-semibold
+         bg-brand-500 text-white hover:bg-brand-600
+         focus:outline-none focus:ring-2 focus:ring-brand-500
+         transition will-change-transform hover:-translate-y-0.5;
+}
+.pill-brand {
+  @apply inline-flex items-center rounded-2xl bg-brand-500 text-white
+         px-5 py-2.5 text-base md:text-lg font-semibold
+         leading-6 md:leading-7;
 }

@@ -18,10 +18,7 @@ export default function HeroMinimal() {
           href="https://tally.so/r/wLqWxQ?utm_source=landing&utm_medium=hero&utm_campaign=start"
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-8 inline-block rounded-2xl px-6 py-3.5 text-lg font-semibold
-                     bg-brand-500 text-white hover:bg-brand-500/90
-                     focus:outline-none focus:ring-2 focus:ring-brand-500
-                     transition will-change-transform hover:-translate-y-0.5"
+          className="btn-primary mt-8"
         >
           Get 5 matches — Free
         </a>

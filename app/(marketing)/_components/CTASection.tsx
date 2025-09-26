@@ -5,10 +5,7 @@ export default function CTASection() {
         href="https://tally.so/r/wLqWxQ?utm_source=landing&utm_medium=cta&utm_campaign=hero"
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-block rounded-2xl px-6 py-3.5 text-lg font-semibold
-                   bg-brand-500 text-white hover:bg-brand-500/90
-                   focus:outline-none focus:ring-2 focus:ring-brand-500
-                   transition will-change-transform hover:-translate-y-0.5"
+        className="btn-primary"
       >
         Get 5 instant matches — Free
       </a>
