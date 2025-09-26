@@ -9,7 +9,7 @@ export default function HowItWorks() {
           ['Stay updated','Weekly email delivery.'],
         ].map(([t,s],i)=>(
           <div key={t}>
-            <div className="mx-auto h-8 w-8 rounded-full bg-indigo-500/15 text-indigo-300 grid place-items-center text-sm font-medium">{i+1}</div>
+            <div className="mx-auto h-8 w-8 rounded-full bg-brand-500/15 text-brand-300 grid place-items-center text-sm font-medium">{i+1}</div>
             <h3 className="mt-3 font-semibold">{t}</h3>
             <p className="mt-1 text-zinc-300">{s}</p>
           </div>

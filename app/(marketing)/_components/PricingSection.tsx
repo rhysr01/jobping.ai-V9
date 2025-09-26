@@ -20,7 +20,10 @@ export default function PricingSection() {
             href="https://tally.so/r/wLqWxQ?utm_source=landing&utm_medium=pricing&utm_campaign=free"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-6 inline-block rounded-2xl px-5 py-3 border border-zinc-700 text-white hover:border-zinc-600 transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="mt-6 inline-block rounded-2xl px-5 py-3 font-semibold
+                       border border-white/15 text-white
+                       hover:border-brand-500/40 hover:-translate-y-0.5
+                       focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
           >
             Get Started — Free
           </a>
@@ -43,7 +46,10 @@ export default function PricingSection() {
             href="https://tally.so/r/wLqWxQ?utm_source=landing&utm_medium=pricing&utm_campaign=premium"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-6 inline-block rounded-2xl px-5 py-3 bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="mt-6 inline-block rounded-2xl px-6 py-3.5 text-lg font-semibold
+                       bg-brand-500 text-white hover:bg-brand-500/90
+                       focus:outline-none focus:ring-2 focus:ring-brand-500
+                       transition will-change-transform hover:-translate-y-0.5"
           >
             Upgrade to Premium
           </a>

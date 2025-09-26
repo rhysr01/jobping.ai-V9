@@ -12,14 +12,16 @@ export default function HeroMinimal() {
           Weekly job matches for early-career roles across Europe—delivered to your inbox.
         </p>
 
-        <div className="mx-auto mt-6 h-[2px] w-24 rounded bg-gradient-to-r from-indigo-400/70 to-transparent" />
+        <div className="mx-auto mt-6 h-[2px] w-24 rounded bg-gradient-to-r from-brand-500/70 to-transparent" />
 
         <a 
           href="https://tally.so/r/wLqWxQ?utm_source=landing&utm_medium=hero&utm_campaign=start"
           target="_blank"
           rel="noopener noreferrer"
           className="mt-8 inline-block rounded-2xl px-6 py-3.5 text-lg font-semibold
-                     bg-indigo-500 text-white hover:-translate-y-0.5 transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                     bg-brand-500 text-white hover:bg-brand-500/90
+                     focus:outline-none focus:ring-2 focus:ring-brand-500
+                     transition will-change-transform hover:-translate-y-0.5"
         >
           Get 5 matches — Free
         </a>

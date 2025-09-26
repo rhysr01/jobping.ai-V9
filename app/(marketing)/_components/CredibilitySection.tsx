@@ -11,8 +11,8 @@ export default function CredibilitySection() {
         
         <div className="mt-12 grid md:grid-cols-3 gap-8 text-center">
           <div>
-            <div className="mx-auto h-12 w-12 rounded-full bg-indigo-500/15 text-indigo-300 grid place-items-center text-lg font-medium mb-4">
-              🎯
+            <div className="mx-auto h-12 w-12 rounded-full bg-brand-500/15 text-brand-300 grid place-items-center text-lg font-medium mb-4">
+              1
             </div>
             <h3 className="font-semibold text-lg mb-2">AI-Powered Matching</h3>
             <p className="text-zinc-400 text-sm">
@@ -21,8 +21,8 @@ export default function CredibilitySection() {
           </div>
           
           <div>
-            <div className="mx-auto h-12 w-12 rounded-full bg-indigo-500/15 text-indigo-300 grid place-items-center text-lg font-medium mb-4">
-              🌍
+            <div className="mx-auto h-12 w-12 rounded-full bg-brand-500/15 text-brand-300 grid place-items-center text-lg font-medium mb-4">
+              2
             </div>
             <h3 className="font-semibold text-lg mb-2">Europe-Wide Coverage</h3>
             <p className="text-zinc-400 text-sm">
@@ -31,8 +31,8 @@ export default function CredibilitySection() {
           </div>
           
           <div>
-            <div className="mx-auto h-12 w-12 rounded-full bg-indigo-500/15 text-indigo-300 grid place-items-center text-lg font-medium mb-4">
-              ⚡
+            <div className="mx-auto h-12 w-12 rounded-full bg-brand-500/15 text-brand-300 grid place-items-center text-lg font-medium mb-4">
+              3
             </div>
             <h3 className="font-semibold text-lg mb-2">Student-First Design</h3>
             <p className="text-zinc-400 text-sm">

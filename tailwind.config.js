@@ -99,6 +99,12 @@ module.exports = {
         zinc: {
           950: '#09090b',
         },
+        brand: {
+          300: '#A5B4FC', // indigo-300
+          400: '#818CF8', // indigo-400
+          500: '#6366F1', // indigo-500 (primary)
+          600: '#4F46E5'  // indigo-600 (pressed)
+        }
       },
       
       // Enhanced border radius for glass morphism

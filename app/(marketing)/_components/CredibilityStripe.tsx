@@ -1,12 +1,11 @@
 export default function CredibilityStripe() {
   return (
-    <div className="mx-auto max-w-[80rem] px-6 md:px-8 py-8">
-      <div className="mx-auto h-12 w-12 rounded-full bg-indigo-500/15 text-indigo-300 grid place-items-center text-lg font-medium mb-6">
-        🎯
+    <section className="mx-auto max-w-[80rem] px-6 md:px-8 py-6">
+      <div className="rounded-2xl border border-brand-500/20 bg-zinc-900/30 px-5 py-4">
+        <p className="text-sm md:text-base text-zinc-200 text-center [text-wrap:balance]">
+          We find the best early-career roles across Europe's job boards, then use AI to match them to your goals. Built for students, by a student.
+        </p>
       </div>
-      <p className="text-center text-lg md:text-xl text-zinc-300 leading-relaxed max-w-[70ch] mx-auto">
-        We find the best early-career roles across Europe's job boards, then we use AI to match them to your personalised goals and location. Stop searching, start applying. Built for students, by a student.
-      </p>
-    </div>
+    </section>
   );
 }
