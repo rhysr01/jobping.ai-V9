@@ -75,13 +75,13 @@ async function saveJobs(jobs, source) {
   const unique = Array.from(new Map(rows.map(r=>[r.job_hash,r])).values());
   for (let i=0;i<unique.length;i+=150){
     const slice = unique.slice(i,i+150);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('jobs')
-      .upsert(slice, { onConflict: 'job_hash', ignoreDuplicates: false });
+      .upsert(slice, { onConflict: 'job_hash', ignoreDuplicates: true });
     if (error) {
       console.error('Upsert error:', error.message);
     } else {
-      console.log(`✅ Saved ${slice.length} jobs`);
+      console.log(`✅ Saved ${slice.length} jobs (${data ? data.length : slice.length} inserted/updated)`);
     }
   }
 }
