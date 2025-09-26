@@ -33,7 +33,7 @@ export default function PricingSection() {
             ))}
           </ul>
           <ButtonPrimary 
-            href="https://tally.so/r/wLqWxQ?utm_source=landing&utm_medium=pricing&utm_campaign=free"
+            href="https://tally.so/r/mJEqx4?utm_source=landing&utm_medium=pricing&utm_campaign=free"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-6"
@@ -55,7 +55,7 @@ export default function PricingSection() {
             ))}
           </ul>
           <ButtonOutline 
-            href="https://tally.so/r/wLqWxQ?utm_source=landing&utm_medium=pricing&utm_campaign=premium"
+            href="https://tally.so/r/mJEqx4?utm_source=landing&utm_medium=pricing&utm_campaign=premium"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-6"
