@@ -77,11 +77,11 @@ async function saveJobs(jobs, source) {
     const slice = unique.slice(i,i+150);
     const { data, error } = await supabase
       .from('jobs')
-      .upsert(slice, { onConflict: 'job_hash', ignoreDuplicates: true });
+      .upsert(slice, { onConflict: 'job_hash', ignoreDuplicates: false });
     if (error) {
       console.error('Upsert error:', error.message);
     } else {
-      console.log(`✅ Saved ${slice.length} jobs (${data ? data.length : slice.length} inserted/updated)`);
+      console.log(`✅ Saved ${slice.length} jobs (upserted)`);
     }
   }
 }
@@ -173,7 +173,7 @@ df = scrape_jobs(
   location='''${city}''',
   country_indeed='''${country}''',
   results_wanted=${RESULTS_WANTED},
-  hours_old=504,
+  hours_old=720,
   distance=20,
   sort='date'
 )
