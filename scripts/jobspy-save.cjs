@@ -113,16 +113,52 @@ async function main() {
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
-  const CORE_EN = [
-    // Internship variants
-    'internship', 'intern', 'placement',
-    // Graduate programme variants
-    'graduate programme', 'graduate program', 'graduate scheme', 'graduate',
-    // Early career common
-    'entry level', 'junior', 'trainee', 'analyst', 'business analyst',
-    // Business axes
-    'finance graduate', 'sales graduate', 'marketing graduate', 'consulting graduate', 'operations graduate'
-  ];
+  // Query rotation system - 3 different sets that rotate
+  const QUERY_SETS = {
+    SET_A: [
+      // Internship focused
+      'internship', 'intern', 'placement', 'trainee',
+      'graduate programme', 'graduate program', 'graduate scheme',
+      'entry level', 'junior', 'analyst', 'business analyst'
+    ],
+    SET_B: [
+      // Industry specific
+      'finance graduate', 'sales graduate', 'marketing graduate', 
+      'consulting graduate', 'operations graduate', 'tech graduate',
+      'data analyst', 'product analyst', 'strategy analyst',
+      'investment banking', 'management consulting', 'corporate finance'
+    ],
+    SET_C: [
+      // Skills and roles focused
+      'business analyst', 'data analyst', 'financial analyst',
+      'marketing analyst', 'operations analyst', 'strategy analyst',
+      'graduate scheme', 'graduate program', 'trainee program',
+      'entry level', 'junior', 'associate', 'analyst'
+    ]
+  };
+
+  // Determine which query set to use based on current time
+  const getCurrentQuerySet = () => {
+    // Allow manual override via environment variable
+    const manualSet = process.env.JOBSPY_QUERY_SET;
+    if (manualSet && QUERY_SETS[manualSet]) {
+      console.log(`🎯 Manual query set override: ${manualSet}`);
+      return manualSet;
+    }
+    
+    const hour = new Date().getHours();
+    const dayOfWeek = new Date().getDay();
+    
+    // Rotate every 8 hours: SET_A (0-7h), SET_B (8-15h), SET_C (16-23h)
+    if (hour >= 0 && hour < 8) return 'SET_A';
+    if (hour >= 8 && hour < 16) return 'SET_B';
+    return 'SET_C';
+  };
+
+  const currentSet = getCurrentQuerySet();
+  const CORE_EN = QUERY_SETS[currentSet];
+  
+  console.log(`🔄 Using query set: ${currentSet} (${CORE_EN.length} terms)`);
   const CITY_LOCAL = {
     'London': [], // English only set is CORE_EN
     'Madrid': [ 'programa de graduados','becario','prácticas','junior','recién graduado','nivel inicial' ],

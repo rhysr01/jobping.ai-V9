@@ -16,10 +16,38 @@ const EU_CITIES_CATEGORIES = [
   // REMOVED: Rome (0 jobs across all searches)
 ];
 
-// Core English early-career terms (SAME AS JOBSPY - 5 terms only)
-const CORE_ENGLISH_TERMS = [
-  'internship', 'graduate programme', 'junior', 'entry level', 'trainee'
-];
+// Query rotation system for Adzuna - 3 different sets
+const QUERY_SETS = {
+  SET_A: [
+    'internship', 'graduate programme', 'junior', 'entry level', 'trainee'
+  ],
+  SET_B: [
+    'finance graduate', 'marketing graduate', 'strategy graduate', 
+    'business analyst', 'data analyst', 'operations analyst'
+  ],
+  SET_C: [
+    'graduate scheme', 'graduate program', 'trainee program',
+    'entry level', 'junior', 'associate', 'analyst'
+  ]
+};
+
+// Determine which query set to use
+const getCurrentQuerySet = () => {
+  const manualSet = process.env.ADZUNA_QUERY_SET;
+  if (manualSet && QUERY_SETS[manualSet]) {
+    console.log(`🎯 Adzuna manual query set override: ${manualSet}`);
+    return manualSet;
+  }
+  
+  const hour = new Date().getHours();
+  if (hour >= 0 && hour < 8) return 'SET_A';
+  if (hour >= 8 && hour < 16) return 'SET_B';
+  return 'SET_C';
+};
+
+const currentSet = getCurrentQuerySet();
+const CORE_ENGLISH_TERMS = QUERY_SETS[currentSet];
+console.log(`🔄 Adzuna using query set: ${currentSet} (${CORE_ENGLISH_TERMS.length} terms)`);
 
 // Local language terms by country (SAME AS JOBSPY - max 6 per city)
 const LOCAL_EARLY_CAREER_TERMS = {
