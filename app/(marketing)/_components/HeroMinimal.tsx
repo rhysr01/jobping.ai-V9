@@ -8,12 +8,11 @@ export default function HeroMinimal() {
         <p className="mt-6 text-xl md:text-2xl text-zinc-200 max-w-[60ch] mx-auto leading-8 md:leading-9 font-medium">
           Weekly job matches for early-career roles across Europe—delivered to your inbox.
         </p>
-        <div className="mx-auto mt-5 h-[2px] w-28 rounded bg-gradient-to-r from-brand-500/70 to-transparent" />
         <a 
-          href="https://tally.so/r/wLqWxQ?utm_source=landing&utm_medium=hero&utm_campaign=start"
+          href="https://tally.so/r/wLqWxQ?utm_source=landing&utm_medium=hero&utm_campaign=free"
           target="_blank"
           rel="noopener noreferrer"
-          className="btn-primary mt-10 text-xl px-8 py-4"
+          className="btn-primary mt-7 text-xl px-8 py-4"
         >
           Get 5 matches — Free
         </a>
