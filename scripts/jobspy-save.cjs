@@ -8,6 +8,7 @@
  * - Upserts into 'jobs' table using job_hash
  */
 
+require('dotenv').config({ path: '.env.local' });
 const { spawnSync } = require('child_process');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -154,6 +155,7 @@ async function main() {
                   : city === 'Berlin' ? 'germany'
                   : city === 'Amsterdam' ? 'netherlands'
                   : city === 'Zurich' ? 'switzerland'
+                  : city === 'Dublin' ? 'ireland'
                   : 'italy';
     for (const term of toRun) {
       console.log(`\n🔎 Fetching: ${term} in ${city}, ${country}`);
