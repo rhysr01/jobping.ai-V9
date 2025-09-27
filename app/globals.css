@@ -2,34 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Typography optimizations */
-html { 
-  text-rendering: optimizeLegibility; 
+/* ---------- Global look ---------- */
+:root { color-scheme: dark; }
+
+html, body {
+  height: 100%;
+  background-color: #000;
 }
 
-body { 
-  -webkit-font-smoothing: antialiased; 
-  -moz-osx-font-smoothing: grayscale; 
+/* Strong, consistent vignette (GPU-cheap) */
+body {
+  background-image:
+    radial-gradient(80% 55% at 50% -10%, rgba(99,102,241,0.18), transparent 60%),
+    radial-gradient(65% 50% at 100% 0%,  rgba(99,102,241,0.12), transparent 60%),
+    radial-gradient(60% 45% at 0% 100%,  rgba(99,102,241,0.10), transparent 60%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center top, right top, left bottom;
 }
 
-/* Brand indigo tokens - using Tailwind brand scale */
-:root {
-  --brand-300: #A5B4FC;
-  --brand-400: #818CF8;
-  --brand-500: #6366F1;
-  --brand-600: #4F46E5;
-}
-
-/* Indigo page frame */
+/* Indigo frame around viewport */
 body::before{
   content:"";
   position: fixed;
-  inset: 8px;                 /* tighter margin */
+  inset: 8px;
   border-radius: var(--frame-radius, 28px);
-  border: 2px solid rgba(99,102,241,0.55); /* thicker outline */
+  border: 2px solid rgba(99,102,241,0.55);
   box-shadow:
-    0 0 0 2px rgba(99,102,241,0.18),       /* outer ring */
-    inset 0 0 70px rgba(99,102,241,0.12);  /* inner glow */
+    0 0 0 2px rgba(99,102,241,0.18),
+    inset 0 0 70px rgba(99,102,241,0.12);
   pointer-events: none;
   z-index: 50;
 }
@@ -37,96 +38,34 @@ body::before{
   body::before{ inset: 6px; border-radius: 22px; }
 }
 
-/* Skip link for accessibility */
-.skip-link {
-  position: absolute;
-  top: -40px;
-  left: 6px;
-  background: #6366F1;
-  color: white;
-  padding: 8px;
-  text-decoration: none;
-  border-radius: 8px;
-  z-index: 1000;
-}
-
-.skip-link:focus {
-  top: 6px;
-}
-
-@layer base {
-  :root{
-    --indigo: var(--brand-500);       /* accent (Indigo 500) */
-    --indigo-600: var(--brand-600);    /* hover/darker */
-    --border: rgba(255,255,255,0.12);
-    --muted: rgba(255,255,255,0.70);
-    --subtle: rgba(255,255,255,0.50);
-    --surface-1: rgba(255,255,255,0.02);
-    --surface-2: rgba(255,255,255,0.04);
-  }
-
-  /* readability bump */
-  html { font-size: 17px; }
-  @media (min-width:1024px){ html { font-size: 18px; } }
-
-  /* no underlines site-wide; we'll show emphasis via weight/size */
-  a { text-decoration: none; }
-
-  /* body styles */
-  body {
-    background: #000;
-    color: #fff;
-    position: relative;
-  }
-  
-  /* Premium black background layers */
-
-  /* skip-link (was showing on screen) */
-  .skip-link{
-    position: absolute; left: -999px; top: auto; width: 1px; height: 1px; overflow: hidden;
-  }
-  .skip-link:focus{ 
-    left: 16px; top: 12px; width: auto; height: auto; padding: .5rem .75rem;
-    background: #fff; color: #000; border-radius: .5rem; z-index: 50; 
-  }
-}
-
+/* ---------- Reusable styles ---------- */
 @layer components {
-  .btn-ghost { background: transparent; color: #fff; border: 1px solid var(--border); }
-  .btn-ghost:hover { background: rgba(255,255,255,0.05); }
+  .container-page { @apply mx-auto max-w-[80rem] px-6 md:px-8; }
+  .section-pad   { @apply py-20 md:py-24; }
 
-  .kicker { @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs tracking-wide;
-    background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.35); color: #C7C9FF; }
+  .btn-primary {
+    @apply inline-block rounded-2xl px-6 py-3.5 text-lg font-semibold
+           bg-brand-500 text-white hover:bg-brand-600
+           focus:outline-none focus:ring-2 focus:ring-brand-500
+           transition will-change-transform hover:-translate-y-0.5;
+  }
+  .btn-outline {
+    @apply inline-block rounded-2xl px-6 py-3.5 font-semibold
+           border border-white/15 text-white hover:border-brand-500/40
+           focus:outline-none focus:ring-2 focus:ring-brand-500
+           transition hover:-translate-y-0.5;
+  }
 
-  .card { background: var(--surface-1); border:1px solid var(--border); border-radius: 1.25rem; }
-  .container-x { @apply mx-auto px-6 sm:px-8 lg:px-12; max-width: 1200px; }
-  .section-y { @apply py-24 sm:py-28 md:py-32; }
-  .muted { color: var(--muted); }
-  .subtle { color: var(--subtle); }
+  .h2-section {
+    @apply text-3xl md:text-4xl font-semibold tracking-tight;
+  }
+  .p-muted {
+    @apply text-zinc-300;
+  }
 }
 
-@layer utilities {
-  /* soft indigo orbs (the "bubbles") */
-  
-}
-
-/* Motion preferences */
-@media (prefers-reduced-motion: no-preference) {
-  .btn:hover { transform: translateY(-1px); }
-}
-
-/* Motion-safe animations */
-@media (prefers-reduced-motion: reduce) {
-  .btn:hover { transform: none; }
-  .animate-pulse-slow,
-  .animate-glow,
-  .animate-float,
-  .animate-shimmer { animation: none; }
-}
-
-/* Shared utility classes for pill styles */
-.pill-brand {
-  @apply inline-flex items-center rounded-2xl bg-brand-500 text-white
-         px-5 py-2.5 text-base md:text-lg font-semibold
-         leading-6 md:leading-7;
+/* Focus ring for keyboard users */
+:focus-visible {
+  outline: 2px solid rgba(129,140,248,0.6);
+  outline-offset: 2px;
 }

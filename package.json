@@ -92,7 +92,6 @@
     "apply:indexes": "node scripts/apply-ingestjob-indexes.js",
     "db:migrate": "echo 'Run migrations in Supabase dashboard'",
     "health:check": "curl -f http://localhost:3000/api/health || exit 1",
-    "automation:start": "node automation/real-job-runner.cjs",
     "build:scrapers": "echo 'Skipping scraper build for now'",
     "build:all": "npm run build && npm run build:scrapers",
     "prebuild": "npm run build:scrapers",
