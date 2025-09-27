@@ -1,5 +1,5 @@
-const axios = require('axios');
 require('dotenv').config({ path: '.env.local' });
+const axios = require('axios');
 
 // EU Cities (VERIFIED working endpoints only)
 const EU_CITIES_CATEGORIES = [
@@ -366,7 +366,6 @@ if (require.main === module) {
   
   (async () => {
     try {
-      require('dotenv').config({ path: '.env.local' });
       const { createClient } = require('@supabase/supabase-js');
       // Local helpers to avoid ESM/CJS interop issues
       function localParseLocation(location) {
@@ -418,7 +417,7 @@ if (require.main === module) {
       }
       
       const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL,
         process.env.SUPABASE_SERVICE_ROLE_KEY
       );
       
