@@ -3,14 +3,14 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 
 export const metadata: Metadata = {
-  title: "JobPing — Five roles. Zero scrolling.",
+  title: "JobPing · Five roles. Zero scrolling.",
   description:
-    "Weekly early-career matches across Europe—straight to your inbox. Five hand-picked roles per email. No job-board blasts.",
+    "Europe's best intern and graduate roles filtered for you. {'{matches_per_email}'} accurate matches based on city, work rights and interests. No job board dumps.",
   robots: { index: true, follow: true },
   openGraph: {
-    title: "JobPing — Five roles. Zero scrolling.",
+    title: "JobPing · Five roles. Zero scrolling.",
     description:
-      "Weekly early-career matches across Europe—straight to your inbox.",
+      "Weekly early career matches across Europe straight to your inbox.",
     type: "website",
   },
 };
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={GeistSans.variable}>
-      <body className="text-white">
+      <body className="text-white premium-bg custom-scrollbar">
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3

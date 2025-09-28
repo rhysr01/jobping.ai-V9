@@ -2,14 +2,16 @@ import Hero from "@/components/sections/Hero";
 import HowItWorks from "@/components/sections/HowItWorks";
 import BuiltForStudents from "@/components/sections/BuiltForStudents";
 import Pricing from "@/components/sections/Pricing";
+import FinalCTA from "@/components/sections/FinalCTA";
 
 export default function Page() {
   return (
     <>
-      <Hero />               {/* no CTA here */}
+      <Hero />
       <HowItWorks />
       <BuiltForStudents />
-      <Pricing />            {/* the ONLY CTAs live here */}
+      <Pricing />
+      <FinalCTA />
     </>
   );
 }

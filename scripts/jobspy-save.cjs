@@ -90,6 +90,7 @@ function pickPythonCommand() {
   const fromEnv = process.env.PYTHON && process.env.PYTHON.trim();
   const candidates = [
     fromEnv,
+    '/usr/bin/python3',
     '/opt/homebrew/bin/python3.11',
     '/usr/local/bin/python3.11',
     'python3.11',

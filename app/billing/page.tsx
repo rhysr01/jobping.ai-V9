@@ -36,16 +36,16 @@ export default function BillingPage({ params }: BillingPageProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0B0B0F]">
+    <div className="min-h-screen premium-bg">
       {/* Header */}
-      <div className="border-b border-[#374151] bg-[#151519]">
-        <div className="container-frame py-8">
+      <div className="border-b border-white/10">
+        <div className="container-page py-10">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-[#F8F9FA] font-bold text-3xl mb-2">Billing & Payments</h1>
-              <p className="text-[#9CA3AF]">Manage your subscription and payment methods</p>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Billing & Payments</h1>
+              <p className="text-zinc-400">{tabs.find(t => t.id===activeTab)?.description}</p>
             </div>
-            <div className="flex items-center gap-2 text-[#6B7280]">
+            <div className="flex items-center gap-2 text-zinc-400">
               <FileText className="w-5 h-5" />
               <span className="text-sm">Secure & Encrypted</span>
             </div>
@@ -53,22 +53,19 @@ export default function BillingPage({ params }: BillingPageProps) {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="border-b border-[#374151] bg-[#151519]">
-        <div className="container-frame">
+      {/* Tabs */}
+      <div className="border-b border-white/10">
+        <div className="container-page">
           <div className="flex space-x-8">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
-              
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as 'overview' | 'payment-methods')}
                   className={`flex items-center gap-3 py-4 px-2 border-b-2 transition-all duration-200 ${
-                    isActive
-                      ? 'border-[#3B82F6] text-[#3B82F6]'
-                      : 'border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]'
+                    isActive ? 'border-brand-500 text-brand-300' : 'border-transparent text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -81,52 +78,44 @@ export default function BillingPage({ params }: BillingPageProps) {
       </div>
 
       {/* Content */}
-      <div className="container-frame py-12">
+      <div className="container-page py-12">
         {activeTab === 'overview' && (
-          <div>
-            <div className="mb-8">
-              <h2 className="text-[#F8F9FA] font-bold text-2xl mb-2">Billing Overview</h2>
-              <p className="text-[#9CA3AF]">Manage your subscription, view invoices, and control your billing settings.</p>
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-2xl font-bold">Billing Overview</h2>
+              <p className="text-zinc-400">Manage your subscription, view invoices, and control your billing settings.</p>
             </div>
-            <BillingDashboard userId={userId} />
+            <div className="glass-card rounded-2xl p-6">
+              <BillingDashboard userId={userId} />
+            </div>
           </div>
         )}
 
         {activeTab === 'payment-methods' && (
-          <div>
-            <div className="mb-8">
-              <h2 className="text-[#F8F9FA] font-bold text-2xl mb-2">Payment Methods</h2>
-              <p className="text-[#9CA3AF]">Add and manage your payment methods securely.</p>
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-2xl font-bold">Payment Methods</h2>
+              <p className="text-zinc-400">Add and manage your payment methods securely.</p>
             </div>
-            <PaymentMethodManager 
-              userId={userId} 
-              onPaymentMethodAdded={() => {
-                // Refresh billing info when payment method is added
-                setActiveTab('overview');
-              }}
-            />
+            <div className="glass-card rounded-2xl p-6">
+              <PaymentMethodManager
+                userId={userId}
+                onPaymentMethodAdded={() => setActiveTab('overview')}
+              />
+            </div>
           </div>
         )}
       </div>
 
-      {/* Footer Security Notice */}
-      <div className="border-t border-[#374151] bg-[#151519] mt-16">
-        <div className="container-frame py-8">
-          <div className="flex items-center justify-center gap-4 text-[#6B7280] text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-[#10B981] rounded-full"></div>
-              <span>PCI DSS Compliant</span>
-            </div>
-            <div className="w-px h-4 bg-[#374151]"></div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-[#3B82F6] rounded-full"></div>
-              <span>256-bit SSL Encryption</span>
-            </div>
-            <div className="w-px h-4 bg-[#374151]"></div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-[#F59E0B] rounded-full"></div>
-              <span>Stripe Powered</span>
-            </div>
+      {/* Footer bullets */}
+      <div className="border-t border-white/10">
+        <div className="container-page py-8">
+          <div className="flex items-center justify-center gap-6 text-zinc-400 text-sm">
+            <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> PCI DSS Compliant</span>
+            <span className="w-px h-4 bg-white/10" />
+            <span className="flex items-center gap-2"><span className="w-2 h-2 bg-brand-500 rounded-full"></span> 256-bit SSL Encryption</span>
+            <span className="w-px h-4 bg-white/10" />
+            <span className="flex items-center gap-2"><span className="w-2 h-2 bg-amber-500 rounded-full"></span> Stripe Powered</span>
           </div>
         </div>
       </div>

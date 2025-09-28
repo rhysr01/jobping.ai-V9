@@ -117,6 +117,7 @@
     "dayjs": "1.11.18",
     "dotenv": "^17.2.1",
     "express": "^4.18.2",
+    "framer-motion": "12.23.22",
     "franc": "6.2.0",
     "geist": "1.5.1",
     "hot-shots": "^11.1.1",

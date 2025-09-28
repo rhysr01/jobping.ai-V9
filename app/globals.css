@@ -10,7 +10,7 @@ html, body {
   background-color: #000;
 }
 
-/* Strong, consistent vignette (GPU-cheap) */
+/* Subtle indigo vignette across the page */
 body {
   background-image:
     radial-gradient(80% 55% at 50% -10%, rgba(99,102,241,0.18), transparent 60%),
@@ -19,6 +19,72 @@ body {
   background-repeat: no-repeat;
   background-attachment: fixed;
   background-position: center top, right top, left bottom;
+}
+
+/* Premium background + grid (from Figma) */
+.premium-bg {
+  position: relative;
+  background-color: transparent;
+  background-image:
+    radial-gradient(120% 80% at 50% -30%, #6366f10d, transparent 60%),
+    linear-gradient(#000 0%, #050505 25%, #0a0a0a 75%, #000 100%);
+  background-attachment: fixed;
+}
+.premium-bg:before {
+  content:"";
+  position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  background-image:
+    radial-gradient(circle at 25% 25%, #ffffff05 0, #0000 50%),
+    radial-gradient(circle at 75% 75%, #6366f103 0, #0000 50%),
+    linear-gradient(#6366f10d 1px, #0000 1px),
+    linear-gradient(90deg, #6366f10d 1px, #0000 1px);
+  background-size: 24px 24px, 32px 32px, 60px 60px, 60px 60px;
+  background-position: 0 0, 0 0, -1px -1px, -1px -1px;
+}
+
+.enhanced-grid {
+  background-image:
+    linear-gradient(#6366f10d 1px, transparent 1px),
+    linear-gradient(90deg, #6366f10d 1px, transparent 1px);
+  background-size: 60px 60px, 60px 60px;
+  background-position: -1px -1px, -1px -1px;
+}
+
+/* Glass + interactive cards - DRAMATIC VERSION */
+.glass-card {
+  backdrop-filter: blur(20px);
+  box-shadow: 
+    0 30px 80px -20px rgba(99,102,241,.4),
+    0 0 0 1px rgba(255,255,255,.1),
+    inset 0 1px 0 rgba(255,255,255,.1);
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05)), rgba(15,15,15,0.8);
+  border: 1px solid rgba(255,255,255,0.15);
+  position: relative;
+  overflow: hidden;
+}
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(99,102,241,.1), transparent);
+  transition: left 0.6s ease;
+}
+.glass-card:hover::before {
+  left: 100%;
+}
+.interactive-hover { 
+  transition: all .4s cubic-bezier(.23,1,.32,1); 
+  position: relative;
+}
+.interactive-hover:hover { 
+  transform: translateY(-4px) scale(1.02); 
+  box-shadow: 
+    0 40px 100px -20px rgba(99,102,241,.5),
+    0 0 0 1px rgba(255,255,255,.2),
+    inset 0 1px 0 rgba(255,255,255,.2);
 }
 
 /* Indigo frame around viewport */
@@ -44,25 +110,94 @@ body::before{
   .section-pad   { @apply py-20 md:py-24; }
 
   .btn-primary {
-    @apply inline-block rounded-2xl px-6 py-3.5 text-lg font-semibold
-           bg-brand-500 text-white hover:bg-brand-600
-           focus:outline-none focus:ring-2 focus:ring-brand-500
-           transition will-change-transform hover:-translate-y-0.5;
+    @apply inline-flex items-center justify-center rounded-2xl px-8 py-5 text-lg font-bold tracking-tight
+           text-white focus:outline-none focus:ring-4 focus:ring-brand-500 focus:ring-offset-4 focus:ring-offset-black;
+    background-image: linear-gradient(to right, #6366F1, #7C3AED, #8B5CF6);
+    box-shadow: 0 20px 60px -18px rgba(99,102,241,.6);
+    min-height: 64px;
+    transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+  }
+  .btn-primary:hover::before {
+    left: 100%;
+  }
+  .btn-primary:hover { 
+    transform: translateY(-2px) scale(1.02); 
+    box-shadow: 0 28px 80px -16px rgba(99,102,241,.8);
+    filter: brightness(1.1);
   }
   .btn-outline {
-    @apply inline-block rounded-2xl px-6 py-3.5 font-semibold
-           border border-white/15 text-white hover:border-brand-500/40
-           focus:outline-none focus:ring-2 focus:ring-brand-500
-           transition hover:-translate-y-0.5;
+    @apply inline-flex items-center justify-center rounded-2xl px-8 py-5 font-semibold text-white border border-white/15;
+    transition: transform .25s ease, box-shadow .25s ease;
+    min-height: 64px;
   }
+  .btn-outline:hover { @apply border-brand-500/40; transform: translateY(-2px); }
 
   .h2-section {
-    @apply text-3xl md:text-4xl font-semibold tracking-tight;
+    @apply text-4xl md:text-5xl font-bold tracking-tight;
   }
   .p-muted {
     @apply text-zinc-300;
   }
 }
+
+/* Number chip base (80px) - DRAMATIC VERSION */
+.number-chip {
+  width: 80px; height: 80px; border-radius: 9999px;
+  display: grid; place-items: center;
+  color: #fff; font-weight: 900; font-size: 1.5rem;
+  border: 3px solid rgba(99,102,241,.7);
+  background: linear-gradient(135deg, rgba(99,102,241,.4), rgba(139,92,246,.3) 60%, rgba(168,85,247,.2));
+  box-shadow: 
+    0 20px 60px -18px rgba(99,102,241,.6),
+    0 0 0 1px rgba(255,255,255,.1),
+    inset 0 1px 0 rgba(255,255,255,.2);
+  position: relative;
+  overflow: hidden;
+}
+.number-chip::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent, rgba(99,102,241,.3), transparent);
+  animation: rotate 3s linear infinite;
+  opacity: 0.6;
+}
+.number-chip::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, rgba(99,102,241,.4), rgba(139,92,246,.3) 60%, rgba(168,85,247,.2));
+  z-index: 1;
+}
+.number-chip > * {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Scrollbar polish */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 9999px; }
 
 /* Focus ring for keyboard users */
 :focus-visible {
