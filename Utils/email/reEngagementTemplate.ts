@@ -73,56 +73,66 @@ export function generateReEngagementEmail(data: ReEngagementEmailData): string {
             z-index: 1;
         }
         .content {
-            padding: 40px 32px;
+            padding: 48px 40px;
             background: #0A0A0A;
         }
         .greeting {
             text-align: center;
-            margin-bottom: 32px;
+            margin-bottom: 40px;
         }
         .greeting-title {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: bold;
             color: #FFFFFF;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
+            line-height: 1.2;
         }
         .greeting-text {
             font-size: 18px;
             color: #AAAAAA;
-            margin-bottom: 24px;
+            margin-bottom: 32px;
+            line-height: 1.6;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
         }
         .re-engagement-box {
             background: #1A1A1A;
             border: 1px solid #333333;
-            border-radius: 12px;
-            padding: 24px;
-            margin: 24px 0;
+            border-radius: 16px;
+            padding: 32px;
+            margin: 32px 0;
             text-align: center;
         }
         .re-engagement-title {
-            font-size: 20px;
+            font-size: 24px;
             font-weight: bold;
             color: #FFFFFF;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
+            line-height: 1.3;
         }
         .re-engagement-text {
             font-size: 16px;
             color: #CCCCCC;
-            margin-bottom: 20px;
-            line-height: 1.5;
+            margin-bottom: 24px;
+            line-height: 1.6;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
         }
         .cta-button {
             /* Match site CTA: gradient + larger, rounded pill */
             background: linear-gradient(90deg, #6366F1, #7C3AED, #8B5CF6);
             color: #FFFFFF !important;
-            padding: 16px 28px;
+            padding: 18px 36px;
             border-radius: 16px;
             text-decoration: none;
             font-weight: 800;
             letter-spacing: -0.01em;
             display: inline-block;
-            margin: 24px 0;
+            margin: 28px 0;
             box-shadow: 0 18px 48px rgba(99,102,241,0.35);
+            font-size: 16px;
         }
         .cta-button:hover {
             filter: brightness(1.06);
@@ -130,39 +140,45 @@ export function generateReEngagementEmail(data: ReEngagementEmailData): string {
         .benefits {
             background: #111111;
             border: 1px solid #333333;
-            border-radius: 12px;
-            padding: 24px;
-            margin: 24px 0;
+            border-radius: 16px;
+            padding: 32px;
+            margin: 32px 0;
         }
         .benefits-title {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             color: #FFFFFF;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
+            text-align: center;
         }
         .benefit-item {
             display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-            font-size: 14px;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            font-size: 15px;
             color: #AAAAAA;
+            line-height: 1.5;
+            padding: 8px 0;
         }
         .benefit-icon {
-            width: 16px;
-            height: 16px;
-            margin-right: 12px;
+            width: 18px;
+            height: 18px;
+            margin-right: 16px;
+            margin-top: 2px;
             color: #6366F1; /* brand-500 */
+            flex-shrink: 0;
         }
         .footer {
             background: #000000;
             border-top: 1px solid #1A1A1A;
-            padding: 24px 32px;
+            padding: 32px 40px;
             text-align: center;
         }
         .footer-text {
             color: #666666;
-            font-size: 12px;
-            margin-bottom: 8px;
+            font-size: 13px;
+            margin-bottom: 12px;
+            line-height: 1.5;
         }
         .unsubscribe-link {
             color: #AAAAAA;
