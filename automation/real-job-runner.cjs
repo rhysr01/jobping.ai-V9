@@ -106,7 +106,7 @@ class RealJobRunner {
         const { count, error } = await supabase
           .from('jobs')
           .select('id', { count: 'exact', head: false })
-          .eq('source', 'jobspy-linkedin')
+          .eq('source', 'jobspy-indeed')
           .gte('created_at', new Date(Date.now() - 10*60*1000).toISOString());
         jobsSaved = error ? 0 : (count || 0);
         if (jobsSaved) {
