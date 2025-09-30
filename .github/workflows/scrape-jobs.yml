@@ -8,10 +8,15 @@ on:
   # Allow manual triggering
   workflow_dispatch:
     inputs:
-      platforms:
-        description: 'Platforms to scrape (comma-separated)'
+      scrapers:
+        description: 'Scrapers to run (comma-separated: adzuna, jobspy, reed, orchestrator)'
         required: false
-        default: 'all'
+        default: 'orchestrator'
+        type: string
+      city:
+        description: 'City for location-specific scraping'
+        required: false
+        default: ''
         type: string
       cleanup_only:
         description: 'Run cleanup only'
@@ -54,7 +59,7 @@ jobs:
       env:
         # Database (use existing secret for now)
         NEXT_PUBLIC_SUPABASE_URL: https://kpecjbjtdjzgkzywylhn.supabase.co
-        SUPABASE_URL: https://kpecjbjtdjzgkzywylhn.supabase.co
+        SUPABASE_URL: https://kpecfrvtbgnjbjtdjzgkzywylhn.supabase.co
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -129,4 +134,16 @@ jobs:
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         NODE_ENV: production
-      run: node scripts/cleanup-old-jobs.js
+      run: |
+        echo "🔍 Preflight checks..."
+        if [ -z "$SUPABASE_URL" ]; then
+          echo "❌ SUPABASE_URL is not set"
+          exit 1
+        fi
+        if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+          echo "❌ SUPABASE_SERVICE_ROLE_KEY is not set"
+          exit 1
+        fi
+        echo "✅ Environment variables validated"
+        echo "🧹 Starting cleanup..."
+        node scripts/cleanup-jobs.js

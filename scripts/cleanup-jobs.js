@@ -24,21 +24,43 @@ async function cleanupJobs() {
   try {
     console.log('🧹 Starting job database cleanup...\n');
 
-    // Step 1: Check current state
+    // Step 1: Check current state with pagination
     console.log('📊 Checking current job data quality...');
-    const { data: beforeStats, error: beforeError } = await supabase
-      .from('jobs')
-      .select('id, company, location, job_url');
+    let allJobs = [];
+    let page = 0;
+    const pageSize = 1000;
+    let hasMore = true;
 
-    if (beforeError) {
-      console.error('❌ Error fetching jobs:', beforeError);
-      return;
+    while (hasMore) {
+      const { data: batch, error: batchError } = await supabase
+        .from('jobs')
+        .select('id, company, location, location_name, job_url')
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+
+      if (batchError) {
+        console.error('❌ Error fetching jobs batch:', batchError);
+        return;
+      }
+
+      if (batch && batch.length > 0) {
+        allJobs = allJobs.concat(batch);
+        page++;
+        console.log(`   Fetched ${batch.length} jobs (total: ${allJobs.length})`);
+      } else {
+        hasMore = false;
+      }
+
+      // Safety check to prevent infinite loops
+      if (page > 100) {
+        console.warn('⚠️  Stopping at 100 pages to prevent infinite loop');
+        break;
+      }
     }
 
-    const totalJobs = beforeStats.length;
-    const qualityJobs = beforeStats.filter(job => 
+    const totalJobs = allJobs.length;
+    const qualityJobs = allJobs.filter(job => 
       job.company && job.company.trim() !== '' &&
-      job.location && job.location.trim() !== '' &&
+      (job.location && job.location.trim() !== '' || job.location_name && job.location_name.trim() !== '') &&
       job.job_url && job.job_url.trim() !== ''
     ).length;
 
@@ -48,9 +70,9 @@ async function cleanupJobs() {
     console.log(`   Jobs to remove: ${totalJobs - qualityJobs}\n`);
 
     // Step 2: Get jobs to delete
-    const jobsToDelete = beforeStats.filter(job => 
+    const jobsToDelete = allJobs.filter(job => 
       !job.company || job.company.trim() === '' ||
-      !job.location || job.location.trim() === '' ||
+      (!job.location || job.location.trim() === '') && (!job.location_name || job.location_name.trim() === '') ||
       !job.job_url || job.job_url.trim() === ''
     );
 
@@ -78,17 +100,38 @@ async function cleanupJobs() {
       console.log(`   Deleted batch ${Math.floor(i / batchSize) + 1}: ${batch.length} jobs`);
     }
 
-    // Step 4: Remove duplicates based on job_url
+    // Step 4: Remove duplicates based on job_url with pagination
     console.log('\n🔄 Removing duplicate jobs...');
     
-    const { data: remainingJobs, error: remainingError } = await supabase
-      .from('jobs')
-      .select('id, job_url')
-      .order('created_at', { ascending: true });
+    let remainingJobs = [];
+    let remainingPage = 0;
+    let remainingHasMore = true;
 
-    if (remainingError) {
-      console.error('❌ Error fetching remaining jobs:', remainingError);
-      return;
+    while (remainingHasMore) {
+      const { data: remainingBatch, error: remainingError } = await supabase
+        .from('jobs')
+        .select('id, job_url, created_at')
+        .order('created_at', { ascending: true })
+        .range(remainingPage * pageSize, (remainingPage + 1) * pageSize - 1);
+
+      if (remainingError) {
+        console.error('❌ Error fetching remaining jobs:', remainingError);
+        return;
+      }
+
+      if (remainingBatch && remainingBatch.length > 0) {
+        remainingJobs = remainingJobs.concat(remainingBatch);
+        remainingPage++;
+        console.log(`   Fetched ${remainingBatch.length} remaining jobs (total: ${remainingJobs.length})`);
+      } else {
+        remainingHasMore = false;
+      }
+
+      // Safety check
+      if (remainingPage > 100) {
+        console.warn('⚠️  Stopping remaining jobs fetch at 100 pages');
+        break;
+      }
     }
 
     // Group by job_url and keep only the first occurrence
@@ -122,21 +165,42 @@ async function cleanupJobs() {
       }
     }
 
-    // Step 5: Final quality check
+    // Step 5: Final quality check with pagination
     console.log('\n✅ Final quality check...');
-    const { data: finalStats, error: finalError } = await supabase
-      .from('jobs')
-      .select('id, company, location, job_url');
+    let finalStats = [];
+    let finalPage = 0;
+    let finalHasMore = true;
 
-    if (finalError) {
-      console.error('❌ Error fetching final stats:', finalError);
-      return;
+    while (finalHasMore) {
+      const { data: finalBatch, error: finalError } = await supabase
+        .from('jobs')
+        .select('id, company, location, location_name, job_url')
+        .range(finalPage * pageSize, (finalPage + 1) * pageSize - 1);
+
+      if (finalError) {
+        console.error('❌ Error fetching final stats:', finalError);
+        return;
+      }
+
+      if (finalBatch && finalBatch.length > 0) {
+        finalStats = finalStats.concat(finalBatch);
+        finalPage++;
+        console.log(`   Fetched ${finalBatch.length} final jobs (total: ${finalStats.length})`);
+      } else {
+        finalHasMore = false;
+      }
+
+      // Safety check
+      if (finalPage > 100) {
+        console.warn('⚠️  Stopping final stats fetch at 100 pages');
+        break;
+      }
     }
 
     const finalTotal = finalStats.length;
     const finalQuality = finalStats.filter(job => 
       job.company && job.company.trim() !== '' &&
-      job.location && job.location.trim() !== '' &&
+      (job.location && job.location.trim() !== '' || job.location_name && job.location_name.trim() !== '') &&
       job.job_url && job.job_url.trim() !== ''
     ).length;
 
