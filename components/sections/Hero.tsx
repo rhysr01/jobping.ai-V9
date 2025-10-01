@@ -8,7 +8,7 @@ export default function Hero() {
       <div className="container-page">
         <LogoWordmark />
         <p className="mt-6 text-xl md:text-2xl text-zinc-200 max-w-[62ch] mx-auto leading-8">
-          Weekly European graduate Job matches personalised sent to your inbox.
+          Weekly personalised graduate job matches for Europe, sent straight to your inbox.
         </p>
       </div>
 

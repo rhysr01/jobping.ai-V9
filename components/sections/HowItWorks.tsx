@@ -3,9 +3,9 @@ import { motion } from "framer-motion";
 
 export default function HowItWorks() {
   const items = [
-    { num: 1, title: "Set your profile", body: "City, work rights, languages, interests. Takes 2 minutes." },
-    { num: 2, title: "We cut the noise", body: "New listings are screened, de-duped, quality-checked." },
-    { num: 3, title: "You get five", body: "A one-minute email with only the best fits every week." },
+    { num: 1, title: "Set your profile", body: "Choose city, work rights, languages, and interests. It takes 2 minutes." },
+    { num: 2, title: "We cut the noise", body: "New listings are screened, deduplicated, and checked for relevance." },
+    { num: 3, title: "You get five", body: "A one minute email with only the best fits every week." },
   ];
 
   return (
@@ -17,7 +17,7 @@ export default function HowItWorks() {
           transition={{ duration: 0.6 }}
           className="h2-section text-center"
         >
-          From setup to inbox in minutes
+          Set up in 2 minutes
         </motion.h2>
         <motion.p 
           initial={{ opacity: 0, y: 20 }}
@@ -25,7 +25,7 @@ export default function HowItWorks() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="mt-2 text-center p-muted"
         >
-          We handle the noise so you can focus on applications that matter.
+          We screen the noise, you apply to the right five.
         </motion.p>
 
         <div className="mt-12 grid gap-12 md:grid-cols-3 text-center">
