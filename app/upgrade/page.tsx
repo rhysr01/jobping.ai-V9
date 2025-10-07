@@ -216,14 +216,19 @@ export default function UpgradePage() {
               </button>
             </div>
           </form>
-        </div>
+        </motion.div>
 
         {/* What's Included */}
-        <div className="mt-8 text-center text-sm text-zinc-400 space-y-1">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="mt-8 text-center text-sm text-zinc-400 space-y-1"
+        >
           <p>✓ Five hand-picked roles on signup</p>
           <p>✓ Mon/Wed/Fri delivery (5 roles each)</p>
           <p>✓ Finer filters and priority support</p>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
