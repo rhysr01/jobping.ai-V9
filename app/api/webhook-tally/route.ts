@@ -298,17 +298,69 @@ export async function POST(req: NextRequest) {
 
     console.log('✅ User created successfully:', newUser.email);
 
-    // Send welcome email
+    // INSTANT JOB MATCHING: Send first 5 jobs immediately on signup
     try {
-      await sendWelcomeEmail({
-        to: userData.email as string,
-        userName: (typeof userData.full_name === 'string' ? userData.full_name : 'there'),
-        matchCount: 5
+      console.log('🚀 Running instant job matching for new user...');
+      
+      // Call match-users API to get first 5 jobs
+      const matchResponse = await fetch(`${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/api/match-users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.SYSTEM_API_KEY || 'internal-system-key',
+        },
+        body: JSON.stringify({
+          userId: newUser.id,
+          tier: newUser.subscription_tier || 'free',
+          isSignupEmail: true, // Flag for first email
+        }),
       });
-      console.log('✅ Welcome email sent to:', userData.email);
-    } catch (emailError) {
-      console.error('⚠️ Failed to send welcome email:', emailError);
-      // Don't fail the webhook for email errors
+
+      if (matchResponse.ok) {
+        const matchData = await matchResponse.json();
+        const jobMatches = matchData.matches || [];
+        console.log(`✅ Instant matching complete: ${jobMatches.length} jobs found`);
+        
+        // Send job matches email immediately
+        if (jobMatches.length > 0) {
+          await sendMatchedJobsEmail({
+            to: userData.email as string,
+            userName: (typeof userData.full_name === 'string' ? userData.full_name : 'there'),
+            jobs: jobMatches,
+            subscriptionTier: newUser.subscription_tier || 'free',
+            isSignupEmail: true,
+          });
+          console.log(`✅ First job matches email sent with ${jobMatches.length} jobs`);
+        } else {
+          // No jobs found, send welcome email instead
+          await sendWelcomeEmail({
+            to: userData.email as string,
+            userName: (typeof userData.full_name === 'string' ? userData.full_name : 'there'),
+            matchCount: 0
+          });
+          console.log('⚠️ No jobs found, sent welcome email without matches');
+        }
+      } else {
+        console.error('⚠️ Instant matching failed, user will receive jobs on next scheduled send');
+        // Send welcome email without jobs as fallback
+        await sendWelcomeEmail({
+          to: userData.email as string,
+          userName: (typeof userData.full_name === 'string' ? userData.full_name : 'there'),
+          matchCount: 5
+        });
+      }
+    } catch (matchError) {
+      console.error('⚠️ Instant matching error:', matchError);
+      // Send welcome email as fallback
+      try {
+        await sendWelcomeEmail({
+          to: userData.email as string,
+          userName: (typeof userData.full_name === 'string' ? userData.full_name : 'there'),
+          matchCount: 5
+        });
+      } catch (emailError) {
+        console.error('⚠️ Failed to send fallback welcome email:', emailError);
+      }
     }
 
     // Cleanup memory
