@@ -29,7 +29,7 @@ export default function Pricing() {
               <li>• Optional standout alerts with a maximum of two per week</li>
               <li>• Finer filters and priority support</li>
             </ul>
-            <a href="https://tally.so/r/mJEqx4?tier=premium&source=pricing" className="btn-outline mt-6">Get 3 times weekly matches</a>
+            <a href="/upgrade" className="btn-outline mt-6">Get 3 times weekly matches</a>
           </div>
         </div>
 
