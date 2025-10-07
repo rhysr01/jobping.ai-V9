@@ -36,13 +36,13 @@
    - Click "Save product"
    - **Copy the Price ID** (starts with `price_...`)
 
-3. **Create Annual Product**:
+3. **Create Quarterly Product**:
    - Click "+ New product"
-   - Name: `JobPing Premium Annual`
-   - Description: `Premium job matching - Annual subscription (save €25)`
+   - Name: `JobPing Premium Quarterly`
+   - Description: `Premium job matching - Quarterly subscription (3 months)`
    - Pricing model: `Recurring`
    - Price: `€59.00 EUR`
-   - Billing period: `Yearly`
+   - Billing period: `Every 3 months`
    - Click "Save product"
    - **Copy the Price ID** (starts with `price_...`)
 
@@ -102,7 +102,7 @@ STRIPE_SECRET_KEY=sk_live_YOUR_SECRET_KEY
 NEXT_PUBLIC_STRIPE_KEY=pk_live_YOUR_PUBLISHABLE_KEY
 STRIPE_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET
 STRIPE_PREMIUM_MONTHLY_PRICE_ID=price_YOUR_MONTHLY_PRICE
-STRIPE_PREMIUM_QUARTERLY_PRICE_ID=price_YOUR_ANNUAL_PRICE
+STRIPE_PREMIUM_QUARTERLY_PRICE_ID=price_YOUR_QUARTERLY_PRICE
 
 # Email (Resend)
 RESEND_API_KEY=re_YOUR_API_KEY

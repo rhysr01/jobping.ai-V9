@@ -22,7 +22,7 @@ export default function Pricing() {
           <div className="rounded-2xl border border-zinc-700 bg-zinc-900/40 ring-1 ring-brand-500/20 p-8">
             <span className="inline-block text-xs px-2 py-1 rounded-full bg-brand-500/15 text-brand-300">Popular</span>
             <h3 className="mt-2 text-2xl font-bold">Premium plan. Three times per week</h3>
-            <p className="mt-1 p-muted"><strong>€7 per month</strong> or <strong>€59 per year</strong></p>
+            <p className="mt-1 p-muted"><strong>€7 per month</strong> or <strong>€59 quarterly</strong></p>
             <ul className="mt-4 space-y-2 p-muted">
               <li>• Five roles on signup</li>
               <li>• Delivery on Monday, Wednesday, and Friday with five roles each</li>
