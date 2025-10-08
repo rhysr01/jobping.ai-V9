@@ -242,8 +242,8 @@ export class WebhookSecurity {
 export const TALLY_WEBHOOK_SECURITY = new WebhookSecurity({
   secret: process.env.TALLY_WEBHOOK_SECRET || '',
   maxAge: 5 * 60 * 1000, // 5 minutes
-  requireTimestamp: true,
-  requireSignature: true,
+  requireTimestamp: false, // Tally doesn't send timestamp headers
+  requireSignature: false, // Tally doesn't send signature headers
   allowedIps: process.env.TALLY_ALLOWED_IPS?.split(',') || []
 });
 
