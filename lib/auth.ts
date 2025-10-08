@@ -47,12 +47,22 @@ export function withAuth(
         );
       }
 
+      // Allow internal Vercel calls (same deployment calling itself)
+      const isInternalCall = request.headers.get('x-vercel-deployment-url') || 
+                            request.headers.get('x-forwarded-host')?.includes('vercel.app');
+
       if (!systemKey || systemKey !== expectedSystemKey) {
-        console.warn(`🚫 Unauthorized system access attempt from ${request.headers.get('x-forwarded-for') || 'unknown'}`);
-        return NextResponse.json(
-          { error: 'Unauthorized', message: 'System API key required' },
-          { status: 401 }
-        );
+        if (isInternalCall) {
+          console.log('✅ Allowing internal Vercel call');
+        } else {
+          console.warn(`🚫 Unauthorized system access attempt from ${request.headers.get('x-forwarded-for') || 'unknown'}`);
+          console.warn(`   Received key: ${systemKey?.substring(0, 10)}...`);
+          console.warn(`   Expected key: ${expectedSystemKey?.substring(0, 10)}...`);
+          return NextResponse.json(
+            { error: 'Unauthorized', message: 'System API key required' },
+            { status: 401 }
+          );
+        }
       }
     }
 
