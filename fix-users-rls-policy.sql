@@ -1,15 +1,19 @@
 -- Fix RLS policy for users table to allow webhook signups
 -- Run this in Supabase SQL Editor
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Allow service role to insert users" ON public.users;
+DROP POLICY IF EXISTS "Allow service role to select users" ON public.users;
+
 -- Allow inserts from service role (for webhook signups)
-CREATE POLICY IF NOT EXISTS "Allow service role to insert users"
+CREATE POLICY "Allow service role to insert users"
 ON public.users
 FOR INSERT
 TO authenticated, service_role
 WITH CHECK (true);
 
 -- Also allow service role to select users (for duplicate checking)
-CREATE POLICY IF NOT EXISTS "Allow service role to select users"
+CREATE POLICY "Allow service role to select users"
 ON public.users
 FOR SELECT
 TO authenticated, service_role
