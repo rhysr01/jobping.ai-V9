@@ -6,11 +6,11 @@ test.describe('Share Preview Tests', () => {
     
     // Check OG image exists
     const ogImage = await page.locator('meta[property="og:image"]').getAttribute('content');
-    expect(ogImage).toBe('https://jobping.ai/og-image.png');
+    expect(ogImage).toBe('https://getjobping.com/og-image.png');
     
     // Check Twitter image
     const twitterImage = await page.locator('meta[name="twitter:image"]').getAttribute('content');
-    expect(twitterImage).toBe('https://jobping.ai/og-image.png');
+    expect(twitterImage).toBe('https://getjobping.com/og-image.png');
   });
 
   test('should have rel="noopener noreferrer" on external links', async ({ page }) => {

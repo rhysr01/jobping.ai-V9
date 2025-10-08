@@ -157,7 +157,7 @@ async function validateApiKey(apiKey: string): Promise<UserSession | null> {
   // System API key
   if (apiKey === process.env.SYSTEM_API_KEY) {
     return {
-      email: 'system@jobping.ai',
+      email: 'system@getjobping.com',
       userId: 'system',
       role: 'system',
       verified: true
@@ -167,7 +167,7 @@ async function validateApiKey(apiKey: string): Promise<UserSession | null> {
   // Admin API key
   if (apiKey === process.env.ADMIN_API_KEY) {
     return {
-      email: 'admin@jobping.ai',
+      email: 'admin@getjobping.com',
       userId: 'admin',
       role: 'admin',
       verified: true

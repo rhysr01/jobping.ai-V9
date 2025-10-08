@@ -39,7 +39,7 @@ export class EmailFeedbackIntegration {
     const { style = 'detailed' } = options;
     
     // Generate simple feedback buttons
-    const baseUrl = 'https://jobping.ai/api/feedback/email';
+    const baseUrl = 'https://getjobping.com/api/feedback/email';
     const encodedEmail = encodeURIComponent(userEmail);
     
     if (style === 'minimal') {

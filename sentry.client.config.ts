@@ -44,7 +44,7 @@ Sentry.init({
       // Filter out script errors from external domains
       if (error.message === 'Script error.' && 
           !event.exception?.values?.[0]?.stacktrace?.frames?.some(frame => 
-            frame.filename?.includes('jobping.ai') || 
+            frame.filename?.includes('getjobping.com') || 
             frame.filename?.includes('localhost')
           )) {
         return null;

@@ -342,9 +342,9 @@ const FOOTER = `
 <div class="footer">
   <p class="footer-text">You're receiving this because you signed up for JobPing.</p>
   <p class="footer-text">
-    <a href="https://jobping.ai/legal/unsubscribe" class="footer-link">Unsubscribe</a> | 
-    <a href="https://jobping.ai/dashboard/preferences" class="footer-link">Email Preferences</a> | 
-    <a href="https://jobping.ai/dashboard" class="footer-link">Dashboard</a>
+    <a href="https://getjobping.com/legal/unsubscribe" class="footer-link">Unsubscribe</a> | 
+    <a href="https://getjobping.com/dashboard/preferences" class="footer-link">Email Preferences</a> | 
+    <a href="https://getjobping.com/dashboard" class="footer-link">Dashboard</a>
   </p>
 </div>
 `;
@@ -353,15 +353,15 @@ const createFeedbackSection = (jobHash: string, userEmail: string) => `
 <div class="feedback-section">
   <div class="feedback-title">How was this match?</div>
   <div class="feedback-buttons">
-    <a href="https://jobping.ai/api/feedback/email?action=positive&score=5&job=${jobHash}&email=${encodeURIComponent(userEmail)}" 
+    <a href="https://getjobping.com/api/feedback/email?action=positive&score=5&job=${jobHash}&email=${encodeURIComponent(userEmail)}" 
        class="feedback-btn positive" target="_blank">⭐ Perfect</a>
-    <a href="https://jobping.ai/api/feedback/email?action=positive&score=4&job=${jobHash}&email=${encodeURIComponent(userEmail)}" 
+    <a href="https://getjobping.com/api/feedback/email?action=positive&score=4&job=${jobHash}&email=${encodeURIComponent(userEmail)}" 
        class="feedback-btn positive" target="_blank">👍 Good</a>
-    <a href="https://jobping.ai/api/feedback/email?action=neutral&score=3&job=${jobHash}&email=${encodeURIComponent(userEmail)}" 
+    <a href="https://getjobping.com/api/feedback/email?action=neutral&score=3&job=${jobHash}&email=${encodeURIComponent(userEmail)}" 
        class="feedback-btn neutral" target="_blank">🤔 OK</a>
-    <a href="https://jobping.ai/api/feedback/email?action=negative&score=2&job=${jobHash}&email=${encodeURIComponent(userEmail)}" 
+    <a href="https://getjobping.com/api/feedback/email?action=negative&score=2&job=${jobHash}&email=${encodeURIComponent(userEmail)}" 
        class="feedback-btn negative" target="_blank">👎 Poor</a>
-    <a href="https://jobping.ai/api/feedback/email?action=negative&score=1&job=${jobHash}&email=${encodeURIComponent(userEmail)}" 
+    <a href="https://getjobping.com/api/feedback/email?action=negative&score=1&job=${jobHash}&email=${encodeURIComponent(userEmail)}" 
        class="feedback-btn negative" target="_blank">❌ Bad</a>
   </div>
   <div class="feedback-note">Your feedback helps improve AI matching accuracy</div>
@@ -400,7 +400,7 @@ export function createWelcomeEmail(userName?: string, matchCount: number = 5): s
           We'll send personalized, high-quality opportunities every 48 hours based on your profile and preferences.
         </p>
         
-        <a href="https://jobping.ai/dashboard" class="cta-button">
+        <a href="https://getjobping.com/dashboard" class="cta-button">
           View Your Matches →
         </a>
       </div>
@@ -517,7 +517,7 @@ export function createJobMatchesEmail(
       <div class="divider"></div>
       
       <div style="text-align: center; margin: 32px 0;">
-        <a href="https://jobping.ai/dashboard" class="cta-button">
+        <a href="https://getjobping.com/dashboard" class="cta-button">
           View All Matches & Apply →
         </a>
       </div>

@@ -14,14 +14,14 @@ test.describe('SEO Tests', () => {
     
     // Check canonical
     const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
-    expect(canonical).toBe('https://jobping.ai/');
+    expect(canonical).toBe('https://getjobping.com/');
     
     // Check OG tags
     const ogTitle = await page.locator('meta[property="og:title"]').getAttribute('content');
     expect(ogTitle).toBe('JobPing - AI-powered job matching for students');
     
     const ogImage = await page.locator('meta[property="og:image"]').getAttribute('content');
-    expect(ogImage).toBe('https://jobping.ai/og-image.png');
+    expect(ogImage).toBe('https://getjobping.com/og-image.png');
     
     // Check Twitter tags
     const twitterCard = await page.locator('meta[name="twitter:card"]').getAttribute('content');

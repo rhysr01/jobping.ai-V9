@@ -48,7 +48,7 @@ if (!global.__SB_MOCK__) {
     users: [
       {
         id: 1,
-        email: 'test-api@jobping.ai',
+        email: 'test-api@getjobping.com',
         full_name: 'Test User',
         email_verified: true,
         subscription_active: true,

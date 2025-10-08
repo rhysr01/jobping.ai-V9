@@ -53,7 +53,7 @@ describe('Performance and Load Tests', () => {
     global.__SB_MOCK__ = {
       users: Array.from({ length: 50 }, (_, i) => ({
         id: i + 1,
-        email: `test${i + 1}@jobping.ai`,
+        email: `test${i + 1}@getjobping.com`,
         full_name: `Test User ${i + 1}`,
         email_verified: true,
         subscription_active: true,
@@ -369,13 +369,13 @@ describe('Performance and Load Tests', () => {
       global.__SB_MOCK__.users = [
         ...Array(10).fill().map((_, i) => ({
           id: i + 1,
-          email: `free${i + 1}@jobping.ai`,
+          email: `free${i + 1}@getjobping.com`,
           subscription_tier: 'free',
           // ... other fields
         })),
         ...Array(5).fill().map((_, i) => ({
           id: i + 11,
-          email: `premium${i + 1}@jobping.ai`,
+          email: `premium${i + 1}@getjobping.com`,
           subscription_tier: 'premium',
           // ... other fields
         }))

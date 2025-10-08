@@ -293,11 +293,11 @@ export function generatePersonalizedCTA(context: PersonalizationContext): Person
   const { subscriptionTier, engagementScore, preferredJobTypes } = context;
 
   let ctaText = '';
-  let ctaUrl = 'https://jobping.ai/dashboard';
+  let ctaUrl = 'https://getjobping.com/dashboard';
 
   if (subscriptionTier === 'premium') {
     ctaText = 'View All Premium Matches →';
-    ctaUrl = 'https://jobping.ai/dashboard?premium=true';
+    ctaUrl = 'https://getjobping.com/dashboard?premium=true';
   } else if (engagementScore >= 70) {
     ctaText = 'See More Matches →';
   } else if (preferredJobTypes.length > 0) {

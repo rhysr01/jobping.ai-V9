@@ -177,7 +177,7 @@ class ProductionHttpClient {
       httpAgent,
       httpsAgent,
       headers: {
-        'User-Agent': 'JobPingBot/1.0 (+https://jobping.ai/bot; contact: support@jobping.ai)',
+        'User-Agent': 'JobPingBot/1.0 (+https://getjobping.com/bot; contact: support@getjobping.com)',
         'Accept': 'application/json, text/html, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Connection': 'keep-alive'

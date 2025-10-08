@@ -288,7 +288,7 @@ async function sendPaymentRecoveryEmail(userEmail: string, invoice: Stripe.Invoi
     
     // Example implementation with Resend (you'd need to import and configure)
     // await resend.emails.send({
-    //   from: 'billing@jobping.ai',
+    //   from: 'billing@getjobping.com',
     //   to: userEmail,
     //   subject: 'Payment Failed - Action Required',
     //   html: `<p>Your payment failed. Please update your payment method.</p>`

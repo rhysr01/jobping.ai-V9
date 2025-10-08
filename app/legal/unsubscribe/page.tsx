@@ -114,7 +114,7 @@ export default function UnsubscribePage() {
                 If you have questions about unsubscribing or need help managing your email preferences:
               </p>
               <p className="text-gray-700 mb-2">
-                <strong>Email:</strong> support@jobping.ai
+                <strong>Email:</strong> support@getjobping.com
               </p>
               <p className="text-gray-700 mb-2">
                 <strong>Data Deletion:</strong>{' '}

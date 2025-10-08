@@ -122,7 +122,7 @@ export class EmailVerificationOracle {
     try {
       const resend = this.getResendClient();
       await resend.emails.send({
-        from: 'JobPing <noreply@jobping.ai>',
+        from: 'JobPing <noreply@getjobping.com>',
         to: [email],
         subject: '🎯 Verify your JobPing account',
         html: `
@@ -367,7 +367,7 @@ export class EmailVerificationOracle {
     `).join('');
 
     await resend.emails.send({
-      from: 'JobPing <noreply@jobping.ai>',
+      from: 'JobPing <noreply@getjobping.com>',
       to: [user.email],
       subject,
       html: `
@@ -520,7 +520,7 @@ export class EmailVerificationOracle {
                 </ul>
               </div>
               
-              <a href="https://jobping.ai/dashboard" class="cta-button">
+              <a href="https://getjobping.com/dashboard" class="cta-button">
                 View Dashboard →
               </a>
               

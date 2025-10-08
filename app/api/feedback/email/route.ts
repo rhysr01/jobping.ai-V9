@@ -337,7 +337,7 @@ function generateThankYouPage(action: string, jobHash: string, email: string, sc
         <p>${message}</p>
         <div class="buttons">
           <button class="btn close-btn" onclick="window.close()">Close</button>
-          <a href="https://jobping-6pcpggc73-rhys-rowlands-projects.vercel.app" class="btn view-jobs-btn">View More Jobs</a>
+          <a href="https://getjobping.com" class="btn view-jobs-btn">View More Jobs</a>
         </div>
         <div class="auto-close-notice">This window will close automatically in 5 seconds</div>
       </div>
@@ -349,7 +349,7 @@ function generateThankYouPage(action: string, jobHash: string, email: string, sc
             window.close();
           } catch (e) {
             // If can't close (not a popup), redirect to dashboard
-            window.location.href = 'https://jobping-6pcpggc73-rhys-rowlands-projects.vercel.app';
+            window.location.href = 'https://getjobping.com';
           }
         }, 5000);
         

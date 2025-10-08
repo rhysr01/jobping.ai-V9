@@ -55,7 +55,7 @@ describe('/api/match-users Integration Tests', () => {
       users: [
         {
           id: 1,
-          email: 'test1@jobping.ai',
+          email: 'test1@getjobping.com',
           full_name: 'Test User 1',
           email_verified: true,
           subscription_active: true,
@@ -74,7 +74,7 @@ describe('/api/match-users Integration Tests', () => {
         },
         {
           id: 2,
-          email: 'test2@jobping.ai',
+          email: 'test2@getjobping.com',
           full_name: 'Test User 2',
           email_verified: true,
           subscription_active: true,
