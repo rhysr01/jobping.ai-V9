@@ -315,7 +315,7 @@ export async function POST(req: NextRequest) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': process.env.SYSTEM_API_KEY || 'internal-system-key',
+          'x-system-api-key': process.env.SYSTEM_API_KEY || 'internal-system-key',
         },
         body: JSON.stringify({
           userId: newUser.id,
