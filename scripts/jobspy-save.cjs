@@ -270,15 +270,25 @@ print(df[cols].to_csv(index=False))
     const t = titleStr(j.title);
     const d = descStr(j.company_description || j.skills || '');
     const full = `${t} ${d}`;
+    
+    // Check if title or description has early-career terms
     const hasEarly = includesAny(t, earlyTerms) || includesAny(d, earlyTerms);
-    if (!hasEarly) return false;
-    // If title is explicitly early-career, bypass business-axis check; else apply normal rule
     const titleHasExplicitEarly = includesAny(t, earlyTerms);
-    const bizOk = titleHasExplicitEarly ? true : includesAny(full, hasEarly ? bizAxesLoose : bizAxesStrict);
+    
+    // RELAXED: If searching with early-career terms, assume all results are relevant
+    // The search queries already filter for early-career roles
+    const searchTermIsEarly = true; // We're using graduate/intern/analyst search terms
+    
+    // If title has early terms OR we're searching early terms, bypass strict business check
+    const bizOk = (titleHasExplicitEarly || searchTermIsEarly) ? true : includesAny(full, bizAxesLoose);
     if (!bizOk) return false;
-    if (!titleHasExplicitEarly && !excludesAll(full, seniorTerms)) return false;
+    
+    // Only reject if DEFINITELY senior (and no early terms in title)
+    if (!titleHasExplicitEarly && includesAny(t, seniorTerms)) return false;
+    
+    // Always reject noise
     if (!excludesAll(full, noisyExclusions)) return false;
-    if (!titleHasExplicitEarly && !excludesAll(` ${t} `, consultantExclusion)) return false;
+    
     return true;
   });
   // No per-city cap - collect all quality jobs
