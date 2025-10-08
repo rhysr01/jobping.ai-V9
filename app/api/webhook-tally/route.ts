@@ -306,7 +306,12 @@ export async function POST(req: NextRequest) {
       console.log('🚀 Running instant job matching for new user...');
       
       // Call match-users API to get first 5 jobs
-      const matchResponse = await fetch(`${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/api/match-users`, {
+      const baseUrl = process.env.NEXT_PUBLIC_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+      const matchUrl = `${baseUrl}/api/match-users`;
+      
+      console.log(`📍 Calling match API: ${matchUrl}`);
+      
+      const matchResponse = await fetch(matchUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -318,6 +323,8 @@ export async function POST(req: NextRequest) {
           isSignupEmail: true, // Flag for first email
         }),
       });
+
+      console.log(`📊 Match API response: ${matchResponse.status} ${matchResponse.statusText}`);
 
       if (matchResponse.ok) {
         const matchData = await matchResponse.json();
