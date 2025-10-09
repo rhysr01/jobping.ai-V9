@@ -14,6 +14,19 @@ export const excludeNoise = [
   "Senior","Sr","Lead","Principal","Director","Head","Manager","Nurse","Warehouse","Construction","Staff"
 ];
 
-export const targetCities = ["Madrid","Barcelona","Paris","Berlin","Milan","Dublin","London"];
+export const targetCities = [
+  "London",
+  "Madrid", 
+  "Berlin",
+  "Hamburg",
+  "Munich",
+  "Amsterdam",
+  "Brussels",
+  "Paris",
+  "Zurich",
+  "Milan",
+  "Rome",
+  "Dublin"
+];
 
 
