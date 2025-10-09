@@ -1,17 +1,14 @@
 export default function BuiltForStudents() {
   const features = [
-    { num: 1, title: "Profile based results", body: "Your city, work rights, and interests shape the list. No generic blasts." },
-    { num: 2, title: "Europe wide sources", body: "Major boards plus direct company pages across the EU and the UK." },
-    { num: 3, title: "Student first design", body: "Short and scannable emails on a predictable schedule." },
+    { num: 1, title: "Your profile drives everything", body: "Matches based on your location, visa status, and interests. Zero generic spam." },
+    { num: 2, title: "EU and UK coverage", body: "We pull from major job boards and directly from company pages across European markets." },
+    { num: 3, title: "Designed for speed", body: "Short emails. Predictable timing. No logins, no dashboards, no doomscrolling." },
   ];
 
   return (
     <section className="section-pad">
       <div className="container-page">
-        <h2 className="h2-section text-center">Built by students for students</h2>
-        <p className="mt-3 text-center p-muted max-w-[65ch] mx-auto">
-          We track boards and company pages across the EU and the UK, then match roles to your profile.
-        </p>
+        <h2 className="h2-section text-center">We search Europe. You get what matters.</h2>
 
         <div className="mt-10 grid md:grid-cols-3 gap-8 md:gap-12">
           {features.map((feature) => (

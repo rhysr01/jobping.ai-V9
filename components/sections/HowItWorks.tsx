@@ -3,9 +3,9 @@ import { motion } from "framer-motion";
 
 export default function HowItWorks() {
   const items = [
-    { num: 1, title: "Set your profile", body: "Choose city, work rights, languages, and interests. It takes 2 minutes." },
-    { num: 2, title: "We cut the noise", body: "New listings are screened, deduplicated, and checked for relevance." },
-    { num: 3, title: "You get five", body: "A one minute email with only the best fits every week." },
+    { num: 1, title: "Tell us what you want", body: "Your target city, work authorization, language skills, and role preferences. Two minutes, done." },
+    { num: 2, title: "We do the hunting", body: "Our scrapers track job boards and company career pages across Europe daily. We filter, deduplicate, and match against your criteria." },
+    { num: 3, title: "Get five roles, not five hundred", body: "Every week, one focused email with exactly five roles that fit your profile. Read it in under a minute." },
   ];
 
   return (
@@ -17,16 +17,8 @@ export default function HowItWorks() {
           transition={{ duration: 0.6 }}
           className="h2-section text-center"
         >
-          Set up in 2 minutes
+          Stop searching. Start matching.
         </motion.h2>
-        <motion.p 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="mt-2 text-center p-muted"
-        >
-          We screen the noise, you apply to the right five.
-        </motion.p>
 
         <div className="mt-12 grid gap-12 md:grid-cols-3 text-center">
           {items.map((x, index) => (

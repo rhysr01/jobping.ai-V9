@@ -1,6 +1,7 @@
 "use client";
 import LogoWordmark from "@/components/LogoWordmark";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function Hero() {
   return (
@@ -8,8 +9,31 @@ export default function Hero() {
       <div className="container-page">
         <LogoWordmark />
         <p className="mt-6 text-xl md:text-2xl text-zinc-200 max-w-[62ch] mx-auto leading-8">
-          Weekly personalised graduate job matches for Europe, sent straight to your inbox.
+          Graduate jobs that actually match you. Five per week, straight to your inbox.
         </p>
+        <p className="mt-4 text-base md:text-lg text-zinc-400 max-w-[58ch] mx-auto">
+          Set up takes 2 minutes. No CV upload. No endless scrolling.
+        </p>
+        
+        {/* CTA Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="mt-10"
+        >
+          <a
+            href="https://tally.so/r/mJEqx4"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-brand-500 to-purple-600 rounded-xl hover:scale-105 transition-transform duration-200 shadow-lg hover:shadow-2xl hover:shadow-brand-500/30"
+          >
+            Get Started — It's Free
+          </a>
+          <p className="mt-4 text-sm text-zinc-500">
+            Join 200+ graduates finding better opportunities
+          </p>
+        </motion.div>
       </div>
 
       {/* Big background orbs — dramatic motion */}
