@@ -114,27 +114,35 @@ async function main() {
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
-  // Query rotation system - 3 different sets that rotate
+  // BUSINESS SCHOOL FOCUSED: 6 tight early-career queries per city
+  // Rotates 3 sets to maximize diversity over time
   const QUERY_SETS = {
     SET_A: [
-      // Internship focused
-      'internship', 'intern', 'placement', 'trainee',
-      'graduate programme', 'graduate program', 'graduate scheme',
-      'entry level', 'junior', 'analyst', 'business analyst'
+      // Top business school programs
+      'graduate programme',
+      'investment banking analyst',
+      'management consulting graduate',
+      'finance graduate',
+      'strategy consultant',
+      'business analyst graduate'
     ],
     SET_B: [
-      // Industry specific
-      'finance graduate', 'sales graduate', 'marketing graduate', 
-      'consulting graduate', 'operations graduate', 'tech graduate',
-      'data analyst', 'product analyst', 'strategy analyst',
-      'investment banking', 'management consulting', 'corporate finance'
+      // Core business roles
+      'finance analyst',
+      'business analyst',
+      'management trainee',
+      'corporate finance graduate',
+      'operations analyst',
+      'commercial analyst'
     ],
     SET_C: [
-      // Skills and roles focused
-      'business analyst', 'data analyst', 'financial analyst',
-      'marketing analyst', 'operations analyst', 'strategy analyst',
-      'graduate scheme', 'graduate program', 'trainee program',
-      'entry level', 'junior', 'associate', 'analyst'
+      // Analyst & associate roles
+      'graduate analyst',
+      'junior analyst',
+      'associate programme',
+      'financial analyst',
+      'strategy analyst',
+      'consulting analyst'
     ]
   };
 
@@ -171,7 +179,7 @@ async function main() {
     'Dublin': [] // English only set is CORE_EN
   };
   const cities = [ 'London','Madrid','Berlin','Amsterdam','Paris','Zurich','Milan','Dublin' ];
-  const MAX_Q_PER_CITY = parseInt(process.env.JOBSPY_MAX_Q_PER_CITY || '12', 10);
+  const MAX_Q_PER_CITY = parseInt(process.env.JOBSPY_MAX_Q_PER_CITY || '6', 10);
   const RESULTS_WANTED = parseInt(process.env.JOBSPY_RESULTS_WANTED || '15', 10);
   const JOBSPY_TIMEOUT_MS = parseInt(process.env.JOBSPY_TIMEOUT_MS || '20000', 10);
 
@@ -205,7 +213,7 @@ async function main() {
 from jobspy import scrape_jobs
 import pandas as pd
 df = scrape_jobs(
-  site_name=['linkedin', 'indeed', 'glassdoor', 'zip_recruiter'],
+  site_name=['linkedin', 'indeed', 'glassdoor'],
   search_term='''${term.replace(/'/g, "''")}''',
   location='''${city}''',
   country_indeed='''${country}''',
