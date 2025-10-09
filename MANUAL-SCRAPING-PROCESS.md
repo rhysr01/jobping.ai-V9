@@ -119,9 +119,27 @@ Should show new jobs from today!
 
 ## 🐛 Troubleshooting
 
-**"JobSpy not found"**:
+**"JobSpy not found"** or **"No matching distribution"**:
+
+Your Python version may be too old (JobSpy requires Python 3.10+).
+
+Check version:
 ```bash
-pip install python-jobspy
+python3 --version
+```
+
+If < 3.10, upgrade Python:
+```bash
+# macOS (using Homebrew)
+brew install python@3.11
+brew link python@3.11
+
+# Or download from python.org
+```
+
+Then install JobSpy:
+```bash
+pip3 install python-jobspy
 ```
 
 **"No jobs found"**:

@@ -6,15 +6,19 @@
 
 set -e
 
+# Ensure Python 3.11 is in PATH (direct path to avoid symlink issues)
+export PATH="/opt/homebrew/opt/python@3.11/bin:$PATH"
+export PYTHON="/opt/homebrew/opt/python@3.11/bin/python3.11"
+
 echo "🔍 JOBSPY DAILY SCRAPER"
 echo "======================================"
 echo "Started: $(date)"
 echo ""
 
 # Check if jobspy is installed
-if ! command -v python-jobspy &> /dev/null; then
-    echo "⚠️  JobSpy CLI not found. Installing via pip..."
-    pip install python-jobspy
+if ! pip3 list 2>/dev/null | grep -q python-jobspy; then
+    echo "⚠️  JobSpy not found. Installing via pip3..."
+    pip3 install python-jobspy
 fi
 
 echo "✅ JobSpy ready"

@@ -217,7 +217,11 @@ import sys
 print('Available columns:', list(df.columns), file=sys.stderr)
 cols=[c for c in ['title','company','location','job_url','company_description','skills'] if c in df.columns]
 print(df[cols].to_csv(index=False))
-`], { encoding: 'utf8', timeout: JOBSPY_TIMEOUT_MS });
+`], { 
+  encoding: 'utf8', 
+  timeout: JOBSPY_TIMEOUT_MS,
+  env: { ...process.env, PATH: process.env.PATH }
+});
         if (py.status === 0) break;
         console.error('Python error:', (py.stderr && py.stderr.trim()) || (py.stdout && py.stdout.trim()) || `status ${py.status}`);
         if (tries < maxTries) {
