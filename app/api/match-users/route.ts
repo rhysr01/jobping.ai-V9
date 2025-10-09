@@ -811,7 +811,7 @@ const matchUsersHandler = async (req: NextRequest) => {
             matchedJobs.map(m => {
               const loc = (m as any).location?.toLowerCase() || '';
               // Find which target city this job matches
-              return targetCities.find(city => city && loc.includes(city.toLowerCase()));
+              return targetCities.find((city: string) => city && loc.includes(city.toLowerCase()));
             }).filter(Boolean)
           );
           
@@ -885,7 +885,7 @@ const matchUsersHandler = async (req: NextRequest) => {
           const finalCities = matches.map(m => {
             const job = distributedJobs.find(j => j.job_hash === m.job_hash);
             const loc = job?.location?.toLowerCase() || '';
-            return targetCities.find(city => city && loc.includes(city.toLowerCase()));
+            return targetCities.find((city: string) => city && loc.includes(city.toLowerCase()));
           }).filter(Boolean);
           const finalUniqueCities = new Set(finalCities);
           
