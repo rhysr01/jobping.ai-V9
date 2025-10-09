@@ -370,19 +370,6 @@ export async function POST(req: NextRequest) {
         
         // Send job matches email immediately
         if (jobMatches.length > 0) {
-          // Mark jobs as sent to prevent duplicates in future emails
-          const jobHashes = jobMatches.map((m: any) => m.job_hash);
-          const { error: markSentError } = await supabase
-            .from('jobs')
-            .update({ is_sent: true })
-            .in('job_hash', jobHashes);
-
-          if (markSentError) {
-            console.error(`❌ Failed to mark jobs as sent for ${userData.email}:`, markSentError);
-          } else {
-            console.log(`✅ Marked ${jobHashes.length} jobs as sent to prevent duplicates`);
-          }
-
           console.log(`📧 Attempting to send email to: ${userData.email}`);
           const emailResult = await sendMatchedJobsEmail({
             to: userData.email as string,

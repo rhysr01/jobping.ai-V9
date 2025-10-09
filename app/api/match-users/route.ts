@@ -541,7 +541,6 @@ const matchUsersHandler = async (req: NextRequest) => {
     const { data: jobs, error: jobsError } = await supabase
       .from('jobs')
       .select('*')
-      .eq('is_sent', false)
       .eq('status', 'active')
       .gte('created_at', thirtyDaysAgo.toISOString())
       .in('freshness_tier', ['ultra_fresh', 'fresh'])
@@ -602,10 +601,21 @@ const matchUsersHandler = async (req: NextRequest) => {
       try {
         console.log(`Processing matches for ${user.email} (tier: ${user.subscription_tier || 'free'})`);
         
-        // Per-user analysis placeholder - not implemented
+        // Get jobs this user has already received (to prevent duplicates)
+        const { data: previousMatches } = await supabase
+          .from('matches')
+          .select('job_hash')
+          .eq('user_email', user.email);
+        
+        const previousJobHashes = new Set(previousMatches?.map(m => m.job_hash) || []);
+        console.log(`User ${user.email} has already received ${previousJobHashes.size} jobs`);
+        
+        // Filter out jobs the user has already received
+        const unseenJobs = jobs.filter(job => !previousJobHashes.has(job.job_hash));
+        console.log(`${unseenJobs.length} new jobs available for ${user.email} (${jobs.length - unseenJobs.length} already sent)`);
         
         // Pre-filter jobs to reduce AI processing load
-        const preFilteredJobs = preFilterJobsByUserPreferences(jobs as JobWithFreshness[], user);
+        const preFilteredJobs = preFilterJobsByUserPreferences(unseenJobs as JobWithFreshness[], user);
         
         const considered = preFilteredJobs.slice(0, user.subscription_tier === 'premium' ? 80 : 40);
         

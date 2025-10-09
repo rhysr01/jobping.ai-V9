@@ -166,13 +166,12 @@ async function handleSendScheduledEmails(req: NextRequest) {
 
     console.log(`📧 Processing ${eligibleUsers.length} users for scheduled emails`);
 
-    // Get fresh jobs from the last 7 days that haven't been sent yet
+    // Get fresh jobs from the last 7 days
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const { data: jobs, error: jobsError } = await supabase
       .from('jobs')
       .select('*')
       .eq('status', 'active')
-      .eq('is_sent', false) // Only fetch unsent jobs
       .gte('created_at', sevenDaysAgo.toISOString())
       .order('created_at', { ascending: false })
       .limit(1000);
@@ -200,6 +199,19 @@ async function handleSendScheduledEmails(req: NextRequest) {
         try {
           console.log(`🎯 Processing user: ${user.email}`);
 
+          // Get jobs this user has already received (to prevent duplicates)
+          const { data: previousMatches } = await supabase
+            .from('matches')
+            .select('job_hash')
+            .eq('user_email', user.email);
+          
+          const previousJobHashes = new Set(previousMatches?.map(m => m.job_hash) || []);
+          console.log(`User ${user.email} has already received ${previousJobHashes.size} jobs`);
+          
+          // Filter out jobs the user has already received
+          const unseenJobs = jobs.filter(job => !previousJobHashes.has(job.job_hash));
+          console.log(`${unseenJobs.length} new jobs available for ${user.email} (${jobs.length - unseenJobs.length} already sent)`);
+
           const userPreferences: UserPreferences = {
             email: user.email,
             target_cities: normalizeStringToArray(user.target_cities),
@@ -220,7 +232,7 @@ async function handleSendScheduledEmails(req: NextRequest) {
           if (aiDisabled) {
             console.log(`🧠 AI disabled, using rule-based fallback for ${user.email}`);
             matchType = 'fallback';
-            const fallbackResults = generateRobustFallbackMatches(jobs, userPreferences);
+            const fallbackResults = generateRobustFallbackMatches(unseenJobs, userPreferences);
             matches = fallbackResults.map((result) => ({
               ...result.job,
               match_score: result.match_score,
@@ -230,13 +242,13 @@ async function handleSendScheduledEmails(req: NextRequest) {
           } else {
             try {
               // Check AI cost limits before making call
-              const estimatedCost = aiCostManager.estimateCost('gpt-4', jobs.length);
+              const estimatedCost = aiCostManager.estimateCost('gpt-4', unseenJobs.length);
               const costCheck = await aiCostManager.canMakeAICall(user.email, estimatedCost);
               
               if (!costCheck.allowed) {
                 console.log(`💰 AI call blocked for ${user.email}: ${costCheck.reason}`);
                 matchType = 'fallback';
-                const fallbackResults = generateRobustFallbackMatches(jobs, userPreferences);
+                const fallbackResults = generateRobustFallbackMatches(unseenJobs, userPreferences);
                 matches = fallbackResults.map((result) => ({
                   ...result.job,
                   match_score: result.match_score,
@@ -246,7 +258,7 @@ async function handleSendScheduledEmails(req: NextRequest) {
               } else {
                 // Use suggested model if provided
                 const model = costCheck.suggestedModel || 'gpt-4';
-                const aiRes = await matcher.performMatching(jobs as any[], userPreferences);
+                const aiRes = await matcher.performMatching(unseenJobs as any[], userPreferences);
                 matches = aiRes.matches;
                 
                 // Record AI usage for cost tracking
@@ -254,7 +266,7 @@ async function handleSendScheduledEmails(req: NextRequest) {
                 
                 if (!matches || matches.length === 0) {
                   matchType = 'fallback';
-                  const fallbackResults = generateRobustFallbackMatches(jobs, userPreferences);
+                  const fallbackResults = generateRobustFallbackMatches(unseenJobs, userPreferences);
                   matches = fallbackResults.map((result) => ({
                     ...result.job,
                     match_score: result.match_score,
@@ -266,7 +278,7 @@ async function handleSendScheduledEmails(req: NextRequest) {
             } catch (aiError) {
               console.error(`❌ AI matching failed for ${user.email}:`, aiError);
               matchType = 'ai_failed';
-              const fallbackResults = generateRobustFallbackMatches(jobs, userPreferences);
+              const fallbackResults = generateRobustFallbackMatches(unseenJobs, userPreferences);
               matches = fallbackResults.map((result) => ({
                 ...result.job,
                 match_score: result.match_score,
@@ -300,7 +312,7 @@ async function handleSendScheduledEmails(req: NextRequest) {
           );
 
           if (matches.length > 0) {
-            // Save matches to database for tracking
+            // Save matches to database for tracking (this prevents duplicates per-user)
             const matchEntries = matches.map((match: any) => ({
               user_email: user.email,
               job_hash: match.job_hash,
@@ -317,17 +329,6 @@ async function handleSendScheduledEmails(req: NextRequest) {
 
             if (matchInsertError) {
               console.error(`❌ Failed to save matches for ${user.email}:`, matchInsertError);
-            }
-
-            // Mark jobs as sent to prevent duplicates
-            const jobHashes = matches.map((m: any) => m.job_hash);
-            const { error: markSentError } = await supabase
-              .from('jobs')
-              .update({ is_sent: true })
-              .in('job_hash', jobHashes);
-
-            if (markSentError) {
-              console.error(`❌ Failed to mark jobs as sent for ${user.email}:`, markSentError);
             }
 
             // Build personalized subject from user preferences and matches
