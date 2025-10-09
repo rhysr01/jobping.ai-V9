@@ -170,10 +170,54 @@ function extractUserData(fields: NonNullable<TallyWebhookData['data']>['fields']
         console.log(`✅ Extracted location: ${loc}`);
       }
     }
+    // LANGUAGES (checkbox format)
+    else if (labelLower.includes('language(s)') && labelLower.includes('professional level') && value === true) {
+      const lang = extractFromParentheses(label);
+      if (lang && lang.length > 1) {
+        if (!userData.languages_spoken) userData.languages_spoken = [];
+        (userData.languages_spoken as string[]).push(lang);
+        console.log(`✅ Extracted language: ${lang}`);
+      }
+    }
     // WORK ENVIRONMENT (checkbox format: Office, Hybrid, Remote)
     else if (labelLower.includes('how do you want to work?') && value === true) {
       const env = extractFromParentheses(label);
       if (env) workEnv.push(env);
+    }
+    // WORK AUTHORIZATION (checkbox format)
+    else if (labelLower.includes('work authorization status') && value === true) {
+      const auth = extractFromParentheses(label);
+      if (auth && auth.length > 1) {
+        userData.visa_status = auth;
+        console.log(`✅ Extracted work authorization: ${auth}`);
+      }
+    }
+    // ENTRY LEVEL PREFERENCE (checkbox format)
+    else if (labelLower.includes('entry level preference') && value === true) {
+      const pref = extractFromParentheses(label);
+      if (pref && pref.length > 1) {
+        if (!userData.entry_level_preference) userData.entry_level_preference = '';
+        userData.entry_level_preference = pref; // Take the first one
+        console.log(`✅ Extracted entry level preference: ${pref}`);
+      }
+    }
+    // COMPANY TYPES (checkbox format)
+    else if (labelLower.includes('companies are your target') && value === true) {
+      const company = extractFromParentheses(label);
+      if (company && company.length > 1) {
+        if (!userData.company_types) userData.company_types = [];
+        (userData.company_types as string[]).push(company);
+        console.log(`✅ Extracted company type: ${company}`);
+      }
+    }
+    // CAREER PATH (checkbox format)
+    else if (labelLower.includes('target career path') && value === true) {
+      const career = extractFromParentheses(label);
+      if (career && career.length > 1) {
+        if (!userData.career_path) userData.career_path = '';
+        userData.career_path = career;
+        console.log(`✅ Extracted career path: ${career}`);
+      }
     }
     // ROLES (checkbox format with job titles in parentheses)
     else if ((labelLower.includes('strategy &') || labelLower.includes('role(s)')) && value === true) {
@@ -183,20 +227,17 @@ function extractUserData(fields: NonNullable<TallyWebhookData['data']>['fields']
         console.log(`✅ Extracted role: ${role}`);
       }
     }
+    // PROFESSIONAL EXPERIENCE (checkbox format)
+    else if (labelLower.includes('professional experience') && value === true) {
+      const exp = extractFromParentheses(label);
+      if (exp && exp.length > 1) {
+        userData.professional_experience = exp;
+        console.log(`✅ Extracted professional experience: ${exp}`);
+      }
+    }
     // TARGET EMPLOYMENT START DATE
     else if (labelLower.includes('target employment start date') || labelLower.includes('employment start')) {
       userData.start_date = Array.isArray(value) ? value[0] : value;
-    }
-    // PROFESSIONAL EXPERIENCE
-    else if (labelLower.includes('professional experience')) {
-      // Tally sends UUID, but we can map common ones or just store as-is for now
-      // You'll need to create a mapping or ask Tally to send actual values
-      userData.professional_experience = 'Entry Level'; // Default for now
-    }
-    // ENTRY LEVEL PREFERENCE
-    else if (labelLower.includes('entry level preference')) {
-      // Same issue - UUIDs instead of actual values
-      userData.entry_level_preference = 'Graduate Programme'; // Default for now
     }
   });
   
