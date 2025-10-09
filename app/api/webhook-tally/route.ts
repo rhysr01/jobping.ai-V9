@@ -62,7 +62,11 @@ function getSupabaseClient() {
         from: (_table: string) => ({
           select: (_columns?: string) => ({
             eq: (_column: string, _value: any) => ({
-              single: () => Promise.resolve({ data: null, error: null })
+              single: () => Promise.resolve({ data: null, error: null }),
+              order: (_column: string, _options?: any) => ({
+                limit: (_count: number) => Promise.resolve({ data: [], error: null })
+              }),
+              limit: (_count: number) => Promise.resolve({ data: [], error: null })
             }),
             gte: (_column: string, _value: any) => ({
               order: (_column: string, _options?: any) => ({
@@ -75,7 +79,8 @@ function getSupabaseClient() {
           upsert: (_data: any) => Promise.resolve({ data: null, error: null }),
           insert: (_data: any) => Promise.resolve({ data: null, error: null }),
           update: (_data: any) => ({
-            eq: (_column: string, _value: any) => Promise.resolve({ data: null, error: null })
+            eq: (_column: string, _value: any) => Promise.resolve({ data: null, error: null }),
+            in: (_column: string, _values: any[]) => Promise.resolve({ data: null, error: null })
           })
         })
       };
