@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# API key backups - NEVER commit
+.env.local.backup
+.env.local.clean
+.env*.backup

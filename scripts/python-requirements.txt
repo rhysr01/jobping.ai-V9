@@ -1,2 +1,0 @@
-jobspy>=0.4.0
-pandas>=2.0
