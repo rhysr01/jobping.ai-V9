@@ -125,9 +125,16 @@ function extractUserData(fields: NonNullable<TallyWebhookData['data']>['fields']
   
   // Tally sends checkbox values in parentheses within labels
   // e.g., "How do you want to work? (Office)" with value: true
+  // NOTE: Match the LAST set of parentheses (not the first!)
   const extractFromParentheses = (label: string): string | null => {
-    const match = label.match(/\(([^)]+)\)/);
-    return match ? match[1].trim() : null;
+    // Match all parentheses, get the last one
+    const matches = label.match(/\(([^)]+)\)/g);
+    if (!matches || matches.length === 0) return null;
+    
+    const lastMatch = matches[matches.length - 1];
+    // Extract content from the last match
+    const content = lastMatch.match(/\(([^)]+)\)/);
+    return content ? content[1].trim() : null;
   };
   
   // Storage for multi-select fields
