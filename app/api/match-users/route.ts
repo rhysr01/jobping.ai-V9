@@ -817,56 +817,57 @@ const matchUsersHandler = async (req: NextRequest) => {
           
           console.log(`📊 City diversity: ${matchedCities.size}/${targetCities.length} cities covered (${Array.from(matchedCities).join(', ')})`);
           
-          // CITY DIVERSITY: If user selected multiple cities but all jobs from ONE city, add diversity
-          if (targetCities.length >= 2 && matchedCities.size < targetCities.length) {
-            console.log(`📍 Ensuring city diversity for ${targetCities.length} target cities (currently have ${matchedCities.size})`);
+          // CITY DIVERSITY: Evenly distribute jobs across selected cities
+          if (targetCities.length >= 2 && matches.length >= 3) {
+            console.log(`📍 Ensuring even city distribution for ${targetCities.length} target cities`);
             console.log(`📍 Available jobs pool: ${distributedJobs.length} jobs`);
             
-            // Find which cities are missing
-            const missingCities = targetCities.filter((city: string) => !matchedCities.has(city));
-            console.log(`📍 Missing cities: ${missingCities.join(', ')}`);
+            // Calculate target distribution (3+2 for 2 cities, 2+2+1 for 3 cities, etc.)
+            const jobsPerCity = Math.floor(5 / targetCities.length); // Base allocation
+            const extraJobs = 5 % targetCities.length; // Extra jobs to distribute
             
-            for (const missingCity of missingCities) {
-              if (matches.length < 2) {
-                console.log(`⚠️ Not enough matches (${matches.length}) to ensure city diversity`);
-                break;
-              }
-              
-              // Find a job from the missing city in the distributed jobs pool
-              const jobFromMissingCity = distributedJobs.find(job => {
+            const cityAllocations = targetCities.map((city: string, index: number) => ({
+              city,
+              target: jobsPerCity + (index < extraJobs ? 1 : 0)
+            }));
+            
+            console.log(`📍 Target distribution: ${cityAllocations.map(c => `${c.city}:${c.target}`).join(', ')}`);
+            
+            // Rebuild matches with even city distribution
+            const newMatches: JobMatch[] = [];
+            
+            for (const allocation of cityAllocations) {
+              const cityJobs = distributedJobs.filter(job => {
                 const loc = job.location.toLowerCase();
-                const cityMatch = loc.includes(missingCity.toLowerCase());
-                const notAlreadyMatched = !matches.some(m => m.job_hash === job.job_hash);
-                
-                if (cityMatch && notAlreadyMatched) {
-                  console.log(`🔍 Found candidate from ${missingCity}: ${job.title} in ${job.location}`);
-                }
-                
-                return cityMatch && notAlreadyMatched;
+                return loc.includes(allocation.city.toLowerCase()) &&
+                       !newMatches.some(m => m.job_hash === job.job_hash);
               });
               
-              if (jobFromMissingCity) {
-                console.log(`✅ Found job from ${missingCity}: ${jobFromMissingCity.title}`);
-                
-                // Replace the LOWEST scoring match with a job from the missing city
-                const lowestScoreIndex = matches.length - 1;
-                const oldJob = matches[lowestScoreIndex];
-                
-                matches[lowestScoreIndex] = {
-                  job_index: matches.length,
-                  job_hash: jobFromMissingCity.job_hash,
-                  match_score: matches[lowestScoreIndex].match_score - 3, // Slightly lower score
-                  match_reason: `City diversity: ${jobFromMissingCity.title} in ${missingCity}`,
-                  confidence_score: 0.8
-                };
-                
-                console.log(`✅ Replaced match ${lowestScoreIndex + 1} (${oldJob.match_reason}) with job from ${missingCity}`);
-              } else {
-                console.log(`⚠️ No jobs found from ${missingCity} in pool of ${distributedJobs.length} jobs`);
-              }
+              console.log(`📍 ${allocation.city}: Found ${cityJobs.length} available jobs, need ${allocation.target}`);
+              
+              // Take the top N jobs for this city
+              const jobsToAdd = cityJobs.slice(0, allocation.target);
+              
+              jobsToAdd.forEach((job, idx) => {
+                newMatches.push({
+                  job_index: newMatches.length + 1,
+                  job_hash: job.job_hash,
+                  match_score: 85 - (newMatches.length * 2), // Decreasing scores
+                  match_reason: `Top ${idx + 1} match in ${allocation.city}`,
+                  confidence_score: 0.85
+                });
+              });
+            }
+            
+            // Only replace matches if we got enough jobs from all cities
+            if (newMatches.length >= 3) {
+              console.log(`✅ Rebuilt ${newMatches.length} matches with city diversity`);
+              matches = newMatches.slice(0, 5); // Ensure exactly 5
+            } else {
+              console.log(`⚠️ Not enough jobs across all cities (${newMatches.length}), keeping original matches`);
             }
           } else {
-            console.log(`📍 City diversity check: ${targetCities.length} cities, ${matchedCities.size} covered, pool: ${distributedJobs.length} jobs`);
+            console.log(`📍 City diversity check: ${targetCities.length} cities, need 3+ matches for diversity`);
           }
           
           // SOURCE DIVERSITY: Ensure matches include multiple job boards (preferred: at least 2)
