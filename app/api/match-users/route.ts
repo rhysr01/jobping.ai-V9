@@ -786,20 +786,13 @@ const matchUsersHandler = async (req: NextRequest) => {
               job_hash: match.job_hash,
               match_score: match.match_score,
               match_reason: match.match_reason,
-              freshness_tier: originalJob?.freshness_tier || 'comprehensive',
-              processing_method: matchType,
               matched_at: new Date().toISOString(),
               created_at: new Date().toISOString(),
-              // Add provenance tracking fields
+              // Only include fields that exist in the database schema
               match_algorithm: userProvenance.match_algorithm,
-              ai_model: userProvenance.ai_model,
-              prompt_version: userProvenance.prompt_version,
               ai_latency_ms: userProvenance.ai_latency_ms,
-              ai_cost_usd: userProvenance.ai_cost_usd,
               cache_hit: userProvenance.cache_hit,
-              fallback_reason: userProvenance.fallback_reason,
-              retry_count: userProvenance.retry_count,
-              error_category: userProvenance.error_category
+              fallback_reason: userProvenance.fallback_reason
             };
           });
 
