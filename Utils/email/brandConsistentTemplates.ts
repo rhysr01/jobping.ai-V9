@@ -342,9 +342,8 @@ const FOOTER = `
 <div class="footer">
   <p class="footer-text">You're receiving this because you signed up for JobPing.</p>
   <p class="footer-text">
-    <a href="https://getjobping.com/legal/unsubscribe" class="footer-link">Unsubscribe</a> | 
-    <a href="https://getjobping.com/dashboard/preferences" class="footer-link">Email Preferences</a> | 
-    <a href="https://getjobping.com/dashboard" class="footer-link">Dashboard</a>
+    <a href="https://getjobping.com" class="footer-link">Visit JobPing</a> | 
+    <a href="https://getjobping.com/api/unsubscribe/one-click" class="footer-link">Unsubscribe</a>
   </p>
 </div>
 `;
@@ -400,9 +399,9 @@ export function createWelcomeEmail(userName?: string, matchCount: number = 5): s
           We'll send personalized, high-quality opportunities every 48 hours based on your profile and preferences.
         </p>
         
-        <a href="https://getjobping.com/dashboard" class="cta-button">
-          View Your Matches →
-        </a>
+        <p class="greeting-text">
+          Check your email for your first batch of matched jobs!
+        </p>
       </div>
       
       <div class="divider"></div>
@@ -466,15 +465,23 @@ export function createJobMatchesEmail(
       
       <div class="job-meta">
         <span class="match-score">${card.matchResult?.match_score || 85}% Match</span>
-        <span style="color: #888888; font-size: 14px;">💰 ${card.job.salary || 'Unknown'}</span>
-        <span style="color: #888888; font-size: 14px;">⏰ ${card.job.job_type || 'Unknown'}</span>
+        <span style="color: #888888; font-size: 14px;">💰 ${card.job.salary || 'Competitive'}</span>
+        <span style="color: #888888; font-size: 14px;">⏰ ${card.job.job_type || 'Full-time'}</span>
       </div>
       
       <p style="color: #888888; font-size: 14px; margin-top: 12px; line-height: 1.5;">
         ${(card.job.description && card.job.description.trim().length > 0) 
           ? (card.job.description.length > 150 ? card.job.description.substring(0, 150) + '...' : card.job.description)
-          : 'Description: Unknown'}
+          : 'Click below to view full job description and requirements.'}
       </p>
+      
+      ${card.job.job_url ? `
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="${card.job.job_url}" class="cta-button" style="display: inline-block; text-align: center;">
+          Apply Now →
+        </a>
+      </div>
+      ` : ''}
       
       ${createFeedbackSection(card.job.job_hash || 'unknown', card.job.user_email || '')}
     </div>
@@ -515,12 +522,6 @@ export function createJobMatchesEmail(
       ${jobCardsHtml}
       
       <div class="divider"></div>
-      
-      <div style="text-align: center; margin: 32px 0;">
-        <a href="https://getjobping.com/dashboard" class="cta-button">
-          View All Matches & Apply →
-        </a>
-      </div>
       
       <div style="text-align: center; margin-top: 24px;">
         <p style="color: #666666; font-size: 12px; margin-bottom: 8px;">
