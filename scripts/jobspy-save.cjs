@@ -266,7 +266,19 @@ print(df[cols].to_csv(index=False))
   const bizAxesStrict = ['consult','sales','business analyst','strategy','operations','logistic','supply chain','finance','account','audit','marketing','brand','commercial','product','data','ai'];
   const bizAxesLoose = ['business','analyst','scheme','program','operations','marketing','sales','finance','account','audit','logistics','supply','chain','consult','strategy','hr','human resources','risk','project','management','data','analytics','product','tech','technology','engineering'];
   const seniorTerms = ['senior','lead','principal','director','head of','vp','vice president','architect','specialist','manager'];
-  const noisyExclusions = ['nurse','nhs','teacher','chef','cleaner','warehouse','driver','barista','waiter','waitress'];
+  const noisyExclusions = [
+    // Healthcare & Medical
+    'nurse','nhs','pharmacist','doctor','veterinary','dental','physiotherap','medical assistant',
+    // Trades & Manual Labor
+    'teacher','chef','cleaner','warehouse','driver','barista','waiter','waitress','hairdresser',
+    'electrician','plumber','mechanic','welder','carpenter','painter','landscap','janitor',
+    'hgv','truck driver','delivery driver','courier','postal',
+    // Retail & Service (non-graduate)
+    'store assistant','shop assistant','cashier','retail assistant','shelf stacker',
+    // Other Irrelevant
+    'laboratory technician','field technician','acoustic consultant','environmental scientist',
+    'social worker','care worker','support worker'
+  ];
   // Additional exclusion: overly generic consultant roles
   const consultantExclusion = [' consultant '];
   const qualityFiltered = collected.filter(j => {
