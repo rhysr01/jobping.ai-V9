@@ -135,6 +135,18 @@ Generate a secure random string (32+ characters)
 Example: system_live_8k3j9f2h7g6d5s4a3p2o1i9u8y7t6r5e4w3q2
 
 ════════════════════════════════════════════════════════════════
+13. TALLY_FORM_URL (NEW - Required for promo redirect)
+════════════════════════════════════════════════════════════════
+Name: TALLY_FORM_URL
+Value: https://tally.so/r/YOUR-FORM-ID
+Environment: ✅ Production  ✅ Preview  ✅ Development
+
+Get from: Your Tally form → Share → Copy public link
+Example: https://tally.so/r/w2Xj4K
+
+This is used to redirect new users after applying promo code.
+
+════════════════════════════════════════════════════════════════
 OPTIONAL (Recommended)
 ════════════════════════════════════════════════════════════════
 
