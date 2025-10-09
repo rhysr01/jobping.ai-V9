@@ -446,6 +446,7 @@ if (require.main === module) {
       console.log(`🔍 Deduplication: ${dbJobs.length} → ${finalJobs.length} unique jobs by hash`);
       
       let savedCount = 0;
+      let skippedCount = 0;
       const batchSize = 50;
       
       for (let i = 0; i < finalJobs.length; i += batchSize) {
@@ -460,15 +461,21 @@ if (require.main === module) {
         
         if (!error) {
           const inserted = Array.isArray(data) ? data.length : 0;
+          const skipped = batch.length - inserted;
           savedCount += inserted;
-          console.log(`✅ Inserted ${inserted} (cumulative ${savedCount}/${finalJobs.length})`);
+          skippedCount += skipped;
+          console.log(`✅ Inserted ${inserted}, Skipped ${skipped} (already in DB) - Cumulative: ${savedCount} new, ${skippedCount} existing`);
         } else {
           console.error('❌ Batch error:', error.message);
         }
       }
       
-      // Print canonical success line for orchestrator
-      console.log(`\n✅ Adzuna Multilingual Early-Career: ${savedCount} jobs saved to database`);
+      // Print canonical success line for orchestrator with clear breakdown
+      console.log(`\n📊 Adzuna Processing Complete:`);
+      console.log(`   ✅ ${savedCount} NEW jobs saved to database`);
+      console.log(`   ⏭️  ${skippedCount} jobs already existed (skipped duplicates)`);
+      console.log(`   📈 Total processed: ${finalJobs.length} unique jobs`);
+      console.log(`\n✅ Adzuna: ${savedCount} jobs processed`);
       
     } catch (error) {
       console.error('❌ Adzuna category scraping failed:', error.message);
