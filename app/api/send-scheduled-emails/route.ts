@@ -166,12 +166,13 @@ async function handleSendScheduledEmails(req: NextRequest) {
 
     console.log(`📧 Processing ${eligibleUsers.length} users for scheduled emails`);
 
-    // Get fresh jobs from the last 7 days
+    // Get fresh jobs from the last 7 days that haven't been sent yet
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const { data: jobs, error: jobsError } = await supabase
       .from('jobs')
       .select('*')
       .eq('status', 'active')
+      .eq('is_sent', false) // Only fetch unsent jobs
       .gte('created_at', sevenDaysAgo.toISOString())
       .order('created_at', { ascending: false })
       .limit(1000);
@@ -299,6 +300,36 @@ async function handleSendScheduledEmails(req: NextRequest) {
           );
 
           if (matches.length > 0) {
+            // Save matches to database for tracking
+            const matchEntries = matches.map((match: any) => ({
+              user_email: user.email,
+              job_hash: match.job_hash,
+              match_score: match.match_score,
+              match_reason: match.match_reason,
+              match_algorithm: matchType === 'ai_success' ? 'ai' : 'rules',
+              matched_at: new Date().toISOString(),
+              created_at: new Date().toISOString()
+            }));
+
+            const { error: matchInsertError } = await supabase
+              .from('matches')
+              .insert(matchEntries);
+
+            if (matchInsertError) {
+              console.error(`❌ Failed to save matches for ${user.email}:`, matchInsertError);
+            }
+
+            // Mark jobs as sent to prevent duplicates
+            const jobHashes = matches.map((m: any) => m.job_hash);
+            const { error: markSentError } = await supabase
+              .from('jobs')
+              .update({ is_sent: true })
+              .in('job_hash', jobHashes);
+
+            if (markSentError) {
+              console.error(`❌ Failed to mark jobs as sent for ${user.email}:`, markSentError);
+            }
+
             // Build personalized subject from user preferences and matches
             const subject = buildPersonalizedSubject({
               jobs: matches.map((m: any) => ({
