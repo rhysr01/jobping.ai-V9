@@ -1,8 +1,8 @@
 -- ============================================
--- JOBPING: Remove Irrelevant Jobs from Database
+-- JOBPING: Remove ALL Irrelevant Jobs from Database
 -- ============================================
 -- Run this in Supabase SQL Editor
--- Total jobs to remove: ~304 (out of 660)
+-- Scans ALL 11,468 jobs in database
 -- ============================================
 
 -- Count before deletion
@@ -17,10 +17,12 @@ WHERE
   -- 1. HAIRDRESSER (4 jobs)
   title ILIKE '%hairdresser%' OR
   
-  -- 2. DRIVERS (5 jobs)
+  -- 2. DRIVERS - Keep "test driver", "product driver" (product management)
   title ILIKE '%HGV%' OR 
   title ILIKE '%truck driver%' OR 
   title ILIKE '%delivery driver%' OR
+  title ILIKE '%bus driver%' OR
+  (title ILIKE '%driver%' AND title NOT ILIKE '%test driver%' AND title NOT ILIKE '%product driver%' AND title NOT ILIKE '%screw driver%') OR
   
   -- 3. HEALTHCARE (9 jobs)
   title ILIKE '%dental nurse%' OR
@@ -29,11 +31,12 @@ WHERE
   title ILIKE '%veterinary%' OR
   title ILIKE '%WCA Doctor%' OR
   
-  -- 4. TRADES (17 jobs - but keep "trainee electrician" as it may be engineering)
+  -- 4. TRADES - Keep mechanical/electrical engineers
   title ILIKE '%apprentice mechanic%' OR
   title ILIKE '%apprentice plumber%' OR
   title ILIKE '%plumber%' OR
-  title ILIKE '%mechanic%' AND title NOT ILIKE '%mechanical engineer%' AND title NOT ILIKE '%mechanical design%' OR
+  (title ILIKE '%mechanic%' AND title NOT ILIKE '%mechanical engineer%' AND title NOT ILIKE '%mechanical design%') OR
+  title ILIKE '%electrician%' AND title NOT ILIKE '%electrical engineer%' OR
   
   -- 5. MANUAL LABOR (5 jobs)
   title ILIKE '%warehouse operative%' OR
@@ -50,20 +53,24 @@ WHERE
   title ILIKE '%laboratory assistant%' OR
   title ILIKE '%laboratory analyst%' OR
   
-  -- 8. SENIOR/LEADERSHIP ROLES (232 jobs - largest cleanup!)
-  title ILIKE '%senior %' OR
+  -- 8. SENIOR/LEADERSHIP ROLES - But keep "(Senior)" in parentheses (flexible roles)
+  (LOWER(title) LIKE 'senior %' OR LOWER(title) LIKE '% senior %' OR LOWER(title) LIKE '% senior') AND title NOT ILIKE '%(senior)%' OR
   title ILIKE '%sr. %' OR
-  title ILIKE '%director%' AND title NOT ILIKE '%trainee%' AND title NOT ILIKE '%junior%' OR
+  (title ILIKE '%director%' AND title NOT ILIKE '%trainee%' AND title NOT ILIKE '%junior%' AND title NOT ILIKE '%art director%') OR
   title ILIKE '%head of%' OR
   title ILIKE '%VP %' OR
   title ILIKE '%vice president%' OR
-  title ILIKE '%principal %' OR
+  title ILIKE '%principal %' AND title NOT ILIKE '%principal consultant%' OR
   
-  -- 9. OTHER IRRELEVANT (18 jobs)
-  title ILIKE '%veterinary surgeon%' OR
-  title ILIKE '%head of finance%' OR
-  title ILIKE '%head of product%' OR
-  title ILIKE '%head of resident%';
+  -- 9. ELDERLY CARE (German "Seniorenresidenz" jobs)
+  title ILIKE '%seniorenresidenz%' OR
+  title ILIKE '%pflegefachkraft%' OR
+  
+  -- 10. IRRELEVANT FOOD SERVICE
+  (title ILIKE '%kok%' AND title ILIKE '%zelfstandig%') OR  -- Dutch chef
+  
+  -- 11. OTHER IRRELEVANT
+  title ILIKE '%veterinary surgeon%';
 
 -- Count after deletion
 SELECT 'AFTER CLEANUP' as status, COUNT(*) as total_jobs FROM jobs;
@@ -95,13 +102,17 @@ LIMIT 20;
 -- ============================================
 -- EXPECTED RESULTS:
 -- ============================================
--- Before: 660 jobs
--- After: ~356 jobs (46% reduction)
+-- Before: 11,468 jobs (all historical data)
+-- Expected removal: ~50-100 jobs
 -- All remaining jobs should be business school relevant:
 --   ✅ Analyst roles (Business, Data, Finance, etc.)
 --   ✅ Graduate programs/schemes
 --   ✅ Junior/trainee business roles
 --   ✅ Entry-level consulting, sales, marketing
---   ✅ Junior engineers (technical but graduate-level)
+--   ✅ (Senior) roles in parentheses (flexible level)
+--   ✅ Junior Art Director, Mechanical Engineers, etc.
+--   ❌ Senior Data Analyst, Directors, VPs removed
+--   ❌ Hairdressers, Drivers, Nurses removed
+--   ❌ Elderly care (Pflegefachkraft) removed
 -- ============================================
 
