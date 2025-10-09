@@ -395,13 +395,39 @@ function preFilterJobsByUserPreferences(jobs: JobWithFreshness[], user: UserPref
     return { job, score };
   });
   
-  // Sort by score and return top jobs
-  const topJobs = scoredJobs
+  // Sort by score, then ensure source diversity in top results
+  const sortedJobs = scoredJobs
     .filter(item => item.score > 0) // Only jobs with some match
-    .sort((a, b) => b.score - a.score)
-    .map(item => item.job);
+    .sort((a, b) => b.score - a.score);
   
-  console.log(`Pre-filtered from ${jobs.length} to ${topJobs.length} jobs for user ${user.email} (scored and ranked)`);
+  // Ensure source diversity in top 100 jobs sent to AI
+  const diverseJobs: typeof sortedJobs[0][] = [];
+  const sourceCount: Record<string, number> = {};
+  const maxPerSource = 40; // Max 40 jobs from any single source in top 100
+  
+  for (const item of sortedJobs) {
+    const source = (item.job as any).source || 'unknown';
+    const currentCount = sourceCount[source] || 0;
+    
+    if (currentCount < maxPerSource) {
+      diverseJobs.push(item);
+      sourceCount[source] = currentCount + 1;
+    }
+    
+    if (diverseJobs.length >= 100) break; // Stop at 100 jobs
+  }
+  
+  // Add remaining jobs if we don't have 100 yet
+  if (diverseJobs.length < 100) {
+    const remainingJobs = sortedJobs.filter(item => !diverseJobs.includes(item));
+    diverseJobs.push(...remainingJobs.slice(0, 100 - diverseJobs.length));
+  }
+  
+  const topJobs = diverseJobs.map(item => item.job);
+  const sourceCounts = Object.entries(sourceCount).map(([s, c]) => `${s}:${c}`).join(', ');
+  
+  console.log(`Pre-filtered from ${jobs.length} to ${topJobs.length} jobs for user ${user.email} (scored, ranked, diversified)`);
+  console.log(`  Source distribution: ${sourceCounts}`);
   return topJobs;
 }
 
