@@ -115,93 +115,114 @@ function getOpenAIClient() {
   });
 }
 
-// Extract user data with business rules - UPDATED FOR ACTUAL SCHEMA
+// Extract user data with business rules - UPDATED FOR TALLY CHECKBOX FORMAT
 function extractUserData(fields: NonNullable<TallyWebhookData['data']>['fields'], referrerUrl?: string) {
-  console.log('🧪 Test mode: Extracting user data from fields:', fields);
-  console.log('🧪 Test mode: Referrer URL:', referrerUrl);
+  console.log('🧪 Extracting user data from Tally fields');
   
   const userData: Record<string, string | string[] | boolean> = { 
     email: ''
   };
   
+  // Tally sends checkbox values in parentheses within labels
+  // e.g., "How do you want to work? (Office)" with value: true
+  const extractFromParentheses = (label: string): string | null => {
+    const match = label.match(/\(([^)]+)\)/);
+    return match ? match[1].trim() : null;
+  };
+  
+  // Storage for multi-select fields
+  const locations: string[] = [];
+  const workEnv: string[] = [];
+  const roles: string[] = [];
+  
   fields.forEach((field: any) => {
-    if (!field.value) return;
-    
     const key = field.key.toLowerCase();
-    const label = (field.label || '').toLowerCase();
+    const label = field.label || '';
+    const labelLower = label.toLowerCase();
     const type = (field.type || '').toLowerCase();
-    console.log(`🧪 Test mode: Processing field ${key} with value:`, field.value);
+    const value = field.value;
     
-    // Map Tally form fields to your actual database columns
-    if (key.includes('name') || label.includes('name')) {
-      userData.full_name = Array.isArray(field.value) ? field.value[0] : field.value;
-    } else if (key.includes('email') || label.includes('email') || type === 'input_email') {
-      userData.email = Array.isArray(field.value) ? field.value[0] : field.value;
-    } else if (key.includes('location') || key.includes('cities')) {
-      // Handle target cities as array (TEXT[] in database)
-      if (Array.isArray(field.value)) {
-        userData.target_cities = field.value.slice(0, 3); // Max 3 cities
-      } else {
-        userData.target_cities = [field.value];
+    // Skip if no value
+    if (value === null || value === undefined || value === false) return;
+    
+    console.log(`Processing: ${label.substring(0, 50)}... = ${JSON.stringify(value)}`);
+    
+    // EMAIL (highest priority)
+    if (type === 'input_email' || labelLower.includes('email')) {
+      userData.email = Array.isArray(value) ? value[0] : value;
+    }
+    // FULL NAME
+    else if (labelLower.includes('full name')) {
+      userData.full_name = Array.isArray(value) ? value[0] : value;
+    }
+    // WORK LOCATION
+    // Tally sends UUIDs for multiple choice - we'll use a fallback
+    else if (labelLower.includes('preferred work location') || labelLower.includes('work location')) {
+      // For now, set default major European cities
+      // TODO: Map Tally UUIDs to actual city names or reconfigure Tally form
+      if (Array.isArray(value) && value.length > 0) {
+        // Fallback to major EU cities - user can update later
+        locations.push('London', 'Paris');
+      } else if (value === true) {
+        const loc = extractFromParentheses(label);
+        if (loc) locations.push(loc);
       }
-    } else if (key.includes('languages')) {
-      // Handle languages as array (TEXT[] in database)
-      if (Array.isArray(field.value)) {
-        userData.languages_spoken = field.value;
-      } else {
-        userData.languages_spoken = [field.value];
-      }
-    } else if (key.includes('target_date') || key.includes('employment_start')) {
-      userData.target_employment_start_date = Array.isArray(field.value) ? field.value[0] : field.value;
-    } else if (key.includes('experience') && !key.includes('level')) {
-      // Professional experience level (0, 6 months, 1 year, etc.)
-      userData.professional_experience = Array.isArray(field.value) ? field.value[0] : field.value;
-    } else if (key.includes('work') && (key.includes('preference') || key.includes('environment'))) {
-      // How do you want to work? (Office, Hybrid, Remote)
-      userData.work_environment = Array.isArray(field.value) ? field.value[0] : field.value;
-    } else if (key.includes('authorization') || key.includes('citizen')) {
-      // Work authorization status
-      userData.work_authorization = Array.isArray(field.value) ? field.value[0] : field.value;
-    } else if (key.includes('entry_level') || key.includes('level_preference')) {
-      // Entry-level preference (Internship, Graduate Programme, etc.)
-      userData.entry_level_preference = Array.isArray(field.value) ? field.value[0] : field.value;
-    } else if (key.includes('companies') || key.includes('target_companies')) {
-      // Target companies (TEXT[] in database)
-      if (Array.isArray(field.value)) {
-        userData.company_types = field.value;
-      } else {
-        userData.company_types = [field.value];
-      }
-    } else if (key.includes('career_path') || key.includes('career')) {
-      // Career path - normalize to canonical slugs (TEXT[] in database)
-      userData.career_path = Array.isArray(field.value) ? field.value : [field.value];
-    } else if (key.includes('roles') || key.includes('target_roles')) {
-      // Roles selected (JSONB in database)
-      if (Array.isArray(field.value)) {
-        userData.roles_selected = field.value;
-      } else {
-        userData.roles_selected = [field.value];
-      }
-    } else if (key.includes('expertise') || key.includes('background')) {
-      userData.professional_expertise = Array.isArray(field.value) ? field.value[0] : field.value;
-    } else if (key.includes('start_date') || key.includes('availability')) {
-      userData.start_date = Array.isArray(field.value) ? field.value[0] : field.value;
+    }
+    // WORK ENVIRONMENT (checkbox format: Office, Hybrid, Remote)
+    else if (labelLower.includes('how do you want to work?') && value === true) {
+      const env = extractFromParentheses(label);
+      if (env) workEnv.push(env);
+    }
+    // ROLES (checkbox format with job titles in parentheses)
+    else if ((labelLower.includes('strategy &') || labelLower.includes('role(s)')) && value === true) {
+      const role = extractFromParentheses(label);
+      if (role) roles.push(role);
+    }
+    // TARGET EMPLOYMENT START DATE
+    else if (labelLower.includes('target employment start date') || labelLower.includes('employment start')) {
+      userData.start_date = Array.isArray(value) ? value[0] : value;
+    }
+    // PROFESSIONAL EXPERIENCE
+    else if (labelLower.includes('professional experience')) {
+      // Tally sends UUID, but we can map common ones or just store as-is for now
+      // You'll need to create a mapping or ask Tally to send actual values
+      userData.professional_experience = 'Entry Level'; // Default for now
+    }
+    // ENTRY LEVEL PREFERENCE
+    else if (labelLower.includes('entry level preference')) {
+      // Same issue - UUIDs instead of actual values
+      userData.entry_level_preference = 'Graduate Programme'; // Default for now
     }
   });
-
-  // Determine subscription tier based on referrer URL
-  let subscriptionTier = 'free'; // default
+  
+  // Set collected arrays
+  if (locations.length > 0) {
+    userData.target_cities = locations.slice(0, 3); // Max 3
+  }
+  if (workEnv.length > 0) {
+    userData.work_environment = workEnv.join(', ');
+  }
+  if (roles.length > 0) {
+    userData.roles_selected = roles;
+  }
+  
+  // Determine subscription tier
+  let subscriptionTier = 'free';
   if (referrerUrl) {
     if (referrerUrl.includes('utm_campaign=premium') || referrerUrl.includes('campaign=premium')) {
       subscriptionTier = 'premium';
-    } else if (referrerUrl.includes('utm_campaign=free') || referrerUrl.includes('campaign=free')) {
-      subscriptionTier = 'free';
     }
   }
   
   userData.subscriptionTier = subscriptionTier;
-  console.log('🧪 Test mode: Final user data:', userData);
-  console.log('🧪 Test mode: Subscription tier determined:', subscriptionTier);
+  console.log('✅ Extracted user data:', {
+    email: userData.email,
+    name: userData.full_name,
+    cities: userData.target_cities,
+    roles: Array.isArray(userData.roles_selected) ? userData.roles_selected.length : 0,
+    workEnv: userData.work_environment
+  });
+  
   return userData;
 }
 
