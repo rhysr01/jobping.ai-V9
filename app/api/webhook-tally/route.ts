@@ -548,13 +548,16 @@ export async function POST(req: NextRequest) {
         const matchData = await matchResponse.json();
         console.log(`✅ Match API completed:`, matchData);
         
-        // Fetch the actual matched jobs from the database
+        // Fetch the actual matched jobs from the database for THIS specific user
+        console.log(`🔍 Fetching matches for user: ${userData.email}`);
+        
         const { data: matches, error: matchError } = await supabase
           .from('matches')
           .select(`
             job_hash,
             match_score,
             match_reason,
+            user_email,
             jobs!inner(
               id,
               title,
@@ -565,8 +568,13 @@ export async function POST(req: NextRequest) {
             )
           `)
           .eq('user_email', userData.email)
-          .order('match_score', { ascending: false })
+          .order('created_at', { ascending: false })  // Get NEWEST matches, not highest score
           .limit(5);
+        
+        console.log(`🔍 Matches query returned ${matches?.length || 0} jobs for ${userData.email}`);
+        if (matches && matches.length > 0) {
+          console.log(`🔍 First match user_email: ${(matches[0] as any).user_email}, location: ${(matches[0] as any).jobs?.location}`);
+        }
 
         if (matchError) {
           console.error('❌ Error fetching matches:', matchError);
