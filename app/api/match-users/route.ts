@@ -637,8 +637,7 @@ const matchUsersHandler = async (req: NextRequest) => {
       .select('*')
       .eq('status', 'active')
       .gte('created_at', thirtyDaysAgo.toISOString())
-      .in('freshness_tier', ['ultra_fresh', 'fresh'])
-      .order('original_posted_date', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
       .limit(jobCap);
 
     const jobFetchTime = Date.now() - jobFetchStart;
