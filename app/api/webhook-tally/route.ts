@@ -81,6 +81,9 @@ function getSupabaseClient() {
           update: (_data: any) => ({
             eq: (_column: string, _value: any) => Promise.resolve({ data: null, error: null }),
             in: (_column: string, _values: any[]) => Promise.resolve({ data: null, error: null })
+          }),
+          delete: () => ({
+            eq: (_column: string, _value: any) => Promise.resolve({ data: null, error: null })
           })
         })
       };
