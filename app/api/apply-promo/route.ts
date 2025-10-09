@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (existingUser) {
-      // Update existing user to premium (activate subscription)
+      // EXISTING USER: Upgrade to premium instantly
       const { error: updateError } = await supabase
         .from('users')
         .update({
@@ -52,33 +52,39 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({ 
         success: true,
-        message: 'Upgraded to premium with promo code!' 
+        existingUser: true,
+        message: '🎉 Upgraded to premium! You\'re all set.',
+        redirectUrl: null // No redirect needed - user already has profile
       });
     }
 
-    // Create new user with premium tier (subscription active)
-    const { error: insertError } = await supabase
-      .from('users')
-      .insert({
+    // NEW USER: Store promo in session/temp table, redirect to Tally
+    // Store the promo code validation in a temporary table or session
+    // so Tally webhook can apply it after profile creation
+    const { error: tempError } = await supabase
+      .from('promo_pending')
+      .upsert({
         email,
-        subscription_active: true,
-        email_verified: true,
-        target_cities: [], // Required field with default
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        promo_code: 'rhys',
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
+        created_at: new Date().toISOString()
+      }, {
+        onConflict: 'email'
       });
 
-    if (insertError) {
-      console.error('Error creating user:', insertError);
-      return NextResponse.json(
-        { error: 'Failed to create user' },
-        { status: 500 }
-      );
+    if (tempError) {
+      console.error('Error storing promo pending:', tempError);
+      // Don't fail - just log and continue
     }
 
+    // Return redirect URL to Tally form
+    const tallyFormUrl = process.env.TALLY_FORM_URL || 'https://tally.so/r/your-form-id';
+    
     return NextResponse.json({ 
       success: true,
-      message: 'Premium activated with promo code!' 
+      existingUser: false,
+      message: '✅ Promo code valid! Please complete your profile to activate premium.',
+      redirectUrl: `${tallyFormUrl}?email=${encodeURIComponent(email)}&promo=rhys`
     });
 
   } catch (error) {

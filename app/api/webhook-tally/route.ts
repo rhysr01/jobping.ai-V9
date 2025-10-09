@@ -255,6 +255,30 @@ export async function POST(req: NextRequest) {
     // Get database client
     const supabase = getSupabaseClient();
     
+    // Check for pending promo code (if table exists)
+    let hasPendingPromo = false;
+    try {
+      const { data: pendingPromo } = await supabase
+        .from('promo_pending')
+        .select('promo_code, expires_at')
+        .eq('email', userData.email)
+        .single();
+      
+      if (pendingPromo && new Date(pendingPromo.expires_at) > new Date()) {
+        console.log(`🎁 Found valid pending promo: ${pendingPromo.promo_code} for ${userData.email}`);
+        hasPendingPromo = true;
+        
+        // Delete the pending promo (it will be applied below)
+        await supabase
+          .from('promo_pending')
+          .delete()
+          .eq('email', userData.email);
+      }
+    } catch (error) {
+      // Table might not exist yet - that's ok
+      console.log('⚠️ promo_pending table not found (or error checking):', error);
+    }
+    
     // Check if user already exists
     const { data: existingUser } = await supabase
       .from('users')
@@ -426,10 +450,14 @@ export async function POST(req: NextRequest) {
       company_types: userData.company_types || [],
       roles_selected: userData.roles_selected || [],
       target_cities: userData.target_cities || [],
-      subscription_active: false, // Use subscription_active instead of subscription_tier
+      subscription_active: hasPendingPromo, // Activate premium if promo was pending
       email_verified: true, // Auto-verify for instant matching (no email verification needed)
       created_at: new Date().toISOString()
     };
+    
+    if (hasPendingPromo) {
+      console.log(`🎉 Activating premium for new user via pending promo: ${userData.email}`);
+    }
     
     // Properly typed Supabase insert with select
     // Using PostgrestBuilder pattern to avoid type inference issues
