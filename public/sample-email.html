@@ -1,238 +1,390 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JobPing - Sample Daily Match Email</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #000;
-            color: #fff;
-            line-height: 1.6;
-        }
-        .email-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: #111;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        .header {
-            padding: 24px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .logo {
-            width: 40px;
-            height: 40px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 16px;
-        }
-        .content {
-            padding: 24px;
-        }
-        .greeting {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        .subtitle {
-            color: rgba(255,255,255,0.7);
-            margin-bottom: 24px;
-        }
-        .job-card {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 16px;
-        }
-        .job-header {
-            display: flex;
-            align-items: start;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-        .company-logo {
-            width: 32px;
-            height: 32px;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            color: rgba(255,255,255,0.6);
-        }
-        .job-info h3 {
-            margin: 0 0 4px 0;
-            font-size: 16px;
-            font-weight: 600;
-        }
-        .job-meta {
-            color: rgba(255,255,255,0.6);
-            font-size: 14px;
-        }
-        .job-description {
-            color: rgba(255,255,255,0.8);
-            font-size: 14px;
-            margin-bottom: 16px;
-        }
-        .job-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .job-level {
-            font-size: 12px;
-            color: rgba(255,255,255,0.6);
-        }
-        .btn {
-            background: #6366f1;
-            color: white;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        .footer {
-            padding: 24px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            text-align: center;
-            color: rgba(255,255,255,0.6);
-            font-size: 14px;
-        }
-        .footer a {
-            color: #6366f1;
-            text-decoration: none;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobPing - Sample Email</title>
+  <style>
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+body { 
+  background: #0a0a0a; 
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
+  line-height: 1.6; 
+  color: #fff; 
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  padding: 20px;
+}
+
+.email-container { 
+  max-width: 600px; 
+  margin: 0 auto; 
+  background: #000;
+  box-shadow: 
+    0 0 60px rgba(99,102,241,0.15),
+    0 20px 80px rgba(0,0,0,0.3);
+}
+
+/* Premium purple gradient header - matches website */
+.header { 
+  background: linear-gradient(135deg, #6366F1 0%, #7C3AED 50%, #8B5CF6 100%);
+  padding: 40px 32px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.header::before { 
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.1), transparent 50%);
+  pointer-events: none;
+}
+
+.jobping-logo { 
+  font-size: 36px; 
+  font-weight: 800; 
+  color: #fff; 
+  margin-bottom: 4px;
+  letter-spacing: -1px;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.tagline { 
+  color: rgba(255,255,255,0.95);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  position: relative;
+  z-index: 1;
+}
+
+.content { 
+  padding: 40px 32px;
+  background: #000;
+}
+
+/* Emotional greeting section */
+.greeting { 
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.greeting-title { 
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 12px;
+  letter-spacing: -1px;
+  line-height: 1.2;
+}
+
+.greeting-text { 
+  font-size: 16px;
+  color: #a1a1aa;
+  margin-bottom: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* Premium badge - gold gradient */
+.premium-badge { 
+  background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+  color: #000;
+  padding: 12px 28px;
+  border-radius: 20px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  box-shadow: 0 6px 20px rgba(255,215,0,0.4);
+  letter-spacing: 1px;
+  display: inline-block;
+}
+
+/* Job card with purple glow - matches website glass cards */
+.job-card { 
+  background: #111111;
+  border-radius: 16px;
+  padding: 28px;
+  margin: 24px 0;
+  border: 1px solid rgba(99,102,241,0.2);
+  box-shadow: 0 4px 20px rgba(99,102,241,0.15);
+}
+
+/* Hot match card - special treatment for 90%+ matches */
+.job-card.hot-match {
+  border: 2px solid rgba(139,92,246,0.6);
+  background: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(139,92,246,0.05) 100%);
+  box-shadow: 0 8px 32px rgba(99,102,241,0.25);
+}
+
+/* Hot match badge with pulse animation */
+.hot-badge {
+  background: linear-gradient(135deg, #8B5CF6, #6366F1);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(139,92,246,0.4);
+}
+
+.pulse {
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+.job-title { 
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+.job-company { 
+  color: #a1a1aa;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+.job-location { 
+  color: #71717a;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.job-description {
+  color: #aaa;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 16px 0;
+}
+
+/* Match score with purple gradient */
+.match-score { 
+  background: linear-gradient(135deg, #6366F1, #8B5CF6);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-block;
+  box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+}
+
+/* Personalization note */
+.personalization {
+  color: #666;
+  font-size: 13px;
+  margin-top: 12px;
+  font-style: italic;
+}
+
+/* Application link section */
+.apply-section {
+  margin-top: 20px;
+  padding: 16px;
+  background: rgba(99,102,241,0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(99,102,241,0.2);
+}
+
+.apply-label {
+  margin: 0;
+  font-size: 12px;
+  color: #a1a1aa;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.apply-link {
+  margin: 0;
+  font-size: 13px;
+  color: #667eea;
+  word-break: break-all;
+  font-family: monospace;
+  padding: 10px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 8px;
+  border: 1px solid rgba(99,102,241,0.15);
+}
+
+/* Footer with branding */
+.footer { 
+  background: rgba(10,10,10,0.8);
+  padding: 32px 24px;
+  text-align: center;
+  border-top: 1px solid rgba(99,102,241,0.15);
+}
+
+.footer-logo {
+  font-size: 18px;
+  font-weight: 600;
+  color: #8B5CF6;
+  margin-bottom: 8px;
+}
+
+.footer-tagline {
+  color: #666;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.footer-text { 
+  color: #71717a;
+  font-size: 12px;
+  margin: 8px 0;
+}
+
+.footer-link { 
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .email-container { 
+    margin: 0;
+    width: 100% !important;
+  }
+  
+  .header { 
+    padding: 40px 24px;
+  }
+  
+  .content { 
+    padding: 32px 24px;
+  }
+  
+  .greeting-title { 
+    font-size: 26px;
+  }
+  
+  .job-card { 
+    padding: 24px;
+    margin: 20px 0;
+  }
+  
+  .job-title { 
+    font-size: 18px;
+  }
+}
+  </style>
 </head>
 <body>
-    <div class="email-container">
-        <div class="header">
-            <div class="logo">JP</div>
-            <div>
-                <div style="font-weight: 600;">Your JobPing Matches</div>
-                <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Tuesday, 7:00 AM • 5 perfect matches</div>
-            </div>
-        </div>
-        
-        <div class="content">
-            <div class="greeting">Good morning!</div>
-            <div class="subtitle">Here are your personalized job matches for today:</div>
-            
-            <div class="job-card">
-                <div class="job-header">
-                    <div class="company-logo">A</div>
-                    <div class="job-info">
-                        <h3>Graduate Frontend Developer</h3>
-                        <div class="job-meta">Adyen • Amsterdam, Netherlands</div>
-                    </div>
-                </div>
-                <div class="job-description">
-                    Join our payment technology team as a frontend developer. Work with React, TypeScript, and modern web technologies to build interfaces used by millions of merchants worldwide.
-                </div>
-                <div class="job-footer">
-                    <div class="job-level">Graduate • Tech</div>
-                    <a href="#" class="btn">View Job</a>
-                </div>
-            </div>
-            
-            <div class="job-card">
-                <div class="job-header">
-                    <div class="company-logo">S</div>
-                    <div class="job-info">
-                        <h3>Junior Data Analyst</h3>
-                        <div class="job-meta">Spotify • Stockholm, Sweden</div>
-                    </div>
-                </div>
-                <div class="job-description">
-                    Analyze user listening patterns and help shape music recommendations. Work with Python, SQL, and machine learning tools in a data-driven environment.
-                </div>
-                <div class="job-footer">
-                    <div class="job-level">Junior • Data</div>
-                    <a href="#" class="btn">View Job</a>
-                </div>
-            </div>
-            
-            <div class="job-card">
-                <div class="job-header">
-                    <div class="company-logo">B</div>
-                    <div class="job-info">
-                        <h3>Associate Product Manager</h3>
-                        <div class="job-meta">Booking.com • Amsterdam, Netherlands</div>
-                    </div>
-                </div>
-                <div class="job-description">
-                    Help millions of travelers find their perfect accommodation. Drive product strategy and work with engineering teams to deliver features that matter.
-                </div>
-                <div class="job-footer">
-                    <div class="job-level">Associate • Product</div>
-                    <a href="#" class="btn">View Job</a>
-                </div>
-            </div>
-            
-            <div class="job-card">
-                <div class="job-header">
-                    <div class="company-logo">K</div>
-                    <div class="job-info">
-                        <h3>Graduate Software Engineer</h3>
-                        <div class="job-meta">Klarna • Berlin, Germany</div>
-                    </div>
-                </div>
-                <div class="job-description">
-                    Build the future of payments as a software engineer. Work on scalable systems processing millions of transactions with Java, Kotlin, and cloud technologies.
-                </div>
-                <div class="job-footer">
-                    <div class="job-level">Graduate • Engineering</div>
-                    <a href="#" class="btn">View Job</a>
-                </div>
-            </div>
-            
-            <div class="job-card">
-                <div class="job-header">
-                    <div class="company-logo">N</div>
-                    <div class="job-info">
-                        <h3>Junior UX Designer</h3>
-                        <div class="job-meta">Notion • Remote, EU</div>
-                    </div>
-                </div>
-                <div class="job-description">
-                    Design intuitive experiences for productivity tools used by millions. Create user interfaces that blend simplicity with powerful functionality.
-                </div>
-                <div class="job-footer">
-                    <div class="job-level">Junior • Design</div>
-                    <a href="#" class="btn">View Job</a>
-                </div>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <p>More opportunities coming Thursday • <a href="#">Manage preferences</a></p>
-            <p style="margin-top: 16px;">
-                <a href="#">View all jobs</a> • 
-                <a href="#">Update preferences</a> • 
-                <a href="#">Unsubscribe</a>
-            </p>
-            <p style="margin-top: 16px; font-size: 12px; color: rgba(255,255,255,0.5);">
-                © 2025 JobPing. All rights reserved.
-            </p>
-        </div>
+  <div class="email-container">
+    <!-- Premium Purple Header -->
+    <div class="header">
+      <div class="jobping-logo">🎯 JobPing</div>
+      <div class="tagline">AI-Powered Job Matching for Europe</div>
     </div>
+    
+    <!-- Content -->
+    <div class="content">
+      <!-- Greeting -->
+      <div class="greeting">
+        <div class="premium-badge">⭐ Premium Member</div>
+        <h1 class="greeting-title">5 perfect matches just dropped 🎯</h1>
+        <p class="greeting-text">
+          Alex, we found roles that actually match you—no generic spam, just quality.
+        </p>
+      </div>
+      
+      <!-- Hot Match Job Card -->
+      <div class="job-card hot-match">
+        <div class="hot-badge">
+          <span class="pulse"></span>
+          🔥 Hot Match • 92% Match
+        </div>
+        <div class="job-title">Senior Frontend Engineer</div>
+        <div class="job-company">Spotify</div>
+        <div class="job-location">📍 Berlin, Germany</div>
+        <p class="job-description">
+          Join our team building the next generation of music streaming. We are looking for a passionate frontend engineer with React expertise to help shape the future of audio.
+        </p>
+        <p class="personalization">Based on your preference for Frontend Developer roles in Berlin</p>
+        <div class="apply-section">
+          <p class="apply-label">📎 Application Link</p>
+          <p class="apply-link">https://jobs.lever.co/spotify/senior-frontend-engineer</p>
+          <p style="margin-top: 8px; font-size: 11px; color: #71717a;">Copy and paste this link into your browser to apply</p>
+        </div>
+      </div>
+      
+      <!-- Regular Job Card -->
+      <div class="job-card">
+        <div class="job-title">Product Designer</div>
+        <div class="job-company">Figma</div>
+        <div class="job-location">📍 London, UK</div>
+        <div style="margin-top: 16px;">
+          <span class="match-score">88% Match</span>
+        </div>
+        <p class="job-description">
+          Help us design tools that empower designers worldwide. You will work on core features, prototyping experiences, and collaborating with engineering teams.
+        </p>
+        <p class="personalization">Based on your preference for Frontend Developer roles in Berlin</p>
+        <div class="apply-section">
+          <p class="apply-label">📎 Application Link</p>
+          <p class="apply-link">https://www.figma.com/careers/product-designer</p>
+          <p style="margin-top: 8px; font-size: 11px; color: #71717a;">Copy and paste this link into your browser to apply</p>
+        </div>
+      </div>
+      
+      <!-- Another Job Card -->
+      <div class="job-card">
+        <div class="job-title">Full Stack Developer</div>
+        <div class="job-company">Stripe</div>
+        <div class="job-location">📍 Dublin, Ireland</div>
+        <div style="margin-top: 16px;">
+          <span class="match-score">85% Match</span>
+        </div>
+        <p class="job-description">
+          Build the financial infrastructure of the internet. Work on scalable systems processing billions of dollars in payments globally.
+        </p>
+        <div class="apply-section">
+          <p class="apply-label">📎 Application Link</p>
+          <p class="apply-link">https://stripe.com/jobs/full-stack-developer</p>
+          <p style="margin-top: 8px; font-size: 11px; color: #71717a;">Copy and paste this link into your browser to apply</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-logo">🎯 JobPing</div>
+      <p class="footer-tagline">AI-powered job matching for Europe</p>
+      <p class="footer-text">
+        <a href="https://getjobping.com/legal/unsubscribe" class="footer-link">Unsubscribe</a>
+      </p>
+    </div>
+  </div>
 </body>
 </html>

@@ -88,24 +88,32 @@ async function saveJobs(jobs, source) {
 
 function pickPythonCommand() {
   const fromEnv = process.env.PYTHON && process.env.PYTHON.trim();
+  // PRIORITY: python3.11 first (jobspy requires 3.10+)
   const candidates = [
     fromEnv,
-    '/usr/bin/python3',
+    '/opt/homebrew/opt/python@3.11/bin/python3.11', // Homebrew python3.11 (preferred)
     '/opt/homebrew/bin/python3.11',
     '/usr/local/bin/python3.11',
     'python3.11',
+    '/usr/bin/python3',
     'python3',
     'python'
   ].filter(Boolean);
   for (const cmd of candidates) {
     try {
       const res = spawnSync(cmd, ['-V'], { encoding: 'utf8', timeout: 3000 });
-      if (res.status === 0 || (res.stdout || res.stderr)) {
-        return cmd;
+      const version = (res.stdout || res.stderr || '').trim();
+      if (res.status === 0 && version) {
+        // Only accept Python 3.10+ (jobspy requirement)
+        const match = version.match(/Python 3\.(\d+)/);
+        if (match && parseInt(match[1]) >= 10) {
+          console.log(`✅ Using Python: ${cmd} (${version})`);
+          return cmd;
+        }
       }
     } catch {}
   }
-  return 'python3';
+  return 'python3.11'; // Fallback
 }
 
 async function main() {
