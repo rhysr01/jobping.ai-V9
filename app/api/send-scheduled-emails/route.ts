@@ -170,7 +170,7 @@ async function handleSendScheduledEmails(req: NextRequest) {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const { data: jobs, error: jobsError } = await supabase
       .from('jobs')
-      .select('*')
+      .select('job_hash, title, company, location, description, source, created_at, freshness_tier, original_posted_date, last_seen_at, status, job_url')
       .eq('status', 'active')
       .gte('created_at', sevenDaysAgo.toISOString())
       .order('created_at', { ascending: false })
@@ -194,6 +194,36 @@ async function handleSendScheduledEmails(req: NextRequest) {
 
     const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
 
+    // ============================================
+    // OPTIMIZATION: Batch fetch all user matches (fixes N+1 query bomb!)
+    // Before: 50 users × 10 batches = 500 queries total
+    // After: 1 query for all users = instant!
+    // ============================================
+    console.log('📊 Batch fetching all previous matches for all users...');
+    const matchFetchStart = Date.now();
+    
+    const allUserEmails = eligibleUsers.map(u => u.email);
+    const { data: allPreviousMatches, error: allMatchError } = await supabase
+      .from('matches')
+      .select('user_email, job_hash')
+      .in('user_email', allUserEmails);
+    
+    if (allMatchError) {
+      console.error('Failed to fetch previous matches:', allMatchError);
+    }
+    
+    // Build lookup map: email → Set<job_hash>
+    const matchesByUser = new Map<string, Set<string>>();
+    (allPreviousMatches || []).forEach(match => {
+      if (!matchesByUser.has(match.user_email)) {
+        matchesByUser.set(match.user_email, new Set());
+      }
+      matchesByUser.get(match.user_email)!.add(match.job_hash);
+    });
+    
+    console.log(`✅ Loaded ${allPreviousMatches?.length || 0} matches for ${eligibleUsers.length} users in ${Date.now() - matchFetchStart}ms`);
+    // ============================================
+
     // BATCH PROCESSING: Process users in batches of 10 to avoid timeouts
     const userResults = [];
     const BATCH_SIZE = 10;
@@ -211,13 +241,8 @@ async function handleSendScheduledEmails(req: NextRequest) {
         try {
           console.log(`🎯 Processing user: ${user.email}`);
 
-          // Get jobs this user has already received (to prevent duplicates)
-          const { data: previousMatches } = await supabase
-            .from('matches')
-            .select('job_hash')
-            .eq('user_email', user.email);
-          
-          const previousJobHashes = new Set(previousMatches?.map(m => m.job_hash) || []);
+          // Use pre-loaded matches (NO QUERY!)
+          const previousJobHashes = matchesByUser.get(user.email) || new Set<string>();
           console.log(`User ${user.email} has already received ${previousJobHashes.size} jobs`);
           
           // Filter out jobs the user has already received
