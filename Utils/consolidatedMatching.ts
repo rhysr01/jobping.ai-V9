@@ -21,6 +21,9 @@ interface ConsolidatedMatchResult {
   confidence: number;
 }
 
+// SHARED CACHE: Persists across all API calls for maximum savings!
+const SHARED_MATCH_CACHE = new Map<string, { matches: JobMatch[], timestamp: number }>();
+
 export class ConsolidatedMatchingEngine {
   private openai: OpenAI | null = null;
   private openai35: OpenAI | null = null;
@@ -28,7 +31,7 @@ export class ConsolidatedMatchingEngine {
     gpt4: { calls: 0, tokens: 0, cost: 0 },
     gpt35: { calls: 0, tokens: 0, cost: 0 }
   };
-  private matchCache = new Map<string, { matches: JobMatch[], timestamp: number }>();
+  private matchCache = SHARED_MATCH_CACHE; // Use shared cache across all instances!
   private readonly CACHE_TTL = 48 * 60 * 60 * 1000; // 48 hours cache (jobs don't change that fast, saves 50% AI costs!)
 
   constructor(openaiApiKey?: string) {

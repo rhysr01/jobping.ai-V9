@@ -194,8 +194,20 @@ async function handleSendScheduledEmails(req: NextRequest) {
 
     const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
 
-    const userResults = await Promise.all(
-      eligibleUsers.map(async (user) => {
+    // BATCH PROCESSING: Process users in batches of 10 to avoid timeouts
+    const userResults = [];
+    const BATCH_SIZE = 10;
+    
+    console.log(`📦 Processing ${eligibleUsers.length} users in batches of ${BATCH_SIZE}...`);
+    
+    for (let i = 0; i < eligibleUsers.length; i += BATCH_SIZE) {
+      const batch = eligibleUsers.slice(i, i + BATCH_SIZE);
+      const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+      const totalBatches = Math.ceil(eligibleUsers.length / BATCH_SIZE);
+      
+      console.log(`\n📦 Processing batch ${batchNumber}/${totalBatches} (${batch.length} users)...`);
+      
+      const batchPromises = batch.map(async (user) => {
         try {
           console.log(`🎯 Processing user: ${user.email}`);
 
@@ -392,8 +404,19 @@ async function handleSendScheduledEmails(req: NextRequest) {
           console.error(`❌ Failed to process user ${user.email}:`, error);
           return { success: false, email: user.email, error };
         }
-      })
-    );
+      });
+      
+      // Process this batch
+      const batchResults = await Promise.all(batchPromises);
+      userResults.push(...batchResults);
+      
+      console.log(`✅ Batch ${batchNumber}/${totalBatches} complete - ${batchResults.filter(r => r.success).length}/${batch.length} succeeded`);
+      
+      // Small delay between batches to avoid rate limits (100ms)
+      if (i + BATCH_SIZE < eligibleUsers.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
 
     const successCount = userResults.filter(r => r.success && !r.noMatches).length;
     const errorCount = userResults.filter(r => !r.success).length;
