@@ -768,6 +768,52 @@ const matchUsersHandler = async (req: NextRequest) => {
         const aiMatchingTime = Date.now() - aiMatchingStart;
         totalAIProcessingTime += aiMatchingTime;
 
+        // SOURCE DIVERSITY: Ensure matches include multiple job boards (preferred: at least 2)
+        if (matches && matches.length >= 3) {
+          const matchedJobs = matches.map(m => {
+            const job = distributedJobs.find(j => j.job_hash === m.job_hash);
+            return job ? { ...m, source: (job as any).source } : m;
+          });
+          
+          // Check current source diversity
+          const sources = matchedJobs.map(m => (m as any).source).filter(Boolean);
+          const uniqueSources = new Set(sources);
+          
+          // If all jobs from ONE source, try to add diversity
+          if (uniqueSources.size === 1 && distributedJobs.length > 10) {
+            console.log(`📊 All ${matches.length} matches from ${Array.from(uniqueSources)[0]}, adding diversity...`);
+            
+            // Find jobs from OTHER sources in our pre-filtered pool
+            const primarySource = Array.from(uniqueSources)[0];
+            const alternativeSources = distributedJobs.filter(j => (j as any).source !== primarySource);
+            
+            if (alternativeSources.length > 0) {
+              // Replace the LOWEST scoring match with a job from a different source
+              const lowestScoreIndex = matches.length - 1; // Last match has lowest score
+              const alternativeJob = alternativeSources[0];
+              
+              matches[lowestScoreIndex] = {
+                job_index: matches.length,
+                job_hash: alternativeJob.job_hash,
+                match_score: matches[lowestScoreIndex].match_score - 5, // Slightly lower score
+                match_reason: `Alternative source: ${alternativeJob.title} at ${alternativeJob.company}`,
+                confidence_score: 0.75
+              };
+              
+              console.log(`✅ Added job from ${(alternativeJob as any).source} for diversity`);
+            }
+          }
+          
+          // Log final diversity
+          const finalSources = matches.map(m => {
+            const job = distributedJobs.find(j => j.job_hash === m.job_hash);
+            return (job as any)?.source;
+          }).filter(Boolean);
+          const finalUniqueSources = new Set(finalSources);
+          
+          console.log(`📊 Final match sources for ${user.email}: ${Array.from(finalUniqueSources).join(', ')} (${finalUniqueSources.size} unique)`);
+        }
+
         // Save matches with enhanced data and provenance tracking
         if (matches && matches.length > 0) {
           // Update provenance data with actual timing and match type
