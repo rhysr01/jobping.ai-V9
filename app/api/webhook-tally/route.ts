@@ -327,8 +327,46 @@ export async function POST(req: NextRequest) {
 
       if (matchResponse.ok) {
         const matchData = await matchResponse.json();
-        const jobMatches = matchData.matches || [];
-        console.log(`✅ Instant matching complete: ${jobMatches.length} jobs found`);
+        console.log(`✅ Match API completed:`, matchData);
+        
+        // Fetch the actual matched jobs from the database
+        const { data: matches, error: matchError } = await supabase
+          .from('matches')
+          .select(`
+            job_hash,
+            match_score,
+            match_reason,
+            jobs!inner(
+              id,
+              title,
+              company,
+              location,
+              job_url,
+              description
+            )
+          `)
+          .eq('user_email', userData.email)
+          .order('match_score', { ascending: false })
+          .limit(5);
+
+        if (matchError) {
+          console.error('❌ Error fetching matches:', matchError);
+          throw matchError;
+        }
+
+        // Transform matches to include job details
+        const jobMatches = matches?.map((match: any) => ({
+          job_hash: match.job_hash,
+          match_score: match.match_score,
+          match_reason: match.match_reason,
+          title: match.jobs.title,
+          company: match.jobs.company,
+          location: match.jobs.location,
+          job_url: match.jobs.job_url,
+          description: match.jobs.description
+        })) || [];
+
+        console.log(`✅ Fetched ${jobMatches.length} matched jobs from database`);
         
         // Send job matches email immediately
         if (jobMatches.length > 0) {
