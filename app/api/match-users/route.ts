@@ -822,7 +822,7 @@ const matchUsersHandler = async (req: NextRequest) => {
             console.log(`📍 Ensuring city diversity for ${targetCities.length} target cities...`);
             
             // Find which cities are missing
-            const missingCities = targetCities.filter(city => !matchedCities.has(city));
+            const missingCities = targetCities.filter((city: string) => !matchedCities.has(city));
             
             for (const missingCity of missingCities) {
               if (matches.length >= 5) break; // Don't exceed the limit
