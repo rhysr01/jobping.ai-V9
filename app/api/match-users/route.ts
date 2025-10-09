@@ -270,25 +270,79 @@ function trackPerformance(): { startTime: number; getMetrics: () => PerformanceM
   };
 }
 
+/**
+ * Smart location matching that handles variations like:
+ * - "11ème Arrondissement, Paris" matches "Paris"
+ * - "Putney Heath, South West London" matches "London"
+ * - "Paris, Île-de-France, France" matches "Paris"
+ */
+function matchesLocation(jobLocation: string, targetCity: string): boolean {
+  const jobLoc = jobLocation.toLowerCase();
+  const target = targetCity.toLowerCase();
+  
+  // Direct substring match (most common)
+  if (jobLoc.includes(target)) return true;
+  
+  // Handle common variations for major European cities
+  const locationVariations: Record<string, string[]> = {
+    'london': ['london', 'greater london', 'central london', 'north london', 'south london', 'east london', 'west london', 'city of london'],
+    'paris': ['paris', 'arrondissement', 'ile-de-france', 'île-de-france'],
+    'dublin': ['dublin', 'county dublin', 'baile átha cliath'],
+    'amsterdam': ['amsterdam', 'noord-holland', 'north holland'],
+    'berlin': ['berlin', 'brandenburg'],
+    'madrid': ['madrid', 'comunidad de madrid'],
+    'barcelona': ['barcelona', 'catalunya', 'catalonia'],
+    'milan': ['milan', 'milano', 'lombardy', 'lombardia'],
+    'rome': ['rome', 'roma', 'lazio'],
+    'brussels': ['brussels', 'bruxelles', 'brussel', 'brussels-capital'],
+    'lisbon': ['lisbon', 'lisboa'],
+    'copenhagen': ['copenhagen', 'københavn', 'capital region'],
+    'stockholm': ['stockholm', 'stockholms län'],
+    'oslo': ['oslo'],
+    'helsinki': ['helsinki', 'uusimaa'],
+    'vienna': ['vienna', 'wien'],
+    'zurich': ['zurich', 'zürich'],
+    'munich': ['munich', 'münchen', 'bavaria'],
+    'frankfurt': ['frankfurt', 'hesse', 'hessen']
+  };
+  
+  const variations = locationVariations[target] || [target];
+  return variations.some(variant => jobLoc.includes(variant));
+}
+
 // Enhanced pre-filter jobs by user preferences with scoring
 function preFilterJobsByUserPreferences(jobs: JobWithFreshness[], user: UserPreferences): JobWithFreshness[] {
-  // Score each job and return top matches
-  const scoredJobs = jobs.map(job => {
+  let filteredJobs = jobs;
+  
+  // HARD FILTER: Location is first priority - only show jobs from target cities or remote
+  if (user.target_cities && user.target_cities.length > 0) {
+    filteredJobs = jobs.filter(job => {
+      const jobLocation = job.location.toLowerCase();
+      const isRemote = jobLocation.includes('remote') || jobLocation.includes('work from home');
+      
+      // Accept if remote OR matches any target city
+      if (isRemote) return true;
+      
+      return user.target_cities!.some(city => matchesLocation(job.location, city));
+    });
+    
+    console.log(`Location filter: ${jobs.length} → ${filteredJobs.length} jobs (cities: ${user.target_cities.join(', ')})`);
+  }
+  
+  // Now score the location-filtered jobs
+  const scoredJobs = filteredJobs.map(job => {
     let score = 0;
     const jobTitle = job.title.toLowerCase();
     const jobLocation = job.location.toLowerCase();
     const jobDesc = (job.description || '').toLowerCase();
     
-    // Location scoring (high priority)
+    // Location preference scoring (bonus points for exact city vs remote)
     if (user.target_cities && user.target_cities.length > 0) {
-      const hasLocationMatch = user.target_cities.some(city => 
-        jobLocation.includes(city.toLowerCase())
-      );
+      const hasExactCityMatch = user.target_cities.some(city => matchesLocation(job.location, city));
       const isRemote = jobLocation.includes('remote');
       
-      if (hasLocationMatch) score += 50; // Exact city match
-      else if (isRemote) score += 30;    // Remote is good fallback
-      else score -= 20;                   // Wrong location penalty
+      if (hasExactCityMatch) score += 50; // Exact city match gets bonus
+      else if (isRemote) score += 30;     // Remote is good but less preferred
     }
     
     // Experience level scoring (high priority)
