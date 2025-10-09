@@ -47,11 +47,18 @@ export class ConsolidatedMatchingEngine {
   private generateCacheKey(jobs: Job[], userPrefs: UserPreferences): string {
     // User clustering: Similar profiles share cache (massive savings at scale!)
     const careerPath = Array.isArray(userPrefs.career_path) ? userPrefs.career_path[0] : userPrefs.career_path || 'general';
-    const city = Array.isArray(userPrefs.target_cities) ? userPrefs.target_cities[0] : userPrefs.target_cities || 'europe';
+    
+    // CRITICAL: Include ALL cities in cache key (sorted for consistency)
+    // This ensures London+Paris users DON'T get London+Berlin cached results!
+    const cities = Array.isArray(userPrefs.target_cities) 
+      ? userPrefs.target_cities.sort().join('+')  // "dublin+london" (sorted alphabetically)
+      : userPrefs.target_cities || 'europe';
+    
     const level = userPrefs.entry_level_preference || 'entry';
     
-    // User segment: e.g., "finance_london_entry" - multiple users can share this cache!
-    const userSegment = `${careerPath}_${city}_${level}`.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    // User segment: e.g., "finance_dublin+london_entry"
+    // Only users with EXACT SAME cities + career + level share cache
+    const userSegment = `${careerPath}_${cities}_${level}`.toLowerCase().replace(/[^a-z0-9_+]/g, '');
     
     // Job pool fingerprint (top 20 jobs - enough to identify pool, faster hashing)
     const jobHashesStr = jobs.slice(0, 20).map(j => j.job_hash).join(',');

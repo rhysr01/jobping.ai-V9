@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
 import { z } from 'zod';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { validateTallyWebhook, getSecurityHeaders } from '@/Utils/security/webhookSecurity';
 import { performMemoryCleanup } from '@/Utils/performance/memoryManager';
 import { sendMatchedJobsEmail, sendWelcomeEmail } from '@/Utils/email';
+import { EmailVerificationOracle } from '@/Utils/emailVerification';
 
 // Test mode helper
 const isTestMode = () => process.env.NODE_ENV === 'test' || process.env.JOBPING_TEST_MODE === '1';
