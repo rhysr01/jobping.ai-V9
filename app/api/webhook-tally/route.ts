@@ -236,10 +236,14 @@ export async function POST(req: NextRequest) {
     });
 
     // Extract user data from form fields
+    console.log('🔍 Tally form fields received:', JSON.stringify(validatedData.data?.fields?.slice(0, 5), null, 2));
+    
     const userData = extractUserData(
       validatedData.data?.fields || [], 
       req.headers.get('referer') || undefined
     );
+    
+    console.log('🔍 Extracted user data:', JSON.stringify(userData, null, 2));
 
     if (!userData.email) {
       console.error('❌ No email found in form data');
