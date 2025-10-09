@@ -151,17 +151,17 @@ function distributeJobsByFreshness(
   
   console.log(`Distributing jobs for ${userTier} user ${userId}. Total jobs: ${jobs.length}`);
   
-  // Validate and clean job data
-  const validJobs = jobs.filter(job => {
-    // Skip jobs with invalid data
-    if (!job.freshness_tier || !job.original_posted_date) {
-      console.warn(`Job ${job.id} missing freshness data, assigning fallback`);
-      // Assign fallback freshness tier based on created_at
+  // Validate and clean job data - assign fallback freshness for all jobs
+  const validJobs = jobs.map(job => {
+    // Assign fallback freshness tier if missing
+    if (!job.freshness_tier) {
       job.freshness_tier = assignFallbackFreshnessTier(job.created_at);
+    }
+    if (!job.original_posted_date) {
       job.original_posted_date = job.created_at; // Use created_at as fallback
     }
-    return job.job_hash && job.title && job.company;
-  });
+    return job;
+  }).filter(job => job.job_hash && job.title && job.company);
   
   // Separate jobs by freshness tier
   const ultraFreshJobs = validJobs.filter(job => job.freshness_tier === 'ultra_fresh');
