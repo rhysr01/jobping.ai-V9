@@ -362,7 +362,7 @@ export async function POST(req: NextRequest) {
         // Transform matches to include job details
         const jobMatches = matches?.map((match: any) => ({
           job_hash: match.job_hash,
-          match_score: match.match_score,
+          match_score: (match.match_score || 0.85) * 100, // Convert 0-1 scale back to 0-100 for display
           match_reason: match.match_reason,
           title: match.jobs.title,
           company: match.jobs.company,

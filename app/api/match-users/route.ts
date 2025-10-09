@@ -784,7 +784,7 @@ const matchUsersHandler = async (req: NextRequest) => {
             return {
               user_email: user.email,
               job_hash: match.job_hash,
-              match_score: match.match_score,
+              match_score: (match.match_score || 85) / 100, // Convert 0-100 scale to 0-1 scale for database
               match_reason: match.match_reason,
               matched_at: new Date().toISOString(),
               created_at: new Date().toISOString(),
