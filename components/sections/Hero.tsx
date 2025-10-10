@@ -11,19 +11,19 @@ export default function Hero() {
         <motion.div 
           className="inline-flex items-center justify-center gap-4 md:gap-6 mb-8"
           animate={{ 
-            scale: [1, 1.05, 1],
-            y: [0, -4, 0]
+            scale: [1, 1.12, 1],
+            y: [0, -12, 0]
           }}
           transition={{ 
-            duration: 0.6,
+            duration: 0.5,
             repeat: Infinity,
-            repeatDelay: 3,
-            ease: "easeInOut"
+            repeatDelay: 2,
+            ease: [0.34, 1.56, 0.64, 1]
           }}
         >
-          {/* Graduation Cap Icon */}
+          {/* BIG Graduation Cap Icon */}
           <svg
-            className="w-16 h-16 md:w-24 md:h-24 lg:w-28 lg:h-28 text-white/90"
+            className="w-20 h-20 md:w-32 md:h-32 lg:w-40 lg:h-40 text-white"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
