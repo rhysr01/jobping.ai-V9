@@ -248,15 +248,27 @@ export class ConsolidatedMatchingEngine {
       messages: [
         {
           role: 'system',
-          content: 'You are an expert career matching AI. Analyze jobs deeply and return highly relevant matches with specific reasoning.'
+          content: `You're a friendly career advisor (not a corporate recruiter). 
+
+Your job: Find 5 perfect job matches and explain WHY they're exciting.
+
+Write match reasons that create "WOW" moments:
+✅ BE SPECIFIC: "You need React + TypeScript. This role uses both PLUS Next.js"
+✅ BE PERSONAL: Reference their feedback, preferences, location
+✅ BE CONFIDENT: "You're overqualified for this (easy interview)"
+✅ BE EMOTIONAL: "This is the startup you'll tell your friends about"
+
+❌ NEVER use: "Good match", "Aligns with preferences", "Strong fit" (boring!)
+
+Keep match reasons 2-3 sentences max. Make every word count.`
         },
         {
           role: 'user',
           content: prompt
         }
       ],
-      temperature: 0.2, // Slightly higher for more nuanced matching
-      max_tokens: 1000,  // Room for analyzing 50 jobs + returning 5 detailed matches
+      temperature: 0.4, // Higher for more personality and WOW moments
+      max_tokens: 1500,  // More room for exciting, detailed match reasons
       functions: [{
         name: 'return_job_matches',
         description: 'Return the top 5 most relevant job matches for the user',
@@ -273,7 +285,7 @@ export class ConsolidatedMatchingEngine {
                   job_index: { type: 'number', minimum: 1, description: 'Index of the job from the list provided' },
                   job_hash: { type: 'string', description: 'Exact job_hash from the job list' },
                   match_score: { type: 'number', minimum: 50, maximum: 100, description: 'How well this job matches the user (50-100)' },
-                  match_reason: { type: 'string', maxLength: 300, description: 'Specific reason why this job is a good match for this user' }
+                  match_reason: { type: 'string', maxLength: 400, description: 'Exciting, specific, personal reason (2-3 sentences max). Reference user preferences, feedback, or create WOW moments. NO boring corporate speak!' }
                 },
                 required: ['job_index', 'job_hash', 'match_score', 'match_reason']
               }

@@ -158,8 +158,8 @@ export class AIMatchingService {
               content: prompt
             }
           ],
-          temperature: 0.3,
-          max_tokens: 2000,
+          temperature: 0.4, // Higher for more personality and WOW moments
+          max_tokens: 2500, // More room for exciting match reasons
         }),
         timeout<OpenAI.Chat.Completions.ChatCompletion>(20000, 'AI matching timeout')
       ]);
@@ -248,22 +248,31 @@ USER PROFILE:
 `;
   }
 
-  // NEW: Build user context WITH feedback learning
+  // NEW: Build user context WITH feedback learning AND CV insights
   private async buildUserContextWithFeedback(profile: NormalizedUserProfile): Promise<string> {
     // Get basic context
     const basicContext = this.buildUserContext(profile);
     
-    // Try to get feedback summary
-    try {
-      const feedbackSummary = await this.getFeedbackSummary(profile.email);
-      
-      if (!feedbackSummary || feedbackSummary.total < 3) {
-        // Not enough feedback, return basic context
-        return basicContext;
-      }
-      
-      // Add feedback insights
-      return `${basicContext}
+    // Get CV insights
+    const cvInsights = await this.getCVInsights(profile.email);
+    
+    // Get feedback summary
+    const feedbackSummary = await this.getFeedbackSummary(profile.email);
+    
+    let enhancedContext = basicContext;
+    
+    // Add CV insights if available
+    if (cvInsights.length > 0) {
+      enhancedContext += `
+
+CV HIGHLIGHTS (use these for WOW factor):
+${cvInsights.map((insight: string) => `- ${insight}`).join('\n')}
+`;
+    }
+    
+    // Add feedback insights if available
+    if (feedbackSummary && feedbackSummary.total >= 3) {
+      enhancedContext += `
 
 LEARNED PREFERENCES (from ${feedbackSummary.total} ratings):
 ✅ USER LOVES:
@@ -271,18 +280,60 @@ LEARNED PREFERENCES (from ${feedbackSummary.total} ratings):
 
 ❌ USER AVOIDS:
   ${feedbackSummary.disliked.map((item: string) => `- ${item}`).join('\n  ')}
-
-MATCHING STRATEGY:
-- Prioritize jobs similar to their top-rated matches
-- Avoid patterns that led to low ratings
-- User has rated ${feedbackSummary.positive}/${feedbackSummary.total} jobs positively (${Math.round(feedbackSummary.positive/feedbackSummary.total*100)}%)
 `;
-    } catch (error) {
-      console.warn('Failed to get feedback summary, using basic context:', error);
-      return basicContext;
     }
+    
+    return enhancedContext;
   }
 
+  // NEW: Get CV insights for WOW factor
+  private async getCVInsights(userEmail: string): Promise<string[]> {
+    try {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+      
+      // Check if we have cached CV data
+      const { data: cvCache } = await supabase
+        .from('user_cv_data')
+        .select('cv_data')
+        .eq('user_email', userEmail)
+        .single();
+      
+      if (cvCache && cvCache.cv_data) {
+        const cvData = cvCache.cv_data as any;
+        
+        // Generate WOW insights from CV
+        const insights: string[] = [];
+        
+        if (cvData.total_years_experience) {
+          insights.push(`${cvData.total_years_experience} years experience`);
+        }
+        
+        if (cvData.previous_companies && cvData.previous_companies.length > 0) {
+          insights.push(`Worked at: ${cvData.previous_companies.slice(0, 2).join(', ')}`);
+        }
+        
+        if (cvData.technical_skills && cvData.technical_skills.length > 0) {
+          insights.push(`Skills: ${cvData.technical_skills.slice(0, 3).join(', ')}`);
+        }
+        
+        if (cvData.unique_strengths && cvData.unique_strengths.length > 0) {
+          insights.push(...cvData.unique_strengths.slice(0, 2));
+        }
+        
+        return insights;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Error fetching CV insights:', error);
+      return [];
+    }
+  }
+  
   // NEW: Fetch and analyze user feedback
   private async getFeedbackSummary(userEmail: string): Promise<any> {
     try {
