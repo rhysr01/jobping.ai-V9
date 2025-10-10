@@ -42,20 +42,11 @@ export const metadata: Metadata = {
     siteName: "JobPing",
     locale: "en_US",
     type: "website",
-    images: [
-      {
-        url: "https://getjobping.com/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "JobPing - Five roles. Zero scrolling.",
-      }
-    ],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "JobPing · Five roles. Zero scrolling.",
     description: "Weekly job matches for early-career roles across Europe.",
-    images: ["https://getjobping.com/og-image.png"],
     creator: "@jobping",
   },
   metadataBase: new URL("https://getjobping.com"),

@@ -1,6 +1,6 @@
 export default function LogoWordmark() {
   return (
-    <h1 className="inline-flex items-baseline gap-3 font-semibold tracking-tight leading-none text-7xl md:text-8xl">
+    <div className="inline-flex items-baseline gap-3 font-semibold tracking-tight leading-none text-7xl md:text-8xl" role="banner">
       <span aria-hidden className="text-white/95">
         {/* White graduation cap before the J */}
         <svg
@@ -20,6 +20,6 @@ export default function LogoWordmark() {
       <span className="bg-gradient-to-b from-white to-zinc-300 bg-clip-text text-transparent">
         JobPing
       </span>
-    </h1>
+    </div>
   );
 }
