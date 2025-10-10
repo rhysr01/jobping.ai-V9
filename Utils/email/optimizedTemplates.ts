@@ -288,12 +288,19 @@ body {
 
 .feedback-title { 
   text-align: center;
-  color: #aaa;
-  font-size: 13px;
-  font-weight: 500;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+
+.feedback-subtitle {
+  text-align: center;
+  color: #888;
+  font-size: 11px;
   margin-bottom: 16px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-style: italic;
 }
 
 .feedback-grid {
@@ -332,11 +339,20 @@ body {
 .fb-bad { background: rgba(220,38,38,0.1); }
 
 .feedback-note {
-  font-size: 11px;
-  color: #71717a;
+  font-size: 12px;
+  color: #8B5CF6;
   text-align: center;
-  margin-top: 12px;
-  font-weight: 500;
+  margin-top: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.feedback-note::before {
+  content: '🧠';
+  font-size: 14px;
 }
 
 /* Footer with branding */
@@ -422,10 +438,11 @@ body {
 }
 `;
 
-// Improved feedback section
+// AI-powered feedback section
 const FB = (h: string, e: string) => `
 <div class="feedback-section">
-  <div class="feedback-title">Rate this match</div>
+  <div class="feedback-title">How good is this match?</div>
+  <div class="feedback-subtitle">Help our AI learn your preferences</div>
   <div class="feedback-grid">
     <div class="feedback-row">
       <a href="https://getjobping.com/api/feedback/email?action=positive&score=5&job=${h}&email=${encodeURIComponent(e)}" class="fb-btn fb-great" target="_blank">
@@ -450,7 +467,7 @@ const FB = (h: string, e: string) => `
       </a>
     </div>
   </div>
-  <div class="feedback-note">Your feedback helps improve job matching</div>
+  <div class="feedback-note">Our AI gets smarter with every rating</div>
 </div>
 `;
 

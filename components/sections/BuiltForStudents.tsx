@@ -14,9 +14,9 @@ export default function BuiltForStudents() {
     },
     { 
       num: 3, 
-      title: "Designed for speed", 
-      body: "Short emails. Predictable timing. No logins, no dashboards, no doomscrolling.",
-      stats: "Under 60 seconds to read"
+      title: "AI that learns from you", 
+      body: "Rate each job match. Our AI gets smarter with every click, delivering better matches over time.",
+      stats: "🧠 Smarter matches with each feedback"
     },
   ];
 

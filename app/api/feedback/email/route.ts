@@ -239,10 +239,10 @@ function generateThankYouPage(action: string, jobHash: string, email: string, sc
                 action === 'scored' ? `Thanks for rating this ${score}/5!` :
                 'Thanks for your feedback!';
 
-  const message = action === 'positive' ? 'We\'ll send you more jobs like this!' :
-                  action === 'negative' ? 'We\'ll avoid similar jobs in the future.' :
-                  action === 'scored' ? 'Your rating helps us improve our matching!' :
-                  'Your feedback helps us get better!';
+  const message = action === 'positive' ? '🧠 Our AI is learning! We\'ll send you more jobs like this.' :
+                  action === 'negative' ? '🧠 Our AI is learning! We\'ll avoid similar jobs in the future.' :
+                  action === 'scored' ? '🧠 Our AI is getting smarter! Your rating improves future matches.' :
+                  '🧠 Our AI is learning from your feedback!';
 
   return new NextResponse(`
     <!DOCTYPE html>
