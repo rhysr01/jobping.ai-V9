@@ -129,8 +129,8 @@ export class AIMatchingService {
     const startTime = Date.now();
     
     try {
-      // Check cache first
-      const cacheKey = this.generateCacheKey(jobs, userPrefs);
+      // Check cache first (with feedback-aware key)
+      const cacheKey = await this.generateCacheKey(jobs, userPrefs);
       const cachedResult = AIMatchingCache.get(cacheKey);
       
       if (cachedResult) {
@@ -184,9 +184,22 @@ export class AIMatchingService {
     }
   }
 
-  private generateCacheKey(jobs: Job[], userPrefs: NormalizedUserProfile): string {
+  private async generateCacheKey(jobs: Job[], userPrefs: NormalizedUserProfile): Promise<string> {
     const jobHashes = jobs.map(j => j.job_hash).sort().join(',');
-    const userKey = `${userPrefs.email}-${userPrefs.careerFocus}`;
+    
+    // Include feedback count in cache key
+    let feedbackFingerprint = 'no-feedback';
+    try {
+      const summary = await this.getFeedbackSummary(userPrefs.email);
+      if (summary && summary.total >= 3) {
+        // Include feedback count and positive ratio in cache key
+        feedbackFingerprint = `fb${summary.total}-pos${summary.positive}`;
+      }
+    } catch {
+      // Ignore errors, use default
+    }
+    
+    const userKey = `${userPrefs.email}-${userPrefs.careerFocus}-${feedbackFingerprint}`;
     return `ai-match:${userKey}:${jobHashes}`;
   }
 

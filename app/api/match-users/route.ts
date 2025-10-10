@@ -306,8 +306,52 @@ function matchesLocation(jobLocation: string, targetCity: string): boolean {
   return variations.some(variant => jobLoc.includes(variant));
 }
 
-// Enhanced pre-filter jobs by user preferences with scoring
-function preFilterJobsByUserPreferences(jobs: JobWithFreshness[], user: UserPreferences): JobWithFreshness[] {
+// Enhanced pre-filter jobs by user preferences with scoring AND feedback learning
+async function preFilterJobsByUserPreferencesEnhanced(jobs: JobWithFreshness[], user: UserPreferences): Promise<JobWithFreshness[]> {
+  // Get user's feedback history for personalized boosting
+  let feedbackBoosts: Map<string, number> = new Map();
+  
+  try {
+    const supabase = getSupabaseClient();
+    const { data: feedback } = await supabase
+      .from('user_feedback')
+      .select('relevance_score, job_context')
+      .eq('user_email', user.email)
+      .gte('relevance_score', 4)  // Only highly-rated jobs
+      .limit(10);
+    
+    if (feedback && feedback.length > 0) {
+      // Extract patterns from highly-rated jobs
+      feedback.forEach(f => {
+        const ctx = f.job_context;
+        if (!ctx) return;
+        
+        // If user loved jobs in Berlin, boost Berlin jobs
+        if (ctx.location) {
+          const city = ctx.location.toLowerCase();
+          feedbackBoosts.set(`loc:${city}`, (feedbackBoosts.get(`loc:${city}`) || 0) + 10);
+        }
+        
+        // If user loved startup jobs, boost startups
+        if (ctx.company?.toLowerCase().includes('startup')) {
+          feedbackBoosts.set('type:startup', (feedbackBoosts.get('type:startup') || 0) + 10);
+        }
+        
+        // If user loved remote jobs, boost remote
+        if (ctx.location?.toLowerCase().includes('remote')) {
+          feedbackBoosts.set('env:remote', (feedbackBoosts.get('env:remote') || 0) + 15);
+        }
+      });
+      
+      if (feedbackBoosts.size > 0) {
+        console.log(`🎯 Feedback boosts for ${user.email}:`, Object.fromEntries(feedbackBoosts));
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to load feedback boosts:', error);
+  }
+  
+  // NOW DO STANDARD PRE-FILTER LOGIC (same as legacy function)
   let filteredJobs = jobs;
   
   // HARD FILTER: Location is first priority - only show jobs from target cities or remote
@@ -388,9 +432,28 @@ function preFilterJobsByUserPreferences(jobs: JobWithFreshness[], user: UserPref
       if (hasCareerMatch) score += 20;
     }
     
+    // NEW: Apply feedback boosts (learned preferences)
+    feedbackBoosts.forEach((boost, key) => {
+      const [type, value] = key.split(':');
+      
+      if (type === 'loc' && jobLocation.includes(value)) {
+        score += boost;
+        console.log(`  📍 Boosted "${job.title}" by +${boost} (location: ${value})`);
+      }
+      if (type === 'type' && (jobTitle.includes(value) || jobDesc.includes(value))) {
+        score += boost;
+        console.log(`  🏢 Boosted "${job.title}" by +${boost} (company type: ${value})`);
+      }
+      if (type === 'env' && jobLocation.includes(value)) {
+        score += boost;
+        console.log(`  🏠 Boosted "${job.title}" by +${boost} (work env: ${value})`);
+      }
+    });
+    
     return { job, score };
   });
   
+  // Rest of function identical to legacy version
   // Sort by score, then ensure source diversity in top results
   const sortedJobs = scoredJobs
     .filter(item => item.score > 0) // Only jobs with some match
@@ -422,7 +485,7 @@ function preFilterJobsByUserPreferences(jobs: JobWithFreshness[], user: UserPref
   const topJobs = diverseJobs.map(item => item.job);
   const sourceCounts = Object.entries(sourceCount).map(([s, c]) => `${s}:${c}`).join(', ');
   
-  console.log(`Pre-filtered from ${jobs.length} to ${topJobs.length} jobs for user ${user.email} (scored, ranked, diversified)`);
+  console.log(`Pre-filtered from ${jobs.length} to ${topJobs.length} jobs for user ${user.email} (scored, ranked, diversified${feedbackBoosts.size > 0 ? ', feedback-boosted' : ''})`);
   console.log(`  Source distribution: ${sourceCounts}`);
   return topJobs;
 }
@@ -762,8 +825,8 @@ const matchUsersHandler = async (req: NextRequest) => {
         const unseenJobs = jobs.filter(job => !previousJobHashes.has(job.job_hash));
         console.log(`${unseenJobs.length} new jobs available for ${user.email} (${jobs.length - unseenJobs.length} already sent)`);
         
-        // Pre-filter jobs to reduce AI processing load
-        const preFilteredJobs = preFilterJobsByUserPreferences(unseenJobs as any[], user);
+        // Pre-filter jobs to reduce AI processing load (with feedback learning)
+        const preFilteredJobs = await preFilterJobsByUserPreferencesEnhanced(unseenJobs as any[], user);
         
         // Increased limits to give AI more jobs to choose from
         const considered = preFilteredJobs.slice(0, user.subscription_tier === 'premium' ? 200 : 100);
