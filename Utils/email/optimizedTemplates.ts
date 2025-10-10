@@ -149,6 +149,18 @@ body {
   background: #fff;
   border-radius: 50%;
   display: inline-block;
+  animation: pulse-animation 2s ease-in-out infinite;
+}
+
+@keyframes pulse-animation {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+  50% { 
+    opacity: 0.5; 
+    transform: scale(1.2); 
+  }
 }
 
 .job-title { 
@@ -183,9 +195,9 @@ body {
 .match-score { 
   background: linear-gradient(135deg, #6366F1, #8B5CF6);
   color: #fff;
-  padding: 8px 18px;
+  padding: 10px 20px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   display: inline-block;
   box-shadow: 0 4px 12px rgba(99,102,241,0.3);
@@ -199,7 +211,7 @@ body {
   font-style: italic;
 }
 
-/* Application link section - copyable */
+/* Application link section - clickable + copyable */
 .apply-section {
   margin-top: 20px;
   padding: 16px;
@@ -213,14 +225,28 @@ body {
   font-size: 12px;
   color: #a1a1aa;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
+.apply-button {
+  display: block;
+  background: linear-gradient(90deg, #6366F1, #7C3AED, #8B5CF6);
+  color: #fff;
+  padding: 14px 28px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+  text-align: center;
+  margin: 12px 0;
+}
+
 .apply-link {
-  margin: 0;
-  font-size: 13px;
+  margin: 12px 0 0 0;
+  font-size: 12px;
   color: #667eea;
   word-break: break-all;
   font-family: monospace;
@@ -228,6 +254,13 @@ body {
   background: rgba(0,0,0,0.4);
   border-radius: 8px;
   border: 1px solid rgba(99,102,241,0.15);
+}
+
+.apply-note {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #71717a;
+  text-align: center;
 }
 
 /* Premium CTA button - matches website */
@@ -372,7 +405,8 @@ body {
   .fb-btn {
     display: block;
     margin-bottom: 8px;
-    padding: 12px;
+    padding: 16px 12px;
+    font-size: 13px;
   }
   
   .fb-btn .emoji {
@@ -499,7 +533,9 @@ export function createJobMatchesEmail(
   
   const title = isSignupEmail 
     ? '5 perfect matches just dropped 🎯' 
-    : `Your fresh ${jobCards.length} matches are here 🎯`;
+    : personalization?.dayText 
+      ? `Your fresh ${personalization.dayText} matches 🎯`
+      : `${jobCards.length} new matches for you 🎯`;
   
   const greeting = userName ? `${userName}, we` : 'We';
   
@@ -523,8 +559,9 @@ export function createJobMatchesEmail(
     const applySection = card.job.job_url
       ? `<div class="apply-section">
           <p class="apply-label">📎 Application Link</p>
+          <a href="${card.job.job_url}" class="apply-button">Apply Now →</a>
           <p class="apply-link">${card.job.job_url}</p>
-          <p style="margin-top: 8px; font-size: 11px; color: #71717a;">Copy and paste this link into your browser to apply</p>
+          <p class="apply-note">Or copy and paste this link into your browser</p>
         </div>`
       : '';
     
