@@ -90,11 +90,15 @@ body {
     inset 0 1px 0 rgba(255,255,255,.2);
 }
 
-/* Indigo frame around viewport */
+/* Indigo frame around viewport - scrolls with page */
 body::before{
   content:"";
-  position: fixed;
-  inset: 8px;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  min-height: 100vh;
   border-radius: var(--frame-radius, 28px);
   border: 2px solid rgba(99,102,241,0.55);
   box-shadow:
@@ -104,7 +108,13 @@ body::before{
   z-index: 50;
 }
 @media (max-width: 768px){
-  body::before{ inset: 6px; border-radius: 22px; }
+  body::before{ 
+    top: 6px;
+    left: 6px;
+    right: 6px;
+    bottom: 6px;
+    border-radius: 22px; 
+  }
 }
 
 /* ---------- Reusable styles ---------- */
