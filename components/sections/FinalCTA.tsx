@@ -4,44 +4,101 @@ export default function FinalCTA() {
   return (
     <section className="section-pad">
       <div className="container-page">
-        <div className="glass-card rounded-2xl p-10 md:p-12 text-center relative overflow-hidden">
-          {/* Decorative background pattern */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none" style={{
-            backgroundImage: `radial-gradient(circle at 2px 2px, rgba(99,102,241,0.3) 1px, transparent 0)`,
-            backgroundSize: '32px 32px'
-          }}></div>
-          
-          <div className="relative z-10">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">Stop the scroll</h2>
-            <p className="mt-4 text-lg text-zinc-300">Join students who receive five high fit roles each week.</p>
+        <div className="text-center mb-12">
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight">Stop the scroll</h2>
+          <p className="mt-4 text-lg text-zinc-300">Here's exactly what you'll receive every week:</p>
+        </div>
+
+        {/* Exact email preview - matches production template */}
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-black border border-zinc-800 rounded-xl overflow-hidden shadow-[0_0_60px_rgba(99,102,241,0.15)]">
             
-            {/* Email preview mockup */}
-            <div className="mt-8 max-w-md mx-auto bg-zinc-900/60 border border-zinc-800 rounded-lg p-4 text-left shadow-2xl">
-              <div className="text-xs text-zinc-500 mb-2">📧 Your Weekly JobPing</div>
-              <div className="space-y-2">
-                <div className="bg-gradient-to-r from-brand-500/10 to-purple-600/10 border border-brand-500/20 rounded p-2">
-                  <div className="text-sm font-semibold text-white">Product Designer</div>
-                  <div className="text-xs text-zinc-400">Figma · Berlin · €45-55k</div>
+            {/* Purple gradient header - EXACT match */}
+            <div className="relative overflow-hidden" style={{
+              background: 'linear-gradient(135deg, #6366F1 0%, #7C3AED 50%, #8B5CF6 100%)',
+              padding: '40px 32px'
+            }}>
+              <div className="absolute inset-0" style={{
+                background: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.1), transparent 50%)',
+                pointerEvents: 'none'
+              }}></div>
+              <div className="relative z-10 text-center">
+                <div className="text-4xl font-extrabold text-white mb-1" style={{
+                  letterSpacing: '-1px',
+                  textShadow: '0 2px 10px rgba(0,0,0,0.3)'
+                }}>
+                  🎯 JobPing
                 </div>
-                <div className="bg-gradient-to-r from-brand-500/10 to-purple-600/10 border border-brand-500/20 rounded p-2">
-                  <div className="text-sm font-semibold text-white">Frontend Developer</div>
-                  <div className="text-xs text-zinc-400">Remote · London · £35-45k</div>
+                <div className="text-xs text-white/95 font-semibold uppercase tracking-wider">
+                  AI-Powered Job Matching for Europe
                 </div>
-                <div className="text-xs text-zinc-500 text-center">+ 3 more matches</div>
               </div>
             </div>
-            
-            <div className="mt-8 flex justify-center">
-              <a 
-                href={tallyUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="btn-primary"
-              >
-                Start with 5 free roles
-              </a>
+
+            {/* Email content */}
+            <div className="p-8 bg-black">
+              {/* Greeting */}
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-white mb-3">5 perfect matches just dropped 🎯</h3>
+                <p className="text-zinc-400 text-sm">We found roles that actually match you—no generic spam, just quality.</p>
+              </div>
+
+              {/* Hot Match Job Card */}
+              <div className="mb-6 p-6 rounded-2xl border-2 border-purple-500/60 bg-gradient-to-br from-brand-500/8 to-purple-600/5 shadow-[0_8px_32px_rgba(99,102,241,0.25)]">
+                <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-brand-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg mb-3">
+                  <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                  🔥 Hot Match • 92% Match
+                </div>
+                <div className="text-lg font-bold text-white mb-2">Senior Frontend Engineer</div>
+                <div className="text-zinc-300 font-semibold text-sm mb-1">Spotify</div>
+                <div className="text-zinc-500 text-sm mb-3">📍 Berlin, Germany</div>
+                <p className="text-zinc-400 text-sm leading-relaxed mb-3">
+                  Join our team building the next generation of music streaming. We are looking for a passionate frontend engineer with React expertise...
+                </p>
+                <p className="text-zinc-600 text-xs italic mb-3">Based on your preference for Frontend Developer roles in Berlin</p>
+                <div className="bg-brand-500/10 border border-brand-500/20 rounded-lg p-3">
+                  <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wide mb-2">📎 Application Link</p>
+                  <p className="text-xs text-brand-400 font-mono break-all bg-black/40 p-2 rounded border border-brand-500/15">
+                    https://jobs.lever.co/spotify/senior-frontend
+                  </p>
+                </div>
+              </div>
+
+              {/* Regular Job Card */}
+              <div className="mb-6 p-6 rounded-2xl border border-brand-500/20 bg-[#111111] shadow-[0_4px_20px_rgba(99,102,241,0.15)]">
+                <div className="text-lg font-bold text-white mb-2">Product Designer</div>
+                <div className="text-zinc-300 font-semibold text-sm mb-1">Figma</div>
+                <div className="text-zinc-500 text-sm mb-3">📍 London, UK</div>
+                <div className="mb-3">
+                  <span className="inline-block bg-gradient-to-r from-brand-500 to-purple-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-[0_4px_12px_rgba(99,102,241,0.3)]">
+                    88% Match
+                  </span>
+                </div>
+                <p className="text-zinc-400 text-sm leading-relaxed">
+                  Help us design tools that empower designers worldwide. You will work on core features...
+                </p>
+              </div>
+
+              {/* CTA at bottom */}
+              <div className="text-center pt-6 border-t border-zinc-800">
+                <p className="text-zinc-500 text-xs mb-4">+ 3 more matches in your weekly email</p>
+                <a 
+                  href={tallyUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="btn-primary inline-block"
+                >
+                  Start with 5 free roles
+                </a>
+                <p className="mt-4 text-xs text-zinc-500">No CV required. Unsubscribe anytime. GDPR friendly.</p>
+              </div>
             </div>
-            <p className="mt-4 text-sm text-zinc-400">No CV required. Unsubscribe anytime. GDPR friendly.</p>
+
+            {/* Footer */}
+            <div className="bg-[#0a0a0a]/80 border-t border-brand-500/15 p-6 text-center">
+              <div className="text-sm font-semibold text-purple-500 mb-1">🎯 JobPing</div>
+              <p className="text-xs text-zinc-600">AI-powered job matching for Europe</p>
+            </div>
           </div>
         </div>
       </div>
