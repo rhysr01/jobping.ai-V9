@@ -87,33 +87,22 @@ async function saveJobs(jobs, source) {
 }
 
 function pickPythonCommand() {
-  const fromEnv = process.env.PYTHON && process.env.PYTHON.trim();
-  // PRIORITY: python3.11 first (jobspy requires 3.10+)
-  const candidates = [
-    fromEnv,
-    '/opt/homebrew/opt/python@3.11/bin/python3.11', // Homebrew python3.11 (preferred)
-    '/opt/homebrew/bin/python3.11',
-    '/usr/local/bin/python3.11',
-    'python3.11',
-    '/usr/bin/python3',
-    'python3',
-    'python'
-  ].filter(Boolean);
-  for (const cmd of candidates) {
-    try {
-      const res = spawnSync(cmd, ['-V'], { encoding: 'utf8', timeout: 3000 });
-      const version = (res.stdout || res.stderr || '').trim();
-      if (res.status === 0 && version) {
-        // Only accept Python 3.10+ (jobspy requirement)
-        const match = version.match(/Python 3\.(\d+)/);
-        if (match && parseInt(match[1]) >= 10) {
-          console.log(`✅ Using Python: ${cmd} (${version})`);
-          return cmd;
-        }
-      }
-    } catch {}
+  // Use wrapper script that ensures correct Python 3.11 environment
+  const scriptPath = require('path').join(__dirname, 'run-jobspy-python.sh');
+  if (require('fs').existsSync(scriptPath)) {
+    console.log(`✅ Using Python wrapper: ${scriptPath}`);
+    return scriptPath;
   }
-  return 'python3.11'; // Fallback
+  
+  // Fallback: try direct Python 3.11 path
+  const directPath = '/opt/homebrew/opt/python@3.11/bin/python3.11';
+  if (require('fs').existsSync(directPath)) {
+    console.log(`✅ Using Python: ${directPath}`);
+    return directPath;
+  }
+  
+  console.warn('⚠️  Python 3.11 not found - jobspy may fail');
+  return 'python3';
 }
 
 async function main() {
