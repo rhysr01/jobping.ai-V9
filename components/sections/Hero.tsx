@@ -7,8 +7,33 @@ export default function Hero() {
   return (
     <section className="relative isolate text-center py-24 md:py-32 lg:py-40">
       <div className="container-page">
-        <LogoWordmark />
-        <h1 className="mt-8 text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white leading-[1.1] max-w-[20ch] mx-auto">
+        {/* Large JobPing branding with graduation cap */}
+        <div className="inline-flex items-center justify-center gap-4 md:gap-6 mb-8">
+          {/* Graduation Cap Icon */}
+          <svg
+            className="w-16 h-16 md:w-24 md:h-24 lg:w-28 lg:h-28 text-white/90"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 3l10 5-10 5L2 8l10-5z" />
+            <path d="M22 10v4" />
+            <path d="M6 12v4c0 1.6 3 3.2 6 3.2s6-1.6 6-3.2v-4" />
+          </svg>
+          
+          {/* Large JobPing Text */}
+          <div className="text-8xl md:text-9xl lg:text-[10rem] font-bold tracking-tight leading-none">
+            <span className="bg-gradient-to-b from-white via-white to-zinc-300 bg-clip-text text-transparent">
+              JobPing
+            </span>
+          </div>
+        </div>
+        
+        <h1 className="mt-6 text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1] max-w-[20ch] mx-auto">
           Graduate jobs in your inbox. Just apply.
         </h1>
         <p className="mt-6 text-xl md:text-2xl text-zinc-300 max-w-[62ch] mx-auto leading-relaxed">
