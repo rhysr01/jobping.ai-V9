@@ -1,39 +1,5 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-
-interface JobMatch {
-  job: {
-    title: string;
-    company: string;
-    location: string;
-    description: string;
-    job_url: string;
-  };
-  match_score: number;
-  match_reason: string;
-}
-
 export default function FinalCTA() {
   const tallyUrl = 'https://tally.so/r/mJEqx4?tier=free&source=finalcta';
-  const [matches, setMatches] = useState<JobMatch[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Fetch real job matches for preview
-    fetch('/api/sample-email-preview')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.matches) {
-          setMatches(data.matches);
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to load sample jobs:', err);
-        setLoading(false);
-      });
-  }, []);
 
   return (
     <section className="section-pad">
@@ -73,77 +39,45 @@ export default function FinalCTA() {
             <div className="p-8 bg-black">
               {/* Greeting */}
               <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold text-white mb-3">Hi Alex 👋</h3>
-                <p className="text-zinc-400 text-sm">5 roles matched to your profile. Here's your weekly curated list:</p>
+                <h3 className="text-2xl font-bold text-white mb-3">5 perfect matches just dropped 🎯</h3>
+                <p className="text-zinc-400 text-sm">We found roles that actually match you—no generic spam, just quality.</p>
               </div>
 
-              {loading ? (
-                <div className="text-center py-12">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
-                  <p className="mt-4 text-zinc-500 text-sm">Loading real jobs...</p>
+              {/* Hot Match Job Card */}
+              <div className="mb-6 p-6 rounded-2xl border-2 border-purple-500/60 bg-gradient-to-br from-brand-500/8 to-purple-600/5 shadow-[0_8px_32px_rgba(99,102,241,0.25)]">
+                <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-brand-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg mb-3">
+                  <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                  🔥 Hot Match • 92% Match
                 </div>
-              ) : matches.length === 0 ? (
-                <div className="text-center py-8 text-zinc-500">
-                  <p>Could not load sample jobs. Check console for errors.</p>
+                <div className="text-lg font-bold text-white mb-2">Senior Frontend Engineer</div>
+                <div className="text-zinc-300 font-semibold text-sm mb-1">Spotify</div>
+                <div className="text-zinc-500 text-sm mb-3">📍 Berlin, Germany</div>
+                <p className="text-zinc-400 text-sm leading-relaxed mb-3">
+                  Join our team building the next generation of music streaming. We are looking for a passionate frontend engineer with React expertise...
+                </p>
+                <p className="text-zinc-600 text-xs italic mb-3">Based on your preference for Frontend Developer roles in Berlin</p>
+                <div className="bg-brand-500/10 border border-brand-500/20 rounded-lg p-3">
+                  <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wide mb-2">📎 Application Link</p>
+                  <p className="text-xs text-brand-400 font-mono break-all bg-black/40 p-2 rounded border border-brand-500/15">
+                    https://jobs.lever.co/spotify/senior-frontend
+                  </p>
                 </div>
-              ) : (
-                <>
-                  {/* Show first 2 jobs with full details */}
-                  {matches.slice(0, 2).map((match, idx) => (
-                    <div 
-                      key={idx}
-                      className={`mb-6 p-6 rounded-2xl ${
-                        idx === 0 
-                          ? 'border-2 border-purple-500/60 bg-gradient-to-br from-brand-500/8 to-purple-600/5 shadow-[0_8px_32px_rgba(99,102,241,0.25)]'
-                          : 'border border-brand-500/20 bg-[#111111] shadow-[0_4px_20px_rgba(99,102,241,0.15)]'
-                      }`}
-                    >
-                      {idx === 0 && (
-                        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-brand-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg mb-3">
-                          <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                          🔥 Top Match • {Math.round(match.match_score)}% Match
-                        </div>
-                      )}
-                      
-                      <div className="text-lg font-bold text-white mb-2">{match.job.title}</div>
-                      <div className="text-zinc-300 font-semibold text-sm mb-1">{match.job.company}</div>
-                      <div className="text-zinc-500 text-sm mb-3">📍 {match.job.location}</div>
-                      
-                      {idx !== 0 && (
-                        <div className="mb-3">
-                          <span className="inline-block bg-gradient-to-r from-brand-500 to-purple-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-[0_4px_12px_rgba(99,102,241,0.3)]">
-                            {Math.round(match.match_score)}% Match
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* WOW AI Match Reason */}
-                      <div className="bg-brand-500/5 border border-brand-500/20 rounded-lg p-3 mb-3">
-                        <p className="text-xs text-purple-400 font-semibold uppercase tracking-wide mb-1.5">🎯 Why this matches you:</p>
-                        <p className="text-zinc-300 text-sm leading-relaxed">
-                          {match.match_reason || 'Great fit for your profile!'}
-                        </p>
-                      </div>
-                      
-                      {idx === 0 && (
-                        <div className="bg-brand-500/10 border border-brand-500/20 rounded-lg p-3">
-                          <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wide mb-2">📎 Application Link</p>
-                          <p className="text-xs text-brand-400 font-mono break-all bg-black/40 p-2 rounded border border-brand-500/15">
-                            {match.job.job_url}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  
-                  {/* Remaining 3 jobs - compact view */}
-                  {matches.length > 2 && (
-                    <div className="text-center text-zinc-500 text-sm mb-6">
-                      + {matches.length - 2} more hand-picked roles in your email
-                    </div>
-                  )}
-                </>
-              )}
+              </div>
+
+              {/* Regular Job Card */}
+              <div className="mb-6 p-6 rounded-2xl border border-brand-500/20 bg-[#111111] shadow-[0_4px_20px_rgba(99,102,241,0.15)]">
+                <div className="text-lg font-bold text-white mb-2">Product Designer</div>
+                <div className="text-zinc-300 font-semibold text-sm mb-1">Figma</div>
+                <div className="text-zinc-500 text-sm mb-3">📍 London, UK</div>
+                <div className="mb-3">
+                  <span className="inline-block bg-gradient-to-r from-brand-500 to-purple-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-[0_4px_12px_rgba(99,102,241,0.3)]">
+                    88% Match
+                  </span>
+                </div>
+                <p className="text-zinc-400 text-sm leading-relaxed">
+                  Help us design tools that empower designers worldwide. You will work on core features...
+                </p>
+              </div>
 
               {/* CTA at bottom */}
               <div className="text-center pt-6 border-t border-zinc-800">
