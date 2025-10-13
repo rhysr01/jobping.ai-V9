@@ -17,6 +17,8 @@ import {
   SEND_PLAN
 } from '@/Utils/sendConfiguration';
 import { Job } from '@/scrapers/types';
+import { normalizeStringToArray } from '@/lib/string-helpers';
+import { getDateDaysAgo } from '@/lib/date-helpers';
 
 // Environment flags and limits
 const IS_TEST = process.env.NODE_ENV === 'test';
@@ -25,22 +27,6 @@ const JOB_LIMIT = IS_TEST ? 300 : 10000; // Increased to handle full job catalog
 
 // Lock key helper
 const LOCK_KEY = (rid: string) => `${IS_TEST ? 'jobping:test' : 'jobping:prod'}:lock:match-users:${rid}`;
-
-
-// Helper function to safely normalize string/array fields
-function normalizeStringToArray(value: any): string[] {
-  if (!value) return [];
-  if (Array.isArray(value)) return value;
-  if (typeof value === 'string') {
-    // Handle both comma-separated and pipe-separated strings
-    if (value.includes('|')) {
-      return value.split('|').map(s => s.trim()).filter(Boolean);
-    }
-    return value.split(',').map(s => s.trim()).filter(Boolean);
-  }
-  return [];
-}
-
 
 // Enhanced monitoring and performance tracking
 interface PerformanceMetrics {
@@ -129,13 +115,7 @@ async function validateDatabaseSchema(supabase: SupabaseClient): Promise<boolean
 
 // Job reservations managed by Redis global lock
 
-// UTC-safe date calculation
-function getDateDaysAgo(days: number): Date {
-  const date = new Date();
-  date.setUTCDate(date.getUTCDate() - days);
-  date.setUTCHours(0, 0, 0, 0); // Start of day UTC
-  return date;
-}
+// Date helper moved to centralized lib/date-helpers.ts
 
 // Tier distribution with intelligent fallback logic
 function distributeJobsByFreshness(
@@ -640,8 +620,6 @@ const matchUsersHandler = async (req: NextRequest) => {
       }, { status: 500 });
     }
 
-    // Auto-scaling functionality placeholder - not implemented
-
     // 1. Fetch active users
     const userFetchStart = Date.now();
     lap('fetch_users');
@@ -696,8 +674,6 @@ const matchUsersHandler = async (req: NextRequest) => {
       roles_selected: normalizeStringToArray(user.roles_selected),
       professional_expertise: user.professional_experience || '',
     }));
-
-    // User segmentation placeholder - not implemented
 
     // 2. Fetch jobs with UTC-safe date calculation and EU/Early Career filtering
     const jobFetchStart = Date.now();
@@ -1125,20 +1101,11 @@ const matchUsersHandler = async (req: NextRequest) => {
 
     const results = await Promise.all(userPromises);
 
-    // Memory cleanup after user processing
-    if (global.gc) {
-      global.gc();
-    }
-
-    // Advanced monitoring placeholder - not implemented
-
     const totalProcessingTime = Date.now() - performanceTracker.startTime;
     const performanceMetrics = performanceTracker.getMetrics();
 
     // Track production metrics for Datadog monitoring
     const requestDuration = Date.now() - requestStartTime;
-
-    // Performance alerts placeholder
 
     // Calculate error rate and alert if high
     const errorRate = performanceMetrics.errors > 0 
@@ -1153,8 +1120,6 @@ const matchUsersHandler = async (req: NextRequest) => {
       });
     }
     
-    // Datadog metrics placeholder
-    
     lap('done');
     return NextResponse.json({
       success: true,
@@ -1168,7 +1133,6 @@ const matchUsersHandler = async (req: NextRequest) => {
     const requestDuration = Date.now() - startTime;
     console.error('Match-users processing error:', error);
     
-    // API failure logging placeholder
     // Sentry error tracking with context
     Sentry.captureException(error, {
       tags: {

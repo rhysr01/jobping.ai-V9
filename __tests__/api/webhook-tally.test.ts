@@ -16,16 +16,7 @@ jest.mock('@supabase/supabase-js', () => ({
   })),
 }));
 
-jest.mock('@/Utils/jobMatching', () => ({
-  performEnhancedAIMatching: jest.fn(() => Promise.resolve([])),
-  generateFallbackMatches: jest.fn(() => []),
-  logMatchSession: jest.fn(() => Promise.resolve()),
-}));
-
-jest.mock('@/Utils/emailUtils', () => ({
-  sendMatchedJobsEmail: jest.fn(() => Promise.resolve()),
-  sendWelcomeEmail: jest.fn(() => Promise.resolve()),
-}));
+// jobMatching and emailUtils have been removed - functionality moved to other services
 
 jest.mock('@/Utils/emailVerification', () => ({
   EmailVerificationOracle: {

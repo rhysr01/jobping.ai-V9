@@ -104,13 +104,7 @@ const optimizePerformanceHandler = async (request: NextRequest) => {
       optimizationResults.actions.push('Response cache clear failed');
     }
 
-    // Force garbage collection
-    if (global.gc) {
-      global.gc();
-      optimizationResults.actions.push('Garbage collection triggered');
-    } else {
-      optimizationResults.actions.push('Garbage collection not available');
-    }
+    optimizationResults.actions.push('Performance analysis complete');
 
     // Get memory stats after optimization
     optimizationResults.memory_after = getMemoryStats();

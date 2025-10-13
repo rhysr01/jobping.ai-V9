@@ -133,8 +133,11 @@ export interface LogContext {
   operation?: string;
   component?: string;
   duration?: number;
+  action?: string;
+  timestamp?: string;
   metadata?: Record<string, any>;
   error?: Error;
+  [key: string]: any; // Allow additional properties
 }
 
 export interface LogEntry {
@@ -341,11 +344,9 @@ export function logUserAction(
   metadata?: Record<string, any>
 ): void {
   logger.info(`USER_ACTION: ${action}`, {
-    context: {
-      action,
-      timestamp: new Date().toISOString(),
-      ...metadata
-    }
+    action,
+    timestamp: new Date().toISOString(),
+    ...metadata
   });
 }
 

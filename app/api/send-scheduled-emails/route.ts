@@ -18,20 +18,7 @@ import { jobQueue } from '@/Utils/job-queue.service';
 import { withAuth } from '@/Utils/auth/withAuth';
 import OpenAI from 'openai';
 import { shouldSendEmailToUser, updateUserEngagement } from '@/Utils/engagementTracker';
-
-// Helper function to safely normalize string/array fields
-function normalizeStringToArray(value: unknown): string[] {
-  if (!value) return [];
-  if (Array.isArray(value)) return value;
-  if (typeof value === 'string') {
-    // Handle both comma-separated and pipe-separated strings
-    if (value.includes('|')) {
-      return value.split('|').map(s => s.trim()).filter(Boolean);
-    }
-    return value.split(',').map(s => s.trim()).filter(Boolean);
-  }
-  return [];
-}
+import { normalizeStringToArray } from '@/lib/string-helpers';
 
 
 function getOpenAIClient() {
@@ -445,11 +432,6 @@ async function handleSendScheduledEmails(req: NextRequest) {
 
     const successCount = userResults.filter(r => r.success && !r.noMatches).length;
     const errorCount = userResults.filter(r => !r.success).length;
-
-    // Memory cleanup after batch processing
-    if (global.gc) {
-      global.gc();
-    }
 
     console.log(`📊 Scheduled email delivery completed:`);
     console.log(`   ✅ Success: ${successCount}`);

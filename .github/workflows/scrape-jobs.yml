@@ -146,4 +146,4 @@ jobs:
         fi
         echo "✅ Environment variables validated"
         echo "🧹 Starting cleanup..."
-        node scripts/cleanup-jobs.js
+        npx tsx scripts/cleanup-jobs.ts

@@ -60,14 +60,14 @@ export function handleError(error: unknown): NextResponse {
       {
         error: error.message,
         code: error.code,
-        ...(error.details && { details: error.details }),
+        details: error.details,
       },
       { status: error.statusCode }
     );
   }
 
   // Unknown error - log with full stack
-  logger.error('Unhandled error', { error });
+  logger.error('Unhandled error', { error: error instanceof Error ? error : new Error(String(error)) });
 
   return NextResponse.json(
     { error: 'Internal server error' },

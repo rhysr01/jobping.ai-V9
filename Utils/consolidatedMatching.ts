@@ -9,7 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Job } from '../scrapers/types';
 import { UserPreferences, JobMatch } from './matching/types';
 import { AIMatchingCache } from './matching/ai-matching.service';
-import { enhanceMatchingWithEmbeddings, createUserProfileEmbedding, createJobEmbedding } from './embeddingBoost';
+// Embedding boost removed - feature not implemented
 
 // ============================================
 // CONFIGURATION CONSTANTS
@@ -501,15 +501,8 @@ Requirements:
       }
     }
 
-    // Apply embedding boost to enhance semantic matching
-    const enhancedMatches = enhanceMatchingWithEmbeddings(
-      jobs.slice(0, 20), // Use the same jobs we processed
-      userPrefs,
-      matches
-    );
-
-    // Sort by enhanced score and return top matches
-    return enhancedMatches
+    // Sort by match score and return top matches
+    return matches
       .sort((a, b) => b.match_score - a.match_score)
       .slice(0, 8); // Increased from 6 to 8 for better coverage
   }

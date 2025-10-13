@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { logUserAction } from '@/lib/monitoring';
 
 export default function Error({
@@ -40,12 +41,12 @@ export default function Error({
           Try again
         </button>
         
-        <a
+        <Link
           href="/"
           className="block w-full mt-3 text-center text-zinc-500 hover:text-zinc-300 text-sm transition-colors"
         >
           ← Back to home
-        </a>
+        </Link>
       </div>
     </div>
   );
