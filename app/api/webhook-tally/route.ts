@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { z } from 'zod';
+import { asyncHandler, ValidationError, RateLimitError, UnauthorizedError, AppError } from '@/lib/errors';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { validateTallyWebhook, getSecurityHeaders } from '@/Utils/security/webhookSecurity';
 import { performMemoryCleanup } from '@/Utils/performance/memoryManager';
@@ -259,32 +260,26 @@ function extractUserData(fields: NonNullable<TallyWebhookData['data']>['fields']
   return userData;
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    // Rate limiting
-    const rateLimiter = getProductionRateLimiter();
-    const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-    
-    const rateLimit = await rateLimiter.checkRateLimit('webhook-tally', clientIp);
-    if (!rateLimit.allowed) {
-      return NextResponse.json({ 
-        error: 'Rate limit exceeded. Please try again later.',
-        retryAfter: rateLimit.retryAfter 
-      }, { status: 429 });
-    }
+export const POST = asyncHandler(async (req: NextRequest) => {
+  // Rate limiting
+  const rateLimiter = getProductionRateLimiter();
+  const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  
+  const rateLimit = await rateLimiter.checkRateLimit('webhook-tally', clientIp);
+  if (!rateLimit.allowed) {
+    throw new RateLimitError(rateLimit.retryAfter);
+  }
 
-    // Security validation
-    const validationResult = await validateTallyWebhook(req);
-    if (!validationResult.isValid) {
-      console.error('❌ Tally webhook validation failed:', validationResult.error);
-      return NextResponse.json({ 
-        error: 'Invalid webhook signature' 
-      }, { status: 401 });
-    }
+  // Security validation
+  const validationResult = await validateTallyWebhook(req);
+  if (!validationResult.isValid) {
+    console.error('❌ Tally webhook validation failed:', validationResult.error);
+    throw new UnauthorizedError('Invalid webhook signature');
+  }
 
-    // Parse and validate the webhook payload
-    const body = await req.json();
-    const validatedData = TallyWebhookSchema.parse(body);
+  // Parse and validate the webhook payload
+  const body = await req.json();
+  const validatedData = TallyWebhookSchema.parse(body);
     
     console.log('✅ Tally webhook received:', {
       eventId: validatedData.eventId,
@@ -678,19 +673,9 @@ export async function POST(req: NextRequest) {
       status: 200,
       headers: getSecurityHeaders()
     });
-
-  } catch (error) {
-    console.error('❌ Tally webhook error:', error);
-    
-    // Cleanup memory on error
-    performMemoryCleanup();
-    
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
-    }, { status: 500 });
-  }
-}
+  // Cleanup memory on success
+  performMemoryCleanup();
+});
 
 // Test handler for email verification testing
 async function handleEmailVerificationTest(req: NextRequest) {

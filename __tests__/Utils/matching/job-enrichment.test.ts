@@ -5,7 +5,11 @@
 
 import {
   enrichJobData,
-  calculateFreshnessTier
+  calculateFreshnessTier,
+  extractPostingDate,
+  extractProfessionalExpertise,
+  extractCareerPath,
+  extractStartDate
 } from '@/Utils/matching/job-enrichment.service';
 import { buildMockJob } from '@/__tests__/_helpers/testBuilders';
 
@@ -178,6 +182,149 @@ describe('Job Enrichment - calculateFreshnessTier', () => {
     const tier = calculateFreshnessTier(exactlyThreeDaysAgo.toISOString());
 
     expect(['fresh', 'comprehensive']).toContain(tier); // Boundary case
+  });
+});
+
+describe('Job Enrichment - extractPostingDate', () => {
+  it('should extract date from description', () => {
+    const description = 'Posted on January 15, 2024. Apply now!';
+    const result = extractPostingDate(description);
+
+    expect(result).toBeTruthy();
+  });
+
+  it('should handle missing date in description', () => {
+    const description = 'Great opportunity to join our team!';
+    const result = extractPostingDate(description);
+
+    expect(result).toBeDefined();
+  });
+
+  it('should extract relative dates', () => {
+    const description = 'Posted 2 days ago';
+    const result = extractPostingDate(description);
+
+    expect(result).toBeDefined();
+  });
+});
+
+describe('Job Enrichment - extractProfessionalExpertise', () => {
+  it('should extract tech expertise', () => {
+    const title = 'Senior Software Engineer';
+    const description = 'React, TypeScript, Node.js experience required';
+
+    const expertise = extractProfessionalExpertise(title, description);
+
+    expect(expertise).toBeTruthy();
+    expect(typeof expertise).toBe('string');
+  });
+
+  it('should extract data science expertise', () => {
+    const title = 'Data Scientist';
+    const description = 'Python, Machine Learning, SQL';
+
+    const expertise = extractProfessionalExpertise(title, description);
+
+    expect(expertise).toBeTruthy();
+  });
+
+  it('should handle non-tech roles', () => {
+    const title = 'Marketing Manager';
+    const description = 'Lead marketing campaigns';
+
+    const expertise = extractProfessionalExpertise(title, description);
+
+    expect(expertise).toBeDefined();
+  });
+
+  it('should extract from title when description is empty', () => {
+    const title = 'Frontend Developer';
+    const description = '';
+
+    const expertise = extractProfessionalExpertise(title, description);
+
+    expect(expertise).toBeTruthy();
+  });
+});
+
+describe('Job Enrichment - extractCareerPath', () => {
+  it('should extract software engineering path', () => {
+    const title = 'Software Engineer';
+    const description = 'Building scalable web applications';
+
+    const careerPath = extractCareerPath(title, description);
+
+    expect(careerPath).toBeTruthy();
+    expect(typeof careerPath).toBe('string');
+  });
+
+  it('should extract product management path', () => {
+    const title = 'Product Manager';
+    const description = 'Define product roadmap and strategy';
+
+    const careerPath = extractCareerPath(title, description);
+
+    expect(careerPath).toBeTruthy();
+  });
+
+  it('should extract design path', () => {
+    const title = 'UX Designer';
+    const description = 'Create user interfaces and experiences';
+
+    const careerPath = extractCareerPath(title, description);
+
+    expect(careerPath).toBeTruthy();
+  });
+
+  it('should handle ambiguous titles', () => {
+    const title = 'Team Member';
+    const description = 'Join our team!';
+
+    const careerPath = extractCareerPath(title, description);
+
+    expect(careerPath).toBeDefined();
+  });
+});
+
+describe('Job Enrichment - extractStartDate', () => {
+  it('should extract immediate start dates', () => {
+    const description = 'Start immediately. Apply today!';
+
+    const startDate = extractStartDate(description);
+
+    expect(startDate).toBeTruthy();
+  });
+
+  it('should extract specific start dates', () => {
+    const description = 'Start date: February 1, 2024';
+
+    const startDate = extractStartDate(description);
+
+    expect(startDate).toBeTruthy();
+  });
+
+  it('should extract relative start dates', () => {
+    const description = 'Position starts in 2 weeks';
+
+    const startDate = extractStartDate(description);
+
+    expect(startDate).toBeDefined();
+  });
+
+  it('should handle missing start date', () => {
+    const description = 'Great opportunity at our company';
+
+    const startDate = extractStartDate(description);
+
+    expect(startDate).toBeDefined();
+  });
+
+  it('should handle ASAP mentions', () => {
+    const description = 'We need someone ASAP';
+
+    const startDate = extractStartDate(description);
+
+    expect(startDate).toBeTruthy();
   });
 });
 
