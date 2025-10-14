@@ -18,6 +18,27 @@ import {
 } from '@/Utils/sendConfiguration';
 import { Job } from '@/scrapers/types';
 import { normalizeStringToArray } from '@/lib/string-helpers';
+
+// Type definitions for better type safety
+interface MatchMetrics {
+  totalJobs: number;
+  distributedJobs: number;
+  tierDistribution: Record<string, number>;
+  cityDistribution?: Record<string, number>;
+  processingTime: number;
+  originalJobCount?: number;
+  validJobCount?: number;
+  [key: string]: any; // Allow additional metrics
+}
+
+interface MatchProvenance {
+  match_algorithm: string;
+  ai_latency_ms?: number;
+  cache_hit?: boolean;
+  fallback_reason?: string;
+  ai_cost_usd?: number;
+  [key: string]: any; // Allow additional properties
+}
 import { getDateDaysAgo } from '@/lib/date-helpers';
 import { userMatchingService } from '@/services/user-matching.service';
 import { Database } from '@/lib/database.types';
@@ -126,7 +147,7 @@ function distributeJobsByFreshness(
   jobs: JobWithFreshness[], 
   userTier: 'free' | 'premium' = 'free',
   userId: string
-): { jobs: JobWithFreshness[], metrics: any } {
+): { jobs: JobWithFreshness[], metrics: MatchMetrics } {
   const startTime = Date.now();
   
   console.log(`Distributing jobs for ${userTier} user ${userId}. Total jobs: ${jobs.length}`);
@@ -195,11 +216,13 @@ function distributeJobsByFreshness(
   return {
     jobs: selectedJobs,
     metrics: {
+      totalJobs: jobs.length,
+      distributedJobs: selectedJobs.length,
+      tierDistribution: tierCounts,
       processingTime,
       originalJobCount: jobs.length,
       validJobCount: validJobs.length,
       selectedJobCount: selectedJobs.length,
-      tierCounts,
       fallbacksUsed: selectedJobs.length < targetTotal
     }
   };
@@ -786,9 +809,8 @@ const matchUsersHandler = async (req: NextRequest) => {
         // AI matching with performance tracking and circuit breaker
         let matches: JobMatch[] = [];
         let matchType: 'ai_success' | 'fallback' | 'ai_failed' = 'ai_success';
-        let userProvenance: any = {
+        let userProvenance: MatchProvenance = {
           match_algorithm: 'ai',
-          prompt_version: process.env.PROMPT_VERSION || 'v1',
           cache_hit: false,
           ai_latency_ms: 0,
           ai_cost_usd: 0

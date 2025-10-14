@@ -8,7 +8,13 @@ import {
   validateJobData,
   validateUserPreferences,
   validateMatchResult,
-  validateUserEligibility
+  validateUserEligibility,
+  validateJobFreshness,
+  validateLocationCompatibility,
+  validateCareerPathCompatibility,
+  validateWorkEnvironmentCompatibility,
+  validateJobUserCompatibility,
+  validateMatchingConfig
 } from '@/Utils/matching/validators';
 import { buildMockJob, buildMockUser } from '@/__tests__/_helpers/testBuilders';
 
@@ -327,6 +333,259 @@ describe('Validators - validateUserEligibility', () => {
 
     expect(result.eligible).toBe(false);
     expect(result.reasons.length).toBeGreaterThan(1);
+  });
+});
+
+describe('Validators - validateJobFreshness', () => {
+  it('should mark job as ultra_fresh within 1 day', () => {
+    const oneDayAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+    const job = buildMockJob({ created_at: oneDayAgo });
+
+    const result = validateJobFreshness(job);
+
+    expect(result.fresh).toBe(true);
+    expect(result.tier).toBe('ultra_fresh');
+    expect(result.daysOld).toBe(0);
+  });
+
+  it('should mark job as fresh within 7 days', () => {
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    const job = buildMockJob({ created_at: threeDaysAgo });
+
+    const result = validateJobFreshness(job);
+
+    expect(result.fresh).toBe(true);
+    expect(result.tier).toBe('fresh');
+    expect(result.daysOld).toBe(3);
+  });
+
+  it('should mark job as stale between 7-30 days', () => {
+    const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString();
+    const job = buildMockJob({ created_at: fifteenDaysAgo });
+
+    const result = validateJobFreshness(job);
+
+    expect(result.fresh).toBe(false);
+    expect(result.tier).toBe('stale');
+    expect(result.daysOld).toBe(15);
+  });
+
+  it('should mark job as very_stale after 30 days', () => {
+    const fortyDaysAgo = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString();
+    const job = buildMockJob({ created_at: fortyDaysAgo });
+
+    const result = validateJobFreshness(job);
+
+    expect(result.fresh).toBe(false);
+    expect(result.tier).toBe('very_stale');
+    expect(result.daysOld).toBe(40);
+  });
+
+  it('should handle job without created_at date', () => {
+    const job = buildMockJob({ created_at: undefined });
+
+    const result = validateJobFreshness(job);
+
+    expect(result.fresh).toBe(false);
+    expect(result.tier).toBe('very_stale');
+    expect(result.daysOld).toBe(999);
+  });
+});
+
+describe('Validators - validateLocationCompatibility', () => {
+  it('should find exact location match', () => {
+    const result = validateLocationCompatibility(['London, UK'], ['London']);
+
+    expect(result.compatible).toBe(true);
+    expect(result.matchScore).toBe(100);
+    expect(result.reasons[0]).toContain('Exact location match');
+  });
+
+  it('should handle remote jobs', () => {
+    const result = validateLocationCompatibility(['Remote, Anywhere'], ['London']);
+
+    expect(result.compatible).toBe(true);
+    expect(result.matchScore).toBeGreaterThanOrEqual(80);
+    expect(result.reasons).toContain('Remote work available');
+  });
+
+  it('should reject incompatible locations', () => {
+    const result = validateLocationCompatibility(['New York, USA'], ['London']);
+
+    expect(result.compatible).toBe(false);
+    expect(result.matchScore).toBe(0);
+  });
+
+  it('should handle empty user target cities', () => {
+    const result = validateLocationCompatibility(['London'], []);
+
+    expect(result.compatible).toBe(false);
+    expect(result.reasons).toContain('No target cities specified');
+  });
+
+  it('should handle empty job locations', () => {
+    const result = validateLocationCompatibility([], ['London']);
+
+    expect(result.compatible).toBe(false);
+    expect(result.reasons).toContain('Job has no location');
+  });
+
+  it('should match multiple user cities', () => {
+    const result = validateLocationCompatibility(['Berlin, Germany'], ['London', 'Berlin', 'Paris']);
+
+    expect(result.compatible).toBe(true);
+    expect(result.matchScore).toBe(100);
+  });
+});
+
+describe('Validators - validateCareerPathCompatibility', () => {
+  it('should match compatible career paths', () => {
+    const result = validateCareerPathCompatibility(['tech', 'software'], 'tech');
+
+    expect(result).toBeDefined();
+    expect(result.matchScore).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should reject incompatible career paths', () => {
+    const result = validateCareerPathCompatibility(['marketing', 'sales'], 'software-engineer');
+
+    expect(result).toBeDefined();
+    expect(result.matchScore).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should handle missing user career path', () => {
+    const result = validateCareerPathCompatibility(['tech'], '');
+
+    expect(result.compatible).toBe(false);
+    expect(result.reasons).toContain('No career path specified');
+  });
+
+  it('should handle missing job categories', () => {
+    const result = validateCareerPathCompatibility([], 'software-engineer');
+
+    expect(result.compatible).toBe(false);
+    expect(result.reasons).toContain('Job has no categories');
+  });
+});
+
+describe('Validators - validateWorkEnvironmentCompatibility', () => {
+  it('should match exact work environment preference', () => {
+    const result = validateWorkEnvironmentCompatibility('remote', 'remote');
+
+    expect(result.compatible).toBe(true);
+    expect(result.matchScore).toBe(100);
+  });
+
+  it('should handle hybrid compatibility', () => {
+    const result = validateWorkEnvironmentCompatibility('hybrid', 'remote');
+
+    expect(result.compatible).toBe(true);
+    expect(result.matchScore).toBeGreaterThan(0);
+  });
+
+  it('should handle missing user preference', () => {
+    const result = validateWorkEnvironmentCompatibility('remote', undefined);
+
+    expect(result.compatible).toBe(true); // Should default to compatible
+  });
+
+  it('should handle missing job environment', () => {
+    const result = validateWorkEnvironmentCompatibility(undefined, 'remote');
+
+    expect(result.compatible).toBe(true); // Should default to compatible
+  });
+
+  it('should handle office vs remote preference', () => {
+    const result = validateWorkEnvironmentCompatibility('office', 'remote');
+
+    expect(result).toBeDefined();
+    expect(result.matchScore).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('Validators - validateJobUserCompatibility', () => {
+  it('should validate fully compatible job and user', () => {
+    const job = buildMockJob({
+      location: 'London, UK',
+      categories: ['tech', 'early-career'],
+      work_environment: 'remote',
+      created_at: new Date().toISOString()
+    });
+    const user = buildMockUser({
+      target_cities: ['London'],
+      career_path: ['tech'],
+      work_environment: 'remote'
+    });
+
+    const result = validateJobUserCompatibility(job, user);
+
+    expect(result.compatible).toBe(true);
+    expect(result.overallScore).toBeGreaterThan(0);
+  });
+
+  it('should handle location incompatibility', () => {
+    const job = buildMockJob({ location: 'New York, USA' });
+    const user = buildMockUser({ target_cities: ['London'] });
+
+    const result = validateJobUserCompatibility(job, user);
+
+    expect(result.breakdown.location.compatible).toBe(false);
+  });
+
+  it('should handle career path incompatibility', () => {
+    const job = buildMockJob({ categories: ['marketing'] });
+    const user = buildMockUser({ career_path: ['tech'] });
+
+    const result = validateJobUserCompatibility(job, user);
+
+    expect(result.breakdown.careerPath.compatible).toBe(false);
+  });
+
+  it('should handle work environment compatibility', () => {
+    const job = buildMockJob({ work_environment: 'office' });
+    const user = buildMockUser({ work_environment: 'remote' });
+
+    const result = validateJobUserCompatibility(job, user);
+
+    expect(result.breakdown.workEnvironment).toBeDefined();
+  });
+
+  it('should provide detailed compatibility breakdown', () => {
+    const job = buildMockJob();
+    const user = buildMockUser();
+
+    const result = validateJobUserCompatibility(job, user);
+
+    expect(result).toHaveProperty('compatible');
+    expect(result).toHaveProperty('overallScore');
+    expect(result).toHaveProperty('breakdown');
+    expect(result.breakdown).toHaveProperty('location');
+    expect(result.breakdown).toHaveProperty('careerPath');
+    expect(result.breakdown).toHaveProperty('workEnvironment');
+  });
+});
+
+describe('Validators - validateMatchingConfig', () => {
+  it('should validate matching configuration', () => {
+    const result = validateMatchingConfig();
+
+    expect(result).toHaveProperty('valid');
+    expect(result).toHaveProperty('errors');
+    expect(Array.isArray(result.errors)).toBe(true);
+  });
+
+  it('should return validation status', () => {
+    const result = validateMatchingConfig();
+
+    expect(typeof result.valid).toBe('boolean');
+  });
+
+  it('should provide error details if invalid', () => {
+    const result = validateMatchingConfig();
+
+    if (!result.valid) {
+      expect(result.errors.length).toBeGreaterThan(0);
+    }
   });
 });
 

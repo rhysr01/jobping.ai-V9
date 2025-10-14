@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { asyncHandler, AppError } from '@/lib/errors';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { HTTP_STATUS, ERROR_CODES } from '@/Utils/constants';
 import { errorResponse } from '@/Utils/errorResponse';
@@ -455,14 +456,15 @@ async function handleSendScheduledEmails(req: NextRequest) {
   }
 }
 
-// Apply auth middleware
-export const POST = withAuth(handleSendScheduledEmails, {
-  requireSystemKey: true,
-  allowedMethods: ['POST']
-});
+// Apply auth middleware and asyncHandler
+export const POST = withAuth(
+  asyncHandler(handleSendScheduledEmails),
+  {
+    requireSystemKey: true,
+    allowedMethods: ['POST']
+  }
+);
 
-export async function GET() {
-  return NextResponse.json({ 
-    error: 'Method not allowed. This endpoint is designed for POST requests only.'
-  }, { status: 405 });
-}
+export const GET = asyncHandler(async () => {
+  throw new AppError('Method not allowed. This endpoint is designed for POST requests only.', 405, 'METHOD_NOT_ALLOWED');
+});
