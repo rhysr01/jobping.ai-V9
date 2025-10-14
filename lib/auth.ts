@@ -2,7 +2,6 @@
 // Phase 0: Lock the doors - prevent abuse and misconfig
 
 import { NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 
 interface AuthOptions {
   requireSystemKey?: boolean;

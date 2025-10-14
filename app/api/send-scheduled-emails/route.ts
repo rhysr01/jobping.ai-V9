@@ -15,6 +15,7 @@ import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
 import { aiCostManager } from '@/Utils/ai-cost-manager';
 import { withAuth } from '@/Utils/auth/withAuth';
 import { shouldSendEmailToUser, updateUserEngagement } from '@/Utils/engagementTracker';
+import { normalizeStringToArray } from '@/lib/string-helpers';
 
 async function handleSendScheduledEmails(req: NextRequest) {
   // PRODUCTION: Rate limiting for scheduled emails (should only be called by automation)

@@ -17,7 +17,6 @@ import {
   SEND_PLAN
 } from '@/Utils/sendConfiguration';
 import { Job } from '@/scrapers/types';
-import { normalizeStringToArray } from '@/lib/string-helpers';
 
 // Type definitions for better type safety
 interface MatchMetrics {
