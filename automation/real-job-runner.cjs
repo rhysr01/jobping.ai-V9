@@ -122,6 +122,42 @@ class RealJobRunner {
     }
   }
 
+  // Run JobSpy Internships-Only scraper
+  async runJobSpyInternshipsScraper() {
+    try {
+      console.log('🎓 Running JobSpy Internships-Only scraper...');
+      const { stdout } = await execAsync('NODE_ENV=production node scripts/jobspy-internships-only.cjs', {
+        cwd: process.cwd(),
+        timeout: 600000, // 10 minutes timeout
+        env: { ...process.env }
+      });
+      
+      // Parse job count from the result
+      let jobsSaved = 0;
+      const savedMatch = stdout.match(/✅ JobSpy Internships: total_saved=(\d+)/);
+      if (savedMatch) {
+        jobsSaved = parseInt(savedMatch[1]);
+      } else {
+        // Fallback to DB count (last 10 minutes)
+        const { count, error } = await supabase
+          .from('jobs')
+          .select('id', { count: 'exact', head: false })
+          .eq('source', 'jobspy-internships')
+          .gte('created_at', new Date(Date.now() - 10*60*1000).toISOString());
+        jobsSaved = error ? 0 : (count || 0);
+        if (jobsSaved) {
+          console.log(`ℹ️  JobSpy Internships: DB fallback count: ${jobsSaved} jobs`);
+        }
+      }
+      
+      console.log(`✅ JobSpy Internships: ${jobsSaved} jobs processed`);
+      return jobsSaved;
+    } catch (error) {
+      console.error('❌ JobSpy Internships scraper failed:', error.message);
+      return 0;
+    }
+  }
+
   // Run Reed scraper with real API
   async runReedScraper() {
     try {
@@ -369,7 +405,7 @@ class RealJobRunner {
     try {
       console.log('\n🚀 STARTING AUTOMATED SCRAPING CYCLE');
       console.log('=====================================');
-      console.log('🎯 Running streamlined scrapers: JobSpy, Adzuna, Reed');
+      console.log('🎯 Running streamlined scrapers: JobSpy, JobSpy Internships, Adzuna, Reed');
       
       // Run JobSpy first for fast signal
       let jobspyJobs = 0;
@@ -378,6 +414,16 @@ class RealJobRunner {
         console.log(`✅ JobSpy completed: ${jobspyJobs} jobs`);
       } catch (error) {
         console.error('❌ JobSpy scraper failed, continuing with other scrapers:', error.message);
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Run JobSpy Internships-Only scraper
+      let jobspyInternshipsJobs = 0;
+      try {
+        jobspyInternshipsJobs = await this.runJobSpyInternshipsScraper();
+        console.log(`✅ JobSpy Internships completed: ${jobspyInternshipsJobs} jobs`);
+      } catch (error) {
+        console.error('❌ JobSpy Internships scraper failed, continuing with other scrapers:', error.message);
       }
       await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -405,7 +451,7 @@ class RealJobRunner {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Update stats with all scrapers
-      this.totalJobsSaved += (adzunaJobs + jobspyJobs + reedJobs);
+      this.totalJobsSaved += (adzunaJobs + jobspyJobs + jobspyInternshipsJobs + reedJobs);
       this.runCount++;
       this.lastRun = new Date();
       
@@ -419,7 +465,7 @@ class RealJobRunner {
       console.log('\n✅ SCRAPING CYCLE COMPLETE');
       console.log('============================');
       console.log(`⏱️  Duration: ${duration.toFixed(1)} seconds`);
-      console.log(`📊 Jobs processed this cycle: ${adzunaJobs + jobspyJobs + reedJobs}`);
+      console.log(`📊 Jobs processed this cycle: ${adzunaJobs + jobspyJobs + jobspyInternshipsJobs + reedJobs}`);
       console.log(`📈 Total jobs processed: ${this.totalJobsSaved}`);
       console.log(`🔄 Total cycles run: ${this.runCount}`);
       console.log(`📅 Last run: ${this.lastRun.toISOString()}`);
@@ -427,7 +473,8 @@ class RealJobRunner {
       console.log(`🆕 Database recent (24h): ${dbStats.recentJobs} jobs`);
       console.log(`🏷️  Sources: ${JSON.stringify(dbStats.sourceBreakdown)}`);
       console.log(`🎯 Core scrapers breakdown:`);
-      console.log(`   - JobSpy: ${jobspyJobs} jobs`);
+      console.log(`   - JobSpy (General): ${jobspyJobs} jobs`);
+      console.log(`   - JobSpy (Internships Only): ${jobspyInternshipsJobs} jobs`);
       console.log(`   - Adzuna: ${adzunaJobs} jobs`);
       console.log(`   - Reed: ${reedJobs} jobs`);
       
@@ -479,7 +526,7 @@ class RealJobRunner {
     console.log('   - 3x daily scraping cycles (8am, 1pm, 6pm)');
     console.log('   - Daily health checks');
     console.log('   - Database monitoring');
-    console.log('   - 4 core scrapers: JobSpy, Adzuna, Reed, Muse');
+    console.log('   - 5 core scrapers: JobSpy, JobSpy Internships, Adzuna, Reed, Greenhouse');
   }
 
   // Get status
