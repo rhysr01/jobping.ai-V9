@@ -501,7 +501,7 @@ Requirements:
    * - Role Type Match: 33% (internship vs graduate vs junior)
    * - Location Match: 28% (target city > EU location)
    * - Career Path/Skills: 24% (finance, consulting, tech, etc.)
-   * - Famous Company: 12% (only household names)
+   * - Company Tier: 15% (10pt baseline for all, +2pt for famous brands)
    * - Cold Start Boost: 15% (new users)
    * NO FRESHNESS: All jobs filtered to 60 days, so all are fresh!
    */
@@ -549,7 +549,7 @@ Requirements:
       reasons.push(skillScore.reason);
     }
 
-    // 4. Famous Company (12 pts max) - Only household names
+    // 4. Company Tier (12 pts max) - Famous brands get +2 bonus, unknown get baseline
     const companyScore = this.calculateCompanyTierScore(company, jobText);
     score += companyScore.points;
     if (companyScore.points > 0) {
@@ -940,7 +940,7 @@ Requirements:
    * Calculate company tier/quality score
    */
   private calculateCompanyTierScore(company: string, jobText: string): { points: number; reason: string } {
-    // ONLY boost FAMOUS companies (household names)
+    // Famous companies get small bonus - but unknown companies are ALSO valued!
     const famousCompanies = [
       // Tech Giants
       'google', 'microsoft', 'apple', 'amazon', 'meta', 'facebook', 'netflix', 'uber', 'airbnb', 'tesla',
@@ -958,15 +958,15 @@ Requirements:
       'salesforce', 'oracle', 'sap', 'adobe', 'spotify', 'booking.com'
     ];
 
-    // Check for famous companies ONLY
+    // Check for famous companies - small bonus
     for (const famous of famousCompanies) {
       if (company.includes(famous)) {
         return { points: 12, reason: 'famous company' };
       }
     }
 
-    // No boost for unknown companies
-    return { points: 0, reason: '' };
+    // Unknown companies still get baseline points (not all good jobs are at famous brands!)
+    return { points: 10, reason: 'established company' };
   }
 
   /**
