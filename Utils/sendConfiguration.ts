@@ -23,7 +23,7 @@ export const SEND_PLAN = {
     days: ["Thu"],      // Weekly on Thursday
     perSend: 5,         // Exactly 5 jobs per email
     pullsPerWeek: 1,
-    signupBonus: 5,     // 5 jobs on signup
+    signupBonus: 10,    // 10 jobs on signup (2x first email!)
   },
   premium: {
     days: ["Mon", "Wed", "Fri"], // 3x per week
@@ -36,7 +36,7 @@ export const SEND_PLAN = {
 
 // Match quality rules
 export const MATCH_RULES = {
-  minScore: 60,
+  minScore: 65,  // Minimum 65% match to send (balanced quality)
   lookbackDays: 30,
   maxPerCompanyPerSend: 2
 } as const;

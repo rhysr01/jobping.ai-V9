@@ -477,8 +477,8 @@ Requirements:
       const job = jobs[i];
       const scoreResult = this.calculateWeightedScore(job, userPrefs, userCities, userCareer, userCareerPaths);
       
-      // Only include matches above threshold (increased from 65 to 70 for better quality)
-      if (scoreResult.score >= 70) {
+      // Include matches above threshold (balanced for good coverage)
+      if (scoreResult.score >= 65) {
         matches.push({
           job_index: i + 1,
           job_hash: job.job_hash,
@@ -512,7 +512,7 @@ Requirements:
     userCareer: string,
     userCareerPaths: string[]
   ): { score: number; reasons: string[] } {
-    let score = 45; // Base score
+    let score = 55; // Base score (increased for better match %s)
     const reasons: string[] = [];
     
     const title = job.title?.toLowerCase() || '';
