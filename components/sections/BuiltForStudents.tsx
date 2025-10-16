@@ -21,18 +21,18 @@ export default function BuiltForStudents() {
   ];
 
   return (
-    <section className="section-pad">
+    <section className="py-20 sm:py-24 md:py-32 lg:py-40">
       <div className="container-page">
-        <h2 className="h2-section text-center px-4">We search 1,000+ companies daily. You review 5 weekly.</h2>
+        <h2 className="h2-section text-center px-4 leading-tight">We search 1,000+ companies daily. You review 5 weekly.</h2>
 
         <div className="mt-10 sm:mt-12 grid gap-8 sm:gap-10 md:grid-cols-3 md:gap-14">
           {features.filter(feature => feature && feature.title).map((feature) => (
-            <div key={feature.num} className="glass-card rounded-2xl p-7 sm:p-9 md:p-11 interactive-hover relative overflow-hidden">
+            <div key={feature.num} className="glass-card rounded-2xl p-8 sm:p-10 md:p-12 interactive-hover relative overflow-hidden">
               <div className="number-chip">{feature.num}</div>
-              <h3 className="mt-4 text-lg sm:text-xl font-semibold">{feature.title}</h3>
-              <p className="mt-2 p-muted text-sm sm:text-base">{feature.body}</p>
-              <div className="mt-4 pt-4 border-t border-zinc-800">
-                <p className="text-xs sm:text-sm font-semibold text-brand-400">{feature.stats}</p>
+              <h3 className="mt-6 text-xl sm:text-2xl font-bold text-white">{feature.title}</h3>
+              <p className="mt-3 p-muted text-base sm:text-lg leading-relaxed">{feature.body}</p>
+              <div className="mt-6 pt-5 border-t border-zinc-700/50">
+                <p className="text-sm sm:text-base font-bold text-brand-400">{feature.stats}</p>
               </div>
             </div>
           ))}

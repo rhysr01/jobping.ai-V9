@@ -59,49 +59,49 @@ export default function FinalCTA() {
   const regularJob = displayJobs[1];
 
   return (
-    <section className="section-pad">
+    <section className="py-20 sm:py-24 md:py-32 lg:py-40">
       <div className="container-page">
-        <div className="text-center mb-10 sm:mb-14 px-4">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">Personalised for you in your inbox weekly</h2>
-          <p className="mt-4 sm:mt-5 text-base sm:text-lg text-zinc-300">Here's exactly what you'll receive:</p>
+        <div className="text-center mb-12 sm:mb-16 px-4">
+          <h2 className="h2-section leading-tight">Personalised for you in your inbox weekly</h2>
+          <p className="mt-5 sm:mt-6 text-base sm:text-lg md:text-xl text-zinc-300 leading-relaxed">Here's exactly what you'll receive:</p>
         </div>
 
         {/* Real email preview with actual jobs */}
         <div className="max-w-2xl mx-auto px-4">
-          <div className="bg-black border border-zinc-800 rounded-xl overflow-hidden shadow-[0_0_60px_rgba(99,102,241,0.15)]">
+          <div className="bg-black border-2 border-zinc-800/50 rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(99,102,241,0.25),0_20px_60px_rgba(0,0,0,0.4)]">
             
-            {/* Purple gradient header - EXACT match */}
+            {/* Purple gradient header - REFINED */}
             <div className="relative overflow-hidden" style={{
               background: 'linear-gradient(135deg, #6366F1 0%, #7C3AED 50%, #8B5CF6 100%)',
-              padding: '32px 20px'
+              padding: '40px 24px'
             }}>
               <div className="absolute inset-0" style={{
-                background: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.1), transparent 50%)',
+                background: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.15), transparent 60%)',
                 pointerEvents: 'none'
               }}></div>
               <div className="relative z-10 text-center">
-                <div className="text-3xl sm:text-4xl font-extrabold text-white mb-1" style={{
-                  letterSpacing: '-1px',
-                  textShadow: '0 2px 10px rgba(0,0,0,0.3)'
+                <div className="text-4xl sm:text-5xl font-black text-white mb-2" style={{
+                  letterSpacing: '-1.5px',
+                  textShadow: '0 4px 20px rgba(0,0,0,0.4)'
                 }}>
                   JobPing
                 </div>
-                <div className="text-[10px] sm:text-xs text-white/95 font-semibold uppercase tracking-wider">
-                  AI-Powered Job Matching for Europe
+                <div className="text-xs sm:text-sm text-white/95 font-bold uppercase tracking-widest">
+                  AI-Powered Job Matching
                 </div>
               </div>
             </div>
 
             {/* Email content */}
-            <div className="p-4 sm:p-6 md:p-8 bg-black">
+            <div className="p-6 sm:p-8 md:p-10 bg-black">
               {/* Greeting */}
-              <div className="text-center mb-6 sm:mb-8">
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">5 perfect matches just dropped</h3>
-                <p className="text-zinc-400 text-xs sm:text-sm">We found roles that actually match you—no generic spam, just quality.</p>
+              <div className="text-center mb-8 sm:mb-10">
+                <h3 className="text-2xl sm:text-3xl font-black text-white mb-3 sm:mb-4 leading-tight">5 perfect matches just dropped</h3>
+                <p className="text-zinc-400 text-sm sm:text-base">We found roles that actually match you—no generic spam, just quality.</p>
               </div>
 
               {/* Hot Match Job Card - DYNAMIC */}
-              <div className="mb-4 sm:mb-6 p-4 sm:p-6 md:p-7 rounded-2xl border-2 border-purple-500/60 bg-gradient-to-br from-brand-500/8 to-purple-600/5 shadow-[0_8px_32px_rgba(99,102,241,0.25)]">
+              <div className="mb-6 sm:mb-7 p-5 sm:p-7 md:p-8 rounded-2xl border-2 border-purple-500/70 bg-gradient-to-br from-brand-500/12 to-purple-600/8 shadow-[0_12px_40px_rgba(99,102,241,0.35)]">
                 <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-purple-600 to-brand-500 text-white text-[10px] sm:text-xs font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg mb-3 sm:mb-4 shadow-[0_4px_12px_rgba(139,92,246,0.4)]">
                   <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse"></span>
                   Hot Match • {hotJob.match_score}% Match
@@ -123,7 +123,7 @@ export default function FinalCTA() {
               </div>
 
               {/* Regular Job Card - DYNAMIC */}
-              <div className="mb-4 sm:mb-6 p-4 sm:p-6 md:p-7 rounded-2xl border border-brand-500/20 bg-[#111111] shadow-[0_4px_20px_rgba(99,102,241,0.15)]">
+              <div className="mb-6 sm:mb-7 p-5 sm:p-7 md:p-8 rounded-2xl border border-brand-500/30 bg-gradient-to-br from-zinc-900/90 to-black shadow-[0_8px_30px_rgba(99,102,241,0.2)]">
                 <div className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3 leading-tight">{regularJob.title}</div>
                 <div className="text-zinc-300 font-semibold text-sm sm:text-base mb-1 sm:mb-2">{regularJob.company}</div>
                 <div className="text-zinc-500 text-xs sm:text-sm mb-3 sm:mb-4">{regularJob.location}</div>
@@ -161,9 +161,9 @@ export default function FinalCTA() {
             </div>
 
             {/* Footer */}
-            <div className="bg-[#0a0a0a]/80 border-t border-brand-500/15 p-4 sm:p-6 text-center">
-              <div className="text-lg sm:text-xl md:text-2xl font-bold text-purple-500 mb-1">JobPing</div>
-              <p className="text-[10px] sm:text-xs text-zinc-600">AI-powered job matching for Europe</p>
+            <div className="bg-[#0a0a0a]/80 border-t-2 border-brand-500/20 p-5 sm:p-7 text-center">
+              <div className="text-2xl sm:text-3xl font-black text-purple-400 mb-2">JobPing</div>
+              <p className="text-xs sm:text-sm text-zinc-500 font-medium">AI-powered job matching for Europe</p>
             </div>
           </div>
         </div>

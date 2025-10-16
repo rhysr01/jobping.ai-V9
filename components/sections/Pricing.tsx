@@ -1,9 +1,9 @@
 export default function Pricing() {
   return (
-    <section id="pricing" className="py-20 sm:py-24 md:py-28 lg:py-36 scroll-mt-24">
+    <section id="pricing" className="py-20 sm:py-24 md:py-32 lg:py-40 scroll-mt-24">
       <div className="container-page">
-        <h2 className="text-center font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl tracking-tight px-4">Five hand picked roles in every email. No dashboards. No scrolling marathons.</h2>
-        <p className="mt-2 sm:mt-3 text-center p-muted text-sm sm:text-base px-4">Pick how often you want great roles.</p>
+        <h2 className="h2-section text-center px-4">Five hand picked roles in every email. No dashboards. No scrolling marathons.</h2>
+        <p className="mt-4 sm:mt-5 text-center p-muted text-base sm:text-lg md:text-xl px-4">Pick how often you want great roles.</p>
         <div className="mt-4 sm:mt-6 text-center">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-brand-500 text-white text-xs sm:text-sm font-bold px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-lg">
             <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
@@ -42,7 +42,7 @@ export default function Pricing() {
           </div>
 
           {/* Premium - MASSIVE EMPHASIS */}
-          <div className="rounded-3xl border-4 border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/15 p-8 sm:p-10 relative shadow-[0_0_60px_rgba(99,102,241,0.4)] hover:shadow-[0_0_80px_rgba(99,102,241,0.6)] transition-all duration-300 transform hover:scale-[1.02] md:scale-105">
+          <div className="rounded-3xl border-4 border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/15 p-8 sm:p-10 relative shadow-[0_0_60px_rgba(99,102,241,0.5)] hover:shadow-[0_0_100px_rgba(99,102,241,0.8)] transition-all duration-300 transform hover:scale-[1.02]">
             {/* HUGE Badge */}
             <div className="absolute -top-5 sm:-top-6 left-1/2 -translate-x-1/2">
               <span className="inline-block text-sm sm:text-base px-6 sm:px-8 py-2 sm:py-3 rounded-full bg-gradient-to-r from-brand-500 to-purple-600 text-white font-black shadow-[0_8px_24px_rgba(99,102,241,0.6)] animate-pulse uppercase tracking-wider">
@@ -99,7 +99,7 @@ export default function Pricing() {
               </li>
             </ul>
             
-            <a href="/upgrade" className="btn-primary mt-6 sm:mt-8 w-full text-center text-lg sm:text-xl py-4 sm:py-5 font-black bg-gradient-to-r from-brand-500 to-purple-600 hover:from-brand-600 hover:to-purple-700 shadow-[0_8px_24px_rgba(99,102,241,0.5)] hover:shadow-[0_12px_32px_rgba(99,102,241,0.7)] transform hover:scale-105 transition-all duration-200 touch-manipulation uppercase tracking-wide">
+            <a href="/upgrade" className="btn-primary mt-6 sm:mt-8 w-full text-center text-lg sm:text-xl py-5 sm:py-6 font-black shadow-[0_12px_40px_rgba(99,102,241,0.6)] hover:shadow-[0_16px_50px_rgba(99,102,241,0.9)] transform hover:scale-[1.03] transition-all duration-200 touch-manipulation uppercase tracking-wide">
               Get Premium Now
             </a>
             

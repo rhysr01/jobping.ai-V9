@@ -9,13 +9,13 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section className="section-pad">
+    <section className="py-20 sm:py-24 md:py-32 lg:py-40">
       <div className="container-page">
         <motion.h2 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="h2-section text-center px-4"
+          className="h2-section text-center px-4 leading-tight"
         >
           Stop searching. Start applying.
         </motion.h2>
@@ -38,17 +38,17 @@ export default function HowItWorks() {
               }}
             >
               <motion.div 
-                className="number-chip mx-auto animate-pulseRing"
+                className="number-chip mx-auto"
                 whileHover={{ 
-                  scale: 1.1,
-                  rotate: [0, -5, 5, 0],
-                  transition: { duration: 0.4 }
+                  scale: 1.15,
+                  rotate: [0, -8, 8, 0],
+                  transition: { duration: 0.5 }
                 }}
               >
                 {x.num}
               </motion.div>
-              <h3 className="mt-5 text-lg sm:text-xl font-semibold">{x.title}</h3>
-              <p className="mt-2 p-muted text-sm sm:text-base">{x.body}</p>
+              <h3 className="mt-6 text-xl sm:text-2xl font-bold text-white">{x.title}</h3>
+              <p className="mt-3 p-muted text-base sm:text-lg leading-relaxed">{x.body}</p>
             </motion.div>
           ))}
         </div>
