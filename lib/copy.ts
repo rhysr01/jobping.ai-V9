@@ -4,7 +4,7 @@
 
 export const CTA_FREE = "Get 5 matches — Free";
 export const CTA_PREMIUM = "Upgrade to Premium";
-export const VP_TAGLINE = "5 relevant roles. Zero scrolling.\nWeekly matches for early-career roles across Europe — delivered to your inbox.";
+export const VP_TAGLINE = "Stop searching. Start applying.\nWeekly matches for early-career roles across Europe — delivered to your inbox.";
 
 // Hero section
 export const HERO_TITLE = "JobPing";
@@ -62,10 +62,10 @@ export const PREMIUM_PLAN_PRICE_UNIT = "/mo";
 export const PREMIUM_PLAN_ANNUAL = "€20 for 3 months (save €1)";
 export const PREMIUM_PLAN_FEATURES = [
   "10 matches on signup",
-  "3 emails per week (Mon/Wed/Fri)",
-  "5 roles per email",
-  "Optional alerts for standout roles (max 2/wk)",
-  "Finer filters",
+  "60+ jobs per month (3x per week)",
+  "24-hour early access to fresh roles",
+  "Hot match alerts (2/week for urgent roles)",
+  "Advanced filters and preferences",
   "Priority support"
 ];
 

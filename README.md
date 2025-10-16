@@ -197,7 +197,7 @@ open coverage/lcov-report/index.html
    ↓
 5. Welcome email sent with matched jobs
    ↓
-6. Weekly emails continue (Mon for free, Mon/Wed/Fri for premium)
+6. Weekly emails continue (Thursday for free, Mon/Wed/Fri for premium)
 ```
 
 ### AI Matching Strategy

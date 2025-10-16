@@ -7,7 +7,7 @@ export default function Pricing() {
         <div className="mt-4 sm:mt-6 text-center">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-brand-500 text-white text-xs sm:text-sm font-bold px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-lg">
             <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-            Join now and get 5 personalised jobs within 48 hours
+            Sign up today → Get your first 5 roles within 48 hours
           </div>
         </div>
 
@@ -15,7 +15,7 @@ export default function Pricing() {
           {/* Free */}
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-6 sm:p-8">
             <h3 className="text-xl sm:text-2xl font-bold">Free</h3>
-            <p className="mt-2 text-zinc-400 text-xs sm:text-sm">Save ~5 hours every week searching</p>
+            <p className="mt-2 text-zinc-400 text-xs sm:text-sm">Perfect for starting your job search</p>
             <div className="mt-3 sm:mt-4 mb-4 sm:mb-6">
               <div className="text-3xl sm:text-4xl font-black text-white">5 jobs</div>
               <div className="text-zinc-500 text-xs sm:text-sm">per week</div>
@@ -49,7 +49,7 @@ export default function Pricing() {
               </span>
             </div>
             <h3 className="text-xl sm:text-2xl font-bold mt-2">Premium</h3>
-            <p className="mt-2 text-zinc-400 text-xs sm:text-sm">Save ~15 hours every week searching</p>
+            <p className="mt-2 text-zinc-400 text-xs sm:text-sm">3x more opportunities • First access to new roles</p>
             <div className="mt-3 sm:mt-4 mb-2">
               <div className="text-3xl sm:text-4xl font-black text-white">15 jobs</div>
               <div className="text-zinc-400 text-xs sm:text-sm font-semibold">per week (Mon • Wed • Fri)</div>
@@ -66,11 +66,15 @@ export default function Pricing() {
               </li>
               <li className="flex items-start gap-2 sm:gap-3">
                 <span className="text-brand-400 mt-0.5">✓</span>
-                <span><strong className="text-white">3x more job opportunities</strong> than free tier</span>
+                <span><strong className="text-white">60+ jobs per month</strong> vs 20 on free tier</span>
               </li>
               <li className="flex items-start gap-2 sm:gap-3">
                 <span className="text-brand-400 mt-0.5">✓</span>
-                <span>Hot match alerts (max 2/week for urgent roles)</span>
+                <span><strong className="text-white">24-hour early access</strong> to fresh roles</span>
+              </li>
+              <li className="flex items-start gap-2 sm:gap-3">
+                <span className="text-brand-400 mt-0.5">✓</span>
+                <span>Hot match alerts (2/week for urgent roles)</span>
               </li>
               <li className="flex items-start gap-2 sm:gap-3">
                 <span className="text-brand-400 mt-0.5">✓</span>

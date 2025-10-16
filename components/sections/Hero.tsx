@@ -50,15 +50,28 @@ export default function Hero() {
           Internships, grad programmes, and early career opportunities sent to you.
         </p>
         <p className="mt-3 sm:mt-4 text-sm sm:text-base md:text-lg text-zinc-400 max-w-[58ch] mx-auto px-4">
-          5 minutes to setup. Hours saved every week.
+          Stop searching. Start applying.
         </p>
+        
+        {/* Signup bonus urgency banner */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="mt-6 sm:mt-8"
+        >
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-brand-500 text-white text-xs sm:text-sm font-bold px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-lg">
+            <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+            Sign up today → Get your first 5 roles within 48 hours
+          </div>
+        </motion.div>
         
         {/* CTA Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
-          className="mt-8 sm:mt-10 px-4"
+          className="mt-6 sm:mt-8 px-4"
         >
           <a
             href="https://tally.so/r/mJEqx4"
@@ -69,7 +82,7 @@ export default function Hero() {
             Get Started — It's Free
           </a>
           <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-zinc-500">
-            Get 5 personalised jobs within 48 hours • No logins • No spam
+            No logins • No spam • Unsubscribe anytime
           </p>
         </motion.div>
       </div>

@@ -23,7 +23,7 @@ export default function BuiltForStudents() {
   return (
     <section className="section-pad">
       <div className="container-page">
-        <h2 className="h2-section text-center px-4">Your time = Applications, not searching</h2>
+        <h2 className="h2-section text-center px-4">We search 1,000+ companies daily. You review 5 weekly.</h2>
 
         <div className="mt-8 sm:mt-10 grid gap-6 sm:gap-8 md:grid-cols-3 md:gap-12">
           {features.filter(feature => feature && feature.title).map((feature) => (

@@ -11,11 +11,11 @@ export {
   EMAIL_PERFORMANCE_METRICS 
 } from './optimizedSender';
 
-// Templates - GMAIL-COMPATIBLE (Table-based layout with inline styles)
+// Templates - GMAIL-OPTIMIZED (Light background, high contrast, large text, no emojis)
 export { 
-  createWelcomeEmailGmail as createWelcomeEmail, 
-  createJobMatchesEmailGmail as createJobMatchesEmail
-} from './gmailCompatibleTemplates';
+  createWelcomeEmailOptimized as createWelcomeEmail, 
+  createJobMatchesEmailOptimized as createJobMatchesEmail
+} from './gmailOptimized';
 
 // Keep original templates available
 export { 

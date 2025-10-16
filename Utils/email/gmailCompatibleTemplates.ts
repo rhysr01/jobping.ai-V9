@@ -29,8 +29,8 @@ const createHeader = () => `
       <table width="600" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td align="center">
-            <div style="font-size: 36px; font-weight: 800; color: ${COLORS.white}; margin-bottom: 4px; letter-spacing: -1px;">
-              🎯 JobPing
+            <div style="font-size: 48px; font-weight: 800; color: ${COLORS.white}; margin-bottom: 4px; letter-spacing: -1px;">
+              JobPing
             </div>
             <div style="color: ${COLORS.white}; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px;">
               AI-Powered Job Matching for Europe
@@ -48,8 +48,8 @@ const createFooter = () => `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: ${COLORS.gray900};">
   <tr>
     <td align="center" style="padding: 32px 24px; border-top: 1px solid ${COLORS.gray700};">
-      <div style="font-size: 18px; font-weight: 600; color: ${COLORS.purpleLight}; margin-bottom: 8px;">
-        🎯 JobPing
+      <div style="font-size: 24px; font-weight: 700; color: ${COLORS.purpleLight}; margin-bottom: 8px;">
+        JobPing
       </div>
       <div style="color: ${COLORS.gray500}; font-size: 13px; margin-bottom: 16px;">
         AI-powered job matching for Europe
@@ -75,7 +75,7 @@ const createJobCard = (card: EmailJobCard, userEmail: string) => {
     : '';
   
   const hotBadge = isHotMatch
-    ? `<div style="background-color: ${COLORS.purpleLight}; color: ${COLORS.white}; padding: 8px 16px; border-radius: 8px; font-weight: 600; margin-bottom: 16px; display: inline-block; font-size: 13px;">🔥 Hot Match • ${matchScore}% Match</div>`
+    ? `<div style="background-color: ${COLORS.purpleLight}; color: ${COLORS.white}; padding: 8px 16px; border-radius: 8px; font-weight: 600; margin-bottom: 16px; display: inline-block; font-size: 13px;">Hot Match • ${matchScore}% Match</div>`
     : '';
   
   return `
@@ -93,7 +93,7 @@ const createJobCard = (card: EmailJobCard, userEmail: string) => {
               ${card.job.company || 'Company'}
             </div>
             <div style="color: ${COLORS.gray500}; font-size: 14px; margin-bottom: 16px;">
-              📍 ${card.job.location || 'Location'}
+              ${card.job.location || 'Location'}
             </div>
             <div style="margin-top: 16px;">
               ${isHotMatch ? '' : `<span style="background-color: ${COLORS.purple}; color: ${COLORS.white}; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 700; display: inline-block;">${matchScore}% Match</span>`}
@@ -106,7 +106,7 @@ const createJobCard = (card: EmailJobCard, userEmail: string) => {
               <tr>
                 <td>
                   <div style="font-size: 12px; color: ${COLORS.gray400}; font-weight: 600; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
-                    📎 APPLICATION LINK
+                    APPLICATION LINK
                   </div>
                   <table width="100%" cellpadding="0" cellspacing="0" border="0">
                     <tr>
