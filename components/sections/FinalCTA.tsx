@@ -14,7 +14,7 @@ interface FeaturedJob {
 }
 
 export default function FinalCTA() {
-  const tallyUrl = 'https://tally.so/r/mJEqx4?tier=free&source=finalcta';
+  const signupUrl = '/signup?source=finalcta';
   const [jobs, setJobs] = useState<FeaturedJob[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -149,9 +149,7 @@ export default function FinalCTA() {
               <div className="text-center pt-4 sm:pt-6 border-t border-zinc-800">
                 <p className="text-zinc-500 text-[10px] sm:text-xs mb-3 sm:mb-4">+ 3 more matches in your weekly email</p>
                 <a 
-                  href={tallyUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
+                  href={signupUrl}
                   className="btn-primary inline-block touch-manipulation"
                 >
                   Get My First 10 Roles

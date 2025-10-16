@@ -38,7 +38,7 @@ export default function Pricing() {
                 <span>Email support</span>
               </li>
             </ul>
-            <a href="https://tally.so/r/mJEqx4?tier=free&source=pricing" target="_blank" rel="noopener noreferrer" className="btn-secondary mt-4 sm:mt-6 w-full text-center touch-manipulation">Get My 5 Weekly Roles</a>
+            <a href="/signup?tier=free" className="btn-secondary mt-4 sm:mt-6 w-full text-center touch-manipulation">Get My 5 Weekly Roles</a>
           </div>
 
           {/* Premium - MASSIVE EMPHASIS */}

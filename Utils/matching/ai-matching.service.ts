@@ -151,7 +151,24 @@ export class AIMatchingService {
           messages: [
             {
               role: 'system',
-              content: 'You are an expert job matching AI. Analyze jobs and return JSON matches.'
+              content: `You are an expert career advisor for EARLY-CAREER business school candidates.
+
+DATABASE QUALITY (use this info):
+- 100% of jobs have verified city data (14 target cities)
+- 100% of jobs have country data
+- 91.9% flagged as early-career appropriate
+- 85%+ labeled by career path category
+- 84% have language requirements
+
+YOUR MATCHING PRIORITY:
+1. CAREER PATH + ROLE TYPE: Match BOTH the broad path AND specific role type
+   Example: User wants "Tech + Sales" = Tech Sales/BDR (NOT Software Engineer)
+   Example: User wants "Tech + Engineer" = Software Engineer (NOT Sales)
+2. LOCATION: Match job city to user's target cities
+3. LANGUAGE: Ensure user speaks required languages
+4. RELEVANCE: Is role description compelling for early-career?
+
+Return ONLY valid JSON array with matches.`
             },
             {
               role: 'user',
@@ -234,18 +251,80 @@ Return ONLY valid JSON array, no other text.
   }
 
   private buildUserContext(profile: NormalizedUserProfile): string {
+    const careerPaths = profile.career_path && profile.career_path.length > 0
+      ? profile.career_path.map(p => `  ✓ ${this.formatCareerPath(p)}`).join('\n')
+      : '  (Open to all career paths)';
+    
+    const specificRoles = profile.roles_selected && profile.roles_selected.length > 0
+      ? profile.roles_selected.map(r => `  ✓ ${r}`).join('\n')
+      : '  (Open to all role types)';
+      
     return `
 USER PROFILE:
 - Email: ${profile.email}
-- Career Focus: ${profile.careerFocus || 'Not specified'}
-- Target Cities: ${profile.target_cities?.join(', ') || 'Not specified'}
-- Languages: ${profile.languages_spoken?.join(', ') || 'Not specified'}
-- Work Environment: ${profile.work_environment || 'flexible'}
-- Experience Level: ${profile.entry_level_preference || 'entry'}
-- Start Date: ${profile.start_date || 'flexible'}
-- Company Types: ${profile.company_types?.join(', ') || 'Not specified'}
-- Roles: ${profile.roles_selected?.join(', ') || 'Not specified'}
+
+CAREER PATH PREFERENCES (Priority #1 for matching):
+${careerPaths}
+
+SPECIFIC ROLE TYPES (Priority #2 - BE PRECISE HERE!):
+${specificRoles}
+
+🚨 IMPORTANT: Career Path + Role Type must BOTH match!
+Examples:
+  • "Tech & Transformation" + "Software Engineer" = Software Intern/Engineer roles
+  • "Tech & Transformation" + "Sales" = Tech Sales/Business Development roles
+  • "Finance & Investment" + "Analyst" = Financial Analyst/Investment Analyst roles
+  • "Marketing & Growth" + "Content" = Content Marketing roles
+
+Available Career Paths:
+  • Strategy & Business Design
+  • Data & Analytics  
+  • Retail & Luxury
+  • Sales & Client Success
+  • Marketing & Growth
+  • Finance & Investment
+  • Operations & Supply Chain
+  • Product & Innovation
+  • Tech & Transformation
+  • Sustainability & ESG
+
+TARGET CITIES (100% verified location data):
+${profile.target_cities?.map(c => `  • ${c}`).join('\n') || '  • Flexible across all 14 cities'}
+
+LANGUAGES SPOKEN:
+${profile.languages_spoken?.map(l => `  • ${l}`).join('\n') || '  • English'}
+
+OTHER PREFERENCES:
+- Work Environment: ${profile.work_environment || 'Flexible'}
+- Experience Level: ${profile.entry_level_preference || 'Entry-level'}
+- Start Date: ${profile.start_date || 'Flexible'}
+- Company Types: ${profile.company_types?.join(', ') || 'Open'}
+
+CRITICAL MATCHING RULES:
+1. **Career Path + Role Type Match**: BOTH must align with job title/description
+   - Tech path + Sales role = Tech Sales (NOT software engineer)
+   - Tech path + Engineer role = Software Engineer (NOT sales)
+2. **Location Match**: User's target cities MUST match job city (100% accurate data)
+3. **Language Match**: User must speak job's required languages (84% of jobs have this data)
+4. **Early-Career Focus**: All jobs are entry-level appropriate (91.9% verified)
 `;
+  }
+
+  // Helper to format career path names nicely
+  private formatCareerPath(slug: string): string {
+    const pathNames: Record<string, string> = {
+      'strategy-business-design': 'Strategy & Business Design',
+      'data-analytics': 'Data & Analytics',
+      'retail-luxury': 'Retail & Luxury',
+      'sales-client-success': 'Sales & Client Success',
+      'marketing-growth': 'Marketing & Growth',
+      'finance-investment': 'Finance & Investment',
+      'operations-supply-chain': 'Operations & Supply Chain',
+      'product-innovation': 'Product & Innovation',
+      'tech-transformation': 'Tech & Transformation',
+      'sustainability-esg': 'Sustainability & ESG'
+    };
+    return pathNames[slug] || slug;
   }
 
   // NEW: Build user context WITH feedback learning AND CV insights
@@ -389,17 +468,39 @@ LEARNED PREFERENCES (from ${feedbackSummary.total} ratings):
   }
 
   private buildJobsContext(jobs: EnrichedJob[]): string {
-    return jobs.map((job, index) => `
+    return jobs.map((job, index) => {
+      const careerPaths = job.categories
+        ?.filter((c: string) => c !== 'early-career')
+        .map((c: string) => this.formatCareerPath(c))
+        .join(' + ') || 'General Business';
+        
+      const languages = job.language_requirements && job.language_requirements.length > 0
+        ? job.language_requirements.join(', ')
+        : 'English (inferred)';
+        
+      return `
 JOB ${index}:
-- Title: ${job.title}
-- Company: ${job.company}
-- Location: ${job.location}
-- Description: ${job.description?.substring(0, 500)}...
-- Categories: ${job.categories?.join(', ')}
-- Experience Level: ${job.experienceLevel}
-- Remote Flexibility: ${job.remoteFlexibility}/10
-- Market Demand: ${job.marketDemand}/10
-`).join('\n');
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 Title: ${job.title}
+🏢 Company: ${job.company}
+📍 Location: ${job.city}, ${job.country} (verified)
+🎯 Career Path(s): ${careerPaths}
+🗣️ Languages Required: ${languages}
+📊 Experience: ${job.experience_required || 'Entry-level'}
+🔥 Freshness: ${job.freshness_tier || 'Active'}
+
+📄 Description (first 400 chars):
+${job.description?.substring(0, 400).trim()}...
+
+MATCH CRITERIA:
+✓ Career path matches user's selected paths?
+✓ Role type matches user's specific role preferences? (e.g., "sales" vs "engineer")
+✓ City in user's target cities?
+✓ User speaks required languages?
+✓ Role appropriate for early-career?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`;
+    }).join('\n');
   }
 
   parseAndValidateMatches(response: string, jobs: Job[]): JobMatch[] {

@@ -14,6 +14,8 @@ export interface Job {
   title: string;                        // text Non-nullable
   company: string;                      // text Non-nullable
   location: string;                     // text Non-nullable
+  city?: string;                        // varchar Nullable (extracted from location)
+  country?: string;                     // varchar Nullable (2-letter country code)
   job_url: string;                      // text Non-nullable
   description: string;                  // text Non-nullable
   experience_required: string;          // text Non-nullable
@@ -444,12 +446,26 @@ export const VISA_STATUS_OPTIONS = [
 ] as const;
 
 export const CAREER_PATHS = [
-  'consulting', 'finance', 'tech', 'marketing', 'operations', 'entrepreneurship'
+  'strategy-business-design',
+  'data-analytics', 
+  'retail-luxury',
+  'sales-client-success',
+  'marketing-growth',
+  'finance-investment',
+  'operations-supply-chain',
+  'product-innovation',
+  'tech-transformation',
+  'sustainability-esg'
 ] as const;
 
 export const TARGET_CITIES = [
-  'Madrid', 'Dublin', 'London', 'Amsterdam', 'Berlin', 
-  'Paris', 'Stockholm', 'Zurich'
+  // UK Cities
+  'London', 'Manchester', 'Belfast', 'Birmingham',
+  // Ireland
+  'Dublin',
+  // Continental Europe
+  'Paris', 'Milan', 'Berlin', 'Madrid', 'Amsterdam',
+  'Munich', 'Hamburg', 'Zurich', 'Rome', 'Brussels'
 ] as const;
 
 export type WorkEnvironment = typeof WORK_ENVIRONMENTS[number];

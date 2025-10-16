@@ -101,9 +101,7 @@ export default function Hero() {
           className="mt-6 sm:mt-8 px-4"
         >
           <a
-            href="https://tally.so/r/mJEqx4"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/signup"
             className="inline-block px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 text-base sm:text-lg md:text-xl font-bold text-white bg-gradient-to-r from-brand-500 to-purple-600 rounded-xl hover:scale-105 active:scale-95 transition-transform duration-200 shadow-lg hover:shadow-2xl hover:shadow-brand-500/30 touch-manipulation"
           >
             Get My 10 Roles in 48 Hours
