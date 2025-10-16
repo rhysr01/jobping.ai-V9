@@ -5,7 +5,7 @@ export default function HowItWorks() {
   const items = [
     { num: 1, title: "Tell us what you want", body: "Your target city, work authorization, language skills, and role preferences. Two minutes, done." },
     { num: 2, title: "We find jobs for you", body: "We monitor 1,000+ companies daily so you don't have to. Filtering, deduplicating, and matching everything to your exact criteria." },
-    { num: 3, title: "Get roles that really match you", body: "Every week, one focused email with exactly five roles that fit your profile. Read it in under a minute." },
+    { num: 3, title: "Get roles that really match you", body: "Every week, one focused email with exactly five roles that fit your profile. Read in 60 seconds." },
   ];
 
   return (

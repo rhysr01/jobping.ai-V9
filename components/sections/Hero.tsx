@@ -74,7 +74,7 @@ export default function Hero() {
           Graduate jobs in your inbox. Just apply.
         </h1>
         <p className="mt-6 sm:mt-8 text-lg sm:text-xl md:text-2xl text-zinc-300 max-w-[62ch] mx-auto leading-relaxed px-4">
-          Internships, grad programmes, and early career opportunities sent to you.
+          Internships, grad programmes, and early-career opportunities. Sent to your inbox.
         </p>
         <p className="mt-4 sm:mt-5 text-sm sm:text-base md:text-lg text-zinc-400 max-w-[58ch] mx-auto px-4">
           Stop searching. Start applying.

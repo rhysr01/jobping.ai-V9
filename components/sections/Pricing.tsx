@@ -2,7 +2,7 @@ export default function Pricing() {
   return (
     <section id="pricing" className="py-20 sm:py-24 md:py-32 lg:py-40 scroll-mt-24">
       <div className="container-page">
-        <h2 className="h2-section text-center px-4">Five hand picked roles in every email. No dashboards. No scrolling marathons.</h2>
+        <h2 className="h2-section text-center px-4">Five hand-picked roles in every email. No dashboards. No scrolling marathons.</h2>
         <p className="mt-4 sm:mt-5 text-center p-muted text-base sm:text-lg md:text-xl px-4">Pick how often you want great roles.</p>
         <div className="mt-4 sm:mt-6 text-center">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-brand-500 text-white text-xs sm:text-sm font-bold px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-lg">
@@ -31,14 +31,14 @@ export default function Pricing() {
               </li>
               <li className="flex items-start gap-2 sm:gap-3">
                 <span className="text-green-500 mt-0.5">✓</span>
-                <span>Deduplicated and quality-filtered</span>
+                <span>No duplicates • Quality filtered</span>
               </li>
               <li className="flex items-start gap-2 sm:gap-3">
                 <span className="text-green-500 mt-0.5">✓</span>
                 <span>Email support</span>
               </li>
             </ul>
-            <a href="https://tally.so/r/mJEqx4?tier=free&source=pricing" target="_blank" rel="noopener noreferrer" className="btn-secondary mt-4 sm:mt-6 w-full text-center touch-manipulation">Get my 5 weekly roles</a>
+            <a href="https://tally.so/r/mJEqx4?tier=free&source=pricing" target="_blank" rel="noopener noreferrer" className="btn-secondary mt-4 sm:mt-6 w-full text-center touch-manipulation">Get My 5 Weekly Roles</a>
           </div>
 
           {/* Premium - MASSIVE EMPHASIS */}

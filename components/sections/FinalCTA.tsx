@@ -154,7 +154,7 @@ export default function FinalCTA() {
                   rel="noopener noreferrer"
                   className="btn-primary inline-block touch-manipulation"
                 >
-                  Get my first 5 personalised roles
+                  Get My First 10 Roles
                 </a>
                 <p className="mt-3 sm:mt-4 text-[10px] sm:text-xs text-zinc-500">No CV required. Unsubscribe anytime. GDPR friendly.</p>
               </div>
