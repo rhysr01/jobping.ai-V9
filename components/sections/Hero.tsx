@@ -19,15 +19,33 @@ export default function Hero() {
   return (
     <section className="relative isolate text-center py-16 sm:py-24 md:py-32 lg:py-40 overflow-hidden">
       <div className="container-page">
-        {/* Large JobPing branding with graduation cap - REFINED */}
+        {/* Large JobPing branding with graduation cap - LOUD & BOUNCY */}
         <motion.div 
           className="inline-flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 md:gap-6 mb-8 sm:mb-10"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ 
+            opacity: 1, 
+            scale: [1, 1.08, 1],
+            y: [0, -16, 0]
+          }}
+          transition={{ 
+            opacity: { duration: 0.6 },
+            scale: { 
+              duration: 0.6,
+              repeat: Infinity,
+              repeatDelay: 2.5,
+              ease: [0.34, 1.56, 0.64, 1]
+            },
+            y: {
+              duration: 0.6,
+              repeat: Infinity,
+              repeatDelay: 2.5,
+              ease: [0.34, 1.56, 0.64, 1]
+            }
+          }}
         >
-          {/* Graduation Cap Icon - REFINED SIZE */}
-          <motion.svg
+          {/* Graduation Cap Icon - ANIMATED */}
+          <svg
             className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 text-white flex-shrink-0"
             viewBox="0 0 24 24"
             fill="none"
@@ -36,20 +54,17 @@ export default function Hero() {
             strokeLinecap="round"
             strokeLinejoin="round"
             aria-hidden="true"
-            whileHover={{ 
-              scale: 1.1,
-              rotate: [0, -5, 5, 0],
-              transition: { duration: 0.6 }
-            }}
           >
             <path d="M12 3l10 5-10 5L2 8l10-5z" />
             <path d="M22 10v4" />
             <path d="M6 12v4c0 1.6 3 3.2 6 3.2s6-1.6 6-3.2v-4" />
-          </motion.svg>
+          </svg>
           
-          {/* Large JobPing Text - BIGGER & BOLDER */}
-          <div className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none">
-            <span className="bg-gradient-to-b from-white via-purple-50 to-purple-200 bg-clip-text text-transparent drop-shadow-[0_0_40px_rgba(139,92,246,0.5)]">
+          {/* Large JobPing Text - MASSIVE WITH GLOW */}
+          <div className="text-7xl sm:text-8xl md:text-9xl lg:text-[10rem] font-black tracking-tighter leading-none">
+            <span className="bg-gradient-to-b from-white via-purple-50 to-purple-200 bg-clip-text text-transparent drop-shadow-[0_0_60px_rgba(139,92,246,0.8)]" style={{
+              filter: 'drop-shadow(0 0 40px rgba(139,92,246,0.6))'
+            }}>
               JobPing
             </span>
           </div>
