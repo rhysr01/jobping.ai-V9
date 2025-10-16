@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
@@ -9,6 +9,7 @@ export default function SignupPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [activeJobs, setActiveJobs] = useState('9,769');
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -23,6 +24,17 @@ export default function SignupPage() {
     careerPath: '',
     roles: [] as string[],
   });
+
+  useEffect(() => {
+    fetch('/api/stats')
+      .then(res => res.json())
+      .then(data => {
+        if (data.activeJobsFormatted) {
+          setActiveJobs(data.activeJobsFormatted);
+        }
+      })
+      .catch(err => console.error('Failed to fetch stats:', err));
+  }, []);
 
   const CITIES = ['Dublin', 'London', 'Paris', 'Amsterdam', 'Manchester', 'Birmingham', 'Madrid', 'Barcelona', 'Berlin', 'Hamburg', 'Munich', 'Zurich', 'Milan', 'Rome'];
   
@@ -143,21 +155,66 @@ export default function SignupPage() {
       />
 
       <div className="relative container-page max-w-4xl py-12 sm:py-20">
-        {/* Header with Logo */}
+        {/* Header - DRAMATIC & LOUD */}
         <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          initial={{ opacity: 0, y: -30, scale: 0.95 }}
+          animate={{ 
+            opacity: 1, 
+            y: 0, 
+            scale: 1
+          }}
+          transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+          className="text-center mb-12 sm:mb-16"
         >
-          <div className="text-5xl sm:text-6xl md:text-7xl font-black mb-4 bg-gradient-to-b from-white via-purple-50 to-purple-200 bg-clip-text text-transparent drop-shadow-[0_0_40px_rgba(139,92,246,0.6)]">
-            JobPing
-          </div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
-            Join 1,000+ Students Finding Their Dream Roles
+          {/* Large JobPing with graduation cap */}
+          <motion.div 
+            className="inline-flex items-center justify-center gap-4 sm:gap-5 mb-6"
+            animate={{ 
+              scale: [1, 1.05, 1],
+              y: [0, -8, 0]
+            }}
+            transition={{ 
+              duration: 0.6,
+              repeat: Infinity,
+              repeatDelay: 3,
+              ease: [0.34, 1.56, 0.64, 1]
+            }}
+          >
+            <svg
+              className="w-12 h-12 sm:w-14 sm:h-14 text-white flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 3l10 5-10 5L2 8l10-5z" />
+              <path d="M22 10v4" />
+              <path d="M6 12v4c0 1.6 3 3.2 6 3.2s6-1.6 6-3.2v-4" />
+            </svg>
+            <div className="text-6xl sm:text-7xl md:text-8xl font-black tracking-tighter bg-gradient-to-b from-white via-purple-50 to-purple-200 bg-clip-text text-transparent drop-shadow-[0_0_60px_rgba(139,92,246,0.8)]" style={{
+              filter: 'drop-shadow(0 0 40px rgba(139,92,246,0.6))'
+            }}>
+              JobPing
+            </div>
+          </motion.div>
+          
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 tracking-tight leading-tight">
+            Join 1,000+ Students Getting Their Dream Roles
           </h1>
-          <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
+          <p className="text-zinc-300 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed mb-4">
             Fill out once. Get 10 hand-picked roles in 48 hours. Zero spam.
           </p>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-brand-500 text-white text-xs sm:text-sm font-bold px-4 sm:px-6 py-2 rounded-full shadow-lg"
+          >
+            <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+            {activeJobs} active roles • Updated daily
+          </motion.div>
         </motion.div>
 
         {/* Progress Indicator */}
@@ -518,28 +575,61 @@ export default function SignupPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
+                    className="border-2 border-brand-500/30 rounded-2xl p-6 bg-gradient-to-br from-brand-500/5 to-purple-600/5"
                   >
-                    <label className="block text-base font-bold text-white mb-4">
-                      {selectedCareer.label} Roles <span className="text-zinc-500 font-normal">(Select what interests you)</span>
+                    <label className="block text-lg font-black text-white mb-4">
+                      <span className="text-2xl mr-2">{selectedCareer.emoji}</span>
+                      {selectedCareer.label} Roles 
+                      <span className="text-zinc-500 font-normal text-base ml-2">(Select what interests you)</span>
                     </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {selectedCareer.roles.map(role => (
-                        <motion.button
-                          key={role}
-                          type="button"
-                          onClick={() => setFormData({...formData, roles: toggleArray(formData.roles, role)})}
-                          whileHover={{ scale: 1.01 }}
-                          whileTap={{ scale: 0.99 }}
-                          className={`px-4 py-3 rounded-lg border-2 transition-all font-medium text-left text-sm ${
-                            formData.roles.includes(role)
-                              ? 'border-brand-500 bg-brand-500/15 text-white'
-                              : 'border-zinc-700 bg-zinc-900/40 text-zinc-400 hover:border-zinc-600'
-                          }`}
-                        >
-                          {role}
-                        </motion.button>
-                      ))}
+                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar pr-2 -mr-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {selectedCareer.roles.map((role, idx) => (
+                          <motion.button
+                            key={role}
+                            type="button"
+                            onClick={() => setFormData({...formData, roles: toggleArray(formData.roles, role)})}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.02 }}
+                            whileHover={{ scale: 1.02, x: 2 }}
+                            whileTap={{ scale: 0.98 }}
+                            className={`px-4 py-3.5 rounded-xl border-2 transition-all font-semibold text-left text-sm relative overflow-hidden ${
+                              formData.roles.includes(role)
+                                ? 'border-brand-500 bg-gradient-to-r from-brand-500/20 to-purple-600/15 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]'
+                                : 'border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80'
+                            }`}
+                          >
+                            {formData.roles.includes(role) && (
+                              <motion.div
+                                layoutId="selected-role"
+                                className="absolute inset-0 bg-gradient-to-r from-brand-500/10 to-purple-600/10 -z-10"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                              />
+                            )}
+                            <span className="flex items-center justify-between">
+                              {role}
+                              {formData.roles.includes(role) && (
+                                <span className="text-brand-400 ml-2">✓</span>
+                              )}
+                            </span>
+                          </motion.button>
+                        ))}
+                      </div>
                     </div>
+                    {formData.roles.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-4 pt-4 border-t border-zinc-700"
+                      >
+                        <p className="text-sm text-zinc-400">
+                          <span className="font-bold text-brand-400">{formData.roles.length} role{formData.roles.length > 1 ? 's' : ''}</span> selected
+                        </p>
+                      </motion.div>
+                    )}
                   </motion.div>
                 )}
 
@@ -556,18 +646,52 @@ export default function SignupPage() {
                   <motion.button
                     onClick={handleSubmit}
                     disabled={!formData.careerPath || loading}
-                    whileHover={{ scale: loading ? 1 : 1.02 }}
-                    whileTap={{ scale: loading ? 1 : 0.98 }}
-                    className="btn-primary flex-1 py-5 text-xl font-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 uppercase tracking-wide shadow-[0_12px_40px_rgba(99,102,241,0.6)]"
+                    whileHover={{ scale: loading ? 1 : 1.03 }}
+                    whileTap={{ scale: loading ? 1 : 0.97 }}
+                    className="relative flex-1 py-6 sm:py-7 text-xl sm:text-2xl font-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 uppercase tracking-wide rounded-2xl overflow-hidden"
+                    style={{
+                      background: loading ? 'linear-gradient(to right, #6366F1, #7C3AED, #8B5CF6)' : 'linear-gradient(135deg, #6366F1 0%, #7C3AED 50%, #8B5CF6 100%)',
+                      boxShadow: '0 0 60px rgba(99,102,241,0.8), 0 20px 60px -18px rgba(99,102,241,0.9), inset 0 1px 0 rgba(255,255,255,0.3)',
+                      textShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                      transition: 'all 0.3s ease'
+                    }}
                   >
-                    {loading ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <span className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></span>
-                        Finding Matches...
-                      </span>
-                    ) : (
-                      'Get My 10 Roles'
+                    {!loading && (
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                        animate={{
+                          x: ['-200%', '200%']
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          repeatDelay: 1,
+                          ease: "easeInOut"
+                        }}
+                      />
                     )}
+                    <span className="relative z-10 text-white flex items-center justify-center gap-3">
+                      {loading ? (
+                        <>
+                          <svg className="w-6 h-6 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span>Finding Matches...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>🚀</span>
+                          <span>Get My 10 Roles</span>
+                          <motion.span
+                            animate={{ x: [0, 4, 0] }}
+                            transition={{ duration: 1, repeat: Infinity, repeatDelay: 0.5 }}
+                          >
+                            →
+                          </motion.span>
+                        </>
+                      )}
+                    </span>
                   </motion.button>
                 </div>
               </motion.div>
@@ -575,20 +699,50 @@ export default function SignupPage() {
           </AnimatePresence>
         </div>
 
-        {/* Trust Signals */}
+        {/* Trust Signals - PROMINENT */}
         <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-8 text-center space-y-3"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="mt-12 text-center space-y-4"
         >
-          <div className="inline-flex items-center gap-2 text-sm text-zinc-500">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            9,769 active early-career roles • Updated daily
+          <div className="inline-flex items-center gap-2 bg-zinc-900/60 border border-zinc-800 px-6 py-3 rounded-full backdrop-blur-sm">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></span>
+            <span className="text-sm font-bold text-zinc-300">
+              {activeJobs} active early-career roles
+            </span>
+            <span className="text-zinc-600">•</span>
+            <span className="text-sm text-zinc-400">Updated daily</span>
           </div>
-          <p className="text-xs text-zinc-600">
-            No CV required • No spam • Cancel anytime • GDPR compliant
-          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-500 px-4">
+            <div className="flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>No CV required</span>
+            </div>
+            <span className="text-zinc-700">•</span>
+            <div className="flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>No spam</span>
+            </div>
+            <span className="text-zinc-700">•</span>
+            <div className="flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Cancel anytime</span>
+            </div>
+            <span className="text-zinc-700">•</span>
+            <div className="flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span>GDPR compliant</span>
+            </div>
+          </div>
         </motion.div>
       </div>
     </div>
