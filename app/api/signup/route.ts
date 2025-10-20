@@ -29,9 +29,8 @@ export async function POST(req: NextRequest) {
       visa_status: data.visaStatus || null,
       entry_level_preference: data.entryLevelPreference || null,
       company_types: data.targetCompanies,
-      career_path: data.careerPath ? [data.careerPath] : [],
+      career_path: data.careerPath || null,
       roles_selected: data.roles,
-      subscription_tier: 'free',
       email_verified: true, // Auto-verify for now (can add email verification later)
       subscription_active: true,
       email_phase: 'welcome', // Start in welcome phase
@@ -73,10 +72,10 @@ export async function POST(req: NextRequest) {
           email: userData.email,
           target_cities: userData.target_cities,
           languages_spoken: userData.languages_spoken,
-          career_path: userData.career_path,
+          career_path: userData.career_path ? [userData.career_path] : [],
           roles_selected: userData.roles_selected,
           entry_level_preference: userData.entry_level_preference,
-          professional_expertise: userData.career_path?.[0] || '',
+          professional_expertise: userData.career_path || '',
           work_environment: userData.work_environment,
           visa_status: userData.visa_status,
         };
