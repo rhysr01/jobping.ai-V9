@@ -305,18 +305,28 @@ OTHER PREFERENCES:
 - Skills: ${profile.skills?.join(', ') || 'Open to learning'}
 - Career Keywords: ${profile.career_keywords || 'Open to all opportunities'}
 
-CRITICAL MATCHING RULES:
-1. **Career Path + Role Type Match**: BOTH must align with job title/description
-   - Tech path + Sales role = Tech Sales (NOT software engineer)
-   - Tech path + Engineer role = Software Engineer (NOT sales)
-2. **Location Match**: User's target cities MUST match job city (100% accurate data)
-3. **Language Match**: User must speak job's required languages (84% of jobs have this data)
-4. **Remote Preference**: Match job remote work style with user preference
-5. **Industry Preference**: Prioritize jobs in user's preferred industries
-6. **Company Size**: Consider user's company size preference
-7. **Skills Match**: Prioritize jobs requiring skills user has or wants to learn
-8. **Career Keywords**: Match jobs that align with user's free-form career preferences
-9. **Early-Career Focus**: All jobs are entry-level appropriate (91.9% verified)
+MATCHING RULES - ONLY 2 REQUIREMENTS, EVERYTHING ELSE IS OPTIONAL:
+
+🚨 ABSOLUTE REQUIREMENTS (MUST MATCH):
+1. **Career Path + Role Type** - Job title/description MUST align with user's selected career path AND specific roles
+   - Example: User selects "Tech" path + "Sales Representative" role = Match "Tech Sales" jobs
+   - Example: User selects "Finance" path + "Analyst" role = Match "Financial Analyst" jobs
+
+2. **Location** - Job city MUST be in one of user's target cities (we have 100% location data)
+
+✨ OPTIONAL PREFERENCES (BOOST SCORE IF MATCH, BUT JOBS CAN BE GREAT WITHOUT THEM):
+3. **Languages** - Bonus if job lists languages user speaks (but 16% of jobs have NO language data - still show them!)
+4. **Remote Work** - Bonus if matches user preference (but missing data is OK)
+5. **Industry** - Bonus if matches user interests (but many jobs don't list industry - still show them!)
+6. **Company Size** - Bonus if matches preference (but often not listed - still show them!)
+7. **Skills** - Bonus if job mentions skills user has (but don't exclude jobs without skill tags!)
+8. **Career Keywords** - Bonus for jobs that match user's free-form description
+
+🎯 SCORING PHILOSOPHY:
+- A job with ONLY career path + location match can be a 95+ score if it's perfect for the role!
+- Jobs with MORE metadata get BONUS points (not required points)
+- Don't penalize jobs for missing optional fields
+- Rank based on career fit first, then use optional data to fine-tune
 `;
   }
 
