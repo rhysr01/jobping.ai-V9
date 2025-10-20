@@ -43,6 +43,9 @@ export default function SignupSuccess() {
                 <div>
                   <div className="font-semibold text-white mb-1">Check Your Email (48 hours)</div>
                   <div className="text-zinc-400 text-sm">You'll receive 10 hand-picked roles that match your profile</div>
+                  <div className="mt-2 text-xs text-yellow-400 font-semibold">
+                    ⚠️ Check your spam/junk folder if you don't see it in your inbox
+                  </div>
                 </div>
               </div>
 
