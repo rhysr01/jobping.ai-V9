@@ -861,11 +861,11 @@ export default function SignupPage() {
                       </p>
                       <p className="text-sm text-zinc-400">
                         By checking this box, you consent to receive personalized job matches and agree to our{' '}
-                        <a href="/legal/privacy" target="_blank" className="text-brand-400 hover:text-brand-300 underline">
+                        <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:text-brand-300 underline">
                           Privacy Policy
                         </a>
                         {' '}and{' '}
-                        <a href="/legal/terms" target="_blank" className="text-brand-400 hover:text-brand-300 underline">
+                        <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:text-brand-300 underline">
                           Terms of Service
                         </a>
                         . You can unsubscribe at any time.
