@@ -68,14 +68,30 @@ export async function POST(req: NextRequest) {
     try {
       const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
       
-      // Fetch jobs for matching
-      const { data: jobs } = await supabase
+      // Fetch jobs for matching - PRE-FILTER by location for better matches
+      const { data: allJobs } = await supabase
         .from('jobs')
         .select('*')
-        .eq('is_active', true)
+        .eq('status', 'active')
         .is('filtered_reason', null)
+        .in('city', userData.target_cities) // CRITICAL: Only jobs in user's cities!
         .order('created_at', { ascending: false })
-        .limit(500);
+        .limit(1000); // Get more since we're pre-filtering
+
+      // Further filter by career path if available (85%+ of jobs have career path data)
+      const jobs = allJobs?.filter(job => {
+        // If job has career path data AND user selected a career path, check for alignment
+        if (job.categories && job.categories.length > 0 && userData.career_path) {
+          const careerPathSlug = userData.career_path.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-');
+          const hasCareerMatch = job.categories.some((cat: string) => 
+            cat.includes(careerPathSlug) || 
+            cat.includes('early-career')
+          );
+          return hasCareerMatch;
+        }
+        // If no career path data, still include it (don't penalize missing data)
+        return true;
+      }) || [];
 
       if (jobs && jobs.length > 0) {
         const userPrefs = {
