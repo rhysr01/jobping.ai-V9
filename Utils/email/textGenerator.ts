@@ -56,7 +56,7 @@ Sit back and relax. We'll send your matches automatically—no action needed!
 
 You're receiving this because you signed up for JobPing.
 
-Unsubscribe: https://www.getjobping.com/legal/unsubscribe
+Unsubscribe: https://www.getjobping.com/legal/unsubscribe`;
 }
 
 export function createJobMatchesEmailText(
