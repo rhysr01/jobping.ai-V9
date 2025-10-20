@@ -99,7 +99,7 @@ export default function Pricing() {
               </li>
             </ul>
             
-            <a href="/signup?tier=premium" className="btn-primary mt-6 sm:mt-8 w-full text-center text-lg sm:text-xl py-5 sm:py-6 font-black shadow-[0_12px_40px_rgba(99,102,241,0.6)] hover:shadow-[0_16px_50px_rgba(99,102,241,0.9)] transform hover:scale-[1.03] transition-all duration-200 touch-manipulation uppercase tracking-wide">
+            <a href="/upgrade" className="btn-primary mt-6 sm:mt-8 w-full text-center text-lg sm:text-xl py-5 sm:py-6 font-black shadow-[0_12px_40px_rgba(99,102,241,0.6)] hover:shadow-[0_16px_50px_rgba(99,102,241,0.9)] transform hover:scale-[1.03] transition-all duration-200 touch-manipulation uppercase tracking-wide">
               Get Premium Now
             </a>
             
