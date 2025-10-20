@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
       languages_spoken: data.languages,
       start_date: data.startDate || null,
       professional_experience: data.experience || null,
+      professional_expertise: data.careerPath || 'entry', // For matching system
       work_environment: data.workEnvironment.join(', ') || null,
       visa_status: data.visaStatus || null,
       entry_level_preference: data.entryLevelPreference || null,
@@ -31,8 +32,12 @@ export async function POST(req: NextRequest) {
       career_path: data.careerPath ? [data.careerPath] : [],
       roles_selected: data.roles,
       subscription_tier: 'free',
-      email_verified: false,
+      email_verified: true, // Auto-verify for now (can add email verification later)
       subscription_active: true,
+      email_phase: 'welcome', // Start in welcome phase
+      onboarding_complete: false, // Will be set to true after first email
+      email_count: 0, // Will increment after first email
+      last_email_sent: null, // Will be set after first email
       created_at: new Date().toISOString(),
     };
 
@@ -127,18 +132,41 @@ export async function POST(req: NextRequest) {
               subjectOverride: `🎉 Welcome to JobPing - Your First ${matchesCount} Matches!`,
             });
 
-            console.log(`✅ Welcome email sent to ${data.email}`);
+            // Update user tracking fields after successful email send
+            await supabase
+              .from('users')
+              .update({
+                last_email_sent: new Date().toISOString(),
+                email_count: 1,
+              })
+              .eq('email', userData.email);
+
+            console.log(`✅ Welcome email sent to ${data.email} with ${matchesCount} matches`);
           } catch (emailError) {
             console.error('Email send failed (non-fatal):', emailError);
           }
         } else {
           // No matches found, send welcome email anyway
-          await sendWelcomeEmail({
-            to: userData.email,
-            userName: userData.full_name,
-            matchCount: 0,
-          });
-          console.log(`✅ Welcome email (no matches) sent to ${data.email}`);
+          try {
+            await sendWelcomeEmail({
+              to: userData.email,
+              userName: userData.full_name,
+              matchCount: 0,
+            });
+
+            // Update tracking even with no matches
+            await supabase
+              .from('users')
+              .update({
+                last_email_sent: new Date().toISOString(),
+                email_count: 1,
+              })
+              .eq('email', userData.email);
+
+            console.log(`✅ Welcome email (no matches) sent to ${data.email}`);
+          } catch (emailError) {
+            console.error('Welcome email failed:', emailError);
+          }
         }
       }
     } catch (matchError) {
@@ -150,6 +178,17 @@ export async function POST(req: NextRequest) {
           userName: userData.full_name,
           matchCount: 0,
         });
+
+        // Update tracking even if matching failed
+        await supabase
+          .from('users')
+          .update({
+            last_email_sent: new Date().toISOString(),
+            email_count: 1,
+          })
+          .eq('email', userData.email);
+
+        console.log(`✅ Welcome email (matching failed) sent to ${data.email}`);
       } catch (emailError) {
         console.error('Welcome email failed:', emailError);
       }
