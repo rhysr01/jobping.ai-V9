@@ -72,14 +72,18 @@ export function createJobMatchesEmailText(
     entryLevelLabel?: string;
   }
 ): string {
-  const premium = subscriptionTier === 'premium' ? 'Premium Member\n\n' : '';
-  const greeting = isSignupEmail ? 'Welcome! Here are your first' : 'Your fresh';
+  const premiumBadge = subscriptionTier === 'premium' ? 'Premium Member\n\n' : '';
+  const greetingText = isSignupEmail ? 'Welcome! Here are your first' : 'Your fresh';
+  const locationText = personalization?.location ? ` in ${personalization.location}` : '';
+  const labelsText = personalization?.salaryRange || personalization?.entryLevelLabel 
+    ? `\n${[personalization.entryLevelLabel, personalization.salaryRange].filter(Boolean).join(' • ')}` 
+    : '';
   
   const header = `JobPing - AI-Powered Job Matching for Europe
 
-${premium}Hi ${userName || 'there'}!
+${premiumBadge}Hi ${userName || 'there'}!
 
-${greeting} ${jobs.length} AI-curated job matches${personalization?.location ? ` in ${personalization.location}` : ''}${personalization?.salaryRange || personalization?.entryLevelLabel ? `\n${[personalization.entryLevelLabel, personalization.salaryRange].filter(Boolean).join(' • ')}` : ''}
+${greetingText} ${jobs.length} AI-curated job matches${locationText}${labelsText}
 
 ---
 
