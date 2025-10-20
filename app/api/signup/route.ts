@@ -29,9 +29,14 @@ export async function POST(req: NextRequest) {
       visa_status: data.visaStatus || null,
       entry_level_preference: data.entryLevelPreference || null,
       company_types: data.targetCompanies,
-      career_path: data.careerPath || null,
-      roles_selected: data.roles,
-      subscription_tier: 'free', // FIXED: Add this field back for email compatibility
+         career_path: data.careerPath || null,
+         roles_selected: data.roles,
+         subscription_tier: 'free', // FIXED: Add this field back for email compatibility
+         // NEW MATCHING PREFERENCES
+         remote_preference: data.remotePreference || 'flexible',
+         industries: data.industries || [],
+         company_size_preference: data.companySizePreference || 'any',
+         skills: data.skills || [],
       email_verified: true, // Auto-verify for now (can add email verification later)
       subscription_active: true,
       email_phase: 'welcome', // Start in welcome phase

@@ -299,6 +299,10 @@ OTHER PREFERENCES:
 - Experience Level: ${profile.entry_level_preference || 'Entry-level'}
 - Start Date: ${profile.start_date || 'Flexible'}
 - Company Types: ${profile.company_types?.join(', ') || 'Open'}
+- Remote Preference: ${profile.remote_preference || 'Flexible'}
+- Industries: ${profile.industries?.join(', ') || 'Open to all'}
+- Company Size: ${profile.company_size_preference || 'Any size'}
+- Skills: ${profile.skills?.join(', ') || 'Open to learning'}
 
 CRITICAL MATCHING RULES:
 1. **Career Path + Role Type Match**: BOTH must align with job title/description
@@ -306,7 +310,11 @@ CRITICAL MATCHING RULES:
    - Tech path + Engineer role = Software Engineer (NOT sales)
 2. **Location Match**: User's target cities MUST match job city (100% accurate data)
 3. **Language Match**: User must speak job's required languages (84% of jobs have this data)
-4. **Early-Career Focus**: All jobs are entry-level appropriate (91.9% verified)
+4. **Remote Preference**: Match job remote work style with user preference
+5. **Industry Preference**: Prioritize jobs in user's preferred industries
+6. **Company Size**: Consider user's company size preference
+7. **Skills Match**: Prioritize jobs requiring skills user has or wants to learn
+8. **Early-Career Focus**: All jobs are entry-level appropriate (91.9% verified)
 `;
   }
 

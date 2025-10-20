@@ -23,6 +23,11 @@ export default function SignupPage() {
     targetCompanies: [] as string[],
     careerPath: '',
     roles: [] as string[],
+    // NEW FIELDS FOR BETTER MATCHING
+    remotePreference: '',
+    industries: [] as string[],
+    companySizePreference: '',
+    skills: [] as string[],
   });
 
   useEffect(() => {
@@ -39,6 +44,36 @@ export default function SignupPage() {
   const CITIES = ['Dublin', 'London', 'Paris', 'Amsterdam', 'Manchester', 'Birmingham', 'Madrid', 'Barcelona', 'Berlin', 'Hamburg', 'Munich', 'Zurich', 'Milan', 'Rome'];
   
   const LANGUAGES = ['English', 'French', 'German', 'Italian', 'Dutch', 'Spanish', 'Arabic', 'Portuguese'];
+  
+  // NEW CONSTANTS FOR BETTER MATCHING
+  const REMOTE_OPTIONS = [
+    { value: 'office', label: 'Office Only', emoji: '🏢' },
+    { value: 'hybrid', label: 'Hybrid (2-3 days office)', emoji: '🏠🏢' },
+    { value: 'remote', label: 'Remote Only', emoji: '🏠' },
+    { value: 'flexible', label: 'Flexible', emoji: '🔄' }
+  ];
+  
+  const INDUSTRIES = [
+    'Technology', 'Finance', 'Consulting', 'Healthcare', 'Retail', 'Manufacturing', 
+    'Energy', 'Media', 'Education', 'Government', 'Non-profit', 'Real Estate', 
+    'Transportation', 'Automotive', 'Fashion', 'Food & Beverage', 'Travel', 'Other'
+  ];
+  
+  const COMPANY_SIZES = [
+    { value: 'startup', label: 'Startup (1-50)', emoji: '🚀' },
+    { value: 'scaleup', label: 'Scale-up (50-500)', emoji: '📈' },
+    { value: 'enterprise', label: 'Enterprise (500+)', emoji: '🏢' },
+    { value: 'any', label: 'Any Size', emoji: '🌟' }
+  ];
+  
+  const COMMON_SKILLS = [
+    'Excel', 'PowerPoint', 'Word', 'Python', 'R', 'SQL', 'PowerBI', 'Tableau', 
+    'Google Analytics', 'Salesforce', 'HubSpot', 'Jira', 'Confluence', 'Slack',
+    'Microsoft Office', 'Google Workspace', 'Adobe Creative Suite', 'Canva',
+    'Data Analysis', 'Project Management', 'Digital Marketing', 'Social Media',
+    'Email Marketing', 'Content Creation', 'Research', 'Presentation Skills',
+    'Communication', 'Leadership', 'Problem Solving', 'Analytical Thinking'
+  ];
   
   const CAREER_PATHS = [
     { 
@@ -239,7 +274,7 @@ export default function SignupPage() {
             <motion.div 
               className="h-full bg-gradient-to-r from-brand-500 via-purple-600 to-purple-500 shadow-[0_0_12px_rgba(139,92,246,0.8)]"
               initial={{ width: 0 }}
-              animate={{ width: `${(step / 3) * 100}%` }}
+              animate={{ width: `${(step / 4) * 100}%` }}
               transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
             />
           </div>
@@ -644,8 +679,8 @@ export default function SignupPage() {
                     ← Back
                   </motion.button>
                   <motion.button
-                    onClick={handleSubmit}
-                    disabled={!formData.careerPath || loading}
+                    onClick={() => setStep(4)}
+                    disabled={!formData.careerPath}
                     whileHover={{ scale: loading ? 1 : 1.03 }}
                     whileTap={{ scale: loading ? 1 : 0.97 }}
                     className="relative flex-1 py-6 sm:py-7 text-xl sm:text-2xl font-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 uppercase tracking-wide rounded-2xl overflow-hidden"
@@ -681,8 +716,8 @@ export default function SignupPage() {
                         </>
                       ) : (
                         <>
-                          <span>🚀</span>
-                          <span>Get My 10 Roles</span>
+                          <span>🎯</span>
+                          <span>Continue to Preferences</span>
                           <motion.span
                             animate={{ x: [0, 4, 0] }}
                             transition={{ duration: 1, repeat: Infinity, repeatDelay: 0.5 }}
@@ -692,6 +727,178 @@ export default function SignupPage() {
                         </>
                       )}
                     </span>
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 4: Matching Preferences */}
+            {step === 4 && (
+              <motion.div
+                key="step4"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.4 }}
+                className="space-y-8"
+              >
+                <div className="text-center">
+                  <h2 className="text-3xl font-black text-white mb-2">Matching Preferences</h2>
+                  <p className="text-zinc-400">Help us find the perfect roles for you</p>
+                </div>
+
+                {/* Remote Work Preference */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-white">🏠 Work Location Preference</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {REMOTE_OPTIONS.map((option) => (
+                      <motion.button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setFormData({...formData, remotePreference: option.value})}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={`px-4 py-4 rounded-xl border-2 transition-all font-semibold text-left ${
+                          formData.remotePreference === option.value
+                            ? 'border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/10 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]'
+                            : 'border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{option.emoji}</span>
+                          <span className="font-bold">{option.label}</span>
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Industry Preferences */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-white">🏢 Industry Preferences</h3>
+                  <p className="text-sm text-zinc-400">Select industries you're interested in (optional)</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {INDUSTRIES.map((industry) => (
+                      <motion.button
+                        key={industry}
+                        type="button"
+                        onClick={() => setFormData({...formData, industries: toggleArray(formData.industries, industry)})}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={`px-3 py-2.5 rounded-lg border-2 transition-all font-medium text-sm ${
+                          formData.industries.includes(industry)
+                            ? 'border-brand-500 bg-gradient-to-r from-brand-500/20 to-purple-600/10 text-white'
+                            : 'border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80'
+                        }`}
+                      >
+                        {industry}
+                      </motion.button>
+                    ))}
+                  </div>
+                  {formData.industries.length > 0 && (
+                    <p className="text-sm text-zinc-400">
+                      <span className="font-bold text-brand-400">{formData.industries.length}</span> industries selected
+                    </p>
+                  )}
+                </div>
+
+                {/* Company Size Preference */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-white">📊 Company Size Preference</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {COMPANY_SIZES.map((size) => (
+                      <motion.button
+                        key={size.value}
+                        type="button"
+                        onClick={() => setFormData({...formData, companySizePreference: size.value})}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={`px-4 py-4 rounded-xl border-2 transition-all font-semibold text-left ${
+                          formData.companySizePreference === size.value
+                            ? 'border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/10 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]'
+                            : 'border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{size.emoji}</span>
+                          <span className="font-bold">{size.label}</span>
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Skills */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-white">💻 Skills & Technologies</h3>
+                  <p className="text-sm text-zinc-400">Select skills you have or want to develop (optional)</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                    {COMMON_SKILLS.map((skill) => (
+                      <motion.button
+                        key={skill}
+                        type="button"
+                        onClick={() => setFormData({...formData, skills: toggleArray(formData.skills, skill)})}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={`px-3 py-2 rounded-lg border-2 transition-all font-medium text-xs ${
+                          formData.skills.includes(skill)
+                            ? 'border-brand-500 bg-gradient-to-r from-brand-500/20 to-purple-600/10 text-white'
+                            : 'border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80'
+                        }`}
+                      >
+                        {skill}
+                      </motion.button>
+                    ))}
+                  </div>
+                  {formData.skills.length > 0 && (
+                    <p className="text-sm text-zinc-400">
+                      <span className="font-bold text-brand-400">{formData.skills.length}</span> skills selected
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-4 pt-6">
+                  <motion.button
+                    onClick={() => setStep(3)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="btn-secondary flex-1 py-5 text-lg"
+                  >
+                    ← Back
+                  </motion.button>
+                  <motion.button
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    whileHover={{ scale: loading ? 1 : 1.03 }}
+                    whileTap={{ scale: loading ? 1 : 0.97 }}
+                    className="relative flex-1 py-6 sm:py-7 text-xl sm:text-2xl font-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 uppercase tracking-wide rounded-2xl overflow-hidden"
+                    style={{
+                      background: loading ? 'linear-gradient(to right, #6366F1, #7C3AED, #8B5CF6)' : 'linear-gradient(135deg, #6366F1 0%, #7C3AED 50%, #8B5CF6 100%)',
+                      boxShadow: '0 0 60px rgba(99,102,241,0.8), 0 20px 60px -18px rgba(99,102,241,0.9), inset 0 1px 0 rgba(255,255,255,0.3)',
+                      textShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    {loading ? (
+                      <>
+                        <svg className="w-6 h-6 animate-spin" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Finding Matches...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🚀</span>
+                        <span>Get My 10 Roles</span>
+                        <motion.span
+                          animate={{ x: [0, 4, 0] }}
+                          transition={{ duration: 1, repeat: Infinity, repeatDelay: 0.5 }}
+                        >
+                          →
+                        </motion.span>
+                      </>
+                    )}
                   </motion.button>
                 </div>
               </motion.div>
