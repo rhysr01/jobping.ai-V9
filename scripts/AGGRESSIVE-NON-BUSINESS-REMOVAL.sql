@@ -163,6 +163,39 @@ WHERE status = 'active'
 AND title ~* '\y(technical artist cfx|artist|musician|actor|performer)\y'
 AND title !~* 'makeup artist|graphic designer|ux designer|product designer';
 
+-- 17. SENIOR/EXPERIENCED ROLES - NOT entry-level
+UPDATE jobs
+SET status = 'inactive', filtered_reason = 'Senior/Experienced (not early-career)'
+WHERE status = 'active'
+AND (
+  -- Explicit seniority markers
+  title ~* '\y(senior|sr\.|sr )\y'
+  OR title ~* '\y(experienced|expérimenté|con esperienza)\y'
+  OR title ~* '\y(expert|experto|esperto)\y' AND title !~* 'junior'
+  
+  -- Management titles (excluding assistants/juniors)
+  OR (title ~* '\y(manager|managerin|mgr|responsable|verantwortlich|jefe)\y' 
+      AND title !~* 'assistant|junior|trainee|intern|graduate|entry|associate manager|management trainee|future manager')
+  
+  -- Director level
+  OR (title ~* '\y(director|directeur|direttore|direktor)\y' 
+      AND title !~* 'assistant|junior|trainee')
+  
+  -- Head/Chief level
+  OR (title ~* '\y(head of|head |chief|capo|leiter)\y' 
+      AND title !~* 'chef de projet|chef de produit|chef des ventes')
+  
+  -- Lead/Principal (excluding leadership programs)
+  OR (title ~* '\y(lead |leading|principal)\y' 
+      AND title !~* 'leadership program|future leaders|graduate leadership')
+  
+  -- VP and above
+  OR title ~* '\y(VP|vice president|vice-president|c-level|ceo|cfo|cto|coo)\y'
+  
+  -- Years of experience mentioned
+  OR title ~* '\y(3-5 years|4-6 years|5\+ years|3\+ years|4\+ years)\y'
+);
+
 COMMIT;
 
 -- ============================================================================
