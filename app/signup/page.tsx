@@ -136,6 +136,12 @@ export default function SignupPage() {
 
   const selectedCareer = CAREER_PATHS.find(c => c.value === formData.careerPath);
 
+  // Debug logging
+  console.log('Step:', step);
+  console.log('CAREER_PATHS length:', CAREER_PATHS.length);
+  console.log('formData.careerPath:', formData.careerPath);
+  console.log('selectedCareer:', selectedCareer);
+
   const toggleArray = (arr: string[], value: string) => {
     return arr.includes(value) ? arr.filter(v => v !== value) : [...arr, value];
   };
