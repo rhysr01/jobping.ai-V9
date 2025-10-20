@@ -360,29 +360,15 @@ function generateThankYouPage(action: string, jobHash: string, email: string, sc
         <p>${message}</p>
         <div class="buttons">
           <button class="btn close-btn" onclick="window.close()">Close</button>
-          <a href="${process.env.NEXT_PUBLIC_URL || 'https://getjobping.com'}" class="btn view-jobs-btn">View More Jobs</a>
         </div>
-        <div class="auto-close-notice">This window will close automatically in 5 seconds</div>
+        <div class="auto-close-notice">This window will close automatically in 3 seconds</div>
       </div>
       
       <script>
-        // Auto-close after 5 seconds
+        // Auto-close after 3 seconds
         setTimeout(() => {
-          try {
-            window.close();
-          } catch (e) {
-            // If can't close (not a popup), redirect to dashboard
-            window.location.href = '${process.env.NEXT_PUBLIC_URL || 'https://getjobping.com'}';
-          }
-        }, 5000);
-        
-        // Popup blocker detection
-        if (window.opener) {
-          console.log('Opened as popup - will auto-close');
-        } else {
-          console.log('Opened in same window - will redirect');
-          document.querySelector('.auto-close-notice').textContent = 'Redirecting to dashboard in 5 seconds...';
-        }
+          window.close();
+        }, 3000);
       </script>
     </body>
     </html>

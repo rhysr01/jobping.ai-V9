@@ -52,14 +52,11 @@ ${weeklyInfo}
 
 Sit back and relax. We'll send your matches automatically—no action needed!
 
-View Your Matches: https://www.getjobping.com/dashboard
-
 ---
 
 You're receiving this because you signed up for JobPing.
 
 Unsubscribe: https://www.getjobping.com/legal/unsubscribe
-Email Preferences: https://www.getjobping.com/dashboard/preferences`;
 }
 
 export function createJobMatchesEmailText(
@@ -108,7 +105,6 @@ JOB MATCHES:
   }).join('\n');
 
   const footer = `
-View All Matches: https://www.getjobping.com/dashboard
 
 ${personalization?.role || personalization?.location || personalization?.salaryRange ? 
   `These matches are based on your preferences: ${[personalization.location, personalization.role, personalization.salaryRange, personalization.entryLevelLabel].filter(Boolean).join(', ')}\n\n` : 
@@ -116,9 +112,9 @@ ${personalization?.role || personalization?.location || personalization?.salaryR
 }---
 
 You're receiving this because you signed up for JobPing.
+Fresh matches delivered automatically to your inbox weekly.
 
-Unsubscribe: https://www.getjobping.com/legal/unsubscribe
-Email Preferences: https://www.getjobping.com/dashboard/preferences`;
+Unsubscribe: https://www.getjobping.com/legal/unsubscribe`;
 
   return header + jobsText + footer;
 }
