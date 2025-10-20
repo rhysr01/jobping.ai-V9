@@ -53,6 +53,12 @@ export interface NormalizedUser {
   work_environment: 'remote' | 'hybrid' | 'on-site' | null;
   start_date: string | null;
   careerFocus: string;
+  // NEW MATCHING PREFERENCES
+  remote_preference?: string;
+  industries?: string[];
+  company_size_preference?: string;
+  skills?: string[];
+  career_keywords?: string;
 }
 
 export type NormalizedUserProfile = NormalizedUser;
