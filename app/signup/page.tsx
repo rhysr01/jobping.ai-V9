@@ -19,12 +19,11 @@ export default function SignupPage() {
     experience: '',
     workEnvironment: [] as string[],
     visaStatus: '',
-    entryLevelPreference: '',
+    entryLevelPreferences: [] as string[], // Changed to array for multiple selections
     targetCompanies: [] as string[],
     careerPath: '',
     roles: [] as string[],
     // NEW FIELDS FOR BETTER MATCHING
-    remotePreference: '',
     industries: [] as string[],
     companySizePreference: '',
     skills: [] as string[],
@@ -47,13 +46,6 @@ export default function SignupPage() {
   const LANGUAGES = ['English', 'French', 'German', 'Italian', 'Dutch', 'Spanish', 'Arabic', 'Portuguese'];
   
   // NEW CONSTANTS FOR BETTER MATCHING
-  const REMOTE_OPTIONS = [
-    { value: 'office', label: 'Office Only', emoji: '🏢' },
-    { value: 'hybrid', label: 'Hybrid (2-3 days office)', emoji: '🏠🏢' },
-    { value: 'remote', label: 'Remote Only', emoji: '🏠' },
-    { value: 'flexible', label: 'Flexible', emoji: '🔄' }
-  ];
-  
   const INDUSTRIES = [
     'Technology', 'Finance', 'Consulting', 'Healthcare', 'Retail', 'Manufacturing', 
     'Energy', 'Media', 'Education', 'Government', 'Non-profit', 'Real Estate', 
@@ -499,11 +491,11 @@ export default function SignupPage() {
                       <motion.button
                         key={pref}
                         type="button"
-                        onClick={() => setFormData({...formData, entryLevelPreference: pref})}
+                        onClick={() => setFormData({...formData, entryLevelPreferences: toggleArray(formData.entryLevelPreferences, pref)})}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         className={`px-5 py-4 rounded-xl border-2 transition-all font-semibold ${
-                          formData.entryLevelPreference === pref
+                          formData.entryLevelPreferences.includes(pref)
                             ? 'border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/10 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]'
                             : 'border-zinc-700 bg-zinc-900/40 text-zinc-300 hover:border-zinc-600'
                         }`}
@@ -512,6 +504,11 @@ export default function SignupPage() {
                       </motion.button>
                     ))}
                   </div>
+                  {formData.entryLevelPreferences.length > 0 && (
+                    <p className="text-sm text-zinc-400 mt-2">
+                      <span className="font-bold text-brand-400">{formData.entryLevelPreferences.length}</span> selected
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -547,7 +544,7 @@ export default function SignupPage() {
                   </motion.button>
                   <motion.button
                     onClick={() => setStep(3)}
-                    disabled={!formData.experience || !formData.visaStatus || !formData.entryLevelPreference}
+                    disabled={!formData.experience || !formData.visaStatus || formData.entryLevelPreferences.length === 0}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="btn-primary flex-1 py-5 text-lg disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
@@ -744,34 +741,8 @@ export default function SignupPage() {
                 className="space-y-8"
               >
                 <div className="text-center">
-                  <h2 className="text-3xl font-black text-white mb-2">Matching Preferences</h2>
-                  <p className="text-zinc-400">Help us find the perfect roles for you</p>
-                </div>
-
-                {/* Remote Work Preference */}
-                <div className="space-y-4">
-                  <h3 className="text-xl font-bold text-white">🏠 Work Location Preference</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {REMOTE_OPTIONS.map((option) => (
-                      <motion.button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setFormData({...formData, remotePreference: option.value})}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className={`px-4 py-4 rounded-xl border-2 transition-all font-semibold text-left ${
-                          formData.remotePreference === option.value
-                            ? 'border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/10 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]'
-                            : 'border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">{option.emoji}</span>
-                          <span className="font-bold">{option.label}</span>
-                        </div>
-                      </motion.button>
-                    ))}
-                  </div>
+                  <h2 className="text-3xl font-black text-white mb-2">Additional Preferences</h2>
+                  <p className="text-zinc-400">Optional - helps us match you even better</p>
                 </div>
 
                 {/* Industry Preferences */}

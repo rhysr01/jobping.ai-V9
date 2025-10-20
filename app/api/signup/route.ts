@@ -24,16 +24,15 @@ export async function POST(req: NextRequest) {
       languages_spoken: data.languages,
       start_date: data.startDate || null,
       professional_experience: data.experience || null,
-      professional_expertise: data.careerPath || 'entry', // For matching system
-      work_environment: data.workEnvironment.join(', ') || null,
-      visa_status: data.visaStatus || null,
-      entry_level_preference: data.entryLevelPreference || null,
+       professional_expertise: data.careerPath || 'entry', // For matching system
+       work_environment: data.workEnvironment.join(', ') || null,
+       visa_status: data.visaStatus || null,
+       entry_level_preference: data.entryLevelPreferences?.join(', ') || null, // Changed to array
       company_types: data.targetCompanies,
          career_path: data.careerPath || null,
          roles_selected: data.roles,
-         subscription_tier: 'free', // FIXED: Add this field back for email compatibility
          // NEW MATCHING PREFERENCES
-         remote_preference: data.remotePreference || 'flexible',
+         remote_preference: data.workEnvironment?.includes('Remote') ? 'remote' : data.workEnvironment?.includes('Hybrid') ? 'hybrid' : 'flexible',
          industries: data.industries || [],
          company_size_preference: data.companySizePreference || 'any',
          skills: data.skills || [],
