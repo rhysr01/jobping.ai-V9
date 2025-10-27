@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-export const GET = async (req: NextRequest) => {
+export const GET = async (_req: NextRequest) => {
   const apiKey = process.env.RESEND_API_KEY;
   
   // Test the API key by making an actual Resend call
   let resendTest = {
     success: false,
-    error: null,
-    emailId: null
+    error: null as any,
+    emailId: null as string | null
   };
   
   if (apiKey) {
