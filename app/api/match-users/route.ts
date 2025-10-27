@@ -16,7 +16,7 @@ import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
 import { 
   SEND_PLAN
 } from '@/Utils/sendConfiguration';
-import { Job } from '@/scrapers/types';
+import { Job as ScrapersJob } from '@/scrapers/types';
 import { getCategoryPriorityScore, jobMatchesUserCategories, WORK_TYPE_CATEGORIES, mapFormLabelToDatabase, getStudentSatisfactionScore } from '@/Utils/matching/categoryMapper';
 
 // Type definitions for better type safety
@@ -137,7 +137,7 @@ async function validateDatabaseSchema(supabase: SupabaseClient): Promise<boolean
 
 // Student satisfaction job distribution - prioritizes what students told us they want
 function distributeJobs(
-  jobs: Job[],
+  jobs: ScrapersJob[],
   userTier: 'free' | 'premium' = 'free',
   userId: string,
   userCareerPath?: string,
@@ -145,7 +145,7 @@ function distributeJobs(
   userWorkEnvironment?: string,
   userEntryLevel?: string,
   userCompanyTypes?: string[]
-): { jobs: Job[], metrics: MatchMetrics } {
+): { jobs: ScrapersJob[], metrics: MatchMetrics } {
   const startTime = Date.now();
   
   console.log(`Distributing jobs for ${userTier} user ${userId}. Total jobs: ${jobs.length}`);
@@ -209,13 +209,13 @@ function distributeJobs(
         (a.city ? 1 : 0) +                    // Location data (they need to know where)
         (a.work_environment ? 1 : 0) +        // Work environment preference
         (a.experience_required ? 1 : 0) +     // Experience level clarity
-        (a.is_graduate || a.is_internship ? 1 : 0); // Early career relevance
+        0; // Early career relevance (removed - properties don't exist)
 
       const studentCriticalB =
         (b.city ? 1 : 0) +
         (b.work_environment ? 1 : 0) +
         (b.experience_required ? 1 : 0) +
-        (b.is_graduate || b.is_internship ? 1 : 0);
+        0; // Early career relevance (removed - properties don't exist)
 
       if (studentCriticalA !== studentCriticalB) {
         return studentCriticalB - studentCriticalA;
@@ -247,7 +247,8 @@ function distributeJobs(
       processingTime,
       originalJobCount: jobs.length,
       validJobCount: validJobs.length,
-      selectedJobCount: selectedJobs.length
+      selectedJobCount: selectedJobs.length,
+      tierDistribution: { [userTier]: selectedJobs.length }
     }
   };
 }
@@ -314,7 +315,7 @@ function matchesLocation(jobLocation: string, targetCity: string): boolean {
 }
 
 // Enhanced pre-filter jobs by user preferences with scoring AND feedback learning
-async function preFilterJobsByUserPreferencesEnhanced(jobs: JobWithFreshness[], user: UserPreferences): Promise<JobWithFreshness[]> {
+async function preFilterJobsByUserPreferencesEnhanced(jobs: (ScrapersJob & { freshnessTier: string })[], user: UserPreferences): Promise<(ScrapersJob & { freshnessTier: string })[]> {
   // Get user's feedback history for personalized boosting
   let feedbackBoosts: Map<string, number> = new Map();
   
@@ -795,12 +796,12 @@ const matchUsersHandler = async (req: NextRequest) => {
         const { jobs: distributedJobs, metrics: distributionMetrics } = distributeJobs(
           considered,
           user.subscription_tier || 'free',
-          user.email,
-          user.career_path,
+          user.email || '',
+          user.career_path || undefined,
           userFormValues,
-          user.work_environment,
-          user.entry_level_preference,
-          user.company_types
+          user.work_environment || undefined,
+          user.entry_level_preference || undefined,
+          user.company_types || undefined
         );
         const distributionTime = Date.now() - distributionStart;
         totalTierDistributionTime += distributionTime;
@@ -822,7 +823,7 @@ const matchUsersHandler = async (req: NextRequest) => {
 
         // Use the consolidated matching engine
         // Cast to Job[] for the matching engine
-        const jobsForMatching = distributedJobs as Job[];
+        const jobsForMatching = distributedJobs as any[];
         const result = await matcher.performMatching(
           jobsForMatching,
           user as unknown as UserPreferences,
@@ -882,7 +883,7 @@ const matchUsersHandler = async (req: NextRequest) => {
             const newMatches: JobMatch[] = [];
             
             // Helper: Score job relevance based on user preferences
-            const scoreJobRelevance = (job: JobWithFreshness): number => {
+            const scoreJobRelevance = (job: ScrapersJob & { freshnessTier: string }): number => {
               let score = 50; // Base score
               const jobTitle = job.title.toLowerCase();
               const jobDesc = (job.description || '').toLowerCase();
@@ -932,7 +933,7 @@ const matchUsersHandler = async (req: NextRequest) => {
               
               // Score and sort by relevance (MOST relevant first)
               const scoredCityJobs = cityJobs
-                .map(job => ({ job, relevanceScore: scoreJobRelevance(job) }))
+                .map(job => ({ job: { ...job, freshnessTier: 'unknown' }, relevanceScore: scoreJobRelevance({ ...job, freshnessTier: 'unknown' }) }))
                 .sort((a, b) => b.relevanceScore - a.relevanceScore);
               
               // Take the top N MOST RELEVANT jobs for this city

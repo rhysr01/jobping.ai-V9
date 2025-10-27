@@ -78,7 +78,6 @@ export {
 
 export {
   enrichJobData,
-  calculateFreshnessTier,
   extractPostingDate,
   extractProfessionalExpertise,
   extractCareerPath,

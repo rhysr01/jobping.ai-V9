@@ -4,14 +4,14 @@
  */
 
 import OpenAI from 'openai';
-import { Job, FreshnessTier } from '../../scrapers/types';
+import { Job } from '../../scrapers/types';
 import { 
   EnrichedJob, 
   NormalizedUserProfile, 
   JobMatch, 
   AiProvenance 
 } from './types';
-import { enrichJobData, calculateFreshnessTier } from './job-enrichment.service';
+import { enrichJobData } from './job-enrichment.service';
 import { timeout } from './normalizers';
 
 // ================================
