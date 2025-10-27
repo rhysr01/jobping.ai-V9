@@ -271,14 +271,12 @@ class ProductionRateLimiter {
     await this.initializeRedis();
     if (this.bypass) return { allowed: true, remaining: 999, resetTime: Date.now() + 60000 };
     
-    // BYPASS RATE LIMITS IN TEST ENVIRONMENT OR RAILWAY
+    // BYPASS RATE LIMITS IN TEST ENVIRONMENT
     const isTestEnvironment = process.env.NODE_ENV === 'test' || 
                              process.env.JEST_WORKER_ID !== undefined ||
                              process.env.npm_config_user_config?.includes('.npmrc');
     
-    const isRailway = process.env.RAILWAY_ENVIRONMENT === 'production';
-    
-    if (isTestEnvironment || isRailway) {
+    if (isTestEnvironment) {
       return {
         allowed: true,
         remaining: 999,

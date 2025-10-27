@@ -537,7 +537,7 @@ test();
 
 **Week 1 - Day 1**: Deploy code, set 0% rollout
 ```bash
-# In Vercel/Railway environment variables
+# In Vercel environment variables
 NEW_EMAIL_TEMPLATE_ROLLOUT=0
 ```
 

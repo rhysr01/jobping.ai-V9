@@ -455,7 +455,7 @@ testEmail();
 
 **Day 6**: 5% rollout
 ```bash
-# Set in Vercel/Railway environment variables
+# Set in Vercel environment variables
 NEW_EMAIL_TEMPLATE_ROLLOUT=5
 ```
 
@@ -717,7 +717,7 @@ vercel logs --app jobping --since 1h
 - [ ] Read full plan
 - [ ] Back up current templates
 - [ ] Have test email addresses ready (Gmail, Outlook, Apple)
-- [ ] Access to Vercel/Railway environment variables
+- [ ] Access to Vercel environment variables
 
 **During Development**:
 - [ ] Create productionReadyTemplates.ts
