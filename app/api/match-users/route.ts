@@ -69,10 +69,10 @@ interface PerformanceMetrics {
 // Student satisfaction job distribution - prioritizes what students told us they want
 const JOB_DISTRIBUTION = {
   free: {
-    jobs_per_user: parseInt(process.env.FREE_JOBS_PER_USER || '5')
+    jobs_per_user: parseInt(process.env.FREE_JOBS_PER_USER || '10')
   },
   premium: {
-    jobs_per_user: parseInt(process.env.PREMIUM_JOBS_PER_USER || '8')
+    jobs_per_user: parseInt(process.env.PREMIUM_JOBS_PER_USER || '10')
   }
 };
 

@@ -7,7 +7,7 @@ export default function Pricing() {
         <div className="mt-4 sm:mt-6 text-center">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-brand-500 text-white text-xs sm:text-sm font-bold px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-lg">
             <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-            Both plans: 10 roles on signup + weekly matches
+            Both plans: Matches on signup + regular updates
           </div>
         </div>
 
@@ -17,14 +17,14 @@ export default function Pricing() {
             <h3 className="text-xl sm:text-2xl font-bold">Free</h3>
             <p className="mt-2 text-zinc-400 text-xs sm:text-sm">Perfect for starting your job search</p>
             <div className="mt-3 sm:mt-4 mb-4 sm:mb-6 bg-zinc-900/60 border border-zinc-700 rounded-xl p-4">
-              <div className="text-2xl sm:text-3xl font-black text-white mb-1">10 roles on signup</div>
+              <div className="text-2xl sm:text-3xl font-black text-white mb-1">5 roles on signup</div>
               <div className="text-zinc-400 text-xs sm:text-sm mb-3">within 48 hours</div>
               <div className="border-t border-zinc-700 pt-3 mt-3">
                 <div className="text-2xl sm:text-3xl font-black text-white mb-1">5 roles/week</div>
                 <div className="text-zinc-400 text-xs sm:text-sm">every Thursday</div>
               </div>
               <div className="border-t border-zinc-700 pt-3 mt-3">
-                <div className="text-lg font-bold text-brand-400">= 30 jobs/month</div>
+                <div className="text-lg font-bold text-brand-400">= 25 jobs/month</div>
               </div>
             </div>
             <ul className="mt-3 sm:mt-4 space-y-2 sm:space-y-3 p-muted text-sm sm:text-base">
@@ -72,7 +72,7 @@ export default function Pricing() {
               </div>
               <div className="border-t border-brand-500/30 pt-3 mt-3">
                 <div className="text-xl sm:text-2xl font-black text-brand-300 mb-2">= 70+ jobs/month</div>
-                <div className="text-zinc-400 text-xs">vs 30 on free tier</div>
+                <div className="text-zinc-400 text-xs">vs 25 on free tier</div>
               </div>
               <div className="border-t border-brand-500/30 pt-4 mt-4">
                 <div className="flex items-baseline gap-2">

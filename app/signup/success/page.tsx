@@ -29,7 +29,7 @@ export default function SignupSuccess() {
           </p>
 
           <div className="inline-block bg-gradient-to-r from-green-500 to-emerald-600 text-white px-8 py-4 rounded-2xl font-bold text-lg mb-8 shadow-[0_8px_24px_rgba(16,185,129,0.4)]">
-            Your First 10 Roles Arriving in 48 Hours
+            Your First Matches Arriving in 48 Hours
           </div>
 
           <div className="glass-card rounded-2xl p-8 sm:p-10 mb-8 text-left">
@@ -42,7 +42,7 @@ export default function SignupSuccess() {
                 </div>
                 <div>
                   <div className="font-semibold text-white mb-1">Check Your Email (Within 48 Hours)</div>
-                  <div className="text-zinc-400 text-sm">You'll receive your first 10 hand-picked roles that match your profile perfectly</div>
+                  <div className="text-zinc-400 text-sm">You'll receive your first hand-picked roles that match your profile perfectly</div>
                   <div className="mt-2 text-xs text-yellow-400 font-semibold">
                     ⚠️ Check your spam/junk folder if you don't see it in your inbox!
                   </div>

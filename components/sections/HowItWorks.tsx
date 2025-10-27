@@ -5,7 +5,7 @@ export default function HowItWorks() {
   const items = [
     { num: 1, title: "Tell us what you want", body: "Your target cities, work authorization, language skills, and role preferences. Takes 2 minutes." },
     { num: 2, title: "We match jobs to you daily", body: "Our AI monitors 1,000+ companies every day, filtering and matching roles to your exact criteria." },
-    { num: 3, title: "Get 10 perfect matches within 48 hours", body: "Then receive 5 hand-picked roles every week (or 15/week with Premium). Each email takes 60 seconds to read." },
+    { num: 3, title: "Get your first matches within 48 hours", body: "Then receive 5 hand-picked roles every week (or 15/week with Premium). Each email takes 60 seconds to read." },
   ];
 
   return (

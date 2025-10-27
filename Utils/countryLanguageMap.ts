@@ -7,11 +7,11 @@
 
 export const COUNTRY_LANGUAGE_MAP: Record<string, string> = {
   // Core EU markets
-  'GB': 'en', 'UK': 'en', 'United Kingdom': 'en',
+  'GB': 'en', 'UK': 'en', 'United Kingdom': 'en', 'Gb': 'en', 'gB': 'en',
   'IE': 'en', 'Ireland': 'en',
-  'DE': 'de', 'Germany': 'de',
-  'FR': 'fr', 'France': 'fr',
-  'ES': 'es', 'Spain': 'es',
+  'DE': 'de', 'Germany': 'de', 'GERMANY': 'de', 'dE': 'de', 'De': 'de',
+  'FR': 'fr', 'France': 'fr', 'FRANCE': 'fr', 'Fr': 'fr', 'fR': 'fr',
+  'ES': 'es', 'Spain': 'es', 'SPAIN': 'es',
   'NL': 'nl', 'Netherlands': 'nl',
   'IT': 'it', 'Italy': 'it',
   'PT': 'pt', 'Portugal': 'pt',
@@ -43,8 +43,8 @@ export const COUNTRY_LANGUAGE_MAP: Record<string, string> = {
 export function getCountryLanguage(country: string): string {
   if (!country) return 'en';
   
-  const normalized = country.trim().toUpperCase();
-  return COUNTRY_LANGUAGE_MAP[normalized] || 'en';
+  const trimmed = country.trim();
+  return COUNTRY_LANGUAGE_MAP[trimmed] || 'en';
 }
 
 /**

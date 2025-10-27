@@ -4,7 +4,7 @@
  */
 
 import { Job } from '../../scrapers/types';
-import { EnrichedJob, FreshnessTier } from './types';
+import { EnrichedJob } from './types';
 
 // ================================
 // JOB ENRICHMENT
@@ -196,23 +196,6 @@ function calculateTimingScore(postedAt: string | null): number {
   return 2; // Stale
 }
 
-// ================================
-// FRESHNESS CALCULATION
-// ================================
-
-export function calculateFreshnessTier(postedAt: string): FreshnessTier {
-  const postedDate = new Date(postedAt);
-  const now = new Date();
-  const hoursSincePosted = (now.getTime() - postedDate.getTime()) / (1000 * 60 * 60);
-  
-  if (hoursSincePosted < 24) {
-    return FreshnessTier.ULTRA_FRESH;
-  } else if (hoursSincePosted < 72) {
-    return FreshnessTier.FRESH;
-  } else {
-    return FreshnessTier.COMPREHENSIVE;
-  }
-}
 
 // ================================
 // EXTRACTION UTILITIES

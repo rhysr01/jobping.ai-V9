@@ -524,7 +524,7 @@ export class EmailVerificationOracle {
               </a>
               
               <p class="footer-text">
-                Questions? Reply to this email. Premium users receive new matches every 48 hours. Free users every 72 hours.
+                Questions? Reply to this email. Premium users receive new matches every 48 hours. Free users every week.
               </p>
             </div>
           </div>

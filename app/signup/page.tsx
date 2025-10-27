@@ -248,7 +248,7 @@ function SignupForm() {
             Join 1,000+ Students Getting Their Dream Roles
           </h1>
           <p className="text-zinc-300 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed mb-4">
-            Fill out once. Get 10 hand-picked roles in 48 hours. Zero spam.
+            Fill out once. Get your first matches in 48 hours. Zero spam.
           </p>
           {tier === 'premium' && (
             <motion.div
@@ -256,7 +256,7 @@ function SignupForm() {
               animate={{ opacity: 1, scale: 1 }}
               className="inline-block bg-gradient-to-r from-brand-500 to-purple-600 text-white px-6 py-2 rounded-full font-bold text-sm mb-2 shadow-[0_0_20px_rgba(99,102,241,0.6)]"
             >
-              ✨ Premium Plan Selected - 15 roles per week
+              ✨ Premium Plan Selected - 10 roles on signup + 15 roles per week
             </motion.div>
           )}
           <motion.div

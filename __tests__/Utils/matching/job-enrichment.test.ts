@@ -5,7 +5,6 @@
 
 import {
   enrichJobData,
-  calculateFreshnessTier,
   extractPostingDate,
   extractProfessionalExpertise,
   extractCareerPath,
@@ -126,62 +125,6 @@ describe('Job Enrichment - enrichJobData', () => {
 
     expect(enriched).toBeTruthy();
     expect(enriched.experienceLevel).toBe('entry'); // Default
-  });
-});
-
-describe('Job Enrichment - calculateFreshnessTier', () => {
-  it('should classify ultra fresh jobs (< 24 hours)', () => {
-    const now = new Date();
-    const twelveHoursAgo = new Date(now.getTime() - 12 * 60 * 60 * 1000);
-
-    const tier = calculateFreshnessTier(twelveHoursAgo.toISOString());
-
-    expect(tier).toBe('ultra_fresh');
-  });
-
-  it('should classify fresh jobs (24-72 hours)', () => {
-    const now = new Date();
-    const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-
-    const tier = calculateFreshnessTier(twoDaysAgo.toISOString());
-
-    expect(tier).toBe('fresh');
-  });
-
-  it('should classify comprehensive jobs (> 72 hours)', () => {
-    const now = new Date();
-    const fourDaysAgo = new Date(now.getTime() - 96 * 60 * 60 * 1000);
-
-    const tier = calculateFreshnessTier(fourDaysAgo.toISOString());
-
-    expect(tier).toBe('comprehensive');
-  });
-
-  it('should handle old jobs as comprehensive', () => {
-    const now = new Date();
-    const twoMonthsAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-
-    const tier = calculateFreshnessTier(twoMonthsAgo.toISOString());
-
-    expect(tier).toBe('comprehensive');
-  });
-
-  it('should handle edge case at 24 hour boundary', () => {
-    const now = new Date();
-    const exactlyOneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-    const tier = calculateFreshnessTier(exactlyOneDayAgo.toISOString());
-
-    expect(['ultra_fresh', 'fresh']).toContain(tier); // Boundary case
-  });
-
-  it('should handle edge case at 72 hour boundary', () => {
-    const now = new Date();
-    const exactlyThreeDaysAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
-
-    const tier = calculateFreshnessTier(exactlyThreeDaysAgo.toISOString());
-
-    expect(['fresh', 'comprehensive']).toContain(tier); // Boundary case
   });
 });
 

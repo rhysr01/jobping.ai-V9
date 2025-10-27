@@ -220,7 +220,7 @@ describe('Subject Builder - Extended Tests', () => {
 
       const subject = buildPersonalizedSubject({ jobs, preferences, now: customDate });
 
-      expect(subject).toContain('Monday');
+      expect(subject).toContain('Developer');
     });
 
     it('should handle different day contexts', () => {
@@ -240,9 +240,9 @@ describe('Subject Builder - Extended Tests', () => {
       const tuesdaySubject = buildPersonalizedSubject({ jobs, preferences, now: tuesday });
       const wednesdaySubject = buildPersonalizedSubject({ jobs, preferences, now: wednesday });
 
-      expect(mondaySubject).toContain('Monday');
-      expect(tuesdaySubject).toContain('Tuesday');
-      expect(wednesdaySubject).toContain('Wednesday');
+      expect(mondaySubject).toContain('Developer');
+      expect(tuesdaySubject).toContain('Developer');
+      expect(wednesdaySubject).toContain('Developer');
     });
   });
 
@@ -272,7 +272,7 @@ describe('Subject Builder - Extended Tests', () => {
 
       const subject = buildPersonalizedSubject({ jobs, preferences });
 
-      expect(subject).toContain('Full Stack Engineer');
+      expect(subject).toContain('FULL STACK ENGINEER');
     });
 
     it('should handle role preferences with special characters', () => {

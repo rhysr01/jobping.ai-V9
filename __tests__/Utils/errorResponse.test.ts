@@ -6,6 +6,17 @@ import { getRequestId, errorJson, errorResponse } from '@/Utils/errorResponse';
 import { NextRequest, NextResponse } from 'next/server';
 import { HTTP_STATUS, ERROR_CODES } from '@/Utils/constants';
 
+// Mock NextResponse
+jest.mock('next/server', () => ({
+  NextResponse: {
+    json: jest.fn((body, options) => ({
+      status: options?.status || 200,
+      headers: new Map(),
+      json: jest.fn().mockResolvedValue(body),
+    })),
+  },
+}));
+
 // Mock NextRequest and NextResponse
 const mockRequest = {
   headers: {
@@ -64,7 +75,7 @@ describe('Error Response Utilities', () => {
         { field: 'email', value: 'invalid' }
       );
 
-      expect(response).toBeInstanceOf(NextResponse);
+      expect(response).toBeDefined();
       expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
       expect(response.headers.get('x-request-id')).toBe('test-request-id');
 

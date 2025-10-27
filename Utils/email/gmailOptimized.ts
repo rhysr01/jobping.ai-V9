@@ -189,10 +189,10 @@ export function createWelcomeEmailOptimized(userName?: string, matchCount: numbe
   
   const weeklyInfo = isPremium
     ? `<div style="color: ${COLORS.gray700}; font-size: 15px; line-height: 1.7;">
-        <strong style="color: ${COLORS.primary};">Premium Plan:</strong> Your first 10 roles + 15 roles per week (Mon/Wed/Fri) + 24-hour early access
+        <strong style="color: ${COLORS.primary};">Premium Plan:</strong> Your first 10 roles + 5 roles every 48 hours (Mon/Wed/Fri) + 24-hour early access
       </div>`
     : `<div style="color: ${COLORS.gray700}; font-size: 15px; line-height: 1.7;">
-        <strong>Free Plan:</strong> Your first 10 roles + 5 new roles every week
+        <strong>Free Plan:</strong> Your first 5 roles + 5 new roles every week
       </div>
       <div style="margin-top: 16px; padding: 16px; background-color: #EEF2FF; border-radius: 8px; border: 2px solid ${COLORS.primary};">
         <div style="color: ${COLORS.primary}; font-size: 14px; font-weight: 700; margin-bottom: 8px;">
@@ -241,11 +241,11 @@ export function createWelcomeEmailOptimized(userName?: string, matchCount: numbe
                     </div>
                     
                     <div style="background: linear-gradient(135deg, ${COLORS.green} 0%, #059669 100%); color: ${COLORS.white}; padding: 20px 36px; border-radius: 50px; font-weight: 700; margin: 32px auto; font-size: 20px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                      Your First ${matchCount} Roles Arriving in 48 Hours
+                      Your First ${matchCount} Matches Arriving in 48 Hours
                     </div>
                     
                     <div style="font-size: 18px; color: ${COLORS.gray700}; margin: 24px 0; font-weight: 500; line-height: 1.7;">
-                      You'll automatically receive your first ${matchCount} hand-picked roles within 48 hours—no spam, just quality opportunities matched to your profile.
+                      You'll automatically receive your first ${matchCount} hand-picked matches within 48 hours—no spam, just quality opportunities matched to your profile.
                     </div>
                     
                     <!-- Spam Warning -->

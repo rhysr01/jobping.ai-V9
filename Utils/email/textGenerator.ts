@@ -31,8 +31,8 @@ export function htmlToText(html: string): string {
 
 export function createWelcomeEmailText(userName?: string, matchCount: number = 10, tier: 'free' | 'premium' = 'free'): string {
   const weeklyInfo = tier === 'premium'
-    ? 'Premium Plan: Your first 10 roles + 15 roles per week (Mon/Wed/Fri) + 24-hour early access'
-    : 'Free Plan: Your first 10 roles + 5 new roles every week';
+    ? 'Premium Plan: Your first 10 roles + 5 roles every 48 hours (Mon/Wed/Fri) + 24-hour early access'
+    : 'Free Plan: Your first 5 roles + 5 new roles every week';
     
   return `JobPing - AI-Powered Job Matching for Europe
 
@@ -40,9 +40,9 @@ Welcome${userName ? `, ${userName}` : ''}!
 
 Your AI career assistant is finding your perfect matches.
 
-✅ Your First ${matchCount} Roles Arriving in 48 Hours
+✅ Your First ${matchCount} Matches Arriving in 48 Hours
 
-You'll automatically receive your first ${matchCount} hand-picked roles within 48 hours—no spam, just quality opportunities matched to your profile.
+You'll automatically receive your first ${matchCount} hand-picked matches within 48 hours—no spam, just quality opportunities matched to your profile.
 
 ⚠️ CHECK YOUR SPAM FOLDER
 Our emails sometimes land in spam/junk. Check there if you don't see them in your inbox!

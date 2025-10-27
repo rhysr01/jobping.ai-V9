@@ -104,7 +104,7 @@ function VerifyEmailContent() {
               <li>📊 AI is analyzing your profile</li>
               <li>🔍 Finding your perfect job matches</li>
               <li>📧 First matches arriving tomorrow at 11:11 AM</li>
-              <li>🎯 Expect 6-8 curated opportunities every 48 hours</li>
+              <li>🎯 Expect 5 curated opportunities every week (or every 48 hours with Premium)</li>
             </ul>
           </div>
           
