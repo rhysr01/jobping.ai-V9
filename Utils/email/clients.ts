@@ -38,11 +38,11 @@ function getBaseDomain(): string {
 }
 
 function getEmailDomain(): string {
-  // Use Resend's test domain for now until domain is properly verified
+  // Use resend.dev for development, getjobping.com for production
   const isDev = process.env.NODE_ENV === 'development';
   const isTest = process.env.NODE_ENV === 'test';
   const isProd = process.env.NODE_ENV === 'production';
-  const defaultDomain = (isDev || isTest || !isProd) ? 'onboarding.resend.dev' : 'getjobping.com';
+  const defaultDomain = (isDev || isTest || !isProd) ? 'resend.dev' : 'getjobping.com';
   return process.env.EMAIL_DOMAIN || defaultDomain;
 }
 
