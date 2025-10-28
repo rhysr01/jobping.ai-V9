@@ -82,9 +82,16 @@ export default function Hero() {
         <h1 className="mt-6 sm:mt-8 text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1] max-w-[20ch] mx-auto px-2">
           No logins. Zero scrolling. Jobs in your inbox.
         </h1>
-        <p className="mt-6 sm:mt-8 text-lg sm:text-xl md:text-2xl text-zinc-300 max-w-[62ch] mx-auto leading-relaxed px-4">
-          Internships, grad programmes, and early-career opportunities delivered weekly.
-        </p>
+        <div className="mt-7 sm:mt-9 px-4">
+          <div className="inline-flex items-center gap-2 bg-white/7 border border-white/10 rounded-full px-4 py-2 shadow-[0_0_24px_rgba(139,92,246,0.25)]">
+            <svg className="w-4 h-4 text-brand-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l-7-7 1.41-1.41L12 16.17l8.59-8.58L22 9l-10 10z" />
+            </svg>
+            <span className="text-sm sm:text-base md:text-lg text-white">
+              Internships, grad programmes, and early‑career opportunities delivered weekly.
+            </span>
+          </div>
+        </div>
         <p className="mt-4 sm:mt-5 text-sm sm:text-base md:text-lg text-zinc-400 max-w-[58ch] mx-auto px-4">
           Stop searching. Start applying.
         </p>
@@ -111,9 +118,10 @@ export default function Hero() {
         >
           <a
             href="/signup"
-            className="inline-block px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 text-base sm:text-lg md:text-xl font-bold text-white bg-gradient-to-r from-brand-500 to-purple-600 rounded-xl hover:scale-105 active:scale-95 transition-transform duration-200 shadow-lg hover:shadow-2xl hover:shadow-brand-500/30 touch-manipulation"
+            className="inline-block px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 text-base sm:text-lg md:text-xl font-bold text-white bg-gradient-to-r from-brand-500 to-purple-600 rounded-xl hover:scale-105 active:scale-95 transition-transform duration-200 shadow-lg hover:shadow-2xl hover:shadow-brand-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            aria-label="Get my matches in 48 hours"
           >
-            Get matches in 48 hours
+            Get my matches in 48 hours
           </a>
           <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-zinc-500">
             No logins · No spam · Unsubscribe anytime

@@ -35,17 +35,18 @@ export default function Pricing() {
               </ul>
 
               <div className="mt-auto">
-                <Link href="/signup?tier=free" className="btn-secondary inline-block w-full text-center relative overflow-hidden group">
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <span className="relative">Get started — Free</span>
+                <Link href="/signup?tier=free" className="btn-secondary inline-block w-full text-center relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black">
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <span className="relative">Start free</span>
                 </Link>
+                <p className="mt-2 text-[11px] text-zinc-500 text-center">Cancel anytime no commitment</p>
               </div>
             </div>
           </div>
 
           {/* Premium Plan */}
-          <div className="relative rounded-2xl p-[1px] bg-gradient-to-b from-brand-500/60 to-purple-600/40 shadow-[0_0_40px_rgba(99,102,241,0.25)] hover:shadow-[0_0_60px_rgba(99,102,241,0.35)] transition-shadow">
-            <div className="absolute -top-4 left-6 px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-[0_0_18px_rgba(99,102,241,0.6)]">
+          <div className="relative rounded-2xl p-[1px] bg-gradient-to-b from-brand-500/60 to-purple-600/40 shadow-[0_0_40px_rgba(139,92,246,0.25)] hover:shadow-[0_0_60px_rgba(139,92,246,0.35)] transition-shadow">
+            <div className="absolute -top-4 left-6 px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-[0_0_18px_rgba(139,92,246,0.6)]">
               Best Value
             </div>
             <div className="relative bg-gradient-to-b from-white/10 to-white/[0.06] rounded-2xl border border-white/15 p-6 md:p-8 flex flex-col h-full overflow-hidden">
@@ -68,10 +69,11 @@ export default function Pricing() {
               </ul>
 
               <div className="mt-auto">
-                <Link href="/billing" className="btn-primary inline-block w-full text-center relative overflow-hidden group">
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <span className="relative">Upgrade to Premium</span>
+                <Link href="/billing" className="btn-primary inline-block w-full text-center relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black">
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400 delay-100" />
+                  <span className="relative">Go Premium</span>
                 </Link>
+                <p className="mt-2 text-[11px] text-zinc-500 text-center">Cancel anytime no commitment</p>
               </div>
             </div>
           </div>
