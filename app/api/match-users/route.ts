@@ -13,10 +13,12 @@ import type { UserPreferences, JobMatch } from '@/Utils/matching/types';
 import crypto from 'crypto';
 import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
 import { 
-  SEND_PLAN
+  SEND_PLAN,
+  MATCH_RULES
 } from '@/Utils/sendConfiguration';
 import { Job as ScrapersJob } from '@/scrapers/types';
 import { getCategoryPriorityScore, jobMatchesUserCategories, WORK_TYPE_CATEGORIES, mapFormLabelToDatabase, getStudentSatisfactionScore } from '@/Utils/matching/categoryMapper';
+import { semanticRetrievalService } from '@/Utils/matching/semanticRetrieval';
 import { z } from 'zod';
 
 // Zod validation schemas
@@ -25,9 +27,9 @@ const matchUsersRequestSchema = z.object({
   jobLimit: z.coerce.number().min(100).max(50000).default(10000),
   forceRun: z.coerce.boolean().default(false),
   dryRun: z.coerce.boolean().default(false),
-  // HMAC authentication
-  signature: z.string().min(1, 'Authentication signature required'),
-  timestamp: z.coerce.number().min(1, 'Timestamp required')
+  // HMAC authentication - only required if HMAC_SECRET is set
+  signature: HMAC_SECRET ? z.string().min(1, 'Authentication signature required') : z.string().optional(),
+  timestamp: HMAC_SECRET ? z.coerce.number().min(1, 'Timestamp required') : z.coerce.number().optional()
 });
 
 const userPreferencesSchema = z.object({
@@ -37,26 +39,8 @@ const userPreferencesSchema = z.object({
   email_verified: z.boolean().default(false)
 });
 
-// Type definitions for better type safety
-interface MatchMetrics {
-  totalJobs: number;
-  distributedJobs: number;
-  tierDistribution: Record<string, number>;
-  cityDistribution?: Record<string, number>;
-  processingTime: number;
-  originalJobCount?: number;
-  validJobCount?: number;
-  [key: string]: any; // Allow additional metrics
-}
-
-interface MatchProvenance {
-  match_algorithm: string;
-  ai_latency_ms?: number;
-  cache_hit?: boolean;
-  fallback_reason?: string;
-  ai_cost_usd?: number;
-  [key: string]: any; // Allow additional properties
-}
+// Import centralized type definitions
+import type { MatchMetrics, MatchProvenance } from '@/lib/types';
 import { getDateDaysAgo } from '@/lib/date-helpers';
 import { Database } from '@/lib/database.types';
 
@@ -64,11 +48,55 @@ type User = Database['public']['Tables']['users']['Row'];
 
 // Environment flags and limits
 const IS_TEST = process.env.NODE_ENV === 'test';
+const IS_DEBUG = process.env.DEBUG_MATCHING === 'true' || IS_TEST;
 const USER_LIMIT = IS_TEST ? 3 : 50;
 const JOB_LIMIT = IS_TEST ? 300 : 10000; // Increased to handle full job catalog
 
 // Lock key helper
 const LOCK_KEY = (rid: string) => `${IS_TEST ? 'jobping:test' : 'jobping:prod'}:lock:match-users:${rid}`;
+
+// Redis locking helper with guaranteed release
+async function withRedisLock<T>(
+  key: string, 
+  ttlSeconds: number, 
+  fn: () => Promise<T>
+): Promise<T | null> {
+  const limiter = getProductionRateLimiter();
+  await limiter.initializeRedis();
+  const redis = (limiter as any).redisClient;
+  
+  if (!redis) {
+    console.warn('Redis not available, proceeding without lock');
+    return await fn();
+  }
+
+  const token = crypto.randomUUID();
+  const lockKey = key;
+  
+  try {
+    // Try to acquire lock
+    const acquired = await redis.set(lockKey, token, { NX: true, EX: ttlSeconds });
+    if (!acquired) {
+      console.log(`Lock ${lockKey} already held, skipping operation`);
+      return null;
+    }
+
+    console.log(`Acquired lock ${lockKey} for ${ttlSeconds}s`);
+    return await fn();
+  } finally {
+    // Always try to release lock
+    try {
+      const currentToken = await redis.get(lockKey);
+      if (currentToken === token) {
+        await redis.del(lockKey);
+        console.log(`Released lock ${lockKey}`);
+      }
+    } catch (error) {
+      console.warn(`Failed to release lock ${lockKey}:`, error);
+      // TTL will release it naturally
+    }
+  }
+}
 
 // Enhanced monitoring and performance tracking
 interface PerformanceMetrics {
@@ -119,18 +147,19 @@ interface Job {
 
 
 // Database schema validation
-async function validateDatabaseSchema(supabase: SupabaseClient): Promise<boolean> {
+async function validateDatabaseSchema(supabase: SupabaseClient): Promise<{ valid: boolean; missingColumns?: string[] }> {
   try {
     // Skip schema validation in test environment
     if (process.env.NODE_ENV === 'test') {
       console.log('Test mode: Skipping database schema validation');
-      return true;
+      return { valid: true };
     }
     
     // Check if required columns exist by attempting a sample query with timeout
+    const requiredColumns = ['status', 'original_posted_date', 'last_seen_at'];
     const queryPromise = supabase
       .from('jobs')
-      .select('status, original_posted_date, last_seen_at')
+      .select(requiredColumns.join(', '))
       .limit(1);
     
     const timeoutPromise = new Promise((_, reject) => 
@@ -141,14 +170,18 @@ async function validateDatabaseSchema(supabase: SupabaseClient): Promise<boolean
     
     if (error) {
       console.error('Database schema validation failed:', error.message);
-      return false;
+      // Try to identify missing columns from error message
+      const missingColumns = requiredColumns.filter(col => 
+        error.message?.toLowerCase().includes(col.toLowerCase())
+      );
+      return { valid: false, missingColumns };
     }
     
     console.log('Database schema validation passed');
-    return true;
+    return { valid: true };
   } catch (err) {
     console.error('Database schema validation error:', err);
-    return false;
+    return { valid: false, missingColumns: ['status', 'original_posted_date', 'last_seen_at'] };
   }
 }
 
@@ -269,12 +302,13 @@ function distributeJobs(
 
 
 // Performance monitoring utility
-function trackPerformance(): { startTime: number; getMetrics: () => PerformanceMetrics } {
+function trackPerformance(): { startTime: number; startMemory: number; getMetrics: () => PerformanceMetrics } {
   const startTime = Date.now();
   const startMemory = process.memoryUsage().heapUsed;
   
   return {
     startTime,
+    startMemory,
     getMetrics: () => ({
       jobFetchTime: 0, // Set by caller
       tierDistributionTime: 0, // Set by caller
@@ -459,15 +493,15 @@ async function preFilterJobsByUserPreferencesEnhanced(jobs: (ScrapersJob & { fre
       
       if (type === 'loc' && jobLocation.includes(value)) {
         score += boost;
-        console.log(`   Boosted "${job.title}" by +${boost} (location: ${value})`);
+        if (IS_DEBUG) console.log(`   Boosted "${job.title}" by +${boost} (location: ${value})`);
       }
       if (type === 'type' && (jobTitle.includes(value) || jobDesc.includes(value))) {
         score += boost;
-        console.log(`  Boosted "${job.title}" by +${boost} (company type: ${value})`);
+        if (IS_DEBUG) console.log(`  Boosted "${job.title}" by +${boost} (company type: ${value})`);
       }
       if (type === 'env' && jobLocation.includes(value)) {
         score += boost;
-        console.log(`   Boosted "${job.title}" by +${boost} (work env: ${value})`);
+        if (IS_DEBUG) console.log(`   Boosted "${job.title}" by +${boost} (work env: ${value})`);
       }
     });
     
@@ -483,7 +517,7 @@ async function preFilterJobsByUserPreferencesEnhanced(jobs: (ScrapersJob & { fre
   // Ensure source diversity in top 100 jobs sent to AI
   const diverseJobs: typeof sortedJobs[0][] = [];
   const sourceCount: Record<string, number> = {};
-  const maxPerSource = 40; // Max 40 jobs from any single source in top 100
+  const maxPerSource = MATCH_RULES.maxPerSource; // Max jobs from any single source in top results
   
   for (const item of sortedJobs) {
     const source = (item.job as any).source || 'unknown';
@@ -506,8 +540,18 @@ async function preFilterJobsByUserPreferencesEnhanced(jobs: (ScrapersJob & { fre
   const topJobs = diverseJobs.map(item => item.job);
   const sourceCounts = Object.entries(sourceCount).map(([s, c]) => `${s}:${c}`).join(', ');
   
-  console.log(`Pre-filtered from ${jobs.length} to ${topJobs.length} jobs for user ${user.email} (scored, ranked, diversified${feedbackBoosts.size > 0 ? ', feedback-boosted' : ''})`);
-  console.log(`  Source distribution: ${sourceCounts}`);
+  // Log job filtering results to Sentry breadcrumb instead of console
+  Sentry.addBreadcrumb({
+    message: 'Job filtering completed',
+    level: 'info',
+    data: {
+      userEmail: user.email,
+      originalCount: jobs.length,
+      filteredCount: topJobs.length,
+      sourceDistribution: sourceCounts,
+      feedbackBoosted: feedbackBoosts.size > 0
+    }
+  });
   return topJobs;
 }
 
@@ -519,8 +563,8 @@ async function preFilterJobsByUserPreferencesEnhanced(jobs: (ScrapersJob & { fre
 async function queryWithTimeout<T>(
   queryPromise: Promise<any>,
   timeoutMs: number = 10000
-): Promise<{ data: T | null; error: any }> {
-  const timeoutPromise = new Promise<{ data: null; error: any }>((_, reject) => 
+): Promise<{ data: T | null; error: unknown }> {
+  const timeoutPromise = new Promise<{ data: null; error: unknown }>((_, reject) => 
     setTimeout(() => reject(new Error(`Query timeout after ${timeoutMs}ms`)), timeoutMs)
   );
 
@@ -609,39 +653,10 @@ const matchUsersHandler = async (req: NextRequest) => {
   const t0 = Date.now(); 
   const lap = (s: string) => console.log(JSON.stringify({ evt:'perf', step:s, ms: Date.now()-t0 }));
   
-  // Redis locking mechanism to prevent job conflicts
-  const requestId = crypto.randomUUID();
-  const lockKey = LOCK_KEY('global'); // single-instance lock
-  const token = crypto.randomUUID();
-  let haveRedisLock = false;
-  
   // Extract IP address
   const ip = req.headers.get('x-forwarded-for') || 
              req.headers.get('x-real-ip') || 
              'unknown';
-  
-  // Acquire lock (prod only)
-  try {
-    if (!IS_TEST) {
-      // lazy get redis from your limiter or a central redis helper you already have
-      const limiter = getProductionRateLimiter();
-      await limiter.initializeRedis();
-      // @ts-ignore  get the client if you expose it; if not, use your existing redis accessor
-      const redis = (limiter as any).redisClient;
-
-      if (redis) {
-        // NX, 30s TTL. If present, return 409.
-        const ok = await redis.set(lockKey, token, { NX: true, EX: 30 });
-        if (!ok) {
-          return NextResponse.json({ error: 'Processing in progress' }, { status: 409 });
-        }
-        haveRedisLock = true;
-      }
-      // If no redis, we just proceed (best effort).
-    }
-  } catch (error) {
-    console.warn('Redis lock acquisition failed, continuing with hard caps:', error);
-  }
 
   // PRODUCTION: Enhanced rate limiting with Redis fallback
   if (!IS_TEST) {
@@ -653,62 +668,24 @@ const matchUsersHandler = async (req: NextRequest) => {
     }
   }
 
-  try {
+  // Use Redis lock to prevent concurrent processing
+  const lockKey = LOCK_KEY('global');
+  const result = await withRedisLock(lockKey, 30, async () => {
     console.log(`Processing match-users request from IP: ${ip}`);
     
-    // Validate request body
-    let requestBody;
-    try {
-      requestBody = await req.json();
-    } catch (parseError) {
-      return NextResponse.json({ 
-        error: 'Invalid JSON in request body',
-        details: parseError instanceof Error ? parseError.message : 'Unknown parsing error'
-      }, { status: 400 });
-    }
-
-    // Validate request body structure
-    if (requestBody && typeof requestBody === 'object') {
-      // Check for invalid fields that shouldn't be present
-      const validFields = ['limit', 'forceReprocess'];
-      const invalidFields = Object.keys(requestBody).filter(key => !validFields.includes(key));
-      
-      if (invalidFields.length > 0) {
-        return NextResponse.json({ 
-          error: 'Invalid request body. Contains unsupported fields.',
-          invalidFields: invalidFields
-        }, { status: 400 });
-      }
-      
-      // Validate field types
-      if (requestBody.limit !== undefined && (typeof requestBody.limit !== 'number' || requestBody.limit < 1)) {
-        return NextResponse.json({ 
-          error: 'Invalid limit parameter. Must be a positive number.',
-          received: requestBody.limit
-        }, { status: 400 });
-      }
-      
-      if (requestBody.forceReprocess !== undefined && typeof requestBody.forceReprocess !== 'boolean') {
-        return NextResponse.json({ 
-          error: 'Invalid forceReprocess parameter. Must be a boolean.',
-          received: requestBody.forceReprocess
-        }, { status: 400 });
-      }
-    }
-
-    const { limit = 1000, forceReprocess = false } = requestBody || {};
-    
-    // In test mode, cap to USER_LIMIT (3) regardless of higher requested limit
-    const userCap = IS_TEST ? Math.min(typeof limit === 'number' ? limit : USER_LIMIT, USER_LIMIT) : USER_LIMIT;
-    const jobCap = JOB_LIMIT;
+    // Use validated Zod schema values from the first parsing
+    const userCap = IS_TEST ? Math.min(userLimit, USER_LIMIT) : userLimit;
+    const jobCap = jobLimit;
     
     const supabase = getDatabaseClient();
     
     // Validate database schema before proceeding
-    const isSchemaValid = await validateDatabaseSchema(supabase);
-    if (!isSchemaValid) {
+    const schemaValidation = await validateDatabaseSchema(supabase);
+    if (!schemaValidation.valid) {
       return NextResponse.json({ 
-        error: 'Database schema validation failed. Missing required columns: status, original_posted_date, last_seen_at' 
+        error: 'Database schema validation failed',
+        message: 'Required columns missing from jobs table',
+        missingColumns: schemaValidation.missingColumns
       }, { status: 500 });
     }
 
@@ -770,42 +747,70 @@ const matchUsersHandler = async (req: NextRequest) => {
     const jobFetchStart = Date.now();
     lap('fetch_jobs');
 
-    // EU location hints for filtering
-    const EU_HINTS = [
-      "UK","United Kingdom","Ireland","Germany","France","Spain","Portugal","Italy",
-      "Netherlands","Belgium","Luxembourg","Denmark","Sweden","Norway","Finland",
-      "Iceland","Poland","Czech","Austria","Switzerland","Hungary","Greece",
-      "Romania","Bulgaria","Croatia","Slovenia","Slovakia","Estonia","Latvia",
-      "Lithuania","Amsterdam","Rotterdam","Eindhoven","London","Dublin","Paris",
-      "Berlin","Munich","Frankfurt","Zurich","Stockholm","Copenhagen","Oslo",
-      "Helsinki","Madrid","Barcelona","Lisbon","Milan","Rome","Athens","Warsaw",
-      "Prague","Vienna","Budapest","Bucharest","Tallinn","Riga","Vilnius",
-      "Brussels","Luxembourg City"
-    ];
+    // Check if semantic search is available
+    const isSemanticAvailable = await semanticRetrievalService.isSemanticSearchAvailable();
+    console.log(`Semantic search available: ${isSemanticAvailable}`);
 
-    // Early career keywords for filtering
-    const EARLY_CAREER_KEYWORDS = [
-      "graduate","new grad","entry level","intern","internship","apprentice",
-      "early career","junior","campus","working student","associate","assistant"
-    ];
+    let jobs: any[] = [];
 
-    // Note: Filter building commented out - not currently used in query
+    if (isSemanticAvailable) {
+      // Use semantic retrieval for better job matching
+      console.log('Using semantic retrieval for job matching');
+      
+      // Get semantic candidates for each user (we'll use the first user's preferences as a sample)
+      const sampleUser = transformedUsers[0];
+      if (sampleUser) {
+        const semanticJobs = await semanticRetrievalService.getSemanticCandidates(
+          sampleUser.preferences as UserPreferences,
+          200 // Get top 200 semantic matches
+        );
+        
+        if (semanticJobs.length > 0) {
+          jobs = semanticJobs;
+          console.log(`Found ${semanticJobs.length} semantic job candidates`);
+        }
+      }
+    }
 
-    const { data: jobs, error: jobsError } = await supabase
-      .from('jobs')
-      .select('job_hash, title, company, location, description, source, created_at, original_posted_date, last_seen_at, status, job_url, is_active, is_graduate, is_internship, career_path, target_cities, skills')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(jobCap);
+    // Fallback to traditional keyword-based search if semantic search fails or returns no results
+    if (jobs.length === 0) {
+      console.log('Falling back to keyword-based job search');
+      
+      // EU location hints for filtering
+      const EU_HINTS = [
+        "UK","United Kingdom","Ireland","Germany","France","Spain","Portugal","Italy",
+        "Netherlands","Belgium","Luxembourg","Denmark","Sweden","Norway","Finland",
+        "Iceland","Poland","Czech","Austria","Switzerland","Hungary","Greece",
+        "Romania","Bulgaria","Croatia","Slovenia","Slovakia","Estonia","Latvia",
+        "Lithuania","Amsterdam","Rotterdam","Eindhoven","London","Dublin","Paris",
+        "Berlin","Munich","Frankfurt","Zurich","Stockholm","Copenhagen","Oslo",
+        "Helsinki","Madrid","Barcelona","Lisbon","Milan","Rome","Athens","Warsaw",
+        "Prague","Vienna","Budapest","Bucharest","Tallinn","Riga","Vilnius",
+        "Brussels","Luxembourg City"
+      ];
+
+      // Early career keywords for filtering
+      const EARLY_CAREER_KEYWORDS = [
+        "graduate","new grad","entry level","intern","internship","apprentice",
+        "early career","junior","campus","working student","associate","assistant"
+      ];
+
+      const { data: jobsData, error: jobsError } = await supabase
+        .from('jobs')
+        .select('job_hash, title, company, location, description, source, created_at, original_posted_date, last_seen_at, status, job_url, is_active, is_graduate, is_internship, career_path, target_cities, skills')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(jobCap);
+
+      if (jobsError) {
+        console.error('Failed to fetch jobs:', jobsError);
+        return NextResponse.json({ error: 'Failed to fetch jobs' }, { status: 500 });
+      }
+
+      jobs = jobsData || [];
+    }
 
     const jobFetchTime = Date.now() - jobFetchStart;
-
-    if (jobsError) {
-      console.error('Failed to fetch jobs:', jobsError);
-      
-      
-      return NextResponse.json({ error: 'Failed to fetch jobs' }, { status: 500 });
-    }
 
     if (!jobs || jobs.length === 0) {
       console.log('No active jobs to process');
@@ -816,11 +821,30 @@ const matchUsersHandler = async (req: NextRequest) => {
     
     // Log filtering effectiveness
     if (jobs.length > 0) {
+      // EU location hints for filtering
+      const EU_HINTS = [
+        "UK","United Kingdom","Ireland","Germany","France","Spain","Portugal","Italy",
+        "Netherlands","Belgium","Luxembourg","Denmark","Sweden","Norway","Finland",
+        "Iceland","Poland","Czech","Austria","Switzerland","Hungary","Greece",
+        "Romania","Bulgaria","Croatia","Slovenia","Slovakia","Estonia","Latvia",
+        "Lithuania","Amsterdam","Rotterdam","Eindhoven","London","Dublin","Paris",
+        "Berlin","Munich","Frankfurt","Zurich","Stockholm","Copenhagen","Oslo",
+        "Helsinki","Madrid","Barcelona","Lisbon","Milan","Rome","Athens","Warsaw",
+        "Prague","Vienna","Budapest","Bucharest","Tallinn","Riga","Vilnius",
+        "Brussels","Luxembourg City"
+      ];
+
+      // Early career keywords for filtering
+      const EARLY_CAREER_KEYWORDS = [
+        "graduate","new grad","entry level","intern","internship","apprentice",
+        "early career","junior","campus","working student","associate","assistant"
+      ];
+
       const euJobs = jobs.filter(job => 
-        EU_HINTS.some(hint => job.location.toLowerCase().includes(hint.toLowerCase()))
+        EU_HINTS.some((hint: string) => job.location.toLowerCase().includes(hint.toLowerCase()))
       ).length;
       const earlyCareerJobs = jobs.filter(job => 
-        EARLY_CAREER_KEYWORDS.some(keyword => 
+        EARLY_CAREER_KEYWORDS.some((keyword: string) => 
           job.title.toLowerCase().includes(keyword.toLowerCase()) ||
           job.description.toLowerCase().includes(keyword.toLowerCase())
         )
@@ -933,6 +957,17 @@ const matchUsersHandler = async (req: NextRequest) => {
         
         const aiMatchingTime = Date.now() - aiMatchingStart;
         totalAIProcessingTime += aiMatchingTime;
+
+        // Update performance metrics with actual timing
+        performanceTracker.getMetrics = () => ({
+          jobFetchTime: jobFetchTime,
+          tierDistributionTime: totalTierDistributionTime,
+          aiMatchingTime: totalAIProcessingTime,
+          totalProcessingTime: Date.now() - performanceTracker.startTime,
+          memoryUsage: process.memoryUsage().heapUsed - performanceTracker.startMemory,
+          errors: 0, // Set by caller
+          totalRequests: 1 // Default to 1 request
+        });
 
         // DIVERSITY: Ensure matches include multiple job boards AND multiple cities
         // This runs EVEN for cached results to ensure city distribution!
@@ -1081,7 +1116,16 @@ const matchUsersHandler = async (req: NextRequest) => {
                 confidence_score: 0.75
               };
               
-              console.log(` Added job from ${(alternativeJob as any).source} for diversity`);
+              // Log diversity improvement to Sentry breadcrumb
+              Sentry.addBreadcrumb({
+                message: 'Added alternative job for diversity',
+                level: 'debug',
+                data: {
+                  userEmail: user.email,
+                  source: (alternativeJob as any).source,
+                  jobTitle: alternativeJob.title
+                }
+              });
             }
           }
           
@@ -1099,7 +1143,18 @@ const matchUsersHandler = async (req: NextRequest) => {
           }).filter(Boolean);
           const finalUniqueCities = new Set(finalCities);
           
-          console.log(` Final diversity for ${user.email}: ${finalUniqueSources.size} sources (${Array.from(finalUniqueSources).join(', ')}), ${finalUniqueCities.size} cities (${Array.from(finalUniqueCities).join(', ')})`);
+          // Log final diversity to Sentry breadcrumb
+          Sentry.addBreadcrumb({
+            message: 'Final diversity achieved',
+            level: 'debug',
+            data: {
+              userEmail: user.email,
+              sourceCount: finalUniqueSources.size,
+              sources: Array.from(finalUniqueSources),
+              cityCount: finalUniqueCities.size,
+              cities: Array.from(finalUniqueCities)
+            }
+          });
         }
 
         // Save matches using service with provenance tracking
@@ -1178,6 +1233,14 @@ const matchUsersHandler = async (req: NextRequest) => {
       failed: results.filter(r => !r.success).length,
       duration: Date.now() - startTime
     });
+  });
+
+  // Handle lock acquisition failure
+  if (result === null) {
+    return NextResponse.json({ error: 'Processing in progress' }, { status: 409 });
+  }
+
+  return result;
 
   } catch (error) {
     const requestDuration = Date.now() - startTime;
@@ -1191,7 +1254,7 @@ const matchUsersHandler = async (req: NextRequest) => {
         requestId
       },
       extra: {
-        processingTime: Date.now() - requestStartTime,
+        processingTime: Date.now() - startTime,
         requestDuration,
         requestId
       }
@@ -1206,28 +1269,7 @@ const matchUsersHandler = async (req: NextRequest) => {
     if (transaction) {
       transaction.finish();
     }
-    
-    if (haveRedisLock) {
-      try {
-        const limiter = getProductionRateLimiter();
-        // @ts-ignore
-        const redis = (limiter as any).redisClient;
-        if (redis) {
-          const val = await redis.get(lockKey);
-          if (val === token) await redis.del(lockKey);
-        }
-      } catch {
-        // swallow; TTL will release naturally
-      }
-    }
   }
-} catch (error) {
-  console.error(' Critical error in POST handler:', error);
-  return NextResponse.json({ 
-    error: 'Internal server error', 
-    message: error instanceof Error ? error.message : 'Unknown error' 
-  }, { status: 500 });
-}
 };
 
 // Export with auth wrapper

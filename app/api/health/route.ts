@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/Utils/supabase';
+import { getDatabaseClient } from '@/Utils/databasePool';
 
 export async function GET(req: NextRequest) {
   const start = Date.now();
@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
       status: healthy ? 'healthy' : 'degraded',
       checks,
       responseTime: duration,
+      duration: duration, // Add duration for test compatibility
       timestamp: new Date().toISOString()
     }, { 
       status: healthy ? 200 : 503 
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
 
 async function checkDatabase(): Promise<{ status: string; message: string }> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
     const { error } = await supabase.from('users').select('count').limit(1);
     
     if (error) {

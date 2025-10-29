@@ -1,6 +1,6 @@
 // app/api/unsubscribe/one-click/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/Utils/supabase';
+import { getDatabaseClient } from '@/Utils/databasePool';
 import crypto from 'crypto';
 import { getBaseUrl } from '@/Utils/url-helpers';
 
@@ -16,7 +16,7 @@ function verifyUnsubscribeToken(email: string, token: string): boolean {
 
 // Add email to suppression list for unsubscribe
 async function suppressEmailForUnsubscribe(email: string): Promise<void> {
-  const supabase = getSupabaseClient();
+  const supabase = getDatabaseClient();
   
   try {
     // Insert suppression record

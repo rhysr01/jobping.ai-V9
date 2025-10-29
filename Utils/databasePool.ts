@@ -107,6 +107,9 @@ class DatabasePool {
   }
 
   private static checkHealth(): void {
+    // Skip health checks in test environment to prevent async logging after tests
+    if (process.env.NODE_ENV === 'test') return;
+    
     const now = Date.now();
     
     if (now - this.lastHealthCheck > this.healthCheckInterval) {

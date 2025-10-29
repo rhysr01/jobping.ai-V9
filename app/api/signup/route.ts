@@ -1,7 +1,7 @@
 // Native signup form handler
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/Utils/supabase';
+import { getDatabaseClient } from '@/Utils/databasePool';
 import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
 import { sendWelcomeEmail, sendMatchedJobsEmail } from '@/Utils/email/sender';
 
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
     
     // Determine subscription tier from request (defaults to 'free')
     const subscriptionTier = (data.tier === 'premium' ? 'premium' : 'free') as 'free' | 'premium';

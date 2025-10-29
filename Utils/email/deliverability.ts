@@ -3,8 +3,8 @@
  * DMARC/SPF/DKIM validation, bounce handling, and unsubscribe management
  */
 
-import { createClient } from '@supabase/supabase-js';
 import { getListUnsubscribeHeader } from '../url-helpers';
+import type { EmailWebhookDetails } from '@/lib/types';
 
 export interface EmailDeliverabilityMetrics {
   deliveryRate: number;
@@ -30,22 +30,8 @@ export interface UnsubscribeRecord {
   source: 'email_link' | 'dashboard' | 'complaint' | 'bounce';
 }
 
-// Initialize Supabase client
-function getSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase configuration');
-  }
-  
-  return createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
-}
+// Import centralized database client
+import { getDatabaseClient } from '../databasePool';
 
 /**
  * Validate email deliverability setup
@@ -186,7 +172,7 @@ export async function addToBounceSuppressionList(
   reason: string
 ): Promise<boolean> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
 
     // Check if email is already in suppression list
     const { data: existing } = await supabase
@@ -249,7 +235,7 @@ export async function addToBounceSuppressionList(
  */
 export async function isInBounceSuppressionList(email: string): Promise<boolean> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
 
     const { data } = await supabase
       .from('email_suppression')
@@ -289,7 +275,7 @@ export async function isInBounceSuppressionList(email: string): Promise<boolean>
  */
 export async function unsubscribeUser(email: string, reason?: string): Promise<boolean> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
 
     // Update user record
     const { error: userError } = await supabase
@@ -333,7 +319,7 @@ export async function unsubscribeUser(email: string, reason?: string): Promise<b
  */
 export async function isUserUnsubscribed(email: string): Promise<boolean> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
 
     const { data: user } = await supabase
       .from('users')
@@ -353,7 +339,7 @@ export async function isUserUnsubscribed(email: string): Promise<boolean> {
  */
 async function getBounceSuppressionListSize(): Promise<number> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
 
     const { count } = await supabase
       .from('email_suppression')
@@ -371,7 +357,7 @@ async function getBounceSuppressionListSize(): Promise<number> {
  */
 async function getComplaintRate(): Promise<number> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
 
     // Get total emails sent in last 30 days
     const thirtyDaysAgo = new Date();
@@ -403,7 +389,7 @@ async function getComplaintRate(): Promise<number> {
  */
 export async function getEmailDeliverabilityMetrics(): Promise<EmailDeliverabilityMetrics> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -512,7 +498,7 @@ export async function validateEmailBeforeSend(email: string): Promise<{
 export async function processEmailWebhook(
   eventType: 'bounce' | 'complaint' | 'delivery',
   email: string,
-  details: any
+  details: EmailWebhookDetails
 ): Promise<boolean> {
   try {
     switch (eventType) {
@@ -527,7 +513,7 @@ export async function processEmailWebhook(
       
       case 'delivery':
         // Log successful delivery
-        const supabase = getSupabaseClient();
+        const supabase = getDatabaseClient();
         await supabase
           .from('email_deliveries')
           .insert({

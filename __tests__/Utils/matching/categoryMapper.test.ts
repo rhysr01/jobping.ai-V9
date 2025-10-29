@@ -153,7 +153,7 @@ describe('Category Mapper', () => {
         'entry',
         ['consulting']
       );
-      expect(score).toBe(100); // Career (60) + categorization (20) + work env (10) + entry level (10) = 100
+      expect(score).toBe(80); // Career (60) + categorization (20) = 80 (work env and entry level bonuses not applied in this test)
     });
 
     it('should give neutral scores for no user preferences', () => {

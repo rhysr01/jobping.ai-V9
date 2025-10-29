@@ -25,6 +25,8 @@ export interface Job {
   is_active: boolean;                   // boolean Non-nullable, default true (added for lifecycle)
   scraper_run_id?: string;              // uuid Nullable
   created_at: string;                   // timestamptz Non-nullable, default now()
+  is_internship?: boolean;              // boolean Nullable (for internship detection)
+  is_graduate?: boolean;                // boolean Nullable (for graduate scheme detection)
 }
 
 // Utility interface for atomic upserts

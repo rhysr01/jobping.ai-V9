@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // import { EmailVerificationOracle } from '@/Utils/emailVerification';
 import { errorResponse } from '@/Utils/errorResponse';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-import { getSupabaseClient } from '@/Utils/supabase';
+import { getDatabaseClient } from '@/Utils/databasePool';
 import { ENV } from '@/Utils/constants';
 
 // Test mode helper - using professional pattern
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       return errorResponse.badRequest(request, 'Verification token required');
     }
 
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
     // const result = await EmailVerificationOracle.verifyEmail(token, supabase);
     
     // Temporary placeholder - email verification coming soon

@@ -26,8 +26,25 @@ function vmlButton(href: string, label: string, gradientFrom: string, gradientTo
   </v:roundrect>
   <![endif]-->
   <!--[if !mso]><!-- -->
-  <a href="${href}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background: linear-gradient(90deg, ${gradientFrom}, ${gradientTo});color:#ffffff;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 4px 20px rgba(99,102,241,0.3);">
-    ${label}
+  <a href="${href}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background: linear-gradient(90deg, ${gradientFrom}, ${gradientTo});color:#ffffff;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 4px 20px rgba(99,102,241,0.3);transition:all 0.2s ease;">
+${label}
+  </a>
+  <!--<![endif]-->
+  `;
+}
+
+// Enhanced VML button specifically for feedback (smaller, more compact)
+function vmlFeedbackButton(href: string, label: string, gradientFrom: string, gradientTo: string) {
+  return `
+  <!--[if mso]>
+  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${href}" style="height:40px;v-text-anchor:middle;width:120px;" arcsize="15%" fillcolor="${gradientFrom}" strokecolor="${gradientFrom}">
+    <w:anchorlock/>
+    <center style="color:#ffffff;font-family:Arial, sans-serif;font-size:14px;font-weight:600;">${label}</center>
+  </v:roundrect>
+  <![endif]-->
+  <!--[if !mso]><!-- -->
+  <a href="${href}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background: linear-gradient(90deg, ${gradientFrom}, ${gradientTo});color:#ffffff;padding:10px 20px;border-radius:12px;text-decoration:none;font-weight:600;font-size:14px;box-shadow:0 3px 15px rgba(99,102,241,0.25);transition:all 0.2s ease;min-width:100px;text-align:center;">
+${label}
   </a>
   <!--<![endif]-->
   `;
@@ -43,6 +60,10 @@ function wrapEmail(title: string, body: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="x-ua-compatible" content="ie=edge" />
   <title>${title}</title>
+  <!-- Gmail preheader text -->
+  <div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
+    Fresh job matches tailored just for you. Hand-picked opportunities waiting.
+  </div>
   <style>
     /* Client resets */
     html, body { margin:0; padding:0; }
@@ -59,6 +80,11 @@ function wrapEmail(title: string, body: string): string {
     .content { padding:36px 28px; }
     .title { font-family: Arial, sans-serif; color:${COLORS.white}; font-size:28px; font-weight:800; letter-spacing:-0.4px; margin:0 0 8px 0; }
     .text { font-family: Arial, sans-serif; color:${COLORS.gray400}; font-size:15px; line-height:1.6; margin:0 0 14px 0; }
+    
+    /* Gmail-specific optimizations */
+    .gmail-fix { min-width: 600px; }
+    .gmail-spacing { mso-line-height-rule: exactly; }
+    .gmail-table { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
     .pill { display:inline-block; background:${COLORS.panel}; color:${COLORS.white}; border:1px solid rgba(99,102,241,0.25); padding:10px 16px; border-radius:999px; font-weight:700; box-shadow:0 0 24px rgba(139,92,246,0.25); }
 
     /* Card */
@@ -80,10 +106,10 @@ function wrapEmail(title: string, body: string): string {
   </style>
 </head>
 <body style="margin:0; background:${COLORS.bg};">
-  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="container">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="container gmail-table">
     <tr>
       <td>
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="shell">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="shell gmail-fix gmail-table">
           <tr>
             <td class="header">
               <div class="logo">JobPing</div>
@@ -111,12 +137,12 @@ export function createWelcomeEmail(userName?: string, matchCount: number = 5): s
   const body = `
   <tr>
     <td class="content" align="center">
-      <div class="pill">${matchCount} hand‑picked roles waiting</div>
-      <h1 class="title">Welcome${name}</h1>
-      <p class="text">We’ll send you roles you can actually get — not a job board dump.</p>
-      <p class="text">Look out for your first set within 48 hours. Then we keep them coming weekly.</p>
-      ${vmlButton(getBaseUrl(), 'Show me my matches', COLORS.indigo, COLORS.purple)}
-      <p class="text" style="color:${COLORS.gray500}; font-size:12px; margin-top:12px;">Changed your mind? Update preferences anytime from any email.</p>
+      <div class="pill">${matchCount} hand‑picked roles waiting for you! 🎯</div>
+      <h1 class="title">Welcome${name}! We're excited to have you! 🚀</h1>
+      <p class="text">We're <span style="color:#8B5CF6; font-weight:700;">thrilled you're here</span> and can't wait to help you find your next amazing role!</p>
+      <p class="text">We'll send you roles you can actually get — not a job board dump. <span style="color:#8B5CF6; font-weight:700;">We're excited to share</span> your first set within 48 hours. Then we keep them coming weekly.</p>
+      ${vmlButton(getBaseUrl(), 'Show me my matches! ✨', COLORS.indigo, COLORS.purple)}
+      <p class="text" style="color:${COLORS.gray500}; font-size:12px; margin-top:12px;">Changed your mind? Update preferences anytime from any email — no hard feelings! 💙</p>
     </td>
   </tr>`;
   return wrapEmail('Welcome to JobPing', body);
@@ -128,13 +154,16 @@ export function createJobMatchesEmail(
   subscriptionTier: 'free' | 'premium' = 'free',
   isSignupEmail: boolean = false,
 ): string {
-  const title = isSignupEmail ? 'Your first matches just landed' : 'Fresh roles for you';
+  const title = isSignupEmail ? 'Your first matches just landed! 🎉' : 'Exciting new opportunities for you! ✨';
   const header = `
   <tr>
     <td class="content" align="left">
       ${subscriptionTier === 'premium' ? '<div class="badge">Premium member</div>' : ''}
       <h1 class="title">${title}</h1>
-      <p class="text">${userName ? `${userName}, ` : ''}these are shortlisted for speed. 60‑second skim. One‑click apply.</p>
+      <p class="text">${userName ? `${userName}, ` : ''}we're <span style="color:#8B5CF6; font-weight:700;">thrilled to share</span> these hand-picked roles with you! Each one has been carefully selected for your preferences. 60‑second skim. One‑click apply.</p>
+      <p class="text" style="color:${COLORS.gray500}; font-size:13px; margin: 16px 0 0 0;">
+        💡 <strong>Quick tip:</strong> Scroll down to rate these matches and help us send you even better ones next time!
+      </p>
     </td>
   </tr>`;
 
@@ -156,25 +185,45 @@ export function createJobMatchesEmail(
     </td></tr>`;
   }).join('');
 
-  // Feedback block (overall email rating) using first job's user_email if present
+  // Enhanced feedback block with better design and clear reference
   const userEmail = (jobCards[0] as any)?.job?.user_email || '';
   const feedback = `
   <tr>
-    <td class="content" align="center">
-      <p class="text" style="margin-bottom:10px;">How useful were these matches?</p>
-      <table role="presentation" cellpadding="0" cellspacing="6">
-        <tr>
-          <td>${vmlButton(`${getBaseUrl()}/api/feedback/email?action=positive&score=5&email=${encodeURIComponent(userEmail)}`, 'Loved it', COLORS.purple, COLORS.indigo)}</td>
-          <td>${vmlButton(`${getBaseUrl()}/api/feedback/email?action=positive&score=4&email=${encodeURIComponent(userEmail)}`, 'Good', COLORS.purple, COLORS.indigo)}</td>
-        </tr>
-        <tr>
-          <td>${vmlButton(`${getBaseUrl()}/api/feedback/email?action=neutral&score=3&email=${encodeURIComponent(userEmail)}`, 'It\'s fine', COLORS.indigo, COLORS.purple)}</td>
-          <td>${vmlButton(`${getBaseUrl()}/api/feedback/email?action=negative&score=2&email=${encodeURIComponent(userEmail)}`, 'Not great', COLORS.indigo, COLORS.purple)}</td>
-        </tr>
-        <tr>
-          <td colspan="2" align="center">${vmlButton(`${getBaseUrl()}/api/feedback/email?action=negative&score=1&email=${encodeURIComponent(userEmail)}`, 'Not relevant', COLORS.indigo, COLORS.purple)}</td>
-        </tr>
-      </table>
+    <td class="content" align="center" style="background: linear-gradient(135deg, rgba(99,102,241,0.05), rgba(139,92,246,0.03)); border-radius: 16px; margin: 24px 0; padding: 32px 20px;">
+      <div style="background: ${COLORS.panel}; border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; padding: 24px; box-shadow: 0 4px 20px rgba(99,102,241,0.1);">
+        <h3 style="color: ${COLORS.white}; font-family: Arial, sans-serif; font-size: 18px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.2px;">
+          💬 Quick Feedback
+        </h3>
+        <p class="text" style="margin-bottom: 20px; color: ${COLORS.gray400}; font-size: 14px;">
+          Help us improve your matches! How useful were these roles?
+        </p>
+        <table role="presentation" cellpadding="0" cellspacing="8" style="margin: 0 auto;">
+          <tr>
+            <td style="padding: 4px;">
+              ${vmlFeedbackButton(`${getBaseUrl()}/api/feedback/email?action=positive&score=5&email=${encodeURIComponent(userEmail)}`, '😍 Loved it', COLORS.purple, COLORS.indigo)}
+            </td>
+            <td style="padding: 4px;">
+              ${vmlFeedbackButton(`${getBaseUrl()}/api/feedback/email?action=positive&score=4&email=${encodeURIComponent(userEmail)}`, '😊 Good', COLORS.purple, COLORS.indigo)}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 4px;">
+              ${vmlFeedbackButton(`${getBaseUrl()}/api/feedback/email?action=neutral&score=3&email=${encodeURIComponent(userEmail)}`, '😐 It\'s fine', COLORS.indigo, COLORS.purple)}
+            </td>
+            <td style="padding: 4px;">
+              ${vmlFeedbackButton(`${getBaseUrl()}/api/feedback/email?action=negative&score=2&email=${encodeURIComponent(userEmail)}`, '😕 Not great', COLORS.indigo, COLORS.purple)}
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2" align="center" style="padding: 4px;">
+              ${vmlFeedbackButton(`${getBaseUrl()}/api/feedback/email?action=negative&score=1&email=${encodeURIComponent(userEmail)}`, '😞 Not relevant', COLORS.indigo, COLORS.purple)}
+            </td>
+          </tr>
+        </table>
+        <p style="color: ${COLORS.gray500}; font-size: 12px; margin: 16px 0 0 0; font-family: Arial, sans-serif;">
+          Takes 2 seconds • Helps us send better matches
+        </p>
+      </div>
     </td>
   </tr>`;
 

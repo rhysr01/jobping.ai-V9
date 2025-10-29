@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { AppError, ValidationError, UnauthorizedError } from '@/lib/errors';
+import type { CleanupLogEntry, CleanupContext } from '@/lib/types';
 import * as Sentry from '@sentry/nextjs';
 
 // Security configuration
@@ -82,7 +83,7 @@ class JobCleanupAPI {
 
   private log(level: 'info' | 'warn' | 'error', message: string, data?: unknown) {
     const timestamp = new Date().toISOString();
-    const baseEntry: any = {
+    const baseEntry: CleanupLogEntry = {
       timestamp,
       requestId: this.requestId,
       level,

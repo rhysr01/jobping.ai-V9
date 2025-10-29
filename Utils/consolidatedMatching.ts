@@ -7,6 +7,7 @@
 import OpenAI from 'openai';
 import type { Job } from '../scrapers/types';
 import { UserPreferences, JobMatch } from './matching/types';
+import type { ParsedMatch } from '@/lib/types';
 // Simple configuration - no complex config module needed
 const JOBS_TO_ANALYZE = 50;
 const CACHE_TTL_HOURS = 48;
@@ -272,6 +273,16 @@ export class ConsolidatedMatchingEngine {
   ): Promise<ConsolidatedMatchResult> {
     const startTime = Date.now();
 
+    // Handle empty job array
+    if (!jobs || jobs.length === 0) {
+      return {
+        matches: [],
+        method: 'rule_based',
+        processingTime: Date.now() - startTime,
+        confidence: 0.0
+      };
+    }
+
     // Check cache first (saves $$$ on repeat matches)
     const cacheKey = this.generateCacheKey(jobs, userPrefs);
     const cached = await this.matchCache.get(cacheKey);
@@ -459,7 +470,7 @@ Keep match reasons 2-3 sentences max. Make every word count.`
           content: prompt
         }
       ],
-      temperature: 0.4, // Higher for more personality and WOW moments
+      temperature: 0.1, // Low temperature for consistent scoring
       max_tokens: 1500,  // More room for exciting, detailed match reasons
       functions: [{
         name: 'return_job_matches',
@@ -626,7 +637,7 @@ Requirements:
   /**
    * Parse function call response - much more reliable than text parsing
    */
-  private parseFunctionCallResponse(matches: any[], jobs: Job[]): JobMatch[] {
+  private parseFunctionCallResponse(matches: ParsedMatch[], jobs: Job[]): JobMatch[] {
     try {
       if (!Array.isArray(matches)) {
         throw new Error('Response is not an array');
@@ -653,7 +664,7 @@ Requirements:
   /**
    * Validate individual match from AI response
    */
-  private isValidMatch(match: any, maxJobIndex: number): boolean {
+  private isValidMatch(match: ParsedMatch, maxJobIndex: number): boolean {
     return (
       match &&
       typeof match.job_index === 'number' &&
@@ -709,7 +720,7 @@ Requirements:
    * NO FRESHNESS: All jobs filtered to 60 days, so all are fresh!
    */
   private calculateWeightedScore(
-    job: any, 
+    job: Job, 
     userPrefs: UserPreferences, 
     userCities: string[], 
     userCareer: string,
@@ -820,7 +831,7 @@ Requirements:
   /**
    * Calculate early career relevance score with role type distinction
    */
-  private calculateEarlyCareerScore(jobText: string, title: string, job?: any, userPrefs?: UserPreferences): { points: number; reason: string } {
+  private calculateEarlyCareerScore(jobText: string, title: string, job?: Job, userPrefs?: UserPreferences): { points: number; reason: string } {
     // CRITICAL: Distinguish between internship, graduate, and junior roles!
     const internshipTerms = ['intern', 'internship', 'stage', 'praktikum', 'prácticas', 'tirocinio', 'stagiar'];
     const graduateTerms = ['graduate', 'new grad', 'grad scheme', 'grad program', 'graduate programme', 'trainee program', 'grad trainee'];

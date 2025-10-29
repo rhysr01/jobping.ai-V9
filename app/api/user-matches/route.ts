@@ -4,6 +4,8 @@ import { HTTP_STATUS } from '@/Utils/constants';
 import { getDatabaseClient } from '@/Utils/databasePool';
 import { z } from 'zod';
 import * as Sentry from '@sentry/nextjs';
+import type { UserMatchesResponse, UserMatchesRequest } from '@/lib/api-types';
+import { createSuccessResponse, createErrorResponse } from '@/lib/api-types';
 
 // Input validation schema
 const userMatchesQuerySchema = z.object({

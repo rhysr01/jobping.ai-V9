@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { metricsCollector } from '../../../Utils/monitoring/metricsCollector';
+import type { HistoricalMetrics } from '@/lib/types';
 
 const getMetricsHandler = async (request: NextRequest) => {
   const startTime = Date.now();
@@ -22,9 +23,27 @@ const getMetricsHandler = async (request: NextRequest) => {
     const currentMetrics = await metricsCollector.collectMetrics();
     
     // Get historical metrics if requested
-    let historicalMetrics: any[] = [];
+    let historicalMetrics: HistoricalMetrics[] = [];
     if (hours > 1) {
-      historicalMetrics = await metricsCollector.getMetricsHistory(hours);
+      const systemMetrics = await metricsCollector.getMetricsHistory(hours);
+      // Convert SystemMetrics to HistoricalMetrics
+      historicalMetrics = systemMetrics.map(metric => ({
+        timestamp: metric.timestamp,
+        activeUsers: metric.business.active_users,
+        jobsScraped: metric.business.recent_jobs,
+        matchesGenerated: metric.business.recent_matches,
+        emailsSent: metric.business.email_sends_today,
+        errorRate: metric.business.failed_emails / Math.max(metric.business.email_sends_today, 1),
+        averageResponseTime: metric.performance.response_time,
+        totalUsers: metric.business.total_users,
+        recentJobs: metric.business.recent_jobs,
+        recentMatches: metric.business.recent_matches,
+        failedEmails: metric.business.failed_emails,
+        pendingJobs: metric.queue.pending_jobs,
+        processingJobs: metric.queue.processing_jobs,
+        failedJobs: metric.queue.failed_jobs,
+        completedJobsToday: metric.queue.completed_jobs_today,
+      }));
     }
 
     const response = {

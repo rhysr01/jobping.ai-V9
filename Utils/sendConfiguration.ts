@@ -15,6 +15,7 @@ export interface MatchRules {
   minScore: number;         // Minimum match score
   lookbackDays: number;     // How far back to look for jobs
   maxPerCompanyPerSend: number; // Max jobs per company per send
+  maxPerSource: number;     // Max jobs from any single source in top results
 }
 
 // Core send configuration - Weekly for free, 3x weekly for premium
@@ -38,7 +39,8 @@ export const SEND_PLAN = {
 export const MATCH_RULES = {
   minScore: 65,  // Minimum 65% match to send (balanced quality)
   lookbackDays: 30,
-  maxPerCompanyPerSend: 2
+  maxPerCompanyPerSend: 2,
+  maxPerSource: 40  // Max 40 jobs from any single source in top results
 } as const;
 
 // Send ledger tracking

@@ -134,7 +134,7 @@ export class AIMatchingService {
       const cachedResult = AIMatchingCache.get(cacheKey);
       
       if (cachedResult) {
-        console.log('¯ Cache hit for AI matching');
+        console.log('ï¿½ Cache hit for AI matching');
         return cachedResult;
       }
 
@@ -175,7 +175,7 @@ Return ONLY valid JSON array with matches.`
               content: prompt
             }
           ],
-          temperature: 0.4, // Higher for more personality and WOW moments
+          temperature: 0.1, // Low temperature for consistent scoring
           max_tokens: 2500, // More room for exciting match reasons
         }),
         timeout<OpenAI.Chat.Completions.ChatCompletion>(20000, 'AI matching timeout')
@@ -191,7 +191,7 @@ Return ONLY valid JSON array with matches.`
       AIMatchingCache.set(cacheKey, matches);
 
       const latency = Date.now() - startTime;
-      console.log(`¤– AI matching completed in ${latency}ms, found ${matches.length} matches`);
+      console.log(`ï¿½ï¿½ AI matching completed in ${latency}ms, found ${matches.length} matches`);
 
       return matches;
 
@@ -233,7 +233,7 @@ You're a friendly career advisor (not a corporate recruiter).
 Write match reasons that create a "WOW" moment:
 
  BE SPECIFIC: "You need React + TypeScript. This role uses both PLUS Next.js"
- BE PERSONAL: "Remember that remote role you rated 5­? This is similar but pays ‚¬10K more"
+ BE PERSONAL: "Remember that remote role you rated 5ï¿½? This is similar but pays ï¿½ï¿½10K more"
  BE CONFIDENT: "You're overqualified for this (which means easy interview)"
  BE EMOTIONAL: "This is the kind of startup you'll tell your friends about"
 
@@ -271,28 +271,28 @@ ${specificRoles}
 
  IMPORTANT: Career Path + Role Type must BOTH match!
 Examples:
-  ¢ "Tech & Transformation" + "Software Engineer" = Software Intern/Engineer roles
-  ¢ "Tech & Transformation" + "Sales" = Tech Sales/Business Development roles
-  ¢ "Finance & Investment" + "Analyst" = Financial Analyst/Investment Analyst roles
-  ¢ "Marketing & Growth" + "Content" = Content Marketing roles
+  ï¿½ "Tech & Transformation" + "Software Engineer" = Software Intern/Engineer roles
+  ï¿½ "Tech & Transformation" + "Sales" = Tech Sales/Business Development roles
+  ï¿½ "Finance & Investment" + "Analyst" = Financial Analyst/Investment Analyst roles
+  ï¿½ "Marketing & Growth" + "Content" = Content Marketing roles
 
 Available Career Paths:
-  ¢ Strategy & Business Design
-  ¢ Data & Analytics  
-  ¢ Retail & Luxury
-  ¢ Sales & Client Success
-  ¢ Marketing & Growth
-  ¢ Finance & Investment
-  ¢ Operations & Supply Chain
-  ¢ Product & Innovation
-  ¢ Tech & Transformation
-  ¢ Sustainability & ESG
+  ï¿½ Strategy & Business Design
+  ï¿½ Data & Analytics  
+  ï¿½ Retail & Luxury
+  ï¿½ Sales & Client Success
+  ï¿½ Marketing & Growth
+  ï¿½ Finance & Investment
+  ï¿½ Operations & Supply Chain
+  ï¿½ Product & Innovation
+  ï¿½ Tech & Transformation
+  ï¿½ Sustainability & ESG
 
 TARGET CITIES (100% verified location data):
-${profile.target_cities?.map(c => `  ¢ ${c}`).join('\n') || '  ¢ Flexible across all 14 cities'}
+${profile.target_cities?.map(c => `  ï¿½ ${c}`).join('\n') || '  ï¿½ Flexible across all 14 cities'}
 
 LANGUAGES SPOKEN:
-${profile.languages_spoken?.map(l => `  ¢ ${l}`).join('\n') || '  ¢ English'}
+${profile.languages_spoken?.map(l => `  ï¿½ ${l}`).join('\n') || '  ï¿½ English'}
 
 OTHER PREFERENCES:
 - Work Environment: ${profile.work_environment || 'Flexible'}
@@ -322,7 +322,7 @@ MATCHING RULES - ONLY 2 REQUIREMENTS, EVERYTHING ELSE IS OPTIONAL:
 7. **Skills** - Bonus if job mentions skills user has (but don't exclude jobs without skill tags!)
 8. **Career Keywords** - Bonus for jobs that match user's free-form description
 
-¯ SCORING PHILOSOPHY:
+ï¿½ SCORING PHILOSOPHY:
 - A job with ONLY career path + location match can be a 95+ score if it's perfect for the role!
 - Jobs with MORE metadata get BONUS points (not required points)
 - Don't penalize jobs for missing optional fields
@@ -500,12 +500,12 @@ LEARNED PREFERENCES (from ${feedbackSummary.total} ratings):
         
       return `
 JOB ${index}:
-
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  Title: ${job.title}
-¢ Company: ${job.company}
+ï¿½ Company: ${job.company}
  Location: ${job.city}, ${job.country} (verified)
-¯ Career Path(s): ${careerPaths}
-£ Languages Required: ${languages}
+ï¿½ Career Path(s): ${careerPaths}
+ï¿½ Languages Required: ${languages}
  Experience: ${job.experience_required || 'Entry-level'}
  Posted: ${job.original_posted_date || job.created_at}
 
@@ -518,7 +518,7 @@ MATCH CRITERIA:
  City in user's target cities?
  User speaks required languages?
  Role appropriate for early-career?
-
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 `;
     }).join('\n');
   }

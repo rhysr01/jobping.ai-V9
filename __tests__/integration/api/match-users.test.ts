@@ -177,7 +177,14 @@ describe.skip('/api/match-users Integration Tests', () => {
           'Content-Type': 'application/json',
           'x-forwarded-for': '127.0.0.1',
         },
-        body: JSON.stringify({ limit: 10 }),
+        body: JSON.stringify({
+          userLimit: 10,
+          jobLimit: 10000,
+          forceRun: false,
+          dryRun: false,
+          signature: "test",
+          timestamp: 1
+        }),
       });
 
       const response = await POST(request);
@@ -203,7 +210,14 @@ describe.skip('/api/match-users Integration Tests', () => {
           'Content-Type': 'application/json',
           'x-forwarded-for': '127.0.0.1',
         },
-        body: JSON.stringify({ limit: 5 }),
+        body: JSON.stringify({
+          userLimit: 5,
+          jobLimit: 10000,
+          forceRun: false,
+          dryRun: false,
+          signature: "test",
+          timestamp: 1
+        }),
       });
 
       const response = await POST(request);
@@ -218,7 +232,14 @@ describe.skip('/api/match-users Integration Tests', () => {
       const invalidRequest = new NextRequest('http://localhost:3000/api/match-users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: 'invalid' }), // Invalid type
+        body: JSON.stringify({
+          userLimit: 'invalid',
+          jobLimit: 10000,
+          forceRun: false,
+          dryRun: false,
+          signature: "test",
+          timestamp: 1
+        }), // Invalid type
       });
 
       const response = await POST(invalidRequest);
@@ -268,7 +289,14 @@ describe.skip('/api/match-users Integration Tests', () => {
       const request = new NextRequest('http://localhost:3000/api/match-users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: 5 }),
+        body: JSON.stringify({
+          userLimit: 5,
+          jobLimit: 10000,
+          forceRun: false,
+          dryRun: false,
+          signature: "test",
+          timestamp: 1
+        }),
       });
 
       const response = await POST(request);
@@ -290,7 +318,14 @@ describe.skip('/api/match-users Integration Tests', () => {
       const request = new NextRequest('http://localhost:3000/api/match-users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: 5 }),
+        body: JSON.stringify({
+          userLimit: 5,
+          jobLimit: 10000,
+          forceRun: false,
+          dryRun: false,
+          signature: "test",
+          timestamp: 1
+        }),
       });
 
       const response = await POST(request);
@@ -304,7 +339,14 @@ describe.skip('/api/match-users Integration Tests', () => {
       const request = new NextRequest('http://localhost:3000/api/match-users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: 100 }), // Large limit
+        body: JSON.stringify({
+          userLimit: 100,
+          jobLimit: 10000,
+          forceRun: false,
+          dryRun: false,
+          signature: "test",
+          timestamp: 1
+        }), // Large limit
       });
 
       const response = await POST(request);
@@ -337,7 +379,14 @@ describe.skip('/api/match-users Integration Tests', () => {
       const request = new NextRequest('http://localhost:3000/api/match-users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: 5 }),
+        body: JSON.stringify({
+          userLimit: 5,
+          jobLimit: 10000,
+          forceRun: false,
+          dryRun: false,
+          signature: "test",
+          timestamp: 1
+        }),
       });
 
       const response = await POST(request);
@@ -355,7 +404,14 @@ describe.skip('/api/match-users Integration Tests', () => {
       const request = new NextRequest('http://localhost:3000/api/match-users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: 10 }),
+        body: JSON.stringify({
+          userLimit: 10,
+          jobLimit: 10000,
+          forceRun: false,
+          dryRun: false,
+          signature: "test",
+          timestamp: 1
+        }),
       });
 
       const response = await POST(request);
@@ -373,7 +429,14 @@ describe.skip('/api/match-users Integration Tests', () => {
       const request = new NextRequest('http://localhost:3000/api/match-users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: 10 }),
+        body: JSON.stringify({
+          userLimit: 10,
+          jobLimit: 10000,
+          forceRun: false,
+          dryRun: false,
+          signature: "test",
+          timestamp: 1
+        }),
       });
 
       const response = await POST(request);
@@ -412,7 +475,14 @@ describe.skip('/api/match-users Integration Tests', () => {
       const request = new NextRequest('http://localhost:3000/api/match-users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: 5 }),
+        body: JSON.stringify({
+          userLimit: 5,
+          jobLimit: 10000,
+          forceRun: false,
+          dryRun: false,
+          signature: "test",
+          timestamp: 1
+        }),
       });
 
       const response = await POST(request);
@@ -428,7 +498,14 @@ describe.skip('/api/match-users Integration Tests', () => {
       const request = new NextRequest('http://localhost:3000/api/match-users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: 5 }),
+        body: JSON.stringify({
+          userLimit: 5,
+          jobLimit: 10000,
+          forceRun: false,
+          dryRun: false,
+          signature: "test",
+          timestamp: 1
+        }),
       });
 
       const response = await POST(request);
@@ -447,7 +524,14 @@ describe.skip('/api/match-users Integration Tests', () => {
       const request = new NextRequest('http://localhost:3000/api/match-users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: 10 }),
+        body: JSON.stringify({
+          userLimit: 10,
+          jobLimit: 10000,
+          forceRun: false,
+          dryRun: false,
+          signature: "test",
+          timestamp: 1
+        }),
       });
 
       const response = await POST(request);
@@ -466,7 +550,14 @@ describe.skip('/api/match-users Integration Tests', () => {
         new NextRequest('http://localhost:3000/api/match-users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ limit: 5 }),
+          body: JSON.stringify({
+          userLimit: 5,
+          jobLimit: 10000,
+          forceRun: false,
+          dryRun: false,
+          signature: "test",
+          timestamp: 1
+        }),
         })
       );
 
