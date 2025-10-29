@@ -1,13 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { HTTP_STATUS } from '@/Utils/constants';
-import { getSupabaseClient } from '@/Utils/supabase';
+import { getDatabaseClient } from '@/Utils/databasePool';
+import { z } from 'zod';
+import * as Sentry from '@sentry/nextjs';
+
+// Input validation schema
+const userMatchesQuerySchema = z.object({
+  email: z.string().email('Invalid email address'),
+  limit: z.coerce.number().min(1).max(50).default(10),
+  minScore: z.coerce.number().min(0).max(100).default(0),
+  // Add HMAC signature for authentication
+  signature: z.string().min(1, 'Authentication signature required'),
+  timestamp: z.coerce.number().min(1, 'Timestamp required')
+});
+
+// HMAC verification for authentication
+function verifyRequest(req: NextRequest, email: string, timestamp: number, signature: string): boolean {
+  const hmacSecret = process.env.INTERNAL_API_HMAC_SECRET;
+  if (!hmacSecret) {
+    console.error('HMAC secret not configured');
+    return false;
+  }
+
+  const crypto = require('crypto');
+  const expectedSignature = crypto
+    .createHmac('sha256', hmacSecret)
+    .update(`${email}:${timestamp}`)
+    .digest('hex');
+
+  // Check timestamp is within 5 minutes
+  const now = Date.now();
+  if (Math.abs(now - timestamp) > 5 * 60 * 1000) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(
+    Buffer.from(signature, 'hex'),
+    Buffer.from(expectedSignature, 'hex')
+  );
+}
 
 export async function GET(req: NextRequest) {
-  // PRODUCTION: Rate limiting for user matches endpoint
-  const rateLimitResult = await getProductionRateLimiter().middleware(req, 'default', {
+  // PRODUCTION: Stricter rate limiting for user matches endpoint
+  const rateLimitResult = await getProductionRateLimiter().middleware(req, 'user-matches', {
     windowMs: 60 * 1000, // 1 minute
-    maxRequests: 30 // 30 requests per minute for user queries
+    maxRequests: 5 // Reduced from 30 to 5 requests per minute
   });
   if (rateLimitResult) {
     return rateLimitResult;
@@ -15,18 +53,43 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
-    const email = searchParams.get('email');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const minScore = parseFloat(searchParams.get('minScore') || '0');
+    
+    // Parse and validate input
+    const parseResult = userMatchesQuerySchema.safeParse({
+      email: searchParams.get('email'),
+      limit: searchParams.get('limit'),
+      minScore: searchParams.get('minScore'),
+      signature: searchParams.get('signature'),
+      timestamp: searchParams.get('timestamp')
+    });
 
-    if (!email) {
-      return NextResponse.json({ error: 'Email parameter is required' }, { status: 400 });
+    if (!parseResult.success) {
+      return NextResponse.json({ 
+        error: 'Invalid input parameters',
+        details: parseResult.error.errors 
+      }, { status: 400 });
     }
 
-    const supabase = getSupabaseClient();
+    const { email, limit, minScore, signature, timestamp } = parseResult.data;
 
-    // Get user matches with job details
-    const { data: matches, error: matchesError } = await supabase
+    // Verify authentication
+    if (!verifyRequest(req, email, timestamp, signature)) {
+      return NextResponse.json({ 
+        error: 'Authentication failed' 
+      }, { status: 401 });
+    }
+
+    // Add Sentry breadcrumb for user context
+    Sentry.addBreadcrumb({
+      message: 'User matches request',
+      level: 'info',
+      data: { email, limit, minScore }
+    });
+
+    const supabase = getDatabaseClient();
+
+    // Get user matches with job details - with timeout
+    const queryPromise = supabase
       .from('matches')
       .select(`
         *,
@@ -50,8 +113,25 @@ export async function GET(req: NextRequest) {
       .order('match_score', { ascending: false })
       .limit(limit);
 
+    // Add 10 second timeout
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Query timeout')), 10000)
+    );
+
+    const { data: matches, error: matchesError } = await Promise.race([
+      queryPromise,
+      timeoutPromise
+    ]) as any;
+
     if (matchesError) {
       console.error('Failed to fetch user matches:', matchesError);
+      
+      // Capture error in Sentry
+      Sentry.captureException(matchesError, {
+        tags: { component: 'user-matches-api' },
+        extra: { email, limit, minScore }
+      });
+      
       return NextResponse.json({ error: 'Failed to fetch matches' }, { status: 500 });
     }
 
@@ -74,6 +154,17 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     console.error('User matches API error:', error);
+    
+    // Capture error in Sentry with user context
+    Sentry.captureException(error, {
+      tags: { component: 'user-matches-api' },
+      extra: { 
+        email: searchParams.get('email'),
+        limit: searchParams.get('limit'),
+        minScore: searchParams.get('minScore')
+      }
+    });
+    
     return NextResponse.json({ error: 'Server error' }, { status: HTTP_STATUS.INTERNAL_ERROR });
   }
 }

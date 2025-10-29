@@ -5,7 +5,7 @@ import { hmacVerify } from '@/Utils/security/hmac';
 const HMAC_SECRET = process.env.INTERNAL_API_HMAC_SECRET;
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-import { getSupabaseClient } from '@/Utils/supabase';
+import { getDatabaseClient } from '@/Utils/databasePool';
 import * as Sentry from '@sentry/nextjs';
 import {
   logMatchSession
@@ -18,6 +18,25 @@ import {
 } from '@/Utils/sendConfiguration';
 import { Job as ScrapersJob } from '@/scrapers/types';
 import { getCategoryPriorityScore, jobMatchesUserCategories, WORK_TYPE_CATEGORIES, mapFormLabelToDatabase, getStudentSatisfactionScore } from '@/Utils/matching/categoryMapper';
+import { z } from 'zod';
+
+// Zod validation schemas
+const matchUsersRequestSchema = z.object({
+  userLimit: z.coerce.number().min(1).max(100).default(50),
+  jobLimit: z.coerce.number().min(100).max(50000).default(10000),
+  forceRun: z.coerce.boolean().default(false),
+  dryRun: z.coerce.boolean().default(false),
+  // HMAC authentication
+  signature: z.string().min(1, 'Authentication signature required'),
+  timestamp: z.coerce.number().min(1, 'Timestamp required')
+});
+
+const userPreferencesSchema = z.object({
+  target_cities: z.array(z.string()).optional(),
+  roles_selected: z.array(z.string()).optional(),
+  subscription_tier: z.enum(['free', 'premium']).default('free'),
+  email_verified: z.boolean().default(false)
+});
 
 // Type definitions for better type safety
 interface MatchMetrics {
@@ -110,11 +129,17 @@ async function validateDatabaseSchema(supabase: SupabaseClient): Promise<boolean
       return true;
     }
     
-    // Check if required columns exist by attempting a sample query
-    const { data, error } = await supabase
+    // Check if required columns exist by attempting a sample query with timeout
+    const queryPromise = supabase
       .from('jobs')
       .select('status, original_posted_date, last_seen_at')
       .limit(1);
+    
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Query timeout')), 5000)
+    );
+    
+    const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
     
     if (error) {
       console.error('Database schema validation failed:', error.message);
@@ -320,7 +345,7 @@ async function preFilterJobsByUserPreferencesEnhanced(jobs: (ScrapersJob & { fre
   let feedbackBoosts: Map<string, number> = new Map();
   
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
     const { data: feedback } = await supabase
       .from('user_feedback')
       .select('relevance_score, job_context')
@@ -502,6 +527,23 @@ async function preFilterJobsByUserPreferencesEnhanced(jobs: (ScrapersJob & { fre
 
 // OpenAI client creation moved to ConsolidatedMatchingEngine
 
+// Database query helper with timeout
+async function queryWithTimeout<T>(
+  queryPromise: Promise<any>,
+  timeoutMs: number = 10000
+): Promise<{ data: T | null; error: any }> {
+  const timeoutPromise = new Promise<{ data: null; error: any }>((_, reject) => 
+    setTimeout(() => reject(new Error(`Query timeout after ${timeoutMs}ms`)), timeoutMs)
+  );
+
+  try {
+    const result = await Promise.race([queryPromise, timeoutPromise]);
+    return { data: result.data, error: result.error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
 const matchUsersHandler = async (req: NextRequest) => {
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
@@ -534,6 +576,40 @@ const matchUsersHandler = async (req: NextRequest) => {
       }
       // Reconstruct request since body was consumed
       req = new Request(req.url, { method: 'POST', headers: req.headers, body: raw }) as any;
+    }
+
+    // Parse and validate request body
+    const body = await req.json();
+    const parseResult = matchUsersRequestSchema.safeParse(body);
+    
+    if (!parseResult.success) {
+      Sentry.addBreadcrumb({
+        message: 'Invalid request parameters',
+        level: 'warning',
+        data: { errors: parseResult.error.issues }
+      });
+      
+      return NextResponse.json({ 
+        error: 'Invalid request parameters',
+        details: parseResult.error.issues 
+      }, { status: 400 });
+    }
+
+    const { userLimit, jobLimit, forceRun, dryRun, signature, timestamp } = parseResult.data;
+
+    // Verify HMAC authentication if signature provided
+    if (signature && HMAC_SECRET) {
+      const expectedSignature = crypto
+        .createHmac('sha256', HMAC_SECRET)
+        .update(`${userLimit}:${jobLimit}:${timestamp}`)
+        .digest('hex');
+      
+      if (!crypto.timingSafeEqual(
+        Buffer.from(signature, 'hex'),
+        Buffer.from(expectedSignature, 'hex')
+      )) {
+        return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
+      }
     }
     const performanceTracker = trackPerformance();
   const reservationId = `batch_${Date.now()}`;
@@ -638,7 +714,7 @@ const matchUsersHandler = async (req: NextRequest) => {
     const userCap = IS_TEST ? Math.min(typeof limit === 'number' ? limit : USER_LIMIT, USER_LIMIT) : USER_LIMIT;
     const jobCap = JOB_LIMIT;
     
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
     
     // Validate database schema before proceeding
     const isSchemaValid = await validateDatabaseSchema(supabase);
