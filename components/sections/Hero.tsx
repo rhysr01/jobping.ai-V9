@@ -96,7 +96,7 @@ export default function Hero() {
           transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
           className="mt-8 text-display text-white text-balance max-w-[20ch] mx-auto relative"
         >
-          <span className="relative z-10">Land your first job faster without endless applications.</span>
+          <span className="relative z-10">Land your first job faster without endless scrolling.</span>
           {/* Subtle radial highlight behind CTA */}
           <div className="absolute -inset-8 bg-gradient-to-r from-brand-500/20 via-purple-600/20 to-brand-500/20 rounded-full blur-3xl opacity-60 -z-10" />
         </motion.h1>
