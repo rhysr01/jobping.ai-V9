@@ -100,17 +100,10 @@ export default function Hero() {
           {/* Subtle radial highlight behind CTA */}
           <div className="absolute -inset-8 bg-gradient-to-r from-brand-500/20 via-purple-600/20 to-brand-500/20 rounded-full blur-3xl opacity-60 -z-10" />
         </motion.h1>
-        <div className="mt-7 sm:mt-9 px-4">
-          <div className="inline-flex items-center gap-2 surface-raised rounded-full px-4 py-2 shadow-[0_0_24px_rgba(139,92,246,0.25)]">
-            <svg className="w-4 h-4 text-brand-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l-7-7 1.41-1.41L12 16.17l8.59-8.58L22 9l-10 10z" />
-            </svg>
-            <span className="text-sm sm:text-base md:text-lg text-zinc-300">
-              Internships, grad programmes, and early‑career opportunities delivered weekly.
-            </span>
-          </div>
-        </div>
-        <p className="mt-8 text-body text-zinc-400 max-w-[58ch] mx-auto leading-relaxed">
+        <p className="mt-8 text-lg sm:text-xl text-zinc-300 max-w-[60ch] mx-auto leading-relaxed">
+          Internships, grad programmes, and early‑career opportunities delivered weekly.
+        </p>
+        <p className="mt-4 text-body text-zinc-400 max-w-[58ch] mx-auto leading-relaxed">
           We match you to real roles that fit your skills, degree, and goals. No spam. No dead ends.
         </p>
         
