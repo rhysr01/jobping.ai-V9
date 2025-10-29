@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import { withAuth } from '../../../lib/auth';
 import { metricsCollector } from '../../../Utils/monitoring/metricsCollector';
 
 const getMetricsHandler = async (request: NextRequest) => {

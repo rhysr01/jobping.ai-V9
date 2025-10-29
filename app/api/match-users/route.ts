@@ -1,7 +1,6 @@
 // app/api/match-users/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { hmacVerify } from '@/Utils/security/hmac';
-// import { withAuth } from '../../../lib/auth';
 const HMAC_SECRET = process.env.INTERNAL_API_HMAC_SECRET;
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
@@ -59,7 +58,6 @@ interface MatchProvenance {
   [key: string]: any; // Allow additional properties
 }
 import { getDateDaysAgo } from '@/lib/date-helpers';
-// import { userMatchingService } from '@/services/user-matching.service';
 import { Database } from '@/lib/database.types';
 
 type User = Database['public']['Tables']['users']['Row'];
@@ -1118,8 +1116,7 @@ const matchUsersHandler = async (req: NextRequest) => {
           const matchesWithEmail = matches.map(m => ({ ...m, user_email: user.email }));
           
           try {
-            // TODO: Implement proper match saving service
-            // For now, just log the matches that would be saved
+            // NOTE: Match saving temporarily disabled - matches are logged for debugging
             console.log(`✅ Would save ${matchesWithEmail.length} matches for ${user.email}:`, 
               matchesWithEmail.map(m => ({ job_hash: m.job_hash, match_score: m.match_score }))
             );

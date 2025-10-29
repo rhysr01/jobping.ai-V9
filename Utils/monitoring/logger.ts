@@ -108,7 +108,7 @@ export class Logger {
 
     // In production, you might want to send logs to a logging service
     if (process.env.NODE_ENV === 'production') {
-      // TODO: Send to logging service (e.g., Datadog, LogRocket, etc.)
+      // NOTE: Production logging service integration not yet implemented
     }
   }
 

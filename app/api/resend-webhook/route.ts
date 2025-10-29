@@ -12,8 +12,7 @@ export async function POST(req: NextRequest) {
       data: event.data
     });
     
-    // TODO: Persist event.id, event.type, event.data to logs/DB
-    // This helps track delivery status and debug issues
+    // NOTE: Event persistence not yet implemented - events are logged for debugging
     
     return NextResponse.json({ ok: true });
   } catch (error) {

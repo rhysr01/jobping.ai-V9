@@ -86,7 +86,7 @@ export class CVParserService {
       // If it's a PDF URL, we need to extract text
       if (cvUrl.endsWith('.pdf')) {
         // For now, return placeholder
-        // TODO: Add PDF parsing with pdf-parse or similar
+        // NOTE: PDF parsing not yet implemented - requires pdf-parse library
         console.warn('PDF parsing not yet implemented');
         return null;
       }

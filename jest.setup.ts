@@ -158,7 +158,6 @@ global.console = {
 
 // Import teardown functions
 import { getProductionRateLimiter } from './Utils/productionRateLimiter';
-// import { teardownDatadog } from './Utils/datadogMetrics'; // TODO: Implement datadog metrics
 
 // Global teardown to close all connections
 afterAll(async () => {
@@ -168,8 +167,6 @@ afterAll(async () => {
     // Teardown rate limiter
     await getProductionRateLimiter().teardown();
     
-  // Teardown Datadog
-  // await teardownDatadog(); // TODO: Implement datadog metrics
     
     // Cache teardown is handled by mocks
     

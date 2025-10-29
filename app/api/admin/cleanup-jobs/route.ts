@@ -15,7 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { errorHandler, DatabaseError, AuthorizationError, ValidationError } from '@/Utils/error-handling/errorHandler';
+import { AppError, ValidationError, UnauthorizedError } from '@/lib/errors';
 import * as Sentry from '@sentry/nextjs';
 
 // Security configuration
@@ -126,7 +126,7 @@ class JobCleanupAPI {
         .select('*', { count: 'exact', head: true });
 
       if (countError) {
-        throw new DatabaseError(`Failed to count total jobs: ${countError.message}`);
+        throw new AppError(`Failed to count total jobs: ${countError.message}`, 500, 'DATABASE_ERROR');
       }
 
       this.metrics.totalJobs = totalJobs || 0;
@@ -140,7 +140,7 @@ class JobCleanupAPI {
         .limit(CONFIG.MAX_DELETIONS_PER_RUN + 100);
 
       if (queryError) {
-        throw new DatabaseError(`Failed to query old jobs: ${queryError.message}`);
+        throw new AppError(`Failed to query old jobs: ${queryError.message}`, 500, 'DATABASE_ERROR');
       }
 
       this.metrics.eligibleForDeletion = oldJobs?.length || 0;
@@ -213,7 +213,7 @@ class JobCleanupAPI {
           this.metrics.errors++;
           
           // Report batch errors to Sentry
-          Sentry.captureException(new DatabaseError(`Batch deletion failed: ${error.message}`));
+          Sentry.captureException(new AppError(`Batch deletion failed: ${error.message}`, 500, 'DATABASE_ERROR'));
           continue;
         }
 
@@ -288,7 +288,7 @@ function authenticateRequest(req: NextRequest): void {
     }
   }
 
-  throw new AuthorizationError('Invalid authentication credentials');
+  throw new UnauthorizedError('Invalid authentication credentials');
 }
 
 export const POST = async (req: NextRequest) => {
@@ -333,11 +333,11 @@ export const POST = async (req: NextRequest) => {
     // Report errors to Sentry
     Sentry.captureException(error instanceof Error ? error : new Error('Cleanup API error'));
     
-    return errorHandler.handleError(error instanceof Error ? error : new Error('Unknown error'), {
-      requestId,
-      endpoint: '/api/admin/cleanup-jobs',
-      method: 'POST',
-    });
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      requestId
+    }, { status: error instanceof AppError ? error.statusCode : 500 });
   }
 };
 
@@ -357,6 +357,9 @@ export const GET = async (req: NextRequest) => {
       }
     });
   } catch (error) {
-    return errorHandler.handleError(error instanceof Error ? error : new Error('Health check failed'));
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Health check failed'
+    }, { status: 500 });
   }
 };

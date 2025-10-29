@@ -7,7 +7,6 @@ import { Resend } from 'resend';
 import { getReEngagementCandidates, markReEngagementSent } from '../engagementTracker';
 import { getResendClient, EMAIL_CONFIG, assertValidFrom } from './clients';
 import { getUnsubscribeUrl } from '../url-helpers';
-// import { generateReEngagementEmail, generateReEngagementSubject } from './reEngagementTemplate';
 
 export interface ReEngagementResult {
   success: boolean;

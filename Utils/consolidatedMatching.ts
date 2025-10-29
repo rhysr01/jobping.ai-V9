@@ -7,8 +7,14 @@
 import OpenAI from 'openai';
 import type { Job } from '../scrapers/types';
 import { UserPreferences, JobMatch } from './matching/types';
-import { MATCHING_CONFIG } from '@/Utils/config/runtime';
-import { trackAPICall } from '@/Utils/monitoring/enhanced-monitoring';
+// Simple configuration - no complex config module needed
+const JOBS_TO_ANALYZE = 50;
+const CACHE_TTL_HOURS = 48;
+const AI_TIMEOUT_MS = 20000;
+const MAX_CACHE_SIZE = 1000;
+const CIRCUIT_BREAKER_THRESHOLD = 5;
+const CIRCUIT_BREAKER_TIMEOUT = 60000;
+const AI_MAX_RETRIES = 2;
 // Embedding boost removed - feature not implemented
 
 // ============================================
@@ -19,10 +25,7 @@ import { trackAPICall } from '@/Utils/monitoring/enhanced-monitoring';
 // GPT-4o-mini is better than 3.5-turbo AND 70% cheaper
 // No need for complexity-based routing anymore
 
-// Use centralized config
-const JOBS_TO_ANALYZE = MATCHING_CONFIG.JOBS_TO_ANALYZE;
-const CACHE_TTL_HOURS = MATCHING_CONFIG.CACHE_TTL_HOURS;
-const AI_TIMEOUT_MS = MATCHING_CONFIG.AI_TIMEOUT_MS;
+// Configuration constants
 
 // ============================================
 
@@ -201,8 +204,8 @@ class CircuitBreaker {
 
 // SHARED CACHE: Use LRU implementation
 const SHARED_MATCH_CACHE = new LRUMatchCache(
-  MATCHING_CONFIG.MAX_CACHE_SIZE,
-  MATCHING_CONFIG.CACHE_TTL_HOURS * 60 * 60 * 1000
+  MAX_CACHE_SIZE,
+  CACHE_TTL_HOURS * 60 * 60 * 1000
 );
 
 export class ConsolidatedMatchingEngine {
@@ -215,8 +218,8 @@ export class ConsolidatedMatchingEngine {
   };
   private matchCache = SHARED_MATCH_CACHE; // Use shared LRU cache
   private circuitBreaker = new CircuitBreaker(
-    MATCHING_CONFIG.CIRCUIT_BREAKER_THRESHOLD,
-    MATCHING_CONFIG.CIRCUIT_BREAKER_TIMEOUT
+    CIRCUIT_BREAKER_THRESHOLD,
+    CIRCUIT_BREAKER_TIMEOUT
   );
   private readonly CACHE_TTL = CACHE_TTL_HOURS * 60 * 60 * 1000; // Configurable cache TTL
 
@@ -273,7 +276,6 @@ export class ConsolidatedMatchingEngine {
     const cacheKey = this.generateCacheKey(jobs, userPrefs);
     const cached = await this.matchCache.get(cacheKey);
     if (cached) {
-      trackAPICall('matching', 'cache_hit', Date.now() - startTime, 200);
       return {
         matches: cached,
         method: 'ai_success',
@@ -285,7 +287,6 @@ export class ConsolidatedMatchingEngine {
     // Skip AI if explicitly disabled, no client, or circuit breaker open
     if (forceRulesBased || !this.openai || !this.circuitBreaker.canExecute()) {
       const ruleMatches = this.performRuleBasedMatching(jobs, userPrefs);
-      trackAPICall('matching', 'rule_based', Date.now() - startTime, 200);
       return {
         matches: ruleMatches,
         method: 'rule_based',
@@ -305,7 +306,6 @@ export class ConsolidatedMatchingEngine {
         // Update cost tracking
         this.updateCostTracking('gpt4omini', 1, 0.01); // Estimate cost
         
-        trackAPICall('matching', 'ai_success', Date.now() - startTime, 200);
         return {
           matches: aiMatches,
           method: 'ai_success',
@@ -320,7 +320,6 @@ export class ConsolidatedMatchingEngine {
 
     // Fallback to rule-based matching
     const ruleMatches = this.performRuleBasedMatching(jobs, userPrefs);
-    trackAPICall('matching', 'ai_failed', Date.now() - startTime, 200);
     return {
       matches: ruleMatches,
       method: 'ai_failed',
@@ -336,7 +335,7 @@ export class ConsolidatedMatchingEngine {
     jobs: Job[],
     userPrefs: UserPreferences
   ): Promise<JobMatch[]> {
-    const maxRetries = MATCHING_CONFIG.AI_MAX_RETRIES;
+    const maxRetries = AI_MAX_RETRIES;
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {

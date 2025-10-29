@@ -154,9 +154,6 @@ describe('ConsolidatedMatchingEngine', () => {
       expect(result.confidence).toBe(0.9);
     });
 
-    // REMOVED: Flaky fallback tests - mocking doesn't work reliably with current implementation
-    // REMOVED: Timeout tests - difficult to test reliably, covered by integration tests
-    // REMOVED: Empty array tests - edge case, not critical
   });
 
   describe('rule-based matching', () => {
@@ -169,14 +166,8 @@ describe('ConsolidatedMatchingEngine', () => {
       expect(result.confidence).toBeGreaterThan(0);
     });
 
-    // REMOVED: Brittle tests checking specific job rankings
-    // These tests failed when scoring thresholds were improved (70 vs 65)
-    // The new threshold is better for quality but breaks these implementation-detail tests
   });
 
-  // REMOVED: AI model selection tests - we now exclusively use gpt-4o-mini
-  // REMOVED: Cost tracking tests - simplified implementation
-  // REMOVED: Error handling tests - flaky mocking, edge cases tested in integration tests
 
   describe('testConnection', () => {
     it('should return true for successful connection', async () => {

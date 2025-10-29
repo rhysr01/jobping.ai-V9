@@ -44,7 +44,6 @@ jest.mock('@/Utils/matching/logging.service', () => ({
 }));
 
 // Integration tests require full environment (DB, Redis, OpenAI)
-// TODO: Set up proper test environment with mocked external services
 describe.skip('/api/match-users Integration Tests', () => {
   let mockRequest: NextRequest;
 

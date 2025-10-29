@@ -25,7 +25,6 @@ export interface Job {
   is_active: boolean;                   // boolean Non-nullable, default true (added for lifecycle)
   scraper_run_id?: string;              // uuid Nullable
   created_at: string;                   // timestamptz Non-nullable, default now()
-  // updated_at?: string;               // timestamptz - DISABLED: Column doesn't exist in current DB schema
 }
 
 // Utility interface for atomic upserts
@@ -191,7 +190,7 @@ export const CAREER_PATH_PRIORITY = {
   'unknown': -2
 } as const;
 
-// Synonym † slug mapping dictionary
+// Synonym ï¿½ slug mapping dictionary
 export const CAREER_PATH_SYNONYMS: Record<string, string> = {
   // Strategy synonyms
   'business development': 'strategy',
@@ -415,7 +414,7 @@ export function testCareerPathNormalization() {
   testCases.forEach(({ input, expected }) => {
     const result = normalizeCareerPath(input);
     const passed = JSON.stringify(result) === JSON.stringify(expected);
-    console.log(`${passed ? '' : ''} "${input}" † ${JSON.stringify(result)} (expected: ${JSON.stringify(expected)})`);
+    console.log(`${passed ? '' : ''} "${input}" ï¿½ ${JSON.stringify(result)} (expected: ${JSON.stringify(expected)})`);
   });
 }
 

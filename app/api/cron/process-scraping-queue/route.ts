@@ -152,23 +152,22 @@ const processScrapingQueueHandler = asyncHandler(async (_request: NextRequest) =
 
 // Scraper processing functions
 async function processAdzunaScraper(companies: string[]): Promise<{ jobsScraped: number; companiesProcessed: number }> {
-  // TODO: Implement Adzuna scraper processing
-  // For now, return mock data
+  // NOTE: Mock implementation - real scraper not yet implemented
   return { jobsScraped: Math.floor(Math.random() * 10), companiesProcessed: companies.length };
 }
 
 async function processReedScraper(companies: string[]): Promise<{ jobsScraped: number; companiesProcessed: number }> {
-  // TODO: Implement Reed scraper processing
+  // NOTE: Mock implementation - real scraper not yet implemented
   return { jobsScraped: Math.floor(Math.random() * 8), companiesProcessed: companies.length };
 }
 
 async function processMuseScraper(companies: string[]): Promise<{ jobsScraped: number; companiesProcessed: number }> {
-  // TODO: Implement Muse scraper processing
+  // NOTE: Mock implementation - real scraper not yet implemented
   return { jobsScraped: Math.floor(Math.random() * 5), companiesProcessed: companies.length };
 }
 
 async function processGreenhouseScraper(companies: string[]): Promise<{ jobsScraped: number; companiesProcessed: number }> {
-  // TODO: Implement Greenhouse scraper processing
+  // NOTE: Mock implementation - real scraper not yet implemented
   return { jobsScraped: Math.floor(Math.random() * 12), companiesProcessed: companies.length };
 }
 
