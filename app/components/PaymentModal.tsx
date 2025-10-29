@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -15,15 +15,20 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
   const [promoCode, setPromoCode] = useState('');
   const [showPromo, setShowPromo] = useState(false);
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setEmailError('');
 
     // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address.');
+      setEmailError('Please enter a valid email address.');
       return;
     }
 
@@ -44,9 +49,86 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
     if (!isLoading) {
       setEmail('');
       setError('');
+      setEmailError('');
       onClose();
     }
   };
+
+  // Focus management and body scroll prevention
+  useEffect(() => {
+    if (isOpen) {
+      // Store the currently focused element
+      previousActiveElement.current = document.activeElement as HTMLElement;
+      
+      // Prevent body scroll
+      document.body.style.overflow = 'hidden';
+      
+      // Focus the modal
+      if (modalRef.current) {
+        modalRef.current.focus();
+      }
+    } else {
+      // Restore body scroll
+      document.body.style.overflow = 'unset';
+      
+      // Restore focus to the previously focused element
+      if (previousActiveElement.current) {
+        previousActiveElement.current.focus();
+      }
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  // Handle Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen && !isLoading) {
+        handleClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, isLoading]);
+
+  // Focus trap
+  useEffect(() => {
+    if (!isOpen || !modalRef.current) return;
+
+    const focusableElements = modalRef.current.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0] as HTMLElement;
+    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleTabKey);
+    return () => document.removeEventListener('keydown', handleTabKey);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -56,12 +138,20 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={handleClose}
+        aria-hidden="true"
       />
       
-      {/* Modal */}
-      <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+      {/* Modal Dialog */}
+      <div 
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="payment-modal-title"
+        tabIndex={-1}
+        className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl focus:outline-none"
+      >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold text-white">
+          <h2 id="payment-modal-title" className="text-2xl font-semibold text-white">
             Complete Your Purchase
           </h2>
           <button
@@ -88,10 +178,19 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
               placeholder="Enter your email address"
               required
               disabled={isLoading}
+              aria-invalid={emailError ? 'true' : 'false'}
+              aria-describedby={emailError ? 'email-error' : undefined}
               className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-400 focus:border-white/30 focus:ring-2 focus:ring-white/20 transition-colors disabled:opacity-50"
             />
+            {emailError && (
+              <p id="email-error" className="mt-2 text-sm text-red-400" role="alert">
+                {emailError}
+              </p>
+            )}
             {error && (
-              <p className="mt-2 text-sm text-red-400">{error}</p>
+              <p className="mt-2 text-sm text-red-400" role="alert">
+                {error}
+              </p>
             )}
           </div>
 

@@ -35,7 +35,12 @@ export default function Pricing() {
               </ul>
 
               <div className="mt-auto">
-                <Link href="/signup?tier=free" className="btn-secondary inline-block w-full text-center relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black">
+                <Link 
+                  href="/signup?tier=free" 
+                  className="btn-secondary inline-block w-full text-center relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  role="button"
+                  aria-label="Start free plan - navigate to signup"
+                >
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <span className="relative">Start free</span>
                 </Link>
@@ -69,7 +74,12 @@ export default function Pricing() {
               </ul>
 
               <div className="mt-auto">
-                <Link href="/billing" className="btn-primary inline-block w-full text-center relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black">
+                <Link 
+                  href="/billing" 
+                  className="btn-primary inline-block w-full text-center relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  role="button"
+                  aria-label="Go Premium - navigate to billing"
+                >
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400 delay-100" />
                   <span className="relative">Go Premium</span>
                 </Link>
