@@ -1,13 +1,16 @@
 import Link from 'next/link';
+import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
+import GlassCard from '@/components/ui/GlassCard';
 
 export default function Pricing() {
   return (
     <section className="py-16 md:py-24 bg-black">
       <div className="container-page">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 text-xs text-zinc-400 mb-4">
+          <Badge variant="default" className="mb-4">
             Simple pricing • Cancel anytime
-          </div>
+          </Badge>
           <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white">
             Free or Premium — both are blazing fast
           </h2>
@@ -100,7 +103,7 @@ export default function Pricing() {
 function Feature({ children, strong }: { children: React.ReactNode; strong?: boolean }) {
   return (
     <li className="flex items-start gap-2">
-      <svg className={`w-4 h-4 mt-0.5 ${strong ? 'text-brand-300' : 'text-green-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg className={`w-4 h-4 mt-0.5 ${strong ? 'text-brand-300' : 'text-green-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
       </svg>
       <span className={strong ? 'font-semibold' : ''}>{children}</span>

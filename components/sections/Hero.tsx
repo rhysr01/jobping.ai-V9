@@ -1,9 +1,11 @@
 "use client";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import Skeleton from "@/components/ui/Skeleton";
 
 export default function Hero() {
   const [activeJobs, setActiveJobs] = useState("12,748");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -19,6 +21,8 @@ export default function Hero() {
       } catch (err) {
         console.error('Failed to fetch stats:', err);
         // Keep the default value "12,748" if fetch fails
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -104,8 +108,12 @@ export default function Hero() {
           className="mt-6 sm:mt-8"
         >
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-brand-500 text-white text-xs sm:text-sm font-bold px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-lg">
-            <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-            {activeJobs} active early-career roles · Updated daily
+            <span className="w-2 h-2 bg-white rounded-full animate-pulse" aria-hidden="true"></span>
+            {isLoading ? (
+              <Skeleton className="h-4 w-32" />
+            ) : (
+              `${activeJobs} active early-career roles · Updated daily`
+            )}
           </div>
         </motion.div>
         
