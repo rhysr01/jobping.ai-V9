@@ -6,6 +6,7 @@ import { z } from 'zod';
 import * as Sentry from '@sentry/nextjs';
 import type { UserMatchesResponse, UserMatchesRequest } from '@/lib/api-types';
 import { createSuccessResponse, createErrorResponse } from '@/lib/api-types';
+import { verifyHMAC, isHMACRequired } from '@/Utils/auth/hmac';
 
 // Input validation schema
 const userMatchesQuerySchema = z.object({
@@ -17,30 +18,10 @@ const userMatchesQuerySchema = z.object({
   timestamp: z.coerce.number().min(1, 'Timestamp required')
 });
 
-// HMAC verification for authentication
+// HMAC verification for authentication (using shared utility)
 function verifyRequest(req: NextRequest, email: string, timestamp: number, signature: string): boolean {
-  const hmacSecret = process.env.INTERNAL_API_HMAC_SECRET;
-  if (!hmacSecret) {
-    console.error('HMAC secret not configured');
-    return false;
-  }
-
-  const crypto = require('crypto');
-  const expectedSignature = crypto
-    .createHmac('sha256', hmacSecret)
-    .update(`${email}:${timestamp}`)
-    .digest('hex');
-
-  // Check timestamp is within 5 minutes
-  const now = Date.now();
-  if (Math.abs(now - timestamp) > 5 * 60 * 1000) {
-    return false;
-  }
-
-  return crypto.timingSafeEqual(
-    Buffer.from(signature, 'hex'),
-    Buffer.from(expectedSignature, 'hex')
-  );
+  const hmacResult = verifyHMAC(`${email}:${timestamp}`, signature, timestamp, 5);
+  return hmacResult.isValid;
 }
 
 export async function GET(req: NextRequest) {

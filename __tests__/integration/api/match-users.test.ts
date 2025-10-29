@@ -43,8 +43,49 @@ jest.mock('@/Utils/matching/logging.service', () => ({
   logMatchSession: jest.fn().mockResolvedValue(undefined)
 }));
 
+// Mock Supabase database client
+jest.mock('@/Utils/databasePool', () => ({
+  getDatabaseClient: jest.fn(() => ({
+    from: jest.fn(() => ({
+      select: jest.fn(() => ({
+        eq: jest.fn(() => ({
+          limit: jest.fn(() => ({
+            data: [
+              {
+                id: 'user1',
+                email: 'test@example.com',
+                full_name: 'Test User',
+                subscription_tier: 'free',
+                target_cities: ['London'],
+                roles_selected: ['Software Engineer'],
+                is_active: true
+              }
+            ],
+            error: null
+          }))
+        }))
+      }))
+    }))
+  }))
+}));
+
+// Mock Redis client
+jest.mock('@/Utils/redis', () => ({
+  getRedisClient: jest.fn(() => ({
+    acquire: jest.fn().mockResolvedValue(true),
+    release: jest.fn().mockResolvedValue(undefined)
+  }))
+}));
+
+// Mock Sentry
+jest.mock('@sentry/nextjs', () => ({
+  addBreadcrumb: jest.fn(),
+  captureMessage: jest.fn(),
+  setContext: jest.fn()
+}));
+
 // Integration tests require full environment (DB, Redis, OpenAI)
-describe.skip('/api/match-users Integration Tests', () => {
+describe('/api/match-users Integration Tests', () => {
   let mockRequest: NextRequest;
 
   beforeEach(() => {
@@ -170,6 +211,8 @@ describe.skip('/api/match-users Integration Tests', () => {
   });
 
   describe('POST /api/match-users', () => {
+    // Set timeout for all tests in this suite
+    jest.setTimeout(30000); // 30 seconds for integration tests
     it('should process users successfully with valid request', async () => {
       const request = new NextRequest('http://localhost:3000/api/match-users', {
         method: 'POST',

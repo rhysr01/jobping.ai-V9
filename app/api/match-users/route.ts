@@ -11,6 +11,7 @@ import {
 } from '@/Utils/matching/logging.service';
 import type { UserPreferences, JobMatch } from '@/Utils/matching/types';
 import crypto from 'crypto';
+import { verifyHMAC, isHMACRequired } from '@/Utils/auth/hmac';
 import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
 import { 
   SEND_PLAN,
@@ -28,8 +29,8 @@ const matchUsersRequestSchema = z.object({
   forceRun: z.coerce.boolean().default(false),
   dryRun: z.coerce.boolean().default(false),
   // HMAC authentication - only required if HMAC_SECRET is set
-  signature: HMAC_SECRET ? z.string().min(1, 'Authentication signature required') : z.string().optional(),
-  timestamp: HMAC_SECRET ? z.coerce.number().min(1, 'Timestamp required') : z.coerce.number().optional()
+  signature: isHMACRequired() ? z.string().min(1, 'Authentication signature required') : z.string().optional(),
+  timestamp: isHMACRequired() ? z.coerce.number().min(1, 'Timestamp required') : z.coerce.number().optional()
 });
 
 const userPreferencesSchema = z.object({
@@ -49,8 +50,9 @@ type User = Database['public']['Tables']['users']['Row'];
 // Environment flags and limits
 const IS_TEST = process.env.NODE_ENV === 'test';
 const IS_DEBUG = process.env.DEBUG_MATCHING === 'true' || IS_TEST;
-const USER_LIMIT = IS_TEST ? 3 : 50;
-const JOB_LIMIT = IS_TEST ? 300 : 10000; // Increased to handle full job catalog
+// Use config values instead of hardcoded limits
+const USER_LIMIT = IS_TEST ? 3 : 50; // Keep test limit for safety
+const JOB_LIMIT = IS_TEST ? 300 : 10000; // Keep test limit for safety
 
 // Lock key helper
 const LOCK_KEY = (rid: string) => `${IS_TEST ? 'jobping:test' : 'jobping:prod'}:lock:match-users:${rid}`;
@@ -111,15 +113,8 @@ interface PerformanceMetrics {
 
 // Rate limiting and job caps managed by production middleware and SEND_PLAN
 
-// Student satisfaction job distribution - prioritizes what students told us they want
-const JOB_DISTRIBUTION = {
-  free: {
-    jobs_per_user: parseInt(process.env.FREE_JOBS_PER_USER || '10')
-  },
-  premium: {
-    jobs_per_user: parseInt(process.env.PREMIUM_JOBS_PER_USER || '10')
-  }
-};
+// Use SEND_PLAN config instead of separate JOB_DISTRIBUTION
+// This consolidates all job distribution logic in one place
 
 // Production-ready job interface with validation
 interface Job {
@@ -204,15 +199,19 @@ function distributeJobs(
 ): { jobs: ScrapersJob[], metrics: MatchMetrics } {
   const startTime = Date.now();
   
-  console.log(`Distributing jobs for ${userTier} user ${userId}. Total jobs: ${jobs.length}`);
+  // Log job distribution to Sentry breadcrumb
+  Sentry.addBreadcrumb({
+    message: 'Job distribution started',
+    level: 'debug',
+    data: { userTier, userId, totalJobs: jobs.length }
+  });
   
   // Validate and clean job data
   const validJobs = jobs.filter(job => job.job_hash && job.title && job.company);
   
   // Get distribution limits based on user tier
-  const config = JOB_DISTRIBUTION[userTier];
-  const maxAllowed = SEND_PLAN[userTier].perSend;
-  const targetCount = Math.min(config.jobs_per_user, maxAllowed);
+  const config = SEND_PLAN[userTier];
+  const targetCount = config.perSend;
   
   // Select jobs for maximum student satisfaction
   // Simple approach: give students what they told us they want
@@ -283,7 +282,12 @@ function distributeJobs(
   
   const processingTime = Date.now() - startTime;
   
-  console.log(`Selected ${selectedJobs.length} jobs for ${userId} (${userTier} tier) in ${processingTime}ms`);
+  // Log job selection completion to Sentry breadcrumb
+  Sentry.addBreadcrumb({
+    message: 'Job selection completed',
+    level: 'debug',
+    data: { userId, userTier, selectedCount: selectedJobs.length, processingTime }
+  });
   
   return {
     jobs: selectedJobs,
@@ -398,8 +402,17 @@ async function preFilterJobsByUserPreferencesEnhanced(jobs: (ScrapersJob & { fre
         }
       });
       
+      // Track feedback boosts for Sentry breadcrumb (no per-job logging)
       if (feedbackBoosts.size > 0) {
-        console.log(`Feedback boosts for ${user.email}:`, Object.fromEntries(feedbackBoosts));
+        Sentry.addBreadcrumb({
+          message: 'Feedback boosts applied',
+          level: 'debug',
+          data: {
+            userEmail: user.email,
+            boostCount: feedbackBoosts.size,
+            boostTypes: Object.fromEntries(feedbackBoosts)
+          }
+        });
       }
     }
   } catch (error) {
@@ -493,15 +506,15 @@ async function preFilterJobsByUserPreferencesEnhanced(jobs: (ScrapersJob & { fre
       
       if (type === 'loc' && jobLocation.includes(value)) {
         score += boost;
-        if (IS_DEBUG) console.log(`   Boosted "${job.title}" by +${boost} (location: ${value})`);
+        // Track boost for summary (no per-job logging)
       }
       if (type === 'type' && (jobTitle.includes(value) || jobDesc.includes(value))) {
         score += boost;
-        if (IS_DEBUG) console.log(`  Boosted "${job.title}" by +${boost} (company type: ${value})`);
+        // Track boost for summary (no per-job logging)
       }
       if (type === 'env' && jobLocation.includes(value)) {
         score += boost;
-        if (IS_DEBUG) console.log(`   Boosted "${job.title}" by +${boost} (work env: ${value})`);
+        // Track boost for summary (no per-job logging)
       }
     });
     
@@ -517,7 +530,7 @@ async function preFilterJobsByUserPreferencesEnhanced(jobs: (ScrapersJob & { fre
   // Ensure source diversity in top 100 jobs sent to AI
   const diverseJobs: typeof sortedJobs[0][] = [];
   const sourceCount: Record<string, number> = {};
-  const maxPerSource = MATCH_RULES.maxPerSource; // Max jobs from any single source in top results
+  const maxPerSource = parseInt(process.env.MAX_PER_SOURCE || '40', 10); // Max jobs from any single source in top results
   
   for (const item of sortedJobs) {
     const source = (item.job as any).source || 'unknown';
@@ -630,17 +643,13 @@ const matchUsersHandler = async (req: NextRequest) => {
     const { userLimit, jobLimit, forceRun, dryRun, signature, timestamp } = parseResult.data;
 
     // Verify HMAC authentication if signature provided
-    if (signature && HMAC_SECRET) {
-      const expectedSignature = crypto
-        .createHmac('sha256', HMAC_SECRET)
-        .update(`${userLimit}:${jobLimit}:${timestamp}`)
-        .digest('hex');
-      
-      if (!crypto.timingSafeEqual(
-        Buffer.from(signature, 'hex'),
-        Buffer.from(expectedSignature, 'hex')
-      )) {
-        return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
+    if (signature && timestamp) {
+      const hmacResult = verifyHMAC(`${userLimit}:${jobLimit}:${timestamp}`, signature, timestamp);
+      if (!hmacResult.isValid) {
+        return NextResponse.json({ 
+          error: 'Authentication failed', 
+          details: hmacResult.error 
+        }, { status: 401 });
       }
     }
     const performanceTracker = trackPerformance();
@@ -879,15 +888,11 @@ const matchUsersHandler = async (req: NextRequest) => {
     
     const userPromises = transformedUsers.map(async (user) => {
       try {
-        console.log(`Processing matches for ${user.email} (tier: ${user.subscription_tier || 'free'})`);
-        
         // Use pre-loaded matches (NO QUERY!)
         const previousJobHashes = new Set<string>(); // Temporarily disabled
-        console.log(`User ${user.email} has already received ${previousJobHashes.size} jobs`);
         
         // Filter out jobs the user has already received
         const unseenJobs = jobs.filter(job => !previousJobHashes.has(job.job_hash));
-        console.log(`${unseenJobs.length} new jobs available for ${user.email} (${jobs.length - unseenJobs.length} already sent)`);
         
         // Pre-filter jobs to reduce AI processing load (with feedback learning)
         const preFilteredJobs = await preFilterJobsByUserPreferencesEnhanced(unseenJobs as any[], user as unknown as UserPreferences);
@@ -896,14 +901,35 @@ const matchUsersHandler = async (req: NextRequest) => {
         // This reduces token cost by 50% while maintaining match quality
         // Top 50 contains all perfect/great matches from pre-filtering
         const considered = preFilteredJobs.slice(0, 50);
-        console.log(` Pre-filter results for ${user.email}: ${preFilteredJobs.length} jobs -> sending top 50 to AI`);
+        // Log pre-filter results to Sentry breadcrumb
+        Sentry.addBreadcrumb({
+          message: 'Pre-filter results',
+          level: 'debug',
+          data: {
+            userEmail: user.email,
+            totalJobs: preFilteredJobs.length,
+            sendingToAI: 50
+          }
+        });
         
-        // Log score distribution to validate we're keeping the best jobs
+        // Log score distribution to Sentry breadcrumb for observability
         if (preFilteredJobs.length >= 50) {
           const top10Scores = preFilteredJobs.slice(0, 10).map((j: any) => (j as any).score || 'N/A');
           const next40Scores = preFilteredJobs.slice(10, 50).map((j: any) => (j as any).score || 'N/A');
-          console.log(`  Top 10 scores: ${top10Scores.join(', ')}`);
-          console.log(`  Next 40 range: ${Math.max(...next40Scores.filter((s: any) => typeof s === 'number'))} - ${Math.min(...next40Scores.filter((s: any) => typeof s === 'number'))}`);
+          
+          Sentry.addBreadcrumb({
+            message: 'Job score distribution analysis',
+            level: 'debug',
+            data: {
+              userEmail: user.email,
+              totalJobs: preFilteredJobs.length,
+              top10Scores: top10Scores.filter(s => typeof s === 'number'),
+              next40Range: {
+                max: Math.max(...next40Scores.filter((s: any) => typeof s === 'number')),
+                min: Math.min(...next40Scores.filter((s: any) => typeof s === 'number'))
+              }
+            }
+          });
         }
         
         // Apply simple job distribution
@@ -1226,6 +1252,22 @@ const matchUsersHandler = async (req: NextRequest) => {
     }
     
     lap('done');
+    
+    // Summary breadcrumb for the entire request with comprehensive metrics
+    const successfulResults = results.filter(r => r.success);
+    
+    Sentry.addBreadcrumb({
+      message: 'Match-users request completed',
+      level: 'info',
+      data: {
+        processed: users.length,
+        matched: successfulResults.length,
+        failed: results.filter(r => !r.success).length,
+        duration: Date.now() - startTime,
+        errorRate: errorRate
+      }
+    });
+    
     return NextResponse.json({
       success: true,
       processed: users.length,
