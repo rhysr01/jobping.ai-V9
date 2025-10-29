@@ -151,11 +151,11 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
         aria-modal="true"
         aria-labelledby="payment-modal-title"
         tabIndex={-1}
-        className="relative surface-glass rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl focus:outline-none"
+        className="relative surface-overlay rounded-2xl p-8 max-w-md w-full mx-4 focus:outline-none"
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 id="payment-modal-title" className="text-2xl font-semibold text-white">
-            Complete Your Purchase
+          <h2 id="payment-modal-title" className="text-heading text-white">
+            Get your matches
           </h2>
           <button
             onClick={handleClose}
@@ -171,7 +171,7 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">
+            <label htmlFor="email" className="block text-small font-medium text-neutral-300 mb-2">
               Email Address
             </label>
             <input
@@ -184,17 +184,17 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
               disabled={isLoading}
               aria-invalid={emailError ? 'true' : 'false'}
               aria-describedby={emailError ? 'email-error' : undefined}
-              className="w-full px-4 py-3 surface-default rounded-xl text-white placeholder-zinc-400 focus:border-white/30 focus:ring-2 focus:ring-white/20 transition-colors disabled:opacity-50"
+              className="w-full px-4 py-3 surface-base rounded-xl text-white placeholder-neutral-400 focus:border-white/30 focus:ring-2 focus:ring-white/20 transition-colors disabled:opacity-50"
             />
             {emailError && (
-              <p id="email-error" className="mt-2 text-sm text-red-400" role="status" aria-live="polite">
-                {emailError}
-              </p>
+              <div className="mt-2 p-3 rounded-lg surface-error" role="status" aria-live="polite">
+                <p className="text-small">{emailError}</p>
+              </div>
             )}
             {error && (
-              <p className="mt-2 text-sm text-red-400" role="status" aria-live="polite">
-                {error}
-              </p>
+              <div className="mt-2 p-3 rounded-lg surface-error" role="status" aria-live="polite">
+                <p className="text-small">{error}</p>
+              </div>
             )}
           </div>
 
@@ -220,15 +220,15 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
                   onChange={(e) => setPromoCode(e.target.value)}
                   placeholder="Enter code e.g. rhys"
                   disabled={isLoading}
-                  className="w-full px-3 py-2 surface-default rounded-lg text-white placeholder-zinc-500 focus:border-white/20 focus:ring-2 focus:ring-white/10 transition-colors disabled:opacity-50 text-sm"
+                  className="w-full px-3 py-2 surface-base rounded-lg text-white placeholder-neutral-500 focus:border-white/20 focus:ring-2 focus:ring-white/10 transition-colors disabled:opacity-50 text-small"
                 />
               </div>
             )}
           </div>
 
-          <div className="bg-zinc-800/50 rounded-xl p-4">
-            <h3 className="text-sm font-medium text-zinc-300 mb-2">What you'll get:</h3>
-            <ul className="text-sm text-zinc-400 space-y-1">
+          <div className="surface-raised rounded-xl p-4">
+            <h3 className="text-small font-medium text-neutral-300 mb-2">What you'll get:</h3>
+            <ul className="text-small text-neutral-400 space-y-1">
               <li className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-white/80" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -255,14 +255,14 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
               type="button"
               onClick={handleClose}
               disabled={isLoading}
-              className="flex-1 px-4 py-3 text-zinc-400 hover:text-white transition-colors disabled:opacity-50"
+              className="btn-mobile flex-1 text-neutral-400 hover:text-white transition-colors disabled:opacity-50"
             >
-              Cancel
+              Maybe later
             </button>
             <button
               type="submit"
               disabled={isLoading || !email}
-              className="flex-1 px-4 py-3 bg-white text-black font-semibold rounded-xl hover:bg-zinc-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="btn-mobile flex-1 bg-white text-black font-semibold rounded-xl hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 interactive-lift"
             >
               {isLoading ? (
                 <>
@@ -273,7 +273,7 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
                   Processing...
                 </>
               ) : (
-                'Continue to Payment'
+                'Get matches'
               )}
             </button>
           </div>

@@ -30,8 +30,14 @@ export default function Hero() {
   }, []);
 
   return (
-    <section data-testid="hero-section" className="relative isolate text-center py-16 sm:py-24 md:py-32 lg:py-40 overflow-hidden">
-      <div className="container-page">
+    <section data-testid="hero-section" className="relative isolate text-center section-padding-hero overflow-hidden">
+      {/* Parallax background elements */}
+      <div className="absolute inset-0 -z-20">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+      </div>
+      
+      <div className="container-page container-rhythm relative z-10">
         {/* Large JobPing branding with graduation cap - LOUD & BOUNCY */}
         <motion.div 
           className="inline-flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 md:gap-6 mb-8 sm:mb-10"
@@ -83,8 +89,10 @@ export default function Hero() {
           </div>
         </motion.div>
         
-        <h1 className="mt-6 sm:mt-8 text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1] max-w-[20ch] mx-auto px-2">
-          No logins. Zero scrolling. Jobs in your inbox.
+        <h1 className="mt-8 text-display text-white text-balance max-w-[20ch] mx-auto relative">
+          <span className="relative z-10">No logins. Zero scrolling. Jobs in your inbox.</span>
+          {/* Subtle radial highlight behind CTA */}
+          <div className="absolute -inset-8 bg-gradient-to-r from-brand-500/20 via-purple-600/20 to-brand-500/20 rounded-full blur-3xl opacity-60 -z-10" />
         </h1>
         <div className="mt-7 sm:mt-9 px-4">
           <div className="inline-flex items-center gap-2 bg-white/7 border border-white/10 rounded-full px-4 py-2 shadow-[0_0_24px_rgba(139,92,246,0.25)]">
@@ -96,7 +104,7 @@ export default function Hero() {
             </span>
           </div>
         </div>
-        <p className="mt-4 sm:mt-5 text-sm sm:text-base md:text-lg text-zinc-400 max-w-[58ch] mx-auto px-4">
+        <p className="mt-6 text-body text-neutral-400 max-w-[58ch] mx-auto">
           Stop searching. Start applying.
         </p>
         
@@ -126,10 +134,11 @@ export default function Hero() {
         >
           <a
             href="/signup"
-            className="inline-block px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 text-base sm:text-lg md:text-xl font-bold text-white bg-gradient-to-r from-brand-500 to-purple-600 rounded-xl hover:scale-102 active:scale-98 transition-transform duration-200 shadow-lg hover:shadow-xl hover:shadow-brand-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            className="btn-mobile inline-block text-heading font-bold text-white bg-gradient-to-r from-brand-500 to-purple-600 rounded-xl interactive-scale interactive-glow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black relative overflow-hidden group"
             aria-label="Get my matches in 48 hours"
           >
-            Get my matches in 48 hours
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <span className="relative">Get my matches in 48 hours</span>
           </a>
           <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-zinc-500">
             No logins · No spam · Unsubscribe anytime

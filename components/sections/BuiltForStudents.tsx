@@ -21,18 +21,18 @@ export default function BuiltForStudents() {
   ];
 
   return (
-    <section className="py-20 sm:py-24 md:py-32 lg:py-40">
-      <div className="container-page">
-        <h2 className="h2-section text-center px-4 leading-tight">We search 1,000+ companies daily. You get hand-picked matches weekly.</h2>
+    <section className="section-padding">
+      <div className="container-page container-rhythm">
+        <h2 className="text-heading text-center text-white text-balance">We search 1,000+ companies daily. You get hand-picked matches weekly.</h2>
 
         <div className="mt-10 sm:mt-12 grid gap-8 sm:gap-10 md:grid-cols-3 md:gap-14">
           {features.filter(feature => feature && feature.title).map((feature) => (
-            <div key={feature.num} className="glass-card rounded-2xl p-8 sm:p-10 md:p-12 interactive-hover relative overflow-hidden">
+            <div key={feature.num} className="surface-raised rounded-2xl p-8 sm:p-10 md:p-12 interactive-lift relative overflow-hidden">
               <div className="number-chip">{feature.num}</div>
-              <h3 className="mt-6 text-xl sm:text-2xl font-bold text-white">{feature.title}</h3>
-              <p className="mt-3 p-muted text-base sm:text-lg leading-relaxed">{feature.body}</p>
+              <h3 className="mt-6 text-heading text-white">{feature.title}</h3>
+              <p className="mt-3 text-body text-neutral-400 leading-relaxed">{feature.body}</p>
               <div className="mt-6 pt-5 border-t border-zinc-700/50">
-                <p className="text-sm sm:text-base font-bold text-brand-400">{feature.stats}</p>
+                <p className="text-small font-bold text-brand-400">{feature.stats}</p>
               </div>
             </div>
           ))}

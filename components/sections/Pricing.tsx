@@ -5,16 +5,16 @@ import GlassCard from '@/components/ui/GlassCard';
 
 export default function Pricing() {
   return (
-    <section className="py-16 md:py-24 bg-black">
-      <div className="container-page">
+    <section className="section-padding bg-black">
+      <div className="container-page container-rhythm">
         <div className="text-center mb-12">
           <Badge variant="default" className="mb-4">
             Simple pricing • Cancel anytime
           </Badge>
-          <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white">
+          <h2 className="text-heading text-white text-balance">
             Free or Premium — both are blazing fast
           </h2>
-          <p className="text-zinc-400 mt-3 text-sm md:text-base">
+          <p className="text-body text-neutral-400 mt-6">
             Get curated roles in your inbox. Zero scrolling, just apply.
           </p>
         </div>

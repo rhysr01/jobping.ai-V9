@@ -4,12 +4,73 @@ export default {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      // 8pt base grid system
+      spacing: {
+        '0.5': '0.125rem', // 2px
+        '1': '0.25rem',    // 4px
+        '2': '0.5rem',     // 8px
+        '3': '0.75rem',    // 12px
+        '4': '1rem',       // 16px
+        '5': '1.25rem',    // 20px
+        '6': '1.5rem',     // 24px
+        '8': '2rem',       // 32px
+        '10': '2.5rem',    // 40px
+        '12': '3rem',      // 48px
+        '16': '4rem',      // 64px
+        '20': '5rem',      // 80px
+        '24': '6rem',      // 96px
+        '32': '8rem',      // 128px
+        '40': '10rem',     // 160px
+        '48': '12rem',     // 192px
+        '64': '16rem',     // 256px
+        '80': '20rem',     // 320px
+        '96': '24rem',     // 384px
+      },
       colors: {
         brand: {
           300: "#A5B4FC",
           400: "#818CF8",
           500: "#6366F1", // primary
           600: "#4F46E5", // hover/pressed
+        },
+        // Semantic color system
+        success: {
+          50: "#f0fdf4",
+          100: "#dcfce7",
+          500: "#22c55e",
+          600: "#16a34a",
+        },
+        warning: {
+          50: "#fffbeb",
+          100: "#fef3c7",
+          500: "#f59e0b",
+          600: "#d97706",
+        },
+        error: {
+          50: "#fef2f2",
+          100: "#fee2e2",
+          500: "#ef4444",
+          600: "#dc2626",
+        },
+        info: {
+          50: "#eff6ff",
+          100: "#dbeafe",
+          500: "#3b82f6",
+          600: "#2563eb",
+        },
+        // Neutral gray ramp
+        neutral: {
+          50: "#fafafa",
+          100: "#f5f5f5",
+          200: "#e5e5e5",
+          300: "#d4d4d4",
+          400: "#a3a3a3",
+          500: "#737373",
+          600: "#525252",
+          700: "#404040",
+          800: "#262626",
+          900: "#171717",
+          950: "#0a0a0a",
         },
         // Glass morphism tokens
         glass: {
@@ -44,9 +105,26 @@ export default {
         '102': '1.02',
         '98': '0.98',
       },
+      // Typography system - 3 consistent sizes
+      fontSize: {
+        'display': ['4rem', { lineHeight: '1.1', letterSpacing: '-0.02em' }], // 64px
+        'heading': ['2.25rem', { lineHeight: '1.2', letterSpacing: '-0.01em' }], // 36px
+        'body': ['1rem', { lineHeight: '1.6', letterSpacing: '0' }], // 16px
+        'small': ['0.875rem', { lineHeight: '1.5', letterSpacing: '0' }], // 14px
+      },
+      // Depth system - 3 surface levels
       boxShadow: {
+        'base': '0 1px 2px 0 rgb(255 255 255 / 0.05)',
+        'raised': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+        'overlay': '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
         'elev-1': "0 10px 30px -10px rgba(99,102,241,0.25)",
         'elev-2': "0 20px 60px -18px rgba(99,102,241,0.35)",
+      },
+      // Micro-interaction timing
+      transitionDuration: {
+        '150': '150ms',
+        '200': '200ms',
+        '300': '300ms',
       },
       // Glass morphism utilities
       backgroundImage: {
