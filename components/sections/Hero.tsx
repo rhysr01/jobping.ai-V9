@@ -51,11 +51,10 @@ export default function Hero() {
   }, []);
 
   return (
-    <section data-testid="hero-section" className="relative isolate text-center section-padding-hero overflow-hidden -mt-16">
-      {/* Radial gradient background */}
-      <div className="absolute inset-0 -z-20 bg-gradient-to-br from-[#0B0215] via-[#14092E] to-[#090013]">
-        <div className="absolute inset-0 bg-gradient-radial from-brand-500/15 via-transparent to-transparent blur-3xl" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+    <section data-testid="hero-section" className="relative flex flex-col items-center justify-center min-h-[90vh] pt-8 text-center overflow-hidden">
+      {/* Dark clean gradient background with subtle radial light */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#060013] via-[#0a001e] to-[#120033]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(154,106,255,0.12)_0%,transparent_70%)] blur-3xl" />
       </div>
       
       <div className="container-page container-rhythm relative z-10">
@@ -114,11 +113,11 @@ export default function Hero() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
-          className="mt-8 text-heading text-white mb-4"
+          className="mt-8 text-white text-5xl font-bold mb-4"
         >
           Land your first job faster without endless scrolling.
         </motion.h1>
-        <p className="text-body text-zinc-400 max-w-2xl mx-auto">
+        <p className="text-zinc-400 max-w-xl mx-auto leading-relaxed">
           We match you to real roles that fit your skills, degree, and goals. No spam. No dead ends.
         </p>
         
@@ -130,12 +129,11 @@ export default function Hero() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <div className="inline-flex items-center gap-2 rounded-full px-4 py-1 text-sm bg-brand-500/10 text-brand-300 border border-brand-500/20 shadow-none">
-              <span className="w-2 h-2 bg-brand-400 rounded-full animate-pulse" aria-hidden="true"></span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-purple-500/20 bg-purple-500/10 px-4 py-1 text-sm text-purple-300">
               {isLoading ? (
                 <Skeleton className="h-4 w-32" />
               ) : (
-                `${activeJobs} active early-career roles · Updated daily`
+                <>• {`${activeJobs} active early-career roles · Updated daily`}</>
               )}
             </div>
           </motion.div>
@@ -150,10 +148,9 @@ export default function Hero() {
                      href="/signup"
                      variant="primary"
                      size="lg"
-                     className="text-heading font-bold relative overflow-hidden group bg-gradient-to-r from-[#9A6AFF] to-[#6B4EFF] shadow-[0_2px_10px_rgba(154,106,255,0.25)] hover:shadow-[0_4px_14px_rgba(154,106,255,0.35)] transition-all duration-200 rounded-xl"
+                     className="mt-5 rounded-lg bg-gradient-to-r from-[#9A6AFF] to-[#6B4EFF] px-8 py-3 text-lg font-semibold shadow-[0_4px_12px_rgba(106,75,255,0.4)] hover:from-[#A77FFF] hover:to-[#7B5DFF] focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                      aria-label="Find my matches"
                    >
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <span className="relative">Find my matches</span>
             </Button>
             <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-zinc-500 text-center">
@@ -179,7 +176,7 @@ export default function Hero() {
           repeat: prefersReduced ? 0 : Infinity,
           repeatType: "reverse"
         }}
-        className="pointer-events-none absolute inset-0 -z-10 enhanced-grid"
+        className="pointer-events-none absolute inset-0 -z-10"
       />
       
       {/* Floating orbs - respect reduced motion */}
