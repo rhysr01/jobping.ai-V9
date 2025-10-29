@@ -70,6 +70,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={GeistSans.variable}>
       <head>
+        <link
+          href="https://api.fontshare.com/v2/css?f[]=satoshi@1,900,700,500,400&display=swap"
+          rel="stylesheet"
+        />
         <StructuredData />
         <FAQSchema />
         <script

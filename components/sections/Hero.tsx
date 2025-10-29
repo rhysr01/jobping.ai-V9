@@ -31,13 +31,11 @@ export default function Hero() {
   }, []);
 
   return (
-    <section data-testid="hero-section" className="relative isolate text-center section-padding-hero overflow-hidden">
-      {/* Soft gradient field background */}
-      <div className="absolute inset-0 -z-20 bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900">
-        {/* Focal depth highlight behind logo/hero */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gradient-radial from-brand-500/5 via-transparent to-transparent rounded-full blur-3xl" />
-        {/* Subtle vignette */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+    <section data-testid="hero-section" className="relative isolate text-center section-padding-hero overflow-hidden -mt-16">
+      {/* Radial gradient background */}
+      <div className="absolute inset-0 -z-20 bg-gradient-to-br from-[#0B0215] via-[#14092E] to-[#090013]">
+        {/* Faint spotlight gradient behind logo */}
+        <div className="absolute inset-0 bg-gradient-radial from-purple-600/20 via-transparent to-transparent" />
       </div>
       
       <div className="container-page container-rhythm relative z-10">
@@ -107,12 +105,12 @@ export default function Hero() {
             <svg className="w-4 h-4 text-brand-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l-7-7 1.41-1.41L12 16.17l8.59-8.58L22 9l-10 10z" />
             </svg>
-            <span className="text-sm sm:text-base md:text-lg text-white">
+            <span className="text-sm sm:text-base md:text-lg text-zinc-300">
               Internships, grad programmes, and early‑career opportunities delivered weekly.
             </span>
           </div>
         </div>
-        <p className="mt-8 text-body text-neutral-400 max-w-[58ch] mx-auto leading-relaxed">
+        <p className="mt-8 text-body text-zinc-400 max-w-[58ch] mx-auto leading-relaxed">
           We match you to real roles that fit your skills, degree, and goals. No spam. No dead ends.
         </p>
         
@@ -124,8 +122,8 @@ export default function Hero() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-brand-500 text-white text-xs sm:text-sm font-bold px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-lg">
-              <span className="w-2 h-2 bg-white rounded-full animate-pulse" aria-hidden="true"></span>
+            <div className="inline-flex items-center gap-2 bg-purple-500/10 text-purple-300 border border-purple-500/20 rounded-full px-4 py-1 text-sm font-medium">
+              <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" aria-hidden="true"></span>
               {isLoading ? (
                 <Skeleton className="h-4 w-32" />
               ) : (
@@ -144,7 +142,7 @@ export default function Hero() {
               href="/signup"
               variant="primary"
               size="lg"
-              className="text-heading font-bold relative overflow-hidden group bg-gradient-to-r from-[#9A6AFF] to-[#6B4EFF] shadow-[0_2px_10px_rgba(154,106,255,0.4)] hover:shadow-[0_4px_20px_rgba(154,106,255,0.6)] hover:outline hover:outline-1 hover:outline-white/20 transition-all duration-200"
+              className="text-heading font-bold relative overflow-hidden group bg-gradient-to-r from-[#9A6AFF] to-[#6B4EFF] shadow-[0_4px_16px_rgba(128,90,213,0.4)] hover:shadow-[0_6px_20px_rgba(128,90,213,0.5)] hover:outline hover:outline-1 hover:outline-white/20 transition-all duration-200 rounded-xl"
               aria-label="Find my matches"
             >
               <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

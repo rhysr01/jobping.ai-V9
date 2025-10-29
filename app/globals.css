@@ -280,9 +280,9 @@ body {
     @apply py-16 md:py-24;
   }
   
-  .section-padding-hero {
-    @apply py-24 md:py-32 lg:py-40;
-  }
+         .section-padding-hero {
+           @apply py-24 md:py-32 lg:py-40 pb-32 md:pb-40 lg:pb-48;
+         }
   
   .container-rhythm {
     @apply px-4 sm:px-6 lg:px-8;
