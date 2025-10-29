@@ -49,13 +49,19 @@ class LRUMatchCache {
   private accessOrder: string[] = [];
   private readonly maxSize: number;
   private readonly ttlMs: number;
+  private readonly lock = new Map<string, Promise<void>>(); // Simple mutex for cache operations
 
   constructor(maxSize: number, ttlMs: number) {
     this.maxSize = maxSize;
     this.ttlMs = ttlMs;
   }
 
-  get(key: string): JobMatch[] | null {
+  async get(key: string): Promise<JobMatch[] | null> {
+    // Wait for any pending operation on this key
+    if (this.lock.has(key)) {
+      await this.lock.get(key);
+    }
+
     const entry = this.cache.get(key);
     
     if (!entry) return null;
@@ -78,24 +84,46 @@ class LRUMatchCache {
     return entry.matches;
   }
 
-  set(key: string, matches: JobMatch[]): void {
-    // Remove oldest entries if at capacity
-    while (this.cache.size >= this.maxSize) {
-      const oldestKey = this.accessOrder.shift();
-      if (oldestKey) {
-        this.cache.delete(oldestKey);
+  async set(key: string, matches: JobMatch[]): Promise<void> {
+    // Create a lock for this key to prevent race conditions
+    const lockPromise = this.acquireLock(key);
+    this.lock.set(key, lockPromise);
+
+    try {
+      // Remove oldest entries if at capacity
+      while (this.cache.size >= this.maxSize) {
+        const oldestKey = this.accessOrder.shift();
+        if (oldestKey) {
+          this.cache.delete(oldestKey);
+        }
       }
+
+      const entry: CacheEntry = {
+        matches,
+        timestamp: Date.now(),
+        accessCount: 1,
+        lastAccessed: Date.now()
+      };
+
+      this.cache.set(key, entry);
+      this.accessOrder.push(key);
+    } finally {
+      this.lock.delete(key);
     }
+  }
 
-    const entry: CacheEntry = {
-      matches,
-      timestamp: Date.now(),
-      accessCount: 1,
-      lastAccessed: Date.now()
-    };
-
-    this.cache.set(key, entry);
-    this.accessOrder.push(key);
+  private async acquireLock(key: string): Promise<void> {
+    // Simple mutex implementation
+    return new Promise((resolve) => {
+      const checkLock = () => {
+        if (!this.lock.has(key)) {
+          resolve();
+        } else {
+          setTimeout(checkLock, 1);
+        }
+      };
+      checkLock();
+    });
   }
 
   private removeFromAccessOrder(key: string): void {
@@ -221,10 +249,11 @@ export class ConsolidatedMatchingEngine {
     // Job pool version (changes daily, not per-job)
     // This means ALL users with same profile on same day share cache! 60% hit rate!
     const today = new Date().toISOString().split('T')[0]; // "2025-10-09"
-    const jobCount = jobs.length;
-    const jobPoolVersion = `v${today}_${jobCount}`;
+    // FIXED: Use job count ranges to improve cache hit rate
+    const jobCountRange = Math.floor(jobs.length / 1000) * 1000; // Round to nearest 1000
+    const jobPoolVersion = `v${today}_${jobCountRange}+`;
     
-    // Cache key format: "finance_london+paris_entry_v2025-10-09_1234"
+    // Cache key format: "finance_london+paris_entry_v2025-10-09_9000+"
     const cacheKey = `${userSegment}_${jobPoolVersion}`;
     
     return cacheKey;
@@ -242,7 +271,7 @@ export class ConsolidatedMatchingEngine {
 
     // Check cache first (saves $$$ on repeat matches)
     const cacheKey = this.generateCacheKey(jobs, userPrefs);
-    const cached = this.matchCache.get(cacheKey);
+    const cached = await this.matchCache.get(cacheKey);
     if (cached) {
       trackAPICall('matching', 'cache_hit', Date.now() - startTime, 200);
       return {
@@ -270,8 +299,11 @@ export class ConsolidatedMatchingEngine {
       const aiMatches = await this.performAIMatchingWithRetry(jobs, userPrefs);
       if (aiMatches && aiMatches.length > 0) {
         // Cache successful AI matches
-        this.matchCache.set(cacheKey, aiMatches);
+        await this.matchCache.set(cacheKey, aiMatches);
         this.circuitBreaker.recordSuccess();
+        
+        // Update cost tracking
+        this.updateCostTracking('gpt4omini', 1, 0.01); // Estimate cost
         
         trackAPICall('matching', 'ai_success', Date.now() - startTime, 200);
         return {
@@ -1170,6 +1202,22 @@ Requirements:
     } catch (error) {
       console.error('AI connection test failed:', error);
       return false;
+    }
+  }
+
+  getCostMetrics() {
+    return {
+      totalCalls: Object.values(this.costTracker).reduce((sum, model) => sum + model.calls, 0),
+      totalTokens: Object.values(this.costTracker).reduce((sum, model) => sum + model.tokens, 0),
+      totalCost: Object.values(this.costTracker).reduce((sum, model) => sum + (model.cost || 0), 0),
+      byModel: this.costTracker
+    };
+  }
+
+  private updateCostTracking(model: string, calls: number, estimatedCost: number): void {
+    if (this.costTracker[model]) {
+      this.costTracker[model].calls += calls;
+      this.costTracker[model].cost = (this.costTracker[model].cost || 0) + estimatedCost;
     }
   }
 }

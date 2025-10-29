@@ -111,7 +111,17 @@ export function createUnifiedHandler<T>(
 
     // Authentication check (simplified)
     if (options.requireAuth) {
-      const authHeader = request.headers.get('authorization');
+      // Normalize header lookup to be resilient in test/runtime envs
+      let authHeader = request.headers.get('authorization');
+      if (!authHeader) {
+        for (const [key, value] of request.headers.entries()) {
+          if (key.toLowerCase() === 'authorization') {
+            authHeader = value;
+            break;
+          }
+        }
+      }
+
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         throw new UnauthorizedError('Authentication required');
       }

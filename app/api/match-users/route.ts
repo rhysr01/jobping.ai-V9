@@ -1118,10 +1118,13 @@ const matchUsersHandler = async (req: NextRequest) => {
           const matchesWithEmail = matches.map(m => ({ ...m, user_email: user.email }));
           
           try {
-            // await userMatchingService.saveMatches(matchesWithEmail, finalProvenance);
-            console.log(`Matches for ${user.email} would be saved here`);
+            // TODO: Implement proper match saving service
+            // For now, just log the matches that would be saved
+            console.log(`✅ Would save ${matchesWithEmail.length} matches for ${user.email}:`, 
+              matchesWithEmail.map(m => ({ job_hash: m.job_hash, match_score: m.match_score }))
+            );
           } catch (error) {
-            console.error(`Failed to save matches for ${user.email}:`, error);
+            console.error(`❌ Failed to save matches for ${user.email}:`, error);
           }
         }
 
