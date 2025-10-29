@@ -1,6 +1,7 @@
 // EMAIL CLIENTS - RESEND & SUPABASE MANAGEMENT
 
 import { Resend } from 'resend';
+import { getBaseUrl, getEmailDomain, getUnsubscribeEmail } from '../url-helpers';
 
 // Resend client management
 export function getResendClient() {
@@ -30,21 +31,7 @@ export function getSupabaseClient() {
   });
 }
 
-// Get base domain from environment
-function getBaseDomain(): string {
-  if (process.env.NEXT_PUBLIC_DOMAIN) {
-    return process.env.NEXT_PUBLIC_DOMAIN;
-  }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  return 'https://www.getjobping.com';
-}
-
-function getEmailDomain(): string {
-  // Use getjobping.com for all environments since it's verified in Resend
-  return (process.env.EMAIL_DOMAIN || 'getjobping.com').trim();
-}
+// Use centralized helpers for consistency
 
 // Type safety for email senders
 type GetJobPingSender = `JobPing <${string}@getjobping.com>`;
@@ -75,8 +62,8 @@ export const EMAIL_CONFIG = {
   from: `JobPing <noreply@${getEmailDomain()}>` as GetJobPingSender,
   maxRetries: 3,
   retryDelay: 2000, // 2 seconds base delay,
-  unsubscribeBase: `${getBaseDomain()}/api/unsubscribe`,
-  listUnsubscribeEmail: `unsubscribe@${getEmailDomain()}`
+  unsubscribeBase: `${getBaseUrl()}/api/unsubscribe`,
+  listUnsubscribeEmail: getUnsubscribeEmail()
 } as const;
 
 // Validate the from address at module load time

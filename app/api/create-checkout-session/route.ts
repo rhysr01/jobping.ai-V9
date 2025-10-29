@@ -4,6 +4,7 @@ import { validatePromoCode } from '@/Utils/promo';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { errorResponse } from '@/Utils/errorResponse';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { getBaseUrl } from '@/Utils/url-helpers';
 
 let _supabaseClient: SupabaseClient | null = null;
 
@@ -147,7 +148,7 @@ export async function GET(req: NextRequest) {
       ? STRIPE_CONFIG.PRODUCTS.PREMIUM_QUARTERLY
       : STRIPE_CONFIG.PRODUCTS.PREMIUM_MONTHLY;
 
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/api/billing/checkout?priceId=${priceId}`);
+    return NextResponse.redirect(`${getBaseUrl()}/api/billing/checkout?priceId=${priceId}`);
   } catch (error) {
     return errorResponse.badRequest(req, 'Invalid request');
   }

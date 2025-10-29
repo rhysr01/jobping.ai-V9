@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
     if (!parseResult.success) {
       return NextResponse.json({ 
         error: 'Invalid input parameters',
-        details: parseResult.error.errors 
+        details: parseResult.error.issues 
       }, { status: 400 });
     }
 
@@ -136,7 +136,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Transform the data to a cleaner format
-    const transformedMatches = matches?.map(match => ({
+    const transformedMatches = matches?.map((match: any) => ({
       id: match.id,
       match_score: match.match_score,
       match_reason: match.match_reason,
@@ -159,9 +159,9 @@ export async function GET(req: NextRequest) {
     Sentry.captureException(error, {
       tags: { component: 'user-matches-api' },
       extra: { 
-        email: searchParams.get('email'),
-        limit: searchParams.get('limit'),
-        minScore: searchParams.get('minScore')
+        email: new URL(req.url).searchParams.get('email'),
+        limit: new URL(req.url).searchParams.get('limit'),
+        minScore: new URL(req.url).searchParams.get('minScore')
       }
     });
     

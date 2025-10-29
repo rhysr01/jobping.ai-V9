@@ -80,16 +80,8 @@ export const STUDENT_SATISFACTION_FACTORS = {
   }
 };
 
-// Student satisfaction scoring - matches all user preferences for maximum satisfaction
-export function getStudentSatisfactionScore(
-  jobCategories: string[],
-  userFormValues: string[],
-  jobWorkEnvironment?: string,
-  jobExperienceRequired?: string,
-  userWorkEnvironment?: string,
-  userEntryLevel?: string,
-  userCompanyTypes?: string[]
-): number {
+// Simple satisfaction scoring - matches what students told us they want
+export function getStudentSatisfactionScore(jobCategories: string[], userFormValues: string[]): number {
   if (!userFormValues || userFormValues.length === 0) return 1; // Neutral for flexible users
 
   let score = 0;
@@ -113,34 +105,7 @@ export function getStudentSatisfactionScore(
     score += 20; // Properly categorized = higher quality
   }
 
-  // Tertiary: Work environment preference match
-  if (userWorkEnvironment && jobWorkEnvironment) {
-    const userEnv = userWorkEnvironment.toLowerCase();
-    const jobEnv = jobWorkEnvironment.toLowerCase();
-
-    if (userEnv === jobEnv) {
-      score += 10; // Exact work environment match
-    } else if ((userEnv === 'hybrid' && jobEnv === 'office') ||
-               (userEnv === 'remote' && (jobEnv === 'office' || jobEnv === 'hybrid'))) {
-      score += 5; // Reasonable work environment compromise
-    } else if (jobEnv === 'remote' && userEnv !== 'remote') {
-      score += 8; // Remote work bonus (flexible for students)
-    }
-  }
-
-  // Quaternary: Entry level appropriateness
-  if (userEntryLevel && jobExperienceRequired) {
-    const userLevel = userEntryLevel.toLowerCase();
-    const jobExp = jobExperienceRequired.toLowerCase();
-
-    if (userLevel === 'entry' && (jobExp.includes('entry') || jobExp.includes('junior') || jobExp.includes('graduate'))) {
-      score += 10; // Perfect for entry level
-    } else if (userLevel === 'mid' && !jobExp.includes('entry') && !jobExp.includes('junior')) {
-      score += 10; // Appropriate for mid level
-    } else if (userLevel === 'senior' && (jobExp.includes('senior') || jobExp.includes('lead'))) {
-      score += 10; // Appropriate for senior level
-    }
-  }
+  // Additional factors (work environment, entry level) intentionally omitted for simplicity and consistency
 
   return Math.min(score, 100); // Cap at 100
 }

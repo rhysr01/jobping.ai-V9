@@ -190,21 +190,11 @@ function distributeJobs(
       // Primary sort: User preference satisfaction (most important for happiness)
       const satisfactionScoreA = getStudentSatisfactionScore(
         a.categories || [],
-        userFormValues || [],
-        a.work_environment,
-        a.experience_required,
-        userWorkEnvironment,
-        userEntryLevel,
-        userCompanyTypes
+        userFormValues || []
       );
       const satisfactionScoreB = getStudentSatisfactionScore(
         b.categories || [],
-        userFormValues || [],
-        b.work_environment,
-        b.experience_required,
-        userWorkEnvironment,
-        userEntryLevel,
-        userCompanyTypes
+        userFormValues || []
       );
       if (satisfactionScoreA !== satisfactionScoreB) {
         return satisfactionScoreB - satisfactionScoreA;

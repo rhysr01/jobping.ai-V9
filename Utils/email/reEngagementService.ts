@@ -6,6 +6,7 @@
 import { Resend } from 'resend';
 import { getReEngagementCandidates, markReEngagementSent } from '../engagementTracker';
 import { getResendClient, EMAIL_CONFIG, assertValidFrom } from './clients';
+import { getUnsubscribeUrl } from '../url-helpers';
 // import { generateReEngagementEmail, generateReEngagementSubject } from './reEngagementTemplate';
 
 export interface ReEngagementResult {
@@ -71,7 +72,7 @@ async function sendReEngagementEmail(user: {
   email: string;
   full_name: string | null;
 }): Promise<void> {
-  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.getjobping.com'}/api/unsubscribe/one-click?email=${encodeURIComponent(user.email)}`;
+  const unsubscribeUrl = getUnsubscribeUrl(user.email);
   
   const emailData = {
     to: user.email,
@@ -83,7 +84,7 @@ async function sendReEngagementEmail(user: {
   const subject = `We Miss You - New Opportunities Await!`;
 
   const resend = getResendClient();
-  const fromAddress = `JobPing <hello@getjobping.com>`;
+  const fromAddress = EMAIL_CONFIG.from;
   assertValidFrom(fromAddress);
 
   const { error } = await resend.emails.send({

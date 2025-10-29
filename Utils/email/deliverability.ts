@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { getListUnsubscribeHeader } from '../url-helpers';
 
 export interface EmailDeliverabilityMetrics {
   deliveryRate: number;
@@ -430,8 +431,7 @@ export async function getEmailDeliverabilityMetrics(): Promise<EmailDeliverabili
  * Generate List-Unsubscribe header
  */
 export function generateListUnsubscribeHeader(): string {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.getjobping.com';
-  return `<${baseUrl}/api/email/unsubscribe?email={email}>, <mailto:unsubscribe@getjobping.com?subject=Unsubscribe>`;
+  return getListUnsubscribeHeader();
 }
 
 /**

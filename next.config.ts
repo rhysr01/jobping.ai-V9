@@ -60,7 +60,7 @@ const nextConfig: NextConfig = {
               value: 'http'
             }
           ],
-          destination: 'https://www.getjobping.com/:path*',
+          destination: 'https://getjobping.com/:path*',
           permanent: true
         }
       ];

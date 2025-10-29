@@ -7,6 +7,8 @@
 import OpenAI from 'openai';
 import type { Job } from '../scrapers/types';
 import { UserPreferences, JobMatch } from './matching/types';
+import { MATCHING_CONFIG } from '@/Utils/config/runtime';
+import { trackAPICall } from '@/Utils/monitoring/enhanced-monitoring';
 // Embedding boost removed - feature not implemented
 
 // ============================================
@@ -17,14 +19,10 @@ import { UserPreferences, JobMatch } from './matching/types';
 // GPT-4o-mini is better than 3.5-turbo AND 70% cheaper
 // No need for complexity-based routing anymore
 
-// Matching Quality
-const JOBS_TO_ANALYZE = 50; // Number of pre-filtered jobs sent to AI
-
-// Cache Settings
-const CACHE_TTL_HOURS = 48; // Cache matches for 48 hours
-
-// Timeouts
-const AI_TIMEOUT_MS = 20000; // 20 second timeout for AI calls
+// Use centralized config
+const JOBS_TO_ANALYZE = MATCHING_CONFIG.JOBS_TO_ANALYZE;
+const CACHE_TTL_HOURS = MATCHING_CONFIG.CACHE_TTL_HOURS;
+const AI_TIMEOUT_MS = MATCHING_CONFIG.AI_TIMEOUT_MS;
 
 // ============================================
 
@@ -35,8 +33,149 @@ interface ConsolidatedMatchResult {
   confidence: number;
 }
 
-// SHARED CACHE: Persists across all API calls for maximum savings!
-const SHARED_MATCH_CACHE = new Map<string, { matches: JobMatch[], timestamp: number }>();
+// ============================================
+// LRU CACHE IMPLEMENTATION
+// ============================================
+
+interface CacheEntry {
+  matches: JobMatch[];
+  timestamp: number;
+  accessCount: number;
+  lastAccessed: number;
+}
+
+class LRUMatchCache {
+  private cache = new Map<string, CacheEntry>();
+  private accessOrder: string[] = [];
+  private readonly maxSize: number;
+  private readonly ttlMs: number;
+
+  constructor(maxSize: number, ttlMs: number) {
+    this.maxSize = maxSize;
+    this.ttlMs = ttlMs;
+  }
+
+  get(key: string): JobMatch[] | null {
+    const entry = this.cache.get(key);
+    
+    if (!entry) return null;
+
+    // Check TTL
+    if (Date.now() - entry.timestamp > this.ttlMs) {
+      this.cache.delete(key);
+      this.removeFromAccessOrder(key);
+      return null;
+    }
+
+    // Update access tracking
+    entry.accessCount++;
+    entry.lastAccessed = Date.now();
+    
+    // Move to end of access order
+    this.removeFromAccessOrder(key);
+    this.accessOrder.push(key);
+    
+    return entry.matches;
+  }
+
+  set(key: string, matches: JobMatch[]): void {
+    // Remove oldest entries if at capacity
+    while (this.cache.size >= this.maxSize) {
+      const oldestKey = this.accessOrder.shift();
+      if (oldestKey) {
+        this.cache.delete(oldestKey);
+      }
+    }
+
+    const entry: CacheEntry = {
+      matches,
+      timestamp: Date.now(),
+      accessCount: 1,
+      lastAccessed: Date.now()
+    };
+
+    this.cache.set(key, entry);
+    this.accessOrder.push(key);
+  }
+
+  private removeFromAccessOrder(key: string): void {
+    const index = this.accessOrder.indexOf(key);
+    if (index > -1) {
+      this.accessOrder.splice(index, 1);
+    }
+  }
+
+  getStats() {
+    return {
+      size: this.cache.size,
+      maxSize: this.maxSize,
+      hitRate: 0 // Would need to track hits/misses for accurate calculation
+    };
+  }
+
+  clear(): void {
+    this.cache.clear();
+    this.accessOrder = [];
+  }
+}
+
+// ============================================
+// CIRCUIT BREAKER
+// ============================================
+
+class CircuitBreaker {
+  private failures = 0;
+  private lastFailure = 0;
+  private isOpen = false;
+  private readonly threshold: number;
+  private readonly timeout: number;
+
+  constructor(threshold: number = 5, timeout: number = 60000) {
+    this.threshold = threshold;
+    this.timeout = timeout;
+  }
+
+  canExecute(): boolean {
+    if (!this.isOpen) return true;
+    
+    const now = Date.now();
+    if (now - this.lastFailure > this.timeout) {
+      this.isOpen = false;
+      this.failures = 0;
+      return true;
+    }
+    
+    return false;
+  }
+
+  recordSuccess(): void {
+    this.failures = 0;
+    this.isOpen = false;
+  }
+
+  recordFailure(): void {
+    this.failures++;
+    this.lastFailure = Date.now();
+    
+    if (this.failures >= this.threshold) {
+      this.isOpen = true;
+    }
+  }
+
+  getStatus() {
+    return {
+      isOpen: this.isOpen,
+      failures: this.failures,
+      lastFailure: this.lastFailure
+    };
+  }
+}
+
+// SHARED CACHE: Use LRU implementation
+const SHARED_MATCH_CACHE = new LRUMatchCache(
+  MATCHING_CONFIG.MAX_CACHE_SIZE,
+  MATCHING_CONFIG.CACHE_TTL_HOURS * 60 * 60 * 1000
+);
 
 export class ConsolidatedMatchingEngine {
   private openai: OpenAI | null = null;
@@ -46,7 +185,11 @@ export class ConsolidatedMatchingEngine {
     gpt4: { calls: 0, tokens: 0, cost: 0 },
     gpt35: { calls: 0, tokens: 0, cost: 0 }
   };
-  private matchCache = SHARED_MATCH_CACHE; // Use shared cache across all instances!
+  private matchCache = SHARED_MATCH_CACHE; // Use shared LRU cache
+  private circuitBreaker = new CircuitBreaker(
+    MATCHING_CONFIG.CIRCUIT_BREAKER_THRESHOLD,
+    MATCHING_CONFIG.CIRCUIT_BREAKER_TIMEOUT
+  );
   private readonly CACHE_TTL = CACHE_TTL_HOURS * 60 * 60 * 1000; // Configurable cache TTL
 
   constructor(openaiApiKey?: string) {
@@ -100,9 +243,9 @@ export class ConsolidatedMatchingEngine {
     // Check cache first (saves $$$ on repeat matches)
     const cacheKey = this.generateCacheKey(jobs, userPrefs);
     const cached = this.matchCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+    if (cached) {
       return {
-        matches: cached.matches,
+        matches: cached,
         method: 'ai_success',
         processingTime: Date.now() - startTime,
         confidence: 0.9
@@ -125,7 +268,7 @@ export class ConsolidatedMatchingEngine {
       const aiMatches = await this.performAIMatchingWithTimeout(jobs, userPrefs);
       if (aiMatches && aiMatches.length > 0) {
         // Cache successful AI matches
-        this.matchCache.set(cacheKey, { matches: aiMatches, timestamp: Date.now() });
+        this.matchCache.set(cacheKey, aiMatches);
         
         return {
           matches: aiMatches,

@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { getBaseUrl } from './url-helpers';
 
 // Lazy initialization to prevent build-time execution
 let _stripe: Stripe | null = null;
@@ -39,8 +40,8 @@ export const STRIPE_CONFIG = {
   WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET!,
   
   // Success/cancel URLs
-  SUCCESS_URL: process.env.NEXT_PUBLIC_BASE_URL + '/payment/success',
-  CANCEL_URL: process.env.NEXT_PUBLIC_BASE_URL + '/payment/cancel',
+  SUCCESS_URL: getBaseUrl() + '/payment/success',
+  CANCEL_URL: getBaseUrl() + '/payment/cancel',
 };
 
 // Create a checkout session for subscription
