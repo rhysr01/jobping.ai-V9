@@ -247,7 +247,7 @@ function SignupForm() {
           </motion.div>
           
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 tracking-tight leading-tight">
-            Land your first job faster — without endless applications
+            Land your first job faster — without endless scrolling
           </h1>
           <p className="text-zinc-300 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed mb-4">
             We match you to real roles that fit your skills, degree, and goals. No spam. No dead ends.
@@ -596,7 +596,7 @@ function SignupForm() {
                     whileTap={{ scale: 0.98 }}
                     className="btn-secondary flex-1 py-5 text-lg"
                   >
-                    � Back
+                    ← Back
                   </motion.button>
                   <motion.button
                     onClick={() => setStep(3)}
@@ -783,7 +783,7 @@ function SignupForm() {
                     className="btn-secondary flex-1 py-5 text-lg"
                     disabled={loading}
                   >
-                    � Back
+                    ← Back
                   </motion.button>
                   <motion.button
                     onClick={() => setStep(4)}
@@ -989,7 +989,7 @@ function SignupForm() {
                     whileTap={{ scale: 0.98 }}
                     className="btn-secondary flex-1 py-5 text-lg"
                   >
-                    � Back
+                    ← Back
                   </motion.button>
                   <motion.button
                     onClick={handleSubmit}
