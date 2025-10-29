@@ -2,6 +2,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import Skeleton from "@/components/ui/Skeleton";
+import Button from "@/components/ui/Button";
 
 export default function Hero() {
   const [activeJobs, setActiveJobs] = useState("12,748");
@@ -95,8 +96,8 @@ export default function Hero() {
           <div className="absolute -inset-8 bg-gradient-to-r from-brand-500/20 via-purple-600/20 to-brand-500/20 rounded-full blur-3xl opacity-60 -z-10" />
         </h1>
         <div className="mt-7 sm:mt-9 px-4">
-          <div className="inline-flex items-center gap-2 bg-white/7 border border-white/10 rounded-full px-4 py-2 shadow-[0_0_24px_rgba(139,92,246,0.25)]">
-            <svg className="w-4 h-4 text-brand-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <div className="inline-flex items-center gap-2 surface-raised rounded-full px-4 py-2 shadow-[0_0_24px_rgba(139,92,246,0.25)]">
+            <svg className="w-4 h-4 text-brand-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l-7-7 1.41-1.41L12 16.17l8.59-8.58L22 9l-10 10z" />
             </svg>
             <span className="text-sm sm:text-base md:text-lg text-white">
@@ -132,14 +133,16 @@ export default function Hero() {
           transition={{ delay: 0.3, duration: 0.6 }}
           className="mt-6 sm:mt-8 px-4"
         >
-          <a
+          <Button
             href="/signup"
-            className="btn-mobile inline-block text-heading font-bold text-white bg-gradient-to-r from-brand-500 to-purple-600 rounded-xl interactive-scale interactive-glow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black relative overflow-hidden group"
+            variant="primary"
+            size="lg"
+            className="text-heading font-bold relative overflow-hidden group"
             aria-label="Get my matches in 48 hours"
           >
             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <span className="relative">Get my matches in 48 hours</span>
-          </a>
+          </Button>
           <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-zinc-500">
             No logins · No spam · Unsubscribe anytime
           </p>

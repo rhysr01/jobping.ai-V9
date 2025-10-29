@@ -11,6 +11,7 @@ export default function LogoWordmark() {
           strokeWidth="1.6"
           strokeLinecap="round"
           strokeLinejoin="round"
+          aria-hidden="true"
         >
           <path d="M12 3l10 5-10 5L2 8l10-5z" />
           <path d="M22 10v4" />

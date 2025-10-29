@@ -155,7 +155,7 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
       >
         <div className="flex items-center justify-between mb-6">
           <h2 id="payment-modal-title" className="text-heading text-white">
-            Get your matches
+            Complete your purchase
           </h2>
           <button
             onClick={handleClose}
@@ -257,7 +257,7 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
               disabled={isLoading}
               className="btn-mobile flex-1 text-neutral-400 hover:text-white transition-colors disabled:opacity-50"
             >
-              Maybe later
+              Cancel
             </button>
             <button
               type="submit"
@@ -273,7 +273,7 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
                   Processing...
                 </>
               ) : (
-                'Get matches'
+                'Continue to Payment'
               )}
             </button>
           </div>

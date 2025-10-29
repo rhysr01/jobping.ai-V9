@@ -12,6 +12,7 @@ function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeJobs, setActiveJobs] = useState('9,769');
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [tier] = useState<'free' | 'premium'>(tierParam === 'premium' ? 'premium' : 'free');
   const [formData, setFormData] = useState({
     fullName: '',
@@ -42,7 +43,8 @@ function SignupForm() {
           setActiveJobs(data.activeJobsFormatted);
         }
       })
-      .catch(err => console.error('Failed to fetch stats:', err));
+      .catch(err => console.error('Failed to fetch stats:', err))
+      .finally(() => setIsLoadingStats(false));
   }, []);
 
   const CITIES = ['Dublin', 'London', 'Paris', 'Amsterdam', 'Manchester', 'Birmingham', 'Madrid', 'Barcelona', 'Berlin', 'Hamburg', 'Munich', 'Zurich', 'Milan', 'Rome'];
@@ -266,7 +268,11 @@ function SignupForm() {
             className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-brand-500 text-white text-xs sm:text-sm font-bold px-4 sm:px-6 py-2 rounded_full shadow-lg"
           >
             <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-            {activeJobs} active roles � Updated daily
+            {isLoadingStats ? (
+              <span className="inline-block w-20 h-4 bg-white/20 rounded animate-pulse"></span>
+            ) : (
+              `${activeJobs} active roles`
+            )} � Updated daily
           </motion.div>
         </motion.div>
 
@@ -1035,7 +1041,11 @@ function SignupForm() {
           <div className="inline-flex items-center gap-2 bg-zinc-900/60 border border-zinc-800 px-6 py-3 rounded-full backdrop-blur-sm">
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></span>
             <span className="text-sm font-bold text-zinc-300">
-              {activeJobs} active early-career roles
+              {isLoadingStats ? (
+                <span className="inline-block w-24 h-4 bg-zinc-600/20 rounded animate-pulse"></span>
+              ) : (
+                `${activeJobs} active early-career roles`
+              )}
             </span>
             <span className="text-zinc-600">�</span>
             <span className="text-sm text-zinc-400">Updated daily</span>
