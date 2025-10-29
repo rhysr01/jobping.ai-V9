@@ -6,8 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { ZodSchema, ZodError } from 'zod';
-import { asyncHandler } from '@/lib/errors';
-import { AppError, ValidationError, RateLimitError, ErrorContext } from '@/Utils/error-handling/errorHandler';
+import { asyncHandler, AppError, ValidationError, UnauthorizedError, RateLimitError } from '@/lib/errors';
 
 // ============================================
 // RATE LIMITING (Lightweight)
@@ -93,10 +92,10 @@ export function createUnifiedHandler<T>(
   options: HandlerOptions = {}
 ) {
   return asyncHandler(async (request: NextRequest) => {
-    // Method validation
-    if (options.allowedMethods && !options.allowedMethods.includes(request.method)) {
-      throw new AppError('Method not allowed', 'METHOD_NOT_ALLOWED' as any, 405);
-    }
+      // Method validation
+      if (options.allowedMethods && !options.allowedMethods.includes(request.method)) {
+        throw new AppError('Method not allowed', 405, 'METHOD_NOT_ALLOWED');
+      }
 
     // Rate limiting
     if (options.rateLimit) {
@@ -106,7 +105,7 @@ export function createUnifiedHandler<T>(
       
       const rateLimitResult = getRateLimiter().isAllowed(key, options.rateLimit);
       if (!rateLimitResult.allowed) {
-        throw new RateLimitError('Rate limit exceeded', rateLimitResult.resetTime);
+        throw new RateLimitError(rateLimitResult.resetTime);
       }
     }
 
@@ -114,7 +113,7 @@ export function createUnifiedHandler<T>(
     if (options.requireAuth) {
       const authHeader = request.headers.get('authorization');
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        throw new AppError('Authentication required', 'UNAUTHORIZED' as any, 401);
+        throw new UnauthorizedError('Authentication required');
       }
     }
 

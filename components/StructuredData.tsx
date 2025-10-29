@@ -1,10 +1,12 @@
+import { getBaseUrl } from '@/Utils/url-helpers';
+
 export default function StructuredData() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "JobPing",
     "description": "No logins. Zero scrolling. Jobs in your inbox. Weekly matches for early-career roles across Europe.",
-    "url": "https://www.getjobping.com",
+    "url": getBaseUrl(),
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Web",
     "offers": {
@@ -23,7 +25,7 @@ export default function StructuredData() {
     "publisher": {
       "@type": "Organization",
       "name": "JobPing",
-      "url": "https://www.getjobping.com"
+      "url": getBaseUrl()
     }
   };
 

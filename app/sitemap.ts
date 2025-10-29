@@ -1,7 +1,8 @@
 import { MetadataRoute } from 'next'
+import { getBaseUrl } from '@/Utils/url-helpers'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://www.getjobping.com'
+  const baseUrl = getBaseUrl()
   
   return [
     {

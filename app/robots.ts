@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next'
+import { getBaseUrl } from '@/Utils/url-helpers'
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -7,6 +8,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/', '/admin/'],
     },
-    sitemap: 'https://www.getjobping.com/sitemap.xml',
+    sitemap: `${getBaseUrl()}/sitemap.xml`,
   }
 }
