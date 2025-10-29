@@ -437,7 +437,16 @@ async function preFilterJobsByUserPreferencesEnhanced(jobs: (ScrapersJob & { fre
         return targetCities.some(city => city && matchesLocation(job.location, city));
       });
       
-      console.log(`Location filter: ${jobs.length} -> ${filteredJobs.length} jobs (cities: ${targetCities.join(', ')})`);
+      // Log location filtering to Sentry breadcrumb
+      Sentry.addBreadcrumb({
+        message: 'Location filtering applied',
+        level: 'debug',
+        data: {
+          originalCount: jobs.length,
+          filteredCount: filteredJobs.length,
+          targetCities: targetCities
+        }
+      });
     }
   }
   
@@ -576,16 +585,33 @@ async function preFilterJobsByUserPreferencesEnhanced(jobs: (ScrapersJob & { fre
 async function queryWithTimeout<T>(
   queryPromise: Promise<any>,
   timeoutMs: number = 10000
-): Promise<{ data: T | null; error: unknown }> {
+): Promise<{ data: T | null; error: { code: string; message: string; details?: unknown } | null }> {
   const timeoutPromise = new Promise<{ data: null; error: unknown }>((_, reject) => 
     setTimeout(() => reject(new Error(`Query timeout after ${timeoutMs}ms`)), timeoutMs)
   );
 
   try {
     const result = await Promise.race([queryPromise, timeoutPromise]);
-    return { data: result.data, error: result.error };
+    if (result.error) {
+      return { 
+        data: null, 
+        error: { 
+          code: 'QUERY_ERROR', 
+          message: 'Database query failed', 
+          details: result.error 
+        } 
+      };
+    }
+    return { data: result.data, error: null };
   } catch (error) {
-    return { data: null, error };
+    return { 
+      data: null, 
+      error: { 
+        code: 'QUERY_TIMEOUT', 
+        message: `Query timeout after ${timeoutMs}ms`,
+        details: error 
+      } 
+    };
   }
 }
 
@@ -617,7 +643,10 @@ const matchUsersHandler = async (req: NextRequest) => {
       const raw = await req.text();
       const sig = req.headers.get('x-jobping-signature');
       if (!hmacVerify(raw, sig, HMAC_SECRET)) {
-        return NextResponse.json({ error: 'invalid_signature' }, { status: 401 });
+        return NextResponse.json({ 
+          error: 'Invalid signature',
+          code: 'INVALID_SIGNATURE' 
+        }, { status: 401 });
       }
       // Reconstruct request since body was consumed
       req = new Request(req.url, { method: 'POST', headers: req.headers, body: raw }) as any;
@@ -642,15 +671,13 @@ const matchUsersHandler = async (req: NextRequest) => {
 
     const { userLimit, jobLimit, forceRun, dryRun, signature, timestamp } = parseResult.data;
 
-    // Verify HMAC authentication if signature provided
-    if (signature && timestamp) {
-      const hmacResult = verifyHMAC(`${userLimit}:${jobLimit}:${timestamp}`, signature, timestamp);
-      if (!hmacResult.isValid) {
-        return NextResponse.json({ 
-          error: 'Authentication failed', 
-          details: hmacResult.error 
-        }, { status: 401 });
-      }
+    // Verify HMAC authentication (mandatory in prod, optional in dev/test)
+    const hmacResult = verifyHMAC(`${userLimit}:${jobLimit}:${timestamp}`, signature || '', timestamp || 0);
+    if (!hmacResult.isValid) {
+      return NextResponse.json({ 
+        error: 'Authentication failed', 
+        details: hmacResult.error 
+      }, { status: 401 });
     }
     const performanceTracker = trackPerformance();
   const reservationId = `batch_${Date.now()}`;
@@ -717,7 +744,11 @@ const matchUsersHandler = async (req: NextRequest) => {
       users = usersData || [];
     } catch (error: any) {
       console.error('Failed to fetch users:', error);
-      return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'Failed to fetch users',
+        code: 'USER_FETCH_ERROR',
+        details: error 
+      }, { status: 500 });
     }
 
     if (!users || users.length === 0) {
@@ -725,7 +756,12 @@ const matchUsersHandler = async (req: NextRequest) => {
       return NextResponse.json({ message: 'No users found' });
     }
 
-    console.log(`Found ${users.length} active users to process`);
+    // Log user count to Sentry breadcrumb (no console spam)
+    Sentry.addBreadcrumb({
+      message: 'Active users found',
+      level: 'info',
+      data: { userCount: users.length }
+    });
 
     // Transform user data to match expected format
     const transformedUsers = users.map(user => ({
@@ -813,7 +849,11 @@ const matchUsersHandler = async (req: NextRequest) => {
 
       if (jobsError) {
         console.error('Failed to fetch jobs:', jobsError);
-        return NextResponse.json({ error: 'Failed to fetch jobs' }, { status: 500 });
+        return NextResponse.json({ 
+          error: 'Failed to fetch jobs',
+          code: 'JOB_FETCH_ERROR',
+          details: jobsError 
+        }, { status: 500 });
       }
 
       jobs = jobsData || [];
@@ -826,7 +866,12 @@ const matchUsersHandler = async (req: NextRequest) => {
       return NextResponse.json({ message: 'No active jobs to process' });
     }
 
-    console.log(`Found ${jobs.length} EU-based early career jobs from past 30 days in ${jobFetchTime}ms`);
+    // Log job fetch results to Sentry breadcrumb
+    Sentry.addBreadcrumb({
+      message: 'Jobs fetched successfully',
+      level: 'info',
+      data: { jobCount: jobs.length, fetchTime: jobFetchTime }
+    });
     
     // Log filtering effectiveness
     if (jobs.length > 0) {
@@ -867,7 +912,12 @@ const matchUsersHandler = async (req: NextRequest) => {
     // Skip in-memory job reservations; Redis global lock already protects this run
 
     // Log overall job distribution
-    console.log(`Total jobs fetched: ${jobs.length}`);
+    // Log total jobs to Sentry breadcrumb
+    Sentry.addBreadcrumb({
+      message: 'Total jobs processed',
+      level: 'debug',
+      data: { totalJobs: jobs.length }
+    });
 
     // 3. Process each user in parallel
     let totalAIProcessingTime = 0;
@@ -1279,7 +1329,10 @@ const matchUsersHandler = async (req: NextRequest) => {
 
   // Handle lock acquisition failure
   if (result === null) {
-    return NextResponse.json({ error: 'Processing in progress' }, { status: 409 });
+    return NextResponse.json({ 
+      error: 'Processing in progress',
+      code: 'PROCESSING_IN_PROGRESS' 
+    }, { status: 409 });
   }
 
   return result;

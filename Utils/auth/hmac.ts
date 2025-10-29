@@ -14,6 +14,7 @@ export interface HMACVerificationResult {
 
 /**
  * Verify HMAC signature with consistent rules across endpoints
+ * Policy: Mandatory in production, optional in test/development
  */
 export function verifyHMAC(
   data: string,
@@ -21,6 +22,14 @@ export function verifyHMAC(
   timestamp: number,
   maxAgeMinutes: number = 5
 ): HMACVerificationResult {
+  // In test/development, HMAC is optional
+  if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development') {
+    if (!signature || !timestamp) {
+      return { isValid: true }; // Allow missing auth in dev/test
+    }
+  }
+
+  // In production, HMAC is mandatory
   if (!HMAC_SECRET) {
     return { isValid: false, error: 'HMAC secret not configured' };
   }

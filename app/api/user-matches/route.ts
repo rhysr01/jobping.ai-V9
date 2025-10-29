@@ -18,11 +18,7 @@ const userMatchesQuerySchema = z.object({
   timestamp: z.coerce.number().min(1, 'Timestamp required')
 });
 
-// HMAC verification for authentication (using shared utility)
-function verifyRequest(req: NextRequest, email: string, timestamp: number, signature: string): boolean {
-  const hmacResult = verifyHMAC(`${email}:${timestamp}`, signature, timestamp, 5);
-  return hmacResult.isValid;
-}
+// HMAC verification now handled by shared utility
 
 export async function GET(req: NextRequest) {
   // PRODUCTION: Stricter rate limiting for user matches endpoint
@@ -55,10 +51,12 @@ export async function GET(req: NextRequest) {
 
     const { email, limit, minScore, signature, timestamp } = parseResult.data;
 
-    // Verify authentication
-    if (!verifyRequest(req, email, timestamp, signature)) {
+    // Verify authentication (mandatory in prod, optional in dev/test)
+    const hmacResult = verifyHMAC(`${email}:${timestamp}`, signature, timestamp, 5);
+    if (!hmacResult.isValid) {
       return NextResponse.json({ 
-        error: 'Authentication failed' 
+        error: 'Authentication failed',
+        details: hmacResult.error 
       }, { status: 401 });
     }
 
