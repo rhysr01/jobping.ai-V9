@@ -6,6 +6,7 @@ import SampleInterviewEmail from "./SampleInterviewEmail";
 import SectionHeader from "@/components/ui/SectionHeader";
 import GlassCard from "@/components/ui/GlassCard";
 import { useReducedMotion } from "@/components/ui/useReducedMotion";
+import { BrandIcons } from "@/components/ui/BrandIcons";
 
 export default function EmailPhoneShowcase() {
   const prefersReduced = useReducedMotion();
@@ -66,17 +67,29 @@ export default function EmailPhoneShowcase() {
           className="mt-12 md:mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-center"
         >
           <GlassCard variant="subtle" hover="lift" className="rounded-xl p-6">
-            <div className="text-2xl mb-2" aria-hidden="true">📧</div>
+            <div className="flex justify-center mb-3">
+              <div className="p-3 rounded-xl bg-brand-500/10 border border-brand-500/20">
+                <BrandIcons.Mail className="w-6 h-6 text-brand-400" />
+              </div>
+            </div>
             <h3 className="text-white font-semibold mb-2">Weekly emails</h3>
             <p className="text-body text-neutral-300 font-medium">5 hand-picked roles every week</p>
           </GlassCard>
           <GlassCard variant="subtle" hover="lift" className="rounded-xl p-6">
-            <div className="text-2xl mb-2" aria-hidden="true">⚡</div>
+            <div className="flex justify-center mb-3">
+              <div className="p-3 rounded-xl bg-brand-500/10 border border-brand-500/20">
+                <BrandIcons.Zap className="w-6 h-6 text-brand-400" />
+              </div>
+            </div>
             <h3 className="text-white font-semibold mb-2">60-second read</h3>
             <p className="text-body text-neutral-300 font-medium">Everything you need in one email</p>
           </GlassCard>
           <GlassCard variant="subtle" hover="lift" className="rounded-xl p-6">
-            <div className="text-2xl mb-2" aria-hidden="true">🎯</div>
+            <div className="flex justify-center mb-3">
+              <div className="p-3 rounded-xl bg-brand-500/10 border border-brand-500/20">
+                <BrandIcons.Target className="w-6 h-6 text-brand-400" />
+              </div>
+            </div>
             <h3 className="text-white font-semibold mb-2">Perfect matches</h3>
             <p className="text-body text-neutral-300 font-medium">AI-filtered for your profile</p>
           </GlassCard>
