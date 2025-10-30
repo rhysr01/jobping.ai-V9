@@ -353,9 +353,14 @@ describe('validators', () => {
         categories: ['healthcare'],
         work_environment: 'on-site',
       };
-      const result = validateJobUserCompatibility(incompatibleJob, mockUser);
-      // May still pass if remote work is detected or other flexible matching
-      expect(result.overallScore).toBeLessThan(50);
+      const incompatibleUser = {
+        ...mockUser,
+        target_cities: ['London'],
+        work_environment: 'remote',
+        career_path: ['tech'],
+      };
+      const result = validateJobUserCompatibility(incompatibleJob, incompatibleUser);
+      expect(result.compatible).toBe(false);
     });
 
     it('should include all breakdown components', () => {

@@ -1,6 +1,5 @@
 // app/api/match-users/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { hmacVerify } from '@/Utils/security/hmac';
 const HMAC_SECRET = process.env.INTERNAL_API_HMAC_SECRET;
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
@@ -439,10 +438,15 @@ const matchUsersHandler = async (req: NextRequest) => {
     if (HMAC_SECRET) {
       const raw = await req.text();
       const sig = req.headers.get('x-jobping-signature');
-      if (!hmacVerify(raw, sig, HMAC_SECRET)) {
+      const timestampHeader = req.headers.get('x-jobping-timestamp');
+      const timestamp = timestampHeader ? parseInt(timestampHeader) : Date.now();
+      
+      const hmacResult = verifyHMAC(raw, sig || '', timestamp);
+      if (!hmacResult.isValid) {
         return NextResponse.json({ 
           error: 'Invalid signature',
-          code: 'INVALID_SIGNATURE' 
+          code: 'INVALID_SIGNATURE',
+          details: hmacResult.error
         }, { status: 401 });
       }
       // Reconstruct request since body was consumed

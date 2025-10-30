@@ -53,8 +53,8 @@ describe('normalizers', () => {
       expect(toOptString('test')).toBe('test');
     });
 
-    it('should trim whitespace', () => {
-      expect(toOptString('  test  ')).toBe('test');
+    it('should return string as-is without trimming', () => {
+      expect(toOptString('  test  ')).toBe('  test  ');
     });
 
     it('should return null for empty string', () => {

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import { withAuth } from '../../../../lib/auth';
-import { healthChecker } from '../../../../Utils/monitoring/healthChecker';
-import { metricsCollector } from '../../../../Utils/monitoring/metricsCollector';
-// import { alertingSystem } from '../../../../Utils/monitoring/alerting';
+import { healthChecker } from '@/Utils/monitoring/healthChecker';
+import { metricsCollector } from '@/Utils/monitoring/metricsCollector';
 
 const getDashboardHandler = async (request: NextRequest) => {
   const startTime = Date.now();
