@@ -5,6 +5,7 @@ import Skeleton from "@/components/ui/Skeleton";
 import Button from "@/components/ui/Button";
 import { useReducedMotion } from "@/components/ui/useReducedMotion";
 import * as Copy from "@/lib/copy";
+import { BrandIcons } from "@/components/ui/BrandIcons";
 
 export default function Hero() {
   const [activeJobs, setActiveJobs] = useState("12,748");
@@ -56,20 +57,12 @@ export default function Hero() {
           whileHover={prefersReduced ? {} : { scale: 1.02 }}
         >
           {/* Graduation Cap Icon */}
-          <svg
-            className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 text-white flex-shrink-0"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
+          <motion.div
+            whileHover={prefersReduced ? {} : { rotate: [0, -5, 5, 0] }}
+            transition={{ duration: 0.5 }}
           >
-            <path d="M12 3l10 5-10 5L2 8l10-5z" />
-            <path d="M22 10v4" />
-            <path d="M6 12v4c0 1.6 3 3.2 6 3.2s6-1.6 6-3.2v-4" />
-          </svg>
+            <BrandIcons.GraduationCap className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 text-white flex-shrink-0" />
+          </motion.div>
           
           {/* JobPing Text - Clean, no glow */}
           <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-none">
@@ -83,11 +76,11 @@ export default function Hero() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
-          className="mt-8 text-white text-display mb-4 text-balance"
+          className="mt-8 text-white text-display mb-6 text-balance leading-tight"
         >
           {Copy.HERO_HEADLINE}
         </motion.h1>
-        <p className="text-neutral-400 leading-relaxed max-w-2xl mx-auto text-xl font-medium mt-2">
+        <p className="text-neutral-300 leading-relaxed max-w-2xl mx-auto text-xl font-medium mt-2 text-neutral-200">
           {Copy.HERO_SUBLINE}
         </p>
         
@@ -99,11 +92,12 @@ export default function Hero() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/10 backdrop-blur-sm px-4 py-1.5 text-small text-brand-300 shadow-[0_1px_2px_rgba(154,106,255,0.08)]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/15 backdrop-blur-sm px-5 py-2 text-small text-brand-200 shadow-[0_2px_8px_rgba(154,106,255,0.15)]">
+              <BrandIcons.Target className="w-4 h-4 text-brand-400" />
               {isLoading ? (
                 <Skeleton className="h-4 w-32" />
               ) : (
-                <>{`${activeJobs} active early-career roles · Updated daily`}</>
+                <span className="font-medium">{`${activeJobs} active early-career roles · Updated daily`}</span>
               )}
             </div>
           </motion.div>
@@ -121,10 +115,13 @@ export default function Hero() {
               className="mt-5 rounded-xl shadow-[0_4px_12px_rgba(106,75,255,0.40)] hover:shadow-[0_6px_20px_rgba(106,75,255,0.50)] hover:brightness-105"
               aria-label={Copy.HERO_CTA}
             >
-              <span className="relative">{Copy.HERO_CTA}</span>
+              <span className="relative flex items-center gap-2">
+                {Copy.HERO_CTA}
+                <BrandIcons.ArrowRight className="w-5 h-5" />
+              </span>
             </Button>
-            <p className="mt-3 sm:mt-4 text-small text-zinc-500 text-center">
-              No logins → No spam → Unsubscribe anytime
+            <p className="mt-4 text-small text-zinc-400 text-center leading-relaxed">
+              Free · No spam · Unsubscribe anytime
             </p>
           </motion.div>
         </div>

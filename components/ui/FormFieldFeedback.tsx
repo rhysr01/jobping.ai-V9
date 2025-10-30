@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { ReactNode } from 'react';
+import { BrandIcons } from './BrandIcons';
 
 interface FormFieldErrorProps {
   error?: string;
@@ -22,13 +23,11 @@ export function FormFieldError({ error, id }: FormFieldErrorProps) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -5 }}
         transition={{ duration: 0.2 }}
-        className="mt-2 text-sm text-red-400 flex items-center gap-2"
+        className="mt-2 text-sm text-red-400 flex items-center gap-2 font-medium"
         role="alert"
         aria-live="polite"
       >
-        <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+        <BrandIcons.AlertCircle className="w-4 h-4 flex-shrink-0" />
         {error}
       </motion.p>
     </AnimatePresence>
@@ -49,13 +48,11 @@ export function FormFieldSuccess({ message }: FormFieldSuccessProps) {
     <motion.p
       initial={{ opacity: 0, y: -5 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mt-2 text-sm text-green-400 flex items-center gap-2"
+      className="mt-2 text-sm text-green-400 flex items-center gap-2 font-medium"
       role="status"
       aria-live="polite"
     >
-      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-      </svg>
+      <BrandIcons.CheckCircle className="w-4 h-4 flex-shrink-0" />
       {message}
     </motion.p>
   );
