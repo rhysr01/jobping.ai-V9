@@ -9,16 +9,27 @@ import type { Job } from '@/scrapers/types';
 import type { UserPreferences } from './types';
 
 export class EmbeddingService {
-  private openai: OpenAI;
+  private openai: OpenAI | null = null;
   private supabase = getDatabaseClient();
   private readonly MODEL = 'text-embedding-3-small'; // 1536 dimensions, cheapest
   private readonly BATCH_SIZE = 100; // OpenAI allows up to 2048 per batch
 
   constructor() {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY not configured');
+    // Don't initialize OpenAI client at construction time
+    // This allows the service to be imported even if OPENAI_API_KEY is not set (e.g., during build)
+  }
+
+  /**
+   * Get or initialize OpenAI client (lazy initialization)
+   */
+  private getOpenAIClient(): OpenAI {
+    if (!this.openai) {
+      if (!process.env.OPENAI_API_KEY) {
+        throw new Error('OPENAI_API_KEY not configured');
+      }
+      this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     }
-    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    return this.openai;
   }
 
   /**
@@ -56,7 +67,7 @@ export class EmbeddingService {
 
     try {
       // Single API call for all users
-      const response = await this.openai.embeddings.create({
+      const response = await this.getOpenAIClient().embeddings.create({
         model: this.MODEL,
         input: texts.map(t => t.text),
       });
@@ -120,7 +131,7 @@ export class EmbeddingService {
       }));
 
       try {
-        const response = await this.openai.embeddings.create({
+        const response = await this.getOpenAIClient().embeddings.create({
           model: this.MODEL,
           input: texts.map(t => t.text),
         });
@@ -208,7 +219,7 @@ export class EmbeddingService {
    */
   private async generateEmbedding(text: string): Promise<number[]> {
     try {
-      const response = await this.openai.embeddings.create({
+      const response = await this.getOpenAIClient().embeddings.create({
         model: this.MODEL,
         input: text.substring(0, 8000), // Truncate to max token limit
       });
@@ -336,6 +347,13 @@ export class EmbeddingService {
   }
 }
 
-// Export singleton instance
-export const embeddingService = new EmbeddingService();
+// Export singleton instance (lazy initialization prevents build-time errors)
+let embeddingServiceInstance: EmbeddingService | null = null;
+
+export const embeddingService = (() => {
+  if (!embeddingServiceInstance) {
+    embeddingServiceInstance = new EmbeddingService();
+  }
+  return embeddingServiceInstance;
+})();
 
