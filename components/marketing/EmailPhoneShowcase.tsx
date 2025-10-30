@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import DeviceFrame from "./DeviceFrame";
 import SampleInterviewEmail from "./SampleInterviewEmail";
 import SectionHeader from "@/components/ui/SectionHeader";
+import GlassCard from "@/components/ui/GlassCard";
 import { useReducedMotion } from "@/components/ui/useReducedMotion";
 
 export default function EmailPhoneShowcase() {
@@ -20,7 +21,7 @@ export default function EmailPhoneShowcase() {
         {/* Section header */}
         <SectionHeader
           title="Real jobs. Real matches. Delivered to your inbox."
-          description="See exactly what you'll receive—curated roles that match your profile, delivered weekly to your email. No apps to download, no dashboards to navigate."
+          description="See exactly what you'll receive → curated roles that match your profile, delivered weekly to your email. No apps to download, no dashboards to navigate."
         />
 
         {/* Phone showcase with floating animation */}
@@ -64,21 +65,21 @@ export default function EmailPhoneShowcase() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="mt-12 md:mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-center"
         >
-          <div className="bg-glass-subtle border border-border-subtle rounded-xl p-6 shadow-base backdrop-blur-sm hover:shadow-[0_4px_12px_rgba(255,255,255,0.04)] transition-all duration-300">
+          <GlassCard variant="subtle" hover="lift" className="rounded-xl p-6">
             <div className="text-2xl mb-2" aria-hidden="true">📧</div>
             <h3 className="text-white font-semibold mb-2">Weekly emails</h3>
             <p className="text-base text-neutral-300 font-medium">5 hand-picked roles every week</p>
-          </div>
-          <div className="bg-glass-subtle border border-border-subtle rounded-xl p-6 shadow-base backdrop-blur-sm hover:shadow-[0_4px_12px_rgba(255,255,255,0.04)] transition-all duration-300">
+          </GlassCard>
+          <GlassCard variant="subtle" hover="lift" className="rounded-xl p-6">
             <div className="text-2xl mb-2" aria-hidden="true">⚡</div>
             <h3 className="text-white font-semibold mb-2">60-second read</h3>
             <p className="text-base text-neutral-300 font-medium">Everything you need in one email</p>
-          </div>
-          <div className="bg-glass-subtle border border-border-subtle rounded-xl p-6 shadow-base backdrop-blur-sm hover:shadow-[0_4px_12px_rgba(255,255,255,0.04)] transition-all duration-300">
+          </GlassCard>
+          <GlassCard variant="subtle" hover="lift" className="rounded-xl p-6">
             <div className="text-2xl mb-2" aria-hidden="true">🎯</div>
             <h3 className="text-white font-semibold mb-2">Perfect matches</h3>
             <p className="text-base text-neutral-300 font-medium">AI-filtered for your profile</p>
-          </div>
+          </GlassCard>
         </motion.div>
       </div>
     </section>

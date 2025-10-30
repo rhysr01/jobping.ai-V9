@@ -254,7 +254,7 @@ function SignupForm() {
           </motion.div>
           
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 tracking-tight leading-tight">
-            Land your first job faster — without endless scrolling
+            Land your first job faster → without endless scrolling
           </h1>
           <p className="text-zinc-300 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed mb-4">
             We match you to real roles that fit your skills, degree, and goals. No spam. No dead ends.
@@ -362,7 +362,7 @@ function SignupForm() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full px-5 py-4 bg_black/40 border-2 border-zinc-700 rounded-xl text-white placeholder-zinc-500 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/20 transition-all text-lg"
+                    className="w-full px-5 py-4 bg-black/40 border-2 border-zinc-700 rounded-xl text-white placeholder-zinc-500 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/20 transition-all text-lg"
                     placeholder="you@example.com"
                   />
                 </div>
@@ -486,7 +486,7 @@ function SignupForm() {
                         whileTap={{ scale: 0.98 }}
                         className={`px-4 py-3.5 rounded-xl border-2 transition-all font-semibold ${
                           formData.experience === exp
-                            ? 'border-brand-500 bg-gradient-to_br from-brand-500/20 to-purple-600/10 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]'
+                            ? 'border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/10 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]'
                             : 'border-zinc-700 bg-zinc-900/40 text-zinc-300 hover:border-zinc-600'
                         }`}
                       >

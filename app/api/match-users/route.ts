@@ -20,6 +20,9 @@ import {
 import { Job as ScrapersJob } from '@/scrapers/types';
 import { getCategoryPriorityScore, jobMatchesUserCategories, WORK_TYPE_CATEGORIES, mapFormLabelToDatabase, getStudentSatisfactionScore } from '@/Utils/matching/categoryMapper';
 import { semanticRetrievalService } from '@/Utils/matching/semanticRetrieval';
+import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilterJobs';
+import { integratedMatchingService } from '@/Utils/matching/integrated-matching.service';
+import { batchMatchingProcessor } from '@/Utils/matching/batch-processor.service';
 import { z } from 'zod';
 
 // Zod validation schemas
@@ -365,217 +368,8 @@ function matchesLocation(jobLocation: string, targetCity: string): boolean {
   return variations.some(variant => jobLoc.includes(variant));
 }
 
-// Enhanced pre-filter jobs by user preferences with scoring AND feedback learning
-async function preFilterJobsByUserPreferencesEnhanced(jobs: (ScrapersJob & { freshnessTier: string })[], user: UserPreferences): Promise<(ScrapersJob & { freshnessTier: string })[]> {
-  // Get user's feedback history for personalized boosting
-  let feedbackBoosts: Map<string, number> = new Map();
-  
-  try {
-    const supabase = getDatabaseClient();
-    const { data: feedback } = await supabase
-      .from('user_feedback')
-      .select('relevance_score, job_context')
-      .eq('user_email', user.email)
-      .gte('relevance_score', 4)  // Only highly-rated jobs
-      .limit(10);
-    
-    if (feedback && feedback.length > 0) {
-      // Extract patterns from highly-rated jobs
-      feedback.forEach(f => {
-        const ctx = f.job_context;
-        if (!ctx) return;
-        
-        // If user loved jobs in Berlin, boost Berlin jobs
-        if (ctx.location) {
-          const city = ctx.location.toLowerCase();
-          feedbackBoosts.set(`loc:${city}`, (feedbackBoosts.get(`loc:${city}`) || 0) + 10);
-        }
-        
-        // If user loved startup jobs, boost startups
-        if (ctx.company?.toLowerCase().includes('startup')) {
-          feedbackBoosts.set('type:startup', (feedbackBoosts.get('type:startup') || 0) + 10);
-        }
-        
-        // If user loved remote jobs, boost remote
-        if (ctx.location?.toLowerCase().includes('remote')) {
-          feedbackBoosts.set('env:remote', (feedbackBoosts.get('env:remote') || 0) + 15);
-        }
-      });
-      
-      // Track feedback boosts for Sentry breadcrumb (no per-job logging)
-      if (feedbackBoosts.size > 0) {
-        Sentry.addBreadcrumb({
-          message: 'Feedback boosts applied',
-          level: 'debug',
-          data: {
-            userEmail: user.email,
-            boostCount: feedbackBoosts.size,
-            boostTypes: Object.fromEntries(feedbackBoosts)
-          }
-        });
-      }
-    }
-  } catch (error) {
-    console.warn('Failed to load feedback boosts:', error);
-  }
-  
-  // NOW DO STANDARD PRE-FILTER LOGIC (same as legacy function)
-  let filteredJobs = jobs;
-  
-  // HARD FILTER: Location is first priority - only show jobs from target cities or remote
-  if (user.target_cities) {
-    const targetCities = Array.isArray(user.target_cities) ? user.target_cities : [user.target_cities];
-    
-    if (targetCities.length > 0) {
-      filteredJobs = jobs.filter(job => {
-        const jobLocation = job.location.toLowerCase();
-        const isRemote = jobLocation.includes('remote') || jobLocation.includes('work from home');
-        
-        // Accept if remote OR matches any target city
-        if (isRemote) return true;
-        
-        return targetCities.some(city => city && matchesLocation(job.location, city));
-      });
-      
-      // Log location filtering to Sentry breadcrumb
-      Sentry.addBreadcrumb({
-        message: 'Location filtering applied',
-        level: 'debug',
-        data: {
-          originalCount: jobs.length,
-          filteredCount: filteredJobs.length,
-          targetCities: targetCities
-        }
-      });
-    }
-  }
-  
-  // Now score the location-filtered jobs
-  const scoredJobs = filteredJobs.map(job => {
-    let score = 0;
-    const jobTitle = job.title.toLowerCase();
-    const jobLocation = job.location.toLowerCase();
-    const jobDesc = (job.description || '').toLowerCase();
-    
-    // Location preference scoring (bonus points for exact city vs remote)
-    if (user.target_cities) {
-      const targetCities = Array.isArray(user.target_cities) ? user.target_cities : [user.target_cities];
-      const hasExactCityMatch = targetCities.some(city => city && matchesLocation(job.location, city));
-      const isRemote = jobLocation.includes('remote');
-      
-      if (hasExactCityMatch) score += 50; // Exact city match gets bonus
-      else if (isRemote) score += 30;     // Remote is good but less preferred
-    }
-    
-    // Experience level scoring (high priority)
-    if (user.entry_level_preference) {
-      const experienceKeywords: Record<string, string[]> = {
-        'entry': ['intern', 'internship', 'graduate', 'grad', 'entry', 'junior', 'trainee', 'associate'],
-        'mid': ['analyst', 'specialist', 'coordinator', 'associate'],
-        'senior': ['senior', 'lead', 'principal', 'manager', 'director']
-      };
-      
-      const keywords = experienceKeywords[user.entry_level_preference as keyof typeof experienceKeywords] || experienceKeywords['entry'];
-      const hasLevelMatch = keywords.some(keyword => jobTitle.includes(keyword));
-      
-      if (hasLevelMatch) score += 40; // Level match
-      else score -= 15;                // Wrong level penalty
-    }
-    
-    // Role/Career path scoring (medium priority) - handle string or array
-    if (user.roles_selected) {
-      const roles = Array.isArray(user.roles_selected) ? user.roles_selected : [user.roles_selected];
-      const hasRoleMatch = roles.some(role => 
-        role && (jobTitle.includes(role.toLowerCase()) || jobDesc.includes(role.toLowerCase()))
-      );
-      if (hasRoleMatch) score += 30;
-    }
-    
-    // Language scoring (if specified) - handle string or array
-    if (user.languages_spoken) {
-      const languages = Array.isArray(user.languages_spoken) ? user.languages_spoken : [user.languages_spoken];
-      const hasLanguageMatch = languages.some(lang => 
-        lang && jobDesc.includes(lang.toLowerCase())
-      );
-      if (hasLanguageMatch) score += 10;
-    }
-    
-    // Career path scoring (handle string or array)
-    if (user.career_path) {
-      const careerPaths = Array.isArray(user.career_path) ? user.career_path : [user.career_path];
-      const hasCareerMatch = careerPaths.some(path => 
-        path && (jobTitle.includes(path.toLowerCase()) || jobDesc.includes(path.toLowerCase()))
-      );
-      if (hasCareerMatch) score += 20;
-    }
-    
-    // NEW: Apply feedback boosts (learned preferences)
-    feedbackBoosts.forEach((boost, key) => {
-      const [type, value] = key.split(':');
-      
-      if (type === 'loc' && jobLocation.includes(value)) {
-        score += boost;
-        // Track boost for summary (no per-job logging)
-      }
-      if (type === 'type' && (jobTitle.includes(value) || jobDesc.includes(value))) {
-        score += boost;
-        // Track boost for summary (no per-job logging)
-      }
-      if (type === 'env' && jobLocation.includes(value)) {
-        score += boost;
-        // Track boost for summary (no per-job logging)
-      }
-    });
-    
-    return { job, score };
-  });
-  
-  // Rest of function identical to legacy version
-  // Sort by score, then ensure source diversity in top results
-  const sortedJobs = scoredJobs
-    .filter(item => item.score > 0) // Only jobs with some match
-    .sort((a, b) => b.score - a.score);
-  
-  // Ensure source diversity in top 100 jobs sent to AI
-  const diverseJobs: typeof sortedJobs[0][] = [];
-  const sourceCount: Record<string, number> = {};
-  const maxPerSource = MATCH_RULES.maxPerSource; // Max jobs from any single source in top results
-  
-  for (const item of sortedJobs) {
-    const source = (item.job as any).source || 'unknown';
-    const currentCount = sourceCount[source] || 0;
-    
-    if (currentCount < maxPerSource) {
-      diverseJobs.push(item);
-      sourceCount[source] = currentCount + 1;
-    }
-    
-    if (diverseJobs.length >= 100) break; // Stop at 100 jobs
-  }
-  
-  // Add remaining jobs if we don't have 100 yet
-  if (diverseJobs.length < 100) {
-    const remainingJobs = sortedJobs.filter(item => !diverseJobs.includes(item));
-    diverseJobs.push(...remainingJobs.slice(0, 100 - diverseJobs.length));
-  }
-  
-  const topJobs = diverseJobs.map(item => item.job);
-  const sourceCounts = Object.entries(sourceCount).map(([s, c]) => `${s}:${c}`).join(', ');
-  
-  // Log job filtering results to Sentry breadcrumb instead of console
-  Sentry.addBreadcrumb({
-    message: 'Job filtering completed',
-    level: 'info',
-    data: {
-      userEmail: user.email,
-      originalCount: jobs.length,
-      filteredCount: topJobs.length,
-      sourceDistribution: sourceCounts,
-      feedbackBoosted: feedbackBoosts.size > 0
-    }
-  });
-  return topJobs;
-}
+// Enhanced pre-filter jobs function moved to Utils/matching/preFilterJobs.ts
+// Imported above for backward compatibility
 
 // Initialize clients
 
@@ -919,24 +713,76 @@ const matchUsersHandler = async (req: NextRequest) => {
       data: { totalJobs: jobs.length }
     });
 
-    // 3. Process each user in parallel
+    // 3. Process users with batch optimization when beneficial
     let totalAIProcessingTime = 0;
     let totalTierDistributionTime = 0;
     
     const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
     
     // ============================================
-    // OPTIMIZATION: Batch fetch all user matches (fixes N+1 query bomb!)
-    // Before: 50 users = 100 queries (2 per user) = 8 seconds wasted
-    // After: 50 users = 1 query = instant!
+    // BATCH PROCESSING OPTIMIZATION
+    // Use batch processing when we have 5+ users to group similar users
+    // This reduces AI calls by sharing matches across similar profiles
     // ============================================
-    // Batch fetch previous matches using service (prevents N+1 queries)
-    const allUserEmails = transformedUsers.map(u => u.email);
-    // const matchesByUser = await userMatchingService.getPreviousMatchesForUsers(allUserEmails);
-    const matchesByUser = {}; // Temporarily disabled
-    // ============================================
+    const USE_BATCH_PROCESSING = transformedUsers.length >= 5 && 
+                                 process.env.ENABLE_BATCH_MATCHING !== 'false';
     
-    const userPromises = transformedUsers.map(async (user) => {
+    let results: Array<{ user: string; success: boolean; matches?: number; error?: string }>;
+    
+    if (USE_BATCH_PROCESSING) {
+      console.log(`Using batch processing for ${transformedUsers.length} users`);
+      
+      // Prepare users for batch processing
+      const usersForBatch = transformedUsers.map(user => ({
+        email: user.email || '',
+        preferences: user.preferences as UserPreferences
+      }));
+      
+      // Use batch processor
+      const batchStartTime = Date.now();
+      const batchResults = await batchMatchingProcessor.processBatch(
+        usersForBatch,
+        jobs as any[],
+        {
+          useEmbeddings: await semanticRetrievalService.isSemanticSearchAvailable(),
+          maxBatchSize: 10
+        }
+      );
+      
+      totalAIProcessingTime = Date.now() - batchStartTime;
+      
+      // Convert batch results to expected format
+      results = transformedUsers.map(user => {
+        const batchResult = batchResults.get(user.email || '');
+        if (batchResult) {
+          return {
+            user: user.email || '',
+            success: true,
+            matches: batchResult.matches.length
+          };
+        }
+        return {
+          user: user.email || '',
+          success: false,
+          error: 'No matches found'
+        };
+      });
+    } else {
+      // Fall back to individual processing for small groups
+      console.log(`Using individual processing for ${transformedUsers.length} users`);
+      
+      // ============================================
+      // OPTIMIZATION: Batch fetch all user matches (fixes N+1 query bomb!)
+      // Before: 50 users = 100 queries (2 per user) = 8 seconds wasted
+      // After: 50 users = 1 query = instant!
+      // ============================================
+      // Batch fetch previous matches using service (prevents N+1 queries)
+      const allUserEmails = transformedUsers.map(u => u.email);
+      // const matchesByUser = await userMatchingService.getPreviousMatchesForUsers(allUserEmails);
+      const matchesByUser = {}; // Temporarily disabled
+      // ============================================
+      
+      const userPromises = transformedUsers.map(async (user) => {
       try {
         // Use pre-loaded matches (NO QUERY!)
         const previousJobHashes = new Set<string>(); // Temporarily disabled
@@ -973,7 +819,7 @@ const matchUsersHandler = async (req: NextRequest) => {
             data: {
               userEmail: user.email,
               totalJobs: preFilteredJobs.length,
-              top10Scores: top10Scores.filter(s => typeof s === 'number'),
+              top10Scores: top10Scores.filter((s: any) => typeof s === 'number'),
               next40Range: {
                 max: Math.max(...next40Scores.filter((s: any) => typeof s === 'number')),
                 min: Math.min(...next40Scores.filter((s: any) => typeof s === 'number'))
@@ -1279,9 +1125,10 @@ const matchUsersHandler = async (req: NextRequest) => {
         return { user: user.email, success: false, error: userError instanceof Error ? userError.message : 'Unknown error' };
       }
     });
-
-    const results = await Promise.all(userPromises);
-
+    
+    results = await Promise.all(userPromises);
+    }
+    
     const totalProcessingTime = Date.now() - performanceTracker.startTime;
     const performanceMetrics = performanceTracker.getMetrics();
 

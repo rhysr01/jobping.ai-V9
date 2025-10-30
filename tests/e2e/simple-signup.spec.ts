@@ -14,7 +14,7 @@ test.describe('Simple Signup Tests', () => {
     
     // Check if homepage loads
     await expect(page.locator('h1:has-text("Land your first job faster")')).toBeVisible();
-    await expect(page.locator('text=Get matches in 48 hours')).toBeVisible();
+    await expect(page.locator('text=Find my matches')).toBeVisible();
     
     // Check navigation
     await expect(page.locator('[data-testid="logo"]')).toBeVisible();
@@ -95,7 +95,7 @@ test.describe('Simple Signup Tests', () => {
     await page.goto('/');
     
     // Check if content is visible on mobile
-    await expect(page.locator('h1:has-text("No logins. Zero scrolling. Jobs in your inbox.")')).toBeVisible();
+    await expect(page.locator('text=Find my matches')).toBeVisible();
     
     // Test mobile navigation - scroll to pricing section instead of clicking
     await page.evaluate(() => {
@@ -117,7 +117,7 @@ test.describe('Simple Signup Tests', () => {
     await page.goto('/');
     
     // Basic functionality test
-    await expect(page.locator('h1:has-text("No logins. Zero scrolling. Jobs in your inbox.")')).toBeVisible();
+    await expect(page.locator('h1:has-text("Land your first job faster")')).toBeVisible();
     
     // Navigation test
     await page.locator('text=Pricing').click();

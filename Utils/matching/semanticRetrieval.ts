@@ -2,6 +2,7 @@
 import { getDatabaseClient } from '@/Utils/databasePool';
 import { Job as ScrapersJob } from '@/scrapers/types';
 import type { UserPreferences } from '@/Utils/matching/types';
+import { embeddingService } from './embedding.service';
 
 export interface SemanticJob extends ScrapersJob {
   semantic_score: number;
@@ -16,33 +17,90 @@ export class SemanticRetrievalService {
   private supabase = getDatabaseClient();
 
   /**
-   * Get top 200 semantically relevant jobs for a user
-   * Uses vector similarity search to find jobs that match user preferences semantically
+   * Get top 200 semantically relevant jobs for a user using vector embeddings
+   * Uses pgvector similarity search with cosine distance
    */
   async getSemanticCandidates(
     userPrefs: UserPreferences,
     limit: number = 200
   ): Promise<SemanticJob[]> {
     try {
-      // Build semantic query based on user preferences
+      // Step 1: Generate user embedding
+      const userEmbedding = await embeddingService.generateUserEmbedding(userPrefs);
+      
+      // Step 2: Query jobs using embedding similarity
+      const cityFilter = Array.isArray(userPrefs.target_cities) 
+        ? userPrefs.target_cities 
+        : userPrefs.target_cities 
+          ? [userPrefs.target_cities] 
+          : null;
+      
+      const careerPathFilter = Array.isArray(userPrefs.career_path)
+        ? userPrefs.career_path
+        : userPrefs.career_path
+          ? [userPrefs.career_path]
+          : null;
+
+      // Convert embedding to Postgres array format for RPC call
+      // Note: Supabase RPC expects the embedding as a string representation
+      const { data: jobs, error } = await this.supabase.rpc(
+        'match_jobs_by_embedding',
+        {
+          query_embedding: userEmbedding, // Pass as array directly
+          match_threshold: 0.65, // 65% similarity threshold (adjustable)
+          match_count: limit,
+          city_filter: cityFilter,
+          career_path_filter: careerPathFilter
+        }
+      );
+
+      if (error) {
+        console.warn('Semantic search failed, falling back to keyword search:', error);
+        return await this.getSemanticCandidatesFallback(userPrefs, limit);
+      }
+
+      // Transform results to match SemanticJob interface
+      return (jobs || []).map((job: any) => ({
+        ...job,
+        semantic_score: job.semantic_score || 0,
+        embedding_distance: job.embedding_distance || 0
+      })) as SemanticJob[];
+    } catch (error) {
+      console.warn('Semantic retrieval error:', error);
+      // Fallback to text-based search if embeddings not available
+      return await this.getSemanticCandidatesFallback(userPrefs, limit);
+    }
+  }
+
+  /**
+   * Fallback to text-based semantic search if embeddings not available
+   */
+  private async getSemanticCandidatesFallback(
+    userPrefs: UserPreferences,
+    limit: number
+  ): Promise<SemanticJob[]> {
+    try {
       const semanticQuery = this.buildSemanticQuery(userPrefs);
       
-      // Use pgvector similarity search
       const { data: jobs, error } = await this.supabase
         .rpc('search_jobs_semantic', {
           query_text: semanticQuery,
-          match_threshold: 0.3, // Minimum similarity threshold
+          match_threshold: 0.3,
           match_count: limit
         });
 
       if (error) {
-        console.warn('Semantic search failed, falling back to keyword search:', error);
+        console.warn('Fallback semantic search also failed:', error);
         return [];
       }
 
-      return jobs || [];
+      return (jobs || []).map((job: any) => ({
+        ...job,
+        semantic_score: job.semantic_score || 0,
+        embedding_distance: job.embedding_distance || 0
+      })) as SemanticJob[];
     } catch (error) {
-      console.warn('Semantic retrieval error:', error);
+      console.warn('Fallback semantic retrieval error:', error);
       return [];
     }
   }

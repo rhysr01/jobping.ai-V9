@@ -8,7 +8,10 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 
 // Hero section
 export const HERO_TITLE = "JobPing";
+export const HERO_HEADLINE = "Land your first job faster without endless scrolling.";
+export const HERO_SUBLINE = "We match you to real roles that fit your skills, degree, and goals. No spam. No dead ends.";
 export const HERO_SUBTITLE = VP_TAGLINE;
+export const HERO_CTA = "Find my matches";
 
 // How it works
 export const HOW_IT_WORKS_TITLE = "How it works";
@@ -40,8 +43,9 @@ export const BUILT_FOR_STUDENTS_FEATURES = [
 ];
 
 // Pricing
-export const PRICING_TITLE = "Choose your plan";
-export const PRICING_SUBTITLE = "5 hand-picked roles per email. No job-board blasts.";
+export const PRICING_TITLE = "From student to hired: discover roles made for you";
+export const PRICING_SUBTITLE = "Get curated roles in your inbox. Zero scrolling, just apply.";
+export const PRICING_BADGE = "Simple pricing → Cancel anytime";
 
 // Free plan
 export const FREE_PLAN_TITLE = "Free";

@@ -4,12 +4,12 @@ export default function UnsubscribePage() {
   return (
     <div className="min-h-screen bg-black py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white/[0.06] border border-white/12 shadow-lg rounded-lg p-8">
-          <h1 className="text-3xl font-bold text-white mb-8 border-b border-white/10 pb-4">
+        <div className="bg-glass-default border border-border-default shadow-lg rounded-lg p-8">
+          <h1 className="text-3xl font-bold text-white mb-8 border-b border-border-subtle pb-4">
             Unsubscribe & Email Preferences
           </h1>
           
-          <div className="bg-white/[0.06] p-4 rounded-lg mb-8 border border-white/12">
+          <div className="bg-glass-subtle p-4 rounded-lg mb-8 border border-border-subtle">
             <p className="text-sm text-white/80">
               <strong>Last Updated:</strong> {new Date().toLocaleDateString()}
             </p>
@@ -21,7 +21,7 @@ export default function UnsubscribePage() {
               We respect your privacy and give you control over the emails you receive from JobPing.
             </p>
 
-            <div className="bg-white/[0.06] border-l-4 border-white/20 p-4 mb-6 border border-white/12">
+            <div className="bg-glass-subtle border-l-4 border-border-elevated p-4 mb-6 border border-border-subtle">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg className="h-5 w-5 text-white/60" viewBox="0 0 20 20" fill="currentColor">

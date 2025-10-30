@@ -5,7 +5,7 @@ import FAQSchema from "@/components/FAQSchema";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
-  title: "JobPing · Five roles. Zero scrolling.",
+  title: "JobPing → Five roles. Zero scrolling.",
   description:
     "Weekly job matches for early-career roles across Europe  delivered to your inbox. 5 hand-picked roles per email. No dashboards. No scrolling marathons.",
   keywords: [
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     }
   },
   openGraph: {
-    title: "JobPing · Five roles. Zero scrolling.",
+    title: "JobPing → Five roles. Zero scrolling.",
     description:
       "Weekly job matches for early-career roles across Europe  delivered to your inbox. Hand-picked quality, zero noise.",
     url: "https://getjobping.com",
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "JobPing · Five roles. Zero scrolling.",
+    title: "JobPing → Five roles. Zero scrolling.",
     description: "Weekly job matches for early-career roles across Europe.",
     creator: "@jobping",
   },
@@ -74,6 +74,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link
           href="https://api.fontshare.com/v2/css?f[]=satoshi@1,900,700,500,400&display=swap"
           rel="stylesheet"
+        />
+        <link
+          rel="preload"
+          href="https://api.fontshare.com/v2/css?f[]=satoshi@1,900,700,500,400&display=swap"
+          as="style"
+        />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              @font-face {
+                font-family: 'Satoshi';
+                font-display: swap;
+              }
+            `,
+          }}
         />
         <StructuredData />
         <FAQSchema />

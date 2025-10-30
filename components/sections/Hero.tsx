@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Skeleton from "@/components/ui/Skeleton";
 import Button from "@/components/ui/Button";
 import { useReducedMotion } from "@/components/ui/useReducedMotion";
+import * as Copy from "@/lib/copy";
 
 export default function Hero() {
   const [activeJobs, setActiveJobs] = useState("12,748");
@@ -84,10 +85,10 @@ export default function Hero() {
           transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
           className="mt-8 text-white text-display mb-4 text-balance"
         >
-          Land your first job faster without endless scrolling.
+          {Copy.HERO_HEADLINE}
         </motion.h1>
         <p className="text-neutral-300 leading-relaxed max-w-2xl mx-auto text-xl font-medium">
-          We match you to real roles that fit your skills, degree, and goals. No spam. No dead ends.
+          {Copy.HERO_SUBLINE}
         </p>
         
         {/* Centered bottom section */}
@@ -102,7 +103,7 @@ export default function Hero() {
               {isLoading ? (
                 <Skeleton className="h-4 w-32" />
               ) : (
-                <>• {`${activeJobs} active early-career roles · Updated daily`}</>
+                <>→ {`${activeJobs} active early-career roles → Updated daily`}</>
               )}
             </div>
           </motion.div>
@@ -118,12 +119,12 @@ export default function Hero() {
               variant="primary"
               size="lg"
               className="mt-5 rounded-xl shadow-[0_4px_12px_rgba(106,75,255,0.40)] hover:shadow-[0_6px_20px_rgba(106,75,255,0.50)] hover:brightness-105"
-              aria-label="Find my matches"
+              aria-label={Copy.HERO_CTA}
             >
-              <span className="relative">Find my matches</span>
+              <span className="relative">{Copy.HERO_CTA}</span>
             </Button>
             <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-zinc-500 text-center">
-              No logins · No spam · Unsubscribe anytime
+              No logins → No spam → Unsubscribe anytime
             </p>
           </motion.div>
         </div>
@@ -137,11 +138,11 @@ export default function Hero() {
           opacity: 1, 
           y: 0, 
           scale: 1,
-          rotate: prefersReduced ? 0 : [0, 1, -1, 0]
+          rotate: prefersReduced ? 0 : [0, 0.5, -0.5, 0]
         }}
         transition={{ 
-          duration: 2, 
-          ease: [0.23, 1, 0.32, 1],
+          duration: 12, 
+          ease: "easeInOut",
           repeat: prefersReduced ? 0 : Infinity,
           repeatType: "reverse"
         }}

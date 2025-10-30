@@ -4,15 +4,16 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Badge from '@/components/ui/Badge';
 import SectionHeader from '@/components/ui/SectionHeader';
+import * as Copy from '@/lib/copy';
 
 export default function Pricing() {
   return (
     <section className="section-padding bg-black">
       <div className="container-page container-rhythm">
         <SectionHeader
-          title="From student to hired: discover roles made for you"
-          description="Get curated roles in your inbox. Zero scrolling, just apply."
-          badge={<Badge variant="default">Simple pricing • Cancel anytime</Badge>}
+          title={Copy.PRICING_TITLE}
+          description={Copy.PRICING_SUBTITLE}
+          badge={<Badge variant="default">{Copy.PRICING_BADGE}</Badge>}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
@@ -64,7 +65,7 @@ export default function Pricing() {
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.4 }}
             viewport={{ once: true }}
-            className="relative rounded-2xl p-[1px] bg-gradient-to-b from-brand-500/45 to-purple-600/30 shadow-[0_0_28px_rgba(139,92,246,0.18)] hover:shadow-[0_0_40px_rgba(139,92,246,0.26)] transition-all duration-300"
+            className="relative rounded-2xl p-[1px] bg-gradient-to-b from-brand-500/45 to-purple-600/30 shadow-[0_0_28px_rgba(139,92,246,0.18)] hover:shadow-[0_0_40px_rgba(139,92,246,0.208)] transition-all duration-300"
           >
             <div className="absolute -top-3 left-5 px-2.5 py-1 text-[11px] font-bold rounded-full bg-brand-500/20 border border-brand-500/30 text-brand-200 shadow-[0_2px_8px_rgba(154,106,255,0.15)] backdrop-blur-sm">
               Best Value
@@ -107,7 +108,7 @@ export default function Pricing() {
         </div>
 
         <p className="text-center text-xs text-zinc-500 mt-6">
-          Cancel anytime • No hidden fees • GDPR compliant
+          Cancel anytime → No hidden fees → GDPR compliant
         </p>
       </div>
     </section>

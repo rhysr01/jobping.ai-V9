@@ -12,10 +12,10 @@ export default function SampleInterviewEmail() {
           <div className="text-zinc-500 text-[12px]">hello@getjobping.com</div>
         </div>
         <div className="mt-3 text-[17px] font-bold text-white leading-tight">
-          Your matches this week — 3 roles picked for you
+          Your matches this week → 3 roles picked for you
         </div>
         <div className="mt-2 text-[13px] text-zinc-400 font-medium">
-          London, Berlin, Dublin — early‑career roles based on your profile
+          London, Berlin, Dublin → early‑career roles based on your profile
         </div>
       </div>
 
@@ -23,16 +23,16 @@ export default function SampleInterviewEmail() {
       <div className="rounded-xl border border-border-subtle bg-glass-subtle p-5 shadow-base backdrop-blur-sm">
         <p className="text-[14px] text-zinc-200 leading-relaxed mb-6">
           Hi <span className="font-semibold text-white">Alex</span>,<br />
-          <span className="mt-2 block">We found three roles that closely match your degree, skills, and location preferences. Reply to this email if you want intros — or apply directly below.</span>
+          <span className="mt-2 block">We found three roles that closely match your degree, skills, and location preferences. Reply to this email if you want intros → or apply directly below.</span>
         </p>
 
         {/* Job 1 */}
         <div className="mt-5 rounded-lg border border-border-subtle bg-glass-subtle p-4 shadow-base backdrop-blur-sm hover:border-border-default transition-all">
           <div className="flex items-center justify-between mb-2">
-            <div className="font-bold text-[15px] text-white">Product Analyst · Monzo</div>
+            <div className="font-bold text-[15px] text-white">Product Analyst → Monzo</div>
             <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 border border-emerald-400/30">London</span>
           </div>
-          <div className="mt-2 text-[13px] text-zinc-400 font-medium">SQL · Python · Experimentation · Early-career</div>
+          <div className="mt-2 text-[13px] text-zinc-400 font-medium">SQL → Python → Experimentation → Early-career</div>
           <a
             href="#"
             aria-label="View role: Product Analyst at Monzo in London"
@@ -45,10 +45,10 @@ export default function SampleInterviewEmail() {
         {/* Job 2 */}
         <div className="mt-4 rounded-lg border border-border-subtle bg-glass-subtle p-4 shadow-base backdrop-blur-sm hover:border-border-default transition-all">
           <div className="flex items-center justify-between mb-2">
-            <div className="font-bold text-[15px] text-white">Data Associate · N26</div>
+            <div className="font-bold text-[15px] text-white">Data Associate → N26</div>
             <span className="rounded-full bg-sky-500/15 px-2.5 py-1 text-[11px] font-semibold text-sky-300 border border-sky-400/30">Berlin</span>
           </div>
-          <div className="mt-2 text-[13px] text-zinc-400 font-medium">Excel · BI · Entry-level · Visa support</div>
+          <div className="mt-2 text-[13px] text-zinc-400 font-medium">Excel → BI → Entry-level → Visa support</div>
           <a
             href="#"
             aria-label="View role: Data Associate at N26 in Berlin"
@@ -61,10 +61,10 @@ export default function SampleInterviewEmail() {
         {/* Job 3 */}
         <div className="mt-4 rounded-lg border border-border-subtle bg-glass-subtle p-4 shadow-base backdrop-blur-sm hover:border-border-default transition-all">
           <div className="flex items-center justify-between mb-2">
-            <div className="font-bold text-[15px] text-white">Operations Intern · Revolut</div>
+            <div className="font-bold text-[15px] text-white">Operations Intern → Revolut</div>
             <span className="rounded-full bg-fuchsia-500/15 px-2.5 py-1 text-[11px] font-semibold text-fuchsia-300 border border-fuchsia-400/30">Dublin</span>
           </div>
-          <div className="mt-2 text-[13px] text-zinc-400 font-medium">Ops · Customer Experience · 6-month paid</div>
+          <div className="mt-2 text-[13px] text-zinc-400 font-medium">Ops → Customer Experience → 6-month paid</div>
           <a
             href="#"
             aria-label="View role: Operations Intern at Revolut in Dublin"
@@ -86,7 +86,7 @@ export default function SampleInterviewEmail() {
         {/* Footer */}
         <div className="mt-6 pt-5 border-t border-zinc-800/50 text-[12px] text-zinc-500 leading-relaxed">
           You're receiving these recommendations based on your profile.<br />
-          <a href="#" className="underline text-zinc-400 hover:text-purple-400 transition-colors">Unsubscribe</a> · <a href="#" className="underline text-zinc-400 hover:text-purple-400 transition-colors">Manage preferences</a>
+          <a href="#" className="underline text-zinc-400 hover:text-purple-400 transition-colors">Unsubscribe</a> → <a href="#" className="underline text-zinc-400 hover:text-purple-400 transition-colors">Manage preferences</a>
         </div>
       </div>
     </div>
