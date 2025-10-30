@@ -56,7 +56,7 @@ export default function BuiltForStudents() {
               <div className="mt-6 pt-5 border-t border-zinc-700/50">
                 <p className="text-small font-bold text-brand-400">{feature.stats}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
