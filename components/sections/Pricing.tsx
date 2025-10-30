@@ -9,140 +9,171 @@ import { BrandIcons } from '@/components/ui/BrandIcons';
 
 export default function Pricing() {
   return (
-    <section className="section-padding bg-black">
-      <div className="container-page container-rhythm">
+    <section className="section-padding bg-black relative overflow-hidden">
+      {/* Background gradient for depth */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-brand-500/5 to-transparent pointer-events-none" />
+      
+      <div className="container-page container-rhythm relative z-10">
         <SectionHeader
           title={Copy.PRICING_TITLE}
           description={Copy.PRICING_SUBTITLE}
-          badge={<Badge variant="default">{Copy.PRICING_BADGE}</Badge>}
+          badge={
+            <Badge variant="brand" size="lg" className="font-bold">
+              <BrandIcons.Star className="w-4 h-4" />
+              {Copy.PRICING_BADGE}
+            </Badge>
+          }
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
           {/* Free Plan */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1, duration: 0.4 }}
+            initial={{ opacity: 0, y: 30, scale: 0.96 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.1, duration: 0.5 }}
             viewport={{ once: true }}
-            className="relative rounded-2xl p-[1px] bg-gradient-to-b from-white/15 to-transparent"
+            className="relative"
           >
             <motion.div 
-              whileHover={{ y: -2 }}
+              whileHover={{ y: -4, scale: 1.01 }}
               transition={{ duration: 0.3 }}
-              className="bg-glass-subtle border border-border-subtle rounded-2xl p-6 md:p-8 flex flex-col h-full hover:border-border-default transition-all duration-300 shadow-base backdrop-blur-sm hover:shadow-[0_4px_12px_rgba(255,255,255,0.04)]"
+              className="relative rounded-3xl p-[1px] bg-gradient-to-b from-white/20 via-white/10 to-transparent overflow-visible"
             >
-              <div className="mb-5">
-                <div className="inline-flex items-center gap-2 text-small uppercase tracking-wider text-zinc-400 font-semibold">
-                  <BrandIcons.Star className="w-3 h-3 text-zinc-400" />
-                  Free
+              <div className="bg-glass-subtle border border-border-subtle rounded-3xl p-8 md:p-10 flex flex-col h-full hover:border-brand-500/30 transition-all duration-300 shadow-lg backdrop-blur-sm hover:shadow-xl">
+                <div className="mb-6">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-800/50 border border-zinc-700/50 text-small uppercase tracking-wider text-zinc-400 font-bold mb-4">
+                    <BrandIcons.Star className="w-3.5 h-3.5 text-zinc-500" />
+                    Free Plan
+                  </div>
+                  <div className="mt-2 text-3xl md:text-4xl font-black text-white leading-tight">5 roles on signup</div>
+                  <div className="text-base font-semibold text-brand-400 mt-3 flex items-center gap-2">
+                    <span className="text-zinc-500 font-normal">= </span>
+                    <span className="text-xl">25 jobs/month</span>
+                  </div>
                 </div>
-                <div className="mt-3 text-heading font-black text-white leading-tight">5 roles on signup</div>
-                <div className="text-small font-medium text-brand-400 mt-2 flex items-center gap-1">
-                  <span className="text-zinc-500">= </span>
-                  <span className="font-semibold">25 jobs/month</span>
+
+                <ul className="text-body text-zinc-300 space-y-4 mb-8 flex-1">
+                  <Feature>
+                    <BrandIcons.Mail className="w-5 h-5 text-brand-400 flex-shrink-0" />
+                    Weekly email with 5 hand‑picked roles
+                  </Feature>
+                  <Feature>
+                    <BrandIcons.Shield className="w-5 h-5 text-brand-400 flex-shrink-0" />
+                    Quality‑screened, early‑career friendly
+                  </Feature>
+                  <Feature>
+                    <BrandIcons.CheckCircle className="w-5 h-5 text-brand-400 flex-shrink-0" />
+                    No dashboards, zero spam
+                  </Feature>
+                </ul>
+
+                <div className="mt-auto">
+                  <Link 
+                    href="/signup?tier=free" 
+                    className="btn-secondary inline-block w-full text-center relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black text-base font-semibold py-4"
+                    role="button"
+                    aria-label="Start free plan - navigate to signup"
+                  >
+                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <span className="relative flex items-center justify-center gap-2">
+                      Start free
+                      <BrandIcons.ArrowRight className="w-5 h-5" />
+                    </span>
+                  </Link>
                 </div>
-              </div>
-
-              <ul className="text-body text-zinc-300 space-y-3 mb-6">
-                <Feature>
-                  <BrandIcons.Mail className="w-4 h-4 text-brand-400 flex-shrink-0" />
-                  Weekly email with 5 hand‑picked roles
-                </Feature>
-                <Feature>
-                  <BrandIcons.Shield className="w-4 h-4 text-brand-400 flex-shrink-0" />
-                  Quality‑screened, early‑career friendly
-                </Feature>
-                <Feature>
-                  <BrandIcons.CheckCircle className="w-4 h-4 text-brand-400 flex-shrink-0" />
-                  No dashboards, zero spam
-                </Feature>
-              </ul>
-
-              <div className="mt-auto">
-                <Link 
-                  href="/signup?tier=free" 
-                  className="btn-secondary inline-block w-full text-center relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-                  role="button"
-                  aria-label="Start free plan - navigate to signup"
-                >
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <span className="relative flex items-center justify-center gap-2">
-                    Start free
-                    <BrandIcons.ArrowRight className="w-4 h-4" />
-                  </span>
-                </Link>
               </div>
             </motion.div>
           </motion.div>
 
           {/* Premium Plan */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
+            initial={{ opacity: 0, y: 30, scale: 0.96 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
             viewport={{ once: true }}
-            className="relative rounded-2xl p-[1px] bg-gradient-to-b from-brand-500/45 to-purple-600/30 shadow-[0_0_28px_rgba(139,92,246,0.18)] hover:shadow-[0_0_40px_rgba(139,92,246,0.208)] transition-all duration-300"
+            className="relative"
           >
-            <div className="absolute -top-3 left-5 px-2.5 py-1 text-[11px] font-bold rounded-full bg-brand-500/20 border border-brand-500/30 text-brand-200 shadow-[0_2px_8px_rgba(154,106,255,0.15)] backdrop-blur-sm flex items-center gap-1">
-              <BrandIcons.Star className="w-3 h-3" />
-              Best Value
-            </div>
+            {/* Enhanced Best Value Badge */}
             <motion.div 
-              whileHover={{ y: -2 }}
-              transition={{ duration: 0.3 }}
-              className="relative bg-glass-subtle border border-border-subtle rounded-2xl p-6 md:p-8 flex flex-col h-full overflow-hidden shadow-base backdrop-blur-sm hover:shadow-[0_4px_12px_rgba(255,255,255,0.04)] transition-all duration-300"
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4, type: 'spring', stiffness: 200 }}
+              viewport={{ once: true }}
+              className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 px-4 py-2 text-sm font-black rounded-full bg-gradient-to-r from-brand-500 to-purple-600 border-2 border-brand-400/50 text-white shadow-[0_4px_20px_rgba(99,102,241,0.5)] backdrop-blur-sm flex items-center gap-2"
             >
+              <BrandIcons.Star className="w-4 h-4 fill-current" />
+              Most Popular
+            </motion.div>
+            
+            <motion.div 
+              whileHover={{ y: -4, scale: 1.01 }}
+              transition={{ duration: 0.3 }}
+              className="relative rounded-3xl p-[2px] bg-gradient-to-b from-brand-500/60 via-purple-600/40 to-brand-500/30 overflow-visible shadow-[0_0_40px_rgba(139,92,246,0.25)] hover:shadow-[0_0_60px_rgba(139,92,246,0.35)] transition-all duration-300"
+            >
+              <div className="relative bg-glass-subtle border border-brand-500/30 rounded-3xl p-8 md:p-10 flex flex-col h-full overflow-hidden shadow-xl backdrop-blur-sm">
+                {/* Subtle animated gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-600/5 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-              <div className="mb-5">
-                <div className="inline-flex items-center gap-2 text-small uppercase tracking-wider text-brand-300 font-semibold">
-                  <BrandIcons.Star className="w-3 h-3 text-brand-400" />
-                  Premium
+                <div className="mb-6 relative z-10">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/20 border border-brand-500/40 text-small uppercase tracking-wider text-brand-300 font-bold mb-4">
+                    <BrandIcons.Star className="w-3.5 h-3.5 text-brand-400 fill-current" />
+                    Premium Plan
+                  </div>
+                  <div className="mt-2 text-3xl md:text-4xl font-black text-white leading-tight">10 roles on signup</div>
+                  <div className="text-base font-semibold text-brand-400 mt-3 flex items-center gap-2">
+                    <span className="text-zinc-500 font-normal">= </span>
+                    <span className="text-xl">70+ jobs/month</span>
+                  </div>
+                  <div className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold">
+                    <BrandIcons.TrendingUp className="w-3.5 h-3.5" />
+                    2.8× more than free
+                  </div>
                 </div>
-                <div className="mt-3 text-heading font-black text-white leading-tight">10 roles on signup</div>
-                <div className="text-small font-medium text-brand-400 mt-2 flex items-center gap-1">
-                  <span className="text-zinc-500">= </span>
-                  <span className="font-semibold">70+ jobs/month</span>
+
+                <ul className="text-body text-zinc-200 space-y-4 mb-8 flex-1 relative z-10">
+                  <Feature strong>
+                    <BrandIcons.Zap className="w-5 h-5 text-brand-300 flex-shrink-0" />
+                    New matches every 48 hours (Mon/Wed/Fri)
+                  </Feature>
+                  <Feature strong>
+                    <BrandIcons.Clock className="w-5 h-5 text-brand-300 flex-shrink-0" />
+                    24‑hour early access to fresh roles
+                  </Feature>
+                  <Feature strong>
+                    <BrandIcons.Target className="w-5 h-5 text-brand-300 flex-shrink-0" />
+                    Priority curation for your preferences
+                  </Feature>
+                </ul>
+
+                <div className="mt-auto relative z-10">
+                  <Link 
+                    href="/billing" 
+                    className="btn-primary inline-block w-full text-center rounded-xl shadow-[0_4px_20px_rgba(106,75,255,0.5)] hover:shadow-[0_8px_30px_rgba(106,75,255,0.6)] hover:brightness-110 relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black transition-all duration-300 text-base font-bold py-4"
+                    role="button"
+                    aria-label="Go Premium - navigate to billing"
+                  >
+                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <span className="relative flex items-center justify-center gap-2">
+                      Go Premium
+                      <BrandIcons.ArrowRight className="w-5 h-5" />
+                    </span>
+                  </Link>
                 </div>
-                <div className="text-zinc-400 text-xs mt-2">vs 25 on free tier</div>
-              </div>
-
-              <ul className="text-body text-zinc-200 space-y-3 mb-6">
-                <Feature strong>
-                  <BrandIcons.Zap className="w-4 h-4 text-brand-300 flex-shrink-0" />
-                  New matches every 48 hours (Mon/Wed/Fri)
-                </Feature>
-                <Feature strong>
-                  <BrandIcons.Clock className="w-4 h-4 text-brand-300 flex-shrink-0" />
-                  24‑hour early access to fresh roles
-                </Feature>
-                <Feature strong>
-                  <BrandIcons.Target className="w-4 h-4 text-brand-300 flex-shrink-0" />
-                  Priority curation for your preferences
-                </Feature>
-              </ul>
-
-              <div className="mt-auto">
-                <Link 
-                  href="/billing" 
-                  className="btn-primary inline-block w-full text-center rounded-xl shadow-[0_4px_12px_rgba(106,75,255,0.40)] hover:shadow-[0_6px_20px_rgba(106,75,255,0.50)] hover:brightness-105 relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black transition-all duration-300"
-                  role="button"
-                  aria-label="Go Premium - navigate to billing"
-                >
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <span className="relative flex items-center justify-center gap-2">
-                    Go Premium
-                    <BrandIcons.ArrowRight className="w-4 h-4" />
-                  </span>
-                </Link>
               </div>
             </motion.div>
           </motion.div>
         </div>
 
-        <p className="text-center text-small text-zinc-500 mt-6">
-          <BrandIcons.Shield className="w-4 h-4 inline mr-1" />
+        <motion.p 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          viewport={{ once: true }}
+          className="text-center text-small text-zinc-500 mt-10 flex items-center justify-center gap-2"
+        >
+          <BrandIcons.Shield className="w-4 h-4" />
           Cancel anytime · GDPR compliant
-        </p>
+        </motion.p>
       </div>
     </section>
   );
@@ -153,7 +184,7 @@ function Feature({ children, strong }: { children: React.ReactNode; strong?: boo
     <li className="flex items-start gap-3">
       {typeof children === 'string' ? (
         <>
-          <BrandIcons.CheckCircle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${strong ? 'text-brand-300' : 'text-brand-400'}`} />
+          <BrandIcons.CheckCircle className={`w-5 h-5 mt-0.5 flex-shrink-0 ${strong ? 'text-brand-300' : 'text-brand-400'}`} />
           <span className={strong ? 'font-semibold text-zinc-100' : 'text-zinc-300'}>{children}</span>
         </>
       ) : (
