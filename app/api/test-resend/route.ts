@@ -3,6 +3,7 @@ import { getResendClient, EMAIL_CONFIG, assertValidFrom } from '@/Utils/email/cl
 import { apiLogger } from '@/lib/api-logger';
 
 export const GET = async (req: NextRequest) => {
+  const startTime = Date.now();
   try {
     apiLogger.info('=== RESEND TEST START ===');
     
@@ -10,7 +11,17 @@ export const GET = async (req: NextRequest) => {
     if (!process.env.RESEND_API_KEY) {
       return NextResponse.json({
         error: 'RESEND_API_KEY not configured',
-        message: 'Please add RESEND_API_KEY to your .env.local file',
+        message: 'RESEND_API_KEY environment variable is not set',
+        hint: 'Check .env.local (local) or Vercel environment variables (production)',
+        timestamp: new Date().toISOString()
+      }, { status: 500 });
+    }
+
+    // Validate API key format
+    if (!process.env.RESEND_API_KEY.startsWith('re_')) {
+      return NextResponse.json({
+        error: 'Invalid RESEND_API_KEY format',
+        message: 'RESEND_API_KEY must start with "re_"',
         timestamp: new Date().toISOString()
       }, { status: 500 });
     }
@@ -122,18 +133,21 @@ export const GET = async (req: NextRequest) => {
     hasApiKey: !!process.env.RESEND_API_KEY,
     apiKeyLength: process.env.RESEND_API_KEY?.length || 0,
     apiKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 10) || 'none',
+    apiKeyFormat: process.env.RESEND_API_KEY?.startsWith('re_') ? 'valid' : 'invalid',
     emailDomain: process.env.EMAIL_DOMAIN || 'getjobping.com',
     fromAddress: EMAIL_CONFIG.from,
     environment: process.env.NODE_ENV,
     vercelUrl: process.env.VERCEL_URL,
-    allResendVars: Object.keys(process.env).filter(k => k.includes('RESEND'))
+    allResendVars: Object.keys(process.env).filter(k => k.includes('RESEND')),
+    nodeEnv: process.env.NODE_ENV
   };
   
-  apiLogger.info('=== RESEND TEST END ===');
+  apiLogger.info('=== RESEND TEST END ===', { duration: Date.now() - startTime });
   
   return NextResponse.json({
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
+    duration: Date.now() - startTime,
     tests: {
       apiKey: apiKeyTest,
       email: emailTest,
@@ -147,11 +161,26 @@ export const GET = async (req: NextRequest) => {
     }
   });
   } catch (error: any) {
-    apiLogger.error('Test endpoint error', error as Error);
+    apiLogger.error('Test endpoint error', error as Error, { duration: Date.now() - startTime });
+    
+    // Provide more helpful error messages
+    let errorMessage = error.message || 'Unknown error';
+    let errorHint = '';
+    
+    if (error.message?.includes('Missing Resend API key')) {
+      errorHint = 'RESEND_API_KEY is not set in environment. Check .env.local (local) or Vercel environment variables (production).';
+    } else if (error.message?.includes('Invalid Resend API key format')) {
+      errorHint = 'RESEND_API_KEY must start with "re_". Check your API key format.';
+    } else if (error.message?.includes('timeout')) {
+      errorHint = 'Resend API call timed out. This might indicate a network issue or Resend API being slow.';
+    }
+    
     return NextResponse.json({
       error: 'Test endpoint failed',
-      message: error.message,
-      timestamp: new Date().toISOString()
+      message: errorMessage,
+      hint: errorHint,
+      timestamp: new Date().toISOString(),
+      duration: Date.now() - startTime
     }, { status: 500 });
   }
 };
