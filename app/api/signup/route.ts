@@ -17,12 +17,28 @@ export async function POST(req: NextRequest) {
 
     const supabase = getDatabaseClient();
     
+    // Check if user already exists
+    const normalizedEmail = data.email.toLowerCase().trim();
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('email, last_email_sent, email_count')
+      .eq('email', normalizedEmail)
+      .single();
+
+    if (existingUser) {
+      apiLogger.info('User already exists', { email: normalizedEmail });
+      return NextResponse.json({ 
+        error: 'Email already registered',
+        code: 'DUPLICATE_EMAIL'
+      }, { status: 409 });
+    }
+    
     // Determine subscription tier from request (defaults to 'free')
     const subscriptionTier = (data.tier === 'premium' ? 'premium' : 'free') as 'free' | 'premium';
     
     // Create user in database
     const userData = {
-      email: data.email.toLowerCase().trim(),
+      email: normalizedEmail,
       full_name: data.fullName.trim(),
       target_cities: data.cities,
       languages_spoken: data.languages,
@@ -58,7 +74,20 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (userError) {
-      apiLogger.error('Failed to create user', userError as Error, { email: data.email });
+      // Handle duplicate email case (shouldn't happen due to check above, but handle gracefully)
+      if (userError.code === '23505' || userError.message?.includes('duplicate key')) {
+        apiLogger.warn('Duplicate email detected during insert', { email: normalizedEmail });
+        return NextResponse.json({ 
+          error: 'Email already registered',
+          code: 'DUPLICATE_EMAIL'
+        }, { status: 409 });
+      }
+      
+      apiLogger.error('Failed to create user', userError as Error, { 
+        email: data.email,
+        errorCode: userError.code,
+        errorMessage: userError.message
+      });
       return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
     }
 
@@ -66,10 +95,15 @@ export async function POST(req: NextRequest) {
 
     // Trigger instant matching and email
     let matchesCount = 0;
+    let emailSent = false;
+    
+    apiLogger.info('Starting email sending process', { email: data.email });
+    
     try {
       const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
       
       // Fetch jobs for matching - PRE-FILTER by location for better matches
+      apiLogger.info('Fetching jobs for matching', { email: data.email, cities: userData.target_cities });
       const { data: allJobs } = await supabase
         .from('jobs')
         .select('*')
@@ -93,6 +127,12 @@ export async function POST(req: NextRequest) {
         // If no career path data, still include it (don't penalize missing data)
         return true;
       }) || [];
+
+      apiLogger.info('Jobs filtered', { 
+        email: data.email, 
+        allJobsCount: allJobs?.length || 0,
+        filteredJobsCount: jobs.length 
+      });
 
       if (jobs && jobs.length > 0) {
         const userPrefs = {
@@ -146,6 +186,7 @@ export async function POST(req: NextRequest) {
 
           // Send welcome email with matched jobs
           try {
+            apiLogger.info('Preparing to send matched jobs email', { email: data.email, matchesCount });
             const matchedJobs = matchesToSave.map(m => {
               const job = jobs.find(j => j.job_hash === m.job_hash);
               return {
@@ -173,6 +214,7 @@ export async function POST(req: NextRequest) {
               })
               .eq('email', userData.email);
 
+            emailSent = true;
             apiLogger.info(`Welcome email sent to user`, { email: data.email, matchCount: matchesCount });
           } catch (emailError) {
             const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
@@ -187,6 +229,7 @@ export async function POST(req: NextRequest) {
           }
         } else {
           // No matches found, send welcome email anyway
+          apiLogger.info('No matches found, sending welcome email', { email: data.email });
           try {
             await sendWelcomeEmail({
               to: userData.email,
@@ -204,6 +247,7 @@ export async function POST(req: NextRequest) {
               })
               .eq('email', userData.email);
 
+            emailSent = true;
             apiLogger.info(`Welcome email (no matches) sent to user`, { email: data.email });
           } catch (emailError) {
             const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
@@ -237,6 +281,7 @@ export async function POST(req: NextRequest) {
             })
             .eq('email', userData.email);
 
+          emailSent = true;
           apiLogger.info(`Welcome email (no jobs) sent to user`, { email: data.email });
         } catch (emailError) {
           const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
@@ -253,6 +298,7 @@ export async function POST(req: NextRequest) {
     } catch (matchError) {
       apiLogger.warn('Matching failed (non-fatal)', matchError as Error, { email: data.email });
       // Send welcome email even if matching fails
+      apiLogger.info('Matching failed, attempting to send welcome email anyway', { email: data.email });
       try {
         await sendWelcomeEmail({
           to: userData.email,
@@ -270,6 +316,7 @@ export async function POST(req: NextRequest) {
           })
           .eq('email', userData.email);
 
+        emailSent = true;
         apiLogger.info(`Welcome email (matching failed) sent to user`, { email: data.email });
       } catch (emailError) {
         const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
@@ -284,10 +331,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Log final status
+    apiLogger.info(`Signup completed`, { 
+      email: data.email, 
+      matchesCount, 
+      emailSent,
+      emailStatus: emailSent ? 'sent' : 'not_sent'
+    });
+
     return NextResponse.json({ 
       success: true, 
       message: 'Signup successful! Check your email for your first matches.',
-      matchesCount
+      matchesCount,
+      emailSent
     });
 
   } catch (error) {

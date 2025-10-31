@@ -8,15 +8,26 @@ import { EmailJobCard } from './types';
 // Welcome email sender using production templates
 export async function sendWelcomeEmail(args: { to: string; userName?: string; matchCount: number; tier?: 'free' | 'premium'; }) {
   const startTime = Date.now();
-  const resend = getResendClient();
+  
+  apiLogger.info('sendWelcomeEmail called', { 
+    to: args.to, 
+    userName: args.userName, 
+    matchCount: args.matchCount,
+    tier: args.tier
+  });
   
   try {
+    const resend = getResendClient();
+    apiLogger.info('Resend client initialized', { hasApiKey: !!process.env.RESEND_API_KEY });
+    
     // Use production template
     const htmlContent = createWelcomeEmail(args.userName, args.matchCount);
     const textContent = `Welcome to JobPing!\n\nYour first ${args.matchCount} job matches will arrive within 48 hours.\n\nBest regards,\nThe JobPing Team`;
     
+    apiLogger.info('Email content generated', { from: EMAIL_CONFIG.from });
     assertValidFrom(EMAIL_CONFIG.from);
     
+    apiLogger.info('Attempting to send welcome email', { to: args.to, from: EMAIL_CONFIG.from });
     const result = await resend.emails.send({
       from: EMAIL_CONFIG.from,
       to: [args.to],
@@ -27,10 +38,24 @@ export async function sendWelcomeEmail(args: { to: string; userName?: string; ma
     
     // Track successful send
     trackEmailSend(true, Date.now() - startTime);
+    apiLogger.info('Welcome email sent successfully', { 
+      to: args.to, 
+      emailId: result?.id,
+      duration: Date.now() - startTime 
+    });
     return result;
   } catch (error) {
     // Track failed send
     trackEmailSend(false, Date.now() - startTime);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    apiLogger.error('sendWelcomeEmail failed', error as Error, { 
+      to: args.to,
+      errorMessage,
+      errorStack,
+      errorType: error?.constructor?.name,
+      duration: Date.now() - startTime
+    });
     throw error;
   }
 }
@@ -45,9 +70,18 @@ export async function sendMatchedJobsEmail(args: {
   subjectOverride?: string;
 }) {
   const startTime = Date.now();
-  const resend = getResendClient();
+  
+  apiLogger.info('sendMatchedJobsEmail called', { 
+    to: args.to, 
+    jobsCount: args.jobs.length,
+    userName: args.userName,
+    isSignupEmail: args.isSignupEmail
+  });
   
   try {
+    const resend = getResendClient();
+    apiLogger.info('Resend client initialized for matched jobs email', { hasApiKey: !!process.env.RESEND_API_KEY });
+    
     // Convert jobs to EmailJobCard format for template
     const jobCards: EmailJobCard[] = args.jobs.map(job => ({
       job: {
@@ -81,8 +115,10 @@ export async function sendMatchedJobsEmail(args: {
     
     const textContent = `Hi ${args.userName || 'there'},\n\nHere are your latest job matches:\n\n${args.jobs.map((job, i) => `${i + 1}. ${job.title} at ${job.company}`).join('\n')}`;
     
+    apiLogger.info('Email content generated for matched jobs', { from: EMAIL_CONFIG.from, subject });
     assertValidFrom(EMAIL_CONFIG.from);
     
+    apiLogger.info('Attempting to send matched jobs email', { to: args.to, from: EMAIL_CONFIG.from });
     const result = await resend.emails.send({
       from: EMAIL_CONFIG.from,
       to: [args.to],
@@ -93,10 +129,26 @@ export async function sendMatchedJobsEmail(args: {
     
     // Track successful send
     trackEmailSend(true, Date.now() - startTime);
+    apiLogger.info('Matched jobs email sent successfully', { 
+      to: args.to, 
+      emailId: result?.id,
+      jobsCount: args.jobs.length,
+      duration: Date.now() - startTime 
+    });
     return result;
   } catch (error) {
     // Track failed send
     trackEmailSend(false, Date.now() - startTime);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    apiLogger.error('sendMatchedJobsEmail failed', error as Error, { 
+      to: args.to,
+      jobsCount: args.jobs.length,
+      errorMessage,
+      errorStack,
+      errorType: error?.constructor?.name,
+      duration: Date.now() - startTime
+    });
     throw error;
   }
 }
