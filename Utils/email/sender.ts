@@ -15,10 +15,16 @@ export async function sendWelcomeEmail(args: { to: string; userName?: string; ma
     matchCount: args.matchCount,
     tier: args.tier
   });
+  console.log(`[EMAIL] sendWelcomeEmail called for ${args.to}`);
   
   try {
     const resend = getResendClient();
-    apiLogger.info('Resend client initialized', { hasApiKey: !!process.env.RESEND_API_KEY });
+    const hasApiKey = !!process.env.RESEND_API_KEY;
+    apiLogger.info('Resend client initialized', { hasApiKey });
+    console.log(`[EMAIL] Resend client initialized. API Key present: ${hasApiKey}`);
+    if (!hasApiKey) {
+      throw new Error('RESEND_API_KEY environment variable is not set');
+    }
     
     // Use production template
     const htmlContent = createWelcomeEmail(args.userName, args.matchCount);
@@ -28,6 +34,7 @@ export async function sendWelcomeEmail(args: { to: string; userName?: string; ma
     assertValidFrom(EMAIL_CONFIG.from);
     
     apiLogger.info('Attempting to send welcome email', { to: args.to, from: EMAIL_CONFIG.from });
+    console.log(`[EMAIL] Attempting to send welcome email from ${EMAIL_CONFIG.from} to ${args.to}`);
     const result = await resend.emails.send({
       from: EMAIL_CONFIG.from,
       to: [args.to],
@@ -43,12 +50,15 @@ export async function sendWelcomeEmail(args: { to: string; userName?: string; ma
       emailId: result?.data?.id,
       duration: Date.now() - startTime 
     });
+    console.log(`[EMAIL] ✅ Welcome email sent successfully to ${args.to}. Email ID: ${result?.data?.id}`);
     return result;
   } catch (error) {
     // Track failed send
     trackEmailSend(false, Date.now() - startTime);
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error(`[EMAIL] ❌ sendWelcomeEmail failed for ${args.to}:`, errorMessage);
+    console.error(`[EMAIL] Error stack:`, errorStack);
     apiLogger.error('sendWelcomeEmail failed', error as Error, { 
       to: args.to,
       errorMessage,
@@ -77,10 +87,16 @@ export async function sendMatchedJobsEmail(args: {
     userName: args.userName,
     isSignupEmail: args.isSignupEmail
   });
+  console.log(`[EMAIL] sendMatchedJobsEmail called for ${args.to} with ${args.jobs.length} jobs`);
   
   try {
     const resend = getResendClient();
-    apiLogger.info('Resend client initialized for matched jobs email', { hasApiKey: !!process.env.RESEND_API_KEY });
+    const hasApiKey = !!process.env.RESEND_API_KEY;
+    apiLogger.info('Resend client initialized for matched jobs email', { hasApiKey });
+    console.log(`[EMAIL] Resend client initialized for matched jobs. API Key present: ${hasApiKey}`);
+    if (!hasApiKey) {
+      throw new Error('RESEND_API_KEY environment variable is not set');
+    }
     
     // Convert jobs to EmailJobCard format for template
     const jobCards: EmailJobCard[] = args.jobs.map(job => ({
@@ -119,6 +135,7 @@ export async function sendMatchedJobsEmail(args: {
     assertValidFrom(EMAIL_CONFIG.from);
     
     apiLogger.info('Attempting to send matched jobs email', { to: args.to, from: EMAIL_CONFIG.from });
+    console.log(`[EMAIL] Attempting to send matched jobs email from ${EMAIL_CONFIG.from} to ${args.to}`);
     const result = await resend.emails.send({
       from: EMAIL_CONFIG.from,
       to: [args.to],
@@ -135,12 +152,15 @@ export async function sendMatchedJobsEmail(args: {
       jobsCount: args.jobs.length,
       duration: Date.now() - startTime 
     });
+    console.log(`[EMAIL] ✅ Matched jobs email sent successfully to ${args.to}. Email ID: ${result?.data?.id}`);
     return result;
   } catch (error) {
     // Track failed send
     trackEmailSend(false, Date.now() - startTime);
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error(`[EMAIL] ❌ sendMatchedJobsEmail failed for ${args.to}:`, errorMessage);
+    console.error(`[EMAIL] Error stack:`, errorStack);
     apiLogger.error('sendMatchedJobsEmail failed', error as Error, { 
       to: args.to,
       jobsCount: args.jobs.length,

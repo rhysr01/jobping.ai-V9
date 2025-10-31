@@ -92,18 +92,23 @@ export async function POST(req: NextRequest) {
     }
 
     apiLogger.info(`User created`, { email: data.email });
+    console.log(`[SIGNUP] User created: ${data.email}`);
 
     // Trigger instant matching and email
     let matchesCount = 0;
     let emailSent = false;
     
     apiLogger.info('Starting email sending process', { email: data.email });
+    console.log(`[SIGNUP] Starting email sending process for: ${data.email}`);
     
     try {
+      console.log(`[SIGNUP] Creating matcher...`);
       const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
+      console.log(`[SIGNUP] Matcher created successfully`);
       
       // Fetch jobs for matching - PRE-FILTER by location for better matches
       apiLogger.info('Fetching jobs for matching', { email: data.email, cities: userData.target_cities });
+      console.log(`[SIGNUP] Fetching jobs for cities: ${JSON.stringify(userData.target_cities)}`);
       const { data: allJobs } = await supabase
         .from('jobs')
         .select('*')
@@ -133,8 +138,10 @@ export async function POST(req: NextRequest) {
         allJobsCount: allJobs?.length || 0,
         filteredJobsCount: jobs.length 
       });
+      console.log(`[SIGNUP] Jobs filtered: ${allJobs?.length || 0} total, ${jobs.length} after filtering`);
 
       if (jobs && jobs.length > 0) {
+        console.log(`[SIGNUP] Found ${jobs.length} jobs, attempting matching...`);
         const userPrefs = {
           email: userData.email,
           target_cities: userData.target_cities,
@@ -154,6 +161,7 @@ export async function POST(req: NextRequest) {
         };
 
         const matchResult = await matcher.performMatching(jobs, userPrefs as any);
+        console.log(`[SIGNUP] Matching complete: ${matchResult.matches?.length || 0} matches found`);
         
         if (matchResult.matches && matchResult.matches.length > 0) {
           // Save matches
@@ -187,6 +195,7 @@ export async function POST(req: NextRequest) {
           // Send welcome email with matched jobs
           try {
             apiLogger.info('Preparing to send matched jobs email', { email: data.email, matchesCount });
+            console.log(`[SIGNUP] Preparing to send matched jobs email to ${data.email}`);
             const matchedJobs = matchesToSave.map(m => {
               const job = jobs.find(j => j.job_hash === m.job_hash);
               return {
@@ -216,7 +225,9 @@ export async function POST(req: NextRequest) {
 
             emailSent = true;
             apiLogger.info(`Welcome email sent to user`, { email: data.email, matchCount: matchesCount });
+            console.log(`[SIGNUP] ✅ Matched jobs email sent successfully to ${data.email}`);
           } catch (emailError) {
+            console.error(`[SIGNUP] ❌ Email send failed:`, emailError);
             const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
             const errorStack = emailError instanceof Error ? emailError.stack : undefined;
             apiLogger.error('Email send failed (non-fatal)', emailError as Error, { 
@@ -230,6 +241,7 @@ export async function POST(req: NextRequest) {
         } else {
           // No matches found, send welcome email anyway
           apiLogger.info('No matches found, sending welcome email', { email: data.email });
+          console.log(`[SIGNUP] No matches found, sending welcome email to ${data.email}`);
           try {
             await sendWelcomeEmail({
               to: userData.email,
@@ -249,7 +261,9 @@ export async function POST(req: NextRequest) {
 
             emailSent = true;
             apiLogger.info(`Welcome email (no matches) sent to user`, { email: data.email });
+            console.log(`[SIGNUP] ✅ Welcome email (no matches) sent successfully to ${data.email}`);
           } catch (emailError) {
+            console.error(`[SIGNUP] ❌ Welcome email failed:`, emailError);
             const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
             const errorStack = emailError instanceof Error ? emailError.stack : undefined;
             apiLogger.error('Welcome email failed', emailError as Error, { 
@@ -264,6 +278,7 @@ export async function POST(req: NextRequest) {
       } else {
         // No jobs found in database, send welcome email anyway
         apiLogger.info(`No jobs found for user cities, sending welcome email`, { email: data.email, cities: userData.target_cities });
+        console.log(`[SIGNUP] No jobs found for cities ${JSON.stringify(userData.target_cities)}, sending welcome email to ${data.email}`);
         try {
           await sendWelcomeEmail({
             to: userData.email,
@@ -283,7 +298,9 @@ export async function POST(req: NextRequest) {
 
           emailSent = true;
           apiLogger.info(`Welcome email (no jobs) sent to user`, { email: data.email });
+          console.log(`[SIGNUP] ✅ Welcome email (no jobs) sent successfully to ${data.email}`);
         } catch (emailError) {
+          console.error(`[SIGNUP] ❌ Welcome email failed:`, emailError);
           const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
           const errorStack = emailError instanceof Error ? emailError.stack : undefined;
           apiLogger.error('Welcome email failed', emailError as Error, { 
@@ -296,9 +313,11 @@ export async function POST(req: NextRequest) {
         }
       }
     } catch (matchError) {
+      console.error(`[SIGNUP] ❌ Matching process failed:`, matchError);
       apiLogger.warn('Matching failed (non-fatal)', matchError as Error, { email: data.email });
       // Send welcome email even if matching fails
       apiLogger.info('Matching failed, attempting to send welcome email anyway', { email: data.email });
+      console.log(`[SIGNUP] Matching failed, attempting to send welcome email anyway to ${data.email}`);
       try {
         await sendWelcomeEmail({
           to: userData.email,
@@ -318,7 +337,9 @@ export async function POST(req: NextRequest) {
 
         emailSent = true;
         apiLogger.info(`Welcome email (matching failed) sent to user`, { email: data.email });
+        console.log(`[SIGNUP] ✅ Welcome email (matching failed) sent successfully to ${data.email}`);
       } catch (emailError) {
+        console.error(`[SIGNUP] ❌ Welcome email failed:`, emailError);
         const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
         const errorStack = emailError instanceof Error ? emailError.stack : undefined;
         apiLogger.error('Welcome email failed', emailError as Error, { 
@@ -338,6 +359,11 @@ export async function POST(req: NextRequest) {
       emailSent,
       emailStatus: emailSent ? 'sent' : 'not_sent'
     });
+    console.log(`[SIGNUP] ===== FINAL STATUS =====`);
+    console.log(`[SIGNUP] Email: ${data.email}`);
+    console.log(`[SIGNUP] Matches: ${matchesCount}`);
+    console.log(`[SIGNUP] Email Sent: ${emailSent ? 'YES ✅' : 'NO ❌'}`);
+    console.log(`[SIGNUP] ========================`);
 
     return NextResponse.json({ 
       success: true, 
