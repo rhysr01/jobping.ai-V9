@@ -7,6 +7,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
   className?: string;
   href?: string;
+  target?: string;
 }
 
 export default function Button({ 
@@ -17,6 +18,7 @@ export default function Button({
   className = '',
   disabled,
   href,
+  target,
   ...props 
 }: ButtonProps) {
   const baseClasses = 'inline-flex items-center justify-center gap-2 font-semibold rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed';
@@ -38,6 +40,7 @@ export default function Button({
     return (
       <a 
         href={href}
+        target={target}
         className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
         {...(props as any)}
       >

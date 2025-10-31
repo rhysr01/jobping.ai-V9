@@ -51,15 +51,17 @@ export async function createCheckoutSession({
   userId,
   successUrl,
   cancelUrl,
+  promoCode,
 }: {
   email: string;
   priceId: string;
   userId: string;
   successUrl?: string;
   cancelUrl?: string;
+  promoCode?: string;
 }) {
   try {
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer_email: email,
       line_items: [
         {
@@ -80,7 +82,18 @@ export async function createCheckoutSession({
           email,
         },
       },
-    });
+    };
+
+    // Add promo code if provided (Stripe coupon)
+    if (promoCode) {
+      sessionParams.discounts = [
+        {
+          coupon: promoCode, // Stripe coupon ID
+        },
+      ];
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     return session;
   } catch (error) {

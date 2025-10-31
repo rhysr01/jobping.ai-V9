@@ -175,7 +175,15 @@ export async function POST(req: NextRequest) {
 
             apiLogger.info(`Welcome email sent to user`, { email: data.email, matchCount: matchesCount });
           } catch (emailError) {
-            apiLogger.warn('Email send failed (non-fatal)', emailError as Error, { email: data.email });
+            const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
+            const errorStack = emailError instanceof Error ? emailError.stack : undefined;
+            apiLogger.error('Email send failed (non-fatal)', emailError as Error, { 
+              email: data.email,
+              errorMessage,
+              errorStack,
+              errorType: emailError?.constructor?.name,
+              rawError: String(emailError)
+            });
           }
         } else {
           // No matches found, send welcome email anyway
@@ -198,8 +206,48 @@ export async function POST(req: NextRequest) {
 
             apiLogger.info(`Welcome email (no matches) sent to user`, { email: data.email });
           } catch (emailError) {
-            apiLogger.error('Welcome email failed', emailError as Error, { email: data.email });
+            const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
+            const errorStack = emailError instanceof Error ? emailError.stack : undefined;
+            apiLogger.error('Welcome email failed', emailError as Error, { 
+              email: data.email,
+              errorMessage,
+              errorStack,
+              errorType: emailError?.constructor?.name,
+              rawError: String(emailError)
+            });
           }
+        }
+      } else {
+        // No jobs found in database, send welcome email anyway
+        apiLogger.info(`No jobs found for user cities, sending welcome email`, { email: data.email, cities: userData.target_cities });
+        try {
+          await sendWelcomeEmail({
+            to: userData.email,
+            userName: userData.full_name,
+            matchCount: 0,
+            tier: userData.subscription_tier as 'free' | 'premium',
+          });
+
+          // Update tracking even with no jobs
+          await supabase
+            .from('users')
+            .update({
+              last_email_sent: new Date().toISOString(),
+              email_count: 1,
+            })
+            .eq('email', userData.email);
+
+          apiLogger.info(`Welcome email (no jobs) sent to user`, { email: data.email });
+        } catch (emailError) {
+          const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
+          const errorStack = emailError instanceof Error ? emailError.stack : undefined;
+          apiLogger.error('Welcome email failed', emailError as Error, { 
+            email: data.email,
+            errorMessage,
+            errorStack,
+            errorType: emailError?.constructor?.name,
+            rawError: String(emailError)
+          });
         }
       }
     } catch (matchError) {
@@ -224,7 +272,15 @@ export async function POST(req: NextRequest) {
 
         apiLogger.info(`Welcome email (matching failed) sent to user`, { email: data.email });
       } catch (emailError) {
-        apiLogger.error('Welcome email failed', emailError as Error, { email: data.email });
+        const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
+        const errorStack = emailError instanceof Error ? emailError.stack : undefined;
+        apiLogger.error('Welcome email failed', emailError as Error, { 
+          email: data.email,
+          errorMessage,
+          errorStack,
+          errorType: emailError?.constructor?.name,
+          rawError: String(emailError)
+        });
       }
     }
 

@@ -118,11 +118,22 @@ export async function POST(req: NextRequest) {
       return errorResponse.notFound(req, 'User not found or email not verified');
     }
 
+    // Normal Stripe flow - if promoCode provided but not valid, try as Stripe coupon
+    let stripeCouponId: string | undefined;
+    if (promoCode) {
+      // If promo code was provided but we got here, it means:
+      // 1. It wasn't a valid internal promo code (already handled above)
+      // 2. It might be a Stripe coupon ID - let Stripe validate it
+      // We'll pass it to Stripe and Stripe will handle validation
+      stripeCouponId = promoCode;
+    }
+
     // Create checkout session
     const session = await createCheckoutSession({
       email,
       priceId,
       userId,
+      promoCode: stripeCouponId,
     });
 
     return NextResponse.json({

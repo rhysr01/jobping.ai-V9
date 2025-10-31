@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
+import { createCustomerPortalSession } from '@/Utils/stripe';
+import { getDatabaseClient } from '@/Utils/databasePool';
+import { apiLogger } from '@/lib/api-logger';
 
 // Initialize Stripe only when needed and with proper error handling
 function getStripeClient() {
-  // Prevent execution during build time
   if (typeof window !== 'undefined') {
     throw new Error('Stripe client should only be used server-side');
   }
@@ -18,17 +20,6 @@ function getStripeClient() {
   });
 }
 
-// Initialize Supabase only when needed
-function getSupabaseClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Supabase environment variables are required');
-  }
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
-}
-
 // GET: Retrieve billing information
 export async function GET(req: NextRequest) {
   try {
@@ -39,21 +30,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 });
     }
 
-    // Get user's Stripe customer ID
-    const supabase = getSupabaseClient();
-    const { data: user } = await supabase
+    const supabase = getDatabaseClient();
+    
+    // Get user's Stripe customer ID and subscription status
+    const { data: user, error: userError } = await supabase
       .from('users')
-      .select('stripe_customer_id')
+      .select('stripe_customer_id, subscription_active, email')
       .eq('id', userId)
       .single();
 
-    if (!user?.stripe_customer_id) {
-      return NextResponse.json({ error: 'No billing information found' }, { status: 404 });
+    if (userError || !user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Get comprehensive billing information
-    // const billingInfo = await paymentRecoverySystem.getBillingHistory(user.stripe_customer_id);
-    
     // Get current subscription details
     const { data: subscription } = await supabase
       .from('subscriptions')
@@ -62,15 +51,38 @@ export async function GET(req: NextRequest) {
       .eq('is_active', true)
       .single();
 
+    // If user has Stripe customer ID, fetch invoices from Stripe
+    let invoices: any[] = [];
+    if (user.stripe_customer_id) {
+      try {
+        const stripe = getStripeClient();
+        const stripeInvoices = await stripe.invoices.list({
+          customer: user.stripe_customer_id,
+          limit: 10,
+        });
+        invoices = stripeInvoices.data.map(inv => ({
+          id: inv.id,
+          amount: inv.amount_paid / 100,
+          currency: inv.currency,
+          status: inv.status,
+          created: inv.created,
+          pdf: inv.invoice_pdf,
+          hosted_invoice_url: inv.hosted_invoice_url,
+        }));
+      } catch (stripeError) {
+        apiLogger.warn('Failed to fetch Stripe invoices', stripeError as Error, { userId });
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      // billing: billingInfo,
-      currentSubscription: subscription,
-      // availableTiers: PAYMENT_CONFIG.tiers
+      currentSubscription: subscription || null,
+      invoices,
+      hasStripeCustomer: !!user.stripe_customer_id,
     });
 
   } catch (error) {
-    console.error(' Billing API error:', error);
+    apiLogger.error('Billing API error', error as Error);
     return NextResponse.json(
       { error: 'Failed to retrieve billing information' },
       { status: 500 }
@@ -78,20 +90,19 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST: Update payment method
+// POST: Update payment method or create portal session
 export async function POST(req: NextRequest) {
   try {
-    const { userId, paymentMethodId, action } = await req.json();
+    const { userId, paymentMethodId, action, invoiceId } = await req.json();
 
     if (!userId || !action) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    // Get user's Stripe customer ID
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
     const { data: user } = await supabase
       .from('users')
-      .select('stripe_customer_id')
+      .select('stripe_customer_id, email')
       .eq('id', userId)
       .single();
 
@@ -99,20 +110,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No billing information found' }, { status: 404 });
     }
 
+    const stripe = getStripeClient();
+
     switch (action) {
+      case 'create_portal_session':
+        const returnUrl = new URL(req.url).origin + '/billing';
+        const portalSession = await createCustomerPortalSession(
+          user.stripe_customer_id,
+          returnUrl
+        );
+        return NextResponse.json({ success: true, url: portalSession.url });
+
       case 'update_payment_method':
         if (!paymentMethodId) {
           return NextResponse.json({ error: 'Payment method ID required' }, { status: 400 });
         }
 
-        // Attach payment method to customer
-        const stripeClient = getStripeClient();
-        await stripeClient.paymentMethods.attach(paymentMethodId, {
+        await stripe.paymentMethods.attach(paymentMethodId, {
           customer: user.stripe_customer_id,
         });
 
-        // Set as default payment method
-        await stripeClient.customers.update(user.stripe_customer_id, {
+        await stripe.customers.update(user.stripe_customer_id, {
           invoice_settings: {
             default_payment_method: paymentMethodId,
           },
@@ -125,26 +143,23 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Payment method ID required' }, { status: 400 });
         }
 
-        // Detach payment method
-        const stripeClient2 = getStripeClient();
-        await stripeClient2.paymentMethods.detach(paymentMethodId);
+        await stripe.paymentMethods.detach(paymentMethodId);
         return NextResponse.json({ success: true, message: 'Payment method removed' });
 
       case 'generate_invoice':
-        const { invoiceId } = await req.json();
         if (!invoiceId) {
           return NextResponse.json({ error: 'Invoice ID required' }, { status: 400 });
         }
 
-        // const invoice = await paymentRecoverySystem.generateInvoice(invoiceId);
-        return NextResponse.json({ success: true, invoiceId });
+        const invoice = await stripe.invoices.retrieve(invoiceId);
+        return NextResponse.json({ success: true, invoice });
 
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
   } catch (error) {
-    console.error(' Billing update error:', error);
+    apiLogger.error('Billing update error', error as Error);
     return NextResponse.json(
       { error: 'Failed to update billing information' },
       { status: 500 }
@@ -161,8 +176,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    // Get user's current subscription
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('stripe_subscription_id')
@@ -174,22 +188,24 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'No active subscription found' }, { status: 404 });
     }
 
+    const stripe = getStripeClient();
+
     switch (action) {
-      case 'pause':
-        // await paymentRecoverySystem.manageSubscription(subscription.stripe_subscription_id, 'pause');
-        return NextResponse.json({ success: true, message: 'Subscription paused' });
-
-      case 'resume':
-        // await paymentRecoverySystem.manageSubscription(subscription.stripe_subscription_id, 'resume');
-        return NextResponse.json({ success: true, message: 'Subscription resumed' });
-
       case 'cancel':
-        // await paymentRecoverySystem.manageSubscription(subscription.stripe_subscription_id, 'cancel');
-        return NextResponse.json({ success: true, message: 'Subscription cancelled' });
+        await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+          cancel_at_period_end: true,
+        });
+        return NextResponse.json({ success: true, message: 'Subscription will cancel at period end' });
 
       case 'reactivate':
-        // await paymentRecoverySystem.manageSubscription(subscription.stripe_subscription_id, 'reactivate');
+        await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+          cancel_at_period_end: false,
+        });
         return NextResponse.json({ success: true, message: 'Subscription reactivated' });
+
+      case 'cancel_immediately':
+        await stripe.subscriptions.cancel(subscription.stripe_subscription_id);
+        return NextResponse.json({ success: true, message: 'Subscription cancelled immediately' });
 
       case 'upgrade':
       case 'downgrade':
@@ -197,28 +213,23 @@ export async function PUT(req: NextRequest) {
           return NextResponse.json({ error: 'New tier required' }, { status: 400 });
         }
 
-        // const tierConfig = PAYMENT_CONFIG.tiers[newTier as keyof typeof PAYMENT_CONFIG.tiers];
-        // if (!tierConfig) {
-        //   return NextResponse.json({ error: 'Invalid tier' }, { status: 400 });
-        // }
+        // Get price ID for new tier
+        const priceId = newTier === 'premium' 
+          ? process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID || process.env.STRIPE_PREMIUM_QUARTERLY_PRICE_ID
+          : null;
 
-        // Get user's Stripe customer ID
-        const supabase = getSupabaseClient();
-    const { data: user } = await supabase
-          .from('users')
-          .select('stripe_customer_id')
-          .eq('id', userId)
-          .single();
-
-        if (!user?.stripe_customer_id) {
-          return NextResponse.json({ error: 'No billing information found' }, { status: 404 });
+        if (!priceId) {
+          return NextResponse.json({ error: 'Invalid tier configuration' }, { status: 400 });
         }
 
-        // Handle subscription change with proration
-        // await paymentRecoverySystem.handleSubscriptionChange(
-        //   user.stripe_customer_id,
-        //   tierConfig.priceId!
-        // );
+        const sub = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
+        await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+          items: [{
+            id: sub.items.data[0].id,
+            price: priceId,
+          }],
+          proration_behavior: 'create_prorations',
+        });
 
         return NextResponse.json({ 
           success: true, 
@@ -230,7 +241,7 @@ export async function PUT(req: NextRequest) {
     }
 
   } catch (error) {
-    console.error(' Subscription management error:', error);
+    apiLogger.error('Subscription management error', error as Error);
     return NextResponse.json(
       { error: 'Failed to manage subscription' },
       { status: 500 }

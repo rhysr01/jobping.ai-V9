@@ -107,16 +107,28 @@ docs/          # API/architecture/deployment
 - `/admin` requires Basic Auth via env `ADMIN_BASIC_USER` and `ADMIN_BASIC_PASS`
 - Upgrade path: move to session-based admin users and audit logging
 
+## Documentation
+
+- **[Project Status](docs/project-status.md)** - Current system status, metrics, and architecture
+- **[Email System](docs/email-system.md)** - Email configuration, testing, and troubleshooting
+- **[API Documentation](docs/API.md)** - API endpoints and usage
+- **[Deployment Guide](docs/deployment/production-guide.md)** - Production setup and deployment
+- **[Vector Embeddings](docs/vector-embeddings-batch-processing.md)** - Batch processing guide
+- **[Architecture](docs/architecture/system-design.md)** - System design and architecture
+- **[Contributing](CONTRIBUTING.md)** - Contribution guidelines
+
+### Archived Documentation
+
+Historical documentation, cleanup reports, and completion summaries are archived in `docs/archive/` for reference.
+
 ## Troubleshooting
 
 - Health: `/api/health` (database, email, queue, external APIs)
 - Sentry: configure DSN to enable error reporting
-- Email: verify `RESEND_API_KEY` and domain (SPF/DKIM/DMARC)
+- Email: verify `RESEND_API_KEY` and domain (SPF/DKIM/DMARC) - see [Email System Docs](docs/email-system.md)
 - Stripe: set API version to a valid stable string
 
 ## Development
-
-### Scripts
 
 ```bash
 npm run dev
