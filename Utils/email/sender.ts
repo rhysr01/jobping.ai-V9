@@ -17,14 +17,25 @@ export async function sendWelcomeEmail(args: { to: string; userName?: string; ma
   });
   console.log(`[EMAIL] sendWelcomeEmail called for ${args.to}`);
   
+  // Check API key BEFORE creating client
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    const error = new Error('RESEND_API_KEY environment variable is not set');
+    console.error(`[EMAIL] ❌ Missing API key`);
+    apiLogger.error('RESEND_API_KEY missing', error);
+    throw error;
+  }
+  
+  if (!apiKey.startsWith('re_')) {
+    const error = new Error(`Invalid RESEND_API_KEY format: must start with "re_"`);
+    console.error(`[EMAIL] ❌ Invalid API key format`);
+    apiLogger.error('Invalid RESEND_API_KEY format', error);
+    throw error;
+  }
+  
   try {
     const resend = getResendClient();
-    const hasApiKey = !!process.env.RESEND_API_KEY;
-    apiLogger.info('Resend client initialized', { hasApiKey });
-    console.log(`[EMAIL] Resend client initialized. API Key present: ${hasApiKey}`);
-    if (!hasApiKey) {
-      throw new Error('RESEND_API_KEY environment variable is not set');
-    }
+    console.log(`[EMAIL] Resend client initialized. API Key present: true`);
     
     // Use production template
     const htmlContent = createWelcomeEmail(args.userName, args.matchCount);
@@ -35,7 +46,9 @@ export async function sendWelcomeEmail(args: { to: string; userName?: string; ma
     
     apiLogger.info('Attempting to send welcome email', { to: args.to, from: EMAIL_CONFIG.from });
     console.log(`[EMAIL] Attempting to send welcome email from ${EMAIL_CONFIG.from} to ${args.to}`);
-    const result = await resend.emails.send({
+    
+    // Add timeout to prevent hanging
+    const sendPromise = resend.emails.send({
       from: EMAIL_CONFIG.from,
       to: [args.to],
       subject: `Welcome to JobPing - Your First ${args.matchCount} Matches Arriving Soon!`,
@@ -43,14 +56,27 @@ export async function sendWelcomeEmail(args: { to: string; userName?: string; ma
       html: htmlContent,
     });
     
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Email send timeout after 15 seconds')), 15000)
+    );
+    
+    const result = await Promise.race([sendPromise, timeoutPromise]) as any;
+    
+    // Handle Resend response format
+    if (result?.error) {
+      throw new Error(`Resend API error: ${JSON.stringify(result.error)}`);
+    }
+    
+    const emailId = result?.data?.id || result?.id || 'unknown';
+    
     // Track successful send
     trackEmailSend(true, Date.now() - startTime);
     apiLogger.info('Welcome email sent successfully', { 
       to: args.to, 
-      emailId: result?.data?.id,
+      emailId,
       duration: Date.now() - startTime 
     });
-    console.log(`[EMAIL] ✅ Welcome email sent successfully to ${args.to}. Email ID: ${result?.data?.id}`);
+    console.log(`[EMAIL] ✅ Welcome email sent successfully to ${args.to}. Email ID: ${emailId}`);
     return result;
   } catch (error) {
     // Track failed send
@@ -89,14 +115,25 @@ export async function sendMatchedJobsEmail(args: {
   });
   console.log(`[EMAIL] sendMatchedJobsEmail called for ${args.to} with ${args.jobs.length} jobs`);
   
+  // Check API key BEFORE creating client
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    const error = new Error('RESEND_API_KEY environment variable is not set');
+    console.error(`[EMAIL] ❌ Missing API key`);
+    apiLogger.error('RESEND_API_KEY missing', error);
+    throw error;
+  }
+  
+  if (!apiKey.startsWith('re_')) {
+    const error = new Error(`Invalid RESEND_API_KEY format: must start with "re_"`);
+    console.error(`[EMAIL] ❌ Invalid API key format`);
+    apiLogger.error('Invalid RESEND_API_KEY format', error);
+    throw error;
+  }
+  
   try {
     const resend = getResendClient();
-    const hasApiKey = !!process.env.RESEND_API_KEY;
-    apiLogger.info('Resend client initialized for matched jobs email', { hasApiKey });
-    console.log(`[EMAIL] Resend client initialized for matched jobs. API Key present: ${hasApiKey}`);
-    if (!hasApiKey) {
-      throw new Error('RESEND_API_KEY environment variable is not set');
-    }
+    console.log(`[EMAIL] Resend client initialized for matched jobs. API Key present: true`);
     
     // Convert jobs to EmailJobCard format for template
     const jobCards: EmailJobCard[] = args.jobs.map(job => ({
@@ -136,7 +173,9 @@ export async function sendMatchedJobsEmail(args: {
     
     apiLogger.info('Attempting to send matched jobs email', { to: args.to, from: EMAIL_CONFIG.from });
     console.log(`[EMAIL] Attempting to send matched jobs email from ${EMAIL_CONFIG.from} to ${args.to}`);
-    const result = await resend.emails.send({
+    
+    // Add timeout to prevent hanging
+    const sendPromise = resend.emails.send({
       from: EMAIL_CONFIG.from,
       to: [args.to],
       subject,
@@ -144,15 +183,28 @@ export async function sendMatchedJobsEmail(args: {
       html: htmlContent,
     });
     
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Email send timeout after 15 seconds')), 15000)
+    );
+    
+    const result = await Promise.race([sendPromise, timeoutPromise]) as any;
+    
+    // Handle Resend response format
+    if (result?.error) {
+      throw new Error(`Resend API error: ${JSON.stringify(result.error)}`);
+    }
+    
+    const emailId = result?.data?.id || result?.id || 'unknown';
+    
     // Track successful send
     trackEmailSend(true, Date.now() - startTime);
     apiLogger.info('Matched jobs email sent successfully', { 
       to: args.to, 
-      emailId: result?.data?.id,
+      emailId,
       jobsCount: args.jobs.length,
       duration: Date.now() - startTime 
     });
-    console.log(`[EMAIL] ✅ Matched jobs email sent successfully to ${args.to}. Email ID: ${result?.data?.id}`);
+    console.log(`[EMAIL] ✅ Matched jobs email sent successfully to ${args.to}. Email ID: ${emailId}`);
     return result;
   } catch (error) {
     // Track failed send
