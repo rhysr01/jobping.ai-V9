@@ -7,7 +7,6 @@ import { POST, GET } from '@/app/api/send-re-engagement/route';
 import { NextRequest } from 'next/server';
 
 jest.mock('@/Utils/productionRateLimiter');
-jest.mock('@/Utils/auth/withAuth');
 jest.mock('@/Utils/email/reEngagementService');
 
 describe('Send Re-Engagement API Route', () => {
@@ -16,10 +15,12 @@ describe('Send Re-Engagement API Route', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    process.env.SYSTEM_API_KEY = 'system-key';
+
     mockRequest = {
       method: 'POST',
       headers: new Headers({
-        'authorization': 'Bearer system-key'
+        'x-api-key': 'system-key'
       }),
       url: 'https://example.com/api/send-re-engagement'
     } as any;
@@ -94,6 +95,7 @@ describe('Send Re-Engagement API Route', () => {
   describe('GET /api/send-re-engagement', () => {
     beforeEach(() => {
       mockRequest.method = 'GET';
+      mockRequest.headers.set('x-api-key', 'system-key');
     });
 
     it('should get re-engagement stats', async () => {
@@ -116,5 +118,9 @@ describe('Send Re-Engagement API Route', () => {
       expect(data.error).toBeDefined();
     });
   });
+});
+
+afterEach(() => {
+  delete process.env.SYSTEM_API_KEY;
 });
 

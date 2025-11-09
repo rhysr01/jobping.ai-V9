@@ -66,9 +66,11 @@ export default function EuropeMap({
     if (newlySelected) {
       setJustSelected(newlySelected);
       const timer = setTimeout(() => setJustSelected(null), 1000);
+      prevSelectedRef.current = selectedCities;
       return () => clearTimeout(timer);
     }
     prevSelectedRef.current = selectedCities;
+    return undefined;
   }, [selectedCities]);
 
   const handleCityClick = useCallback((city: string) => {

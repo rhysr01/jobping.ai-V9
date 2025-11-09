@@ -24,7 +24,7 @@ function verifyPreferencesToken(email: string, token: string): boolean {
   // const secret = process.env.PREFERENCES_SECRET;
   // return verifySignedToken(token, email, secret);
   
-  return token && token.length > 0;
+  return token.length > 0;
 }
 
 export async function GET(req: NextRequest) {

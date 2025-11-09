@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -12,7 +12,7 @@ import LanguageSelector from '@/components/ui/LanguageSelector';
 import CalendarPicker from '@/components/ui/CalendarPicker';
 import EuropeMap from '@/components/ui/EuropeMap';
 
-export default function PreferencesPage() {
+function PreferencesContent() {
   const searchParams = useSearchParams();
   const token = searchParams?.get('token');
   const email = searchParams?.get('email');
@@ -246,6 +246,18 @@ export default function PreferencesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PreferencesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-xl">Loading preferences...</div>
+      </div>
+    }>
+      <PreferencesContent />
+    </Suspense>
   );
 }
 

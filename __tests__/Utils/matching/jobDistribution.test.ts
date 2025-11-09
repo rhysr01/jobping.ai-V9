@@ -94,17 +94,21 @@ describe('Job Distribution Service', () => {
 
       const stats = getDistributionStats(jobs);
 
-      expect(stats).toHaveProperty('uniqueSources');
-      expect(stats).toHaveProperty('uniqueCities');
-      expect(stats.uniqueSources).toBe(2);
-      expect(stats.uniqueCities).toBe(2);
+      expect(stats).toHaveProperty('sourceDistribution');
+      expect(stats).toHaveProperty('cityDistribution');
+      expect(stats.totalJobs).toBe(3);
+      expect(stats.sourceDistribution['source1']).toBe(2);
+      expect(stats.sourceDistribution['source2']).toBe(1);
+      expect(stats.cityDistribution['London']).toBe(2);
+      expect(stats.cityDistribution['Paris']).toBe(1);
     });
 
     it('should handle empty job list', () => {
       const stats = getDistributionStats([]);
 
-      expect(stats.uniqueSources).toBe(0);
-      expect(stats.uniqueCities).toBe(0);
+      expect(stats.totalJobs).toBe(0);
+      expect(Object.keys(stats.sourceDistribution)).toHaveLength(0);
+      expect(Object.keys(stats.cityDistribution)).toHaveLength(0);
     });
   });
 });

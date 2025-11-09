@@ -3,16 +3,7 @@
 require('dotenv').config({ path: '.env.local' });
 const axios = require('axios');
 const { createClient } = require('@supabase/supabase-js');
-
-// Inline helpers to avoid ESM/CJS interop issues
-function classifyEarlyCareer(job) {
-  const { title, description } = job;
-  const text = `${title || ''} ${description || ''}`;
-  const graduateRegex = /(graduate|new.?grad|recent.?graduate|campus.?hire|graduate.?scheme|graduate.?program|rotational.?program|university.?hire|college.?hire|entry.?level|junior|trainee|intern|internship|placement|analyst|assistant|apprenticeship|apprentice|stagiaire|alternant|alternance|d[ée]butant|dipl[oô]m[eé]|praktikum|praktikant|traineeprogramm|berufseinstieg|absolvent|ausbildung|werkstudent|einsteiger|becario|pr[aá]cticas|programa.?de.?graduados|reci[eé]n.?titulado|nivel.?inicial|tirocinio|stagista|apprendista|neolaureato|stage|stagiair|starterfunctie|traineeship|afgestudeerde|leerwerkplek|instapfunctie|fresher|nyuddannet|nyutdannet|nyexaminerad|reci[eé]n.?graduado)/i;
-  const seniorRegex = /(senior|lead|principal|director|head.?of|vp|chief|executive\s+level|executive\s+director|5\+.?years|7\+.?years|10\+.?years|architect\b|team.?lead|tech.?lead|staff\b|distinguished)/i;
-  const experienceRegex = /(proven.?track.?record|extensive.?experience|minimum.?3.?years|minimum.?5.?years|minimum.?7.?years|prior.?experience|relevant.?experience|3\+.?years|5\+.?years|7\+.?years|10\+.?years)/i;
-  return graduateRegex.test(text) && !seniorRegex.test(text) && !experienceRegex.test(text);
-}
+const { classifyEarlyCareer, makeJobHash } = require('./shared/helpers.cjs');
 
 function parseLocation(location) {
   const loc = (location || '').toLowerCase().trim();
@@ -36,9 +27,7 @@ function parseLocation(location) {
 function convertToDatabaseFormat(job) {
   const { city, country, isRemote, isEU } = parseLocation(job.location);
   const isEarlyCareer = classifyEarlyCareer(job);
-  const key = `${(job.title||'').toLowerCase().trim()}|${(job.company||'').toLowerCase().trim()}|${(job.location||'').toLowerCase().trim()}`;
-  let hash = 0; for (let i=0;i<key.length;i++){ const ch = key.charCodeAt(i); hash = ((hash<<5)-hash)+ch; hash = hash & hash; }
-  const job_hash = Math.abs(hash).toString(36);
+  const job_hash = makeJobHash(job);
   // Normalize date to ISO (Reed often returns DD/MM/YYYY)
   const normalizeDate = (d) => {
     if (!d) return new Date().toISOString();
@@ -67,7 +56,35 @@ function convertToDatabaseFormat(job) {
 }
 
 const REED_API = 'https://www.reed.co.uk/api/1.0/search';
-const LOCATIONS = [ 'Belfast','Dublin','London','Manchester','Birmingham' ];
+const DEFAULT_LOCATIONS = [ 'Belfast','Dublin','London','Manchester','Birmingham' ];
+function parseTargetCities() {
+  const raw = process.env.TARGET_CITIES;
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((city) => (typeof city === 'string' ? city.trim() : ''))
+        .filter(Boolean);
+    }
+    return [];
+  } catch (error) {
+    console.warn('⚠️  Reed TARGET_CITIES parse failed:', error.message);
+    return [];
+  }
+}
+const TARGET_CITIES = parseTargetCities();
+const LOCATIONS = TARGET_CITIES.length ? TARGET_CITIES : DEFAULT_LOCATIONS;
+
+if (TARGET_CITIES.length) {
+  console.log('🎯 Reed target cities from signup data:', TARGET_CITIES.join(', '));
+}
+
+const RESULTS_PER_PAGE = parseInt(process.env.REED_RESULTS_PER_PAGE || '50', 10);
+const PAGE_DELAY_MS = parseInt(process.env.REED_PAGE_DELAY_MS || '400', 10);
+const PAGE_DELAY_JITTER_MS = parseInt(process.env.REED_PAGE_DELAY_JITTER_MS || '0', 10);
+const BACKOFF_DELAY_MS = parseInt(process.env.REED_BACKOFF_DELAY_MS || '6000', 10);
+const MAX_QUERIES_PER_LOCATION = parseInt(process.env.REED_MAX_QUERIES_PER_LOCATION || `${EARLY_TERMS.length}`, 10);
 const EARLY_TERMS = [ 'graduate','entry level','junior','trainee','intern','internship' ];
 const MAX_PAGES = parseInt(process.env.REED_MAX_PAGES || '10', 10);
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -105,8 +122,9 @@ function toIngestJob(reedJob) {
 
 async function scrapeLocation(location) {
   const jobs = [];
-  const resultsPerPage = 50;
-  for (const term of EARLY_TERMS) {
+  const resultsPerPage = RESULTS_PER_PAGE;
+  const termsToUse = MAX_QUERIES_PER_LOCATION > 0 ? EARLY_TERMS.slice(0, MAX_QUERIES_PER_LOCATION) : EARLY_TERMS;
+  for (const term of termsToUse) {
     let page = 0;
     while (page < MAX_PAGES) {
       const params = {
@@ -138,12 +156,20 @@ async function scrapeLocation(location) {
           if (valid) jobs.push(j);
         }
         console.log(`   ✓ accumulated ${jobs.length} valid jobs so far for ${location}`);
-        await sleep(400); // Reduced from 800ms to 400ms for speed
+        const jitter = PAGE_DELAY_JITTER_MS > 0 ? Math.floor(Math.random() * PAGE_DELAY_JITTER_MS) : 0;
+        const delayMs = Math.max(0, PAGE_DELAY_MS + jitter);
+        if (delayMs > 0) {
+          await sleep(delayMs);
+        }
         // Stop paginating if fewer than a full page returned
         if (items.length < resultsPerPage) break;
         page++;
       } catch (e) {
-        if (e.response && e.response.status === 429) { await sleep(6000); page--; continue; }
+        if (e.response && e.response.status === 429) {
+          await sleep(BACKOFF_DELAY_MS);
+          page--;
+          continue;
+        }
         console.warn(`Reed error for ${location} ${term}:`, e.message);
         break;
       }
@@ -156,12 +182,25 @@ async function saveJobsToDB(jobs) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
   const supabase = createClient(url, key);
-  const dbJobs = jobs.map(convertToDatabaseFormat);
+const dbJobs = jobs.map(convertToDatabaseFormat);
+const BATCH_SIZE = 50;
+let totalUpserted = 0;
+
+for (let i = 0; i < dbJobs.length; i += BATCH_SIZE) {
+  const batch = dbJobs.slice(i, i + BATCH_SIZE);
   const { data, error } = await supabase
     .from('jobs')
-    .upsert(dbJobs, { onConflict: 'job_hash', ignoreDuplicates: false });
-  if (error) throw error;
-  return Array.isArray(data) ? data.length : dbJobs.length;
+    .upsert(batch, { onConflict: 'job_hash', ignoreDuplicates: true })
+    .select('job_hash');
+
+  if (error) {
+    throw error;
+  }
+
+  totalUpserted += Array.isArray(data) ? data.length : batch.length;
+}
+
+return totalUpserted;
 }
 
 (async () => {
@@ -184,7 +223,11 @@ async function saveJobsToDB(jobs) {
   }
   const seen = new Set();
   const unique = all.filter(j => {
-    const key = `${j.title.toLowerCase()}|${j.company.toLowerCase()}|${j.location.toLowerCase()}`;
+    const key = makeJobHash({
+      title: j.title,
+      company: j.company,
+      location: j.location,
+    });
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

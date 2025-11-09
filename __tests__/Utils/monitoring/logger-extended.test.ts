@@ -78,6 +78,8 @@ describe('Logger', () => {
     });
 
     it('should log database queries', () => {
+      process.env.LOG_LEVEL = 'debug';
+      logger = new Logger('test-component');
       logger.databaseQuery('SELECT * FROM users', 50, 10);
 
       expect(consoleSpy.debug).toHaveBeenCalled();

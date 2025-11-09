@@ -28,6 +28,11 @@ describe('Email Clients', () => {
     delete process.env.RESEND_API_KEY;
     delete process.env.NEXT_PUBLIC_SUPABASE_URL;
     delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const { createClient } = require('@supabase/supabase-js');
+    createClient.mockReturnValue({
+      from: jest.fn()
+    });
   });
 
   describe('getResendClient', () => {
