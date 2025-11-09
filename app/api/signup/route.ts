@@ -267,12 +267,14 @@ export async function POST(req: NextRequest) {
           console.log(`[SIGNUP] Distribution: Sources=${JSON.stringify(stats.sourceDistribution)}, Cities=${JSON.stringify(stats.cityDistribution)}`);
 
           // Save matches
-          const matchesToSave = distributedJobs.map(job => ({
-            user_email: userData.email,
-            job_hash: job.job_hash,
-            match_score: job.match_score || 85,
-            match_reason: job.match_reason || 'AI match',
-          })).filter(m => m.job_hash);
+          const matchesToSave = distributedJobs
+            .filter(job => job.job_hash) // Filter out jobs without job_hash
+            .map(job => ({
+              user_email: userData.email,
+              job_hash: job.job_hash!,
+              match_score: job.match_score || 85,
+              match_reason: job.match_reason || 'AI match',
+            }));
 
           const matchEntries = matchesToSave.map(match => ({
             user_email: match.user_email,

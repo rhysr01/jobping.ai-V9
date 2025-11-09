@@ -957,13 +957,15 @@ const matchUsersHandler = async (req: NextRequest) => {
           });
 
           // Rebuild matches array with distributed jobs
-          matches = distributedMatchedJobs.map((job, idx) => ({
-            job_index: idx + 1,
-            job_hash: job.job_hash,
-            match_score: job.match_score || 85,
-            match_reason: job.match_reason || 'AI match',
-            confidence_score: 0.85
-          }));
+          matches = distributedMatchedJobs
+            .filter(job => job.job_hash) // Filter out jobs without job_hash
+            .map((job, idx) => ({
+              job_index: idx + 1,
+              job_hash: job.job_hash!,
+              match_score: job.match_score || 85,
+              match_reason: job.match_reason || 'AI match',
+              confidence_score: 0.85
+            }));
         }
 
         // Update performance metrics with actual timing
