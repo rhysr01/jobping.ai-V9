@@ -83,13 +83,16 @@ export async function sendWelcomeEmail(args: { to: string; userName?: string; ma
     trackEmailSend(false, Date.now() - startTime);
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
+    const apiKeyPrefix = process.env.RESEND_API_KEY?.substring(0, 10) || 'none';
     console.error(`[EMAIL] ❌ sendWelcomeEmail failed for ${args.to}:`, errorMessage);
+    console.error(`[EMAIL] API Key prefix: ${apiKeyPrefix}...`);
     console.error(`[EMAIL] Error stack:`, errorStack);
     apiLogger.error('sendWelcomeEmail failed', error as Error, { 
       to: args.to,
       errorMessage,
       errorStack,
       errorType: error?.constructor?.name,
+      apiKeyPrefix,
       duration: Date.now() - startTime
     });
     throw error;
@@ -211,7 +214,9 @@ export async function sendMatchedJobsEmail(args: {
     trackEmailSend(false, Date.now() - startTime);
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
+    const apiKeyPrefix = process.env.RESEND_API_KEY?.substring(0, 10) || 'none';
     console.error(`[EMAIL] ❌ sendMatchedJobsEmail failed for ${args.to}:`, errorMessage);
+    console.error(`[EMAIL] API Key prefix: ${apiKeyPrefix}...`);
     console.error(`[EMAIL] Error stack:`, errorStack);
     apiLogger.error('sendMatchedJobsEmail failed', error as Error, { 
       to: args.to,
@@ -219,6 +224,7 @@ export async function sendMatchedJobsEmail(args: {
       errorMessage,
       errorStack,
       errorType: error?.constructor?.name,
+      apiKeyPrefix,
       duration: Date.now() - startTime
     });
     throw error;
