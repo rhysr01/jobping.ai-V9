@@ -72,7 +72,7 @@ export default function EmailPhoneShowcase() {
               <BrandIcons.Mail className="w-6 h-6 text-brand-400" />
             </IconBadge>
             <h3 className="text-white font-black mb-2 text-xl sm:text-2xl">Weekly emails</h3>
-            <p className="text-body text-neutral-100 font-bold">5 hand picked jobs every week</p>
+            <p className="text-body text-neutral-100 font-bold">5 hand-picked jobs every week</p>
           </GlassCard>
           <GlassCard variant="subtle" hover="lift" className="p-8">
             <IconBadge className="mb-4">
@@ -86,7 +86,7 @@ export default function EmailPhoneShowcase() {
               <BrandIcons.Target className="w-6 h-6 text-brand-400" />
             </IconBadge>
             <h3 className="text-white font-black mb-2 text-xl sm:text-2xl">Perfect matches</h3>
-            <p className="text-body text-neutral-100 font-bold">AI filtered for your profile</p>
+            <p className="text-body text-neutral-100 font-bold">AI-filtered for your profile</p>
           </GlassCard>
         </motion.div>
       </div>

@@ -150,7 +150,7 @@ export function createWelcomeEmail(userName?: string, matchCount: number = 5): s
   const body = `
   <tr>
     <td class="content" align="center">
-      <div class="pill">${matchCount} hand picked jobs waiting for you! 🎯</div>
+      <div class="pill">${matchCount} hand-picked jobs waiting for you! 🎯</div>
       <h1 class="title">Welcome${name}!<br />We're excited to have you! 🚀</h1>
       <p class="text">We're <span style="color:#8B5CF6; font-weight:600;">thrilled you're here</span> and can't wait to help you find your next amazing role!</p>
       <p class="text">We'll send you jobs you can actually get — not a job board dump. <span style="color:#8B5CF6; font-weight:600;">We're excited to share</span> your first set within 48 hours. Then we keep them coming weekly.</p>
