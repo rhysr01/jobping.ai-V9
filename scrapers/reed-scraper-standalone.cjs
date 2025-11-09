@@ -3,7 +3,8 @@
 require('dotenv').config({ path: '.env.local' });
 const axios = require('axios');
 const { createClient } = require('@supabase/supabase-js');
-const { classifyEarlyCareer, makeJobHash } = require('./shared/helpers.cjs');
+const { classifyEarlyCareer, makeJobHash, CAREER_PATH_KEYWORDS } = require('./shared/helpers.cjs');
+const { recordScraperRun } = require('./shared/telemetry.cjs');
 
 function parseLocation(location) {
   const loc = (location || '').toLowerCase().trim();
@@ -86,6 +87,8 @@ const PAGE_DELAY_JITTER_MS = parseInt(process.env.REED_PAGE_DELAY_JITTER_MS || '
 const BACKOFF_DELAY_MS = parseInt(process.env.REED_BACKOFF_DELAY_MS || '6000', 10);
 const MAX_QUERIES_PER_LOCATION = parseInt(process.env.REED_MAX_QUERIES_PER_LOCATION || `${EARLY_TERMS.length}`, 10);
 const INCLUDE_REMOTE = String(process.env.INCLUDE_REMOTE || '').toLowerCase() === 'true';
+const scriptStart = Date.now();
+let scrapeErrors = 0;
 
 function parseTargetCareerPaths() {
   const raw = process.env.TARGET_CAREER_PATHS;
@@ -103,21 +106,6 @@ function parseTargetCareerPaths() {
     return [];
   }
 }
-
-const CAREER_PATH_KEYWORDS = {
-  strategy: ['strategy', 'consult', 'business analyst', 'transformation', 'growth'],
-  finance: ['finance', 'financial', 'banking', 'investment', 'audit', 'account', 'treasury'],
-  sales: ['sales', 'business development', 'account executive', 'sdr', 'bdr', 'customer success'],
-  marketing: ['marketing', 'brand', 'growth', 'digital', 'content', 'communications'],
-  product: ['product manager', 'product management', 'product analyst', 'product owner'],
-  operations: ['operations', 'supply chain', 'logistics', 'process', 'project coordinator'],
-  'general-management': ['management trainee', 'leadership programme', 'general management'],
-  data: ['data', 'analytics', 'bi analyst', 'insight', 'business intelligence'],
-  'people-hr': ['hr', 'people', 'talent', 'recruit', 'human resources'],
-  legal: ['legal', 'compliance', 'paralegal', 'law', 'regulation'],
-  sustainability: ['sustainability', 'esg', 'environment', 'impact', 'climate'],
-  creative: ['design', 'creative', 'ux', 'ui', 'graphic', 'copywriter'],
-};
 
 const TARGET_CAREER_PATHS = parseTargetCareerPaths();
 if (TARGET_CAREER_PATHS.length) {
@@ -212,6 +200,7 @@ async function scrapeLocation(location) {
         if (items.length < resultsPerPage) break;
         page++;
       } catch (e) {
+        scrapeErrors += 1;
         if (e.response && e.response.status === 429) {
           await sleep(BACKOFF_DELAY_MS);
           page--;
@@ -266,6 +255,7 @@ return totalUpserted;
       await sleep(1000);
     } catch (e) {
       console.error(`❌ Reed fatal in ${loc}:`, e?.message || e);
+      scrapeErrors += 1;
     }
   }
   const seen = new Set();
@@ -281,6 +271,16 @@ return totalUpserted;
   });
   console.log(`📊 Reed total unique: ${unique.length}`);
   let inserted = 0;
-  try { inserted = await saveJobsToDB(unique); } catch (e) { console.error('❌ Reed DB save failed:', e.message); }
+  try {
+    inserted = await saveJobsToDB(unique);
+  } catch (e) {
+    scrapeErrors += 1;
+    console.error('❌ Reed DB save failed:', e.message);
+  }
   console.log(`✅ Reed: ${inserted} jobs saved to database`);
-})().catch(e => { console.error('❌ Reed fatal:', e.message); process.exit(1); });
+  recordScraperRun('reed', inserted, Date.now() - scriptStart, scrapeErrors);
+})().catch(e => {
+  console.error('❌ Reed fatal:', e.message);
+  recordScraperRun('reed', 0, Date.now() - scriptStart, scrapeErrors + 1);
+  process.exit(1);
+});
