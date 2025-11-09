@@ -12,34 +12,29 @@ type CityCoordinate = {
   x: number;
   y: number;
   country: string;
-  labelOffset?: {
-    x?: number;
-    y?: number;
-    anchor?: 'start' | 'middle' | 'end';
-  };
 };
 
 const CITY_COORDINATES: Record<string, CityCoordinate> = {
-  'Dublin': { lat: 53.3498, lon: -6.2603, x: 175, y: 400, country: 'Ireland', labelOffset: { x: -16, y: -32, anchor: 'end' } },
-  'London': { lat: 51.5074, lon: -0.1278, x: 198, y: 440, country: 'United Kingdom', labelOffset: { x: 22, y: -12, anchor: 'start' } },
-  'Manchester': { lat: 53.4808, lon: -2.2426, x: 155, y: 400, country: 'United Kingdom', labelOffset: { x: -18, y: 6, anchor: 'end' } },
-  'Birmingham': { lat: 52.4862, lon: -1.8904, x: 182, y: 420, country: 'United Kingdom', labelOffset: { x: 28, y: 18, anchor: 'start' } },
-  'Paris': { lat: 48.8566, lon: 2.3522, x: 247, y: 500, country: 'France', labelOffset: { x: -24, y: -30, anchor: 'end' } },
-  'Amsterdam': { lat: 52.3676, lon: 4.9041, x: 298, y: 425, country: 'Netherlands', labelOffset: { x: 20, y: -18, anchor: 'start' } },
-  'Brussels': { lat: 50.8503, lon: 4.3517, x: 287, y: 460, country: 'Belgium', labelOffset: { x: -26, y: 18, anchor: 'end' } },
-  'Berlin': { lat: 52.5200, lon: 13.4050, x: 468, y: 425, country: 'Germany', labelOffset: { x: 0, y: -28 } },
-  'Hamburg': { lat: 53.5511, lon: 9.9937, x: 400, y: 400, country: 'Germany', labelOffset: { x: -32, y: -18, anchor: 'end' } },
-  'Munich': { lat: 48.1351, lon: 11.5820, x: 431, y: 520, country: 'Germany', labelOffset: { x: 30, y: 12, anchor: 'start' } },
-  'Zurich': { lat: 47.3769, lon: 8.5417, x: 371, y: 535, country: 'Switzerland', labelOffset: { x: -26, y: 24, anchor: 'end' } },
-  'Madrid': { lat: 40.4168, lon: -3.7038, x: 126, y: 685, country: 'Spain', labelOffset: { x: 0, y: 36 } },
-  'Barcelona': { lat: 41.3851, lon: 2.1734, x: 243, y: 665, country: 'Spain', labelOffset: { x: 28, y: 28, anchor: 'start' } },
-  'Milan': { lat: 45.4642, lon: 9.1900, x: 384, y: 575, country: 'Italy', labelOffset: { x: 28, y: -14, anchor: 'start' } },
-  'Rome': { lat: 41.9028, lon: 12.4964, x: 450, y: 655, country: 'Italy', labelOffset: { x: 0, y: 34 } },
-  'Stockholm': { lat: 59.3293, lon: 18.0686, x: 562, y: 275, country: 'Sweden', labelOffset: { x: 24, y: -16, anchor: 'start' } },
-  'Copenhagen': { lat: 55.6761, lon: 12.5683, x: 451, y: 355, country: 'Denmark', labelOffset: { x: -28, y: -18, anchor: 'end' } },
-  'Vienna': { lat: 48.2082, lon: 16.3738, x: 528, y: 515, country: 'Austria', labelOffset: { x: 30, y: 10, anchor: 'start' } },
-  'Prague': { lat: 50.0755, lon: 14.4378, x: 488, y: 475, country: 'Czech Republic', labelOffset: { x: -30, y: -14, anchor: 'end' } },
-  'Warsaw': { lat: 52.2297, lon: 21.0122, x: 620, y: 430, country: 'Poland', labelOffset: { x: 28, y: -20, anchor: 'start' } },
+  'Dublin': { lat: 53.3498, lon: -6.2603, x: 175, y: 400, country: 'Ireland' },
+  'London': { lat: 51.5074, lon: -0.1278, x: 198, y: 440, country: 'United Kingdom' },
+  'Manchester': { lat: 53.4808, lon: -2.2426, x: 155, y: 400, country: 'United Kingdom' },
+  'Birmingham': { lat: 52.4862, lon: -1.8904, x: 182, y: 420, country: 'United Kingdom' },
+  'Paris': { lat: 48.8566, lon: 2.3522, x: 247, y: 500, country: 'France' },
+  'Amsterdam': { lat: 52.3676, lon: 4.9041, x: 298, y: 425, country: 'Netherlands' },
+  'Brussels': { lat: 50.8503, lon: 4.3517, x: 287, y: 460, country: 'Belgium' },
+  'Berlin': { lat: 52.5200, lon: 13.4050, x: 468, y: 425, country: 'Germany' },
+  'Hamburg': { lat: 53.5511, lon: 9.9937, x: 400, y: 400, country: 'Germany' },
+  'Munich': { lat: 48.1351, lon: 11.5820, x: 431, y: 520, country: 'Germany' },
+  'Zurich': { lat: 47.3769, lon: 8.5417, x: 371, y: 535, country: 'Switzerland' },
+  'Madrid': { lat: 40.4168, lon: -3.7038, x: 126, y: 685, country: 'Spain' },
+  'Barcelona': { lat: 41.3851, lon: 2.1734, x: 243, y: 665, country: 'Spain' },
+  'Milan': { lat: 45.4642, lon: 9.1900, x: 384, y: 575, country: 'Italy' },
+  'Rome': { lat: 41.9028, lon: 12.4964, x: 450, y: 655, country: 'Italy' },
+  'Stockholm': { lat: 59.3293, lon: 18.0686, x: 562, y: 275, country: 'Sweden' },
+  'Copenhagen': { lat: 55.6761, lon: 12.5683, x: 451, y: 355, country: 'Denmark' },
+  'Vienna': { lat: 48.2082, lon: 16.3738, x: 528, y: 515, country: 'Austria' },
+  'Prague': { lat: 50.0755, lon: 14.4378, x: 488, y: 475, country: 'Czech Republic' },
+  'Warsaw': { lat: 52.2297, lon: 21.0122, x: 620, y: 430, country: 'Poland' },
 };
 
 interface EuropeMapProps {
@@ -150,7 +145,7 @@ export default function EuropeMap({
       
       {/* Europe Map SVG */}
       <svg
-        viewBox="80 140 540 520"
+        viewBox="0 0 1000 800"
         className="w-full h-full relative z-10"
         preserveAspectRatio="xMidYMid meet"
         aria-label="Map of Europe showing available cities"
@@ -192,7 +187,7 @@ export default function EuropeMap({
         </defs>
 
         {/* Enhanced country shapes with brand-colored borders */}
-        <g aria-label="European countries" transform="translate(-20, -10)">
+        <g aria-label="European countries">
           {/* UK & Ireland */}
           <path
             d="M 150 250 Q 180 240 200 260 Q 210 280 200 300 Q 190 320 180 310 Q 160 300 150 280 Z"
@@ -265,16 +260,14 @@ export default function EuropeMap({
         </g>
 
         {/* City markers */}
-        <g aria-label="Selectable cities" transform="translate(-20, -10)">
+        <g aria-label="Selectable cities">
           {cityEntries.map(([city, coords]) => {
             const selected = isCitySelected(city);
             const disabled = isCityDisabled(city);
             const hovered = hoveredCity === city;
             const focused = focusedCity === city;
-            const labelOffset = coords.labelOffset || {};
-            const labelX = coords.x + (labelOffset.x ?? 0);
-            const labelY = coords.y - (selected ? 24 : hovered || focused ? 22 : 20) + (labelOffset.y ?? 0);
-            const textAnchor = labelOffset.anchor ?? 'middle';
+            const showLabel = selected || hovered || focused;
+            const labelY = coords.y - (selected ? 30 : 24);
 
             return (
               <g key={city} aria-label={`${city}, ${coords.country}`}>
@@ -356,26 +349,28 @@ export default function EuropeMap({
                   } : {}}
                 />
                 
-                {/* City label with brand colors - improved spacing */}
-                <motion.text
-                  x={labelX}
-                  y={labelY}
-                  textAnchor={textAnchor}
-                  fill={selected ? '#C2A8FF' : hovered || focused ? '#B491FF' : '#a1a1aa'}
-                  fontSize={selected ? "13" : hovered || focused ? "12" : "11"}
-                  fontWeight={selected ? '700' : hovered || focused ? '600' : '500'}
-                  className="pointer-events-none select-none"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: hovered || selected || focused ? 1 : 0.7 }}
-                  transition={{ duration: 0.2 }}
-                  style={selected ? {
-                    filter: 'drop-shadow(0 0 4px rgba(154,106,255,0.5))',
-                    textShadow: '0 0 8px rgba(154,106,255,0.4)'
-                  } : {}}
-                  aria-hidden="true"
-                >
-                  {city}
-                </motion.text>
+                {/* City label appears only when relevant */}
+                {showLabel && (
+                  <motion.text
+                    x={coords.x}
+                    y={labelY}
+                    textAnchor="middle"
+                    fill={selected ? '#C2A8FF' : '#B491FF'}
+                    fontSize={selected ? "13" : "12"}
+                    fontWeight={selected ? '700' : '600'}
+                    className="pointer-events-none select-none"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                    style={selected ? {
+                      filter: 'drop-shadow(0 0 4px rgba(154,106,255,0.5))',
+                      textShadow: '0 0 8px rgba(154,106,255,0.4)'
+                    } : {}}
+                    aria-hidden="true"
+                  >
+                    {city}
+                  </motion.text>
+                )}
               </g>
             );
           })}
