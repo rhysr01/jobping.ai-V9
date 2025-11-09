@@ -1,39 +1,45 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
 
 interface SectionHeaderProps {
   title: string;
   description?: string;
-  badge?: ReactNode;
+  eyebrow?: string;
+  align?: "left" | "center";
   className?: string;
 }
 
-/**
- * Consistent section header component
- * Standardizes typography, spacing, and animations across all sections
- */
-export default function SectionHeader({ 
-  title, 
-  description, 
-  badge,
-  className = "" 
+export default function SectionHeader({
+  title,
+  description,
+  eyebrow,
+  align = "center",
+  className = "",
 }: SectionHeaderProps) {
+  const alignment =
+    align === "left"
+      ? "items-start text-left"
+      : "items-center text-center";
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
-      className={`text-center mb-12 md:mb-16 ${className}`}
+      transition={{ duration: 0.5 }}
+      className={`mb-12 flex flex-col gap-4 ${alignment} ${className}`}
     >
-      {badge && <div className="mb-4">{badge}</div>}
-      <h2 className="text-4xl sm:text-5xl md:text-6xl text-white text-balance mb-4 font-black drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] text-shadow-md">
+      {eyebrow && (
+        <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
+          {eyebrow}
+        </span>
+      )}
+      <h2 className="text-balance text-3xl font-semibold text-white sm:text-4xl">
         {title}
       </h2>
       {description && (
-        <p className="text-xl sm:text-2xl text-neutral-100 max-w-2xl mx-auto font-bold leading-relaxed text-shadow-sm">
+        <p className="max-w-2xl text-base text-zinc-300 sm:text-lg">
           {description}
         </p>
       )}

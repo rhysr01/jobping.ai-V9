@@ -8,16 +8,17 @@ interface ExperienceOption {
   value: string;
   label: string;
   months: number;
-  icon: string;
+  Icon: (props: { className?: string }) => JSX.Element;
+  description: string;
 }
 
 const EXPERIENCE_LEVELS: ExperienceOption[] = [
-  { value: '0', label: '0', months: 0, icon: '🎓' },
-  { value: '6 months', label: '6 months', months: 6, icon: '🌱' },
-  { value: '1 year', label: '1 year', months: 12, icon: '⭐' },
-  { value: '1-2 years', label: '1-2 years', months: 18, icon: '🚀' },
-  { value: '2 years', label: '2 years', months: 24, icon: '💼' },
-  { value: '3+ years', label: '3+ years', months: 36, icon: '🏆' }
+  { value: '0', label: '0', months: 0, Icon: BrandIcons.GraduationCap, description: 'New to the field — learning fast.' },
+  { value: '6 months', label: '6 months', months: 6, Icon: BrandIcons.Sparkles, description: 'Early hands-on experience.' },
+  { value: '1 year', label: '1 year', months: 12, Icon: BrandIcons.Star, description: 'Solid foundation in place.' },
+  { value: '1-2 years', label: '1-2 years', months: 18, Icon: BrandIcons.TrendingUp, description: 'Growing and ready for more.' },
+  { value: '2 years', label: '2 years', months: 24, Icon: BrandIcons.Briefcase, description: 'Confident contributor.' },
+  { value: '3+ years', label: '3+ years', months: 36, Icon: BrandIcons.CheckCircle, description: 'Seasoned early-career pro.' }
 ];
 
 interface ExperienceTimelineProps {
@@ -29,6 +30,8 @@ export default function ExperienceTimeline({ selected, onChange }: ExperienceTim
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const selectedIndex = EXPERIENCE_LEVELS.findIndex(exp => exp.value === selected);
   const maxMonths = Math.max(...EXPERIENCE_LEVELS.map(e => e.months));
+  const selectedLevel = selectedIndex >= 0 ? EXPERIENCE_LEVELS[selectedIndex] : null;
+  const SelectedIcon = selectedLevel?.Icon;
 
   return (
     <div className="space-y-6">
@@ -123,13 +126,26 @@ export default function ExperienceTimeline({ selected, onChange }: ExperienceTim
                 )}
                 
                 {/* Label below */}
-                <div className={`mt-3 text-center min-w-[60px] ${
-                  isSelected || isHovered ? 'opacity-100' : 'opacity-60'
-                }`}>
-                  <div className="text-lg mb-1">{exp.icon}</div>
-                  <div className={`text-xs font-semibold ${
-                    isSelected ? 'text-brand-400' : 'text-zinc-400'
-                  }`}>
+                <div
+                  className={`mt-3 flex min-w-[72px] flex-col items-center gap-2 text-center ${
+                    isSelected || isHovered ? 'opacity-100' : 'opacity-60'
+                  }`}
+                >
+                  <span
+                    className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all ${
+                      isSelected
+                        ? 'border-brand-400 bg-gradient-to-br from-brand-500 via-purple-500 to-brand-400 shadow-[0_0_14px_rgba(154,106,255,0.4)] text-white'
+                        : 'border-zinc-600 bg-zinc-900 text-brand-200'
+                    }`}
+                    aria-hidden="true"
+                  >
+                    <exp.Icon className="w-4 h-4" />
+                  </span>
+                  <div
+                    className={`text-xs font-semibold uppercase tracking-wide ${
+                      isSelected ? 'text-brand-300' : 'text-zinc-400'
+                    }`}
+                  >
                     {exp.label}
                   </div>
                 </div>
@@ -140,20 +156,22 @@ export default function ExperienceTimeline({ selected, onChange }: ExperienceTim
       </div>
       
       {/* Selected experience card */}
-      {selectedIndex >= 0 && (
+      {selectedLevel && SelectedIcon && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="p-4 bg-gradient-to-r from-brand-500/10 via-purple-600/10 to-brand-500/10 rounded-2xl border-2 border-brand-500/30 shadow-glow-subtle"
         >
           <div className="flex items-center gap-3">
-            <div className="text-2xl">{EXPERIENCE_LEVELS[selectedIndex].icon}</div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 via-purple-500 to-brand-400 text-white shadow-[0_0_20px_rgba(154,106,255,0.35)]">
+              <SelectedIcon className="w-6 h-6" />
+            </div>
             <div>
               <div className="text-sm font-semibold text-white">
-                {EXPERIENCE_LEVELS[selectedIndex].label} experience
+                {selectedLevel.label} experience
               </div>
               <div className="text-xs text-zinc-400">
-                Perfect for early-career roles
+                {selectedLevel.description}
               </div>
             </div>
           </div>

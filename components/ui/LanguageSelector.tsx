@@ -2,38 +2,26 @@
 
 import { motion } from 'framer-motion';
 
-// Language flags mapping
-const LANGUAGE_FLAGS: Record<string, string> = {
-  'English': '🇬🇧',
-  'French': '🇫🇷',
-  'German': '🇩🇪',
-  'Spanish': '🇪🇸',
-  'Italian': '🇮🇹',
-  'Dutch': '🇳🇱',
-  'Portuguese': '🇵🇹',
-  'Polish': '🇵🇱',
-  'Swedish': '🇸🇪',
-  'Danish': '🇩🇰',
-  'Finnish': '🇫🇮',
-  'Czech': '🇨🇿',
-  'Romanian': '🇷🇴',
-  'Hungarian': '🇭🇺',
-  'Greek': '🇬🇷',
-  'Arabic': '🇸🇦'
-};
-
 interface LanguageSelectorProps {
   languages: string[];
   selected: string[];
   onChange: (value: string) => void;
 }
 
+const getLanguageMonogram = (language: string) => {
+  const words = language.split(/\s|-/).filter(Boolean);
+  if (words.length === 1) {
+    return words[0].slice(0, 2).toUpperCase();
+  }
+  return (words[0][0] + words[1][0]).toUpperCase();
+};
+
 export default function LanguageSelector({ languages, selected, onChange }: LanguageSelectorProps) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
       {languages.map(lang => {
         const isSelected = selected.includes(lang);
-        const flag = LANGUAGE_FLAGS[lang] || '🌐';
+        const monogram = getLanguageMonogram(lang);
         
         return (
           <motion.button
@@ -59,10 +47,16 @@ export default function LanguageSelector({ languages, selected, onChange }: Lang
             )}
             
             <div className="relative flex items-center justify-center gap-2">
-              {/* Flag emoji */}
-              <span className="text-xl">{flag}</span>
-              
-              {/* Language name */}
+              <span
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-black tracking-tight transition-shadow ${
+                  isSelected
+                    ? 'bg-gradient-to-br from-brand-500 via-purple-500 to-brand-400 text-white shadow-[0_0_18px_rgba(154,106,255,0.5)]'
+                    : 'bg-zinc-800/80 text-zinc-200'
+                }`}
+                aria-hidden="true"
+              >
+                {monogram}
+              </span>
               <span className="font-semibold">{lang}</span>
               
               {/* Selection checkmark */}

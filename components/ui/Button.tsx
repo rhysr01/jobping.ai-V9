@@ -21,19 +21,24 @@ export default function Button({
   target,
   ...props 
 }: ButtonProps) {
-  const baseClasses = 'inline-flex items-center justify-center gap-2 font-semibold rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseClasses =
+    'inline-flex items-center justify-center gap-2 rounded-2xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-50';
   
   const variants = {
-    primary: 'bg-gradient-to-r from-brand-500 to-purple-600 text-white hover:scale-102 active:scale-98 shadow-[0_4px_12px_rgba(106,75,255,0.40)] hover:shadow-[0_6px_20px_rgba(106,75,255,0.50)] hover:brightness-105',
-    secondary: 'bg-glass-subtle border border-border-subtle text-white hover:bg-glass-default hover:border-border-default backdrop-blur-sm',
-    ghost: 'text-zinc-400 hover:text-white hover:bg-glass-subtle',
-    danger: 'bg-red-500/10 border border-red-500/20 text-red-300 hover:bg-red-500/20'
+    primary:
+      'bg-gradient-to-r from-brand-500 via-purple-500 to-brand-500 text-white shadow-[0_16px_40px_rgba(99,102,241,0.35)] hover:-translate-y-0.5 hover:shadow-[0_22px_50px_rgba(99,102,241,0.45)] active:translate-y-0',
+    secondary:
+      'border border-white/15 bg-white/5 text-white hover:bg-white/10',
+    ghost:
+      'text-zinc-400 hover:text-white hover:bg-white/5',
+    danger:
+      'border border-red-500/20 bg-red-500/10 text-red-200 hover:bg-red-500/20'
   };
 
   const sizes = {
-    sm: 'px-4 py-2 text-small',
-    md: 'px-6 py-3 text-body',
-    lg: 'px-8 py-3 text-large'
+    sm: 'px-4 py-2 text-sm',
+    md: 'px-5 py-3 text-sm sm:text-base',
+    lg: 'px-7 py-3.5 text-base sm:text-lg'
   };
 
   if (href) {
