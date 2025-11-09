@@ -1,10 +1,51 @@
-// Native signup form handler
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseClient } from '@/Utils/databasePool';
 import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
 import { sendWelcomeEmail, sendMatchedJobsEmail } from '@/Utils/email/sender';
 import { apiLogger } from '@/lib/api-logger';
+
+// Helper function to safely send welcome email and update tracking
+async function sendWelcomeEmailAndTrack(
+  email: string,
+  userName: string,
+  tier: 'free' | 'premium',
+  matchCount: number,
+  supabase: any,
+  context: string
+): Promise<boolean> {
+  try {
+    await sendWelcomeEmail({
+      to: email,
+      userName,
+      matchCount,
+      tier,
+    });
+
+    await supabase
+      .from('users')
+      .update({
+        last_email_sent: new Date().toISOString(),
+        email_count: 1,
+      })
+      .eq('email', email);
+
+    apiLogger.info(`Welcome email (${context}) sent to user`, { email });
+    console.log(`[SIGNUP] ✅ Welcome email (${context}) sent successfully to ${email}`);
+    return true;
+  } catch (emailError) {
+    const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
+    const errorStack = emailError instanceof Error ? emailError.stack : undefined;
+    console.error(`[SIGNUP] ❌ Welcome email (${context}) failed:`, errorMessage);
+    apiLogger.error(`Welcome email (${context}) failed`, emailError as Error, { 
+      email,
+      errorMessage,
+      errorStack,
+      errorType: emailError?.constructor?.name,
+      rawError: String(emailError)
+    });
+    return false;
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,22 +82,30 @@ export async function POST(req: NextRequest) {
       email: normalizedEmail,
       full_name: data.fullName.trim(),
       target_cities: data.cities,
-      languages_spoken: data.languages,
+      languages_spoken: data.languages || [],
       start_date: data.startDate || null,
       professional_experience: data.experience || null,
       professional_expertise: data.careerPath || 'entry', // For matching system
-      work_environment: data.workEnvironment.join(', ') || null,
+      work_environment: Array.isArray(data.workEnvironment) && data.workEnvironment.length > 0 
+        ? data.workEnvironment.join(', ') 
+        : null,
       visa_status: data.visaStatus || null,
-      entry_level_preference: data.entryLevelPreferences?.join(', ') || null, // Changed to array
-      company_types: data.targetCompanies,
-        career_path: data.careerPath || null,
-        roles_selected: data.roles,
-        // NEW MATCHING PREFERENCES
-        remote_preference: data.workEnvironment?.includes('Remote') ? 'remote' : data.workEnvironment?.includes('Hybrid') ? 'hybrid' : 'flexible',
-        industries: data.industries || [],
-        company_size_preference: data.companySizePreference || 'any',
-        skills: data.skills || [],
-        career_keywords: data.careerKeywords || null,
+      entry_level_preference: Array.isArray(data.entryLevelPreferences) && data.entryLevelPreferences.length > 0
+        ? data.entryLevelPreferences.join(', ')
+        : null,
+      company_types: data.targetCompanies || [],
+      career_path: data.careerPath || null,
+      roles_selected: data.roles || [],
+      // NEW MATCHING PREFERENCES
+      remote_preference: Array.isArray(data.workEnvironment) && data.workEnvironment.includes('Remote') 
+        ? 'remote' 
+        : Array.isArray(data.workEnvironment) && data.workEnvironment.includes('Hybrid') 
+        ? 'hybrid' 
+        : 'flexible',
+      industries: data.industries || [],
+      company_size_preference: data.companySizePreference || 'any',
+      skills: data.skills || [],
+      career_keywords: data.careerKeywords || null,
       subscription_tier: subscriptionTier,
       email_verified: true, // Auto-verify for now (can add email verification later)
       subscription_active: true,
@@ -242,75 +291,27 @@ export async function POST(req: NextRequest) {
           // No matches found, send welcome email anyway
           apiLogger.info('No matches found, sending welcome email', { email: data.email });
           console.log(`[SIGNUP] No matches found, sending welcome email to ${data.email}`);
-          try {
-            await sendWelcomeEmail({
-              to: userData.email,
-              userName: userData.full_name,
-              matchCount: 0,
-              tier: userData.subscription_tier as 'free' | 'premium',
-            });
-
-            // Update tracking even with no matches
-            await supabase
-              .from('users')
-              .update({
-                last_email_sent: new Date().toISOString(),
-                email_count: 1,
-              })
-              .eq('email', userData.email);
-
-            emailSent = true;
-            apiLogger.info(`Welcome email (no matches) sent to user`, { email: data.email });
-            console.log(`[SIGNUP] ✅ Welcome email (no matches) sent successfully to ${data.email}`);
-          } catch (emailError) {
-            console.error(`[SIGNUP] ❌ Welcome email failed:`, emailError);
-            const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
-            const errorStack = emailError instanceof Error ? emailError.stack : undefined;
-            apiLogger.error('Welcome email failed', emailError as Error, { 
-              email: data.email,
-              errorMessage,
-              errorStack,
-              errorType: emailError?.constructor?.name,
-              rawError: String(emailError)
-            });
-          }
+          emailSent = await sendWelcomeEmailAndTrack(
+            userData.email,
+            userData.full_name,
+            userData.subscription_tier as 'free' | 'premium',
+            0,
+            supabase,
+            'no matches'
+          );
         }
       } else {
         // No jobs found in database, send welcome email anyway
         apiLogger.info(`No jobs found for user cities, sending welcome email`, { email: data.email, cities: userData.target_cities });
         console.log(`[SIGNUP] No jobs found for cities ${JSON.stringify(userData.target_cities)}, sending welcome email to ${data.email}`);
-        try {
-          await sendWelcomeEmail({
-            to: userData.email,
-            userName: userData.full_name,
-            matchCount: 0,
-            tier: userData.subscription_tier as 'free' | 'premium',
-          });
-
-          // Update tracking even with no jobs
-          await supabase
-            .from('users')
-            .update({
-              last_email_sent: new Date().toISOString(),
-              email_count: 1,
-            })
-            .eq('email', userData.email);
-
-          emailSent = true;
-          apiLogger.info(`Welcome email (no jobs) sent to user`, { email: data.email });
-          console.log(`[SIGNUP] ✅ Welcome email (no jobs) sent successfully to ${data.email}`);
-        } catch (emailError) {
-          console.error(`[SIGNUP] ❌ Welcome email failed:`, emailError);
-          const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
-          const errorStack = emailError instanceof Error ? emailError.stack : undefined;
-          apiLogger.error('Welcome email failed', emailError as Error, { 
-            email: data.email,
-            errorMessage,
-            errorStack,
-            errorType: emailError?.constructor?.name,
-            rawError: String(emailError)
-          });
-        }
+        emailSent = await sendWelcomeEmailAndTrack(
+          userData.email,
+          userData.full_name,
+          userData.subscription_tier as 'free' | 'premium',
+          0,
+          supabase,
+          'no jobs'
+        );
       }
     } catch (matchError) {
       console.error(`[SIGNUP] ❌ Matching process failed:`, matchError);
@@ -318,38 +319,14 @@ export async function POST(req: NextRequest) {
       // Send welcome email even if matching fails
       apiLogger.info('Matching failed, attempting to send welcome email anyway', { email: data.email });
       console.log(`[SIGNUP] Matching failed, attempting to send welcome email anyway to ${data.email}`);
-      try {
-        await sendWelcomeEmail({
-          to: userData.email,
-          userName: userData.full_name,
-          matchCount: 0,
-          tier: userData.subscription_tier as 'free' | 'premium',
-        });
-
-        // Update tracking even if matching failed
-        await supabase
-          .from('users')
-          .update({
-            last_email_sent: new Date().toISOString(),
-            email_count: 1,
-          })
-          .eq('email', userData.email);
-
-        emailSent = true;
-        apiLogger.info(`Welcome email (matching failed) sent to user`, { email: data.email });
-        console.log(`[SIGNUP] ✅ Welcome email (matching failed) sent successfully to ${data.email}`);
-      } catch (emailError) {
-        console.error(`[SIGNUP] ❌ Welcome email failed:`, emailError);
-        const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
-        const errorStack = emailError instanceof Error ? emailError.stack : undefined;
-        apiLogger.error('Welcome email failed', emailError as Error, { 
-          email: data.email,
-          errorMessage,
-          errorStack,
-          errorType: emailError?.constructor?.name,
-          rawError: String(emailError)
-        });
-      }
+      emailSent = await sendWelcomeEmailAndTrack(
+        userData.email,
+        userData.full_name,
+        userData.subscription_tier as 'free' | 'premium',
+        0,
+        supabase,
+        'matching failed'
+      );
     }
 
     // Log final status
@@ -364,6 +341,20 @@ export async function POST(req: NextRequest) {
     console.log(`[SIGNUP] Matches: ${matchesCount}`);
     console.log(`[SIGNUP] Email Sent: ${emailSent ? 'YES ✅' : 'NO ❌'}`);
     console.log(`[SIGNUP] ========================`);
+
+    // SAFETY NET: Ensure email is sent even if something went wrong
+    if (!emailSent) {
+      console.log(`[SIGNUP] ⚠️ Email not sent yet, attempting safety net send...`);
+      apiLogger.warn('Email not sent during normal flow, attempting safety net', { email: data.email });
+      emailSent = await sendWelcomeEmailAndTrack(
+        userData.email,
+        userData.full_name,
+        userData.subscription_tier as 'free' | 'premium',
+        matchesCount,
+        supabase,
+        'safety net'
+      );
+    }
 
     return NextResponse.json({ 
       success: true, 
