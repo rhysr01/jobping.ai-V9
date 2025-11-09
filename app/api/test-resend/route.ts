@@ -150,7 +150,7 @@ export const GET = async (req: NextRequest) => {
     apiKeyFormat: apiKey.startsWith('re_') ? 'valid' : 'invalid',
     hasWhitespace: /\s/.test(apiKey),
     trimmedLength: apiKey.trim().length,
-    emailDomain: process.env.EMAIL_DOMAIN || 'getjobping.com',
+    emailDomain: (process.env.EMAIL_DOMAIN || 'getjobping.com').trim(),
     fromAddress: EMAIL_CONFIG.from,
     environment: process.env.NODE_ENV,
     vercelUrl: process.env.VERCEL_URL,
