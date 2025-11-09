@@ -21,7 +21,7 @@ export default function HowItWorks() {
     { 
       num: 3, 
       title: "Get your first matches within 48 hours", 
-      body: "Then receive 5 hand-picked roles every week (or 15/week with Premium). Each email takes 60 seconds to read.",
+      body: "Then receive 5 hand-picked jobs every week (or 15/week with Premium for €5/month). Each email takes 60 seconds to read.",
       icon: BrandIcons.Mail
     },
   ];

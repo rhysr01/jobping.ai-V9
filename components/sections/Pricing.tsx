@@ -46,17 +46,17 @@ export default function Pricing() {
                     <BrandIcons.Star className="w-3.5 h-3.5 text-zinc-500" />
                     Free Plan
                 </div>
-                  <div className="mt-2 text-3xl md:text-4xl font-black text-white leading-tight">10 roles on signup</div>
+                  <div className="mt-2 text-3xl md:text-4xl font-black text-white leading-tight">10 jobs on signup</div>
                   <div className="text-base font-semibold text-brand-400 mt-3 flex items-center gap-2">
                     <span className="text-zinc-500 font-normal">= </span>
-                    <span className="text-xl">30 jobs/month</span>
+                    <span className="text-xl">5 jobs/week (~20/month)</span>
                   </div>
               </div>
 
                 <ul className="text-body text-zinc-300 space-y-4 mb-8 flex-1">
                   <Feature>
                     <BrandIcons.Mail className="w-5 h-5 text-brand-400 flex-shrink-0" />
-                    Weekly email with 5 hand‑picked roles
+                    Weekly email with 5 hand‑picked jobs
                   </Feature>
                   <Feature>
                     <BrandIcons.Shield className="w-5 h-5 text-brand-400 flex-shrink-0" />
@@ -121,14 +121,20 @@ export default function Pricing() {
                     <BrandIcons.Star className="w-3.5 h-3.5 text-brand-400 fill-current" />
                     Premium Plan
                 </div>
-                  <div className="mt-2 text-3xl md:text-4xl font-black text-white leading-tight">10 roles on signup</div>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-3xl md:text-4xl font-black text-white leading-tight">10 jobs on signup</span>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className="text-2xl md:text-3xl font-black text-brand-400">{Copy.PREMIUM_PLAN_PRICE}</span>
+                    <span className="text-base font-semibold text-zinc-500">{Copy.PREMIUM_PLAN_PRICE_UNIT}</span>
+                  </div>
                   <div className="text-base font-semibold text-brand-400 mt-3 flex items-center gap-2">
                     <span className="text-zinc-500 font-normal">= </span>
-                    <span className="text-xl">70+ jobs/month</span>
+                    <span className="text-xl">15 jobs/week (~60/month)</span>
                   </div>
                   <div className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold">
                     <BrandIcons.TrendingUp className="w-3.5 h-3.5" />
-                    2.8× more than free
+                    3× more than free
                   </div>
               </div>
 

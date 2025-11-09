@@ -66,8 +66,8 @@ function SignupSuccessContent() {
                   <div className="text-zinc-400 text-sm">
                     You should receive an email with your first matches within the next few minutes. 
                     {tier === 'premium' 
-                      ? ' Premium users get up to 10 roles on signup.' 
-                      : ' Free users get up to 10 roles on signup.'}
+                      ? ' Premium users get up to 10 jobs on signup.' 
+                      : ' Free users get up to 10 jobs on signup.'}
                   </div>
                   <div className="mt-2 text-xs text-yellow-400 font-semibold">
                     💡 Check your spam/junk folder if you don't see it within 5 minutes!
@@ -91,11 +91,38 @@ function SignupSuccessContent() {
                 </div>
                 <div>
                   <div className="font-semibold text-white mb-1">Ongoing Updates</div>
-                   <div className="text-zinc-400 text-sm">Free: 5 new roles every week · Premium: 15 new roles every week (3× weekly)</div>
+                   <div className="text-zinc-400 text-sm">Free: 5 new jobs every week · Premium: 15 new jobs every week (3× weekly)</div>
                 </div>
               </div>
             </div>
           </div>
+
+          {tier === 'free' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="glass-card rounded-2xl p-8 sm:p-10 mb-8 bg-gradient-to-br from-brand-500/10 to-purple-600/10 border-2 border-brand-500/30"
+            >
+              <div className="text-center">
+                <h3 className="text-2xl md:text-3xl font-black text-white mb-3">
+                  Get More Matches for €5 Now
+                </h3>
+                <p className="text-zinc-300 text-lg mb-6">
+                  Upgrade to Premium and get <span className="text-brand-400 font-bold">15 jobs per week</span> instead of 5
+                </p>
+                <Link 
+                  href="/billing" 
+                  className="btn-primary inline-block px-8 py-4 text-lg font-bold"
+                >
+                  Upgrade to Premium - €5/month
+                </Link>
+                <p className="text-zinc-500 text-sm mt-4">
+                  Cancel anytime · No commitment
+                </p>
+              </div>
+            </motion.div>
+          )}
 
           <Link href="/" className="btn-outline inline-block">
             Back to Home

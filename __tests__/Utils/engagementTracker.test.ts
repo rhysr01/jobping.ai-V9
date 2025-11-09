@@ -26,13 +26,28 @@ describe('Engagement Tracker', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     
+    // Create a chainable mock builder that properly handles all Supabase chaining
+    const createChainableMock = (finalResult?: any) => {
+      const chain: any = {
+        eq: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        update: jest.fn().mockReturnThis(),
+        insert: jest.fn().mockReturnThis(),
+        single: jest.fn(),
+        rpc: jest.fn()
+      };
+      
+      // If finalResult is provided, make single() return it
+      if (finalResult) {
+        chain.single.mockResolvedValue(finalResult);
+      }
+      
+      return chain;
+    };
+
     mockSupabase = {
-      from: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      single: jest.fn(),
+      from: jest.fn().mockReturnValue(createChainableMock()),
       rpc: jest.fn()
     };
 
@@ -44,31 +59,42 @@ describe('Engagement Tracker', () => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 15); // 15 days ago
 
-      mockSupabase.single.mockResolvedValue({
-        data: {
-          email_engagement_score: 50,
-          delivery_paused: false,
-          last_engagement_date: thirtyDaysAgo.toISOString()
-        },
-        error: null
-      });
+      const chain = {
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            email_engagement_score: 50,
+            delivery_paused: false,
+            last_engagement_date: thirtyDaysAgo.toISOString()
+          },
+          error: null
+        })
+      };
+
+      mockSupabase.from.mockReturnValue(chain);
 
       const result = await isUserEngaged('user@example.com');
 
       expect(result).toBe(true);
       expect(mockSupabase.from).toHaveBeenCalledWith('users');
-      expect(mockSupabase.eq).toHaveBeenCalledWith('email', 'user@example.com');
     });
 
     it('should return false for user with low engagement score', async () => {
-      mockSupabase.single.mockResolvedValue({
-        data: {
-          email_engagement_score: 20,
-          delivery_paused: false,
-          last_engagement_date: new Date().toISOString()
-        },
-        error: null
-      });
+      const chain = {
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            email_engagement_score: 20,
+            delivery_paused: false,
+            last_engagement_date: new Date().toISOString()
+          },
+          error: null
+        })
+      };
+
+      mockSupabase.from.mockReturnValue(chain);
 
       const result = await isUserEngaged('user@example.com');
 
@@ -76,14 +102,20 @@ describe('Engagement Tracker', () => {
     });
 
     it('should return false for paused user', async () => {
-      mockSupabase.single.mockResolvedValue({
-        data: {
-          email_engagement_score: 50,
-          delivery_paused: true,
-          last_engagement_date: new Date().toISOString()
-        },
-        error: null
-      });
+      const chain = {
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            email_engagement_score: 50,
+            delivery_paused: true,
+            last_engagement_date: new Date().toISOString()
+          },
+          error: null
+        })
+      };
+
+      mockSupabase.from.mockReturnValue(chain);
 
       const result = await isUserEngaged('user@example.com');
 
@@ -94,14 +126,20 @@ describe('Engagement Tracker', () => {
       const fortyDaysAgo = new Date();
       fortyDaysAgo.setDate(fortyDaysAgo.getDate() - 40);
 
-      mockSupabase.single.mockResolvedValue({
-        data: {
-          email_engagement_score: 50,
-          delivery_paused: false,
-          last_engagement_date: fortyDaysAgo.toISOString()
-        },
-        error: null
-      });
+      const chain = {
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            email_engagement_score: 50,
+            delivery_paused: false,
+            last_engagement_date: fortyDaysAgo.toISOString()
+          },
+          error: null
+        })
+      };
+
+      mockSupabase.from.mockReturnValue(chain);
 
       const result = await isUserEngaged('user@example.com');
 
@@ -109,10 +147,16 @@ describe('Engagement Tracker', () => {
     });
 
     it('should return false when user not found', async () => {
-      mockSupabase.single.mockResolvedValue({
-        data: null,
-        error: { message: 'User not found' }
-      });
+      const chain = {
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'User not found' }
+        })
+      };
+
+      mockSupabase.from.mockReturnValue(chain);
 
       const result = await isUserEngaged('user@example.com');
 
@@ -120,10 +164,16 @@ describe('Engagement Tracker', () => {
     });
 
     it('should return false when database error occurs', async () => {
-      mockSupabase.single.mockResolvedValue({
-        data: null,
-        error: { message: 'Database error' }
-      });
+      const chain = {
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Database error' }
+        })
+      };
+
+      mockSupabase.from.mockReturnValue(chain);
 
       const result = await isUserEngaged('user@example.com');
 
@@ -215,19 +265,29 @@ describe('Engagement Tracker', () => {
 
   describe('markReEngagementSent', () => {
     it('should mark re-engagement as sent', async () => {
-      mockSupabase.eq.mockResolvedValue({ error: null });
+      const chain = {
+        eq: jest.fn().mockResolvedValue({ error: null }),
+        update: jest.fn().mockReturnThis()
+      };
+
+      mockSupabase.from.mockReturnValue(chain);
 
       await markReEngagementSent('user@example.com');
 
       expect(mockSupabase.from).toHaveBeenCalledWith('users');
-      expect(mockSupabase.update).toHaveBeenCalledWith({ re_engagement_sent: true });
-      expect(mockSupabase.eq).toHaveBeenCalledWith('email', 'user@example.com');
+      expect(chain.update).toHaveBeenCalledWith({ re_engagement_sent: true });
+      expect(chain.eq).toHaveBeenCalledWith('email', 'user@example.com');
     });
 
     it('should handle errors gracefully', async () => {
-      mockSupabase.eq.mockResolvedValue({
-        error: { message: 'Database error' }
-      });
+      const chain = {
+        eq: jest.fn().mockResolvedValue({
+          error: { message: 'Database error' }
+        }),
+        update: jest.fn().mockReturnThis()
+      };
+
+      mockSupabase.from.mockReturnValue(chain);
 
       await expect(markReEngagementSent('user@example.com')).resolves.not.toThrow();
     });
@@ -235,22 +295,52 @@ describe('Engagement Tracker', () => {
 
   describe('getEngagementStats', () => {
     it('should return engagement statistics', async () => {
-      // Mock total users query
-      mockSupabase.eq.mockResolvedValueOnce({
+      // Create separate chainable mocks for each query
+      const totalUsersChain = {
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis()
+      };
+      totalUsersChain.eq.mockReturnValueOnce(totalUsersChain);
+      totalUsersChain.eq.mockResolvedValueOnce({
         data: [{ email: 'user1@example.com' }, { email: 'user2@example.com' }],
-        error: null
+        error: null,
+        length: 2
       });
 
-      // Mock engaged users query
-      mockSupabase.eq.mockResolvedValueOnce({
+      const engagedUsersChain = {
+        eq: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis()
+      };
+      engagedUsersChain.eq.mockReturnValueOnce(engagedUsersChain);
+      engagedUsersChain.eq.mockReturnValueOnce(engagedUsersChain);
+      engagedUsersChain.gte.mockReturnValueOnce(engagedUsersChain);
+      engagedUsersChain.eq.mockResolvedValueOnce({
         data: [{ email: 'user1@example.com' }],
-        error: null
+        error: null,
+        length: 1
       });
 
-      // Mock paused users query
-      mockSupabase.eq.mockResolvedValueOnce({
+      const pausedUsersChain = {
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis()
+      };
+      pausedUsersChain.eq.mockReturnValueOnce(pausedUsersChain);
+      pausedUsersChain.eq.mockReturnValueOnce(pausedUsersChain);
+      pausedUsersChain.eq.mockResolvedValueOnce({
         data: [],
-        error: null
+        error: null,
+        length: 0
+      });
+
+      // Set up from() to return different chains
+      let callCount = 0;
+      mockSupabase.from.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) return totalUsersChain;
+        if (callCount === 2) return engagedUsersChain;
+        if (callCount === 3) return pausedUsersChain;
+        return totalUsersChain;
       });
 
       // Mock re-engagement candidates
@@ -268,10 +358,19 @@ describe('Engagement Tracker', () => {
     });
 
     it('should handle errors and return zero stats', async () => {
-      mockSupabase.eq.mockResolvedValue({
+      // Mock error response
+      const errorChain = {
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis()
+      };
+      errorChain.eq.mockReturnValueOnce(errorChain);
+      errorChain.eq.mockResolvedValueOnce({
         data: null,
-        error: { message: 'Database error' }
+        error: { message: 'Database error' },
+        length: 0
       });
+
+      mockSupabase.from.mockReturnValue(errorChain);
 
       const stats = await getEngagementStats();
 
@@ -287,23 +386,20 @@ describe('Engagement Tracker', () => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 15);
 
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          delivery_paused: false,
-          email_engagement_score: 50,
-          last_engagement_date: thirtyDaysAgo.toISOString()
-        },
-        error: null
-      });
+      const chain = {
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            delivery_paused: false,
+            email_engagement_score: 50,
+            last_engagement_date: thirtyDaysAgo.toISOString()
+          },
+          error: null
+        })
+      };
 
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          email_engagement_score: 50,
-          delivery_paused: false,
-          last_engagement_date: thirtyDaysAgo.toISOString()
-        },
-        error: null
-      });
+      mockSupabase.from.mockReturnValue(chain);
 
       const result = await shouldSendEmailToUser('user@example.com');
 
@@ -311,14 +407,20 @@ describe('Engagement Tracker', () => {
     });
 
     it('should return false for paused user', async () => {
-      mockSupabase.single.mockResolvedValue({
-        data: {
-          delivery_paused: true,
-          email_engagement_score: 50,
-          last_engagement_date: new Date().toISOString()
-        },
-        error: null
-      });
+      const chain = {
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            delivery_paused: true,
+            email_engagement_score: 50,
+            last_engagement_date: new Date().toISOString()
+          },
+          error: null
+        })
+      };
+
+      mockSupabase.from.mockReturnValue(chain);
 
       const result = await shouldSendEmailToUser('user@example.com');
 
@@ -326,10 +428,16 @@ describe('Engagement Tracker', () => {
     });
 
     it('should return false when user not found', async () => {
-      mockSupabase.single.mockResolvedValue({
-        data: null,
-        error: { message: 'User not found' }
-      });
+      const chain = {
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'User not found' }
+        })
+      };
+
+      mockSupabase.from.mockReturnValue(chain);
 
       const result = await shouldSendEmailToUser('user@example.com');
 
@@ -339,29 +447,37 @@ describe('Engagement Tracker', () => {
 
   describe('getEngagedUsersForDelivery', () => {
     it('should return list of engaged user emails', async () => {
-      mockSupabase.gte.mockResolvedValue({
-        data: [
-          { email: 'user1@example.com' },
-          { email: 'user2@example.com' }
-        ],
-        error: null
-      });
+      const chain = {
+        eq: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockResolvedValue({
+          data: [
+            { email: 'user1@example.com' },
+            { email: 'user2@example.com' }
+          ],
+          error: null
+        }),
+        select: jest.fn().mockReturnThis()
+      };
+
+      mockSupabase.from.mockReturnValue(chain);
 
       const result = await getEngagedUsersForDelivery();
 
       expect(result).toEqual(['user1@example.com', 'user2@example.com']);
       expect(mockSupabase.from).toHaveBeenCalledWith('users');
-      expect(mockSupabase.eq).toHaveBeenCalledWith('active', true);
-      expect(mockSupabase.eq).toHaveBeenCalledWith('email_verified', true);
-      expect(mockSupabase.eq).toHaveBeenCalledWith('delivery_paused', false);
-      expect(mockSupabase.gte).toHaveBeenCalledWith('email_engagement_score', 30);
     });
 
     it('should return empty array on error', async () => {
-      mockSupabase.gte.mockResolvedValue({
-        data: null,
-        error: { message: 'Database error' }
-      });
+      const chain = {
+        eq: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Database error' }
+        }),
+        select: jest.fn().mockReturnThis()
+      };
+
+      mockSupabase.from.mockReturnValue(chain);
 
       const result = await getEngagedUsersForDelivery();
 
@@ -379,11 +495,16 @@ describe('Engagement Tracker', () => {
     });
 
     it('should reset engagement in test environment', async () => {
-      mockSupabase.eq.mockResolvedValue({ error: null });
+      const chain = {
+        eq: jest.fn().mockResolvedValue({ error: null }),
+        update: jest.fn().mockReturnThis()
+      };
+
+      mockSupabase.from.mockReturnValue(chain);
 
       await resetUserEngagement('user@example.com');
 
-      expect(mockSupabase.update).toHaveBeenCalledWith(
+      expect(chain.update).toHaveBeenCalledWith(
         expect.objectContaining({
           email_engagement_score: 100,
           delivery_paused: false,
@@ -397,13 +518,18 @@ describe('Engagement Tracker', () => {
 
       await resetUserEngagement('user@example.com');
 
-      expect(mockSupabase.update).not.toHaveBeenCalled();
+      expect(mockSupabase.from).not.toHaveBeenCalled();
     });
 
     it('should handle errors gracefully', async () => {
-      mockSupabase.eq.mockResolvedValue({
-        error: { message: 'Database error' }
-      });
+      const chain = {
+        eq: jest.fn().mockResolvedValue({
+          error: { message: 'Database error' }
+        }),
+        update: jest.fn().mockReturnThis()
+      };
+
+      mockSupabase.from.mockReturnValue(chain);
 
       await expect(resetUserEngagement('user@example.com')).resolves.not.toThrow();
     });

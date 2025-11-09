@@ -72,7 +72,7 @@ export default function EmailPhoneShowcase() {
               <BrandIcons.Mail className="w-6 h-6 text-brand-400" />
             </IconBadge>
             <h3 className="text-white font-semibold mb-2">Weekly emails</h3>
-            <p className="text-body text-neutral-200 font-medium">5 hand-picked roles every week</p>
+            <p className="text-body text-neutral-200 font-medium">5 hand-picked jobs every week</p>
           </GlassCard>
           <GlassCard variant="subtle" hover="lift" className="p-8">
             <IconBadge className="mb-4">

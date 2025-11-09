@@ -5,7 +5,7 @@ export default function StructuredData() {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "JobPing",
-    "description": "No logins. Zero scrolling. Jobs in your inbox. Weekly matches for early-career roles across Europe.",
+    "description": "No logins. Zero scrolling. Jobs in your inbox. Weekly matches for early-career jobs across Europe.",
     "url": getBaseUrl(),
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Web",

@@ -3,6 +3,7 @@ import { getDatabaseClient } from '@/Utils/databasePool';
 import { Job as ScrapersJob } from '@/scrapers/types';
 import type { UserPreferences } from '@/Utils/matching/types';
 import { embeddingService } from './embedding.service';
+import { getDatabaseCategoriesForForm } from './categoryMapper';
 
 export interface SemanticJob extends ScrapersJob {
   semantic_score: number;
@@ -35,11 +36,19 @@ export class SemanticRetrievalService {
           ? [userPrefs.target_cities] 
           : null;
       
-      const careerPathFilter = Array.isArray(userPrefs.career_path)
-        ? userPrefs.career_path
-        : userPrefs.career_path
-          ? [userPrefs.career_path]
-          : null;
+      // CRITICAL: Map form career path values to database categories
+      // Form values: ['strategy', 'finance'] → DB categories: ['strategy-business-design', 'finance-investment']
+      let careerPathFilter: string[] | null = null;
+      if (userPrefs.career_path && userPrefs.career_path.length > 0) {
+        careerPathFilter = [];
+        userPrefs.career_path.forEach(formValue => {
+          // Map form value to database categories
+          const dbCategories = getDatabaseCategoriesForForm(formValue);
+          careerPathFilter!.push(...dbCategories);
+        });
+        // Remove duplicates
+        careerPathFilter = [...new Set(careerPathFilter)];
+      }
 
       // Convert embedding to Postgres array format for RPC call
       // Note: Supabase RPC expects the embedding as a string representation
@@ -50,7 +59,7 @@ export class SemanticRetrievalService {
           match_threshold: 0.65, // 65% similarity threshold (adjustable)
           match_count: limit,
           city_filter: cityFilter,
-          career_path_filter: careerPathFilter
+          career_path_filter: careerPathFilter // Now properly mapped to DB categories
         }
       );
 

@@ -9,6 +9,8 @@ import { BrandIcons } from "@/components/ui/BrandIcons";
 
 export default function Hero() {
   const [activeJobs, setActiveJobs] = useState("12,748");
+  const [internships, setInternships] = useState("");
+  const [graduates, setGraduates] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const prefersReduced = useReducedMotion();
 
@@ -22,6 +24,12 @@ export default function Hero() {
         const data = await response.json();
         if (data.activeJobsFormatted) {
           setActiveJobs(data.activeJobsFormatted);
+        }
+        if (data.internships) {
+          setInternships(data.internships.toLocaleString('en-US'));
+        }
+        if (data.graduates) {
+          setGraduates(data.graduates.toLocaleString('en-US'));
         }
       } catch (err) {
         console.error('Failed to fetch stats:', err);
@@ -91,15 +99,23 @@ export default function Hero() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
+            className="flex flex-col sm:flex-row items-center gap-3"
           >
             <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/15 backdrop-blur-sm px-5 py-2 text-small text-brand-200 shadow-[0_2px_8px_rgba(154,106,255,0.15)]">
               <BrandIcons.Target className="w-4 h-4 text-brand-400" />
               {isLoading ? (
                 <Skeleton className="h-4 w-32" />
               ) : (
-                <span className="font-medium">{`${activeJobs} active early-career roles · Updated daily`}</span>
+                <span className="font-medium">{`${activeJobs} active jobs`}</span>
               )}
             </div>
+            {!isLoading && (internships || graduates) && (
+              <div className="inline-flex items-center gap-2 rounded-full border border-zinc-700/50 bg-zinc-800/30 backdrop-blur-sm px-4 py-1.5 text-xs text-zinc-400">
+                {internships && <span>{internships} internships</span>}
+                {internships && graduates && <span>·</span>}
+                {graduates && <span>{graduates} graduate programs</span>}
+              </div>
+            )}
           </motion.div>
           
           {/* CTA Button */}
@@ -121,7 +137,7 @@ export default function Hero() {
               </span>
             </Button>
             <p className="mt-4 text-small text-zinc-400 text-center leading-relaxed">
-              Free · No spam · Unsubscribe anytime
+              Free forever · No spam · Cancel anytime · GDPR compliant
             </p>
           </motion.div>
         </div>

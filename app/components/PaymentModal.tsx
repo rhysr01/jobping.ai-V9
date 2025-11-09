@@ -228,6 +228,13 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
 
           <div className="surface-raised rounded-xl p-4">
             <h3 className="text-small font-medium text-neutral-300 mb-2">What you'll get:</h3>
+            <div className="mb-3 pb-3 border-b border-white/10">
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className="text-xl font-bold text-white">€5</span>
+                <span className="text-sm text-neutral-400">/month</span>
+              </div>
+              <p className="text-xs text-neutral-500">Cancel anytime</p>
+            </div>
             <ul className="text-small text-neutral-400 space-y-1">
               <li className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-white/80" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">

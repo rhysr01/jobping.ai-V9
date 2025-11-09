@@ -5,6 +5,7 @@ import { sendWelcomeEmail, sendMatchedJobsEmail } from '@/Utils/email/sender';
 import { apiLogger } from '@/lib/api-logger';
 import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilterJobs';
 import { getDatabaseCategoriesForForm } from '@/Utils/matching/categoryMapper';
+import { distributeJobsWithDiversity, getDistributionStats } from '@/Utils/matching/jobDistribution';
 
 // Helper function to safely send welcome email and update tracking
 async function sendWelcomeEmailAndTrack(
@@ -236,16 +237,42 @@ export async function POST(req: NextRequest) {
         console.log(`[SIGNUP] Matching complete: ${matchResult.matches?.length || 0} matches found`);
         
         if (matchResult.matches && matchResult.matches.length > 0) {
-          // Save matches
-          const matchesToSave = matchResult.matches.slice(0, 10).map(m => {
+          // Get matched jobs with full data
+          const matchedJobsRaw = matchResult.matches.map(m => {
             const job = preFilteredJobs.find(j => j.job_hash === m.job_hash);
-            return {
-              user_email: userData.email,
-              job_hash: m.job_hash,
+            return job ? {
+              ...job,
               match_score: m.match_score,
-              match_reason: m.match_reason || 'AI match',
-            };
-          }).filter(m => m.job_hash);
+              match_reason: m.match_reason,
+            } : null;
+          }).filter(j => j !== null);
+
+          // DISTRIBUTION: Ensure source diversity and city balance
+          const targetCount = Math.min(10, matchedJobsRaw.length);
+          const distributedJobs = distributeJobsWithDiversity(matchedJobsRaw as any[], {
+            targetCount,
+            targetCities: userData.target_cities || [],
+            maxPerSource: Math.ceil(targetCount / 3), // Max 1/3 from any source
+            ensureCityBalance: true
+          });
+
+          // Log distribution stats
+          const stats = getDistributionStats(distributedJobs);
+          apiLogger.info('Job distribution stats', { 
+            email: data.email,
+            sourceDistribution: stats.sourceDistribution,
+            cityDistribution: stats.cityDistribution,
+            totalJobs: stats.totalJobs
+          });
+          console.log(`[SIGNUP] Distribution: Sources=${JSON.stringify(stats.sourceDistribution)}, Cities=${JSON.stringify(stats.cityDistribution)}`);
+
+          // Save matches
+          const matchesToSave = distributedJobs.map(job => ({
+            user_email: userData.email,
+            job_hash: job.job_hash,
+            match_score: job.match_score || 85,
+            match_reason: job.match_reason || 'AI match',
+          })).filter(m => m.job_hash);
 
           const matchEntries = matchesToSave.map(match => ({
             user_email: match.user_email,
@@ -268,14 +295,7 @@ export async function POST(req: NextRequest) {
           try {
             apiLogger.info('Preparing to send matched jobs email', { email: data.email, matchesCount });
             console.log(`[SIGNUP] Preparing to send matched jobs email to ${data.email}`);
-            const matchedJobs = matchesToSave.map(m => {
-              const job = preFilteredJobs.find(j => j.job_hash === m.job_hash);
-              return {
-                ...job,
-                match_score: m.match_score,
-                match_reason: m.match_reason,
-              };
-            }).filter(j => j);
+            const matchedJobs = distributedJobs;
 
             await sendMatchedJobsEmail({
               to: userData.email,

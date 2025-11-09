@@ -60,7 +60,14 @@ function SignupForm() {
 
   const CITIES = ['Dublin', 'London', 'Paris', 'Amsterdam', 'Manchester', 'Birmingham', 'Madrid', 'Barcelona', 'Berlin', 'Hamburg', 'Munich', 'Zurich', 'Milan', 'Rome'];
   
-  const LANGUAGES = ['English', 'French', 'German', 'Italian', 'Dutch', 'Spanish', 'Arabic', 'Portuguese'];
+  const LANGUAGES = [
+    // Most common EU languages
+    'English', 'French', 'German', 'Spanish', 'Italian', 'Dutch', 'Portuguese',
+    // Additional EU languages
+    'Polish', 'Swedish', 'Danish', 'Finnish', 'Czech', 'Romanian', 'Hungarian', 'Greek',
+    // Other common languages
+    'Arabic'
+  ];
   
   // NEW CONSTANTS FOR BETTER MATCHING
   const INDUSTRIES = [
@@ -295,7 +302,7 @@ function SignupForm() {
               animate={{ opacity: 1, scale: 1 }}
               className="inline-block bg-gradient-to-r from-brand-500 to-purple-600 text-white px-6 py-2 rounded-full font-bold text-sm mb-2 shadow-glow-subtle"
             >
-               Premium Plan Selected - 10 roles on signup + 15 roles per week (3× weekly)
+               Premium Plan Selected - €5/month - 10 jobs on signup + 15 jobs per week (3× weekly)
             </motion.div>
           )}
           <motion.div
@@ -450,6 +457,7 @@ function SignupForm() {
                   <label className="block text-base font-bold text-white mb-3">
                     Preferred Cities * <span className="text-zinc-500 font-normal">(Select up to 3)</span>
                   </label>
+                  <p className="text-sm text-zinc-400 mb-3">Choose up to 3 cities where you'd like to work</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                     {CITIES.map(city => (
                       <motion.button
@@ -471,6 +479,7 @@ function SignupForm() {
                             : 'border-zinc-700 bg-zinc-900/40 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-900/60'
                         }`}
                         aria-pressed={formData.cities.includes(city)}
+                        disabled={formData.cities.length >= 3 && !formData.cities.includes(city)}
                       >
                         {city}
                       </motion.button>
@@ -484,6 +493,9 @@ function SignupForm() {
                   </div>
                   {formData.cities.length === 0 && step === 1 && (
                     <FormFieldError error="Please select at least one city" />
+                  )}
+                  {formData.cities.length >= 3 && (
+                    <p className="text-xs text-amber-400 mt-1">Maximum 3 cities selected. Deselect one to choose another.</p>
                   )}
                 </div>
 
@@ -624,14 +636,18 @@ function SignupForm() {
 
                 <div>
                   <label className="block text-base font-bold text-white mb-3">Work Authorization *</label>
+                  <p className="text-sm text-zinc-400 mb-3">Select your work authorization status in the EU/UK</p>
                   <div className="space-y-2">
                     {[
                       'EU citizen',
+                      'EEA citizen (Iceland, Liechtenstein, Norway)',
+                      'Swiss citizen',
                       'UK citizen',
                       'Dual EU & UK citizenship',
+                      'Student Visa (EU)',
+                      'Student Visa (Non-EU)',
                       'Non-EU (require sponsorship)',
-                      'Non-UK (require sponsorship)',
-                      'Student Visa'
+                      'Non-UK (require sponsorship)'
                     ].map(visa => (
                       <motion.button
                         key={visa}
@@ -653,8 +669,9 @@ function SignupForm() {
 
                 <div>
                   <label className="block text-base font-bold text-white mb-3">Entry Level Preference *</label>
+                  <p className="text-sm text-zinc-400 mb-3">What type of roles are you looking for?</p>
                   <div className="grid grid-cols-2 gap-3">
-                    {['Internship', 'Graduate Programmes', 'Entry Level', 'Not sure yet'].map(pref => (
+                    {['Internship', 'Graduate Programmes', 'Entry Level', 'Working Student', 'Not sure yet'].map(pref => (
                       <motion.button
                         key={pref}
                         type="button"

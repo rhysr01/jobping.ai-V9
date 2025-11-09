@@ -5,14 +5,14 @@ import FAQSchema from "@/components/FAQSchema";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
-  title: "JobPing → Five roles. Zero scrolling.",
+  title: "JobPing → Five jobs. Zero scrolling.",
   description:
-    "Weekly job matches for early-career roles across Europe  delivered to your inbox. 5 hand-picked roles per email. No dashboards. No scrolling marathons.",
+    "Weekly job matches for early-career jobs across Europe delivered to your inbox. 5 hand-picked jobs per email. No dashboards. No scrolling marathons.",
   keywords: [
     "graduate jobs",
     "internships Europe",
     "entry level jobs",
-    "junior roles",
+    "junior jobs",
     "graduate scheme",
     "trainee program",
     "job matching",
@@ -20,7 +20,14 @@ export const metadata: Metadata = {
     "London jobs",
     "Berlin jobs",
     "Paris jobs",
-    "Madrid jobs"
+    "Madrid jobs",
+    "Dublin jobs",
+    "Amsterdam jobs",
+    "early career jobs",
+    "graduate opportunities",
+    "internship opportunities",
+    "job alerts",
+    "job matching service"
   ],
   authors: [{ name: "JobPing" }],
   creator: "JobPing",
@@ -37,19 +44,28 @@ export const metadata: Metadata = {
     }
   },
   openGraph: {
-    title: "JobPing → Five roles. Zero scrolling.",
+    title: "JobPing → Five jobs. Zero scrolling.",
     description:
-      "Weekly job matches for early-career roles across Europe  delivered to your inbox. Hand-picked quality, zero noise.",
+      "Weekly job matches for early-career jobs across Europe delivered to your inbox. Hand-picked quality, zero noise.",
     url: "https://getjobping.com",
     siteName: "JobPing",
     locale: "en_US",
     type: "website",
+    images: [
+      {
+        url: "https://getjobping.com/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "JobPing - AI-powered job matching for early-career jobs in Europe",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
-    title: "JobPing → Five roles. Zero scrolling.",
-    description: "Weekly job matches for early-career roles across Europe.",
+    card: "summary_large_image",
+    title: "JobPing → Five jobs. Zero scrolling.",
+    description: "Weekly job matches for early-career jobs across Europe.",
     creator: "@jobping",
+    images: ["https://getjobping.com/og-image.png"],
   },
   metadataBase: new URL("https://getjobping.com"),
   alternates: {

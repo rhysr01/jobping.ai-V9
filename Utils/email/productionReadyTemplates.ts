@@ -150,10 +150,10 @@ export function createWelcomeEmail(userName?: string, matchCount: number = 5): s
   const body = `
   <tr>
     <td class="content" align="center">
-      <div class="pill">${matchCount} hand‑picked roles waiting for you! 🎯</div>
+      <div class="pill">${matchCount} hand‑picked jobs waiting for you! 🎯</div>
       <h1 class="title">Welcome${name}!<br />We're excited to have you! 🚀</h1>
       <p class="text">We're <span style="color:#8B5CF6; font-weight:600;">thrilled you're here</span> and can't wait to help you find your next amazing role!</p>
-      <p class="text">We'll send you roles you can actually get — not a job board dump. <span style="color:#8B5CF6; font-weight:600;">We're excited to share</span> your first set within 48 hours. Then we keep them coming weekly.</p>
+      <p class="text">We'll send you jobs you can actually get — not a job board dump. <span style="color:#8B5CF6; font-weight:600;">We're excited to share</span> your first set within 48 hours. Then we keep them coming weekly.</p>
       ${vmlButton(getBaseUrl(), 'Show me my matches! ✨', COLORS.indigo, COLORS.purple)}
       <p class="text" style="color:${COLORS.gray500}; font-size:14px; margin-top:28px;">Changed your mind? Update preferences anytime from any email — no hard feelings! 💙</p>
     </td>
@@ -173,7 +173,7 @@ export function createJobMatchesEmail(
     <td class="content" align="left">
       ${subscriptionTier === 'premium' ? '<div class="badge" style="margin-bottom:24px;">⭐ Premium Member</div>' : ''}
       <h1 class="title">${title}</h1>
-      <p class="text">${userName ? `${userName}, ` : ''}we're <span style="color:#8B5CF6; font-weight:600;">thrilled to share</span> these hand-picked roles with you! Each one has been carefully selected for your preferences.</p>
+      <p class="text">${userName ? `${userName}, ` : ''}we're <span style="color:#8B5CF6; font-weight:600;">thrilled to share</span> these hand-picked jobs with you! Each one has been carefully selected for your preferences.</p>
     </td>
   </tr>`;
 
@@ -198,6 +198,24 @@ export function createJobMatchesEmail(
 
   // Premium feedback section - ONLY at the end, after all jobs
   const userEmail = (jobCards[0] as any)?.job?.user_email || '';
+  const upgradeCta = subscriptionTier === 'free' ? `
+  <tr>
+    <td class="content" align="center" style="padding-top:32px;">
+      <div style="background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.1)); border:2px solid rgba(99,102,241,0.3); border-radius:16px; padding:36px 28px; margin-top:12px;">
+        <h3 style="color:${COLORS.white}; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; font-size:24px; font-weight:700; margin:0 0 12px 0; letter-spacing:-0.3px;">
+          Get More Matches for €5 Now
+        </h3>
+        <p class="text" style="margin-bottom:24px; color:${COLORS.gray300}; font-size:16px; line-height:1.6;">
+          Upgrade to Premium and get <span style="color:#8B5CF6; font-weight:600;">15 jobs per week</span> instead of 5. Cancel anytime.
+        </p>
+        ${vmlButton(`${getBaseUrl()}/billing`, 'Upgrade to Premium - €5/month', COLORS.purple, COLORS.indigo)}
+        <p style="color:${COLORS.gray500}; font-size:12px; margin:16px 0 0 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; line-height:1.5;">
+          No commitment · Cancel anytime
+        </p>
+      </div>
+    </td>
+  </tr>` : '';
+  
   const feedback = `
   <tr>
     <td class="content" align="center" style="padding-top:40px;">
@@ -238,5 +256,5 @@ export function createJobMatchesEmail(
     </td>
   </tr>`;
 
-  return wrapEmail('Your Job Matches', header + items + feedback);
+  return wrapEmail('Your Job Matches', header + items + upgradeCta + feedback);
 }

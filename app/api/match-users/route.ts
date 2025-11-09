@@ -17,11 +17,12 @@ import {
   MATCH_RULES
 } from '@/Utils/sendConfiguration';
 import { Job as ScrapersJob } from '@/scrapers/types';
-import { getCategoryPriorityScore, jobMatchesUserCategories, WORK_TYPE_CATEGORIES, mapFormLabelToDatabase, getStudentSatisfactionScore } from '@/Utils/matching/categoryMapper';
+import { getCategoryPriorityScore, jobMatchesUserCategories, WORK_TYPE_CATEGORIES, mapFormLabelToDatabase, getStudentSatisfactionScore, getDatabaseCategoriesForForm } from '@/Utils/matching/categoryMapper';
 import { semanticRetrievalService } from '@/Utils/matching/semanticRetrieval';
 import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilterJobs';
 import { integratedMatchingService } from '@/Utils/matching/integrated-matching.service';
 import { batchMatchingProcessor } from '@/Utils/matching/batch-processor.service';
+import { distributeJobsWithDiversity, getDistributionStats } from '@/Utils/matching/jobDistribution';
 import { z } from 'zod';
 
 // Zod validation schemas
@@ -565,16 +566,23 @@ const matchUsersHandler = async (req: NextRequest) => {
     });
 
     // Transform user data to match expected format
+    // CRITICAL: Include ALL user preferences from signup form (target_cities, roles_selected, etc.)
     const transformedUsers = users.map(user => ({
       id: user.id,
       email: user.email,
       full_name: user.full_name,
       preferences: {
         email: user.email,
+        // CRITICAL FIELDS FROM SIGNUP FORM - these were missing!
+        target_cities: Array.isArray(user.target_cities) ? user.target_cities : (user.target_cities ? [user.target_cities] : []),
+        roles_selected: Array.isArray(user.roles_selected) ? user.roles_selected : (user.roles_selected ? [user.roles_selected] : []),
+        languages_spoken: Array.isArray(user.languages_spoken) ? user.languages_spoken : (user.languages_spoken ? [user.languages_spoken] : []),
         career_path: user.career_path ? [user.career_path] : [],
         work_environment: user.work_environment as 'remote' | 'hybrid' | 'on-site' | 'unclear' | undefined,
         entry_level_preference: user.entry_level_preference || 'entry',
         company_types: user.company_types || [],
+        professional_expertise: user.professional_expertise || user.career_path || undefined,
+        // Legacy fields (kept for compatibility)
         location_preference: 'any',
         salary_expectations: 'any',
         remote_preference: 'any',
@@ -599,15 +607,17 @@ const matchUsersHandler = async (req: NextRequest) => {
 
     let jobs: any[] = [];
 
-    if (isSemanticAvailable) {
-      // Use semantic retrieval for better job matching
-      apiLogger.info('Using semantic retrieval for job matching');
+    // NOTE: Semantic search is disabled for batch processing because it requires per-user queries
+    // Instead, we use keyword-based search and let preFilterJobs handle filtering
+    // This is more efficient for batch processing multiple users
+    if (false && isSemanticAvailable && transformedUsers.length === 1) {
+      // Only use semantic search for single-user requests (not batch)
+      apiLogger.info('Using semantic retrieval for single-user matching');
       
-      // Get semantic candidates for each user (we'll use the first user's preferences as a sample)
-      const sampleUser = transformedUsers[0];
-      if (sampleUser) {
+      const user = transformedUsers[0];
+      if (user) {
         const semanticJobs = await semanticRetrievalService.getSemanticCandidates(
-          sampleUser.preferences as UserPreferences,
+          user.preferences as UserPreferences,
           200 // Get top 200 semantic matches
         );
         
@@ -620,34 +630,51 @@ const matchUsersHandler = async (req: NextRequest) => {
 
     // Fallback to traditional keyword-based search if semantic search fails or returns no results
     if (jobs.length === 0) {
-      apiLogger.info('Falling back to keyword-based job search');
+      apiLogger.info('Using optimized database filtering for job search');
       
-      // EU location hints for filtering
-      const EU_HINTS = [
-        "UK","United Kingdom","Ireland","Germany","France","Spain","Portugal","Italy",
-        "Netherlands","Belgium","Luxembourg","Denmark","Sweden","Norway","Finland",
-        "Iceland","Poland","Czech","Austria","Switzerland","Hungary","Greece",
-        "Romania","Bulgaria","Croatia","Slovenia","Slovakia","Estonia","Latvia",
-        "Lithuania","Amsterdam","Rotterdam","Eindhoven","London","Dublin","Paris",
-        "Berlin","Munich","Frankfurt","Zurich","Stockholm","Copenhagen","Oslo",
-        "Helsinki","Madrid","Barcelona","Lisbon","Milan","Rome","Athens","Warsaw",
-        "Prague","Vienna","Budapest","Bucharest","Tallinn","Riga","Vilnius",
-        "Brussels","Luxembourg City"
-      ];
-
-      // Early career keywords for filtering
-      const EARLY_CAREER_KEYWORDS = [
-        "graduate","new grad","entry level","intern","internship","apprentice",
-        "early career","junior","campus","working student","associate","assistant"
-      ];
-
-      const { data: jobsData, error: jobsError } = await supabase
+      // OPTIMIZATION: Collect all unique cities and career paths from users
+      // Then fetch jobs matching ANY of these combinations at database level
+      // This reduces data transfer significantly (e.g., 1200 → 200 jobs)
+      const allCities = new Set<string>();
+      const allCareerPaths = new Set<string>();
+      
+      transformedUsers.forEach(user => {
+        if (user.preferences.target_cities) {
+          user.preferences.target_cities.forEach(city => allCities.add(city));
+        }
+        if (user.preferences.career_path) {
+          user.preferences.career_path.forEach(path => {
+            // Map form value to database category
+            const dbCategories = getDatabaseCategoriesForForm(path);
+            dbCategories.forEach(cat => allCareerPaths.add(cat));
+          });
+        }
+      });
+      
+      // Build optimized query using database indexes
+      let query = supabase
         .from('jobs')
-        .select('job_hash, title, company, location, description, source, created_at, original_posted_date, last_seen_at, status, job_url, is_active, is_graduate, is_internship, career_path, target_cities, skills')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(jobCap);
-
+        .select('job_hash, title, company, location, description, source, created_at, original_posted_date, last_seen_at, status, job_url, is_active, is_graduate, is_internship, categories, city, country, skills')
+        .eq('is_active', true);
+      
+      // OPTIMIZATION: Filter by cities at database level (uses idx_jobs_city index)
+      if (allCities.size > 0 && allCities.size <= 50) { // Only if reasonable number of cities
+        const citiesArray = Array.from(allCities);
+        query = query.in('city', citiesArray);
+        apiLogger.debug(`Filtering by ${citiesArray.length} cities at DB level`, { cities: citiesArray.slice(0, 5) });
+      }
+      
+      // OPTIMIZATION: Filter by categories at database level (uses idx_jobs_categories GIN index)
+      if (allCareerPaths.size > 0 && allCareerPaths.size <= 20) { // Only if reasonable number of categories
+        const categoriesArray = Array.from(allCareerPaths);
+        query = query.overlaps('categories', categoriesArray);
+        apiLogger.debug(`Filtering by ${categoriesArray.length} categories at DB level`, { categories: categoriesArray.slice(0, 5) });
+      }
+      
+      query = query.order('created_at', { ascending: false }).limit(jobCap);
+      
+      const { data: jobsData, error: jobsError } = await query;
+      
       if (jobsError) {
         apiLogger.error('Failed to fetch jobs', jobsError as Error, { userCap, jobCap });
         return NextResponse.json({ 
@@ -658,6 +685,11 @@ const matchUsersHandler = async (req: NextRequest) => {
       }
 
       jobs = jobsData || [];
+      apiLogger.info(`Fetched ${jobs.length} jobs using optimized database filtering`, { 
+        citiesFiltered: allCities.size,
+        categoriesFiltered: allCareerPaths.size,
+        jobsReturned: jobs.length
+      });
     }
 
     const jobFetchTime = Date.now() - jobFetchStart;
@@ -890,6 +922,49 @@ const matchUsersHandler = async (req: NextRequest) => {
         
         const aiMatchingTime = Date.now() - aiMatchingStart;
         totalAIProcessingTime += aiMatchingTime;
+
+        // DISTRIBUTION: Ensure source diversity and city balance AFTER AI matching
+        if (matches && matches.length > 0) {
+          // Get full job data for matched jobs
+          const matchedJobsRaw = matches.map(m => {
+            const job = distributedJobs.find(j => j.job_hash === m.job_hash);
+            return job ? {
+              ...job,
+              match_score: m.match_score,
+              match_reason: m.match_reason,
+            } : null;
+          }).filter(j => j !== null);
+
+          // Get user's target cities
+          const targetCities = user.preferences.target_cities || [];
+          const targetCount = Math.min(5, matchedJobsRaw.length); // Standard is 5 jobs per email
+
+          // Apply distribution
+          const distributedMatchedJobs = distributeJobsWithDiversity(matchedJobsRaw as any[], {
+            targetCount,
+            targetCities,
+            maxPerSource: Math.ceil(targetCount / 3), // Max 1/3 from any source
+            ensureCityBalance: true
+          });
+
+          // Log distribution stats
+          const stats = getDistributionStats(distributedMatchedJobs);
+          apiLogger.info('Job distribution stats after AI matching', { 
+            email: user.email,
+            sourceDistribution: stats.sourceDistribution,
+            cityDistribution: stats.cityDistribution,
+            totalJobs: stats.totalJobs
+          });
+
+          // Rebuild matches array with distributed jobs
+          matches = distributedMatchedJobs.map((job, idx) => ({
+            job_index: idx + 1,
+            job_hash: job.job_hash,
+            match_score: job.match_score || 85,
+            match_reason: job.match_reason || 'AI match',
+            confidence_score: 0.85
+          }));
+        }
 
         // Update performance metrics with actual timing
         performanceTracker.getMetrics = () => ({

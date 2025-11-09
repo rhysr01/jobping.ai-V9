@@ -310,19 +310,27 @@ export class ConsolidatedMatchingEngine {
     try {
       const aiMatches = await this.performAIMatchingWithRetry(jobs, userPrefs);
       if (aiMatches && aiMatches.length > 0) {
-        // Cache successful AI matches
-        await this.matchCache.set(cacheKey, aiMatches);
-        this.circuitBreaker.recordSuccess();
+        // CRITICAL: Post-filter AI matches to ensure they meet location/career requirements
+        const validatedMatches = this.validateAIMatches(aiMatches, jobs, userPrefs);
         
-        // Update cost tracking
-        this.updateCostTracking('gpt4omini', 1, 0.01); // Estimate cost
-        
-        return {
-          matches: aiMatches,
-          method: 'ai_success',
-          processingTime: Date.now() - startTime,
-          confidence: 0.9
-        };
+        if (validatedMatches.length === 0) {
+          // If all AI matches were filtered out, fall back to rules
+          console.warn('All AI matches failed validation, falling back to rules');
+        } else {
+          // Cache successful AI matches
+          await this.matchCache.set(cacheKey, validatedMatches);
+          this.circuitBreaker.recordSuccess();
+          
+          // Update cost tracking
+          this.updateCostTracking('gpt4omini', 1, 0.01); // Estimate cost
+          
+          return {
+            matches: validatedMatches,
+            method: 'ai_success',
+            processingTime: Date.now() - startTime,
+            confidence: 0.9
+          };
+        }
       }
     } catch (error) {
       this.circuitBreaker.recordFailure();
@@ -572,25 +580,38 @@ ${workEnv ? `- Work Environment Preference: ${workEnv}` : ''}
 AVAILABLE JOBS:
 ${jobList}
 
+CRITICAL REQUIREMENTS (MUST BE MET):
+1. **LOCATION MATCH IS REQUIRED**: Jobs MUST be in one of these cities: ${userCities}
+   - Exact city match required (e.g., "London" matches "London, UK" but NOT "New London")
+   - Remote/hybrid jobs are acceptable if location preference allows
+   - DO NOT recommend jobs in other cities, even if they seem relevant
+${careerPaths ? `2. **CAREER PATH MATCH IS REQUIRED**: Jobs MUST align with: ${careerPaths}
+   - Job title or description must relate to these career paths
+   - DO NOT recommend jobs outside these career paths` : ''}
+${roles ? `3. **ROLE MATCH IS REQUIRED**: Jobs MUST match these roles: ${roles}
+   - Job title or description must include these role keywords
+   - DO NOT recommend jobs that don't match these roles` : ''}
+
 INSTRUCTIONS:
-Analyze each job carefully and return the top 5 best matches for this user.
-Consider:
-1. Location match (exact city or remote options)
+Analyze each job carefully and return ONLY jobs that meet ALL critical requirements above.
+Then rank by:
+1. Location match quality (exact city > remote/hybrid)
 2. Experience level fit (entry-level, graduate, junior keywords)
-3. Role alignment with career path and expertise
+3. Role alignment strength with career path and expertise
 4. Language requirements (if specified)
 5. Company type and culture fit
 
-Return JSON array with exactly 5 matches, ranked by relevance:
+Return JSON array with exactly 5 matches (or fewer if less than 5 meet requirements), ranked by relevance:
 [{"job_index":1,"job_hash":"actual-hash","match_score":85,"match_reason":"Specific reason why this matches user profile"}]
 
 Requirements:
 - job_index: Must be 1-${jobsToAnalyze.length}
 - job_hash: Must match the hash from the job list above
 - match_score: 50-100 (be selective, only recommend truly relevant jobs)
-- match_reason: Brief, specific explanation of why this job fits the user
+- match_reason: Brief, specific explanation of why this job fits the user (must mention location AND career/role match)
 - Return exactly 5 matches (or fewer if less than 5 good matches exist)
-- Valid JSON array only, no markdown or extra text`;
+- Valid JSON array only, no markdown or extra text
+- DO NOT include jobs that don't match the required location or career path`;
   }
 
   /**
@@ -676,6 +697,116 @@ Requirements:
       match.match_score <= 100 &&
       match.job_hash.length > 0
     );
+  }
+
+  /**
+   * Post-filter AI matches to ensure they meet location and career path requirements
+   * This is a safety net to catch any AI mistakes
+   */
+  private validateAIMatches(
+    aiMatches: JobMatch[],
+    jobs: Job[],
+    userPrefs: UserPreferences
+  ): JobMatch[] {
+    const targetCities = Array.isArray(userPrefs.target_cities) 
+      ? userPrefs.target_cities 
+      : userPrefs.target_cities 
+        ? [userPrefs.target_cities] 
+        : [];
+    
+    const userHasRolePreference = userPrefs.roles_selected && userPrefs.roles_selected.length > 0;
+    const userHasCareerPreference = userPrefs.career_path && 
+      (Array.isArray(userPrefs.career_path) ? userPrefs.career_path.length > 0 : !!userPrefs.career_path);
+    
+    return aiMatches.filter(match => {
+      // Find the job by hash
+      const job = jobs.find(j => j.job_hash === match.job_hash);
+      if (!job) {
+        console.warn(`Job not found for hash: ${match.job_hash}`);
+        return false;
+      }
+      
+      // Validate location match
+      if (targetCities.length > 0) {
+        const jobLocation = (job.location || '').toLowerCase();
+        const jobCity = (job as any).city ? String((job as any).city).toLowerCase() : '';
+        
+        const locationMatches = targetCities.some(city => {
+          const cityLower = city.toLowerCase();
+          
+          // Check structured city field first
+          if (jobCity && (jobCity === cityLower || jobCity.includes(cityLower) || cityLower.includes(jobCity))) {
+            return true;
+          }
+          
+          // Use word boundary matching
+          const escapedCity = cityLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const patterns = [
+            new RegExp(`\\b${escapedCity}\\b`, 'i'),
+            new RegExp(`^${escapedCity}[,\\s]`, 'i'),
+            new RegExp(`[,\\s]${escapedCity}[,\\s]`, 'i'),
+            new RegExp(`[,\\s]${escapedCity}$`, 'i'),
+          ];
+          
+          if (patterns.some(pattern => pattern.test(jobLocation))) {
+            return true;
+          }
+          
+          // Allow remote/hybrid
+          if (jobLocation.includes('remote') || jobLocation.includes('hybrid')) {
+            return true;
+          }
+          
+          return false;
+        });
+        
+        if (!locationMatches) {
+          console.warn(`Location mismatch: job location "${job.location}" doesn't match user cities: ${targetCities.join(', ')}`);
+          return false;
+        }
+      }
+      
+      // Validate role match if user specified roles
+      if (userHasRolePreference) {
+        const jobTitle = (job.title || '').toLowerCase();
+        const jobDesc = (job.description || '').toLowerCase();
+        const roles = userPrefs.roles_selected || [];
+        
+        const hasRoleMatch = roles.some(role => 
+          role && (jobTitle.includes(role.toLowerCase()) || jobDesc.includes(role.toLowerCase()))
+        );
+        
+        if (!hasRoleMatch) {
+          console.warn(`Role mismatch: job "${job.title}" doesn't match user roles: ${roles.join(', ')}`);
+          return false;
+        }
+      }
+      
+      // Validate career path match if user specified career path
+      if (userHasCareerPreference) {
+        const jobTitle = (job.title || '').toLowerCase();
+        const jobDesc = (job.description || '').toLowerCase();
+        const careerPaths = Array.isArray(userPrefs.career_path) ? userPrefs.career_path : [userPrefs.career_path];
+        
+        const hasCareerMatch = careerPaths.some(path => {
+          if (!path) return false;
+          const pathLower = path.toLowerCase();
+          return jobTitle.includes(pathLower) || 
+                 jobDesc.includes(pathLower) ||
+                 ((job.categories && Array.isArray(job.categories) && 
+                   job.categories.some((cat: string) => 
+                     cat.toLowerCase().includes(pathLower) || pathLower.includes(cat.toLowerCase())
+                   )));
+        });
+        
+        if (!hasCareerMatch) {
+          console.warn(`Career path mismatch: job "${job.title}" doesn't match user career paths: ${careerPaths.join(', ')}`);
+          return false;
+        }
+      }
+      
+      return true;
+    });
   }
 
   /**
