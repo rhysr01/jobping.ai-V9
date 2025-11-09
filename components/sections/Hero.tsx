@@ -58,6 +58,23 @@ export default function Hero() {
       </div>
 
       <div className="container-page container-rhythm relative z-10 mx-auto flex max-w-5xl flex-col items-center gap-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <motion.div
+            className="inline-flex items-center justify-center gap-4 rounded-full bg-white/5 px-6 py-3 shadow-[0_14px_40px_rgba(18,0,42,0.35)] backdrop-blur-sm"
+            whileHover={prefersReduced ? {} : { scale: 1.02 }}
+          >
+            <BrandIcons.GraduationCap className="h-12 w-12 text-white sm:h-14 sm:w-14" />
+            <span className="text-5xl font-semibold tracking-tight text-white sm:text-6xl md:text-7xl">
+              JobPing
+            </span>
+          </motion.div>
+        </motion.div>
+
         <motion.span
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
