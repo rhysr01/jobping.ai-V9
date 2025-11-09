@@ -66,7 +66,7 @@ export const PREMIUM_PLAN_PRICE_UNIT = "/mo";
 export const PREMIUM_PLAN_ANNUAL = "€20 for 3 months (save €1)";
 export const PREMIUM_PLAN_FEATURES = [
   "10 matches on signup",
-  "60+ jobs per month (3x per week)",
+  "70+ jobs per month (3x per week)",
   "24-hour early access to fresh roles",
   "Hot match alerts (2/week for urgent roles)",
   "Advanced filters and preferences",

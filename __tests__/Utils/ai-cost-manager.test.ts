@@ -190,19 +190,21 @@ describe('AICostManager', () => {
     });
 
     it('should record different AI models', async () => {
+      mockSupabaseClient.gte.mockResolvedValue({ data: [], error: null });
       mockSupabaseClient.insert.mockResolvedValue({ error: null });
 
-      await costManager.recordAICall('user123', 0.01, 0.05);
-      await costManager.recordAICall('user123', 'gpt-4o', 0.15);
+      await costManager.recordAICall('user123', 'gpt-3.5-turbo', 0.01, 100);
+      await costManager.recordAICall('user123', 'gpt-4', 0.15, 200);
 
       expect(mockSupabaseClient.insert).toHaveBeenCalledTimes(2);
     });
 
     it('should record different costs', async () => {
+      mockSupabaseClient.gte.mockResolvedValue({ data: [], error: null });
       mockSupabaseClient.insert.mockResolvedValue({ error: null });
 
-      await costManager.recordAICall('user123', 0.01, 0.01);
-      await costManager.recordAICall('user123', 0.01, 0.10);
+      await costManager.recordAICall('user123', 'gpt-3.5-turbo', 0.01, 100);
+      await costManager.recordAICall('user123', 'gpt-3.5-turbo', 0.10, 200);
 
       expect(mockSupabaseClient.insert).toHaveBeenCalledTimes(2);
     });
