@@ -12,9 +12,9 @@ export default function EmailPhoneShowcase() {
   const pointIcons = [BrandIcons.Check, BrandIcons.Shield, BrandIcons.Mail];
 
   return (
-    <section className="section-padding relative overflow-hidden">
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[620px] w-[620px] rounded-full bg-brand-500/12 blur-3xl" />
+    <section className="section-padding relative overflow-hidden bg-gradient-to-br from-[#080014] via-[#0a001a] to-[#1a0030]">
+      <div className="absolute inset-0 -z-10 opacity-80">
+        <div className="absolute left-1/2 top-1/2 h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/14 blur-[140px]" />
       </div>
 
       <div className="container-page container-rhythm">
@@ -62,18 +62,19 @@ export default function EmailPhoneShowcase() {
                 prefersReduced
                   ? {}
                   : {
-                      y: [0, -12, 0],
+                      y: [-2, 2, -2],
+                      rotate: [-1.2, 1.2, -1.2],
                     }
               }
               transition={{
-                duration: 6,
+                duration: 7,
                 repeat: prefersReduced ? 0 : Infinity,
                 ease: "easeInOut",
               }}
               className="relative"
             >
               <div className="absolute inset-0 -z-10 translate-y-8">
-                <div className="h-full w-full scale-110 rounded-full bg-brand-500/18 blur-3xl" />
+                <div className="h-full w-full scale-110 rounded-full bg-black/40 blur-[120px]" />
               </div>
               <DeviceFrame>
                 <SampleInterviewEmail />

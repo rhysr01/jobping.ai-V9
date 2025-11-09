@@ -7,19 +7,19 @@ import { BrandIcons } from '@/components/ui/BrandIcons';
 
 export default function StickyMobileCTA() {
   const [isVisible, setIsVisible] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isUnderLarge, setIsUnderLarge] = useState(false);
 
   useEffect(() => {
     // Check if mobile on mount and resize
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    const updateBreakpoint = () => {
+      setIsUnderLarge(window.innerWidth <= 1024);
     };
     
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
+    updateBreakpoint();
+    window.addEventListener('resize', updateBreakpoint);
     
     const handleScroll = () => {
-      if (!isMobile) return;
+      if (!isUnderLarge) return;
       
       const scrollY = window.scrollY;
       const windowHeight = window.innerHeight;
@@ -35,11 +35,11 @@ export default function StickyMobileCTA() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('resize', updateBreakpoint);
     };
-  }, [isMobile]);
+  }, [isUnderLarge]);
 
-  if (!isMobile) return null;
+  if (!isUnderLarge) return null;
 
   return (
     <AnimatePresence>
@@ -49,7 +49,7 @@ export default function StickyMobileCTA() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-t from-black via-black to-transparent pointer-events-none md:hidden"
+          className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-t from-black via-black to-transparent pointer-events-none lg:hidden"
         >
           <Link
             href="/signup"

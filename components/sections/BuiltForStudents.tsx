@@ -39,7 +39,7 @@ export default function BuiltForStudents() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: index * 0.05 }}
-                className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 text-left shadow-[0_16px_50px_rgba(10,0,32,0.22)] backdrop-blur-sm sm:p-8"
+                className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 text-left backdrop-blur-sm transition-all duration-300 hover:-translate-y-[3px] hover:border-brand-500/25 hover:bg-white/10 sm:p-8"
               >
                 <span className="absolute -right-4 top-6 text-6xl font-black text-white/5">
                   {feature.num}

@@ -1,5 +1,5 @@
 "use client";
-import { motion } from "framer-motion";
+import { motion, animate } from "framer-motion";
 import { useEffect, useState } from "react";
 import Skeleton from "@/components/ui/Skeleton";
 import Button from "@/components/ui/Button";
@@ -7,11 +7,23 @@ import { useReducedMotion } from "@/components/ui/useReducedMotion";
 import * as Copy from "@/lib/copy";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 
+const trustSignals = [
+  { label: "Reed.co.uk feeds", Icon: BrandIcons.Briefcase },
+  { label: "Adzuna data", Icon: BrandIcons.TrendingUp },
+  { label: "Company career pages", Icon: BrandIcons.Target },
+];
+
+const numberFormatter = new Intl.NumberFormat("en-US");
+
 export default function Hero() {
-  const [activeJobs, setActiveJobs] = useState("12,748");
-  const [internships, setInternships] = useState("");
-  const [graduates, setGraduates] = useState("");
-  const [totalUsers, setTotalUsers] = useState("");
+  const [activeJobsTarget, setActiveJobsTarget] = useState(12748);
+  const [internshipsTarget, setInternshipsTarget] = useState(0);
+  const [graduatesTarget, setGraduatesTarget] = useState(0);
+  const [totalUsersTarget, setTotalUsersTarget] = useState(0);
+  const [displayActiveJobs, setDisplayActiveJobs] = useState(0);
+  const [displayInternships, setDisplayInternships] = useState(0);
+  const [displayGraduates, setDisplayGraduates] = useState(0);
+  const [displayTotalUsers, setDisplayTotalUsers] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const prefersReduced = useReducedMotion();
 
@@ -23,17 +35,20 @@ export default function Hero() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        if (data.activeJobsFormatted) {
-          setActiveJobs(data.activeJobsFormatted);
-        }
-        if (data.internships) {
-          setInternships(data.internships.toLocaleString('en-US'));
-        }
-        if (data.graduates) {
-          setGraduates(data.graduates.toLocaleString('en-US'));
-        }
-        if (data.totalUsersFormatted) {
-          setTotalUsers(data.totalUsersFormatted);
+        const parseStat = (value: unknown, fallback = 0) => {
+          if (typeof value === "number" && !Number.isNaN(value)) return value;
+          if (typeof value === "string") {
+            const numeric = Number(value.replace(/,/g, ""));
+            if (!Number.isNaN(numeric)) return numeric;
+          }
+          return fallback;
+        };
+
+        if (data) {
+          setActiveJobsTarget(parseStat(data.activeJobs ?? data.activeJobsFormatted, 12748));
+          setInternshipsTarget(parseStat(data.internships, 0));
+          setGraduatesTarget(parseStat(data.graduates, 0));
+          setTotalUsersTarget(parseStat(data.totalUsers ?? data.totalUsersFormatted, 0));
         }
       } catch (err) {
         console.error('Failed to fetch stats:', err);
@@ -47,6 +62,75 @@ export default function Hero() {
   }, []);
 
   const featureIcons = [BrandIcons.Zap, BrandIcons.Target, BrandIcons.Sparkles];
+  const formatNumber = (value: number) =>
+    numberFormatter.format(Math.round(Math.max(0, value)));
+  const hasInternships = !isLoading && displayInternships > 0;
+  const hasGraduates = !isLoading && displayGraduates > 0;
+  const hasTotalUsers = !isLoading && displayTotalUsers > 0;
+
+  useEffect(() => {
+    if (prefersReduced) {
+      setDisplayActiveJobs(activeJobsTarget);
+      return;
+    }
+    const controls = animate(0, activeJobsTarget, {
+      duration: 1.6,
+      ease: "easeOut",
+      onUpdate: setDisplayActiveJobs,
+    });
+    return () => controls.stop();
+  }, [activeJobsTarget, prefersReduced]);
+
+  useEffect(() => {
+    if (internshipsTarget <= 0) {
+      setDisplayInternships(0);
+      return;
+    }
+    if (prefersReduced) {
+      setDisplayInternships(internshipsTarget);
+      return;
+    }
+    const controls = animate(0, internshipsTarget, {
+      duration: 1.4,
+      ease: "easeOut",
+      onUpdate: setDisplayInternships,
+    });
+    return () => controls.stop();
+  }, [internshipsTarget, prefersReduced]);
+
+  useEffect(() => {
+    if (graduatesTarget <= 0) {
+      setDisplayGraduates(0);
+      return;
+    }
+    if (prefersReduced) {
+      setDisplayGraduates(graduatesTarget);
+      return;
+    }
+    const controls = animate(0, graduatesTarget, {
+      duration: 1.4,
+      ease: "easeOut",
+      onUpdate: setDisplayGraduates,
+    });
+    return () => controls.stop();
+  }, [graduatesTarget, prefersReduced]);
+
+  useEffect(() => {
+    if (totalUsersTarget <= 0) {
+      setDisplayTotalUsers(0);
+      return;
+    }
+    if (prefersReduced) {
+      setDisplayTotalUsers(totalUsersTarget);
+      return;
+    }
+    const controls = animate(0, totalUsersTarget, {
+      duration: 1.6,
+      ease: "easeOut",
+      onUpdate: setDisplayTotalUsers,
+    });
+    return () => controls.stop();
+  }, [totalUsersTarget, prefersReduced]);
 
   return (
     <section
@@ -62,14 +146,14 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col items-center gap-4"
+          className="flex flex-col items-center gap-6"
         >
           <motion.div
-            className="inline-flex items-center justify-center gap-4 rounded-full bg-white/5 px-6 py-3 shadow-[0_14px_40px_rgba(18,0,42,0.35)] backdrop-blur-sm"
+            className="relative inline-flex items-center justify-center gap-5 overflow-hidden rounded-full bg-white/5 px-8 py-4 shadow-[0_18px_46px_rgba(18,0,42,0.35)] backdrop-blur-sm light-sheen"
             whileHover={prefersReduced ? {} : { scale: 1.02 }}
           >
-            <BrandIcons.GraduationCap className="h-12 w-12 text-white sm:h-14 sm:w-14" />
-            <span className="text-5xl font-semibold tracking-tight text-white sm:text-6xl md:text-7xl">
+            <BrandIcons.GraduationCap className="h-14 w-14 text-white sm:h-16 sm:w-16 md:h-20 md:w-20" />
+            <span className="text-[3.5rem] font-semibold tracking-tight text-white sm:text-[4rem] md:text-[4.5rem]">
               JobPing
             </span>
           </motion.div>
@@ -114,10 +198,10 @@ export default function Hero() {
             return (
               <li
                 key={feature}
-                className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-zinc-200 shadow-[0_12px_40px_rgba(18,0,42,0.28)] backdrop-blur-sm sm:text-base"
+                className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-zinc-200 backdrop-blur-sm transition-all duration-300 sm:text-base hover:-translate-y-[3px] hover:border-brand-500/25 hover:bg-white/10"
               >
-                <span className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-500/15 text-brand-200">
-                  <Icon className="h-4 w-4" />
+                <span className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/12 text-brand-200">
+                  <Icon className="h-5 w-5" />
                 </span>
                 <span className="leading-snug">{feature}</span>
               </li>
@@ -162,24 +246,45 @@ export default function Hero() {
               {isLoading ? (
                 <Skeleton className="h-4 w-20" />
               ) : (
-                <span>{`${activeJobs} active jobs this week`}</span>
+                <span>{`${formatNumber(displayActiveJobs)} active jobs this week`}</span>
               )}
             </div>
-            {!isLoading && (internships || graduates) && (
+            {(hasInternships || hasGraduates) && (
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5">
-                {internships && <span>{internships} internships</span>}
-                {internships && graduates && <span className="text-zinc-600">•</span>}
-                {graduates && <span>{graduates} graduate programmes</span>}
+                {hasInternships && <span>{`${formatNumber(displayInternships)} internships`}</span>}
+                {hasInternships && hasGraduates && <span className="text-zinc-600">•</span>}
+                {hasGraduates && <span>{`${formatNumber(displayGraduates)} graduate programmes`}</span>}
               </div>
             )}
-            {!isLoading && totalUsers && parseInt(totalUsers.replace(/,/g, '')) > 0 && (
+            {hasTotalUsers && (
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5">
                 <BrandIcons.Star className="h-4 w-4 text-brand-300" />
-                <span>{`Join ${totalUsers}+ students`}</span>
+                <span>{`Join ${formatNumber(displayTotalUsers)}+ students`}</span>
               </div>
             )}
           </div>
         </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
+          className="mt-10 flex flex-col items-center gap-3 text-xs uppercase tracking-[0.32em] text-zinc-500/80"
+        >
+          <span>Powered by live feeds from</span>
+          <div className="flex flex-wrap items-center justify-center gap-3 text-[0.82rem] tracking-[0.12em] text-zinc-200/90 sm:gap-4">
+            {trustSignals.map(({ label, Icon }) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-[0.82rem] font-semibold normal-case tracking-[0.04em]"
+              >
+                <Icon className="h-3.5 w-3.5 text-brand-200" />
+                {label}
+              </span>
+            ))}
+          </div>
+        </motion.div>
+
       </div>
 
       <motion.div

@@ -72,6 +72,33 @@ export default function Pricing() {
             <PricingCard key={plan.id} plan={plan} index={index} />
           ))}
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mt-16 overflow-hidden rounded-3xl border border-brand-500/20 bg-gradient-to-r from-[#0b031d] via-[#120033] to-[#1f0546] px-6 py-10 text-center shadow-[0_24px_80px_rgba(17,0,45,0.35)] sm:px-10"
+        >
+          <div className="flex flex-col items-center gap-5">
+            <span className="inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
+              🚀 Over 12 000 jobs matched this month
+            </span>
+            <h3 className="text-2xl font-semibold text-white sm:text-3xl">
+              Start free today—see your first five matches before the weekend.
+            </h3>
+            <p className="max-w-2xl text-sm text-zinc-300 sm:text-base">
+              We refresh the pipeline every morning and route hot roles instantly. If we miss the mark, reply to any email and we retune within 24 hours.
+            </p>
+            <Link
+              href="/signup"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/15 hover:text-brand-100 sm:text-base"
+            >
+              Start free
+              <BrandIcons.ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -89,7 +116,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
       transition={{ duration: 0.55, delay: index * 0.1 }}
       className={`relative flex h-full flex-col justify-between rounded-3xl border ${
         isPremium ? 'border-brand-500/40 bg-brand-500/10' : 'border-white/10 bg-white/5'
-      } p-8 shadow-[0_22px_60px_rgba(10,0,42,0.25)] backdrop-blur-sm sm:p-9`}
+      } p-8 backdrop-blur-sm transition-all duration-300 hover:-translate-y-[3px] hover:border-brand-500/30 hover:bg-white/10 sm:p-9`}
     >
       {plan.badge && (
         <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-brand-500 to-purple-600 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow-[0_8px_24px_rgba(99,102,241,0.45)]">

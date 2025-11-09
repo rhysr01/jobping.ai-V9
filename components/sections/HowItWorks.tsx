@@ -20,6 +20,9 @@ export default function HowItWorks() {
             <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
             {Copy.HOW_IT_WORKS_TITLE}
           </span>
+          <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
+            Updated daily
+          </span>
           <h2 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">
             Less typing, more applying
           </h2>
@@ -38,7 +41,7 @@ export default function HowItWorks() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.55, delay: index * 0.1 }}
-                className="flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 text-left shadow-[0_18px_60px_rgba(10,0,32,0.28)] backdrop-blur-sm sm:p-7"
+              className="flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 text-left backdrop-blur-sm transition-all duration-300 hover:-translate-y-[3px] hover:border-brand-500/25 hover:bg-white/10 sm:p-7"
               >
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-sm font-semibold text-brand-200">
                   {index + 1}

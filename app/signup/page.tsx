@@ -536,6 +536,53 @@ function SignupForm() {
                     />
                   </motion.div>
 
+                  {/* Mobile-friendly city chips */}
+                  <div className="grid grid-cols-2 gap-2 sm:hidden">
+                    {CITIES.map(city => {
+                      const isSelected = formData.cities.includes(city);
+                      const isDisabled = !isSelected && formData.cities.length >= 3;
+                      return (
+                        <motion.button
+                          key={city}
+                          type="button"
+                          onClick={() => {
+                            if (isDisabled) {
+                              announce('Maximum cities selected. Deselect one to choose another.', 'polite');
+                              return;
+                            }
+                            const nextCities = toggleArray(formData.cities, city);
+                            setFormData({
+                              ...formData,
+                              cities: nextCities
+                            });
+                            if (nextCities.length > formData.cities.length) {
+                              announce(`Selected ${city}. ${nextCities.length} of 3 cities selected.`, 'polite');
+                            } else {
+                              announce(`Deselected ${city}. ${nextCities.length} of 3 cities selected.`, 'polite');
+                            }
+                          }}
+                          whileTap={{ scale: 0.97 }}
+                          className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-medium transition-colors ${
+                            isSelected
+                              ? 'border-brand-500 bg-brand-500/15 text-white shadow-glow-subtle'
+                              : isDisabled
+                                ? 'border-zinc-800 bg-zinc-900/40 text-zinc-500 cursor-not-allowed'
+                                : 'border-zinc-700 bg-zinc-900/40 text-zinc-200 hover:border-zinc-500'
+                          }`}
+                          disabled={isDisabled}
+                        >
+                          <span>{city}</span>
+                          <span className={`text-xs font-semibold ${isSelected ? 'text-brand-200' : 'text-zinc-500'}`}>
+                            {isSelected ? 'Selected' : 'Tap'}
+                          </span>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                  {formData.cities.length >= 3 && (
+                    <p className="mt-2 text-xs text-amber-400 sm:hidden">Maximum 3 cities selected. Deselect one to choose another.</p>
+                  )}
+
                   {/* City Buttons Grid - REMOVED (redundant with map) */}
                   {/* Map is sufficient for city selection */}
                   <div className="mt-2 flex items-center justify-between">
@@ -544,11 +591,14 @@ function SignupForm() {
                       <FormFieldSuccess message={`${formData.cities.length} city${formData.cities.length > 1 ? 'ies' : ''} selected`} />
                     )}
                   </div>
+                  {formData.cities.length > 0 && (
+                    <p className="mt-1 text-xs text-zinc-300">{formData.cities.join(', ')}</p>
+                  )}
                   {formData.cities.length === 0 && step === 1 && (
                     <FormFieldError error="Please select at least one city" />
                   )}
                   {formData.cities.length >= 3 && (
-                    <p className="text-xs text-amber-400 mt-1">Maximum 3 cities selected. Deselect one to choose another.</p>
+                    <p className="text-xs text-amber-400 mt-1 hidden sm:block">Maximum 3 cities selected. Deselect one to choose another.</p>
                   )}
                 </div>
 

@@ -16,12 +16,12 @@ type CityCoordinate = {
 
 const CITY_COORDINATES: Record<string, CityCoordinate> = {
   'Dublin': { lat: 53.3498, lon: -6.2603, x: 175, y: 400, country: 'Ireland' },
-  'London': { lat: 51.5074, lon: -0.1278, x: 198, y: 440, country: 'United Kingdom' },
-  'Manchester': { lat: 53.4808, lon: -2.2426, x: 155, y: 400, country: 'United Kingdom' },
+  'London': { lat: 51.5074, lon: -0.1278, x: 202, y: 440, country: 'United Kingdom' },
+  'Manchester': { lat: 53.4808, lon: -2.2426, x: 160, y: 400, country: 'United Kingdom' },
   'Birmingham': { lat: 52.4862, lon: -1.8904, x: 182, y: 420, country: 'United Kingdom' },
   'Paris': { lat: 48.8566, lon: 2.3522, x: 247, y: 500, country: 'France' },
-  'Amsterdam': { lat: 52.3676, lon: 4.9041, x: 298, y: 425, country: 'Netherlands' },
-  'Brussels': { lat: 50.8503, lon: 4.3517, x: 287, y: 460, country: 'Belgium' },
+  'Amsterdam': { lat: 52.3676, lon: 4.9041, x: 304, y: 425, country: 'Netherlands' },
+  'Brussels': { lat: 50.8503, lon: 4.3517, x: 282, y: 460, country: 'Belgium' },
   'Berlin': { lat: 52.5200, lon: 13.4050, x: 468, y: 425, country: 'Germany' },
   'Hamburg': { lat: 53.5511, lon: 9.9937, x: 400, y: 400, country: 'Germany' },
   'Munich': { lat: 48.1351, lon: 11.5820, x: 431, y: 520, country: 'Germany' },
@@ -60,7 +60,9 @@ export default function EuropeMap({
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [focusedCity, setFocusedCity] = useState<string | null>(null);
   const [justSelected, setJustSelected] = useState<string | null>(null);
+  const [shakeCity, setShakeCity] = useState<string | null>(null);
   const prevSelectedRef = useRef<string[]>([]);
+  const shakeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Track when cities are selected to trigger highlight animation
   useEffect(() => {
@@ -75,6 +77,14 @@ export default function EuropeMap({
     return undefined;
   }, [selectedCities]);
 
+  useEffect(() => {
+    return () => {
+      if (shakeTimeoutRef.current) {
+        clearTimeout(shakeTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleCityClick = useCallback((city: string) => {
     if (selectedCities.includes(city)) {
       onCityClick(city);
@@ -83,16 +93,28 @@ export default function EuropeMap({
     }
   }, [selectedCities, maxSelections, onCityClick]);
 
+  const triggerShake = useCallback((city: string) => {
+    setShakeCity(city);
+    if (shakeTimeoutRef.current) {
+      clearTimeout(shakeTimeoutRef.current);
+    }
+    shakeTimeoutRef.current = setTimeout(() => setShakeCity(null), 450);
+  }, []);
+
   const handleCityHover = useCallback((city: string, event: React.MouseEvent<SVGCircleElement>) => {
     setHoveredCity(city);
     const rect = event.currentTarget.getBoundingClientRect();
     const svg = event.currentTarget.closest('svg');
     if (svg) {
       const svgRect = svg.getBoundingClientRect();
+      const xRaw = rect.left + rect.width / 2 - svgRect.left;
+      const yRaw = rect.top - svgRect.top - 10;
+      const xClamped = Math.max(12, Math.min(svgRect.width - 12, xRaw));
+      const yClamped = Math.max(12, yRaw);
       setTooltip({
         city,
-        x: rect.left + rect.width / 2 - svgRect.left,
-        y: rect.top - svgRect.top - 10
+        x: xClamped,
+        y: yClamped
       });
     }
   }, []);
@@ -125,9 +147,22 @@ export default function EuropeMap({
     >
       {/* Brand-colored background gradients matching app design */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#060013] via-[#0a001e] to-[#120033]">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(154,106,255,0.15)_0%,transparent_60%)] blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.12)_0%,transparent_60%)] blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(154,106,255,0.1)_0%,transparent_60%)] blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.08)_0%,transparent_60%)] blur-3xl" />
       </div>
+
+      {/* Subtle grid overlay */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(154,106,255,0.08) 0.5px, transparent 0.5px), linear-gradient(90deg, rgba(154,106,255,0.08) 0.5px, transparent 0.5px)',
+          backgroundSize: '72px 72px',
+          backgroundPosition: '-1px -1px',
+          opacity: 0.08
+        }}
+        aria-hidden="true"
+      />
       
       {/* Glass morphism overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-white/[0.02] backdrop-blur-[1px]" aria-hidden="true" />
@@ -144,14 +179,14 @@ export default function EuropeMap({
         <defs>
           {/* Country gradient with brand colors */}
           <linearGradient id="europeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#9A6AFF" stopOpacity="0.08" />
-            <stop offset="50%" stopColor="#6B4EFF" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0.06" />
+            <stop offset="0%" stopColor="#9A6AFF" stopOpacity="0.05" />
+            <stop offset="50%" stopColor="#6B4EFF" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0.04" />
           </linearGradient>
           
           {/* Brand-colored glow filter */}
           <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4" result="coloredBlur" in="SourceGraphic"/>
+            <feGaussianBlur stdDeviation="3" result="coloredBlur" in="SourceGraphic"/>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
               <feMergeNode in="SourceGraphic"/>
@@ -160,7 +195,7 @@ export default function EuropeMap({
           
           {/* Stronger glow for selected cities */}
           <filter id="glowStrong" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="6" result="coloredBlur" in="SourceGraphic"/>
+            <feGaussianBlur stdDeviation="4.5" result="coloredBlur" in="SourceGraphic"/>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
               <feMergeNode in="SourceGraphic"/>
@@ -181,9 +216,9 @@ export default function EuropeMap({
           <path
             d="M 150 250 Q 180 240 200 260 Q 210 280 200 300 Q 190 320 180 310 Q 160 300 150 280 Z"
             fill="url(#europeGradient)"
-            stroke="rgba(154,106,255,0.2)"
+            stroke="rgba(154,106,255,0.35)"
             strokeWidth="1.5"
-            opacity="0.6"
+            opacity="0.35"
             aria-label="United Kingdom and Ireland"
           />
           
@@ -191,9 +226,9 @@ export default function EuropeMap({
           <path
             d="M 200 300 Q 250 310 280 330 Q 270 360 250 350 Q 230 340 200 320 Z"
             fill="url(#europeGradient)"
-            stroke="rgba(154,106,255,0.2)"
+            stroke="rgba(154,106,255,0.35)"
             strokeWidth="1.5"
-            opacity="0.6"
+            opacity="0.35"
             aria-label="France"
           />
           
@@ -201,9 +236,9 @@ export default function EuropeMap({
           <path
             d="M 280 250 Q 320 260 350 280 Q 340 320 320 340 Q 300 330 280 310 Q 270 290 280 270 Z"
             fill="url(#europeGradient)"
-            stroke="rgba(154,106,255,0.2)"
+            stroke="rgba(154,106,255,0.35)"
             strokeWidth="1.5"
-            opacity="0.6"
+            opacity="0.35"
             aria-label="Germany"
           />
           
@@ -211,9 +246,9 @@ export default function EuropeMap({
           <path
             d="M 180 420 Q 220 430 280 450 Q 270 480 240 470 Q 200 460 180 440 Z"
             fill="url(#europeGradient)"
-            stroke="rgba(154,106,255,0.2)"
+            stroke="rgba(154,106,255,0.35)"
             strokeWidth="1.5"
-            opacity="0.6"
+            opacity="0.35"
             aria-label="Spain"
           />
           
@@ -221,9 +256,9 @@ export default function EuropeMap({
           <path
             d="M 300 360 Q 330 380 350 400 Q 340 440 320 430 Q 310 400 300 380 Z"
             fill="url(#europeGradient)"
-            stroke="rgba(154,106,255,0.2)"
+            stroke="rgba(154,106,255,0.35)"
             strokeWidth="1.5"
-            opacity="0.6"
+            opacity="0.35"
             aria-label="Italy"
           />
           
@@ -231,9 +266,9 @@ export default function EuropeMap({
           <path
             d="M 300 180 Q 350 190 380 200 Q 370 240 350 230 Q 320 220 300 200 Z"
             fill="url(#europeGradient)"
-            stroke="rgba(154,106,255,0.2)"
+            stroke="rgba(154,106,255,0.35)"
             strokeWidth="1.5"
-            opacity="0.6"
+            opacity="0.35"
             aria-label="Nordic countries"
           />
           
@@ -241,9 +276,9 @@ export default function EuropeMap({
           <path
             d="M 320 280 Q 360 290 400 300 Q 390 340 360 330 Q 340 320 320 300 Z"
             fill="url(#europeGradient)"
-            stroke="rgba(154,106,255,0.2)"
+            stroke="rgba(154,106,255,0.35)"
             strokeWidth="1.5"
-            opacity="0.6"
+            opacity="0.35"
             aria-label="Central and Eastern Europe"
           />
         </g>
@@ -256,7 +291,7 @@ export default function EuropeMap({
             const hovered = hoveredCity === city;
             const focused = focusedCity === city;
             const showLabel = selected || hovered || focused;
-            const labelY = coords.y - (selected ? 30 : 24);
+            const labelY = coords.y - (selected ? 32 : 26);
 
             return (
               <g key={city} aria-label={`${city}, ${coords.country}`}>
@@ -269,15 +304,15 @@ export default function EuropeMap({
                       cy={coords.y}
                       r="20"
                       fill="url(#selectedGradient)"
-                      opacity={justSelected === city ? 0.4 : 0.2}
+                      opacity={justSelected === city ? 0.25 : 0.12}
                       className="animate-pulse"
                       aria-hidden="true"
                       initial={justSelected === city ? { scale: 0.8, opacity: 0 } : false}
                       animate={justSelected === city ? { 
                         scale: [0.8, 1.2, 1],
-                        opacity: [0.6, 0.3, 0.2]
+                        opacity: [0.4, 0.2, 0.12]
                       } : {}}
-                      transition={{ duration: 0.8, ease: 'easeOut' }}
+                      transition={{ duration: 0.5, ease: 'easeOut' }}
                     />
                     {/* Middle glow ring */}
                     <circle
@@ -308,15 +343,21 @@ export default function EuropeMap({
                 <motion.circle
                   cx={coords.x}
                   cy={coords.y}
-                  r={selected ? 11 : hovered || focused ? 9 : 8}
-                  fill={selected ? 'url(#selectedGradient)' : disabled ? '#52525b' : hovered || focused ? '#B491FF' : '#71717a'}
-                  stroke={selected ? '#9A6AFF' : hovered || focused ? '#B491FF' : '#52525b'}
+                  r={selected ? 11 : hovered || focused ? 10 : 9}
+                  fill={selected ? 'url(#selectedGradient)' : disabled ? '#3f3f46' : hovered || focused ? '#C2A8FF' : '#71717a'}
+                  stroke={selected ? '#9A6AFF' : hovered || focused ? '#C2A8FF' : '#52525b'}
                   strokeWidth={selected ? 3.5 : hovered || focused ? 2.5 : 2}
                   className={disabled ? 'cursor-not-allowed' : 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-transparent'}
                   filter={selected ? 'url(#glowStrong)' : hovered || focused ? 'url(#glow)' : undefined}
                   whileHover={!disabled ? { scale: 1.35, strokeWidth: 3.5 } : {}}
                   whileTap={!disabled ? { scale: 0.85 } : {}}
-                  onClick={() => !disabled && handleCityClick(city)}
+                  onClick={() => {
+                    if (disabled) {
+                      triggerShake(city);
+                    } else {
+                      handleCityClick(city);
+                    }
+                  }}
                   onMouseEnter={(e) => !disabled && handleCityHover(city, e)}
                   onMouseLeave={handleCityLeave}
                   onFocus={() => !disabled && setFocusedCity(city)}
@@ -328,11 +369,22 @@ export default function EuropeMap({
                   aria-pressed={selected}
                   aria-disabled={disabled}
                   initial={justSelected === city ? { scale: 0.5, opacity: 0 } : false}
-                  animate={justSelected === city ? { 
-                    scale: [0.5, 1.3, 1],
-                    opacity: [0, 1, 1]
-                  } : selected ? { scale: 1 } : {}}
-                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                  animate={
+                    shakeCity === city
+                      ? { x: [-2, 2, -1, 1, 0], scale: selected ? 1 : 1 }
+                      : justSelected === city
+                        ? { scale: [0.5, 1.3, 1], opacity: [0, 1, 1], x: 0 }
+                        : selected
+                          ? { scale: 1, x: 0 }
+                          : { x: 0 }
+                  }
+                  transition={
+                    shakeCity === city
+                      ? { duration: 0.45, ease: 'easeInOut' }
+                      : justSelected === city
+                        ? { duration: 0.6, ease: 'easeOut' }
+                        : { duration: 0.2, ease: 'easeOut' }
+                  }
                   style={selected ? {
                     filter: 'drop-shadow(0 0 12px rgba(154,106,255,0.8)) drop-shadow(0 0 24px rgba(139,92,246,0.5)) drop-shadow(0 0 36px rgba(99,102,241,0.3))'
                   } : {}}
@@ -344,7 +396,7 @@ export default function EuropeMap({
                     x={coords.x}
                     y={labelY}
                     textAnchor="middle"
-                    fill={selected ? '#C2A8FF' : '#B491FF'}
+                    fill={selected ? '#C2A8FF' : '#E6E1FF'}
                     fontSize={selected ? "13" : "12"}
                     fontWeight={selected ? '700' : '600'}
                     className="pointer-events-none select-none"
@@ -393,12 +445,12 @@ export default function EuropeMap({
 
       {/* Enhanced Legend with brand styling - better spacing */}
       <div 
-        className="absolute bottom-5 left-5 right-5 flex items-center justify-between text-xs bg-gradient-to-r from-brand-500/10 via-purple-600/10 to-brand-500/10 backdrop-blur-md rounded-xl px-6 py-3.5 border border-brand-500/30 shadow-glow-subtle"
+        className="absolute bottom-5 left-5 right-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs bg-gradient-to-r from-brand-500/10 via-purple-600/10 to-brand-500/10 backdrop-blur-md rounded-xl px-6 py-4 border border-brand-500/30 shadow-glow-subtle"
         role="status"
         aria-live="polite"
         aria-label={`${selectedCities.length} of ${maxSelections} cities selected`}
       >
-        <div className="flex items-center gap-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
           <div className="flex items-center gap-3">
             <div className="relative w-4 h-4 rounded-full bg-gradient-to-br from-brand-500 to-purple-600 shadow-glow-subtle" aria-hidden="true">
               <div className="absolute inset-0 rounded-full bg-brand-500/40 animate-pulse" />

@@ -64,6 +64,36 @@ body {
   content: none;
 }
 
+.light-sheen {
+  position: relative;
+  overflow: hidden;
+}
+.light-sheen::after {
+  content: '';
+  position: absolute;
+  inset: -25%;
+  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.18) 40%, rgba(255,255,255,0.32) 50%, rgba(255,255,255,0.18) 60%, transparent 100%);
+  transform: translateX(-130%);
+  animation: sheen-glide 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+@keyframes sheen-glide {
+  0%, 12% {
+    transform: translateX(-130%);
+  }
+  45%, 55% {
+    transform: translateX(130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .light-sheen::after {
+    animation: none;
+  }
+}
+
 .enhanced-grid {
   background-image:
     linear-gradient(#6366f10d 1px, transparent 1px),

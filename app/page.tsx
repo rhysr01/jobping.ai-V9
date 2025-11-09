@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import Hero from "@/components/sections/Hero";
 import HowItWorks from "@/components/sections/HowItWorks";
 import BuiltForStudents from "@/components/sections/BuiltForStudents";
+import SecondaryCTA from "@/components/sections/SecondaryCTA";
 import Pricing from "@/components/sections/Pricing";
 import EmailPhoneShowcase from "@/components/marketing/EmailPhoneShowcase";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
@@ -33,6 +34,9 @@ export default function Page() {
       </Suspense>
       <Suspense fallback={<SectionSkeleton />}>
       <BuiltForStudents />
+      </Suspense>
+      <Suspense fallback={<SectionSkeleton />}>
+      <SecondaryCTA />
       </Suspense>
       <Suspense fallback={<SectionSkeleton />}>
       <Pricing />
