@@ -3,38 +3,53 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 
-// Geographic coordinates (lat/long) converted to SVG viewBox coordinates
-// ViewBox: 0 0 1000 800 represents Europe approximately: 10°W-40°E, 35°N-72°N
-// Conversion: x = (longitude + 10) / 50 * 1000, y = (72 - latitude) / 37 * 800
+// Projection bounds control the visible portion of Europe
+const BOUNDS = { lonMin: -9, lonMax: 30, latMin: 37, latMax: 63 };
+const VIEW = { w: 1000, h: 800 };
+
+const project = (lat: number, lon: number) => {
+  const x = ((lon - BOUNDS.lonMin) / (BOUNDS.lonMax - BOUNDS.lonMin)) * VIEW.w;
+  const y = ((BOUNDS.latMax - lat) / (BOUNDS.latMax - BOUNDS.latMin)) * VIEW.h;
+  return { x, y };
+};
+
+const OFFSET: Record<string, { dx: number; dy: number }> = {
+  London: { dx: 6, dy: 4 },
+  Manchester: { dx: -8, dy: -6 },
+  Birmingham: { dx: 2, dy: -6 },
+  Brussels: { dx: -6, dy: 4 },
+  Amsterdam: { dx: 6, dy: -2 },
+};
+
 type CityCoordinate = {
   lat: number;
   lon: number;
-  x: number;
-  y: number;
   country: string;
 };
 
+type ProjectedCity = CityCoordinate & { x: number; y: number };
+
 const CITY_COORDINATES: Record<string, CityCoordinate> = {
-  'Dublin': { lat: 53.3498, lon: -6.2603, x: 175, y: 400, country: 'Ireland' },
-  'London': { lat: 51.5074, lon: -0.1278, x: 202, y: 440, country: 'United Kingdom' },
-  'Manchester': { lat: 53.4808, lon: -2.2426, x: 160, y: 400, country: 'United Kingdom' },
-  'Birmingham': { lat: 52.4862, lon: -1.8904, x: 182, y: 420, country: 'United Kingdom' },
-  'Paris': { lat: 48.8566, lon: 2.3522, x: 247, y: 500, country: 'France' },
-  'Amsterdam': { lat: 52.3676, lon: 4.9041, x: 304, y: 425, country: 'Netherlands' },
-  'Brussels': { lat: 50.8503, lon: 4.3517, x: 282, y: 460, country: 'Belgium' },
-  'Berlin': { lat: 52.5200, lon: 13.4050, x: 468, y: 425, country: 'Germany' },
-  'Hamburg': { lat: 53.5511, lon: 9.9937, x: 400, y: 400, country: 'Germany' },
-  'Munich': { lat: 48.1351, lon: 11.5820, x: 431, y: 520, country: 'Germany' },
-  'Zurich': { lat: 47.3769, lon: 8.5417, x: 371, y: 535, country: 'Switzerland' },
-  'Madrid': { lat: 40.4168, lon: -3.7038, x: 126, y: 685, country: 'Spain' },
-  'Barcelona': { lat: 41.3851, lon: 2.1734, x: 243, y: 665, country: 'Spain' },
-  'Milan': { lat: 45.4642, lon: 9.1900, x: 384, y: 575, country: 'Italy' },
-  'Rome': { lat: 41.9028, lon: 12.4964, x: 450, y: 655, country: 'Italy' },
-  'Stockholm': { lat: 59.3293, lon: 18.0686, x: 562, y: 275, country: 'Sweden' },
-  'Copenhagen': { lat: 55.6761, lon: 12.5683, x: 451, y: 355, country: 'Denmark' },
-  'Vienna': { lat: 48.2082, lon: 16.3738, x: 528, y: 515, country: 'Austria' },
-  'Prague': { lat: 50.0755, lon: 14.4378, x: 488, y: 475, country: 'Czech Republic' },
-  'Warsaw': { lat: 52.2297, lon: 21.0122, x: 620, y: 430, country: 'Poland' },
+  'Dublin': { lat: 53.3498, lon: -6.2603, country: 'Ireland' },
+  'London': { lat: 51.5074, lon: -0.1278, country: 'United Kingdom' },
+  'Manchester': { lat: 53.4808, lon: -2.2426, country: 'United Kingdom' },
+  'Birmingham': { lat: 52.4862, lon: -1.8904, country: 'United Kingdom' },
+  'Paris': { lat: 48.8566, lon: 2.3522, country: 'France' },
+  'Amsterdam': { lat: 52.3676, lon: 4.9041, country: 'Netherlands' },
+  'Brussels': { lat: 50.8503, lon: 4.3517, country: 'Belgium' },
+  'Berlin': { lat: 52.5200, lon: 13.4050, country: 'Germany' },
+  'Hamburg': { lat: 53.5511, lon: 9.9937, country: 'Germany' },
+  'Munich': { lat: 48.1351, lon: 11.5820, country: 'Germany' },
+  'Zurich': { lat: 47.3769, lon: 8.5417, country: 'Switzerland' },
+  'Madrid': { lat: 40.4168, lon: -3.7038, country: 'Spain' },
+  'Barcelona': { lat: 41.3851, lon: 2.1734, country: 'Spain' },
+  'Milan': { lat: 45.4642, lon: 9.1900, country: 'Italy' },
+  'Rome': { lat: 41.9028, lon: 12.4964, country: 'Italy' },
+  'Stockholm': { lat: 59.3293, lon: 18.0686, country: 'Sweden' },
+  'Copenhagen': { lat: 55.6761, lon: 12.5683, country: 'Denmark' },
+  'Vienna': { lat: 48.2082, lon: 16.3738, country: 'Austria' },
+  'Prague': { lat: 50.0755, lon: 14.4378, country: 'Czech Republic' },
+  'Warsaw': { lat: 52.2297, lon: 21.0122, country: 'Poland' },
 };
 
 interface EuropeMapProps {
@@ -110,7 +125,7 @@ export default function EuropeMap({
       const xRaw = rect.left + rect.width / 2 - svgRect.left;
       const yRaw = rect.top - svgRect.top - 10;
       const xClamped = Math.max(12, Math.min(svgRect.width - 12, xRaw));
-      const yClamped = Math.max(12, yRaw);
+      const yClamped = Math.max(12, Math.min(svgRect.height - 12, yRaw));
       setTooltip({
         city,
         x: xClamped,
@@ -137,7 +152,13 @@ export default function EuropeMap({
     [isCitySelected, selectedCities.length, maxSelections]
   );
 
-  const cityEntries = useMemo(() => Object.entries(CITY_COORDINATES), []);
+  const cityEntries = useMemo<[string, ProjectedCity][]>(() => {
+    return Object.entries(CITY_COORDINATES).map(([name, city]) => {
+      const { x, y } = project(city.lat, city.lon);
+      const offset = OFFSET[name] ?? { dx: 0, dy: 0 };
+      return [name, { ...city, x: x + offset.dx, y: y + offset.dy }];
+    });
+  }, []);
 
   return (
     <div 
@@ -147,8 +168,8 @@ export default function EuropeMap({
     >
       {/* Brand-colored background gradients matching app design */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#060013] via-[#0a001e] to-[#120033]">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(154,106,255,0.1)_0%,transparent_60%)] blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.08)_0%,transparent_60%)] blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(154,106,255,0.07)_0%,transparent_60%)] blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.056)_0%,transparent_60%)] blur-3xl" />
       </div>
 
       {/* Subtle grid overlay */}
@@ -171,7 +192,7 @@ export default function EuropeMap({
       <svg
         viewBox="0 0 1000 800"
         className="w-full h-full relative z-10"
-        preserveAspectRatio="xMidYMid meet"
+        preserveAspectRatio="xMidYMid slice"
         aria-label="Map of Europe showing available cities"
         style={{ aspectRatio: '5/4' }}
       >
@@ -179,9 +200,9 @@ export default function EuropeMap({
         <defs>
           {/* Country gradient with brand colors */}
           <linearGradient id="europeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#9A6AFF" stopOpacity="0.05" />
-            <stop offset="50%" stopColor="#6B4EFF" stopOpacity="0.08" />
-            <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0.04" />
+            <stop offset="0%" stopColor="#9A6AFF" stopOpacity="0.04" />
+            <stop offset="50%" stopColor="#6B4EFF" stopOpacity="0.07" />
+            <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0.03" />
           </linearGradient>
           
           {/* Brand-colored glow filter */}
