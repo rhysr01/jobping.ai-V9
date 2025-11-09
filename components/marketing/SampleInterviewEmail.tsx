@@ -15,7 +15,7 @@ export default function SampleInterviewEmail() {
           Your matches this week → 3 roles picked for you
         </div>
         <div className="mt-2 text-[13px] text-zinc-400 font-medium">
-          London, Berlin, Dublin → early‑career roles based on your profile
+          London, Berlin, Dublin → early career roles based on your profile
         </div>
       </div>
 

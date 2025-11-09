@@ -61,8 +61,8 @@ export default function BuiltForStudents() {
                     <Icon className="w-5 h-5 text-brand-400" />
                   </IconBadge>
                 </div>
-                <h3 className="mt-4 text-heading text-white font-black leading-tight">{feature.title}</h3>
-                <p className="mt-4 text-large text-neutral-200 leading-relaxed font-medium">{feature.body}</p>
+                <h3 className="mt-4 text-2xl sm:text-3xl md:text-4xl text-white font-black leading-tight">{feature.title}</h3>
+                <p className="mt-4 text-lg sm:text-xl text-neutral-100 leading-relaxed font-semibold">{feature.body}</p>
               <div className="mt-6 pt-5 border-t border-zinc-700/50">
                   <p className="text-small font-bold text-brand-400 flex items-center gap-2">
                     <BrandIcons.Check className="w-4 h-4" />

@@ -21,7 +21,7 @@ export default function HowItWorks() {
     { 
       num: 3, 
       title: "Get your first matches within 48 hours", 
-      body: "Then receive 5 hand-picked jobs every week (or 15/week with Premium for €5/month). Each email takes 60 seconds to read.",
+      body: "Then receive 5 hand picked jobs every week (or 15/week with Premium for €5/month). Each email takes 60 seconds to read.",
       icon: BrandIcons.Mail
     },
   ];
@@ -66,8 +66,8 @@ export default function HowItWorks() {
                     <Icon className="w-6 h-6 text-brand-400" />
                   </IconBadge>
                 </div>
-                <h3 className="mt-4 text-heading text-white font-black leading-tight">{x.title}</h3>
-                <p className="mt-4 text-large text-neutral-200 leading-relaxed font-medium max-w-sm mx-auto">{x.body}</p>
+                <h3 className="mt-4 text-2xl sm:text-3xl md:text-4xl text-white font-black leading-tight">{x.title}</h3>
+                <p className="mt-4 text-lg sm:text-xl text-neutral-100 leading-relaxed font-semibold max-w-sm mx-auto">{x.body}</p>
               </motion.div>
             );
           })}

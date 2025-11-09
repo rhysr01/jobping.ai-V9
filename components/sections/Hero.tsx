@@ -69,11 +69,11 @@ export default function Hero() {
             whileHover={prefersReduced ? {} : { rotate: [0, -5, 5, 0] }}
             transition={{ duration: 0.5 }}
           >
-            <BrandIcons.GraduationCap className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 text-white flex-shrink-0" />
+            <BrandIcons.GraduationCap className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 text-white flex-shrink-0" />
           </motion.div>
           
           {/* JobPing Text - Clean, no glow */}
-          <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-none">
+          <div className="text-8xl sm:text-10xl md:text-12xl lg:text-14xl font-black tracking-tighter leading-none">
             <span className="bg-gradient-to-b from-white via-purple-50/90 to-purple-200/80 bg-clip-text text-transparent">
               JobPing
             </span>
@@ -84,11 +84,11 @@ export default function Hero() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
-          className="mt-8 text-white text-display mb-6 text-balance leading-tight"
+          className="mt-8 text-white text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black mb-6 text-balance leading-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
         >
           {Copy.HERO_HEADLINE}
         </motion.h1>
-        <p className="text-neutral-300 leading-relaxed max-w-2xl mx-auto text-xl font-medium mt-2 text-neutral-200">
+        <p className="text-neutral-100 leading-relaxed max-w-2xl mx-auto text-2xl sm:text-3xl font-bold mt-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
           {Copy.HERO_SUBLINE}
         </p>
         

@@ -71,22 +71,22 @@ export default function EmailPhoneShowcase() {
             <IconBadge className="mb-4">
               <BrandIcons.Mail className="w-6 h-6 text-brand-400" />
             </IconBadge>
-            <h3 className="text-white font-semibold mb-2">Weekly emails</h3>
-            <p className="text-body text-neutral-200 font-medium">5 hand-picked jobs every week</p>
+            <h3 className="text-white font-black mb-2 text-xl sm:text-2xl">Weekly emails</h3>
+            <p className="text-body text-neutral-100 font-bold">5 hand picked jobs every week</p>
           </GlassCard>
           <GlassCard variant="subtle" hover="lift" className="p-8">
             <IconBadge className="mb-4">
               <BrandIcons.Zap className="w-6 h-6 text-brand-400" />
             </IconBadge>
-            <h3 className="text-white font-semibold mb-2">60-second read</h3>
-            <p className="text-body text-neutral-200 font-medium">Everything you need in one email</p>
+            <h3 className="text-white font-black mb-2 text-xl sm:text-2xl">60-second read</h3>
+            <p className="text-body text-neutral-100 font-bold">Everything you need in one email</p>
           </GlassCard>
           <GlassCard variant="subtle" hover="lift" className="p-8">
             <IconBadge className="mb-4">
               <BrandIcons.Target className="w-6 h-6 text-brand-400" />
             </IconBadge>
-            <h3 className="text-white font-semibold mb-2">Perfect matches</h3>
-            <p className="text-body text-neutral-200 font-medium">AI-filtered for your profile</p>
+            <h3 className="text-white font-black mb-2 text-xl sm:text-2xl">Perfect matches</h3>
+            <p className="text-body text-neutral-100 font-bold">AI filtered for your profile</p>
           </GlassCard>
         </motion.div>
       </div>

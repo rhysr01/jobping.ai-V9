@@ -56,11 +56,11 @@ export default function Pricing() {
                 <ul className="text-body text-zinc-300 space-y-4 mb-8 flex-1">
                   <Feature>
                     <BrandIcons.Mail className="w-5 h-5 text-brand-400 flex-shrink-0" />
-                    Weekly email with 5 hand‑picked jobs
+                    Weekly email with 5 hand picked jobs
                   </Feature>
                   <Feature>
                     <BrandIcons.Shield className="w-5 h-5 text-brand-400 flex-shrink-0" />
-                    Quality‑screened, early‑career friendly
+                    Quality screened, early career friendly
                   </Feature>
                   <Feature>
                     <BrandIcons.CheckCircle className="w-5 h-5 text-brand-400 flex-shrink-0" />
@@ -145,7 +145,7 @@ export default function Pricing() {
                   </Feature>
                   <Feature strong>
                     <BrandIcons.Clock className="w-5 h-5 text-brand-300 flex-shrink-0" />
-                    24‑hour early access to fresh roles
+                    24 hour early access to fresh roles
                   </Feature>
                   <Feature strong>
                     <BrandIcons.Target className="w-5 h-5 text-brand-300 flex-shrink-0" />
