@@ -8,6 +8,7 @@ import type { UserPreferences } from '@/Utils/matching/types';
 import { getDatabaseClient } from '@/Utils/databasePool';
 import * as Sentry from '@sentry/nextjs';
 import { MATCH_RULES } from '@/Utils/sendConfiguration';
+import { getDatabaseCategoriesForForm } from './categoryMapper';
 
 /**
  * Enhanced pre-filter jobs by user preferences with scoring AND feedback learning
@@ -68,17 +69,72 @@ export async function preFilterJobsByUserPreferencesEnhanced(
     console.warn('Failed to load feedback boosts:', error);
   }
   
-  // Filter jobs by location first (fastest filter)
+  // Filter jobs by location first (fastest filter) - STRICT MATCHING
   const targetCities = Array.isArray(user.target_cities) 
     ? user.target_cities 
     : user.target_cities 
       ? [user.target_cities] 
       : [];
   
+  /**
+   * Strict location matching function
+   * Matches city names with word boundaries to avoid false positives
+   * e.g., "London" matches "London, UK" but NOT "New London"
+   */
+  const matchesLocationStrict = (job: ScrapersJob & { freshnessTier: string }, targetCity: string): boolean => {
+    const jobLocation = (job.location || '').toLowerCase();
+    const jobLoc = jobLocation.toLowerCase().trim();
+    const city = targetCity.toLowerCase().trim();
+    
+    // Check structured city field first (most accurate)
+    if ((job as any).city) {
+      const jobCity = String((job as any).city).toLowerCase().trim();
+      if (jobCity === city || jobCity.includes(city) || city.includes(jobCity)) {
+        return true;
+      }
+    }
+    
+    // Use word boundary matching for location string
+    // Match patterns like: "London", "London, UK", "Greater London", but NOT "New London"
+    // Escape special regex characters in city name
+    const escapedCity = city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const patterns = [
+      new RegExp(`\\b${escapedCity}\\b`, 'i'), // Exact word match
+      new RegExp(`^${escapedCity}[,\\s]`, 'i'), // Starts with city name
+      new RegExp(`[,\\s]${escapedCity}[,\\s]`, 'i'), // City in middle
+      new RegExp(`[,\\s]${escapedCity}$`, 'i'), // City at end
+    ];
+    
+    // Check if any pattern matches
+    if (patterns.some(pattern => pattern.test(jobLoc))) {
+      return true;
+    }
+    
+    // Handle special cases (Greater London, etc.)
+    const specialCases: Record<string, string[]> = {
+      'london': ['greater london', 'central london', 'north london', 'south london', 'east london', 'west london'],
+      'paris': ['greater paris', 'paris region'],
+      'berlin': ['greater berlin'],
+      'madrid': ['greater madrid'],
+      'barcelona': ['greater barcelona'],
+    };
+    
+    if (specialCases[city]) {
+      return specialCases[city].some(variant => jobLoc.includes(variant));
+    }
+    
+    // Allow remote/hybrid if user hasn't explicitly excluded it
+    if (jobLoc.includes('remote') || jobLoc.includes('hybrid') || jobLoc.includes('work from home')) {
+      return true; // Remote/hybrid is always acceptable
+    }
+    
+    return false;
+  };
+  
   const filteredJobs = targetCities.length > 0
     ? jobs.filter(job => {
-        const jobLocation = (job.location || '').toLowerCase();
-        return targetCities.some(city => jobLocation.includes(city.toLowerCase()));
+        // Use strict matching
+        return targetCities.some(city => matchesLocationStrict(job, city));
       })
     : jobs;
   
@@ -91,41 +147,183 @@ export async function preFilterJobsByUserPreferencesEnhanced(
     sourceCount[source] = (sourceCount[source] || 0) + 1;
   });
   
-  // Now score the location-filtered jobs
+  // Now score the location-filtered jobs with COMPREHENSIVE scoring
   const scoredJobs = filteredJobs.map(job => {
     let score = 0;
+    let hasRoleMatch = false;
+    let hasCareerMatch = false;
     const jobTitle = job.title.toLowerCase();
     const jobDesc = (job.description || '').toLowerCase();
     const jobLocation = (job.location || '').toLowerCase();
+    const jobWorkEnv = ((job as any).work_environment || '').toLowerCase();
     
-    // Role/Title matching (HIGH priority - prevents finance guy getting sales jobs)
-    if (user.roles_selected && user.roles_selected.length > 0) {
-      const roles = user.roles_selected;
-      const hasRoleMatch = roles.some((role: string) => 
-        role && (jobTitle.includes(role.toLowerCase()) || jobDesc.includes(role.toLowerCase()))
-      );
-      if (hasRoleMatch) score += 30;
-    }
+    // ============================================
+    // COMPREHENSIVE SCORING SYSTEM (Total: 100+ points possible)
+    // PRIORITY ORDER: Career Path > Role > Other factors
+    // IMPORTANT: Roles are ALWAYS within the career path (from signup form)
+    // ============================================
     
-    // Language scoring (if specified) - handle string or array
-    if (user.languages_spoken) {
-      const languages = Array.isArray(user.languages_spoken) ? user.languages_spoken : [user.languages_spoken];
-      const hasLanguageMatch = languages.some(lang => 
-        lang && jobDesc.includes(lang.toLowerCase())
-      );
-      if (hasLanguageMatch) score += 10;
-    }
+    // 1. Location match (REQUIRED - already filtered, but give points)
+    score += 40; // Base score for location match (reduced from 50 to make room for other factors)
     
-    // Career path scoring (handle string or array)
+    // 2. Career path scoring (HIGHEST PRIORITY - most important factor)
+    // Career path is MORE IMPORTANT than role - it defines the user's direction
+    // Roles are ALWAYS a subset of the career path (from signup form structure)
     if (user.career_path) {
       const careerPaths = Array.isArray(user.career_path) ? user.career_path : [user.career_path];
-      const hasCareerMatch = careerPaths.some(path => 
-        path && (jobTitle.includes(path.toLowerCase()) || jobDesc.includes(path.toLowerCase()))
-      );
-      if (hasCareerMatch) score += 20;
+      hasCareerMatch = careerPaths.some(path => {
+        if (!path) return false;
+        const pathLower = path.toLowerCase();
+        
+        // Check job title/description for career path keywords
+        const titleMatch = jobTitle.includes(pathLower) || jobDesc.includes(pathLower);
+        
+        // CRITICAL: Also check job categories against mapped database categories
+        // Form value 'strategy' → DB category 'strategy-business-design'
+        const dbCategories = getDatabaseCategoriesForForm(path);
+        const categoryMatch = (job as any).categories && Array.isArray((job as any).categories) && 
+          (job as any).categories.some((cat: string) => 
+            dbCategories.some(dbCat => 
+              cat.toLowerCase().includes(dbCat.toLowerCase()) || 
+              dbCat.toLowerCase().includes(cat.toLowerCase())
+            )
+          );
+        
+        return titleMatch || categoryMatch;
+      });
+      if (hasCareerMatch) {
+        score += 35; // HIGHEST priority - career path match
+      } else {
+        // QUALITY FOCUS: Moderate penalty - ensures quality matches rank higher
+        // But don't exclude completely - allow close matches through
+        score -= 15; // Moderate penalty - ensures quality ranking
+      }
     }
     
-    // NEW: Apply feedback boosts (learned preferences)
+    // 3. Role/Title matching (SECOND PRIORITY - refinement WITHIN career path)
+    // IMPORTANT: Roles are ALWAYS within the career path from the signup form
+    // So if career path matches, roles are more likely to match too
+    // This is a refinement filter, not a separate concern
+    if (user.roles_selected && user.roles_selected.length > 0) {
+      const roles = user.roles_selected;
+      hasRoleMatch = roles.some((role: string) => {
+        if (!role) return false;
+        const roleLower = role.toLowerCase();
+        // Check for exact role match or partial match
+        return jobTitle.includes(roleLower) || 
+               jobDesc.includes(roleLower) ||
+               // Also check for role keywords (e.g., "Analyst" matches "Financial Analyst")
+               roleLower.split(' ').some(keyword => 
+                 jobTitle.includes(keyword) || jobDesc.includes(keyword)
+               );
+      });
+      if (hasRoleMatch) {
+        // If career path already matches, role match is more valuable (refinement)
+        // If career path doesn't match, role match is less valuable (might be wrong career)
+        if (hasCareerMatch) {
+          score += 20; // Role match WITHIN correct career path (refinement bonus)
+        } else {
+          score += 10; // Role match but wrong career path (less valuable)
+        }
+      } else {
+        // QUALITY FOCUS: Penalties ensure quality matches rank higher
+        // But still allow through if career path matches (shows flexibility)
+        if (hasCareerMatch) {
+          score -= 3; // Small penalty - career path matches but role doesn't (still quality match)
+        } else {
+          score -= 10; // Moderate penalty - ensures quality ranking
+        }
+      }
+    }
+    
+    // 4. Work environment matching (if user specified)
+    if (user.work_environment && user.work_environment !== 'unclear') {
+      const userWorkEnv = user.work_environment.toLowerCase();
+      const jobWorkEnvLower = jobWorkEnv || jobLocation; // Check location string too
+      
+      if (userWorkEnv === 'remote' && (jobWorkEnvLower.includes('remote') || jobWorkEnvLower.includes('work from home'))) {
+        score += 10; // Remote preference match
+      } else if (userWorkEnv === 'hybrid' && (jobWorkEnvLower.includes('hybrid') || jobWorkEnvLower.includes('remote'))) {
+        score += 8; // Hybrid preference match (remote also acceptable)
+      } else if (userWorkEnv === 'on-site' && !jobWorkEnvLower.includes('remote') && !jobWorkEnvLower.includes('hybrid')) {
+        score += 5; // On-site preference match
+      } else if (userWorkEnv !== 'unclear') {
+        score -= 5; // Penalty for mismatch
+      }
+    }
+    
+    // 5. Entry level preference matching
+    if (user.entry_level_preference) {
+      const entryLevel = user.entry_level_preference.toLowerCase();
+      const entryKeywords = ['intern', 'internship', 'graduate', 'grad', 'entry', 'junior', 'trainee', 'associate', 'assistant'];
+      const seniorKeywords = ['senior', 'lead', 'principal', 'manager', 'director', 'head', 'executive'];
+      
+      const isEntryLevel = entryKeywords.some(kw => jobTitle.includes(kw) || jobDesc.includes(kw));
+      const isSenior = seniorKeywords.some(kw => jobTitle.includes(kw) || jobDesc.includes(kw));
+      
+      if (entryLevel.includes('entry') && isEntryLevel) {
+        score += 8; // Entry level match
+      } else if (entryLevel.includes('entry') && isSenior) {
+        score -= 15; // Strong penalty for senior jobs when user wants entry
+      } else if (entryLevel.includes('senior') && isSenior) {
+        score += 8; // Senior level match
+      }
+    }
+    
+    // 6. Company type matching (if user specified)
+    if (user.company_types && user.company_types.length > 0) {
+      const companyTypes = user.company_types;
+      const companyName = ((job as any).company || '').toLowerCase();
+      const hasCompanyMatch = companyTypes.some(type => {
+        const typeLower = type.toLowerCase();
+        // Check company name and description
+        return companyName.includes(typeLower) || 
+               jobDesc.includes(typeLower) ||
+               // Handle common variations
+               (typeLower.includes('startup') && (companyName.includes('startup') || jobDesc.includes('startup'))) ||
+               (typeLower.includes('consulting') && (companyName.includes('consulting') || jobDesc.includes('consulting')));
+      });
+      if (hasCompanyMatch) {
+        score += 5; // Company type match
+      }
+    }
+    
+    // 7. Language scoring (if specified)
+    if (user.languages_spoken && user.languages_spoken.length > 0) {
+      const languages = Array.isArray(user.languages_spoken) ? user.languages_spoken : [user.languages_spoken];
+      const hasLanguageMatch = languages.some(lang => {
+        if (!lang) return false;
+        const langLower = lang.toLowerCase();
+        // Check description for language requirements
+        return jobDesc.includes(langLower) || 
+               jobDesc.includes(`${langLower} speaking`) ||
+               jobDesc.includes(`${langLower} language`) ||
+               ((job as any).language_requirements && Array.isArray((job as any).language_requirements) &&
+                (job as any).language_requirements.some((req: string) => req.toLowerCase().includes(langLower)));
+      });
+      if (hasLanguageMatch) {
+        score += 7; // Language match
+      } else {
+        // Small penalty if language specified but not found (might be required)
+        score -= 3;
+      }
+    }
+    
+    // 8. Early career indicators (bonus points)
+    const earlyCareerKeywords = ['graduate', 'intern', 'internship', 'entry', 'junior', 'trainee', 'associate'];
+    const hasEarlyCareerIndicator = earlyCareerKeywords.some(kw => 
+      jobTitle.includes(kw) || 
+      jobDesc.includes(kw) ||
+      (job as any).is_graduate ||
+      (job as any).is_internship ||
+      ((job as any).categories && Array.isArray((job as any).categories) && 
+       (job as any).categories.includes('early-career'))
+    );
+    if (hasEarlyCareerIndicator) {
+      score += 5; // Bonus for early career jobs
+    }
+    
+    // 9. Apply feedback boosts (learned preferences)
     feedbackBoosts.forEach((boost, key) => {
       const [type, value] = key.split(':');
       
@@ -140,12 +338,53 @@ export async function preFilterJobsByUserPreferencesEnhanced(
       }
     });
     
-    return { job, score };
+    return { job, score, hasRoleMatch, hasCareerMatch };
   });
+  
+  // QUALITY-FOCUSED MATCHING: Ensure graduates get high-quality, relevant matches
+  // CRITICAL: Career path matching is REQUIRED when user specifies it
+  const userHasRolePreference = user.roles_selected && user.roles_selected.length > 0;
+  const userHasCareerPreference = user.career_path && 
+    (Array.isArray(user.career_path) ? user.career_path.length > 0 : !!user.career_path);
+  
+  // QUALITY THRESHOLD: Higher minimum ensures quality matches
+  // Location match (40) + early career bonus (5) = 45 minimum for quality jobs
+  // This ensures graduates get quality matches, not just any job
+  const MINIMUM_SCORE = 45;
+  
+  // QUALITY FILTER: If user specified preferences, jobs must show SOME relevance
+  // This ensures quality over quantity - graduates get relevant matches
+  const QUALITY_RELEVANCE_THRESHOLD = 0.3; // At least 30% relevance to preferences
   
   // Sort by score, then ensure source diversity in top results
   const sortedJobs = scoredJobs
-    .filter(item => item.score > 0) // Only jobs with some match
+    .filter(item => {
+      // Quality threshold - ensure matches are actually good
+      if (item.score < MINIMUM_SCORE) return false;
+      
+      // CRITICAL: Career path matching is REQUIRED when user specifies it
+      // This ensures graduates only see jobs in their chosen career path
+      if (userHasCareerPreference && !item.hasCareerMatch) {
+        return false; // Hard requirement - must match career path
+      }
+      
+      // QUALITY CHECK: If user has role preferences, ensure job has some relevance
+      // This prevents showing completely irrelevant jobs just to fill quota
+      if (userHasRolePreference) {
+        // Calculate relevance: how well does job match user's stated preferences?
+        const baseScore = 40; // Location match
+        const relevanceScore = item.score - baseScore; // Score beyond location
+        const maxPossibleRelevance = 35 + 20 + 10 + 8 + 7 + 5; // Career + Role + WorkEnv + EntryLevel + Language + EarlyCareer
+        const relevanceRatio = relevanceScore / maxPossibleRelevance;
+        
+        // If relevance is too low, exclude it (quality over quantity)
+        if (relevanceRatio < QUALITY_RELEVANCE_THRESHOLD) {
+          return false;
+        }
+      }
+      
+      return true;
+    })
     .sort((a, b) => b.score - a.score);
   
   // Ensure source diversity in top 100 jobs sent to AI

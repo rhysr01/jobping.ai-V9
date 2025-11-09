@@ -3,6 +3,8 @@ import { getDatabaseClient } from '@/Utils/databasePool';
 import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
 import { sendWelcomeEmail, sendMatchedJobsEmail } from '@/Utils/email/sender';
 import { apiLogger } from '@/lib/api-logger';
+import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilterJobs';
+import { getDatabaseCategoriesForForm } from '@/Utils/matching/categoryMapper';
 
 // Helper function to safely send welcome email and update tracking
 async function sendWelcomeEmailAndTrack(
@@ -155,67 +157,88 @@ export async function POST(req: NextRequest) {
       const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
       console.log(`[SIGNUP] Matcher created successfully`);
       
-      // Fetch jobs for matching - PRE-FILTER by location for better matches
+      // OPTIMIZED: Fetch jobs using database-level filtering for better performance
+      // Use the same optimized approach as match-users route
       apiLogger.info('Fetching jobs for matching', { email: data.email, cities: userData.target_cities });
       console.log(`[SIGNUP] Fetching jobs for cities: ${JSON.stringify(userData.target_cities)}`);
-      const { data: allJobs } = await supabase
+      
+      // Map career path to database categories for filtering
+      let careerPathCategories: string[] = [];
+      if (userData.career_path) {
+        careerPathCategories = getDatabaseCategoriesForForm(userData.career_path);
+      }
+      
+      // Build optimized query using database indexes
+      let query = supabase
         .from('jobs')
         .select('*')
+        .eq('is_active', true)
         .eq('status', 'active')
-        .is('filtered_reason', null)
-        .in('city', userData.target_cities) // CRITICAL: Only jobs in user's cities!
-        .order('created_at', { ascending: false })
-        .limit(1000); // Get more since we're pre-filtering
+        .is('filtered_reason', null);
+      
+      // CRITICAL: Filter by cities at database level (uses idx_jobs_city index)
+      if (userData.target_cities && userData.target_cities.length > 0) {
+        query = query.in('city', userData.target_cities);
+      }
+      
+      // QUALITY-FOCUSED: Filter by career path at database level for quality matches
+      // This ensures graduates get relevant, high-quality matches
+      // But we'll still show quality jobs even if exact match isn't found
+      if (careerPathCategories.length > 0) {
+        // Use overlaps to find jobs with ANY matching category (flexible but quality-focused)
+        query = query.overlaps('categories', careerPathCategories);
+      }
+      
+      query = query.order('created_at', { ascending: false }).limit(1000);
+      
+      const { data: allJobs, error: jobsError } = await query;
+      
+      if (jobsError) {
+        apiLogger.error('Failed to fetch jobs', jobsError as Error, { email: data.email });
+        throw jobsError;
+      }
 
-      // Further filter by career path if available (85%+ of jobs have career path data)
-      const jobs = allJobs?.filter(job => {
-        // If job has career path data AND user selected a career path, check for alignment
-        if (job.categories && job.categories.length > 0 && userData.career_path) {
-          const careerPathSlug = userData.career_path.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-');
-          const hasCareerMatch = job.categories.some((cat: string) => 
-            cat.includes(careerPathSlug) || 
-            cat.includes('early-career')
-          );
-          return hasCareerMatch;
-        }
-        // If no career path data, still include it (don't penalize missing data)
-        return true;
-      }) || [];
-
+      // CRITICAL: Use the same strict pre-filtering as match-users route
+      // This ensures welcome email jobs match user preferences perfectly
+      const userPrefs = {
+        email: userData.email,
+        target_cities: userData.target_cities,
+        languages_spoken: userData.languages_spoken,
+        career_path: userData.career_path ? [userData.career_path] : [],
+        roles_selected: userData.roles_selected,
+        entry_level_preference: userData.entry_level_preference,
+        professional_expertise: userData.career_path || '',
+        work_environment: userData.work_environment,
+        visa_status: userData.visa_status,
+        company_types: userData.company_types || [],
+      };
+      
+      // Use the same enhanced pre-filtering that ensures strict location/career matching
+      const preFilteredJobs = await preFilterJobsByUserPreferencesEnhanced(
+        (allJobs || []) as any[],
+        userPrefs as any
+      );
+      
       apiLogger.info('Jobs filtered', { 
         email: data.email, 
         allJobsCount: allJobs?.length || 0,
-        filteredJobsCount: jobs.length 
+        preFilteredCount: preFilteredJobs.length 
       });
-      console.log(`[SIGNUP] Jobs filtered: ${allJobs?.length || 0} total, ${jobs.length} after filtering`);
+      console.log(`[SIGNUP] Jobs filtered: ${allJobs?.length || 0} total, ${preFilteredJobs.length} after strict pre-filtering`);
 
-      if (jobs && jobs.length > 0) {
-        console.log(`[SIGNUP] Found ${jobs.length} jobs, attempting matching...`);
-        const userPrefs = {
-          email: userData.email,
-          target_cities: userData.target_cities,
-          languages_spoken: userData.languages_spoken,
-          career_path: userData.career_path ? [userData.career_path] : [],
-          roles_selected: userData.roles_selected,
-          entry_level_preference: userData.entry_level_preference,
-          professional_expertise: userData.career_path || '',
-          work_environment: userData.work_environment,
-          visa_status: userData.visa_status,
-          // NEW MATCHING PREFERENCES
-          remote_preference: userData.remote_preference,
-          industries: userData.industries,
-          company_size_preference: userData.company_size_preference,
-          skills: userData.skills,
-          career_keywords: userData.career_keywords,
-        };
-
-        const matchResult = await matcher.performMatching(jobs, userPrefs as any);
+      if (preFilteredJobs && preFilteredJobs.length > 0) {
+        console.log(`[SIGNUP] Found ${preFilteredJobs.length} pre-filtered jobs, attempting AI matching...`);
+        
+        // Send top 50 pre-filtered jobs to AI (same as match-users route)
+        const jobsForAI = preFilteredJobs.slice(0, 50);
+        
+        const matchResult = await matcher.performMatching(jobsForAI, userPrefs as any);
         console.log(`[SIGNUP] Matching complete: ${matchResult.matches?.length || 0} matches found`);
         
         if (matchResult.matches && matchResult.matches.length > 0) {
           // Save matches
           const matchesToSave = matchResult.matches.slice(0, 10).map(m => {
-            const job = jobs.find(j => j.job_hash === m.job_hash);
+            const job = preFilteredJobs.find(j => j.job_hash === m.job_hash);
             return {
               user_email: userData.email,
               job_hash: m.job_hash,
@@ -246,7 +269,7 @@ export async function POST(req: NextRequest) {
             apiLogger.info('Preparing to send matched jobs email', { email: data.email, matchesCount });
             console.log(`[SIGNUP] Preparing to send matched jobs email to ${data.email}`);
             const matchedJobs = matchesToSave.map(m => {
-              const job = jobs.find(j => j.job_hash === m.job_hash);
+              const job = preFilteredJobs.find(j => j.job_hash === m.job_hash);
               return {
                 ...job,
                 match_score: m.match_score,
