@@ -85,6 +85,44 @@ const PAGE_DELAY_MS = parseInt(process.env.REED_PAGE_DELAY_MS || '400', 10);
 const PAGE_DELAY_JITTER_MS = parseInt(process.env.REED_PAGE_DELAY_JITTER_MS || '0', 10);
 const BACKOFF_DELAY_MS = parseInt(process.env.REED_BACKOFF_DELAY_MS || '6000', 10);
 const MAX_QUERIES_PER_LOCATION = parseInt(process.env.REED_MAX_QUERIES_PER_LOCATION || `${EARLY_TERMS.length}`, 10);
+const INCLUDE_REMOTE = String(process.env.INCLUDE_REMOTE || '').toLowerCase() === 'true';
+
+function parseTargetCareerPaths() {
+  const raw = process.env.TARGET_CAREER_PATHS;
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((value) => (typeof value === 'string' ? value.trim() : ''))
+        .filter(Boolean);
+    }
+    return [];
+  } catch (error) {
+    console.warn('⚠️  Reed TARGET_CAREER_PATHS parse failed:', error.message);
+    return [];
+  }
+}
+
+const CAREER_PATH_KEYWORDS = {
+  strategy: ['strategy', 'consult', 'business analyst', 'transformation', 'growth'],
+  finance: ['finance', 'financial', 'banking', 'investment', 'audit', 'account', 'treasury'],
+  sales: ['sales', 'business development', 'account executive', 'sdr', 'bdr', 'customer success'],
+  marketing: ['marketing', 'brand', 'growth', 'digital', 'content', 'communications'],
+  product: ['product manager', 'product management', 'product analyst', 'product owner'],
+  operations: ['operations', 'supply chain', 'logistics', 'process', 'project coordinator'],
+  'general-management': ['management trainee', 'leadership programme', 'general management'],
+  data: ['data', 'analytics', 'bi analyst', 'insight', 'business intelligence'],
+  'people-hr': ['hr', 'people', 'talent', 'recruit', 'human resources'],
+  legal: ['legal', 'compliance', 'paralegal', 'law', 'regulation'],
+  sustainability: ['sustainability', 'esg', 'environment', 'impact', 'climate'],
+  creative: ['design', 'creative', 'ux', 'ui', 'graphic', 'copywriter'],
+};
+
+const TARGET_CAREER_PATHS = parseTargetCareerPaths();
+if (TARGET_CAREER_PATHS.length) {
+  console.log('🎯 Reed target career paths:', TARGET_CAREER_PATHS.join(', '));
+}
 const EARLY_TERMS = [ 'graduate','entry level','junior','trainee','intern','internship' ];
 const MAX_PAGES = parseInt(process.env.REED_MAX_PAGES || '10', 10);
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -149,9 +187,18 @@ async function scrapeLocation(location) {
         for (const r of items) {
           const j = toIngestJob(r);
           const { isRemote, isEU } = parseLocation(j.location);
-          if (isRemote) continue;
+          if (isRemote && !INCLUDE_REMOTE) continue;
           if (!isEU && !j.location.toLowerCase().includes('dublin')) continue;
           if (!(classifyEarlyCareer(j) || EARLY_TERMS.some(t => j.title.toLowerCase().includes(t)))) continue;
+          if (TARGET_CAREER_PATHS.length) {
+            const text = `${j.title || ''} ${j.description || ''}`.toLowerCase();
+            const matchesCareerPath = TARGET_CAREER_PATHS.some((path) => {
+              const keywords = CAREER_PATH_KEYWORDS[path] || [];
+              if (!keywords.length) return true;
+              return keywords.some((keyword) => text.includes(keyword));
+            });
+            if (!matchesCareerPath) continue;
+          }
           const valid = j.title && j.company && j.location && j.description && j.url;
           if (valid) jobs.push(j);
         }

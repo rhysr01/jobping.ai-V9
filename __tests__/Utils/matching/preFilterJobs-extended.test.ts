@@ -6,9 +6,28 @@
 import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilterJobs';
 import { buildMockUser, buildMockJob } from '@/__tests__/_helpers/testBuilders';
 
+jest.mock('@sentry/nextjs', () => ({
+  addBreadcrumb: jest.fn(),
+  captureException: jest.fn()
+}));
+
+jest.mock('@/Utils/databasePool', () => ({
+  getDatabaseClient: jest.fn(() => ({
+    from: jest.fn(() => ({
+      select: jest.fn(() => ({
+        eq: jest.fn(() => ({
+          gte: jest.fn(() => ({
+            limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
+          }))
+        }))
+      }))
+    }))
+  }))
+}));
+
 describe('Pre-Filter Jobs Service', () => {
   describe('preFilterJobsByUserPreferencesEnhanced', () => {
-    it('should filter jobs by user preferences', () => {
+    it('should filter jobs by user preferences', async () => {
       const userPrefs = buildMockUser();
       const jobs = [
         buildMockJob(),
@@ -16,13 +35,13 @@ describe('Pre-Filter Jobs Service', () => {
         buildMockJob()
       ];
 
-      const filtered = preFilterJobsByUserPreferencesEnhanced(jobs, userPrefs);
+      const filtered = await preFilterJobsByUserPreferencesEnhanced(jobs, userPrefs);
 
       expect(Array.isArray(filtered)).toBe(true);
       expect(filtered.length).toBeLessThanOrEqual(jobs.length);
     });
 
-    it('should filter by target cities', () => {
+    it('should filter by target cities', async () => {
       const userPrefs = {
         ...buildMockUser(),
         target_cities: ['London']
@@ -34,12 +53,12 @@ describe('Pre-Filter Jobs Service', () => {
         { ...buildMockJob(), location: 'London' }
       ];
 
-      const filtered = preFilterJobsByUserPreferencesEnhanced(jobs, userPrefs);
+      const filtered = await preFilterJobsByUserPreferencesEnhanced(jobs, userPrefs);
 
       expect(filtered.every(job => job.location.includes('London'))).toBe(true);
     });
 
-    it('should filter by work environment', () => {
+    it('should filter by work environment', async () => {
       const userPrefs = {
         ...buildMockUser(),
         work_environment: 'remote'
@@ -51,19 +70,19 @@ describe('Pre-Filter Jobs Service', () => {
         { ...buildMockJob(), work_environment: 'remote' }
       ];
 
-      const filtered = preFilterJobsByUserPreferencesEnhanced(jobs, userPrefs);
+      const filtered = await preFilterJobsByUserPreferencesEnhanced(jobs, userPrefs);
 
       expect(filtered.every(job => job.work_environment === 'remote')).toBe(true);
     });
 
-    it('should handle empty job list', () => {
+    it('should handle empty job list', async () => {
       const userPrefs = buildMockUser();
-      const filtered = preFilterJobsByUserPreferencesEnhanced([], userPrefs);
+      const filtered = await preFilterJobsByUserPreferencesEnhanced([], userPrefs);
 
       expect(filtered).toEqual([]);
     });
 
-    it('should handle jobs without location', () => {
+    it('should handle jobs without location', async () => {
       const userPrefs = {
         ...buildMockUser(),
         target_cities: ['London']
@@ -74,12 +93,12 @@ describe('Pre-Filter Jobs Service', () => {
         { ...buildMockJob(), location: 'London' }
       ];
 
-      const filtered = preFilterJobsByUserPreferencesEnhanced(jobs, userPrefs);
+      const filtered = await preFilterJobsByUserPreferencesEnhanced(jobs, userPrefs);
 
       expect(Array.isArray(filtered)).toBe(true);
     });
 
-    it('should filter by experience level', () => {
+    it('should filter by experience level', async () => {
       const userPrefs = {
         ...buildMockUser(),
         entry_level_preference: 'entry'
@@ -91,7 +110,7 @@ describe('Pre-Filter Jobs Service', () => {
         { ...buildMockJob(), experience_required: 'entry' }
       ];
 
-      const filtered = preFilterJobsByUserPreferencesEnhanced(jobs, userPrefs);
+      const filtered = await preFilterJobsByUserPreferencesEnhanced(jobs, userPrefs);
 
       expect(filtered.length).toBeGreaterThan(0);
     });
