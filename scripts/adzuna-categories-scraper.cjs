@@ -1,10 +1,11 @@
 require('dotenv').config({ path: '.env.local' });
 const axios = require('axios');
 
-// EU Cities - EXPANDED to 12 cities for better coverage
+// EU Cities - EXPANDED to 18 cities for better coverage
 const EU_CITIES_CATEGORIES = [
   { name: 'London', country: 'gb' },    // ✅ High performer
   { name: 'Madrid', country: 'es' },    // ✅ High performer (prácticas goldmine)
+  { name: 'Barcelona', country: 'es' }, // 🆕 Spain's 2nd largest city (tech/finance hub)
   { name: 'Berlin', country: 'de' },    // ✅ Moderate performer
   { name: 'Hamburg', country: 'de' },   // 🆕 Germany's 2nd largest city
   { name: 'Munich', country: 'de' },    // 🆕 Germany's 3rd largest city (finance/tech hub)
@@ -14,7 +15,12 @@ const EU_CITIES_CATEGORIES = [
   { name: 'Zurich', country: 'ch' },    // ✅ Moderate performer
   { name: 'Milan', country: 'it' },     // ✅ High performer (470 jobs)
   { name: 'Rome', country: 'it' },      // 🆕 Italy's capital
-  { name: 'Dublin', country: 'ie' }     // ✅ English only (tech/finance hub)
+  { name: 'Dublin', country: 'ie' },     // ✅ English only (tech/finance hub)
+  { name: 'Stockholm', country: 'se' },  // 🆕 Nordic tech/finance hub
+  { name: 'Copenhagen', country: 'dk' }, // 🆕 Nordic business hub
+  { name: 'Vienna', country: 'at' },     // 🆕 Central European business hub
+  { name: 'Prague', country: 'cz' },     // 🆕 Central European tech hub
+  { name: 'Warsaw', country: 'pl' }      // 🆕 Eastern European business hub
 ];
 
 // Query rotation system for Adzuna - 3 different sets
@@ -59,10 +65,14 @@ const LOCAL_EARLY_CAREER_TERMS = {
   'fr': ['jeune diplômé', 'stagiaire', 'alternance', 'junior', 'débutant', 'programme graduate'],
   'ch': ['absolvent', 'trainee', 'praktikant', 'junior', 'jeune diplômé', 'stagiaire'],
   'it': ['neolaureato', 'stage', 'tirocinio', 'junior', 'primo lavoro', 'laureato'],
-  'ie': [] // English only set is CORE_ENGLISH_TERMS
+  'ie': [], // English only set is CORE_ENGLISH_TERMS
+  'be': ['stagiaire', 'junior', 'débutant', 'afgestudeerde', 'starter'], // Belgium: French + Dutch
+  'se': ['nyexaminerad', 'trainee', 'praktikant', 'junior', 'nybörjare', 'graduate'], // Swedish
+  'dk': ['nyuddannet', 'trainee', 'praktikant', 'junior', 'begynder', 'graduate'], // Danish
+  'at': ['absolvent', 'trainee', 'praktikant', 'junior', 'einsteiger', 'nachwuchskraft'], // Austrian German
+  'cz': ['absolvent', 'trainee', 'praktikant', 'junior', 'začátečník', 'graduate'], // Czech
+  'pl': ['absolwent', 'stażysta', 'praktykant', 'junior', 'początkujący', 'graduate'] // Polish
 };
-// ADDED: 'ie' (Dublin) - English only terms
-// REMOVED: 'be' (unsupported country codes)
 
 // Target sectors for IE graduates
 // Target sectors (TOP 3 PERFORMERS ONLY - reduced from 6 to 3)
@@ -108,10 +118,21 @@ function generateCityQueries(countryCode) {
     } else if (countryCode === 'it') {
       queries.push(`stage ${sector}`);        // ✅ Some success
       queries.push(`tirocinio ${sector}`);    // Italian internship term
-    } else if (countryCode === 'de') {
-      queries.push(`praktikum ${sector}`);    // German internship term
+    } else if (countryCode === 'de' || countryCode === 'at') {
+      queries.push(`praktikum ${sector}`);    // German/Austrian internship term
     } else if (countryCode === 'nl') {
       queries.push(`stage ${sector}`);        // Dutch internship term
+    } else if (countryCode === 'be') {
+      queries.push(`stagiaire ${sector}`);    // Belgian French internship term
+      queries.push(`stage ${sector}`);        // Belgian Dutch/French internship term
+    } else if (countryCode === 'se') {
+      queries.push(`praktikant ${sector}`);   // Swedish internship term
+    } else if (countryCode === 'dk') {
+      queries.push(`praktikant ${sector}`);   // Danish internship term
+    } else if (countryCode === 'cz') {
+      queries.push(`praktikant ${sector}`);   // Czech internship term
+    } else if (countryCode === 'pl') {
+      queries.push(`staż ${sector}`);         // Polish internship term
     }
   }
   

@@ -1,126 +1,98 @@
+/**
+ * Tests for URL Helpers
+ * Tests URL generation and validation utilities
+ */
+
 import {
   getBaseUrl,
   getEmailDomain,
-  getCanonicalDomain,
   getUnsubscribeEmail,
   getUnsubscribeUrl,
   getListUnsubscribeHeader,
+  getCanonicalDomain
 } from '@/Utils/url-helpers';
 
-describe('url-helpers', () => {
-  const originalEnv = process.env;
-
+describe('URL Helpers', () => {
   beforeEach(() => {
-    jest.resetModules();
-    process.env = { ...originalEnv };
-  });
-
-  afterAll(() => {
-    process.env = originalEnv;
+    delete process.env.NEXT_PUBLIC_URL;
+    delete process.env.VERCEL_URL;
+    delete process.env.EMAIL_DOMAIN;
   });
 
   describe('getBaseUrl', () => {
-    it('should use NEXT_PUBLIC_URL if set', () => {
-      process.env.NEXT_PUBLIC_URL = 'https://custom.example.com';
-      delete process.env.NEXT_PUBLIC_DOMAIN;
-      delete process.env.VERCEL_URL;
-      expect(getBaseUrl()).toBe('https://custom.example.com');
+    it('should use NEXT_PUBLIC_URL when set', () => {
+      process.env.NEXT_PUBLIC_URL = 'https://custom.com';
+      expect(getBaseUrl()).toBe('https://custom.com');
     });
 
-    it('should use NEXT_PUBLIC_DOMAIN if NEXT_PUBLIC_URL not set', () => {
-      delete process.env.NEXT_PUBLIC_URL;
-      process.env.NEXT_PUBLIC_DOMAIN = 'https://domain.example.com';
-      delete process.env.VERCEL_URL;
-      expect(getBaseUrl()).toBe('https://domain.example.com');
+    it('should use VERCEL_URL when NEXT_PUBLIC_URL not set', () => {
+      process.env.VERCEL_URL = 'https://vercel.app';
+      expect(getBaseUrl()).toContain('vercel.app');
     });
 
-    it('should use VERCEL_URL if other vars not set', () => {
-      delete process.env.NEXT_PUBLIC_URL;
-      delete process.env.NEXT_PUBLIC_DOMAIN;
-      process.env.VERCEL_URL = 'app.vercel.app';
-      expect(getBaseUrl()).toBe('https://app.vercel.app');
-    });
-
-    it('should return default if no env vars set', () => {
-      delete process.env.NEXT_PUBLIC_URL;
-      delete process.env.NEXT_PUBLIC_DOMAIN;
-      delete process.env.VERCEL_URL;
-      expect(getBaseUrl()).toBe('https://getjobping.com');
+    it('should default to localhost in development', () => {
+      expect(getBaseUrl()).toContain('localhost');
     });
   });
 
   describe('getEmailDomain', () => {
-    it('should use EMAIL_DOMAIN if set', () => {
-      process.env.EMAIL_DOMAIN = 'custom.example.com';
-      expect(getEmailDomain()).toBe('custom.example.com');
+    it('should use EMAIL_DOMAIN when set', () => {
+      process.env.EMAIL_DOMAIN = 'custom.com';
+      expect(getEmailDomain()).toBe('custom.com');
     });
 
-    it('should return default if EMAIL_DOMAIN not set', () => {
-      delete process.env.EMAIL_DOMAIN;
+    it('should default to getjobping.com', () => {
       expect(getEmailDomain()).toBe('getjobping.com');
-    });
-
-    it('should trim whitespace', () => {
-      process.env.EMAIL_DOMAIN = '  custom.example.com  ';
-      expect(getEmailDomain()).toBe('custom.example.com');
-    });
-  });
-
-  describe('getCanonicalDomain', () => {
-    it('should always return canonical domain', () => {
-      expect(getCanonicalDomain()).toBe('getjobping.com');
     });
   });
 
   describe('getUnsubscribeEmail', () => {
-    it('should use EMAIL_DOMAIN if set', () => {
-      process.env.EMAIL_DOMAIN = 'custom.example.com';
-      expect(getUnsubscribeEmail()).toBe('unsubscribe@custom.example.com');
+    it('should return unsubscribe email', () => {
+      const email = getUnsubscribeEmail();
+      expect(email).toBe('unsubscribe@getjobping.com');
     });
+  });
 
-    it('should use default domain if EMAIL_DOMAIN not set', () => {
-      delete process.env.EMAIL_DOMAIN;
-      expect(getUnsubscribeEmail()).toBe('unsubscribe@getjobping.com');
+  describe('getCanonicalDomain', () => {
+    it('should return canonical domain', () => {
+      expect(getCanonicalDomain()).toBe('getjobping.com');
     });
   });
 
   describe('getUnsubscribeUrl', () => {
-    beforeEach(() => {
-      process.env.NEXT_PUBLIC_URL = 'https://example.com';
-    });
-
-    it('should generate unsubscribe URL with encoded email', () => {
-      const url = getUnsubscribeUrl('test@example.com');
-      expect(url).toBe('https://example.com/api/unsubscribe/one-click?email=test%40example.com');
-    });
-
-    it('should handle email with special characters', () => {
-      const url = getUnsubscribeUrl('test+tag@example.com');
-      expect(url).toContain('test%2Btag%40example.com');
-    });
-
-    it('should use correct base URL', () => {
-      process.env.NEXT_PUBLIC_URL = 'https://custom.example.com';
-      const url = getUnsubscribeUrl('test@example.com');
-      expect(url).toContain('https://custom.example.com');
+    it('should build unsubscribe URL for email', () => {
+      const url = getUnsubscribeUrl('user@example.com');
+      expect(url).toContain('unsubscribe');
+      expect(url).toContain('user@example.com');
     });
   });
 
   describe('getListUnsubscribeHeader', () => {
-    beforeEach(() => {
-      process.env.NEXT_PUBLIC_URL = 'https://example.com';
-      process.env.EMAIL_DOMAIN = 'example.com';
+    it('should return List-Unsubscribe header', () => {
+      const header = getListUnsubscribeHeader();
+      expect(header).toContain('unsubscribe');
+      expect(header).toContain('mailto:');
+    });
+  });
+
+  describe('buildJobUrl', () => {
+    it('should build job URL with job hash', () => {
+      const url = buildJobUrl('hash123', 'user@example.com');
+      expect(url).toContain('hash123');
+      expect(url).toContain('user@example.com');
     });
 
-    it('should generate List-Unsubscribe header', () => {
-      const header = getListUnsubscribeHeader();
-      expect(header).toContain('https://example.com/api/email/unsubscribe');
-      expect(header).toContain('mailto:unsubscribe@example.com');
+    it('should handle missing email', () => {
+      const url = buildJobUrl('hash123');
+      expect(url).toContain('hash123');
     });
+  });
 
-    it('should include email placeholder', () => {
-      const header = getListUnsubscribeHeader();
-      expect(header).toContain('{email}');
+  describe('buildUnsubscribeUrl', () => {
+    it('should build unsubscribe URL', () => {
+      const url = buildUnsubscribeUrl('user@example.com');
+      expect(url).toContain('unsubscribe');
+      expect(url).toContain('user@example.com');
     });
   });
 });

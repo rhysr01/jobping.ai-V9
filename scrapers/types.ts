@@ -327,8 +327,12 @@ export const TARGET_CITIES = [
   // Ireland
   'Dublin',
   // Continental Europe
-  'Paris', 'Milan', 'Berlin', 'Madrid', 'Amsterdam',
-  'Munich', 'Hamburg', 'Zurich', 'Rome', 'Brussels'
+  'Paris', 'Milan', 'Berlin', 'Madrid', 'Barcelona', 'Amsterdam',
+  'Munich', 'Hamburg', 'Zurich', 'Rome', 'Brussels',
+  // Nordic
+  'Stockholm', 'Copenhagen',
+  // Central/Eastern Europe
+  'Vienna', 'Prague', 'Warsaw'
 ] as const;
 
 export type WorkEnvironment = typeof WORK_ENVIRONMENTS[number];

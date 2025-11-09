@@ -168,6 +168,7 @@ async function main() {
   const CITY_LOCAL = {
     'London': [], // English only set is CORE_EN
     'Madrid': [ 'programa de graduados','becario','prácticas','junior','recién graduado','nivel inicial' ],
+    'Barcelona': [ 'programa de graduados','becario','prácticas','junior','recién graduado','nivel inicial' ],
     'Berlin': [ 'absolvent','trainee','praktikant','junior','berufseinsteiger','nachwuchskraft' ],
     'Hamburg': [ 'absolvent','trainee','praktikant','junior','berufseinsteiger','nachwuchskraft' ],
     'Munich': [ 'absolvent','trainee','praktikant','junior','berufseinsteiger','nachwuchskraft' ],
@@ -177,9 +178,14 @@ async function main() {
     'Zurich': [ 'absolvent','trainee','praktikant','junior','jeune diplômé','stagiaire' ],
     'Milan': [ 'neolaureato','stage','tirocinio','junior','primo lavoro','laureato' ],
     'Rome': [ 'neolaureato','stage','tirocinio','junior','primo lavoro','laureato' ],
-    'Dublin': [] // English only set is CORE_EN
+    'Dublin': [], // English only set is CORE_EN
+    'Stockholm': [ 'nyexaminerad','trainee','praktikant','junior','nybörjare','graduate' ],
+    'Copenhagen': [ 'nyuddannet','trainee','praktikant','junior','begynder','graduate' ],
+    'Vienna': [ 'absolvent','trainee','praktikant','junior','einsteiger','nachwuchskraft' ],
+    'Prague': [ 'absolvent','trainee','praktikant','junior','začátečník','graduate' ],
+    'Warsaw': [ 'absolwent','stażysta','praktykant','junior','początkujący','graduate' ]
   };
-  const cities = [ 'London','Madrid','Berlin','Hamburg','Munich','Amsterdam','Brussels','Paris','Zurich','Milan','Rome','Dublin' ];
+  const cities = [ 'London','Madrid','Barcelona','Berlin','Hamburg','Munich','Amsterdam','Brussels','Paris','Zurich','Milan','Rome','Dublin','Stockholm','Copenhagen','Vienna','Prague','Warsaw' ];
   const MAX_Q_PER_CITY = parseInt(process.env.JOBSPY_MAX_Q_PER_CITY || '6', 10);
   const RESULTS_WANTED = parseInt(process.env.JOBSPY_RESULTS_WANTED || '15', 10);
   const JOBSPY_TIMEOUT_MS = parseInt(process.env.JOBSPY_TIMEOUT_MS || '20000', 10);
@@ -198,6 +204,7 @@ async function main() {
     const country = city === 'London' ? 'united kingdom'
                   : city === 'Paris' ? 'france'
                   : city === 'Madrid' ? 'spain'
+                  : city === 'Barcelona' ? 'spain'
                   : city === 'Berlin' ? 'germany'
                   : city === 'Hamburg' ? 'germany'
                   : city === 'Munich' ? 'germany'
@@ -207,6 +214,11 @@ async function main() {
                   : city === 'Dublin' ? 'ireland'
                   : city === 'Milan' ? 'italy'
                   : city === 'Rome' ? 'italy'
+                  : city === 'Stockholm' ? 'sweden'
+                  : city === 'Copenhagen' ? 'denmark'
+                  : city === 'Vienna' ? 'austria'
+                  : city === 'Prague' ? 'czech republic'
+                  : city === 'Warsaw' ? 'poland'
                   : 'europe';
     for (const term of toRun) {
       console.log(`\n🔎 Fetching: ${term} in ${city}, ${country}`);

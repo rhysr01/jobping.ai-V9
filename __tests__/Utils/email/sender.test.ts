@@ -109,16 +109,20 @@ describe('Email Sender', () => {
     });
 
     it('should handle timeout errors', async () => {
+      jest.useFakeTimers();
       mockResendClient.emails.send.mockImplementation(
         () => new Promise(resolve => setTimeout(resolve, 20000))
       );
 
-      await expect(
-        sendWelcomeEmail({
-          to: 'user@example.com',
-          matchCount: 5
-        })
-      ).rejects.toThrow('timeout');
+      const promise = sendWelcomeEmail({
+        to: 'user@example.com',
+        matchCount: 5
+      });
+
+      jest.advanceTimersByTime(16000);
+      
+      await expect(promise).rejects.toThrow('timeout');
+      jest.useRealTimers();
     });
 
     it('should track metrics correctly', async () => {
