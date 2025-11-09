@@ -9,30 +9,30 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 // Hero section
 export const HERO_TITLE = "JobPing";
 export const HERO_HEADLINE = "Stop scrolling job boards.";
-export const HERO_SUBLINE = "Tell us where you want to work and we’ll send internships and graduate roles straight to your inbox within 48 hours.";
+export const HERO_SUBLINE = "Tell us where you want to work and we’ll send early career internships and graduate roles straight to your inbox within 48 hours.";
 export const HERO_SUBTITLE = VP_TAGLINE;
-export const HERO_CTA = "Get EU jobs in my inbox — free";
-export const HERO_PILL = "Internships & graduate roles across Europe";
+export const HERO_CTA = "Get EU jobs in my inbox for free";
+export const HERO_PILL = "Internships and graduate roles across Europe";
 export const HERO_FEATURES = [
-  "Every send is reviewed by our team before it goes out",
-  "Only jobs that match your city, visa status, and experience",
-  "Five links per email (15 with Premium) with direct apply buttons"
+  "Every shortlist is reviewed by our team before it goes out",
+  "Only internships and graduate roles that match your city, visa status, and experience",
+  "Five early career links per email (15 with Premium) with direct apply buttons"
 ];
 export const HERO_SOCIAL_PROOF = "Trusted by students in 20+ European cities.";
-export const HERO_FINE_PRINT = "Free forever · Cancel anytime · Inbox only";
+export const HERO_FINE_PRINT = "Free forever  •  Cancel anytime  •  Inbox only";
 
 // How it works
 export const HOW_IT_WORKS_TITLE = "How it works";
-export const HOW_IT_WORKS_SUMMARY = "Tell us where you want to work, then let us do the searching.";
+export const HOW_IT_WORKS_SUMMARY = "Tell us where you want to work and we’ll surface early career roles for you.";
 export const HOW_IT_WORKS_STEPS = [
   { title: "Share your preferences", description: "Pick cities, work rights, and roles. It takes under two minutes." },
   { title: "We search every day", description: "JobPing scans European job boards and company pages and filters out the noise." },
-  { title: "Shortlist arrives by email", description: "You get five ready-to-apply roles per send (fifteen on Premium)." },
+  { title: "Shortlist arrives by email", description: "You get five early career roles per send (fifteen on Premium) that you can apply to right away." },
 ];
 
 // Built for students
 export const BUILT_FOR_STUDENTS_TITLE = "Built for students and recent grads";
-export const BUILT_FOR_STUDENTS_SUBTITLE = "Everything in JobPing is designed to help first-time applicants land roles they can genuinely secure.";
+export const BUILT_FOR_STUDENTS_SUBTITLE = "Everything in JobPing is designed to help first time applicants land early career roles they can genuinely secure.";
 export const BUILT_FOR_STUDENTS_KICKER = "For students and grads";
 export const BUILT_FOR_STUDENTS_FEATURES = [
   {
@@ -43,12 +43,12 @@ export const BUILT_FOR_STUDENTS_FEATURES = [
   {
     num: 2,
     title: "Useful context in every send",
-    body: "Each email highlights salary clues, visa notes, and why the role suits you."
+    body: "Each email highlights salary clues, visa notes, and why the early career role suits you."
   },
   {
     num: 3,
-    title: "Inbox-first experience",
-    body: "Nothing to log into—just open the email and hit apply when you like a role."
+    title: "Inbox first experience",
+    body: "Nothing to log into. Just open the email and hit apply when you like a role."
   }
 ];
 
@@ -89,7 +89,7 @@ export const REASSURANCE_ITEMS = [
 // Email showcase
 export const EMAIL_SHOWCASE_KICKER = "What the drop looks like";
 export const EMAIL_SHOWCASE_TITLE = "Emails built to help you apply faster";
-export const EMAIL_SHOWCASE_SUBTITLE = "Every send includes the context you need—visa notes, salary clues, why it fits you—and nothing else.";
+export const EMAIL_SHOWCASE_SUBTITLE = "Every send includes the context you need (visa notes, salary clues, why it fits you) and nothing else.";
 export const EMAIL_SHOWCASE_POINTS = [
   "Five curated roles per email, focused on internships and graduate programmes",
   "Clear summaries with salary cues, visa notes, and why we chose the role",

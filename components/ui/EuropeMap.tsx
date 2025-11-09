@@ -129,17 +129,6 @@ export default function EuropeMap({
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.12)_0%,transparent_60%)] blur-3xl" />
       </div>
       
-      {/* Enhanced grid pattern with brand colors */}
-      <div 
-        className="absolute inset-0 opacity-20" 
-        style={{
-          backgroundImage: 'linear-gradient(rgba(99,102,241,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.1) 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-          backgroundPosition: '-1px -1px'
-        }}
-        aria-hidden="true"
-      />
-      
       {/* Glass morphism overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-white/[0.02] backdrop-blur-[1px]" aria-hidden="true" />
       

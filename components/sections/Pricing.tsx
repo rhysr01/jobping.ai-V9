@@ -46,7 +46,7 @@ const plans: PlanConfig[] = [
 
 export default function Pricing() {
   return (
-    <section data-testid="pricing" className="section-padding relative overflow-hidden">
+    <section data-testid="pricing" className="section-padding relative overflow-hidden bg-[#05010f]">
       <div className="absolute inset-0 bg-gradient-to-br from-[#05010f] via-[#090018] to-[#130033] opacity-90" />
 
       <div className="container-page container-rhythm relative z-10">
@@ -58,9 +58,12 @@ export default function Pricing() {
           className="mx-auto max-w-3xl text-left sm:text-center"
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
+            <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
             Pricing
           </span>
-          <h2 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">{Copy.PRICING_TITLE}</h2>
+          <h2 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">
+            {Copy.PRICING_TITLE}
+          </h2>
           <p className="mt-3 text-base text-zinc-300 sm:text-lg">{Copy.PRICING_SUBTITLE}</p>
         </motion.div>
 

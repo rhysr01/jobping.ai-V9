@@ -7,7 +7,7 @@ export default function HowItWorks() {
   const stepIcons = [BrandIcons.CheckCircle, BrandIcons.Zap, BrandIcons.Mail];
 
   return (
-    <section data-testid="how-it-works" className="section-padding">
+    <section data-testid="how-it-works" className="section-padding bg-[#0a021c]">
       <div className="container-page container-rhythm">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -17,6 +17,7 @@ export default function HowItWorks() {
           className="mx-auto max-w-3xl text-left sm:text-center"
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
+            <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
             {Copy.HOW_IT_WORKS_TITLE}
           </span>
           <h2 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">
