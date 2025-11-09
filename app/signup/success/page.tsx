@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { SuccessAnimation } from '@/components/ui/SuccessAnimation';
+import { BrandIcons } from '@/components/ui/BrandIcons';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
@@ -52,7 +53,7 @@ function SignupSuccessContent() {
       <AnimatePresence>
         {showSuccess && (
           <SuccessAnimation
-            message="Signup successful! Check your email for your first matches."
+            message="Signup complete! Your first matches are on the way."
             onComplete={() => setShowSuccess(false)}
           />
         )}
@@ -72,19 +73,17 @@ function SignupSuccessContent() {
           </div>
 
           {/* Main Message */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-6 bg-gradient-to-b from-white via-purple-50 to-purple-200 bg-clip-text text-transparent">
-            You're All Set!
+          <h1 className="mb-4 text-4xl font-semibold text-white sm:text-5xl">
+            You're in.
           </h1>
 
-          <p className="text-xl sm:text-2xl text-zinc-300 mb-4">
-            Your first matches are on their way!
-          </p>
-          <p className="text-sm text-zinc-400 max-w-xl mx-auto mb-6">
-            We’ve queued your welcome email and automatically retry with a safety net if delivery fails.
+          <p className="mx-auto mb-6 max-w-xl text-base text-zinc-300 sm:text-lg">
+            We’ve queued your welcome email and job matches. They usually arrive within a few minutes (or within 48 hours at the latest).
           </p>
 
-          <div className="inline-block bg-gradient-to-r from-green-500 to-emerald-600 text-white px-8 py-4 rounded-2xl font-bold text-lg mb-8 shadow-[0_8px_24px_rgba(16,185,129,0.4)]">
-            Check Your Inbox Now
+          <div className="mx-auto mb-8 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-300">
+            <BrandIcons.Mail className="h-4 w-4 text-brand-200" />
+            hello@getjobping.com · add us to contacts
           </div>
 
           <div className="glass-card rounded-2xl p-8 sm:p-10 mb-8 text-left">
@@ -96,21 +95,13 @@ function SignupSuccessContent() {
                   1
                 </div>
                 <div>
-                  <div className="font-semibold text-white mb-1">Check Your Inbox Now</div>
+                  <div className="font-semibold text-white mb-1">Check your inbox</div>
                   <div className="text-zinc-400 text-sm">
-                    You should receive an email with your first matches within the next few minutes.
-                    {tier === 'premium' 
-                      ? ' Premium users get up to 10 jobs on signup.' 
-                      : ' Free users get up to 10 jobs on signup.'}
+                    Your first drop includes {tier === 'premium' ? '10 jobs plus your premium welcome email.' : 'up to 10 jobs and your welcome email.'}
+                    {' '}If you don’t see it after a few minutes, peek at spam.
                   </div>
                   <div className="mt-2 text-xs text-zinc-400">
-                    If it doesn’t arrive, our system automatically retries and sends a safety-net email.
-                  </div>
-                  <div className="mt-2 text-xs text-yellow-400 font-semibold">
-                    💡 Check your spam/junk folder if you don't see it within 5 minutes!
-                  </div>
-                  <div className="mt-2 text-xs text-zinc-400">
-                    📧 Add <strong className="text-white">hello@getjobping.com</strong> to your contacts to ensure delivery
+                    We retry delivery automatically. Add <strong className="text-white">hello@getjobping.com</strong> to stay out of spam.
                   </div>
                   <motion.button
                     onClick={handleResendEmail}
@@ -132,8 +123,8 @@ function SignupSuccessContent() {
                   2
                 </div>
                 <div>
-                  <div className="font-semibold text-white mb-1">Review & Apply</div>
-                  <div className="text-zinc-400 text-sm">Each email takes 60 seconds to read with direct application links</div>
+                  <div className="font-semibold text-white mb-1">Review & apply</div>
+                  <div className="text-zinc-400 text-sm">Each email takes under a minute to scan and links straight to the application.</div>
                 </div>
               </div>
 
@@ -142,8 +133,8 @@ function SignupSuccessContent() {
                   3
                 </div>
                 <div>
-                  <div className="font-semibold text-white mb-1">Ongoing Updates</div>
-                   <div className="text-zinc-400 text-sm">Free: 5 new jobs every week · Premium: 15 new jobs every week (3× weekly)</div>
+                  <div className="font-semibold text-white mb-1">Stay in sync</div>
+                   <div className="text-zinc-400 text-sm">Free: 5 jobs every Thursday · Premium: 15 jobs each week (Mon / Wed / Fri).</div>
                 </div>
               </div>
             </div>
@@ -157,17 +148,17 @@ function SignupSuccessContent() {
               className="glass-card rounded-2xl p-8 sm:p-10 mb-8 bg-gradient-to-br from-brand-500/10 to-purple-600/10 border-2 border-brand-500/30"
             >
               <div className="text-center">
-                <h3 className="text-2xl md:text-3xl font-black text-white mb-3">
-                  Get More Matches for €5 Now
+                <h3 className="text-2xl md:text-3xl font-semibold text-white mb-3">
+                  Need more roles each week?
                 </h3>
                 <p className="text-zinc-300 text-lg mb-6">
-                  Upgrade to Premium and get <span className="text-brand-400 font-bold">15 jobs per week</span> instead of 5
+                  Premium sends <span className="text-brand-300 font-semibold">15 jobs per week</span> with early access and hot match alerts.
                 </p>
                 <Link 
                   href="/billing" 
                   className="btn-primary inline-block px-8 py-4 text-lg font-bold"
                 >
-                  Upgrade to Premium - €5/month
+                  Upgrade for €5/month
                 </Link>
                 <p className="text-zinc-400 text-sm mt-4">
                   Cancel anytime · No commitment
@@ -181,7 +172,7 @@ function SignupSuccessContent() {
           </Link>
 
           <p className="mt-8 text-sm text-zinc-400">
-            Didn't receive an email? Check your spam folder or contact us.
+            Still nothing? Tap resend above or email <a href="mailto:hello@getjobping.com" className="text-brand-200 hover:text-brand-100">hello@getjobping.com</a>.
           </p>
         </motion.div>
       </div>

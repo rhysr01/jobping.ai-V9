@@ -1,55 +1,55 @@
 "use client";
 import { motion } from "framer-motion";
-import SectionHeader from "@/components/ui/SectionHeader";
 import { BrandIcons } from "@/components/ui/BrandIcons";
-import { IconBadge } from "@/components/ui/IconBadge";
 import * as Copy from "@/lib/copy";
 
 export default function HowItWorks() {
+  const stepIcons = [BrandIcons.CheckCircle, BrandIcons.Zap, BrandIcons.Mail];
+
   return (
     <section data-testid="how-it-works" className="section-padding">
       <div className="container-page container-rhythm">
-        <SectionHeader title={Copy.HOW_IT_WORKS_TITLE} />
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mx-auto max-w-3xl text-left sm:text-center"
+        >
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
+            {Copy.HOW_IT_WORKS_TITLE}
+          </span>
+          <h2 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">
+            Less typing, more applying
+          </h2>
+          <p className="mt-3 text-base text-zinc-300 sm:text-lg">
+            {Copy.HOW_IT_WORKS_SUMMARY}
+          </p>
+        </motion.div>
 
-        <div className="mt-10 sm:mt-14 grid gap-10 sm:gap-12 md:gap-14 md:grid-cols-3 text-center">
-          {Copy.HOW_IT_WORKS_STEPS.filter(x => x && x.title).map((x, index) => {
-            const icons = [BrandIcons.Target, BrandIcons.Zap, BrandIcons.Mail];
-            const Icon = icons[index] || BrandIcons.Target;
+        <div className="mt-10 grid gap-6 sm:mt-16 sm:grid-cols-3">
+          {Copy.HOW_IT_WORKS_STEPS.filter(step => step && step.title).map((step, index) => {
+            const Icon = stepIcons[index] || BrandIcons.Target;
             return (
-            <motion.div 
-              key={index + 1} 
-              className="relative px-4 py-2"
-              initial={{ opacity: 0, y: 30, scale: 0.98 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ 
-                duration: 0.6, 
-                delay: index * 0.15,
-                ease: [0.23, 1, 0.32, 1]
-              }}
-              whileHover={{ 
-                scale: 1.02,
-                transition: { duration: 0.3 }
-              }}
-            >
-              <motion.div 
-                  className="number-chip mx-auto mb-4 relative"
-                whileHover={{ 
-                    scale: 1.05,
-                  transition: { duration: 0.3 }
-                }}
+              <motion.article
+                key={step.title}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.55, delay: index * 0.1 }}
+                className="flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 text-left shadow-[0_18px_60px_rgba(10,0,32,0.28)] backdrop-blur-sm sm:p-7"
               >
-                  <span className="relative z-10">{index + 1}</span>
-                  <div className="absolute inset-0 bg-brand-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-                </motion.div>
-                <div className="flex justify-center mb-4">
-                  <IconBadge>
-                    <Icon className="w-6 h-6 text-brand-400" />
-                  </IconBadge>
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-sm font-semibold text-brand-200">
+                  {index + 1}
+                </span>
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-500/12 text-brand-200">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <h3 className="text-lg font-semibold text-white sm:text-xl">{step.title}</h3>
                 </div>
-                <h3 className="mt-4 text-2xl sm:text-3xl md:text-4xl text-white font-black leading-tight">{x.title}</h3>
-                <p className="mt-4 text-lg sm:text-xl text-neutral-100 leading-relaxed font-semibold max-w-sm mx-auto">{x.description}</p>
-              </motion.div>
+                <p className="text-sm leading-relaxed text-zinc-300 sm:text-base">{step.description}</p>
+              </motion.article>
             );
           })}
         </div>

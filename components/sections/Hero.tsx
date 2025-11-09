@@ -46,158 +46,140 @@ export default function Hero() {
     fetchStats();
   }, []);
 
+  const featureIcons = [BrandIcons.Zap, BrandIcons.Target, BrandIcons.Sparkles];
+
   return (
-    <section data-testid="hero-section" className="relative flex flex-col items-center justify-center min-h-[90vh] pt-8 text-center overflow-hidden">
-      {/* Dark clean gradient background with subtle radial light */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#060013] via-[#0a001e] to-[#120033]">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(154,106,255,0.12)_0%,transparent_70%)] blur-3xl" />
+    <section
+      data-testid="hero-section"
+      className="relative flex flex-col items-center justify-center overflow-hidden pb-24 pt-20 text-center sm:pt-24"
+    >
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[#05010f] via-[#090018] to-[#11002c]">
+        <div className="absolute inset-0 bg-[radial-gradient(72%_60%_at_50%_0%,rgba(124,58,237,0.28),transparent_65%)] blur-3xl" />
       </div>
-      
-      <div className="container-page container-rhythm relative z-10">
-        {/* Large JobPing branding with graduation cap - Calm motion */}
-        <motion.div 
-          className="inline-flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 md:gap-6 mb-8 sm:mb-10"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ 
-            opacity: 1, 
-            scale: 1
-          }}
-          transition={{ 
-            opacity: { duration: 0.6 },
-            scale: { duration: 0.6 }
-          }}
-          whileHover={prefersReduced ? {} : { scale: 1.02 }}
-        >
-          {/* Graduation Cap Icon */}
-          <motion.div
-            whileHover={prefersReduced ? {} : { rotate: [0, -5, 5, 0] }}
-            transition={{ duration: 0.5 }}
-          >
-            <BrandIcons.GraduationCap className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 text-white flex-shrink-0" />
-          </motion.div>
-          
-          {/* JobPing Text - Clean, no glow */}
-          <div className="text-8xl sm:text-10xl md:text-12xl lg:text-14xl font-black tracking-tighter leading-none">
-            <span className="bg-gradient-to-b from-white via-purple-50/90 to-purple-200/80 bg-clip-text text-transparent text-shadow-lg">
-              JobPing
-            </span>
-          </div>
-        </motion.div>
-        
-        <motion.h1
-          initial={{ opacity: 0, y: 40 }}
+
+      <div className="container-page container-rhythm relative z-10 mx-auto flex max-w-5xl flex-col items-center gap-10">
+        <motion.span
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
-          className="mt-8 text-white text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black mb-6 text-balance leading-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)] text-shadow-md"
+          transition={{ duration: 0.4 }}
+          className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-2 text-sm font-semibold text-brand-200 backdrop-blur-md"
+        >
+          <BrandIcons.Mail className="h-4 w-4 text-brand-300" />
+          {Copy.HERO_PILL}
+        </motion.span>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.6, ease: "easeOut" }}
+          className="text-balance text-4xl leading-tight text-white sm:text-6xl sm:leading-[1.05] md:text-7xl"
         >
           {Copy.HERO_HEADLINE}
         </motion.h1>
-        <p className="text-neutral-100 leading-relaxed max-w-2xl mx-auto text-2xl sm:text-3xl font-bold mt-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] text-shadow-sm">
+
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.6 }}
+          className="max-w-2xl text-balance text-lg text-zinc-300 sm:text-xl"
+        >
           {Copy.HERO_SUBLINE}
-        </p>
-        
-        {/* Centered bottom section */}
-        <div className="mt-10 sm:mt-12 flex flex-col items-center space-y-6">
-          {/* Stats pill - tag style, not CTA */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="flex flex-col sm:flex-row items-center gap-3"
+        </motion.p>
+
+        <motion.ul
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="grid w-full gap-4 text-left sm:grid-cols-3"
+        >
+          {Copy.HERO_FEATURES.map((feature, index) => {
+            const Icon = featureIcons[index] ?? BrandIcons.Target;
+            return (
+              <li
+                key={feature}
+                className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-zinc-200 shadow-[0_12px_40px_rgba(18,0,42,0.28)] backdrop-blur-sm sm:text-base"
+              >
+                <span className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-500/15 text-brand-200">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="leading-snug">{feature}</span>
+              </li>
+            );
+          })}
+        </motion.ul>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.6 }}
+          className="flex flex-col items-center gap-6"
+        >
+          <Button
+            href="/signup"
+            variant="primary"
+            size="lg"
+            className="min-w-[220px]"
+            aria-label={Copy.HERO_CTA}
           >
-            <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/18 backdrop-blur-sm px-5 py-2 text-small text-brand-200 shadow-[0_2px_12px_rgba(154,106,255,0.2)] glow-brand-subtle">
-              <BrandIcons.Target className="w-4 h-4 text-brand-400" />
+            <span className="flex items-center gap-2">
+              {Copy.HERO_CTA}
+              <BrandIcons.ArrowRight className="h-5 w-5" />
+            </span>
+          </Button>
+          <p className="text-sm text-zinc-400">{Copy.HERO_FINE_PRINT}</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45, duration: 0.6 }}
+          className="flex flex-col items-center gap-4 text-sm text-zinc-300 sm:flex-row"
+        >
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-brand-200">
+            <BrandIcons.Users className="h-4 w-4 text-brand-300" />
+            {Copy.HERO_SOCIAL_PROOF}
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-400">
+            <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1.5 text-sm text-brand-200">
+              <BrandIcons.Target className="h-4 w-4 text-brand-300" />
               {isLoading ? (
-                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-20" />
               ) : (
-                <span className="font-medium">{`${activeJobs} active jobs`}</span>
+                <span>{`${activeJobs} active jobs this week`}</span>
               )}
             </div>
             {!isLoading && (internships || graduates) && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-zinc-700/50 bg-zinc-800/30 backdrop-blur-sm px-4 py-1.5 text-xs text-zinc-400">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5">
                 {internships && <span>{internships} internships</span>}
-                {internships && graduates && <span>·</span>}
-                {graduates && <span>{graduates} graduate programs</span>}
+                {internships && graduates && <span className="text-zinc-600">•</span>}
+                {graduates && <span>{graduates} graduate programmes</span>}
               </div>
             )}
-          </motion.div>
-          
-          {/* CTA Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-          >
-            <Button
-              href="/signup"
-              variant="primary"
-              size="lg"
-              className="mt-5"
-              aria-label={Copy.HERO_CTA}
-            >
-              <span className="relative flex items-center gap-2">
-                {Copy.HERO_CTA}
-                <BrandIcons.ArrowRight className="w-5 h-5" />
-              </span>
-            </Button>
-            <p className="mt-4 text-small text-zinc-400 text-center leading-relaxed">
-              Free forever · No spam · Cancel anytime · GDPR compliant
-            </p>
             {!isLoading && totalUsers && parseInt(totalUsers.replace(/,/g, '')) > 0 && (
-              <p className="mt-2 text-xs text-zinc-400 text-center">
-                Join <span className="text-brand-300 font-bold">{totalUsers}+</span> students finding EU jobs
-              </p>
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5">
+                <BrandIcons.Star className="h-4 w-4 text-brand-300" />
+                <span>{`Join ${totalUsers}+ students`}</span>
+              </div>
             )}
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Big background orbs - respect reduced motion */}
       <motion.div
         aria-hidden
-        initial={{ opacity: 0, y: -20, scale: 0.8 }}
-        animate={{ 
-          opacity: 1, 
-          y: 0, 
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{
+          opacity: 1,
           scale: 1,
-          rotate: prefersReduced ? 0 : [0, 0.5, -0.5, 0]
+          rotate: prefersReduced ? 0 : [0, 0.6, -0.6, 0],
         }}
-        transition={{ 
-          duration: 12, 
+        transition={{
+          duration: 14,
           ease: "easeInOut",
           repeat: prefersReduced ? 0 : Infinity,
-          repeatType: "reverse"
+          repeatType: "reverse",
         }}
-        className="pointer-events-none absolute inset-0 -z-10"
-      />
-      
-      {/* Floating orbs - respect reduced motion */}
-      <motion.div
-        aria-hidden
-        animate={{ 
-          y: prefersReduced ? 0 : [0, -6, 0],
-          opacity: prefersReduced ? 0.25 : [0.25, 0.45, 0.25]
-        }}
-        transition={{ 
-          duration: 8,
-          repeat: prefersReduced ? 0 : Infinity,
-          ease: "easeInOut"
-        }}
-        className="pointer-events-none absolute top-10 sm:top-20 right-4 sm:right-20 w-20 sm:w-32 h-20 sm:h-32 bg-brand-500/10 rounded-full blur-xl"
-      />
-      <motion.div
-        aria-hidden
-        animate={{ 
-          y: prefersReduced ? 0 : [0, 6, 0],
-          opacity: prefersReduced ? 0.2 : [0.2, 0.4, 0.2]
-        }}
-        transition={{ 
-          duration: 8,
-          repeat: prefersReduced ? 0 : Infinity,
-          ease: "easeInOut",
-          delay: 1
-        }}
-        className="pointer-events-none absolute bottom-10 sm:bottom-20 left-4 sm:left-20 w-16 sm:w-24 h-16 sm:h-24 bg-purple-500/10 rounded-full blur-lg"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(124,58,237,0.18),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(99,102,241,0.16),transparent_60%)]"
       />
     </section>
   );

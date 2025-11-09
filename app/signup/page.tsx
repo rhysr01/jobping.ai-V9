@@ -24,6 +24,7 @@ function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeJobs, setActiveJobs] = useState('Updating…');
+  const [totalUsers, setTotalUsers] = useState('');
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [tier] = useState<'free' | 'premium'>(tierParam === 'premium' ? 'premium' : 'free');
   const prefersReduced = useReducedMotion();
@@ -57,15 +58,13 @@ function SignupForm() {
     fetch('/api/stats')
       .then(res => res.json())
       .then(data => {
-        if (data.activeJobsFormatted) {
-          setActiveJobs(data.activeJobsFormatted);
-        } else {
-          setActiveJobs('Updating…');
-        }
+        setActiveJobs(data.activeJobsFormatted ?? 'Updating…');
+        setTotalUsers(data.totalUsersFormatted ?? '');
       })
       .catch(err => {
         console.error('Failed to fetch stats:', err);
         setActiveJobs('Updating…');
+        setTotalUsers('');
       })
       .finally(() => setIsLoadingStats(false));
   }, []);
@@ -283,85 +282,62 @@ function SignupForm() {
       />
 
       <div className="relative container-page max-w-4xl py-12 sm:py-20">
-        {/* Header - DRAMATIC & LOUD */}
-        <motion.div 
-          initial={{ opacity: 0, y: -30, scale: 0.95 }}
-          animate={{ 
-            opacity: 1, 
-            y: 0, 
-            scale: 1
-          }}
-          transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
-          className="text-center mb-12 sm:mb-16"
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-12 text-center sm:mb-16"
         >
-          {/* Large JobPing with graduation cap */}
-          <motion.div 
-            className="inline-flex items-center justify-center gap-4 sm:gap-5 mb-6"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ 
-              opacity: 1, 
-              scale: 1,
-              ...(prefersReduced ? {} : {
-                    scale: [1, 1.05, 1],
-                    y: [0, -8, 0]
-                  })
-            }}
-            transition={{ 
-              duration: 0.6,
-              repeat: prefersReduced ? 0 : Infinity,
-              repeatDelay: 3,
-              ease: [0.34, 1.56, 0.64, 1]
-            }}
-          >
-            <svg
-              className="w-12 h-12 sm:w-14 sm:h-14 text-white flex-shrink-0"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 3l10 5-10 5L2 8l10-5z" />
-              <path d="M22 10v4" />
-              <path d="M6 12v4c0 1.6 3 3.2 6 3.2s6-1.6 6-3.2v-4" />
-            </svg>
-            <div className="text-6xl sm:text-7xl md:text-8xl font-black tracking-tighter bg-gradient-to-b from-white via-purple-50 to-purple-200 bg-clip-text text-transparent">
-              JobPing
-            </div>
-          </motion.div>
-          
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 tracking-tight leading-tight">
-            {Copy.HERO_HEADLINE.replace('without endless scrolling', '→ without endless scrolling')}
-          </h1>
-          <p className="text-zinc-300 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed mb-2">
-            {Copy.HERO_SUBLINE}
-          </p>
-          <p className="text-zinc-400 text-base max-w-2xl mx-auto leading-relaxed mb-4 italic">
-            We know job hunting is rough — we make it easier.
-          </p>
           {tier === 'premium' && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="inline-block bg-gradient-to-r from-brand-500 to-purple-600 text-white px-6 py-2 rounded-full font-bold text-sm mb-2 shadow-glow-subtle"
-            >
-               Premium Plan Selected — €5/month • 10 jobs on signup + 15/week (~60/month, 3× free)
-            </motion.div>
+            <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1 text-xs font-semibold text-brand-200">
+              <BrandIcons.Star className="h-3.5 w-3.5" />
+              Premium selected · €5/mo
+            </span>
           )}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-brand-500 text-white text-xs sm:text-sm font-bold px-4 sm:px-6 py-2 rounded-full shadow-lg"
-          >
-            <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-            {isLoadingStats ? (
-              <span className="inline-block w-20 h-4 bg-white/20 rounded animate-pulse"></span>
-            ) : (
-              `${activeJobs} active roles`
-            )} → Updated daily
-          </motion.div>
+
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
+            Onboarding
+          </span>
+          <h1 className="mt-4 text-3xl font-semibold text-white sm:text-4xl md:text-5xl">
+            Tell us where to send your first matches
+          </h1>
+          <p className="mt-3 text-base text-zinc-300 sm:text-lg">
+            We only ask for the essentials so we can filter internships and graduate roles you can actually land.
+          </p>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm text-zinc-300 sm:text-base">
+            {Copy.REASSURANCE_ITEMS.map(item => (
+              <span
+                key={item}
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-1.5"
+              >
+                <BrandIcons.Check className="h-4 w-4 text-brand-200" />
+                {item}
+              </span>
+            ))}
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-400 sm:text-sm">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-brand-200">
+              <BrandIcons.Target className="h-4 w-4 text-brand-300" />
+              {isLoadingStats ? (
+                <span className="inline-block h-4 w-20 animate-pulse rounded bg-white/15" />
+              ) : (
+                `${activeJobs} active jobs this week`
+              )}
+            </span>
+            {!isLoadingStats && totalUsers && parseInt(totalUsers.replace(/,/g, '')) > 0 && (
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+                <BrandIcons.Users className="h-4 w-4 text-brand-300" />
+                {`${totalUsers}+ students on JobPing`}
+              </span>
+            )}
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+              <BrandIcons.Clock className="h-4 w-4 text-brand-300" />
+              First drop arrives within 48 hours
+            </span>
+          </div>
         </motion.div>
 
         {/* Progress Indicator */}
@@ -617,36 +593,41 @@ function SignupForm() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4 }}
-                className="space-y-8 sm:space-y-10"
+                className="relative"
               >
-                <div>
-                  <h2 className="text-3xl font-black text-white mb-2">Your preferences</h2>
-                  <p className="text-zinc-400">Help us match you perfectly</p>
-                  <p className="text-sm text-zinc-500 mt-1">These fields improve the quality of your first 5 jobs.</p>
+                <div className="relative overflow-hidden rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#12002b]/40 to-purple-600/15 px-5 py-6 sm:px-8 sm:py-8">
+                  <div className="pointer-events-none absolute -top-24 right-0 h-48 w-48 rounded-full bg-brand-500/25 blur-3xl" />
+                  <div className="pointer-events-none absolute -bottom-28 left-12 h-56 w-56 bg-purple-600/20 blur-[120px]" />
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(155,106,255,0.15),transparent_55%)]" />
+                  <div className="relative z-10 space-y-8 sm:space-y-10">
+                    <div>
+                      <h2 className="text-3xl font-black text-white mb-2">Your preferences</h2>
+                      <p className="text-zinc-200">Help us match you perfectly</p>
+                      <p className="text-sm text-zinc-300 mt-1">These fields improve the quality of your first 5 jobs.</p>
 
-                  {/* Progress Helper */}
-                  <div className="mt-4 p-4 bg-zinc-800/50 rounded-xl border border-zinc-700">
-                    <h3 className="text-sm font-bold text-zinc-300 mb-2">Required for next step:</h3>
-                    <div className="space-y-1 text-sm">
-                      <div className={`flex items-center gap-2 ${formData.experience ? 'text-green-400' : 'text-zinc-400'}`}>
-                        <span className={`w-2 h-2 rounded-full ${formData.experience ? 'bg-green-400' : 'bg-zinc-500'}`}></span>
-                        Professional Experience
-                      </div>
-                      <div className={`flex items-center gap-2 ${formData.visaStatus ? 'text-green-400' : 'text-zinc-400'}`}>
-                        <span className={`w-2 h-2 rounded-full ${formData.visaStatus ? 'bg-green-400' : 'bg-zinc-500'}`}></span>
-                        Visa Status
-                      </div>
-                      <div className={`flex items-center gap-2 ${formData.entryLevelPreferences.length > 0 ? 'text-green-400' : 'text-zinc-400'}`}>
-                        <span className={`w-2 h-2 rounded-full ${formData.entryLevelPreferences.length > 0 ? 'bg-green-400' : 'bg-zinc-500'}`}></span>
-                        Entry Level Preferences ({formData.entryLevelPreferences.length}/1+ selected)
+                      {/* Progress Helper */}
+                      <div className="mt-4 rounded-2xl border border-brand-500/30 bg-gradient-to-r from-brand-500/10 via-purple-600/10 to-brand-500/10 p-4 shadow-glow-subtle">
+                        <h3 className="text-sm font-bold text-white/80 mb-2">Required for next step:</h3>
+                        <div className="space-y-1 text-sm">
+                          <div className={`flex items-center gap-2 ${formData.experience ? 'text-brand-200' : 'text-zinc-300'}`}>
+                            <span className={`w-2 h-2 rounded-full ${formData.experience ? 'bg-brand-400' : 'bg-zinc-500'}`}></span>
+                            Professional Experience
+                          </div>
+                          <div className={`flex items-center gap-2 ${formData.visaStatus ? 'text-brand-200' : 'text-zinc-300'}`}>
+                            <span className={`w-2 h-2 rounded-full ${formData.visaStatus ? 'bg-brand-400' : 'bg-zinc-500'}`}></span>
+                            Visa Status
+                          </div>
+                          <div className={`flex items-center gap-2 ${formData.entryLevelPreferences.length > 0 ? 'text-brand-200' : 'text-zinc-300'}`}>
+                            <span className={`w-2 h-2 rounded-full ${formData.entryLevelPreferences.length > 0 ? 'bg-brand-400' : 'bg-zinc-500'}`}></span>
+                            Entry Level Preferences ({formData.entryLevelPreferences.length}/1+ selected)
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                <div>
-                  <label className="block text-base font-bold text-white mb-3">Target Start Date *</label>
-                  <p className="text-sm text-zinc-400 mb-4">When are you available to start?</p>
+                    <div>
+                      <label className="block text-base font-bold text-white mb-3">Target Start Date *</label>
+                      <p className="text-sm text-zinc-200 mb-4">When are you available to start?</p>
                   <CalendarPicker
                     value={formData.startDate}
                     onChange={(date) => setFormData({...formData, startDate: date})}
@@ -654,27 +635,29 @@ function SignupForm() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-base font-bold text-white mb-3">Professional Experience *</label>
-                  <p className="text-sm text-zinc-400 mb-4">How much professional experience do you have?</p>
-                  <ExperienceTimeline
-                    selected={formData.experience}
-                    onChange={(exp) => setFormData({...formData, experience: exp})}
-                  />
+                    <div>
+                      <label className="block text-base font-bold text-white mb-3">Professional Experience *</label>
+                      <p className="text-sm text-zinc-200 mb-4">How much professional experience do you have?</p>
+                  <div className="mt-6">
+                    <ExperienceTimeline
+                      selected={formData.experience}
+                      onChange={(exp) => setFormData({...formData, experience: exp})}
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-base font-bold text-white mb-3">Work Environment</label>
-                  <p className="text-sm text-zinc-400 mb-4">Where would you like to work?</p>
+                    <div>
+                      <label className="block text-base font-bold text-white mb-3">Work Environment</label>
+                      <p className="text-sm text-zinc-200 mb-4">Where would you like to work?</p>
                   <WorkEnvironmentSelector
                     selected={formData.workEnvironment}
                     onChange={(env) => setFormData({...formData, workEnvironment: toggleArray(formData.workEnvironment, env)})}
                   />
                 </div>
 
-                <div>
-                  <label className="block text-base font-bold text-white mb-3">Work Authorization *</label>
-                  <p className="text-sm text-zinc-400 mb-3">Select your work authorization status in the EU/UK</p>
+                    <div>
+                      <label className="block text-base font-bold text-white mb-3">Work Authorization *</label>
+                      <p className="text-sm text-zinc-200 mb-3">Select your work authorization status in the EU/UK</p>
                   <div className="space-y-2">
                     {[
                       'EU citizen',
@@ -705,16 +688,16 @@ function SignupForm() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-base font-bold text-white mb-3">Entry Level Preference *</label>
-                  <p className="text-sm text-zinc-400 mb-4">What type of roles are you looking for?</p>
+                    <div>
+                      <label className="block text-base font-bold text-white mb-3">Entry Level Preference *</label>
+                      <p className="text-sm text-zinc-200 mb-4">What type of roles are you looking for?</p>
                   <EntryLevelSelector
                     selected={formData.entryLevelPreferences}
                     onChange={(pref) => setFormData({...formData, entryLevelPreferences: toggleArray(formData.entryLevelPreferences, pref)})}
                   />
                   {formData.entryLevelPreferences.length > 0 && (
-                    <p className="text-sm text-zinc-400 mt-4">
-                      <span className="font-bold text-brand-400">{formData.entryLevelPreferences.length}</span> selected
+                    <p className="text-sm text-zinc-200 mt-4">
+                      <span className="font-bold text-brand-200">{formData.entryLevelPreferences.length}</span> selected
                     </p>
                   )}
                 </div>
@@ -741,30 +724,32 @@ function SignupForm() {
                   </div>
                 </div>
 
-                <div className="flex gap-4 pt-4">
-                  <motion.button
-                    onClick={() => setStep(1)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="btn-secondary flex-1 py-5 text-lg"
-                  >
-                    ← Back
-                  </motion.button>
-                  <motion.button
-                    onClick={() => setStep(3)}
-                    disabled={!formData.experience || !formData.visaStatus || formData.entryLevelPreferences.length === 0}
-                    whileHover={{ scale: 1.02 }}
-                    className={`relative flex-1 py-6 sm:py-7 text-xl sm:text-2xl font-black uppercase tracking-wide rounded-2xl overflow-hidden transition-all ${
-                      !formData.experience || !formData.visaStatus || formData.entryLevelPreferences.length === 0
-                        ? 'opacity-40 cursor-not-allowed bg-zinc-700 text-zinc-400'
-                        : 'bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-glow-signup hover:shadow-glow-medium hover:scale-105'
-                    }`}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {(!formData.experience || !formData.visaStatus || formData.entryLevelPreferences.length === 0)
-                      ? 'Complete Required Fields'
-                      : 'Continue to Career Path →'}
-                  </motion.button>
+                    <div className="flex gap-4 pt-4">
+                      <motion.button
+                        onClick={() => setStep(1)}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="btn-secondary flex-1 py-5 text-lg"
+                      >
+                        ← Back
+                      </motion.button>
+                      <motion.button
+                        onClick={() => setStep(3)}
+                        disabled={!formData.experience || !formData.visaStatus || formData.entryLevelPreferences.length === 0}
+                        whileHover={{ scale: 1.02 }}
+                        className={`relative flex-1 py-6 sm:py-7 text-xl sm:text-2xl font-black uppercase tracking-wide rounded-2xl overflow-hidden transition-all ${
+                          !formData.experience || !formData.visaStatus || formData.entryLevelPreferences.length === 0
+                            ? 'opacity-40 cursor-not-allowed bg-zinc-700 text-zinc-400'
+                            : 'bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-glow-signup hover:shadow-glow-medium hover:scale-105'
+                        }`}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {(!formData.experience || !formData.visaStatus || formData.entryLevelPreferences.length === 0)
+                          ? 'Complete Required Fields'
+                          : 'Continue to Career Path →'}
+                      </motion.button>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -777,27 +762,32 @@ function SignupForm() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4 }}
-                className="space-y-8 sm:space-y-10"
+                className="relative"
               >
-                <div>
-                  <h2 className="text-3xl font-black text-white mb-2">Your career path</h2>
-                  <p className="text-zinc-400">What type of roles interest you?</p>
+                <div className="relative overflow-hidden rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#130433]/45 to-purple-600/15 px-5 py-6 sm:px-8 sm:py-8">
+                  <div className="pointer-events-none absolute -top-24 left-6 h-48 w-48 rounded-full bg-purple-600/25 blur-3xl" />
+                  <div className="pointer-events-none absolute -bottom-28 right-0 h-56 w-56 bg-brand-500/25 blur-[120px]" />
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(99,102,241,0.12),transparent_60%)]" />
+                  <div className="relative z-10 space-y-8 sm:space-y-10">
+                    <div>
+                      <h2 className="text-3xl font-black text-white mb-2">Your career path</h2>
+                      <p className="text-zinc-200">What type of roles interest you?</p>
 
-                  {/* Progress Helper */}
-                  <div className="mt-4 p-4 bg-zinc-800/50 rounded-xl border border-zinc-700">
-                    <h3 className="text-sm font-bold text-zinc-300 mb-2">Required for next step:</h3>
-                    <div className="space-y-1 text-sm">
-                      <div className={`flex items-center gap-2 ${formData.careerPath ? 'text-green-400' : 'text-zinc-400'}`}>
-                        <span className={`w-2 h-2 rounded-full ${formData.careerPath ? 'bg-green-400' : 'bg-zinc-500'}`}></span>
-                        Career Path Selection
-                      </div>
-                      <div className={`flex items-center gap-2 ${formData.roles.length > 0 ? 'text-green-400' : 'text-zinc-400'}`}>
-                        <span className={`w-2 h-2 rounded-full ${formData.roles.length > 0 ? 'bg-green-400' : 'bg-zinc-500'}`}></span>
-                        Role Selection ({formData.roles.length}/1+ selected)
+                      {/* Progress Helper */}
+                      <div className="mt-4 rounded-2xl border border-brand-500/30 bg-gradient-to-r from-brand-500/10 via-purple-600/10 to-brand-500/10 p-4 shadow-glow-subtle">
+                        <h3 className="text-sm font-bold text-white/80 mb-2">Required for next step:</h3>
+                        <div className="space-y-1 text-sm">
+                          <div className={`flex items-center gap-2 ${formData.careerPath ? 'text-brand-200' : 'text-zinc-300'}`}>
+                            <span className={`w-2 h-2 rounded-full ${formData.careerPath ? 'bg-brand-400' : 'bg-zinc-500'}`}></span>
+                            Career Path Selection
+                          </div>
+                          <div className={`flex items-center gap-2 ${formData.roles.length > 0 ? 'text-brand-200' : 'text-zinc-300'}`}>
+                            <span className={`w-2 h-2 rounded-full ${formData.roles.length > 0 ? 'bg-brand-400' : 'bg-zinc-500'}`}></span>
+                            Role Selection ({formData.roles.length}/1+ selected)
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
                 <div>
                   <label className="block text-base font-bold text-white mb-4">Select Your Career Path *</label>
@@ -962,66 +952,68 @@ function SignupForm() {
                   );
                 })()}
 
-                <div className="flex gap-4 pt-6">
-                  <motion.button
-                    onClick={() => setStep(2)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="btn-secondary flex-1 py-5 text-lg"
-                    disabled={loading}
-                  >
-                    ← Back
-                  </motion.button>
-                  <motion.button
-                    onClick={() => setStep(4)}
-                    disabled={!formData.careerPath || formData.roles.length === 0}
-                    whileHover={{ scale: loading ? 1 : 1.03 }}
-                    whileTap={{ scale: loading ? 1 : 0.97 }}
-                    className="relative flex-1 py-6 sm:py-7 text-xl sm:text-2xl font-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 uppercase tracking-wide rounded-2xl overflow-hidden"
-                    style={{
-                      background: loading ? 'linear-gradient(to right, #6366F1, #7C3AED, #8B5CF6)' : 'linear-gradient(135deg, #6366F1 0%, #7C3AED 50%, #8B5CF6 100%)',
-                      boxShadow: '0 0 60px rgba(99,102,241,0.8), 0 20px 60px -18px rgba(99,102,241,0.9), inset 0 1px 0 rgba(255,255,255,0.3)',
-                      textShadow: '0 2px 8px rgba(0,0,0,0.4)',
-                      transition: 'all 0.3s ease'
-                    }}
-                  >
-                    {!loading && (
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                        animate={{
-                          x: ['-200%', '200%']
+                    <div className="flex gap-4 pt-6">
+                      <motion.button
+                        onClick={() => setStep(2)}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="btn-secondary flex-1 py-5 text-lg"
+                        disabled={loading}
+                      >
+                        ← Back
+                      </motion.button>
+                      <motion.button
+                        onClick={() => setStep(4)}
+                        disabled={!formData.careerPath || formData.roles.length === 0}
+                        whileHover={{ scale: loading ? 1 : 1.03 }}
+                        whileTap={{ scale: loading ? 1 : 0.97 }}
+                        className="relative flex-1 py-6 sm:py-7 text-xl sm:text-2xl font-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 uppercase tracking-wide rounded-2xl overflow-hidden"
+                        style={{
+                          background: loading ? 'linear-gradient(to right, #6366F1, #7C3AED, #8B5CF6)' : 'linear-gradient(135deg, #6366F1 0%, #7C3AED 50%, #8B5CF6 100%)',
+                          boxShadow: '0 0 60px rgba(99,102,241,0.8), 0 20px 60px -18px rgba(99,102,241,0.9), inset 0 1px 0 rgba(255,255,255,0.3)',
+                          textShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                          transition: 'all 0.3s ease'
                         }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          repeatDelay: 1,
-                          ease: "easeInOut"
-                        }}
-                      />
-                    )}
-                    <span className="relative z-10 text-white flex items-center justify-center gap-3">
-                      {loading ? (
-                        <>
-                          <svg className="w-6 h-6 animate-spin" viewBox="0 0 24 24" fill="none">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          <span>Finding Matches...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>→</span>
-                          <span>{formData.careerPath && formData.roles.length === 0 ? 'Select Roles to Finish' : 'Complete Signup'}</span>
-                          <motion.span
-                            animate={{ x: [0, 4, 0] }}
-                            transition={{ duration: 1, repeat: Infinity, repeatDelay: 0.5 }}
-                          >
-                            →
-                          </motion.span>
-                        </>
-                      )}
-                    </span>
-                  </motion.button>
+                      >
+                        {!loading && (
+                          <motion.div
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                            animate={{
+                              x: ['-200%', '200%']
+                            }}
+                            transition={{
+                              duration: 2,
+                              repeat: Infinity,
+                              repeatDelay: 1,
+                              ease: "easeInOut"
+                            }}
+                          />
+                        )}
+                        <span className="relative z-10 text-white flex items-center justify-center gap-3">
+                          {loading ? (
+                            <>
+                              <svg className="w-6 h-6 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              <span>Finding Matches...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>→</span>
+                              <span>{formData.careerPath && formData.roles.length === 0 ? 'Select Roles to Finish' : 'Complete Signup'}</span>
+                              <motion.span
+                                animate={{ x: [0, 4, 0] }}
+                                transition={{ duration: 1, repeat: Infinity, repeatDelay: 0.5 }}
+                              >
+                                →
+                              </motion.span>
+                            </>
+                          )}
+                        </span>
+                      </motion.button>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -1034,62 +1026,65 @@ function SignupForm() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4 }}
-                className="space-y-8 sm:space-y-10"
+                className="relative"
               >
-                <div className="text-center">
-                  <h2 className="text-3xl font-black text-white mb-2 text-shadow-sm">Additional Preferences</h2>
-                  <p className="text-zinc-300 mb-4">Optional - helps us match you even better</p>
-                  <motion.button
-                    type="button"
-                    onClick={() => {
-                      // Skip to submit if GDPR consent is already checked, otherwise just skip optional fields
-                      if (formData.gdprConsent) {
-                        handleSubmit();
-                      } else {
-                        // Focus on GDPR consent
-                        const gdprCheckbox = document.querySelector('input[type="checkbox"]') as HTMLInputElement;
-                        if (gdprCheckbox) {
-                          gdprCheckbox.focus();
-                          gdprCheckbox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                      }
-                    }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="text-brand-400 hover:text-brand-300 text-sm font-semibold underline"
-                  >
-                    Skip Optional Fields →
-                  </motion.button>
-                </div>
-
-                {/* Industry Preferences */}
-                <div className="space-y-4">
-                  <h3 className="text-xl font-bold text-white">Industry Preferences</h3>
-                  <p className="text-sm text-zinc-400">Select industries you're interested in (optional)</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {INDUSTRIES.map((industry) => (
+                <div className="relative overflow-hidden rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#0d0425]/45 to-purple-600/15 px-5 py-6 sm:px-8 sm:py-8">
+                  <div className="pointer-events-none absolute -top-28 right-8 h-52 w-52 rounded-full bg-brand-500/25 blur-[120px]" />
+                  <div className="pointer-events-none absolute -bottom-24 left-6 h-48 w-48 rounded-full bg-purple-600/20 blur-3xl" />
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(136,84,255,0.12),transparent_60%)]" />
+                  <div className="relative z-10 space-y-8 sm:space-y-10">
+                    <div className="text-center">
+                      <h2 className="text-3xl font-black text-white mb-2 text-shadow-sm">Additional Preferences</h2>
+                      <p className="text-zinc-200 mb-4">Optional - helps us match you even better</p>
                       <motion.button
-                        key={industry}
                         type="button"
-                        onClick={() => setFormData({...formData, industries: toggleArray(formData.industries, industry)})}
+                        onClick={() => {
+                          if (formData.gdprConsent) {
+                            handleSubmit();
+                          } else {
+                            const gdprCheckbox = document.querySelector('input[type="checkbox"]') as HTMLInputElement;
+                            if (gdprCheckbox) {
+                              gdprCheckbox.focus();
+                              gdprCheckbox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                          }
+                        }}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className={`px-3 py-2.5 rounded-lg border-2 transition-all font-medium text-sm ${
-                          formData.industries.includes(industry)
-                            ? 'border-brand-500 bg-gradient-to-r from-brand-500/20 to-purple-600/10 text-white'
-                            : 'border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80'
-                        }`}
+                        className="text-brand-300 hover:text-brand-200 text-sm font-semibold underline"
                       >
-                        {industry}
+                        Skip Optional Fields →
                       </motion.button>
-                    ))}
-                  </div>
-                  {formData.industries.length > 0 && (
-                    <p className="text-sm text-zinc-400">
-                      <span className="font-bold text-brand-400">{formData.industries.length}</span> industries selected
-                    </p>
-                  )}
-                </div>
+                    </div>
+
+                    {/* Industry Preferences */}
+                    <div className="space-y-4">
+                      <h3 className="text-xl font-bold text-white">Industry Preferences</h3>
+                      <p className="text-sm text-zinc-200">Select industries you're interested in (optional)</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {INDUSTRIES.map((industry) => (
+                          <motion.button
+                            key={industry}
+                            type="button"
+                            onClick={() => setFormData({...formData, industries: toggleArray(formData.industries, industry)})}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className={`px-3 py-2.5 rounded-lg border-2 transition-all font-medium text-sm ${
+                              formData.industries.includes(industry)
+                                ? 'border-brand-500 bg-gradient-to-r from-brand-500/20 to-purple-600/10 text-white'
+                                : 'border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80'
+                            }`}
+                          >
+                            {industry}
+                          </motion.button>
+                        ))}
+                      </div>
+                      {formData.industries.length > 0 && (
+                        <p className="text-sm text-zinc-200">
+                          <span className="font-bold text-brand-200">{formData.industries.length}</span> industries selected
+                        </p>
+                      )}
+                    </div>
 
                 {/* Company Size Preference */}
                 <div className="space-y-4">
@@ -1210,6 +1205,8 @@ function SignupForm() {
                     )}
                   </motion.button>
                 </div>
+              </div>
+            </div>
               </motion.div>
             )}
           </AnimatePresence>
