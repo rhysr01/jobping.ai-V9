@@ -19,6 +19,9 @@ const OFFSET: Record<string, { dx: number; dy: number }> = {
   Birmingham: { dx: 2, dy: -6 },
   Brussels: { dx: -6, dy: 4 },
   Amsterdam: { dx: 6, dy: -2 },
+  Paris: { dx: -3, dy: 3 },
+  Zurich: { dx: 3, dy: -3 },
+  Hamburg: { dx: -3, dy: -2 },
 };
 
 type CityCoordinate = {
@@ -168,8 +171,8 @@ export default function EuropeMap({
     >
       {/* Brand-colored background gradients matching app design */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#060013] via-[#0a001e] to-[#120033]">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(154,106,255,0.07)_0%,transparent_60%)] blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.056)_0%,transparent_60%)] blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(154,106,255,0.05)_0%,transparent_60%)] blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.04)_0%,transparent_60%)] blur-3xl" />
       </div>
 
       {/* Subtle grid overlay */}
@@ -238,8 +241,9 @@ export default function EuropeMap({
           y="0"
           width="1000"
           height="800"
-          className="opacity-[0.28]"
-          style={{ filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.08))' }}
+          opacity="0.35"
+          style={{ filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.08))' }}
+          aria-hidden="true"
         />
 
         {/* City markers */}
