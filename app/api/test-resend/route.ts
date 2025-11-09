@@ -60,7 +60,19 @@ export const GET = async (req: NextRequest) => {
   } catch (error: any) {
     apiKeyTest.success = false;
     apiKeyTest.error = error.message;
-      apiLogger.error('API Key test failed', error as Error);
+    // Capture more details about the error
+    if (error.response) {
+      apiKeyTest.error = JSON.stringify({
+        message: error.message,
+        statusCode: error.response?.status,
+        statusText: error.response?.statusText,
+        body: error.response?.data || error.response?.body
+      });
+    }
+    apiLogger.error('API Key test failed', error as Error, {
+      statusCode: error.response?.status,
+      errorBody: error.response?.data || error.response?.body
+    });
   }
   
   // Test 2: Send actual email
@@ -128,18 +140,31 @@ export const GET = async (req: NextRequest) => {
     });
   }
   
-  // Test 3: Environment variables
+  // Test 3: Environment variables with detailed diagnostics
+  const apiKey = process.env.RESEND_API_KEY || '';
   const envTest = {
     hasApiKey: !!process.env.RESEND_API_KEY,
-    apiKeyLength: process.env.RESEND_API_KEY?.length || 0,
-    apiKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 10) || 'none',
-    apiKeyFormat: process.env.RESEND_API_KEY?.startsWith('re_') ? 'valid' : 'invalid',
+    apiKeyLength: apiKey.length,
+    apiKeyPrefix: apiKey.substring(0, 10) || 'none',
+    apiKeySuffix: apiKey.length > 10 ? `...${apiKey.substring(apiKey.length - 4)}` : 'none',
+    apiKeyFormat: apiKey.startsWith('re_') ? 'valid' : 'invalid',
+    hasWhitespace: /\s/.test(apiKey),
+    trimmedLength: apiKey.trim().length,
     emailDomain: process.env.EMAIL_DOMAIN || 'getjobping.com',
     fromAddress: EMAIL_CONFIG.from,
     environment: process.env.NODE_ENV,
     vercelUrl: process.env.VERCEL_URL,
     allResendVars: Object.keys(process.env).filter(k => k.includes('RESEND')),
-    nodeEnv: process.env.NODE_ENV
+    nodeEnv: process.env.NODE_ENV,
+    // Diagnostic: Check if key has common issues
+    diagnostics: {
+      hasLeadingSpace: apiKey.startsWith(' '),
+      hasTrailingSpace: apiKey.endsWith(' '),
+      hasNewlines: apiKey.includes('\n') || apiKey.includes('\r'),
+      hasQuotes: apiKey.startsWith('"') || apiKey.startsWith("'") || apiKey.endsWith('"') || apiKey.endsWith("'"),
+      isEmpty: apiKey.trim().length === 0,
+      looksValid: apiKey.startsWith('re_') && apiKey.length > 20 && !/\s/.test(apiKey)
+    }
   };
   
   apiLogger.info('=== RESEND TEST END ===', { duration: Date.now() - startTime });
