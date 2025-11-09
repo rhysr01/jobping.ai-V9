@@ -259,26 +259,36 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /webhook-tally:
+  /signup:
     post:
       tags:
-        - Webhooks
-      summary: Tally Form Webhook
+        - User Management
+      summary: User Registration
       description: |
-        Receives form submissions from Tally forms for user registration.
-        This is a public endpoint that processes new user signups.
+        User registration via signup form.
+        This endpoint processes new user signups and triggers initial job matching.
         
-        **Rate Limit**: 10 requests per minute
-      operationId: webhookTally
+        **Rate Limit**: 20 requests per minute
+      operationId: signup
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TallyWebhook'
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                full_name:
+                  type: string
+                target_cities:
+                  type: array
+                  items:
+                    type: string
       responses:
         '200':
-          description: Webhook processed successfully
+          description: User registered successfully
           content:
             application/json:
               schema:
@@ -290,9 +300,6 @@ paths:
                   userId:
                     type: string
                     example: "user_123"
-                  email:
-                    type: string
-                    example: "user@example.com"
                   matchesFound:
                     type: integer
                     example: 12
@@ -612,51 +619,6 @@ components:
           type: string
           format: date-time
           example: "2024-01-15T10:30:00Z"
-
-    TallyWebhook:
-      type: object
-      properties:
-        eventId:
-          type: string
-          example: "evt_1234567890"
-        eventType:
-          type: string
-          example: "FORM_RESPONSE"
-        createdAt:
-          type: string
-          format: date-time
-          example: "2024-01-15T10:30:00Z"
-        formId:
-          type: string
-          example: "form_1234567890"
-        responseId:
-          type: string
-          example: "resp_1234567890"
-        data:
-          type: object
-          properties:
-            fields:
-              type: array
-              items:
-                type: object
-                properties:
-                  key:
-                    type: string
-                    example: "email"
-                  label:
-                    type: string
-                    example: "Email Address"
-                  type:
-                    type: string
-                    example: "EMAIL"
-                  value:
-                    oneOf:
-                      - type: string
-                      - type: array
-                        items:
-                          type: string
-                      - type: "null"
-                    example: "user@example.com"
 
     DashboardData:
       type: object

@@ -33,46 +33,6 @@ process.env.NEXT_PUBLIC_URL = 'http://localhost:3000';
 process.env.SCRAPE_API_KEY = 'test-api-key';
 process.env.BYPASS_RESERVATION = '1';
 
-// Mock NextResponse
-jest.mock('next/server', () => ({
-  NextRequest: class NextRequest {
-    constructor(url: string, options: any = {}) {
-      this._url = url;
-      this._method = options.method || 'GET';
-      this._headers = new Map(Object.entries(options.headers || {}));
-      this._body = options.body;
-    }
-    
-    private _url: string;
-    private _method: string;
-    private _headers: Map<string, string>;
-    private _body: string;
-    
-    get url() {
-      return this._url;
-    }
-    
-    get method() {
-      return this._method;
-    }
-    
-    get headers() {
-      return this._headers;
-    }
-    
-    json() {
-      return Promise.resolve(JSON.parse(this._body || '{}'));
-    }
-  },
-  NextResponse: {
-    json: jest.fn((data: any, options: any = {}) => ({
-      json: () => Promise.resolve(data),
-      status: options.status || 200,
-      headers: new Map(Object.entries(options.headers || {})),
-    })),
-  },
-}));
-
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
   useRouter() {
@@ -129,14 +89,31 @@ jest.mock('resend', () => ({
 }));
 
 // Mock Sentry (no-op in test mode)
-jest.mock('@sentry/nextjs', () => ({
-  captureException: jest.fn(),
-  captureMessage: jest.fn(),
-  withScope: jest.fn(),
-  setContext: jest.fn(),
-  setTag: jest.fn(),
-  setUser: jest.fn(),
-}));
+jest.mock('@sentry/nextjs', () => {
+  const mockAddBreadcrumb = jest.fn();
+  const mockCaptureException = jest.fn();
+  const mockCaptureMessage = jest.fn();
+  const mockSetUser = jest.fn();
+  const mockSetContext = jest.fn();
+  const mockWithScope = jest.fn();
+  const mockSetTag = jest.fn();
+  
+  const mockSentry = {
+    addBreadcrumb: mockAddBreadcrumb,
+    captureException: mockCaptureException,
+    captureMessage: mockCaptureMessage,
+    setUser: mockSetUser,
+    setContext: mockSetContext,
+    withScope: mockWithScope,
+    setTag: mockSetTag
+  };
+  
+  return {
+    __esModule: true,
+    default: mockSentry,
+    ...mockSentry
+  };
+});
 
 // EnhancedAIMatchingCache removed - no longer needed
 

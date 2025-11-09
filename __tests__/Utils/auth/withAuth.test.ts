@@ -6,16 +6,6 @@
 import { withAuth, requireSystemKey } from '@/Utils/auth/withAuth';
 import { NextRequest, NextResponse } from 'next/server';
 
-// Mock NextResponse
-jest.mock('next/server', () => ({
-  NextResponse: {
-    json: jest.fn((data: any, options?: any) => ({
-      json: () => Promise.resolve(data),
-      status: options?.status || 200,
-      headers: new Map()
-    }))
-  }
-}));
 
 describe('withAuth', () => {
   let mockRequest: NextRequest;

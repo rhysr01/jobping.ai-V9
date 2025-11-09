@@ -101,7 +101,6 @@ SENTRY_AUTH_TOKEN=your-sentry-auth-token
 JWT_SECRET=your-super-secure-jwt-secret-256-bits
 ADMIN_API_KEY=your-admin-api-key
 SYSTEM_API_KEY=your-system-api-key
-TALLY_WEBHOOK_SECRET=your-tally-webhook-secret
 
 # ================================
 # PERFORMANCE & RATE LIMITING
@@ -262,7 +261,7 @@ vercel inspect https://jobping.ai
 ### 3. **Custom Domain Setup**
 
 1. **Add Domain in Vercel Dashboard**
-   - Go to Project Settings † Domains
+   - Go to Project Settings ï¿½ Domains
    - Add `jobping.ai` and `www.jobping.ai`
    - Configure DNS records as instructed
 
@@ -286,7 +285,7 @@ vercel inspect https://jobping.ai
 ### 1. **Stripe Webhook Setup**
 
 1. **Create Webhook Endpoint**
-   - Go to Stripe Dashboard † Webhooks
+   - Go to Stripe Dashboard ï¿½ Webhooks
    - Add endpoint: `https://jobping.ai/api/webhooks/stripe`
    - Select events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
 

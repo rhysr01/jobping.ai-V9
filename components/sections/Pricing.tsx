@@ -40,15 +40,15 @@ export default function Pricing() {
               transition={{ duration: 0.3 }}
               className="relative rounded-3xl p-[1px] bg-gradient-to-b from-white/20 via-white/10 to-transparent overflow-visible"
             >
-              <div className="bg-glass-subtle border border-border-subtle rounded-3xl p-8 md:p-10 flex flex-col h-full hover:border-brand-500/30 transition-all duration-300 shadow-lg backdrop-blur-sm hover:shadow-xl">
+              <div className="bg-glass-subtle border border-border-subtle rounded-3xl p-8 md:p-10 flex flex-col h-full hover:border-brand-500/40 transition-all duration-300 shadow-lg backdrop-blur-sm hover:shadow-xl hover:glow-brand-subtle">
                 <div className="mb-6">
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-800/50 border border-zinc-700/50 text-small uppercase tracking-wider text-zinc-400 font-bold mb-4">
-                    <BrandIcons.Star className="w-3.5 h-3.5 text-zinc-500" />
+                    <BrandIcons.Star className="w-3.5 h-3.5 text-zinc-300" />
                     Free Plan
                 </div>
                   <div className="mt-2 text-3xl md:text-4xl font-black text-white leading-tight">10 jobs on signup</div>
                   <div className="text-base font-semibold text-brand-400 mt-3 flex items-center gap-2">
-                    <span className="text-zinc-500 font-normal">= </span>
+                    <span className="text-zinc-400 font-normal">= </span>
                     <span className="text-xl">5 jobs/week (~20/month)</span>
                   </div>
               </div>
@@ -112,7 +112,7 @@ export default function Pricing() {
               transition={{ duration: 0.3 }}
               className="relative rounded-3xl p-[2px] bg-gradient-to-b from-brand-500/60 via-purple-600/40 to-brand-500/30 overflow-visible shadow-[0_0_40px_rgba(139,92,246,0.25)] hover:shadow-[0_0_60px_rgba(139,92,246,0.35)] transition-all duration-300"
             >
-              <div className="relative bg-glass-subtle border border-brand-500/30 rounded-3xl p-8 md:p-10 flex flex-col h-full overflow-hidden shadow-xl backdrop-blur-sm">
+              <div className="relative bg-glass-subtle border border-brand-500/40 rounded-3xl p-8 md:p-10 flex flex-col h-full overflow-hidden shadow-xl backdrop-blur-sm glow-brand-subtle">
                 {/* Subtle animated gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-600/5 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
@@ -126,10 +126,10 @@ export default function Pricing() {
                   </div>
                   <div className="mt-3 flex items-center gap-2">
                     <span className="text-2xl md:text-3xl font-black text-brand-400">{Copy.PREMIUM_PLAN_PRICE}</span>
-                    <span className="text-base font-semibold text-zinc-500">{Copy.PREMIUM_PLAN_PRICE_UNIT}</span>
+                    <span className="text-base font-semibold text-zinc-300">{Copy.PREMIUM_PLAN_PRICE_UNIT}</span>
                   </div>
                   <div className="text-base font-semibold text-brand-400 mt-3 flex items-center gap-2">
-                    <span className="text-zinc-500 font-normal">= </span>
+                    <span className="text-zinc-400 font-normal">= </span>
                     <span className="text-xl">15 jobs/week (~60/month)</span>
                   </div>
                   <div className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold">
@@ -177,7 +177,7 @@ export default function Pricing() {
           whileInView={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
           viewport={{ once: true }}
-          className="text-center text-small text-zinc-500 mt-10 flex items-center justify-center gap-2"
+          className="text-center text-small text-zinc-400 mt-10 flex items-center justify-center gap-2"
         >
           <BrandIcons.Shield className="w-4 h-4" />
           Cancel anytime · GDPR compliant

@@ -45,6 +45,22 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 console.log('✅ Supabase client initialized successfully');
 
+function parseJsonEnv(value) {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((item) => (typeof item === 'string' ? item.trim() : ''))
+        .filter(Boolean);
+    }
+    return [];
+  } catch (error) {
+    console.warn('⚠️  Failed to parse JSON env value:', error.message);
+    return [];
+  }
+}
+
 class RealJobRunner {
   constructor() {
     this.isRunning = false;
@@ -53,14 +69,99 @@ class RealJobRunner {
     this.runCount = 0;
   }
 
+  async getSignupTargets() {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('target_cities, career_path, industries, roles_selected')
+        .eq('subscription_active', true);
+
+      if (error) {
+        console.error('⚠️  Failed to fetch signup targets:', error.message);
+        return { cities: [], careerPaths: [], industries: [], roles: [] };
+      }
+
+      const citySet = new Set(parseJsonEnv(process.env.TARGET_CITIES_OVERRIDE));
+      const careerSet = new Set(parseJsonEnv(process.env.TARGET_CAREER_PATHS_OVERRIDE));
+      const industrySet = new Set(parseJsonEnv(process.env.TARGET_INDUSTRIES_OVERRIDE));
+      const roleSet = new Set(parseJsonEnv(process.env.TARGET_ROLES_OVERRIDE));
+
+      (data || []).forEach((user) => {
+        if (Array.isArray(user?.target_cities)) {
+          user.target_cities.forEach((city) => {
+            if (typeof city === 'string' && city.trim()) {
+              citySet.add(city.trim());
+            }
+          });
+        }
+
+        if (user?.career_path && typeof user.career_path === 'string') {
+          careerSet.add(user.career_path.trim());
+        }
+
+        if (Array.isArray(user?.industries)) {
+          user.industries.forEach((industry) => {
+            if (typeof industry === 'string' && industry.trim()) {
+              industrySet.add(industry.trim());
+            }
+          });
+        }
+
+        if (Array.isArray(user?.roles_selected)) {
+          user.roles_selected.forEach((role) => {
+            if (typeof role === 'string' && role.trim()) {
+              roleSet.add(role.trim());
+            }
+          });
+        }
+      });
+
+      const cities = Array.from(citySet);
+      const careerPaths = Array.from(careerSet);
+      const industries = Array.from(industrySet);
+      const roles = Array.from(roleSet);
+
+      console.log('🎯 Signup-driven targets ready', {
+        citiesPreview: cities.slice(0, 10),
+        totalCities: cities.length,
+        totalCareerPaths: careerPaths.length,
+        totalIndustries: industries.length,
+        totalRoles: roles.length,
+      });
+
+      return { cities, careerPaths, industries, roles };
+    } catch (error) {
+      console.error('⚠️  Unexpected error collecting signup targets:', error.message);
+      return { cities: [], careerPaths: [], industries: [], roles: [] };
+    }
+  }
+
   // Actually run your working scrapers
-  async runAdzunaScraper() {
+  async runAdzunaScraper(targets) {
     try {
       console.log('🔄 Running Adzuna scraper...');
       // Call standardized wrapper for consistent output
-      const { stdout } = await execAsync('NODE_ENV=production node scrapers/wrappers/adzuna-wrapper.cjs', {
+      const env = {
+        ...process.env,
+        NODE_ENV: 'production',
+      };
+      if (targets?.cities?.length) {
+        env.TARGET_CITIES = JSON.stringify(targets.cities);
+      }
+      if (targets?.careerPaths?.length) {
+        env.TARGET_CAREER_PATHS = JSON.stringify(targets.careerPaths);
+      }
+      if (targets?.industries?.length) {
+        env.TARGET_INDUSTRIES = JSON.stringify(targets.industries);
+      }
+      if (targets?.roles?.length) {
+        env.TARGET_ROLES = JSON.stringify(targets.roles);
+      }
+
+      const { stdout } = await execAsync('node scrapers/wrappers/adzuna-wrapper.cjs', {
         cwd: process.cwd(),
-        timeout: 600000 // 10 minutes for full scraper suite
+        timeout: 600000, // 10 minutes for full scraper suite
+        env,
       });
       // Parse canonical success line
       let jobsSaved = 0;
@@ -159,12 +260,30 @@ class RealJobRunner {
   }
 
   // Run Reed scraper with real API
-  async runReedScraper() {
+  async runReedScraper(targets) {
     try {
       console.log('🔄 Running Reed scraper...');
-      const { stdout } = await execAsync('NODE_ENV=production node scrapers/wrappers/reed-wrapper.cjs', {
+      const env = {
+        ...process.env,
+        NODE_ENV: 'production',
+      };
+      if (targets?.cities?.length) {
+        env.TARGET_CITIES = JSON.stringify(targets.cities);
+      }
+      if (targets?.careerPaths?.length) {
+        env.TARGET_CAREER_PATHS = JSON.stringify(targets.careerPaths);
+      }
+      if (targets?.industries?.length) {
+        env.TARGET_INDUSTRIES = JSON.stringify(targets.industries);
+      }
+      if (targets?.roles?.length) {
+        env.TARGET_ROLES = JSON.stringify(targets.roles);
+      }
+
+      const { stdout } = await execAsync('node scrapers/wrappers/reed-wrapper.cjs', {
         cwd: process.cwd(),
-        timeout: 300000
+        timeout: 300000,
+        env,
       });
       let reedJobs = 0;
       const match = stdout.match(/✅ Reed: (\d+) jobs saved to database/);
@@ -407,6 +526,8 @@ class RealJobRunner {
       console.log('=====================================');
       console.log('🎯 Running streamlined scrapers: JobSpy, JobSpy Internships, Adzuna, Reed');
       
+      const signupTargets = await this.getSignupTargets();
+      
       // Run JobSpy first for fast signal
       let jobspyJobs = 0;
       try {
@@ -431,7 +552,7 @@ class RealJobRunner {
       let adzunaJobs = 0;
       if (!SKIP_ADZUNA) {
         try {
-          adzunaJobs = await this.runAdzunaScraper();
+          adzunaJobs = await this.runAdzunaScraper(signupTargets);
           console.log(`✅ Adzuna completed: ${adzunaJobs} jobs`);
         } catch (error) {
           console.error('❌ Adzuna scraper failed, continuing with other scrapers:', error.message);
@@ -443,7 +564,7 @@ class RealJobRunner {
       
       let reedJobs = 0;
       try {
-        reedJobs = await this.runReedScraper();
+        reedJobs = await this.runReedScraper(signupTargets);
         console.log(`✅ Reed completed: ${reedJobs} jobs`);
       } catch (error) {
         console.error('❌ Reed scraper failed, continuing with other scrapers:', error.message);

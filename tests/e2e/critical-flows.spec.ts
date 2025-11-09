@@ -130,12 +130,12 @@ test.describe('API Endpoints', () => {
     expect(response.status()).toBe(401);
   });
 
-  test('Webhook endpoints handle invalid data gracefully', async ({ request }) => {
-    const response = await request.post('/api/webhook-tally', {
+  test('Signup endpoint handles invalid data gracefully', async ({ request }) => {
+    const response = await request.post('/api/signup', {
       data: { invalid: 'data' }
     });
-    // Should return 400, 422, or 404 for invalid data
-    expect([400, 422, 404]).toContain(response.status());
+    // Should return 400, 422 for invalid data
+    expect([400, 422]).toContain(response.status());
   });
 });
 

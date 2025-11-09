@@ -54,7 +54,84 @@ ${label}
 }
 
 // Premium wrapper with enhanced styling
-function wrapEmail(title: string, body: string): string {
+function formatSource(source?: string): string | undefined {
+  if (!source) return undefined;
+  const cleaned = String(source).replace(/[_-]/g, ' ');
+  return cleaned.slice(0, 1).toUpperCase() + cleaned.slice(1);
+}
+
+function formatSalary(job: Record<string, any>): string | undefined {
+  const min = job.salary_min ?? job.salaryMin ?? job.salary ?? job.compensation_min;
+  const max = job.salary_max ?? job.salaryMax ?? job.compensation_max;
+  const currency = job.salary_currency ?? job.currency ?? '€';
+  if (!min && !max) return undefined;
+  const formatNumber = (raw: number) => {
+    if (raw === null || raw === undefined) return undefined;
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return undefined;
+    if (value >= 1000) return `${Math.round(value / 1000)}k`;
+    if (value % 1 === 0) return value.toString();
+    return value.toFixed(0);
+  };
+  const formattedMin = formatNumber(Number(min));
+  const formattedMax = formatNumber(Number(max));
+  if (formattedMin && formattedMax) return `${currency}${formattedMin}–${formattedMax}`;
+  if (formattedMin) return `${currency}${formattedMin}+`;
+  if (formattedMax) return `Up to ${currency}${formattedMax}`;
+  return undefined;
+}
+
+function formatJobTags(job: Record<string, any>): string[] {
+  const tags = new Set<string>();
+  const addTag = (value?: string) => {
+    if (!value) return;
+    const trimmed = value.toString().trim();
+    if (trimmed.length === 0) return;
+    tags.add(trimmed);
+  };
+
+  const careerPath = job.career_path ?? job.careerPath ?? job.primary_category;
+  addTag(careerPath);
+
+  if (Array.isArray(job.career_paths)) {
+    job.career_paths.slice(0, 2).forEach((path: string) => addTag(path));
+  }
+
+  const workEnv = job.work_arrangement ?? job.work_environment ?? job.work_mode;
+  if (workEnv) {
+    addTag(
+      workEnv
+        .toString()
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (char: string) => char.toUpperCase())
+    );
+  }
+
+  const employment = job.employment_type ?? job.job_type ?? job.contract_type;
+  if (employment) {
+    addTag(
+      employment
+        .toString()
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (char: string) => char.toUpperCase())
+    );
+  }
+
+  const source = formatSource(job.source);
+  if (source) addTag(`via ${source}`);
+
+  const language = job.language_requirement ?? job.language ?? job.primary_language;
+  if (language) addTag(`${language.toString()} role`);
+
+  const salaryTag = formatSalary(job);
+  if (salaryTag) addTag(salaryTag);
+
+  return Array.from(tags).slice(0, 3);
+}
+
+function wrapEmail(title: string, body: string, footerEmail?: string): string {
+  const encodedEmail = footerEmail ? encodeURIComponent(footerEmail) : '';
+  const baseUrl = getBaseUrl();
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -133,7 +210,16 @@ function wrapEmail(title: string, body: string): string {
           <tr>
             <td class="footer">
               <div class="footer-logo">JobPing</div>
-              <div class="footer-text"><a class="footer-link" href="${getBaseUrl()}/legal/unsubscribe">Unsubscribe</a></div>
+              <div class="footer-text" style="color:${COLORS.gray400}; font-size:12px;">
+                JobPing Ltd · 77 Camden Street Lower · Dublin D02 XE80 · Ireland
+              </div>
+              <div class="footer-text">
+                <a class="footer-link" href="${baseUrl}/legal/unsubscribe">Unsubscribe</a> · 
+                <a class="footer-link" href="${baseUrl}/preferences?email=${encodedEmail}&token=temp" style="color:#8B5CF6;">Update Preferences</a>
+              </div>
+              <div class="footer-text" style="color:${COLORS.gray500}; font-size:12px;">
+                You're receiving this because you created a JobPing account. Prefer the browser? Copy &amp; paste <a class="footer-link" href="${baseUrl}">${baseUrl}</a>
+              </div>
             </td>
           </tr>
         </table>
@@ -145,20 +231,33 @@ function wrapEmail(title: string, body: string): string {
   `.trim();
 }
 
-export function createWelcomeEmail(userName?: string, matchCount: number = 5): string {
-  const name = userName ? `, ${userName}` : '';
+export function createWelcomeEmail(
+  userName?: string,
+  matchCount: number = 5,
+  userEmail?: string
+): string {
+  const displayName = userName?.trim() ? userName.trim() : 'there';
+  const friendName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+  const matchesLabel = matchCount === 1 ? 'match' : 'matches';
   const body = `
   <tr>
     <td class="content" align="center">
-      <div class="pill">${matchCount} hand-picked jobs waiting for you! 🎯</div>
-      <h1 class="title">Welcome${name}!<br />We're excited to have you! 🚀</h1>
-      <p class="text">We're <span style="color:#8B5CF6; font-weight:600;">thrilled you're here</span> and can't wait to help you find your next amazing role!</p>
-      <p class="text">We'll send you jobs you can actually get — not a job board dump. <span style="color:#8B5CF6; font-weight:600;">We're excited to share</span> your first set within 48 hours. Then we keep them coming weekly.</p>
-      ${vmlButton(getBaseUrl(), 'Show me my matches! ✨', COLORS.indigo, COLORS.purple)}
-      <p class="text" style="color:${COLORS.gray500}; font-size:14px; margin-top:28px;">Changed your mind? Update preferences anytime from any email — no hard feelings! 💙</p>
+      <div class="pill">${matchCount} new ${matchesLabel} already picked for you <span role="img" aria-label="target">🎯</span></div>
+      <h1 class="title">Welcome, ${friendName}! <span role="img" aria-label="rocket">🚀</span></h1>
+      <p class="text">We're here to get you into a high-quality EU early-career role — no job board scrolling, no generic blasts.</p>
+      <p class="text">You'll receive your first ${matchesLabel} within the next 24 hours, then fresh, hand-curated drops every week. Each one is filtered against your preferences so you only see roles you can realistically land.</p>
+      <p class="text">Quick start:</p>
+      <ul style="color:${COLORS.gray300}; font-size:15px; line-height:1.6; text-align:left; margin:0 auto 24px auto; max-width:420px; padding:0 0 0 18px;">
+        <li>Whitelist <strong style="color:${COLORS.white};">hello@getjobping.com</strong> so nothing hits spam</li>
+        <li>Complete your preferences if anything has changed</li>
+        <li>Reply to this email if you want us to refine your matches further</li>
+      </ul>
+      ${vmlButton(getBaseUrl(), 'View my matches', COLORS.indigo, COLORS.purple)}
+      <p class="text" style="color:${COLORS.gray500}; font-size:13px; margin-top:20px;">Prefer a direct link? <a href="${getBaseUrl()}" style="color:#8B5CF6;">${getBaseUrl()}</a></p>
+      <p class="text" style="color:${COLORS.gray500}; font-size:14px; margin-top:28px;">Need to tweak anything? <a href="${getBaseUrl()}/preferences?email=${encodeURIComponent(userEmail || '')}&token=temp" style="color:#8B5CF6; text-decoration:underline;">Update your preferences</a> any time — or reply to this email and we'll handle it for you.</p>
     </td>
   </tr>`;
-  return wrapEmail('Welcome to JobPing', body);
+  return wrapEmail('Welcome to JobPing', body, userEmail);
 }
 
 export function createJobMatchesEmail(
@@ -166,23 +265,41 @@ export function createJobMatchesEmail(
   userName?: string,
   subscriptionTier: 'free' | 'premium' = 'free',
   isSignupEmail: boolean = false,
+  userEmail?: string,
 ): string {
-  const title = isSignupEmail ? 'Your first matches just landed! 🎉' : 'Exciting new opportunities for you! ✨';
+  const matchesCount = jobCards.length;
+  const title = isSignupEmail
+    ? `Your first ${matchesCount} matches just landed!`
+    : `Your ${matchesCount} new ${matchesCount === 1 ? 'match' : 'matches'} are ready`;
+  const campaign = `${subscriptionTier}-${isSignupEmail ? 'signup' : 'weekly'}-matches`;
+  const baseUrl = getBaseUrl();
   const header = `
   <tr>
     <td class="content" align="left">
       ${subscriptionTier === 'premium' ? '<div class="badge" style="margin-bottom:24px;">⭐ Premium Member</div>' : ''}
-      <h1 class="title">${title}</h1>
-      <p class="text">${userName ? `${userName}, ` : ''}we're <span style="color:#8B5CF6; font-weight:600;">thrilled to share</span> these hand-picked jobs with you! Each one has been carefully selected for your preferences.</p>
+      <h1 class="title">${title} <span role="img" aria-label="sparkles">✨</span></h1>
+      <p class="text">${userName ? `${userName}, ` : ''}here's what our matcher surfaced for you today. Every role below cleared the filters you set — location, career path, visa, and early-career fit.</p>
+      <p class="text" style="color:${COLORS.gray400}; font-size:15px;">Review the highlights, tap through to apply, and let us know if anything feels off — your feedback powers the next batch.</p>
     </td>
   </tr>`;
+  const formatTagsMarkup = (job: Record<string, any>) => {
+    const tags = formatJobTags(job);
+    if (!tags.length) return '';
+    const tagItems = tags.map(tag => `<li style="display:inline-block; margin:0 8px 8px 0; padding:6px 12px; border-radius:999px; background:rgba(99,102,241,0.15); color:${COLORS.gray300}; font-size:13px; font-weight:600; letter-spacing:0.2px;">${tag}</li>`).join('');
+    return `<ul style="margin:16px 0 12px 0; padding:0; list-style:none;">${tagItems}</ul>`;
+  };
 
-  // Premium job cards - clean design, no reviews per job
   const items = jobCards.map((c, index) => {
     const score = c.matchResult?.match_score ?? 85;
     const hot = score >= 90;
     const desc = c.job.description ? c.job.description.slice(0, 200) + (c.job.description.length > 200 ? '…' : '') : '';
-    const apply = c.job.job_url ? vmlButton(c.job.job_url, 'Apply now →', COLORS.indigo, COLORS.purple) : '';
+    const jobUrl = c.job.job_url || c.job.url || c.job.apply_url || '';
+    const applyHref = jobUrl ? `${jobUrl}${jobUrl.includes('?') ? '&' : '?'}utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=apply_button` : '';
+    const apply = jobUrl ? vmlButton(applyHref, 'Apply now →', COLORS.indigo, COLORS.purple) : '';
+    const plainLink = jobUrl
+      ? `<p class="text" style="color:${COLORS.gray500}; font-size:13px; margin-top:18px;">Button not working? Paste this link: <a href="${applyHref}" style="color:#8B5CF6; word-break:break-all;">${jobUrl}</a></p>`
+      : '';
+    const tagsMarkup = formatTagsMarkup(c.job);
     return `
     <tr><td class="content">
       <div class="card${hot ? ' hot' : ''}">
@@ -191,13 +308,17 @@ export function createJobMatchesEmail(
         <div class="company">${c.job.company || 'Company'}</div>
         <div class="loc">📍 ${c.job.location || 'Location'}</div>
         ${desc ? '<div class="desc">' + desc + '</div>' : ''}
+        ${tagsMarkup}
         ${apply}
+        ${plainLink}
       </div>
     </td></tr>`;
   }).join('');
 
   // Premium feedback section - ONLY at the end, after all jobs
-  const userEmail = (jobCards[0] as any)?.job?.user_email || '';
+  const firstCard = jobCards[0] as any;
+  const emailForLinks = userEmail || firstCard?.job?.user_email || '';
+  const upgradeUrl = `${baseUrl}/billing?utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=upgrade_cta`;
   const upgradeCta = subscriptionTier === 'free' ? `
   <tr>
     <td class="content" align="center" style="padding-top:32px;">
@@ -208,7 +329,7 @@ export function createJobMatchesEmail(
         <p class="text" style="margin-bottom:24px; color:${COLORS.gray300}; font-size:16px; line-height:1.6;">
           Upgrade to Premium and get <span style="color:#8B5CF6; font-weight:600;">15 jobs per week</span> instead of 5. Cancel anytime.
         </p>
-        ${vmlButton(`${getBaseUrl()}/billing`, 'Upgrade to Premium - €5/month', COLORS.purple, COLORS.indigo)}
+        ${vmlButton(upgradeUrl, 'Upgrade to Premium - €5/month', COLORS.purple, COLORS.indigo)}
         <p style="color:${COLORS.gray500}; font-size:12px; margin:16px 0 0 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; line-height:1.5;">
           No commitment · Cancel anytime
         </p>
@@ -216,6 +337,11 @@ export function createJobMatchesEmail(
     </td>
   </tr>` : '';
   
+  const feedbackBase = `${baseUrl}/api/feedback/email`;
+  const feedbackParams = `utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=feedback`;
+  const encodeFeedback = (action: string, score: number) =>
+    `${feedbackBase}?action=${action}&score=${score}&email=${encodeURIComponent(emailForLinks)}&${feedbackParams}`;
+
   const feedback = `
   <tr>
     <td class="content" align="center" style="padding-top:40px;">
@@ -229,23 +355,23 @@ export function createJobMatchesEmail(
         <table role="presentation" cellpadding="0" cellspacing="12" style="margin:0 auto; width:100%; max-width:420px;">
           <tr>
             <td align="center" style="padding:8px;">
-              ${vmlFeedbackButton(`${getBaseUrl()}/api/feedback/email?action=positive&score=5&email=${encodeURIComponent(userEmail)}`, '😍 Loved it', COLORS.purple, COLORS.indigo)}
+              ${vmlFeedbackButton(encodeFeedback('positive', 5), '😍 Loved it', COLORS.purple, COLORS.indigo)}
             </td>
             <td align="center" style="padding:8px;">
-              ${vmlFeedbackButton(`${getBaseUrl()}/api/feedback/email?action=positive&score=4&email=${encodeURIComponent(userEmail)}`, '😊 Good', COLORS.purple, COLORS.indigo)}
+              ${vmlFeedbackButton(encodeFeedback('positive', 4), '😊 Good', COLORS.purple, COLORS.indigo)}
             </td>
           </tr>
           <tr>
             <td align="center" style="padding:8px;">
-              ${vmlFeedbackButton(`${getBaseUrl()}/api/feedback/email?action=neutral&score=3&email=${encodeURIComponent(userEmail)}`, '😐 It\'s fine', COLORS.indigo, COLORS.purple)}
+              ${vmlFeedbackButton(encodeFeedback('neutral', 3), '😐 It\'s fine', COLORS.indigo, COLORS.purple)}
             </td>
             <td align="center" style="padding:8px;">
-              ${vmlFeedbackButton(`${getBaseUrl()}/api/feedback/email?action=negative&score=2&email=${encodeURIComponent(userEmail)}`, '😕 Not great', COLORS.indigo, COLORS.purple)}
+              ${vmlFeedbackButton(encodeFeedback('negative', 2), '😕 Not great', COLORS.indigo, COLORS.purple)}
             </td>
           </tr>
           <tr>
             <td colspan="2" align="center" style="padding:8px;">
-              ${vmlFeedbackButton(`${getBaseUrl()}/api/feedback/email?action=negative&score=1&email=${encodeURIComponent(userEmail)}`, '😞 Not relevant', COLORS.indigo, COLORS.purple)}
+              ${vmlFeedbackButton(encodeFeedback('negative', 1), '😞 Not relevant', COLORS.indigo, COLORS.purple)}
             </td>
           </tr>
         </table>
@@ -256,5 +382,5 @@ export function createJobMatchesEmail(
     </td>
   </tr>`;
 
-  return wrapEmail('Your Job Matches', header + items + upgradeCta + feedback);
+  return wrapEmail('Your Job Matches', header + items + upgradeCta + feedback, userEmail);
 }

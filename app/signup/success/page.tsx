@@ -8,13 +8,44 @@ import { useSearchParams } from 'next/navigation';
 
 function SignupSuccessContent() {
   const [showSuccess, setShowSuccess] = useState(true);
+  const [emailSentAt, setEmailSentAt] = useState<string>('');
+  const [resending, setResending] = useState(false);
   const searchParams = useSearchParams();
   const tier = searchParams?.get('tier') === 'premium' ? 'premium' : 'free';
+  const email = searchParams?.get('email') || '';
 
   useEffect(() => {
+    setEmailSentAt(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
     const timer = setTimeout(() => setShowSuccess(false), 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  const handleResendEmail = async () => {
+    if (!email) {
+      alert('Email address not found. Please contact support.');
+      return;
+    }
+
+    setResending(true);
+    try {
+      const response = await fetch('/api/resend-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        alert('Email resent successfully! Check your inbox.');
+      } else {
+        alert(result.error || 'Failed to resend email. Please try again later.');
+      }
+    } catch (error) {
+      alert('Failed to resend email. Please try again later.');
+    } finally {
+      setResending(false);
+    }
+  };
 
   return (
     <>
@@ -72,6 +103,21 @@ function SignupSuccessContent() {
                   <div className="mt-2 text-xs text-yellow-400 font-semibold">
                     💡 Check your spam/junk folder if you don't see it within 5 minutes!
                   </div>
+                  <div className="mt-2 text-xs text-zinc-400">
+                    📧 Add <strong className="text-white">hello@getjobping.com</strong> to your contacts to ensure delivery
+                  </div>
+                  <motion.button
+                    onClick={handleResendEmail}
+                    disabled={resending || !email}
+                    className="mt-3 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-colors"
+                  >
+                    {resending ? 'Sending...' : 'Resend Email'}
+                  </motion.button>
+                  {emailSentAt && (
+                    <p className="mt-2 text-xs text-zinc-400">
+                      Email sent at {emailSentAt}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -117,7 +163,7 @@ function SignupSuccessContent() {
                 >
                   Upgrade to Premium - €5/month
                 </Link>
-                <p className="text-zinc-500 text-sm mt-4">
+                <p className="text-zinc-400 text-sm mt-4">
                   Cancel anytime · No commitment
                 </p>
               </div>
@@ -128,7 +174,7 @@ function SignupSuccessContent() {
             Back to Home
           </Link>
 
-          <p className="mt-8 text-sm text-zinc-500">
+          <p className="mt-8 text-sm text-zinc-400">
             Didn't receive an email? Check your spam folder or contact us.
           </p>
         </motion.div>

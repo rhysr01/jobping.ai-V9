@@ -167,6 +167,8 @@ async function main() {
   console.log(`🔄 Using query set: ${currentSet} (${CORE_EN.length} terms)`);
   const CITY_LOCAL = {
     'London': [], // English only set is CORE_EN
+    'Manchester': [], // English only set is CORE_EN
+    'Birmingham': [], // English only set is CORE_EN
     'Madrid': [ 'programa de graduados','becario','prácticas','junior','recién graduado','nivel inicial' ],
     'Barcelona': [ 'programa de graduados','becario','prácticas','junior','recién graduado','nivel inicial' ],
     'Berlin': [ 'absolvent','trainee','praktikant','junior','berufseinsteiger','nachwuchskraft' ],
@@ -185,7 +187,7 @@ async function main() {
     'Prague': [ 'absolvent','trainee','praktikant','junior','začátečník','graduate' ],
     'Warsaw': [ 'absolwent','stażysta','praktykant','junior','początkujący','graduate' ]
   };
-  const cities = [ 'London','Madrid','Barcelona','Berlin','Hamburg','Munich','Amsterdam','Brussels','Paris','Zurich','Milan','Rome','Dublin','Stockholm','Copenhagen','Vienna','Prague','Warsaw' ];
+  const cities = [ 'London','Manchester','Birmingham','Madrid','Barcelona','Berlin','Hamburg','Munich','Amsterdam','Brussels','Paris','Zurich','Milan','Rome','Dublin','Stockholm','Copenhagen','Vienna','Prague','Warsaw' ];
   const MAX_Q_PER_CITY = parseInt(process.env.JOBSPY_MAX_Q_PER_CITY || '6', 10);
   const RESULTS_WANTED = parseInt(process.env.JOBSPY_RESULTS_WANTED || '15', 10);
   const JOBSPY_TIMEOUT_MS = parseInt(process.env.JOBSPY_TIMEOUT_MS || '20000', 10);
@@ -202,6 +204,8 @@ async function main() {
     ];
     const toRun = prioritized.slice(0, MAX_Q_PER_CITY);
     const country = city === 'London' ? 'united kingdom'
+                  : city === 'Manchester' ? 'united kingdom'
+                  : city === 'Birmingham' ? 'united kingdom'
                   : city === 'Paris' ? 'france'
                   : city === 'Madrid' ? 'spain'
                   : city === 'Barcelona' ? 'spain'

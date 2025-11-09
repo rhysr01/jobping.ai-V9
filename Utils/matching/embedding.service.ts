@@ -24,10 +24,25 @@ export class EmbeddingService {
    */
   private getOpenAIClient(): OpenAI {
     if (!this.openai) {
-      if (!process.env.OPENAI_API_KEY) {
+      const apiKey = process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY;
+      
+      if (!apiKey) {
         throw new Error('OPENAI_API_KEY not configured');
       }
-      this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
+      // Clean the API key (remove quotes, newlines, whitespace)
+      const cleanedKey = apiKey
+        .trim()
+        .replace(/^["']|["']$/g, '') // Remove surrounding quotes
+        .replace(/\n/g, '') // Remove newlines
+        .replace(/\r/g, '') // Remove carriage returns
+        .trim();
+      
+      if (!cleanedKey.startsWith('sk-')) {
+        throw new Error(`Invalid OpenAI API key format: should start with "sk-" but found "${cleanedKey.substring(0, 10)}..."`);
+      }
+      
+      this.openai = new OpenAI({ apiKey: cleanedKey });
     }
     return this.openai;
   }
@@ -207,44 +222,57 @@ export class EmbeddingService {
   }
 
   /**
-   * Store job embeddings in database using batch upsert
-   * OPTIMIZED: Single batch upsert instead of individual updates
+   * Store job embeddings in database using batch update
+   * OPTIMIZED: Batch updates instead of individual updates
    */
   async storeJobEmbeddings(
     embeddings: Map<string, number[]>
   ): Promise<void> {
     if (embeddings.size === 0) return;
 
-    // Update jobs in batches using upsert
-    const batchSize = 100;
+    // Update jobs individually (Supabase doesn't support batch update with different WHERE clauses)
+    // But we can use Promise.all for parallel updates
     const entries = Array.from(embeddings.entries());
+    const batchSize = 50; // Process 50 at a time in parallel
+    
+    let successCount = 0;
+    let errorCount = 0;
     
     for (let i = 0; i < entries.length; i += batchSize) {
       const batch = entries.slice(i, i + batchSize);
       
-      // Prepare batch with proper vector format (native array)
-      const updates = batch.map(([jobHash, embedding]) => ({
-        job_hash: jobHash,
-        embedding: embedding // Pass as native array - Supabase handles conversion
-      }));
+      // Update each job individually but in parallel
+      const updatePromises = batch.map(async ([jobHash, embedding]) => {
+        try {
+          const { error } = await this.supabase
+            .from('jobs')
+            .update({ 
+              embedding: embedding // Pass as native array - Supabase/pgvector handles conversion
+            })
+            .eq('job_hash', jobHash);
 
-      try {
-        // Single batch upsert - much faster than individual updates
-        const { error } = await this.supabase
-          .from('jobs')
-          .upsert(updates, { 
-            onConflict: 'job_hash',
-            ignoreDuplicates: false 
-          });
-
-        if (error) {
-          console.error(`Failed to store embedding batch ${i}:`, error);
-          // Continue with other batches instead of failing completely
+          if (error) {
+            console.error(`Failed to store embedding for job_hash ${jobHash.substring(0, 8)}...:`, error.message);
+            return false;
+          }
+          return true;
+        } catch (error) {
+          console.error(`Error storing embedding for job_hash ${jobHash.substring(0, 8)}...:`, error);
+          return false;
         }
-      } catch (error) {
-        console.error(`Error storing embedding batch ${i}:`, error);
+      });
+
+      const results = await Promise.all(updatePromises);
+      successCount += results.filter(r => r).length;
+      errorCount += results.filter(r => !r).length;
+      
+      // Log progress every batch
+      if ((i + batchSize) % 500 === 0 || i + batchSize >= entries.length) {
+        console.log(`  Stored ${successCount}/${entries.length} embeddings (${errorCount} errors)`);
       }
     }
+    
+    console.log(`✅ Successfully stored ${successCount} embeddings, ${errorCount} errors`);
   }
 
   /**

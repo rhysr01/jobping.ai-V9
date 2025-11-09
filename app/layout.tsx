@@ -5,9 +5,9 @@ import FAQSchema from "@/components/FAQSchema";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
-  title: "JobPing → Five jobs. Zero scrolling.",
+  title: "JobPing → EU early-career roles in your inbox. Weekly.",
   description:
-    "Weekly job matches for early-career jobs across Europe delivered to your inbox. 5 hand-picked jobs per email. No dashboards. No scrolling marathons.",
+    "EU early-career roles delivered to your inbox weekly. We monitor 1,000+ companies across Europe and send you 5 hand-picked internships, graduate schemes, and entry-level roles—matched to your city, skills, and goals.",
   keywords: [
     "graduate jobs",
     "internships Europe",
@@ -44,9 +44,9 @@ export const metadata: Metadata = {
     }
   },
   openGraph: {
-    title: "JobPing → Five jobs. Zero scrolling.",
+    title: "JobPing → EU early-career roles in your inbox. Weekly.",
     description:
-      "Weekly job matches for early-career jobs across Europe delivered to your inbox. Hand-picked quality, zero noise.",
+      "EU early-career roles delivered to your inbox weekly. 5 hand-picked internships, graduate schemes, and entry-level roles matched to your profile.",
     url: "https://getjobping.com",
     siteName: "JobPing",
     locale: "en_US",
@@ -62,8 +62,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "JobPing → Five jobs. Zero scrolling.",
-    description: "Weekly job matches for early-career jobs across Europe.",
+    title: "JobPing → EU early-career roles in your inbox. Weekly.",
+    description: "EU early-career roles delivered weekly. 5 hand-picked matches per email.",
     creator: "@jobping",
     images: ["https://getjobping.com/og-image.png"],
   },

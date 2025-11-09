@@ -155,45 +155,32 @@ curl -X POST https://getjobping.com/api/send-scheduled-emails \
 
 ---
 
-### Webhook Endpoints
+### User Registration
 
-#### `POST /api/webhook-tally`
+#### `POST /api/signup`
 
-Tally form submission webhook.
+User registration via signup form.
 
 **Request**:
 ```http
-POST /api/webhook-tally
+POST /api/signup
 Content-Type: application/json
 
 {
-  "eventId": "...",
-  "eventType": "FORM_RESPONSE",
-  "createdAt": "...",
-  "data": {
-    "responseId": "...",
-    "submissionId": "...",
-    "respondentId": "...",
-    "formId": "...",
-    "formName": "...",
-    "createdAt": "...",
-    "fields": [
-      {
-        "key": "question_...",
-        "label": "Email",
-        "type": "INPUT_EMAIL",
-        "value": "user@example.com"
-      }
-    ]
-  }
+  "email": "user@example.com",
+  "full_name": "John Doe",
+  "target_cities": ["London"],
+  "roles_selected": ["Analyst"],
+  ...
 }
 ```
 
 **Response** (200):
 ```json
 {
-  "received": true,
-  "userId": "uuid"
+  "success": true,
+  "userId": "uuid",
+  "matchesFound": 12
 }
 ```
 

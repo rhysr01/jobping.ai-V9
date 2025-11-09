@@ -23,11 +23,6 @@ const PREFIX = () => (isTestMode() ? 'jobping:test:' : 'jobping:prod:');
 // Production rate limit configurations per endpoint
 export const RATE_LIMIT_CONFIG = {
   // Public endpoints (stricter limits)
-  'webhook-tally': {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 10, // 10 requests per minute
-    skipSuccessfulRequests: false
-  },
   'scrape': {
     windowMs: 60 * 1000, // 1 minute  
     maxRequests: 2, // 2 scrape requests per minute (resource intensive)

@@ -52,6 +52,13 @@ export async function GET() {
       .eq('is_active', true)
       .eq('is_graduate', true);
 
+    // Get user count for social proof
+    const { count: totalUsers } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('active', true)
+      .eq('email_verified', true);
+
     // Format numbers with commas
     const formatNumber = (num: number) => {
       return num.toLocaleString('en-US');
@@ -62,6 +69,8 @@ export async function GET() {
       activeJobsFormatted: formatNumber(activeJobs || 0),
       internships: internships || 0,
       graduates: graduates || 0,
+      totalUsers: totalUsers || 0,
+      totalUsersFormatted: formatNumber(totalUsers || 0),
       lastUpdated: new Date().toISOString(),
     };
 
@@ -81,6 +90,8 @@ export async function GET() {
       activeJobsFormatted: '12,748',
       internships: 3710,
       graduates: 3480,
+      totalUsers: 0,
+      totalUsersFormatted: '0',
       lastUpdated: new Date().toISOString(),
       fallback: true,
     });

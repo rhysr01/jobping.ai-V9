@@ -142,7 +142,7 @@ function MetricCard({ title, value, subtitle, color }: {
         <div className="ml-4">
           <p className="text-sm font-medium text-zinc-400">{title}</p>
           <p className="text-2xl font-semibold text-white">{value}</p>
-          <p className="text-sm text-zinc-500">{subtitle}</p>
+          <p className="text-sm text-zinc-400">{subtitle}</p>
         </div>
       </div>
     </div>
