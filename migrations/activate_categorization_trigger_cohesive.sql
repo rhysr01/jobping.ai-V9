@@ -105,6 +105,9 @@ BEGIN
        job_title LIKE '%treasury analyst%' OR
        job_title LIKE '%junior tax%' OR
        job_title LIKE '%finance graduate%' OR
+       job_title LIKE '%impiegato amministrativo%' OR
+       job_title LIKE '%contabile%' OR
+       job_title LIKE '%accounting%' OR
        -- Generic finance keywords
        job_title LIKE '%finance%' OR
        job_title LIKE '%financial%' OR
@@ -357,10 +360,15 @@ BEGIN
        job_title LIKE '%test analyst%' OR
        job_title LIKE '%platform engineer%' OR
        job_title LIKE '%cybersecurity analyst%' OR
+       job_title LIKE '%cyber security%' OR
+       job_title LIKE '%it security%' OR
+       job_title LIKE '%network admin%' OR
+       job_title LIKE '%network administrator%' OR
        job_title LIKE '%it operations%' OR
        job_title LIKE '%technical consultant%' OR
        job_title LIKE '%solutions engineer%' OR
        job_title LIKE '%it business analyst%' OR
+       (job_title LIKE '%trainee%' AND (job_title LIKE '%cyber%' OR job_title LIKE '%security%' OR job_title LIKE '%network%' OR job_title LIKE '%it%')) OR
        -- Generic tech keywords
        job_title LIKE '%engineer%' OR
        job_title LIKE '%developer%' OR
@@ -368,6 +376,7 @@ BEGIN
        job_title LIKE '%devops%' OR
        job_title LIKE '%cloud%' OR
        job_title LIKE '%cybersecurity%' OR
+       job_title LIKE '%cyber security%' OR
        job_title LIKE '%it support%' OR
        job_title LIKE '%technical%' OR
        job_title LIKE '%programming%' OR
@@ -382,6 +391,8 @@ BEGIN
        job_description LIKE '%aws%' OR
        job_description LIKE '%azure%' OR
        job_description LIKE '%kubernetes%' OR
+       job_description LIKE '%cyber security%' OR
+       job_description LIKE '%network administration%' OR
        job_company LIKE '%tech%' OR
        job_company LIKE '%software%' OR
        job_company LIKE '%saas%' OR
@@ -488,7 +499,29 @@ BEGIN
   END IF;
 
   -- ============================================================================
-  -- STEP 14: Ensure status and is_active are set correctly
+  -- STEP 14: Filter out non-business-school relevant jobs AFTER categorization attempts
+  -- Only filter if no business-relevant category was assigned
+  -- ============================================================================
+  IF NOT (job_categories && ARRAY['strategy-business-design', 'finance-investment', 'sales-client-success', 'marketing-growth', 'data-analytics', 'operations-supply-chain', 'product-innovation', 'tech-transformation', 'sustainability-esg']) THEN
+    IF (job_title LIKE '%dental%' OR job_title LIKE '%dentist%' OR
+        job_title LIKE '%army%' OR job_title LIKE '%soldier%' OR
+        job_title LIKE '%cameriere%' OR job_title LIKE '%waiter%' OR job_title LIKE '%waitress%' OR
+        (job_title LIKE '%trainer%' AND (job_description LIKE '%sport%' OR job_description LIKE '%fitness%' OR job_description LIKE '%gym%')) OR
+        job_title LIKE '%work from home%' OR job_title LIKE '%flexible hours%' OR
+        job_description LIKE '%paid online tasks%' OR job_description LIKE '%cashback%' OR
+        job_title LIKE '%teacher%' OR job_title LIKE '%teaching%' OR job_title LIKE '%educator%' OR
+        (job_title LIKE '%nurse%' AND NOT job_title LIKE '%business%') OR
+        (job_title LIKE '%engineer%' AND (job_description LIKE '%mechanical%' OR job_description LIKE '%civil%' OR job_description LIKE '%electrical%') AND NOT job_description LIKE '%software%' AND NOT job_description LIKE '%it%')) AND
+        NOT (job_title LIKE '%business%' OR job_title LIKE '%strategy%' OR job_title LIKE '%finance%' OR job_title LIKE '%consulting%') THEN
+      -- Mark as inactive
+      NEW.status := 'inactive';
+      NEW.is_active := false;
+      NEW.filtered_reason := 'non_business_school_relevant';
+    END IF;
+  END IF;
+
+  -- ============================================================================
+  -- STEP 15: Ensure status and is_active are set correctly
   -- ============================================================================
   IF NEW.status IS NULL OR NEW.status = '' THEN
     NEW.status := 'active';
@@ -499,7 +532,7 @@ BEGIN
   END IF;
 
   -- ============================================================================
-  -- STEP 15: Update categories and timestamp
+  -- STEP 16: Update categories and timestamp
   -- ============================================================================
   NEW.categories := job_categories;
   NEW.updated_at := NOW();
