@@ -74,6 +74,7 @@ export async function GET(request: NextRequest) {
 
     const response: MetricsResponse = {
       success: true,
+      timestamp: endIso,
       data: {
         current: {
           activeUsers,
@@ -107,8 +108,10 @@ export async function GET(request: NextRequest) {
     console.error('[metrics] Failed to generate metrics', error);
     return NextResponse.json(
       {
-         error: 'Failed to generate metrics',
-         details: error instanceof Error ? error.message : 'Unknown error',
+        success: false,
+        timestamp: new Date().toISOString(),
+        error: 'Failed to generate metrics',
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

@@ -14,7 +14,6 @@ describe('Status API Route', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
 
     mockRequest = {
       method: 'GET',
@@ -35,7 +34,7 @@ describe('Status API Route', () => {
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    jest.clearAllMocks();
   });
 
   describe('GET /api/status', () => {
