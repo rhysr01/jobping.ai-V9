@@ -7,7 +7,10 @@ export default function HowItWorks() {
   const stepIcons = [BrandIcons.CheckCircle, BrandIcons.Zap, BrandIcons.Mail];
 
   return (
-    <section data-testid="how-it-works" className="section-padding bg-[#0a021c]">
+    <section
+      data-testid="how-it-works"
+      className="section-padding bg-gradient-to-br from-[#080018] via-[#050312] to-[#11022c]"
+    >
       <div className="container-page container-rhythm">
         <motion.div
           initial={{ opacity: 0, y: 16 }}

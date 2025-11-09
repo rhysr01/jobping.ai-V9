@@ -8,7 +8,7 @@ export default function BuiltForStudents() {
   const featureIcons = [BrandIcons.Briefcase, BrandIcons.CheckCircle, BrandIcons.Mail];
 
   return (
-    <section className="section-padding bg-black">
+    <section className="section-padding bg-gradient-to-br from-[#05030c] via-[#03010d] to-[#160233]">
       <div className="container-page container-rhythm">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
