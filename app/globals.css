@@ -361,12 +361,12 @@ body {
   
   /* Consistent spacing rhythm */
   .section-padding {
-    @apply py-12 md:py-20;
+    @apply py-14 md:py-24;
   }
   
-         .section-padding-hero {
-           @apply py-24 md:py-32 lg:py-40 pb-32 md:pb-40 lg:pb-48;
-         }
+  .section-padding-hero {
+    @apply py-24 md:py-32 lg:py-40;
+  }
   
   .container-rhythm {
     @apply px-4 sm:px-6 lg:px-8;

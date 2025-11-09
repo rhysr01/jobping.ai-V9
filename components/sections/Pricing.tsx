@@ -47,7 +47,7 @@ const plans: PlanConfig[] = [
 export default function Pricing() {
   return (
     <section data-testid="pricing" className="section-padding relative overflow-hidden bg-[#05010f]">
-      <div className="absolute inset-0 bg-gradient-to-br from-[#05010f] via-[#090018] to-[#130033] opacity-90" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#05000d] via-[#09011a] to-[#170043] opacity-90" />
 
       <div className="container-page container-rhythm relative z-10">
         <motion.div

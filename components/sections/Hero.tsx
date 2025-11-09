@@ -135,7 +135,7 @@ export default function Hero() {
   return (
     <section
       data-testid="hero-section"
-      className="relative flex flex-col items-center justify-center overflow-hidden pb-24 pt-20 text-center sm:pt-24"
+      className="section-padding-hero relative flex flex-col items-center justify-center overflow-hidden text-center"
     >
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[#05010f] via-[#090018] to-[#11002c]">
         <div className="absolute inset-0 bg-[radial-gradient(72%_60%_at_50%_0%,rgba(124,58,237,0.28),transparent_65%)] blur-3xl" />

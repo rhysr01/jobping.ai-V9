@@ -231,78 +231,16 @@ export default function EuropeMap({
           </linearGradient>
         </defs>
 
-        {/* Enhanced country shapes with brand-colored borders */}
-        <g aria-label="European countries">
-          {/* UK & Ireland */}
-          <path
-            d="M 150 250 Q 180 240 200 260 Q 210 280 200 300 Q 190 320 180 310 Q 160 300 150 280 Z"
-            fill="url(#europeGradient)"
-            stroke="rgba(154,106,255,0.35)"
-            strokeWidth="1.5"
-            opacity="0.35"
-            aria-label="United Kingdom and Ireland"
-          />
-          
-          {/* France */}
-          <path
-            d="M 200 300 Q 250 310 280 330 Q 270 360 250 350 Q 230 340 200 320 Z"
-            fill="url(#europeGradient)"
-            stroke="rgba(154,106,255,0.35)"
-            strokeWidth="1.5"
-            opacity="0.35"
-            aria-label="France"
-          />
-          
-          {/* Germany */}
-          <path
-            d="M 280 250 Q 320 260 350 280 Q 340 320 320 340 Q 300 330 280 310 Q 270 290 280 270 Z"
-            fill="url(#europeGradient)"
-            stroke="rgba(154,106,255,0.35)"
-            strokeWidth="1.5"
-            opacity="0.35"
-            aria-label="Germany"
-          />
-          
-          {/* Spain */}
-          <path
-            d="M 180 420 Q 220 430 280 450 Q 270 480 240 470 Q 200 460 180 440 Z"
-            fill="url(#europeGradient)"
-            stroke="rgba(154,106,255,0.35)"
-            strokeWidth="1.5"
-            opacity="0.35"
-            aria-label="Spain"
-          />
-          
-          {/* Italy */}
-          <path
-            d="M 300 360 Q 330 380 350 400 Q 340 440 320 430 Q 310 400 300 380 Z"
-            fill="url(#europeGradient)"
-            stroke="rgba(154,106,255,0.35)"
-            strokeWidth="1.5"
-            opacity="0.35"
-            aria-label="Italy"
-          />
-          
-          {/* Nordic countries */}
-          <path
-            d="M 300 180 Q 350 190 380 200 Q 370 240 350 230 Q 320 220 300 200 Z"
-            fill="url(#europeGradient)"
-            stroke="rgba(154,106,255,0.35)"
-            strokeWidth="1.5"
-            opacity="0.35"
-            aria-label="Nordic countries"
-          />
-          
-          {/* Central/Eastern Europe */}
-          <path
-            d="M 320 280 Q 360 290 400 300 Q 390 340 360 330 Q 340 320 320 300 Z"
-            fill="url(#europeGradient)"
-            stroke="rgba(154,106,255,0.35)"
-            strokeWidth="1.5"
-            opacity="0.35"
-            aria-label="Central and Eastern Europe"
-          />
-        </g>
+        {/* Europe outline (real) */}
+        <image
+          href="/maps/europe-outline.svg"
+          x="0"
+          y="0"
+          width="1000"
+          height="800"
+          className="opacity-[0.28]"
+          style={{ filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.08))' }}
+        />
 
         {/* City markers */}
         <g aria-label="Selectable cities">
