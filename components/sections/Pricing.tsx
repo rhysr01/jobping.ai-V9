@@ -46,10 +46,10 @@ export default function Pricing() {
                     <BrandIcons.Star className="w-3.5 h-3.5 text-zinc-500" />
                     Free Plan
                 </div>
-                  <div className="mt-2 text-3xl md:text-4xl font-black text-white leading-tight">5 roles on signup</div>
+                  <div className="mt-2 text-3xl md:text-4xl font-black text-white leading-tight">10 roles on signup</div>
                   <div className="text-base font-semibold text-brand-400 mt-3 flex items-center gap-2">
                     <span className="text-zinc-500 font-normal">= </span>
-                    <span className="text-xl">25 jobs/month</span>
+                    <span className="text-xl">30 jobs/month</span>
                   </div>
               </div>
 
