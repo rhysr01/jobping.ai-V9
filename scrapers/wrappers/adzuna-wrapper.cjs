@@ -17,7 +17,10 @@ function parseJson(value) {
   }
 }
 
+const { recordScraperRun } = require('../shared/telemetry.cjs');
+
 async function main() {
+  const startTime = Date.now();
   try {
     process.env.INCLUDE_REMOTE = process.env.INCLUDE_REMOTE || 'false';
     const targetCities = parseJson(process.env.TARGET_CITIES);
@@ -37,9 +40,11 @@ async function main() {
     });
     const jobs = result.jobs;
     console.log(`✅ Adzuna: ${jobs.length} jobs saved to database`);
+    recordScraperRun('adzuna', jobs.length, Date.now() - startTime);
     process.exit(0);
   } catch (error) {
     console.error(`❌ Adzuna failed: ${error.message}`);
+    recordScraperRun('adzuna', 0, Date.now() - startTime, 1);
     process.exit(1);
   }
 }

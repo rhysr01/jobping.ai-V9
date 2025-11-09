@@ -2,6 +2,21 @@ const GRADUATE_REGEX = /(graduate|new.?grad|recent.?graduate|campus.?hire|gradua
 const SENIOR_REGEX = /(senior|lead|principal|director|head.?of|vp|vice\s+president|chief|executive\s+level|executive\s+director|5\+.?years|7\+.?years|10\+.?years|experienced\s+professional|architect\b|team.?lead|tech.?lead|staff\b|distinguished|manager|managing|headcount|senioritätsniveau|executive)/i;
 const EXPERIENCE_REGEX = /(proven.?track.?record|extensive.?experience|minimum.?3.?years|minimum.?5.?years|minimum.?7.?years|prior.?experience|relevant.?experience|3\+.?years|5\+.?years|7\+.?years|10\+.?years)/i;
 
+const CAREER_PATH_KEYWORDS = {
+  strategy: ['strategy', 'consult', 'business analyst', 'transformation', 'growth'],
+  finance: ['finance', 'financial', 'banking', 'investment', 'audit', 'account', 'treasury'],
+  sales: ['sales', 'business development', 'account executive', 'sdr', 'bdr', 'customer success'],
+  marketing: ['marketing', 'brand', 'growth', 'digital', 'content', 'communications'],
+  product: ['product manager', 'product management', 'product analyst', 'product owner'],
+  operations: ['operations', 'supply chain', 'logistics', 'process', 'project coordinator'],
+  'general-management': ['management trainee', 'leadership programme', 'general management'],
+  data: ['data', 'analytics', 'bi analyst', 'insight', 'business intelligence'],
+  'people-hr': ['hr', 'people', 'talent', 'recruit', 'human resources'],
+  legal: ['legal', 'compliance', 'paralegal', 'law', 'regulation'],
+  sustainability: ['sustainability', 'esg', 'environment', 'impact', 'climate'],
+  creative: ['design', 'creative', 'ux', 'ui', 'graphic', 'copywriter'],
+};
+
 function normalizeString(value) {
   return String(value || '')
     .toLowerCase()
@@ -39,5 +54,6 @@ module.exports = {
   classifyEarlyCareer,
   makeJobHash,
   normalizeString,
+  CAREER_PATH_KEYWORDS,
 };
 

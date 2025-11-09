@@ -1,6 +1,9 @@
 require('dotenv').config({ path: '.env.local' });
 const axios = require('axios');
-const { classifyEarlyCareer, makeJobHash } = require('../scrapers/shared/helpers.cjs');
+const { classifyEarlyCareer, makeJobHash, CAREER_PATH_KEYWORDS } = require('../scrapers/shared/helpers.cjs');
+const { recordScraperRun } = require('../scrapers/shared/telemetry.cjs');
+const scriptStart = Date.now();
+let scrapeErrors = 0;
 
 // EU Cities - EXPANDED to 20 cities for better coverage
 const EU_CITIES_CATEGORIES = [
@@ -230,6 +233,7 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
     verbose = false,
     maxPages = parseInt(process.env.ADZUNA_MAX_PAGES || '3', 10),
     pageDelayJitter = parseInt(process.env.ADZUNA_PAGE_DELAY_JITTER_MS || '0', 10),
+    targetCareerPaths = [],
   } = options;
 
   if (!appId || !appKey) {
@@ -278,7 +282,22 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
             search_country: countryCode
           }));
           
-          const filteredJobs = transformedJobs.filter((job) => classifyEarlyCareer(job));
+          const filteredJobs = transformedJobs.filter((job) => {
+            if (!classifyEarlyCareer(job)) {
+              return false;
+            }
+
+            if (!targetCareerPaths || targetCareerPaths.length === 0) {
+              return true;
+            }
+
+            const lowerText = `${job.title || ''} ${job.description || ''}`.toLowerCase();
+            return targetCareerPaths.some((path) => {
+              const keywords = CAREER_PATH_KEYWORDS[path] || [];
+              if (!keywords.length) return true;
+              return keywords.some((keyword) => lowerText.includes(keyword));
+            });
+          });
           
           if (filteredJobs.length === 0 && verbose) {
             console.log(`   ⚠️  Filtered out ${transformedJobs.length} non-early-career jobs for "${query}"`);
@@ -305,6 +324,7 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
       }
       
     } catch (error) {
+      scrapeErrors += 1;
       console.error(`❌ Error searching ${cityName} for "${query}":`, error.message);
       // Continue with next query
     }
@@ -424,6 +444,7 @@ async function scrapeAllCitiesCategories(options = {}) {
         verbose,
         maxPages,
         pageDelayJitter,
+        targetCareerPaths,
       });
       
       if (cityJobs.length > 0) {
@@ -436,6 +457,7 @@ async function scrapeAllCitiesCategories(options = {}) {
       totalCityCount++;
       
     } catch (error) {
+      scrapeErrors += 1;
       console.error(`❌ Failed to process ${city.name}:`, error.message);
     }
   }
@@ -493,60 +515,10 @@ if (require.main === module) {
         const isRemote = /\b(remote|work\s*from\s*home|wfh|anywhere|distributed|virtual)\b/i.test(loc);
         return { isRemote };
       }
-      function localIsEarlyCareer(title, description) {
-        const text = `${title || ''} ${(description || '')}`.toLowerCase();
-        
-        // Explicit early-career terms (REQUIRED - matching JobSpy strictness)
-        const earlyTerms = [
-          'graduate', 'grad', 'intern', 'internship', 'junior', 'trainee', 
-          'entry level', 'entry-level', 'associate', 'analyst', 'assistant', 
-          'apprentice', 'placement', 'stage', 'praktikum', 'becario', 'prácticas', 
-          'tirocinio', 'stagiaire', 'werkstudent', 'praktikant', 'nyexaminerad',
-          'nyuddannet', 'absolvent', 'neolaureato', 'jeune diplômé', 'afgestudeerde',
-          'starter', 'débutant', 'einsteiger', 'začátečník', 'początkujący',
-          'begynder', 'nybörjare', 'campus', 'early career', 'early-career'
-        ];
-        
-        // Senior exclusion (STRICT)
-        const seniorTerms = [
-          'senior', 'lead', 'principal', 'director', 'head of', 'vp', 
-          'vice president', 'chief', 'executive', 'manager', 'architect', 
-          'specialist', 'staff', 'c-level', 'cto', 'ceo', 'cfo', 'coo'
-        ];
-        
-        // Business relevance (exclude healthcare, education, non-business)
-        const nonBusiness = [
-          'nurse', 'dental', 'dentist', 'teacher', 'teaching', 'educator',
-          'doctor', 'pharmacist', 'veterinary', 'clinical', 'medical',
-          'physiotherap', 'paramedic', 'radiographer', 'sonographer',
-          'chef', 'cleaner', 'warehouse', 'driver', 'barista', 'waiter',
-          'waitress', 'hairdresser', 'electrician', 'plumber', 'mechanic'
-        ];
-        
-        const hasEarly = earlyTerms.some(term => text.includes(term));
-        const hasSenior = seniorTerms.some(term => text.includes(term));
-        const hasNonBusiness = nonBusiness.some(term => text.includes(term));
-        
-        // Must have early-career term AND not be senior AND not be non-business
-        return hasEarly && !hasSenior && !hasNonBusiness;
-      }
-      function localMakeJobHash(job) {
-        const normalizedTitle = (job.title || '').toLowerCase().trim().replace(/\s+/g, ' ');
-        const normalizedCompany = (job.company || '').toLowerCase().trim().replace(/\s+/g, ' ');
-        const normalizedLocation = (job.location || '').toLowerCase().trim().replace(/\s+/g, ' ');
-        const hashString = `${normalizedTitle}|${normalizedCompany}|${normalizedLocation}`;
-        let hash = 0;
-        for (let i = 0; i < hashString.length; i++) {
-          const c = hashString.charCodeAt(i);
-          hash = ((hash << 5) - hash) + c;
-          hash |= 0;
-        }
-        return Math.abs(hash).toString(36);
-      }
       function convertToDatabaseFormat(job) {
         const { isRemote } = localParseLocation(job.location);
-        const isEarly = localIsEarlyCareer(job.title, job.description);
-        const job_hash = localMakeJobHash(job);
+        const isEarly = classifyEarlyCareer(job);
+        const job_hash = makeJobHash(job);
         const nowIso = new Date().toISOString();
         
         // Only save jobs that pass strict early-career filter (matching JobSpy quality)
@@ -636,9 +608,11 @@ if (require.main === module) {
       console.log(`   ⏭️  ${skippedCount} jobs already existed (skipped duplicates)`);
       console.log(`   📈 Total processed: ${finalJobs.length} unique jobs`);
       console.log(`\n✅ Adzuna: ${savedCount} jobs processed`);
+      recordScraperRun('adzuna', savedCount, Date.now() - scriptStart, scrapeErrors);
       
     } catch (error) {
       console.error('❌ Adzuna category scraping failed:', error.message);
+      recordScraperRun('adzuna', 0, Date.now() - scriptStart, scrapeErrors + 1);
       process.exit(1);
     }
   })();
