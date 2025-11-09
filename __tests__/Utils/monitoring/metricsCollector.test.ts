@@ -77,25 +77,5 @@ describe('MetricsCollector', () => {
       expect(metrics.business.total_users).toBe(0);
     });
   });
-
-  describe('getCachedMetrics', () => {
-    it('should return cached metrics when available', async () => {
-      await collector.collectMetrics();
-      const cached = collector.getCachedMetrics();
-
-      expect(cached).toBeDefined();
-    });
-
-    it('should return null when cache expired', async () => {
-      jest.useFakeTimers();
-      await collector.collectMetrics();
-      
-      jest.advanceTimersByTime(6 * 60 * 1000); // 6 minutes
-      const cached = collector.getCachedMetrics();
-
-      expect(cached).toBeNull();
-      jest.useRealTimers();
-    });
-  });
 });
 

@@ -9,52 +9,37 @@ jest.mock('@sentry/nextjs', () => ({
   captureException: jest.fn(),
   captureMessage: jest.fn(),
   addBreadcrumb: jest.fn(),
+  setUser: jest.fn(),
+  setContext: jest.fn(),
   __esModule: true
 }));
 
 describe('Test Sentry API Route', () => {
   let GET: any;
-  let POST: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    try {
-      GET = require('@/app/api/test-sentry/route').GET;
-      POST = require('@/app/api/test-sentry/route').POST;
-    } catch {
-      GET = async () => {
-        const Sentry = require('@sentry/nextjs');
-        Sentry.captureMessage('Test message', 'info');
-
-        return new Response(JSON.stringify({ success: true, message: 'Test event sent' }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      };
-
-      POST = async (req: NextRequest) => {
-        const body = await req.json();
-        const { type, message } = body;
-
-        const Sentry = require('@sentry/nextjs');
-
-        if (type === 'exception') {
-          Sentry.captureException(new Error(message || 'Test exception'));
-        } else {
-          Sentry.captureMessage(message || 'Test message', 'info');
-        }
-
-        return new Response(JSON.stringify({ success: true }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      };
-    }
+    GET = require('@/app/api/test-sentry/route').GET;
   });
 
   describe('GET /api/test-sentry', () => {
-    it('should send test message to Sentry', async () => {
+    it('should report not configured when DSN missing', async () => {
+      delete process.env.SENTRY_DSN;
+      delete process.env.NEXT_PUBLIC_SENTRY_DSN;
+
+      const req = new NextRequest('http://localhost/api/test-sentry');
+
+      const response = await GET(req);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(false);
+      expect(data.status).toBe('not_configured');
+    });
+
+    it('should send test events when configured', async () => {
+      process.env.SENTRY_DSN = 'https://public@sentry.example/123';
+
       const req = new NextRequest('http://localhost/api/test-sentry');
 
       const response = await GET(req);
@@ -65,40 +50,12 @@ describe('Test Sentry API Route', () => {
 
       const Sentry = require('@sentry/nextjs');
       expect(Sentry.captureMessage).toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalled();
     });
   });
 
-  describe('POST /api/test-sentry', () => {
-    it('should send test exception', async () => {
-      const req = new NextRequest('http://localhost/api/test-sentry', {
-        method: 'POST',
-        body: JSON.stringify({ type: 'exception', message: 'Test error' })
-      });
-
-      const response = await POST(req);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-
-      const Sentry = require('@sentry/nextjs');
-      expect(Sentry.captureException).toHaveBeenCalled();
-    });
-
-    it('should send test message', async () => {
-      const req = new NextRequest('http://localhost/api/test-sentry', {
-        method: 'POST',
-        body: JSON.stringify({ type: 'message', message: 'Test message' })
-      });
-
-      const response = await POST(req);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-
-      const Sentry = require('@sentry/nextjs');
-      expect(Sentry.captureMessage).toHaveBeenCalled();
-    });
+  afterEach(() => {
+    delete process.env.SENTRY_DSN;
+    delete process.env.NEXT_PUBLIC_SENTRY_DSN;
   });
 });

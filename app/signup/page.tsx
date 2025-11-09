@@ -23,7 +23,7 @@ function SignupForm() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [activeJobs, setActiveJobs] = useState('9,769');
+  const [activeJobs, setActiveJobs] = useState('Updating…');
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [tier] = useState<'free' | 'premium'>(tierParam === 'premium' ? 'premium' : 'free');
   const prefersReduced = useReducedMotion();
@@ -59,9 +59,14 @@ function SignupForm() {
       .then(data => {
         if (data.activeJobsFormatted) {
           setActiveJobs(data.activeJobsFormatted);
+        } else {
+          setActiveJobs('Updating…');
         }
       })
-      .catch(err => console.error('Failed to fetch stats:', err))
+      .catch(err => {
+        console.error('Failed to fetch stats:', err);
+        setActiveJobs('Updating…');
+      })
       .finally(() => setIsLoadingStats(false));
   }, []);
 
@@ -341,7 +346,7 @@ function SignupForm() {
               animate={{ opacity: 1, scale: 1 }}
               className="inline-block bg-gradient-to-r from-brand-500 to-purple-600 text-white px-6 py-2 rounded-full font-bold text-sm mb-2 shadow-glow-subtle"
             >
-               Premium Plan Selected - €5/month - 10 jobs on signup + 15 jobs per week (3× weekly)
+               Premium Plan Selected — €5/month • 10 jobs on signup + 15/week (~60/month, 3× free)
             </motion.div>
           )}
           <motion.div
@@ -491,7 +496,8 @@ function SignupForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-base font-bold text-white mb-3">Email *</label>
+                  <label htmlFor="email" className="block text-base font-bold text-white mb-2">Email *</label>
+                  <p className="text-sm text-zinc-400 mb-3">We’ll email your first set within 48 hours.</p>
                   <input
                     ref={formRefs.email}
                     id="email"
@@ -616,6 +622,7 @@ function SignupForm() {
                 <div>
                   <h2 className="text-3xl font-black text-white mb-2">Your preferences</h2>
                   <p className="text-zinc-400">Help us match you perfectly</p>
+                  <p className="text-sm text-zinc-500 mt-1">These fields improve the quality of your first 5 jobs.</p>
 
                   {/* Progress Helper */}
                   <div className="mt-4 p-4 bg-zinc-800/50 rounded-xl border border-zinc-700">

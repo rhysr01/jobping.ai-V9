@@ -52,7 +52,7 @@ function SignupSuccessContent() {
       <AnimatePresence>
         {showSuccess && (
           <SuccessAnimation
-            message="Signup successful!"
+            message="Signup successful! Check your email for your first matches."
             onComplete={() => setShowSuccess(false)}
           />
         )}
@@ -79,6 +79,9 @@ function SignupSuccessContent() {
           <p className="text-xl sm:text-2xl text-zinc-300 mb-4">
             Your first matches are on their way!
           </p>
+          <p className="text-sm text-zinc-400 max-w-xl mx-auto mb-6">
+            We’ve queued your welcome email and automatically retry with a safety net if delivery fails.
+          </p>
 
           <div className="inline-block bg-gradient-to-r from-green-500 to-emerald-600 text-white px-8 py-4 rounded-2xl font-bold text-lg mb-8 shadow-[0_8px_24px_rgba(16,185,129,0.4)]">
             Check Your Inbox Now
@@ -95,10 +98,13 @@ function SignupSuccessContent() {
                 <div>
                   <div className="font-semibold text-white mb-1">Check Your Inbox Now</div>
                   <div className="text-zinc-400 text-sm">
-                    You should receive an email with your first matches within the next few minutes. 
+                    You should receive an email with your first matches within the next few minutes.
                     {tier === 'premium' 
                       ? ' Premium users get up to 10 jobs on signup.' 
                       : ' Free users get up to 10 jobs on signup.'}
+                  </div>
+                  <div className="mt-2 text-xs text-zinc-400">
+                    If it doesn’t arrive, our system automatically retries and sends a safety-net email.
                   </div>
                   <div className="mt-2 text-xs text-yellow-400 font-semibold">
                     💡 Check your spam/junk folder if you don't see it within 5 minutes!
