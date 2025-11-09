@@ -68,7 +68,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 Reload page
               </Button>
             </div>
-            <p className="text-xs text-zinc-600 mt-6">
+            <p className="text-xs text-zinc-400 mt-6">
               If this problem persists, please contact support.
             </p>
           </div>

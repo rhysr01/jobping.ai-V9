@@ -8,43 +8,43 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 
 // Hero section
 export const HERO_TITLE = "JobPing";
-export const HERO_HEADLINE = "Stop scrolling job boards. Get 5 perfect matches delivered weekly.";
-export const HERO_SUBLINE = "AI-powered matching for early-career jobs across Europe. We find roles that match your skills, location, and goals—so you can focus on applying, not searching.";
+export const HERO_HEADLINE = "EU early-career roles. Delivered to your inbox. Weekly.";
+export const HERO_SUBLINE = "We monitor 1,000+ companies across Europe. Every week, we send you 5 hand-picked internships, graduate schemes, and entry-level roles—matched to your city, skills, and goals. No scrolling. Just apply.";
 export const HERO_SUBTITLE = VP_TAGLINE;
-export const HERO_CTA = "Get my matches — it's free";
+export const HERO_CTA = "Get EU jobs in my inbox — free";
 
 // How it works
 export const HOW_IT_WORKS_TITLE = "How it works";
 export const HOW_IT_WORKS_STEPS = [
   { title: "Set your profile", description: "City, work rights, languages, interests. Takes 2 minutes—no CV needed." },
-  { title: "We match jobs to you daily", description: "Our AI monitors 1,000+ companies every day, filtering and matching jobs to your exact criteria." },
-  { title: "Get 5 perfect matches weekly", description: "Receive 5 hand-picked jobs every week (or 15/week with Premium for €5/month). Each email takes 60 seconds to read." },
+  { title: "We scan EU job boards daily", description: "Our AI monitors 1,000+ companies across Europe every day, filtering for internships, graduate schemes, and entry-level roles." },
+  { title: "Get 5 EU roles in your inbox weekly", description: "Receive 5 hand-picked early-career jobs every week (or 15/week with Premium for €5/month). Each email takes 60 seconds to read." },
 ];
 
 // Built for students
 export const BUILT_FOR_STUDENTS_TITLE = "Built for students, by a student";
-export const BUILT_FOR_STUDENTS_SUBTITLE = "We find the best early-career jobs across Europe's job boards, then use AI to match them to your goals. No more endless scrolling.";
+export const BUILT_FOR_STUDENTS_SUBTITLE = "EU early-career roles delivered to your inbox. We scan Europe's job boards daily, then use AI to match internships, graduate schemes, and entry-level roles to your goals.";
 export const BUILT_FOR_STUDENTS_FEATURES = [
   {
     num: 1,
-    title: "Goal-based matching",
-    body: "Your city, work rights, and interests guide the results. We learn what you love and filter what you don't."
+    title: "EU early-career roles only",
+    body: "We filter for internships, graduate schemes, and entry-level roles across 20 European cities. Your city, work rights, and interests guide the matches."
   },
   {
     num: 2,
-    title: "Europe-wide sources",
-    body: "Major boards + company pages across the EU/UK. We monitor 1,000+ companies daily so you don't have to."
+    title: "Delivered to your inbox weekly",
+    body: "No dashboards. No apps. Just 5 hand-picked EU roles in your email every week. Each match takes 60 seconds to review."
   },
   {
     num: 3,
-    title: "Student-first format",
-    body: "Short, scannable emails on a predictable schedule. No dashboards to check, no apps to download."
+    title: "1,000+ companies monitored daily",
+    body: "We scan major EU job boards and company pages across Europe. Fresh roles matched to your profile, delivered weekly."
   }
 ];
 
 // Pricing
 export const PRICING_TITLE = "Start free. Upgrade when you're ready.";
-export const PRICING_SUBTITLE = "Get curated jobs in your inbox. Zero scrolling, just apply. Cancel anytime.";
+export const PRICING_SUBTITLE = "EU early-career roles in your inbox. Zero scrolling, just apply. Cancel anytime.";
 export const PRICING_BADGE = "Simple pricing → Cancel anytime";
 
 // Free plan

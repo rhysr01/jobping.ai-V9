@@ -210,8 +210,8 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
               </button>
             ) : (
               <div className="mt-3">
-                <label htmlFor="promo" className="block text-xs font-medium text-zinc-400 mb-1">
-                  Promo Code <span className="text-zinc-500">(Optional)</span>
+                <label htmlFor="promo" className="block text-xs font-medium text-zinc-300 mb-1">
+                  Promo Code <span className="text-zinc-400">(Optional)</span>
                 </label>
                 <input
                   type="text"
@@ -233,7 +233,7 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
                 <span className="text-xl font-bold text-white">€5</span>
                 <span className="text-sm text-neutral-400">/month</span>
               </div>
-              <p className="text-xs text-neutral-500">Cancel anytime</p>
+              <p className="text-xs text-neutral-400">Cancel anytime</p>
             </div>
             <ul className="text-small text-neutral-400 space-y-1">
               <li className="flex items-center gap-2">

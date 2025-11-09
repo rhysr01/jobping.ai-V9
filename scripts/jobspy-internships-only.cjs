@@ -101,6 +101,8 @@ async function main() {
   const INTERNSHIP_TERMS = {
     // English internships
     'London': ['internship', 'placement year', 'summer internship', 'intern', 'industrial placement'],
+    'Manchester': ['internship', 'placement year', 'summer internship', 'intern', 'industrial placement'],
+    'Birmingham': ['internship', 'placement year', 'summer internship', 'intern', 'industrial placement'],
     'Dublin': ['internship', 'placement year', 'summer internship', 'intern', 'industrial placement'],
     
     // Spanish internships
@@ -127,6 +129,8 @@ async function main() {
 
   const COUNTRY_MAP = {
     'London': 'united kingdom',
+    'Manchester': 'united kingdom',
+    'Birmingham': 'united kingdom',
     'Dublin': 'ireland',
     'Paris': 'france',
     'Madrid': 'spain',

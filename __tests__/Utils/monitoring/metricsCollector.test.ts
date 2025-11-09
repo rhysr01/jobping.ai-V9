@@ -69,7 +69,7 @@ describe('MetricsCollector', () => {
     });
 
     it('should handle database errors gracefully', async () => {
-      mockSupabase.select.mockRejectedValue(new Error('DB error'));
+      mockSupabase.select.mockResolvedValue({ data: null, error: new Error('DB error'), count: 0 });
 
       const metrics = await collector.collectMetrics();
 

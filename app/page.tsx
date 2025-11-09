@@ -4,6 +4,8 @@ import HowItWorks from "@/components/sections/HowItWorks";
 import BuiltForStudents from "@/components/sections/BuiltForStudents";
 import Pricing from "@/components/sections/Pricing";
 import EmailPhoneShowcase from "@/components/marketing/EmailPhoneShowcase";
+import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
+import ExitIntentPopup from "@/components/ui/ExitIntentPopup";
 import { SkeletonCard } from "@/components/ui/Skeleton";
 
 function SectionSkeleton() {
@@ -19,6 +21,7 @@ function SectionSkeleton() {
 export default function Page() {
   return (
     <>
+      <main id="main-content">
       <Suspense fallback={<SectionSkeleton />}>
       <Hero />
       </Suspense>
@@ -34,6 +37,9 @@ export default function Page() {
       <Suspense fallback={<SectionSkeleton />}>
       <Pricing />
       </Suspense>
+      </main>
+      <StickyMobileCTA />
+      <ExitIntentPopup />
     </>
   );
 }

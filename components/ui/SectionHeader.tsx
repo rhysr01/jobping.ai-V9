@@ -29,11 +29,11 @@ export default function SectionHeader({
       className={`text-center mb-12 md:mb-16 ${className}`}
     >
       {badge && <div className="mb-4">{badge}</div>}
-      <h2 className="text-4xl sm:text-5xl md:text-6xl text-white text-balance mb-4 font-black drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+      <h2 className="text-4xl sm:text-5xl md:text-6xl text-white text-balance mb-4 font-black drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] text-shadow-md">
         {title}
       </h2>
       {description && (
-        <p className="text-xl sm:text-2xl text-neutral-100 max-w-2xl mx-auto font-bold leading-relaxed">
+        <p className="text-xl sm:text-2xl text-neutral-100 max-w-2xl mx-auto font-bold leading-relaxed text-shadow-sm">
           {description}
         </p>
       )}

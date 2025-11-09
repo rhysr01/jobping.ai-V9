@@ -9,7 +9,7 @@ export default function SampleInterviewEmail() {
         <div className="flex items-center gap-2 mb-3">
           <Image src="/branding/jobping-logo.svg" alt="JobPing logo" width={24} height={24} className="rounded" />
           <div className="font-semibold text-white">JobPing</div>
-          <div className="text-zinc-500 text-[12px]">hello@getjobping.com</div>
+          <div className="text-zinc-400 text-[12px]">hello@getjobping.com</div>
         </div>
         <div className="mt-3 text-[17px] font-bold text-white leading-tight">
           Your matches this week → 3 roles picked for you
@@ -84,7 +84,7 @@ export default function SampleInterviewEmail() {
         </a>
 
         {/* Footer */}
-        <div className="mt-6 pt-5 border-t border-zinc-800/50 text-[12px] text-zinc-500 leading-relaxed">
+        <div className="mt-6 pt-5 border-t border-zinc-800/50 text-[12px] text-zinc-400 leading-relaxed">
           You're receiving these recommendations based on your profile.<br />
           <a href="#" className="underline text-zinc-400 hover:text-purple-400 transition-colors">Unsubscribe</a> → <a href="#" className="underline text-zinc-400 hover:text-purple-400 transition-colors">Manage preferences</a>
         </div>

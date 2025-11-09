@@ -40,6 +40,107 @@ BEGIN
   END IF;
 
   -- ============================================================================
+  -- STEP 1.5: Description-based categorization for generic titles
+  -- Only apply if no career path assigned yet (for generic titles like "Graduate Associate", "Management Trainee", "Assistant")
+  -- ============================================================================
+  IF NOT (job_categories && ARRAY['strategy-business-design', 'finance-investment', 'sales-client-success', 'marketing-growth', 'data-analytics', 'operations-supply-chain', 'product-innovation', 'tech-transformation', 'sustainability-esg']) THEN
+    -- Strategy keywords in description
+    IF job_description LIKE '%strategy consulting%' OR
+       job_description LIKE '%management consulting%' OR
+       job_description LIKE '%business transformation%' OR
+       job_description LIKE '%advisory%' OR
+       job_description LIKE '%consulting%' OR
+       job_description LIKE '%business analyst%' OR
+       job_description LIKE '%strategy%' AND (job_description LIKE '%analyst%' OR job_description LIKE '%consultant%') THEN
+      job_categories := array_append(job_categories, 'strategy-business-design');
+    -- Finance keywords in description
+    ELSIF job_description LIKE '%investment banking%' OR
+          job_description LIKE '%corporate finance%' OR
+          job_description LIKE '%financial analyst%' OR
+          job_description LIKE '%finance%' AND (job_description LIKE '%analyst%' OR job_description LIKE '%banking%' OR job_description LIKE '%investment%') OR
+          job_description LIKE '%accounting%' OR
+          job_description LIKE '%audit%' OR
+          job_description LIKE '%trading%' OR
+          job_description LIKE '%equity research%' THEN
+      job_categories := array_append(job_categories, 'finance-investment');
+    -- Sales keywords in description
+    ELSIF job_description LIKE '%sales development%' OR
+          job_description LIKE '%business development%' OR
+          job_description LIKE '%sdr%' OR
+          job_description LIKE '%bdr%' OR
+          job_description LIKE '%customer success%' OR
+          job_description LIKE '%client success%' OR
+          job_description LIKE '%account executive%' OR
+          job_description LIKE '%inside sales%' THEN
+      job_categories := array_append(job_categories, 'sales-client-success');
+    -- Marketing keywords in description
+    ELSIF job_description LIKE '%marketing%' AND (job_description LIKE '%intern%' OR job_description LIKE '%analyst%' OR job_description LIKE '%assistant%' OR job_description LIKE '%coordinator%') OR
+          job_description LIKE '%digital marketing%' OR
+          job_description LIKE '%social media%' OR
+          job_description LIKE '%content marketing%' OR
+          job_description LIKE '%brand%' AND (job_description LIKE '%marketing%' OR job_description LIKE '%assistant%') OR
+          job_description LIKE '%growth marketing%' THEN
+      job_categories := array_append(job_categories, 'marketing-growth');
+    -- Data keywords in description
+    ELSIF job_description LIKE '%data analyst%' OR
+          job_description LIKE '%data analysis%' OR
+          job_description LIKE '%business intelligence%' OR
+          job_description LIKE '%data science%' OR
+          job_description LIKE '%analytics%' AND (job_description LIKE '%analyst%' OR job_description LIKE '%intern%') OR
+          job_description LIKE '%sql%' OR
+          job_description LIKE '%python%' AND (job_description LIKE '%data%' OR job_description LIKE '%analyst%') OR
+          job_description LIKE '%tableau%' OR
+          job_description LIKE '%power bi%' OR
+          job_description LIKE '%powerbi%' THEN
+      job_categories := array_append(job_categories, 'data-analytics');
+    -- Operations keywords in description
+    ELSIF job_description LIKE '%operations%' AND (job_description LIKE '%analyst%' OR job_description LIKE '%intern%' OR job_description LIKE '%coordinator%') OR
+          job_description LIKE '%supply chain%' OR
+          job_description LIKE '%logistics%' AND (job_description LIKE '%analyst%' OR job_description LIKE '%intern%') OR
+          job_description LIKE '%procurement%' OR
+          job_description LIKE '%hr%' OR
+          job_description LIKE '%human resources%' OR
+          job_description LIKE '%talent%' AND (job_description LIKE '%acquisition%' OR job_description LIKE '%recruitment%') OR
+          job_description LIKE '%process improvement%' THEN
+      job_categories := array_append(job_categories, 'operations-supply-chain');
+    -- Product keywords in description
+    ELSIF job_description LIKE '%product management%' OR
+          job_description LIKE '%product analyst%' OR
+          job_description LIKE '%associate product manager%' OR
+          job_description LIKE '%apm%' OR
+          job_description LIKE '%product development%' OR
+          job_description LIKE '%user experience%' OR
+          job_description LIKE '%ux%' OR
+          job_description LIKE '%product owner%' OR
+          job_description LIKE '%innovation%' AND (job_description LIKE '%analyst%' OR job_description LIKE '%intern%') THEN
+      job_categories := array_append(job_categories, 'product-innovation');
+    -- Tech keywords in description
+    ELSIF job_description LIKE '%software engineer%' OR
+          job_description LIKE '%software development%' OR
+          job_description LIKE '%programming%' OR
+          job_description LIKE '%coding%' OR
+          job_description LIKE '%cyber security%' OR
+          job_description LIKE '%cybersecurity%' OR
+          job_description LIKE '%it security%' OR
+          job_description LIKE '%network admin%' OR
+          job_description LIKE '%devops%' OR
+          job_description LIKE '%cloud%' AND (job_description LIKE '%engineer%' OR job_description LIKE '%intern%') OR
+          job_description LIKE '%backend%' OR
+          job_description LIKE '%frontend%' OR
+          job_description LIKE '%api%' AND (job_description LIKE '%developer%' OR job_description LIKE '%engineer%') THEN
+      job_categories := array_append(job_categories, 'tech-transformation');
+    -- Sustainability keywords in description
+    ELSIF job_description LIKE '%esg%' OR
+          job_description LIKE '%sustainability%' AND (job_description LIKE '%analyst%' OR job_description LIKE '%intern%' OR job_description LIKE '%strategy%') OR
+          job_description LIKE '%environmental%' AND (job_description LIKE '%analyst%' OR job_description LIKE '%social%') OR
+          job_description LIKE '%climate%' AND (job_description LIKE '%analyst%' OR job_description LIKE '%change%') OR
+          job_description LIKE '%green finance%' OR
+          job_description LIKE '%carbon%' AND (job_description LIKE '%analyst%' OR job_description LIKE '%reporting%') THEN
+      job_categories := array_append(job_categories, 'sustainability-esg');
+    END IF;
+  END IF;
+
+  -- ============================================================================
   -- STEP 2: Strategy & Business Design (matches form: value='strategy')
   -- Roles: Business Analyst, Associate Consultant, Junior Consultant, Strategy Analyst,
   --        Consulting Intern, Junior Business Analyst, Transformation Analyst, etc.

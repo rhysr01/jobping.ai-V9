@@ -100,7 +100,7 @@ export default function DeleteDataPage() {
               <li>All preferences and settings</li>
             </ul>
             
-            <p className="text-xs text-zinc-500 mt-6">
+            <p className="text-xs text-zinc-400 mt-6">
               If you have questions, contact us at <a href="mailto:privacy@getjobping.com" className="text-brand-400 hover:text-brand-300 underline">privacy@getjobping.com</a>
             </p>
           </div>

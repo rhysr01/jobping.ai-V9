@@ -405,7 +405,9 @@ export async function POST(req: NextRequest) {
       success: true, 
       message: 'Signup successful! Check your email for your first matches.',
       matchesCount,
-      emailSent
+      emailSent,
+      email: userData.email,
+      redirectUrl: `/signup/success?tier=${tier}&email=${encodeURIComponent(userData.email)}`
     });
 
   } catch (error) {

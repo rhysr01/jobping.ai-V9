@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense, useRef } from 'react';
+import { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useReducedMotion } from '@/components/ui/useReducedMotion';
@@ -8,6 +8,12 @@ import * as Copy from '@/lib/copy';
 import { FormFieldError, FormFieldSuccess, FormFieldHelper } from '@/components/ui/FormFieldFeedback';
 import { useAriaAnnounce } from '@/components/ui/AriaLiveRegion';
 import { useEmailValidation, useRequiredValidation } from '@/hooks/useFormValidation';
+import EuropeMap from '@/components/ui/EuropeMap';
+import WorkEnvironmentSelector from '@/components/ui/WorkEnvironmentSelector';
+import ExperienceTimeline from '@/components/ui/ExperienceTimeline';
+import EntryLevelSelector from '@/components/ui/EntryLevelSelector';
+import LanguageSelector from '@/components/ui/LanguageSelector';
+import CalendarPicker from '@/components/ui/CalendarPicker';
 
 function SignupForm() {
   const router = useRouter();
@@ -58,7 +64,7 @@ function SignupForm() {
       .finally(() => setIsLoadingStats(false));
   }, []);
 
-  const CITIES = ['Dublin', 'London', 'Paris', 'Amsterdam', 'Manchester', 'Birmingham', 'Madrid', 'Barcelona', 'Berlin', 'Hamburg', 'Munich', 'Zurich', 'Milan', 'Rome'];
+  const CITIES = ['Dublin', 'London', 'Paris', 'Amsterdam', 'Manchester', 'Birmingham', 'Madrid', 'Barcelona', 'Berlin', 'Hamburg', 'Munich', 'Zurich', 'Milan', 'Rome', 'Brussels', 'Stockholm', 'Copenhagen', 'Vienna', 'Prague', 'Warsaw'];
   
   const LANGUAGES = [
     // Most common EU languages
@@ -163,14 +169,26 @@ function SignupForm() {
   const citiesValidation = useRequiredValidation(formData.cities, 'Preferred cities');
   const languagesValidation = useRequiredValidation(formData.languages, 'Languages');
 
-  // Focus management when step changes
+  // Keyboard shortcuts for power users
   useEffect(() => {
-    if (step === 1 && formRefs.fullName.current) {
-      formRefs.fullName.current.focus();
-    } else if (step === 1 && formRefs.email.current && formData.fullName) {
-      formRefs.email.current.focus();
-    }
-  }, [step, formData.fullName]);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + Enter to submit
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (step === 4 && formData.gdprConsent && !loading) {
+          handleSubmit();
+        }
+      }
+      // Escape to go back
+      if (e.key === 'Escape' && step > 1) {
+        e.preventDefault();
+        setStep(step - 1);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [step, formData.gdprConsent, loading, handleSubmit]);
 
   // Announce validation errors to screen readers
   useEffect(() => {
@@ -195,7 +213,25 @@ function SignupForm() {
     setFormData({...formData, roles: []});
   };
 
-  const handleSubmit = async () => {
+  // Load form data from localStorage on mount (error recovery)
+  useEffect(() => {
+    const saved = localStorage.getItem('jobping_signup_form');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setFormData(prev => ({ ...prev, ...parsed }));
+      } catch (e) {
+        console.error('Failed to load saved form data:', e);
+      }
+    }
+  }, []);
+
+  // Save form data to localStorage on change (error recovery)
+  useEffect(() => {
+    localStorage.setItem('jobping_signup_form', JSON.stringify(formData));
+  }, [formData]);
+
+  const handleSubmit = useCallback(async () => {
     setLoading(true);
     setError('');
     
@@ -209,7 +245,9 @@ function SignupForm() {
       const result = await response.json();
 
       if (response.ok) {
-        router.push(`/signup/success?tier=${tier}`);
+        localStorage.removeItem('jobping_signup_form'); // Clear saved data on success
+        const redirectUrl = result.redirectUrl || `/signup/success?tier=${tier}`;
+        router.push(redirectUrl);
       } else {
         setError(result.error || 'Signup failed. Please try again.');
       }
@@ -219,7 +257,7 @@ function SignupForm() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [formData, tier, router]);
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
@@ -328,7 +366,7 @@ function SignupForm() {
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
                   i < step ? 'bg-green-500 text-white' :
                   i === step ? 'bg-gradient-to-br from-brand-500 to-purple-600 text-white' :
-                  'bg-zinc-800 text-zinc-500'
+                  'bg-zinc-800 text-zinc-400'
                 }`}>
                   {i < step ? '' : i}
                 </div>
@@ -342,7 +380,7 @@ function SignupForm() {
             <motion.div 
               className="h-full bg-gradient-to-r from-brand-500 via-purple-600 to-purple-500"
               initial={{ width: 0 }}
-              animate={{ width: `${(step / 4) * 100}%` }}
+              animate={{ width: `${(step / 3) * 100}%` }}
               transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
             />
           </div>
@@ -378,11 +416,43 @@ function SignupForm() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4 }}
-                className="space-y-8"
+                className="space-y-8 sm:space-y-10"
               >
                 <div>
-                  <h2 className="text-3xl font-black text-white mb-2">Let's get started</h2>
-                  <p className="text-zinc-400">Tell us about yourself</p>
+                  <h2 className="text-3xl font-black text-white mb-2 text-shadow-sm">Let's get started</h2>
+                  <p className="text-zinc-300">Tell us about yourself</p>
+                </div>
+
+                {/* GDPR Consent - MOVED TO STEP 1 (Required) */}
+                <div className="bg-gradient-to-r from-brand-500/10 via-purple-600/10 to-brand-500/10 border-2 border-brand-500/30 rounded-xl p-6">
+                  <label className="flex items-start gap-4 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={formData.gdprConsent}
+                      onChange={(e) => setFormData({...formData, gdprConsent: e.target.checked})}
+                      className="mt-1 w-5 h-5 rounded border-2 border-zinc-600 bg-zinc-800 checked:bg-brand-500 checked:border-brand-500 cursor-pointer"
+                      required
+                    />
+                    <div className="flex-1">
+                      <p className="text-white font-medium mb-1">
+                        I agree to receive job recommendations via email *
+                      </p>
+                      <p className="text-sm text-zinc-400">
+                        By checking this box, you consent to receive personalized job matches and agree to our{' '}
+                        <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:text-brand-300 underline">
+                          Privacy Policy
+                        </a>
+                        {' '}and{' '}
+                        <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:text-brand-300 underline">
+                          Terms of Service
+                        </a>
+                        . You can unsubscribe at any time.
+                      </p>
+                    </div>
+                  </label>
+                  {!formData.gdprConsent && step === 1 && (
+                    <FormFieldError error="GDPR consent is required to continue" />
+                  )}
                 </div>
 
                 <div>
@@ -434,7 +504,7 @@ function SignupForm() {
                         announce('Email address is valid', 'polite');
                       }
                     }}
-                    className={`w-full px-5 py-4 bg-black/40 border-2 rounded-xl text-white placeholder-zinc-500 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/20 transition-all text-lg ${
+                    className={`w-full px-5 py-4 bg-black/40 border-2 rounded-xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/20 transition-all text-lg ${
                       formData.email ? (emailValidation.isValid ? 'border-green-500/50' : emailValidation.error ? 'border-red-500/50' : 'border-zinc-700') : 'border-zinc-700'
                     }`}
                     placeholder="you@example.com"
@@ -455,38 +525,38 @@ function SignupForm() {
 
                 <div>
                   <label className="block text-base font-bold text-white mb-3">
-                    Preferred Cities * <span className="text-zinc-500 font-normal">(Select up to 3)</span>
+                    Preferred Cities * <span className="text-zinc-400 font-normal">(Select up to 3)</span>
                   </label>
-                  <p className="text-sm text-zinc-400 mb-3">Choose up to 3 cities where you'd like to work</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {CITIES.map(city => (
-                      <motion.button
-                        key={city}
-                        type="button"
-                        onClick={() => {
-                          if (formData.cities.length < 3 || formData.cities.includes(city)) {
-                            setFormData({...formData, cities: toggleArray(formData.cities, city)});
-                            if (formData.cities.length === 0 && !formData.cities.includes(city)) {
-                              announce(`Selected ${city}. ${formData.cities.length + 1} of 3 cities selected.`, 'polite');
-                            }
+                  <p className="text-sm text-zinc-400 mb-4">Choose up to 3 cities where you'd like to work</p>
+                  
+                  {/* Interactive Europe Map */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="mb-6 sm:mb-8 md:mb-10"
+                  >
+                    <EuropeMap
+                      selectedCities={formData.cities}
+                      onCityClick={(city) => {
+                        if (formData.cities.length < 3 || formData.cities.includes(city)) {
+                          setFormData({...formData, cities: toggleArray(formData.cities, city)});
+                          if (formData.cities.length === 0 && !formData.cities.includes(city)) {
+                            announce(`Selected ${city}. ${formData.cities.length + 1} of 3 cities selected.`, 'polite');
+                          } else if (formData.cities.includes(city)) {
+                            announce(`Deselected ${city}. ${formData.cities.length - 1} of 3 cities selected.`, 'polite');
                           }
-                        }}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
-                        className={`px-4 py-3.5 rounded-xl border-2 transition-all font-semibold text-sm ${
-                          formData.cities.includes(city)
-                            ? 'border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/10 text-white shadow-glow-subtle'
-                            : 'border-zinc-700 bg-zinc-900/40 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-900/60'
-                        }`}
-                        aria-pressed={formData.cities.includes(city)}
-                        disabled={formData.cities.length >= 3 && !formData.cities.includes(city)}
-                      >
-                        {city}
-                      </motion.button>
-                    ))}
-                  </div>
+                        }
+                      }}
+                      maxSelections={3}
+                      className="w-full"
+                    />
+                  </motion.div>
+
+                  {/* City Buttons Grid - REMOVED (redundant with map) */}
+                  {/* Map is sufficient for city selection */}
                   <div className="mt-2 flex items-center justify-between">
-                    <p className="text-xs text-zinc-500">{formData.cities.length}/3 selected</p>
+                    <p className="text-xs text-zinc-400">{formData.cities.length}/3 selected</p>
                     {formData.cities.length > 0 && citiesValidation.isValid && (
                       <FormFieldSuccess message={`${formData.cities.length} city${formData.cities.length > 1 ? 'ies' : ''} selected`} />
                     )}
@@ -501,30 +571,17 @@ function SignupForm() {
 
                 <div>
                   <label className="block text-base font-bold text-white mb-3">Languages (Professional Level) *</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {LANGUAGES.map(lang => (
-                      <motion.button
-                        key={lang}
-                        type="button"
-                        onClick={() => {
-                          setFormData({...formData, languages: toggleArray(formData.languages, lang)});
-                          if (formData.languages.length === 0) {
-                            announce(`Selected ${lang}. ${formData.languages.length + 1} language selected.`, 'polite');
-                          }
-                        }}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
-                        className={`px-4 py-3.5 rounded-xl border-2 transition-all font-semibold text-sm ${
-                          formData.languages.includes(lang)
-                            ? 'border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/10 text-white shadow-glow-subtle'
-                            : 'border-zinc-700 bg-zinc-900/40 text-zinc-300 hover:border-zinc-600'
-                        }`}
-                        aria-pressed={formData.languages.includes(lang)}
-                      >
-                        {lang}
-                      </motion.button>
-                    ))}
-                  </div>
+                  <p className="text-sm text-zinc-400 mb-4">Select languages you can use professionally</p>
+                  <LanguageSelector
+                    languages={LANGUAGES}
+                    selected={formData.languages}
+                    onChange={(lang) => {
+                      setFormData({...formData, languages: toggleArray(formData.languages, lang)});
+                      if (formData.languages.length === 0) {
+                        announce(`Selected ${lang}. ${formData.languages.length + 1} language selected.`, 'polite');
+                      }
+                    }}
+                  />
                   {formData.languages.length > 0 && languagesValidation.isValid && (
                     <FormFieldSuccess message={`${formData.languages.length} language${formData.languages.length > 1 ? 's' : ''} selected`} />
                   )}
@@ -535,7 +592,7 @@ function SignupForm() {
 
                 <motion.button
                   onClick={() => setStep(2)}
-                  disabled={!formData.fullName || !formData.email || formData.cities.length === 0 || formData.languages.length === 0}
+                  disabled={!formData.fullName || !formData.email || formData.cities.length === 0 || formData.languages.length === 0 || !formData.gdprConsent}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="btn-primary w-full text-xl py-6 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
@@ -553,7 +610,7 @@ function SignupForm() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4 }}
-                className="space-y-8"
+                className="space-y-8 sm:space-y-10"
               >
                 <div>
                   <h2 className="text-3xl font-black text-white mb-2">Your preferences</h2>
@@ -563,15 +620,15 @@ function SignupForm() {
                   <div className="mt-4 p-4 bg-zinc-800/50 rounded-xl border border-zinc-700">
                     <h3 className="text-sm font-bold text-zinc-300 mb-2">Required for next step:</h3>
                     <div className="space-y-1 text-sm">
-                      <div className={`flex items-center gap-2 ${formData.experience ? 'text-green-400' : 'text-zinc-500'}`}>
+                      <div className={`flex items-center gap-2 ${formData.experience ? 'text-green-400' : 'text-zinc-400'}`}>
                         <span className={`w-2 h-2 rounded-full ${formData.experience ? 'bg-green-400' : 'bg-zinc-500'}`}></span>
                         Professional Experience
                       </div>
-                      <div className={`flex items-center gap-2 ${formData.visaStatus ? 'text-green-400' : 'text-zinc-500'}`}>
+                      <div className={`flex items-center gap-2 ${formData.visaStatus ? 'text-green-400' : 'text-zinc-400'}`}>
                         <span className={`w-2 h-2 rounded-full ${formData.visaStatus ? 'bg-green-400' : 'bg-zinc-500'}`}></span>
                         Visa Status
                       </div>
-                      <div className={`flex items-center gap-2 ${formData.entryLevelPreferences.length > 0 ? 'text-green-400' : 'text-zinc-500'}`}>
+                      <div className={`flex items-center gap-2 ${formData.entryLevelPreferences.length > 0 ? 'text-green-400' : 'text-zinc-400'}`}>
                         <span className={`w-2 h-2 rounded-full ${formData.entryLevelPreferences.length > 0 ? 'bg-green-400' : 'bg-zinc-500'}`}></span>
                         Entry Level Preferences ({formData.entryLevelPreferences.length}/1+ selected)
                       </div>
@@ -581,57 +638,30 @@ function SignupForm() {
 
                 <div>
                   <label className="block text-base font-bold text-white mb-3">Target Start Date *</label>
-                  <input
-                    type="date"
+                  <p className="text-sm text-zinc-400 mb-4">When are you available to start?</p>
+                  <CalendarPicker
                     value={formData.startDate}
-                    onChange={(e) => setFormData({...formData, startDate: e.target.value})}
-                    className="w-full px-5 py-4 bg-black/40 border-2 border-zinc-700 rounded-xl text-white focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/20 transition-all text-lg"
-                    autoComplete="off"
+                    onChange={(date) => setFormData({...formData, startDate: date})}
+                    minDate={new Date().toISOString().split('T')[0]}
                   />
                 </div>
 
                 <div>
                   <label className="block text-base font-bold text-white mb-3">Professional Experience *</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {['0', '6 months', '1 year', '1-2 years', '2 years', '3+ years'].map(exp => (
-                      <motion.button
-                        key={exp}
-                        type="button"
-                        onClick={() => setFormData({...formData, experience: exp})}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
-                        className={`px-4 py-3.5 rounded-xl border-2 transition-all font-semibold ${
-                          formData.experience === exp
-                            ? 'border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/10 text-white shadow-glow-subtle'
-                            : 'border-zinc-700 bg-zinc-900/40 text-zinc-300 hover:border-zinc-600'
-                        }`}
-                      >
-                        {exp}
-                      </motion.button>
-                    ))}
-                  </div>
+                  <p className="text-sm text-zinc-400 mb-4">How much professional experience do you have?</p>
+                  <ExperienceTimeline
+                    selected={formData.experience}
+                    onChange={(exp) => setFormData({...formData, experience: exp})}
+                  />
                 </div>
 
                 <div>
                   <label className="block text-base font-bold text-white mb-3">Work Environment</label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {['Office', 'Hybrid', 'Remote'].map(env => (
-                      <motion.button
-                        key={env}
-                        type="button"
-                        onClick={() => setFormData({...formData, workEnvironment: toggleArray(formData.workEnvironment, env)})}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
-                        className={`px-4 py-3.5 rounded-xl border-2 transition-all font-semibold ${
-                          formData.workEnvironment.includes(env)
-                            ? 'border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/10 text-white shadow-glow-subtle'
-                            : 'border-zinc-700 bg-zinc-900/40 text-zinc-300 hover:border-zinc-600'
-                        }`}
-                      >
-                        {env}
-                      </motion.button>
-                    ))}
-                  </div>
+                  <p className="text-sm text-zinc-400 mb-4">Where would you like to work?</p>
+                  <WorkEnvironmentSelector
+                    selected={formData.workEnvironment}
+                    onChange={(env) => setFormData({...formData, workEnvironment: toggleArray(formData.workEnvironment, env)})}
+                  />
                 </div>
 
                 <div>
@@ -669,27 +699,13 @@ function SignupForm() {
 
                 <div>
                   <label className="block text-base font-bold text-white mb-3">Entry Level Preference *</label>
-                  <p className="text-sm text-zinc-400 mb-3">What type of roles are you looking for?</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {['Internship', 'Graduate Programmes', 'Entry Level', 'Working Student', 'Not sure yet'].map(pref => (
-                      <motion.button
-                        key={pref}
-                        type="button"
-                        onClick={() => setFormData({...formData, entryLevelPreferences: toggleArray(formData.entryLevelPreferences, pref)})}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className={`px-5 py-4 rounded-xl border-2 transition-all font-semibold ${
-                          formData.entryLevelPreferences.includes(pref)
-                            ? 'border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/10 text-white shadow-glow-subtle'
-                            : 'border-zinc-700 bg-zinc-900/40 text-zinc-300 hover:border-zinc-600'
-                        }`}
-                      >
-                        {pref}
-                      </motion.button>
-                    ))}
-                  </div>
+                  <p className="text-sm text-zinc-400 mb-4">What type of roles are you looking for?</p>
+                  <EntryLevelSelector
+                    selected={formData.entryLevelPreferences}
+                    onChange={(pref) => setFormData({...formData, entryLevelPreferences: toggleArray(formData.entryLevelPreferences, pref)})}
+                  />
                   {formData.entryLevelPreferences.length > 0 && (
-                    <p className="text-sm text-zinc-400 mt-2">
+                    <p className="text-sm text-zinc-400 mt-4">
                       <span className="font-bold text-brand-400">{formData.entryLevelPreferences.length}</span> selected
                     </p>
                   )}
@@ -732,7 +748,7 @@ function SignupForm() {
                     whileHover={{ scale: 1.02 }}
                     className={`relative flex-1 py-6 sm:py-7 text-xl sm:text-2xl font-black uppercase tracking-wide rounded-2xl overflow-hidden transition-all ${
                       !formData.experience || !formData.visaStatus || formData.entryLevelPreferences.length === 0
-                        ? 'opacity-40 cursor-not-allowed bg-zinc-700 text-zinc-500'
+                        ? 'opacity-40 cursor-not-allowed bg-zinc-700 text-zinc-400'
                         : 'bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-glow-signup hover:shadow-glow-medium hover:scale-105'
                     }`}
                     whileTap={{ scale: 0.98 }}
@@ -753,7 +769,7 @@ function SignupForm() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4 }}
-                className="space-y-8"
+                className="space-y-8 sm:space-y-10"
               >
                 <div>
                   <h2 className="text-3xl font-black text-white mb-2">Your career path</h2>
@@ -763,11 +779,11 @@ function SignupForm() {
                   <div className="mt-4 p-4 bg-zinc-800/50 rounded-xl border border-zinc-700">
                     <h3 className="text-sm font-bold text-zinc-300 mb-2">Required for next step:</h3>
                     <div className="space-y-1 text-sm">
-                      <div className={`flex items-center gap-2 ${formData.careerPath ? 'text-green-400' : 'text-zinc-500'}`}>
+                      <div className={`flex items-center gap-2 ${formData.careerPath ? 'text-green-400' : 'text-zinc-400'}`}>
                         <span className={`w-2 h-2 rounded-full ${formData.careerPath ? 'bg-green-400' : 'bg-zinc-500'}`}></span>
                         Career Path Selection
                       </div>
-                      <div className={`flex items-center gap-2 ${formData.roles.length > 0 ? 'text-green-400' : 'text-zinc-500'}`}>
+                      <div className={`flex items-center gap-2 ${formData.roles.length > 0 ? 'text-green-400' : 'text-zinc-400'}`}>
                         <span className={`w-2 h-2 rounded-full ${formData.roles.length > 0 ? 'bg-green-400' : 'bg-zinc-500'}`}></span>
                         Role Selection ({formData.roles.length}/1+ selected)
                       </div>
@@ -777,7 +793,8 @@ function SignupForm() {
 
                 <div>
                   <label className="block text-base font-bold text-white mb-4">Select Your Career Path *</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <p className="text-sm text-zinc-400 mb-6">Choose the career path that interests you most</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {CAREER_PATHS.map(path => (
                       <motion.button
                         key={path.value}
@@ -785,31 +802,69 @@ function SignupForm() {
                         onClick={() => {
                           const newCareer = CAREER_PATHS.find(c => c.value === path.value);
                           if (newCareer) {
-                            // Only keep roles that belong to the newly selected career path
                             const validRoles = formData.roles.filter(role => newCareer.roles.includes(role));
                             setFormData({...formData, careerPath: path.value, roles: validRoles});
                           }
                         }}
-                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileHover={{ scale: 1.02, y: -3 }}
                         whileTap={{ scale: 0.98 }}
-                        className={`px-5 py-5 rounded-xl border-2 transition-all text-left relative overflow-hidden ${
+                        className={`relative px-6 py-6 rounded-2xl border-2 transition-all text-left overflow-hidden group ${
                           formData.careerPath === path.value
                             ? 'border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/15 shadow-glow-signup'
                             : 'border-zinc-700 bg-zinc-900/40 hover:border-zinc-600 hover:bg-zinc-900/60'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <span className="text-3xl">{path.emoji}</span>
-                          <div className="flex-1">
-                            <div className={`font-bold text-base ${formData.careerPath === path.value ? 'text-white' : 'text-zinc-200'}`}>
+                        {/* Background gradient on select */}
+                        {formData.careerPath === path.value && (
+                          <motion.div
+                            className="absolute inset-0 bg-gradient-to-br from-brand-500/10 to-purple-600/5"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.3 }}
+                          />
+                        )}
+                        
+                        <div className="relative flex items-start gap-4">
+                          {/* Large emoji icon */}
+                          <motion.div
+                            className={`text-4xl sm:text-5xl ${
+                              formData.careerPath === path.value ? 'scale-110' : ''
+                            }`}
+                            animate={formData.careerPath === path.value ? { scale: 1.1 } : { scale: 1 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            {path.emoji}
+                          </motion.div>
+                          
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className={`font-bold text-lg mb-1 ${
+                              formData.careerPath === path.value ? 'text-white' : 'text-zinc-200'
+                            }`}>
                               {path.label}
                             </div>
-                            <div className="text-xs text-zinc-500 mt-1">{path.roles.length} roles</div>
+                            <div className="flex items-center gap-2 text-xs text-zinc-400">
+                              <BrandIcons.Briefcase className="w-3.5 h-3.5" />
+                              <span>{path.roles.length} roles available</span>
+                            </div>
                           </div>
+                          
+                          {/* Selection indicator */}
                           {formData.careerPath === path.value && (
-                            <div className="text-brand-400 text-2xl"></div>
+                            <motion.div
+                              initial={{ scale: 0, rotate: -180 }}
+                              animate={{ scale: 1, rotate: 0 }}
+                              className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-glow-subtle"
+                            >
+                              <BrandIcons.Check className="w-5 h-5 text-white" />
+                            </motion.div>
                           )}
                         </div>
+                        
+                        {/* Glow effect on hover */}
+                        {formData.careerPath !== path.value && (
+                          <div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 to-purple-600/0 group-hover:from-brand-500/5 group-hover:to-purple-600/5 transition-all duration-300" />
+                        )}
                       </motion.button>
                     ))}
                   </div>
@@ -829,7 +884,7 @@ function SignupForm() {
                       <label className="block text-lg font-black text-white mb-4">
                         <span className="text-2xl mr-2">{selectedCareer.emoji}</span>
                         {selectedCareer.label} Roles
-                        <span className="text-zinc-500 font-normal text-base ml-2">(Select at least one - required)</span>
+                        <span className="text-zinc-400 font-normal text-base ml-2">(Select at least one - required)</span>
                       </label>
 
                       {/* Select All / Clear All Controls */}
@@ -971,11 +1026,32 @@ function SignupForm() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4 }}
-                className="space-y-8"
+                className="space-y-8 sm:space-y-10"
               >
                 <div className="text-center">
-                  <h2 className="text-3xl font-black text-white mb-2">Additional Preferences</h2>
-                  <p className="text-zinc-400">Optional - helps us match you even better</p>
+                  <h2 className="text-3xl font-black text-white mb-2 text-shadow-sm">Additional Preferences</h2>
+                  <p className="text-zinc-300 mb-4">Optional - helps us match you even better</p>
+                  <motion.button
+                    type="button"
+                    onClick={() => {
+                      // Skip to submit if GDPR consent is already checked, otherwise just skip optional fields
+                      if (formData.gdprConsent) {
+                        handleSubmit();
+                      } else {
+                        // Focus on GDPR consent
+                        const gdprCheckbox = document.querySelector('input[type="checkbox"]') as HTMLInputElement;
+                        if (gdprCheckbox) {
+                          gdprCheckbox.focus();
+                          gdprCheckbox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                      }
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="text-brand-400 hover:text-brand-300 text-sm font-semibold underline"
+                  >
+                    Skip Optional Fields →
+                  </motion.button>
                 </div>
 
                 {/* Industry Preferences */}
@@ -1037,12 +1113,12 @@ function SignupForm() {
                 <div className="space-y-4">
                   <h3 className="text-xl font-bold text-white">Career Keywords</h3>
                   <p className="text-sm text-zinc-400">Describe what you're looking for in your own words (optional)</p>
-                  <p className="text-xs text-zinc-500">Examples: "customer-facing", "data-driven", "creative problem-solving", "client interaction", "analytical work"</p>
+                  <p className="text-xs text-zinc-400">Examples: "customer-facing", "data-driven", "creative problem-solving", "client interaction", "analytical work"</p>
                   <textarea
                     value={formData.careerKeywords}
                     onChange={(e) => setFormData({...formData, careerKeywords: e.target.value})}
                     placeholder="e.g., customer-facing roles, data-driven positions, creative problem-solving, client interaction..."
-                    className="w-full px-4 py-3 rounded-xl border-2 border-zinc-700 bg-zinc-900/60 text-white placeholder-zinc-500 focus:border-brand-500 focus:outline-none transition-colors resize-none"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-zinc-600 bg-zinc-900/70 text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/20 transition-colors resize-none"
                     rows={3}
                     maxLength={200}
                   />
@@ -1081,33 +1157,6 @@ function SignupForm() {
                   )}
                 </div>
 
-                {/* GDPR Consent */}
-                <div className="bg-zinc-900/60 border-2 border-zinc-700 rounded-xl p-6">
-                  <label className="flex items-start gap-4 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={formData.gdprConsent}
-                      onChange={(e) => setFormData({...formData, gdprConsent: e.target.checked})}
-                      className="mt-1 w-5 h-5 rounded border-2 border-zinc-600 bg-zinc-800 checked:bg-brand-500 checked:border-brand-500 cursor-pointer"
-                    />
-                    <div className="flex-1">
-                      <p className="text-white font-medium mb-1">
-                        I agree to receive job recommendations via email *
-                      </p>
-                      <p className="text-sm text-zinc-400">
-                        By checking this box, you consent to receive personalized job matches and agree to our{' '}
-                        <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:text-brand-300 underline">
-                          Privacy Policy
-                        </a>
-                        {' '}and{' '}
-                        <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:text-brand-300 underline">
-                          Terms of Service
-                        </a>
-                        . You can unsubscribe at any time.
-                      </p>
-                    </div>
-                  </label>
-                </div>
 
                 <div className="flex gap-4 pt-6">
                   <motion.button
@@ -1120,7 +1169,7 @@ function SignupForm() {
                   </motion.button>
                   <motion.button
                     onClick={handleSubmit}
-                    disabled={loading || !formData.gdprConsent}
+                    disabled={loading}
                     whileHover={{ scale: loading ? 1 : 1.03 }}
                     whileTap={{ scale: loading ? 1 : 0.97 }}
                     className="relative flex-1 py-6 sm:py-7 text-xl sm:text-2xl font-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 uppercase tracking-wide rounded-2xl overflow-hidden"
@@ -1174,10 +1223,10 @@ function SignupForm() {
                 `${activeJobs} active early-career roles`
               )}
             </span>
-            <span className="text-zinc-600">·</span>
+            <span className="text-zinc-400">·</span>
             <span className="text-sm text-zinc-400">Updated daily</span>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-500 px-4">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-400 px-4">
             <div className="flex items-center gap-1.5">
               <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

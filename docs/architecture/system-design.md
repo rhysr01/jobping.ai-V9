@@ -117,7 +117,7 @@ graph TB
  health/                 # System health check
  match-users/           # Core matching endpoint
  send-scheduled-emails/ # Email automation
- webhook-tally/         # User registration
+ signup/                # User registration (signup form)
  dashboard/             # Analytics dashboard
  user-matches/          # User match retrieval
  create-checkout-session/ # Payment processing

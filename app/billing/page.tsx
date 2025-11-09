@@ -374,7 +374,7 @@ export default function BillingPage({ params }: BillingPageProps) {
                 </>
               ) : (
                 <GlassCard variant="subtle" className="p-12 text-center">
-                  <CreditCard className="w-16 h-16 mx-auto mb-4 text-zinc-600" />
+                  <CreditCard className="w-16 h-16 mx-auto mb-4 text-zinc-400" />
                   <h3 className="text-xl font-semibold mb-2">No Active Subscription</h3>
                   <p className="text-zinc-400 mb-6">You don't have an active subscription yet.</p>
                   <Button href="/signup?tier=premium" variant="primary" size="lg">
@@ -398,7 +398,7 @@ export default function BillingPage({ params }: BillingPageProps) {
                 <p className="text-zinc-400 mt-1">Add and manage your payment methods securely.</p>
               </div>
               <GlassCard variant="subtle" className="p-12 text-center">
-                <CreditCard className="w-16 h-16 mx-auto mb-4 text-zinc-600" />
+                <CreditCard className="w-16 h-16 mx-auto mb-4 text-zinc-400" />
                 <h3 className="text-xl font-semibold mb-2">Payment Methods</h3>
                 <p className="text-zinc-400 mb-6">Manage your payment methods securely through Stripe.</p>
                 <Button
@@ -411,7 +411,7 @@ export default function BillingPage({ params }: BillingPageProps) {
                   Manage Payment Methods
                 </Button>
                 {!billingData?.currentSubscription && (
-                  <p className="text-sm text-zinc-500 mt-4">Subscribe first to add payment methods</p>
+                  <p className="text-sm text-zinc-400 mt-4">Subscribe first to add payment methods</p>
                 )}
               </GlassCard>
             </motion.div>

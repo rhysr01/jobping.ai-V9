@@ -121,7 +121,7 @@ node scripts/email-verification-test.js --email=your-email@example.com
 ```
 
 **What it tests:**
-1. **Webhook Registration** - User creation via Tally form
+1. **User Registration** - User creation via signup form
 2. **Database User Creation** - User storage in Supabase
 3. **Email Sending** - Verification email delivery
 4. **Verification Token** - Token generation and validation
@@ -133,7 +133,7 @@ node scripts/email-verification-test.js --email=your-email@example.com
 - `POST /api/test-email` - Send test verification emails
 - `POST /api/test-token` - Generate test verification tokens
 - `POST /api/test-welcome-email` - Trigger welcome email sequence
-- `POST /api/webhook-tally?test=email-verification` - Test webhook flow
+- `POST /api/signup?test=email-verification` - Test signup flow
 
 **Output:**
 - Console logs with real-time test progress
@@ -180,7 +180,7 @@ JOBPING_TEST_MODE=1  # Enable test mode
 NODE_ENV=test        # Test environment
 ```
 
-## ˆ Success Criteria
+## ï¿½ Success Criteria
 
 ### Pilot Ready (90% success rate)
 - All critical endpoints responding
@@ -265,7 +265,7 @@ DEBUG=1 JOBPING_TEST_MODE=1 npx tsx scripts/pilot-smoke.ts
 - `0` - All tests passed
 - `1` - Critical failures detected
 
-## ¯ Next Steps
+## ï¿½ Next Steps
 
 1. **Run smoke test** to validate system readiness
 2. **Review failures** and fix critical issues

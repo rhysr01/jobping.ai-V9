@@ -1,9 +1,11 @@
 require('dotenv').config({ path: '.env.local' });
 const axios = require('axios');
 
-// EU Cities - EXPANDED to 18 cities for better coverage
+// EU Cities - EXPANDED to 20 cities for better coverage
 const EU_CITIES_CATEGORIES = [
   { name: 'London', country: 'gb' },    // ✅ High performer
+  { name: 'Manchester', country: 'gb' }, // 🆕 UK's 2nd largest city
+  { name: 'Birmingham', country: 'gb' }, // 🆕 UK's 3rd largest city
   { name: 'Madrid', country: 'es' },    // ✅ High performer (prácticas goldmine)
   { name: 'Barcelona', country: 'es' }, // 🆕 Spain's 2nd largest city (tech/finance hub)
   { name: 'Berlin', country: 'de' },    // ✅ Moderate performer
@@ -396,10 +398,41 @@ if (require.main === module) {
         return { isRemote };
       }
       function localIsEarlyCareer(title, description) {
-        const hay = `${title || ''} ${(description || '')}`.toLowerCase();
-        const inc = /(graduate|new\s?grad|entry[-\s]?level|intern(ship)?|apprentice|early\s?career|junior|campus|working\sstudent|trainee|associate|analyst|coordinator|specialist|assistant|representative|consultant|researcher)/i;
-        const excl = /(senior|staff|principal|lead|manager|director|head\b|vp\b|vice\s+president|chief|executive|c-level|cto|ceo|cfo|coo)/i;
-        return inc.test(hay) && !excl.test(hay);
+        const text = `${title || ''} ${(description || '')}`.toLowerCase();
+        
+        // Explicit early-career terms (REQUIRED - matching JobSpy strictness)
+        const earlyTerms = [
+          'graduate', 'grad', 'intern', 'internship', 'junior', 'trainee', 
+          'entry level', 'entry-level', 'associate', 'analyst', 'assistant', 
+          'apprentice', 'placement', 'stage', 'praktikum', 'becario', 'prácticas', 
+          'tirocinio', 'stagiaire', 'werkstudent', 'praktikant', 'nyexaminerad',
+          'nyuddannet', 'absolvent', 'neolaureato', 'jeune diplômé', 'afgestudeerde',
+          'starter', 'débutant', 'einsteiger', 'začátečník', 'początkujący',
+          'begynder', 'nybörjare', 'campus', 'early career', 'early-career'
+        ];
+        
+        // Senior exclusion (STRICT)
+        const seniorTerms = [
+          'senior', 'lead', 'principal', 'director', 'head of', 'vp', 
+          'vice president', 'chief', 'executive', 'manager', 'architect', 
+          'specialist', 'staff', 'c-level', 'cto', 'ceo', 'cfo', 'coo'
+        ];
+        
+        // Business relevance (exclude healthcare, education, non-business)
+        const nonBusiness = [
+          'nurse', 'dental', 'dentist', 'teacher', 'teaching', 'educator',
+          'doctor', 'pharmacist', 'veterinary', 'clinical', 'medical',
+          'physiotherap', 'paramedic', 'radiographer', 'sonographer',
+          'chef', 'cleaner', 'warehouse', 'driver', 'barista', 'waiter',
+          'waitress', 'hairdresser', 'electrician', 'plumber', 'mechanic'
+        ];
+        
+        const hasEarly = earlyTerms.some(term => text.includes(term));
+        const hasSenior = seniorTerms.some(term => text.includes(term));
+        const hasNonBusiness = nonBusiness.some(term => text.includes(term));
+        
+        // Must have early-career term AND not be senior AND not be non-business
+        return hasEarly && !hasSenior && !hasNonBusiness;
       }
       function localMakeJobHash(job) {
         const normalizedTitle = (job.title || '').toLowerCase().trim().replace(/\s+/g, ' ');
@@ -419,6 +452,13 @@ if (require.main === module) {
         const isEarly = localIsEarlyCareer(job.title, job.description);
         const job_hash = localMakeJobHash(job);
         const nowIso = new Date().toISOString();
+        
+        // Only save jobs that pass strict early-career filter (matching JobSpy quality)
+        // If not early-career, skip this job entirely
+        if (!isEarly) {
+          return null; // Signal to filter out
+        }
+        
         return {
           job_hash,
           title: (job.title || '').trim(),
@@ -428,9 +468,9 @@ if (require.main === module) {
           job_url: (job.url || '').trim(),
           source: (job.source || 'adzuna').trim(),
           posted_at: job.posted_at || nowIso,
-          categories: [isEarly ? 'early-career' : 'experienced'],
+          categories: ['early-career'], // Always early-career since we filter
           work_environment: isRemote ? 'remote' : 'on-site',
-          experience_required: isEarly ? 'entry-level' : 'experienced',
+          experience_required: 'entry-level',
           original_posted_date: job.posted_at || nowIso,
           last_seen_at: nowIso,
           is_active: true,
@@ -449,11 +489,14 @@ if (require.main === module) {
       // Respect remote exclusion preference
       const includeRemote = String(process.env.INCLUDE_REMOTE || '').toLowerCase() !== 'false' ? true : false;
       const filteredJobs = includeRemote ? results.jobs : results.jobs.filter(j => !localParseLocation(j.location).isRemote);
-      const dbJobs = filteredJobs.map(job => {
-        const dbJob = convertToDatabaseFormat(job);
-        const { metadata, ...clean } = dbJob;
-        return clean;
-      });
+      const dbJobs = filteredJobs
+        .map(job => {
+          const dbJob = convertToDatabaseFormat(job);
+          if (!dbJob) return null; // Filter out non-early-career jobs
+          const { metadata, ...clean } = dbJob;
+          return clean;
+        })
+        .filter(job => job !== null); // Remove null entries
       
       // Deduplicate by job_hash to prevent "cannot affect row a second time" error
       const uniqueJobs = dbJobs.reduce((acc, job) => {

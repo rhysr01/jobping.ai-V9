@@ -11,6 +11,7 @@ export default function Hero() {
   const [activeJobs, setActiveJobs] = useState("12,748");
   const [internships, setInternships] = useState("");
   const [graduates, setGraduates] = useState("");
+  const [totalUsers, setTotalUsers] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const prefersReduced = useReducedMotion();
 
@@ -30,6 +31,9 @@ export default function Hero() {
         }
         if (data.graduates) {
           setGraduates(data.graduates.toLocaleString('en-US'));
+        }
+        if (data.totalUsersFormatted) {
+          setTotalUsers(data.totalUsersFormatted);
         }
       } catch (err) {
         console.error('Failed to fetch stats:', err);
@@ -74,7 +78,7 @@ export default function Hero() {
           
           {/* JobPing Text - Clean, no glow */}
           <div className="text-8xl sm:text-10xl md:text-12xl lg:text-14xl font-black tracking-tighter leading-none">
-            <span className="bg-gradient-to-b from-white via-purple-50/90 to-purple-200/80 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-b from-white via-purple-50/90 to-purple-200/80 bg-clip-text text-transparent text-shadow-lg">
               JobPing
             </span>
           </div>
@@ -84,11 +88,11 @@ export default function Hero() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
-          className="mt-8 text-white text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black mb-6 text-balance leading-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+          className="mt-8 text-white text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black mb-6 text-balance leading-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)] text-shadow-md"
         >
           {Copy.HERO_HEADLINE}
         </motion.h1>
-        <p className="text-neutral-100 leading-relaxed max-w-2xl mx-auto text-2xl sm:text-3xl font-bold mt-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
+        <p className="text-neutral-100 leading-relaxed max-w-2xl mx-auto text-2xl sm:text-3xl font-bold mt-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] text-shadow-sm">
           {Copy.HERO_SUBLINE}
         </p>
         
@@ -101,7 +105,7 @@ export default function Hero() {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="flex flex-col sm:flex-row items-center gap-3"
           >
-            <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/15 backdrop-blur-sm px-5 py-2 text-small text-brand-200 shadow-[0_2px_8px_rgba(154,106,255,0.15)]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/18 backdrop-blur-sm px-5 py-2 text-small text-brand-200 shadow-[0_2px_12px_rgba(154,106,255,0.2)] glow-brand-subtle">
               <BrandIcons.Target className="w-4 h-4 text-brand-400" />
               {isLoading ? (
                 <Skeleton className="h-4 w-32" />
@@ -139,6 +143,11 @@ export default function Hero() {
             <p className="mt-4 text-small text-zinc-400 text-center leading-relaxed">
               Free forever · No spam · Cancel anytime · GDPR compliant
             </p>
+            {!isLoading && totalUsers && parseInt(totalUsers.replace(/,/g, '')) > 0 && (
+              <p className="mt-2 text-xs text-zinc-400 text-center">
+                Join <span className="text-brand-300 font-bold">{totalUsers}+</span> students finding EU jobs
+              </p>
+            )}
           </motion.div>
         </div>
       </div>

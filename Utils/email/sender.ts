@@ -2,6 +2,7 @@
 
 import { apiLogger } from '@/lib/api-logger';
 import { getResendClient, EMAIL_CONFIG, assertValidFrom } from './clients';
+import { getBaseUrl } from '../url-helpers';
 import { createWelcomeEmail, createJobMatchesEmail } from './productionReadyTemplates';
 import { EmailJobCard } from './types';
 
@@ -38,8 +39,17 @@ export async function sendWelcomeEmail(args: { to: string; userName?: string; ma
     console.log(`[EMAIL] Resend client initialized. API Key present: true`);
     
     // Use production template
-    const htmlContent = createWelcomeEmail(args.userName, args.matchCount);
-    const textContent = `Welcome to JobPing!\n\nYour first ${args.matchCount} job matches will arrive within 48 hours.\n\nBest regards,\nThe JobPing Team`;
+    const matchesLabel = args.matchCount === 1 ? 'match' : 'matches';
+    const htmlContent = createWelcomeEmail(args.userName, args.matchCount, args.to);
+    const baseUrl = getBaseUrl();
+    const textContent =
+`Welcome to JobPing!
+
+We've already queued your first ${args.matchCount} ${matchesLabel}. Expect them within the next 24 hours, followed by fresh drops each week.
+
+Tip: add hello@getjobping.com to your contacts so nothing hits spam. Need to tweak your preferences? Visit ${baseUrl}/preferences or reply to this email and we'll help.
+
+— The JobPing Team`;
     
     apiLogger.info('Email content generated', { from: EMAIL_CONFIG.from });
     assertValidFrom(EMAIL_CONFIG.from);
@@ -51,7 +61,7 @@ export async function sendWelcomeEmail(args: { to: string; userName?: string; ma
     const sendPromise = resend.emails.send({
       from: EMAIL_CONFIG.from,
       to: [args.to],
-      subject: `Welcome to JobPing - Your First ${args.matchCount} Matches Arriving Soon!`,
+      subject: `Welcome to JobPing – ${args.matchCount} ${matchesLabel} already in progress`,
       text: textContent,
       html: htmlContent,
     });
@@ -166,7 +176,8 @@ export async function sendMatchedJobsEmail(args: {
       jobCards,
       args.userName,
       args.subscriptionTier || 'free',
-      args.isSignupEmail || false
+      args.isSignupEmail || false,
+      args.to // Pass user email explicitly for links
     );
     
     const textContent = `Hi ${args.userName || 'there'},\n\nHere are your latest job matches:\n\n${args.jobs.map((job, i) => `${i + 1}. ${job.title} at ${job.company}`).join('\n')}`;
