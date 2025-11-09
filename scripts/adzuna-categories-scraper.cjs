@@ -1,5 +1,6 @@
 require('dotenv').config({ path: '.env.local' });
 const axios = require('axios');
+const { classifyEarlyCareer, makeJobHash } = require('../scrapers/shared/helpers.cjs');
 
 // EU Cities - EXPANDED to 20 cities for better coverage
 const EU_CITIES_CATEGORIES = [
@@ -222,11 +223,13 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
   const {
     appId = process.env.ADZUNA_APP_ID,
     appKey = process.env.ADZUNA_APP_KEY,
-    resultsPerPage = 25,
-    maxDaysOld = 28, // Last 28 days for wider early-career coverage
-    delay = 800,
-    timeout = 15000,
-    verbose = false
+    resultsPerPage = parseInt(process.env.ADZUNA_RESULTS_PER_PAGE || '25', 10),
+    maxDaysOld = parseInt(process.env.ADZUNA_MAX_DAYS_OLD || '28', 10), // Last 28 days for wider coverage
+    delay = parseInt(process.env.ADZUNA_PAGE_DELAY_MS || '800', 10),
+    timeout = parseInt(process.env.ADZUNA_TIMEOUT_MS || '15000', 10),
+    verbose = false,
+    maxPages = parseInt(process.env.ADZUNA_MAX_PAGES || '3', 10),
+    pageDelayJitter = parseInt(process.env.ADZUNA_PAGE_DELAY_JITTER_MS || '0', 10),
   } = options;
 
   if (!appId || !appKey) {
@@ -242,7 +245,6 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
       // Search multiple pages for more results
       let page = 1;
       let hasMorePages = true;
-      const maxPages = 3; // Limit to 3 pages for speed
       
       while (hasMorePages && page <= maxPages) {
         const url = `https://api.adzuna.com/v1/api/jobs/${countryCode}/search/${page}?app_id=${appId}&app_key=${appKey}&what=${encodeURIComponent(query)}&where=${encodeURIComponent(cityName)}&results_per_page=${resultsPerPage}&sort_by=date&max_days_old=${maxDaysOld}`;
@@ -276,7 +278,13 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
             search_country: countryCode
           }));
           
-          allJobs.push(...transformedJobs);
+          const filteredJobs = transformedJobs.filter((job) => classifyEarlyCareer(job));
+          
+          if (filteredJobs.length === 0 && verbose) {
+            console.log(`   ⚠️  Filtered out ${transformedJobs.length} non-early-career jobs for "${query}"`);
+          }
+          
+          allJobs.push(...filteredJobs);
           
           // Stop if we got fewer results than requested (last page)
           if (jobs.length < resultsPerPage) {
@@ -289,8 +297,11 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
         
         page++;
         
-        // Delay between requests (reduced from 1000ms to 500ms for speed)
-        await new Promise(resolve => setTimeout(resolve, 500));
+        const jitter = pageDelayJitter > 0 ? Math.floor(Math.random() * pageDelayJitter) : 0;
+        const delayMs = Math.max(0, delay + jitter);
+        if (delayMs > 0) {
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
       }
       
     } catch (error) {
@@ -306,15 +317,77 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
  * Scrape all EU cities with category-focused approach
  */
 async function scrapeAllCitiesCategories(options = {}) {
-  const { verbose = false } = options;
+  const {
+    verbose = false,
+    targetCities = [],
+    targetCareerPaths = [],
+    targetIndustries = [],
+    targetRoles = [],
+    includeRemote = false,
+    resultsPerPage: overrideResultsPerPage,
+    maxDaysOld: overrideMaxDaysOld,
+    delay: overrideDelay,
+    timeout: overrideTimeout,
+    maxPages: overrideMaxPages,
+    pageDelayJitter: overridePageDelayJitter,
+    maxQueriesPerCity: overrideMaxQueriesPerCity,
+  } = options;
+  
+  const normalizedTargetCities = targetCities
+    .map(city => city && city.toLowerCase().trim())
+    .filter(Boolean);
+  
+  const resultsPerPage = typeof overrideResultsPerPage === 'number'
+    ? overrideResultsPerPage
+    : parseInt(process.env.ADZUNA_RESULTS_PER_PAGE || '25', 10);
+  const maxDaysOld = typeof overrideMaxDaysOld === 'number'
+    ? overrideMaxDaysOld
+    : parseInt(process.env.ADZUNA_MAX_DAYS_OLD || '28', 10);
+  const delayMs = typeof overrideDelay === 'number'
+    ? overrideDelay
+    : parseInt(process.env.ADZUNA_PAGE_DELAY_MS || '800', 10);
+  const timeoutMs = typeof overrideTimeout === 'number'
+    ? overrideTimeout
+    : parseInt(process.env.ADZUNA_TIMEOUT_MS || '15000', 10);
+  const maxPages = typeof overrideMaxPages === 'number'
+    ? overrideMaxPages
+    : parseInt(process.env.ADZUNA_MAX_PAGES || '3', 10);
+  const pageDelayJitter = typeof overridePageDelayJitter === 'number'
+    ? overridePageDelayJitter
+    : parseInt(process.env.ADZUNA_PAGE_DELAY_JITTER_MS || '0', 10);
+  const maxQueriesPerCity = typeof overrideMaxQueriesPerCity === 'number'
+    ? overrideMaxQueriesPerCity
+    : parseInt(process.env.ADZUNA_MAX_QUERIES_PER_CITY || '15', 10);
   
   console.log(`🎓 Starting multilingual early-career job search across ${EU_CITIES_CATEGORIES.length} EU cities...`);
   console.log(`📅 Time range: Last 28 days for wider coverage`);
   console.log(`🌍 Languages: English + local terms per country`);
   console.log(`🏢 Target sectors: ${HIGH_PERFORMING_SECTORS.join(', ')}`);
   console.log(`📊 API Usage: ~${EU_CITIES_CATEGORIES.length * 15} calls (optimized for 250 daily limit)`);
+  console.log(`⚙️  Adzuna config: ${JSON.stringify({
+    resultsPerPage,
+    maxDaysOld,
+    delayMs,
+    timeoutMs,
+    maxPages,
+    pageDelayJitter,
+    maxQueriesPerCity,
+  })}`);
   if (verbose) {
     console.log(`🔍 Core English terms: ${CORE_ENGLISH_TERMS.join(', ')}`);
+  }
+  
+  if (normalizedTargetCities.length) {
+    console.log(`🎯 Signup target cities (${normalizedTargetCities.length}): ${normalizedTargetCities.join(', ')}`);
+  }
+  if (targetCareerPaths.length) {
+    console.log(`🎯 Signup career paths (${targetCareerPaths.length}): ${targetCareerPaths.join(', ')}`);
+  }
+  if (targetIndustries.length) {
+    console.log(`🎯 Signup industries (${targetIndustries.length}): ${targetIndustries.join(', ')}`);
+  }
+  if (targetRoles.length) {
+    console.log(`🎯 Signup roles (${targetRoles.length}): ${targetRoles.join(', ')}`);
   }
   
   const allJobs = [];
@@ -322,16 +395,36 @@ async function scrapeAllCitiesCategories(options = {}) {
   
   // Optional single-city filter via env CITY (matches by name, case-insensitive)
   const cityEnv = (process.env.CITY || '').trim().toLowerCase();
-  const targetCities = cityEnv
-    ? EU_CITIES_CATEGORIES.filter(c => c.name.toLowerCase() === cityEnv)
-    : EU_CITIES_CATEGORIES;
+  let citiesToProcess;
+  if (cityEnv) {
+    citiesToProcess = EU_CITIES_CATEGORIES.filter(c => c.name.toLowerCase() === cityEnv);
+  } else if (normalizedTargetCities.length) {
+    citiesToProcess = EU_CITIES_CATEGORIES.filter(c => normalizedTargetCities.includes(c.name.toLowerCase()));
+    if (citiesToProcess.length === 0) {
+      console.warn('⚠️  Signup cities did not match predefined EU list; falling back to default cities');
+      citiesToProcess = EU_CITIES_CATEGORIES;
+    }
+  } else {
+    citiesToProcess = EU_CITIES_CATEGORIES;
+  }
 
-  for (const city of targetCities) {
+  for (const city of citiesToProcess) {
     try {
       const cityQueries = generateCityQueries(city.country);
-      console.log(`\n🌍 Processing ${city.name} (${city.country.toUpperCase()}) - ${cityQueries.length} queries...`);
+      const limitedCityQueries = maxQueriesPerCity > 0
+        ? cityQueries.slice(0, maxQueriesPerCity)
+        : cityQueries;
+      console.log(`\n🌍 Processing ${city.name} (${city.country.toUpperCase()}) - ${limitedCityQueries.length}/${cityQueries.length} queries...`);
       
-      const cityJobs = await scrapeCityCategories(city.name, city.country, cityQueries, options);
+      const cityJobs = await scrapeCityCategories(city.name, city.country, limitedCityQueries, {
+        resultsPerPage,
+        maxDaysOld,
+        delay: delayMs,
+        timeout: timeoutMs,
+        verbose,
+        maxPages,
+        pageDelayJitter,
+      });
       
       if (cityJobs.length > 0) {
         allJobs.push(...cityJobs);
@@ -349,14 +442,17 @@ async function scrapeAllCitiesCategories(options = {}) {
   
   // Remove duplicates based on URL
   const uniqueJobs = allJobs.reduce((acc, job) => {
-    const key = job.url || `${job.title}-${job.company}-${job.location}`;
-    if (!acc.has(key)) {
-      acc.set(key, job);
+    const jobHash = makeJobHash(job);
+    if (!acc.has(jobHash)) {
+      acc.set(jobHash, { ...job, job_hash: jobHash });
     }
     return acc;
   }, new Map());
   
-  const finalJobs = Array.from(uniqueJobs.values());
+  let finalJobs = Array.from(uniqueJobs.values());
+  if (!includeRemote) {
+    finalJobs = finalJobs.filter(job => !String(job.location || '').toLowerCase().includes('remote'));
+  }
   
   console.log(`\n📊 Multilingual Early-Career Job Search Summary:`);
   console.log(`   🏙️  Cities processed: ${totalCityCount}/${EU_CITIES_CATEGORIES.length}`);

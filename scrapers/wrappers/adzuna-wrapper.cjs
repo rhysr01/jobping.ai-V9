@@ -26,15 +26,16 @@ async function main() {
     const targetRoles = parseJson(process.env.TARGET_ROLES);
 
     const adzunaModule = require('../../scripts/adzuna-categories-scraper.cjs');
+    const includeRemote = String(process.env.INCLUDE_REMOTE).toLowerCase() === 'true';
     const result = await adzunaModule.scrapeAllCitiesCategories({
       verbose: false,
       targetCities,
       targetCareerPaths,
       targetIndustries,
       targetRoles,
-      includeRemote: String(process.env.INCLUDE_REMOTE).toLowerCase() === 'true'
+      includeRemote,
     });
-    const jobs = result.jobs.filter(job => !String(job.location || '').toLowerCase().includes('remote'));
+    const jobs = result.jobs;
     console.log(`✅ Adzuna: ${jobs.length} jobs saved to database`);
     process.exit(0);
   } catch (error) {

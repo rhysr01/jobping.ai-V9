@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useReducedMotion } from '@/components/ui/useReducedMotion';
+import { BrandIcons } from '@/components/ui/BrandIcons';
 import * as Copy from '@/lib/copy';
 import { FormFieldError, FormFieldSuccess, FormFieldHelper } from '@/components/ui/FormFieldFeedback';
 import { useAriaAnnounce } from '@/components/ui/AriaLiveRegion';
@@ -169,6 +170,34 @@ function SignupForm() {
   const citiesValidation = useRequiredValidation(formData.cities, 'Preferred cities');
   const languagesValidation = useRequiredValidation(formData.languages, 'Languages');
 
+  const handleSubmit = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, tier }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        localStorage.removeItem('jobping_signup_form'); // Clear saved data on success
+        const redirectUrl = result.redirectUrl || `/signup/success?tier=${tier}`;
+        router.push(redirectUrl);
+      } else {
+        setError(result.error || 'Signup failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [formData, tier, router]);
+
   // Keyboard shortcuts for power users
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -230,34 +259,6 @@ function SignupForm() {
   useEffect(() => {
     localStorage.setItem('jobping_signup_form', JSON.stringify(formData));
   }, [formData]);
-
-  const handleSubmit = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    
-    try {
-      const response = await fetch('/api/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, tier }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        localStorage.removeItem('jobping_signup_form'); // Clear saved data on success
-        const redirectUrl = result.redirectUrl || `/signup/success?tier=${tier}`;
-        router.push(redirectUrl);
-      } else {
-        setError(result.error || 'Signup failed. Please try again.');
-      }
-    } catch (error) {
-      console.error('Signup error:', error);
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [formData, tier, router]);
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">

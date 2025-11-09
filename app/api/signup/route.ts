@@ -407,7 +407,7 @@ export async function POST(req: NextRequest) {
       matchesCount,
       emailSent,
       email: userData.email,
-      redirectUrl: `/signup/success?tier=${tier}&email=${encodeURIComponent(userData.email)}`
+      redirectUrl: `/signup/success?tier=${subscriptionTier}&email=${encodeURIComponent(userData.email)}`
     });
 
   } catch (error) {

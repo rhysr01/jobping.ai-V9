@@ -71,14 +71,6 @@ jest.mock('redis', () => ({
   })),
 }));
 
-// Mock ProductionRateLimiter (exists)
-jest.mock('@/Utils/productionRateLimiter', () => ({
-  getProductionRateLimiter: jest.fn(() => ({
-    checkLimit: jest.fn(() => Promise.resolve({ allowed: true, remaining: 10 })),
-    teardown: jest.fn(() => Promise.resolve()),
-  })),
-}));
-
 // Mock Resend (no-op in test mode)
 jest.mock('resend', () => ({
   Resend: jest.fn(() => ({
@@ -136,20 +128,11 @@ global.console = {
   global.console = originalConsole;
 };
 
-// Import teardown functions
-import { getProductionRateLimiter } from './Utils/productionRateLimiter';
-
 // Global teardown to close all connections
 afterAll(async () => {
   console.log(' Cleaning up test resources...');
   
   try {
-    // Teardown rate limiter
-    await getProductionRateLimiter().teardown();
-    
-    
-    // Cache teardown is handled by mocks
-    
     console.log(' Test cleanup completed');
   } catch (error) {
     console.error(' Error during test cleanup:', error);
