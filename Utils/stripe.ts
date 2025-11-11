@@ -3,19 +3,28 @@ import { getBaseUrl } from './url-helpers';
 
 // Lazy initialization to prevent build-time execution
 let _stripe: Stripe | null = null;
+let _stripeKey: string | null = null;
 
 function getStripeClient(): Stripe {
-  if (_stripe) return _stripe;
-  
+  if (process.env.NODE_ENV === 'test') {
+    _stripe = null;
+    _stripeKey = null;
+  }
+
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeKey) {
+    _stripe = null;
+    _stripeKey = null;
     throw new Error('Missing STRIPE_SECRET_KEY environment variable');
   }
-  
-  _stripe = new Stripe(stripeKey, {
-    apiVersion: '2025-07-30.basil',
-  });
-  
+
+  if (!_stripe || _stripeKey !== stripeKey) {
+    _stripe = new Stripe(stripeKey, {
+      apiVersion: '2025-07-30.basil',
+    });
+    _stripeKey = stripeKey;
+  }
+
   return _stripe;
 }
 
@@ -31,17 +40,25 @@ export const stripe = new Proxy({} as Stripe, {
 // Stripe configuration
 export const STRIPE_CONFIG = {
   // Product IDs - you'll need to create these in your Stripe dashboard
-  PRODUCTS: {
-    PREMIUM_MONTHLY: process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID || 'price_premium_monthly',
-    PREMIUM_QUARTERLY: process.env.STRIPE_PREMIUM_QUARTERLY_PRICE_ID || 'price_premium_quarterly',
+  get PRODUCTS() {
+    return {
+      PREMIUM_MONTHLY: process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID || 'price_premium_monthly',
+      PREMIUM_QUARTERLY: process.env.STRIPE_PREMIUM_QUARTERLY_PRICE_ID || 'price_premium_quarterly',
+    };
   },
   
   // Webhook endpoint secret
-  WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET!,
+  get WEBHOOK_SECRET() {
+    return process.env.STRIPE_WEBHOOK_SECRET ?? '';
+  },
   
   // Success/cancel URLs
-  SUCCESS_URL: getBaseUrl() + '/payment/success',
-  CANCEL_URL: getBaseUrl() + '/payment/cancel',
+  get SUCCESS_URL() {
+    return getBaseUrl() + '/payment/success';
+  },
+  get CANCEL_URL() {
+    return getBaseUrl() + '/payment/cancel';
+  },
 };
 
 // Create a checkout session for subscription
@@ -174,6 +191,10 @@ export async function updateSubscription(subscriptionId: string, priceId: string
 // Verify webhook signature
 export function constructWebhookEvent(payload: string, signature: string) {
   try {
+    if (!STRIPE_CONFIG.WEBHOOK_SECRET) {
+      throw new Error('Missing STRIPE_WEBHOOK_SECRET environment variable');
+    }
+
     return stripe.webhooks.constructEvent(
       payload,
       signature,

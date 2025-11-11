@@ -1,6 +1,6 @@
 "use client";
 import { motion, animate } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Skeleton from "@/components/ui/Skeleton";
 import Button from "@/components/ui/Button";
 import { useReducedMotion } from "@/components/ui/useReducedMotion";
@@ -132,6 +132,20 @@ export default function Hero() {
     return () => controls.stop();
   }, [totalUsersTarget, prefersReduced]);
 
+  const particles = useMemo(() => {
+    if (prefersReduced) return [];
+    return Array.from({ length: 26 }).map((_, index) => ({
+      id: index,
+      top: Math.random() * 100,
+      left: Math.random() * 100,
+      size: 2 + Math.random() * 2,
+      duration: 8 + Math.random() * 6,
+      delay: Math.random() * 4,
+      drift: 8 + Math.random() * 6,
+      opacity: 0.25 + Math.random() * 0.35,
+    }));
+  }, [prefersReduced]);
+
   return (
     <section
       data-testid="hero-section"
@@ -140,6 +154,37 @@ export default function Hero() {
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[#05010f] via-[#090018] to-[#11002c]">
         <div className="absolute inset-0 bg-[radial-gradient(72%_60%_at_50%_0%,rgba(124,58,237,0.28),transparent_65%)] blur-3xl" />
       </div>
+      {!prefersReduced && (
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          {particles.map(({ id, top, left, size, duration, delay, drift, opacity }) => (
+            <motion.span
+              key={`particle-${id}`}
+              className="absolute rounded-full bg-white"
+              style={{
+                top: `${top}%`,
+                left: `${left}%`,
+                width: size,
+                height: size,
+                opacity,
+                boxShadow: `0 0 ${size * 4}px rgba(167, 139, 250, 0.35)`,
+              }}
+              initial={{ y: 0, scale: 0.6 }}
+              animate={{
+                y: [-drift, drift, -drift],
+                opacity: [opacity * 0.5, opacity, opacity * 0.4],
+                scale: [0.6, 1, 0.6],
+              }}
+              transition={{
+                duration,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay,
+              }}
+              aria-hidden
+            />
+          ))}
+        </div>
+      )}
 
       <div className="container-page container-rhythm relative z-10 mx-auto flex max-w-5xl flex-col items-center gap-10">
         <motion.div
@@ -149,14 +194,61 @@ export default function Hero() {
           className="flex flex-col items-center gap-6"
         >
           <motion.div
-            className="relative inline-flex items-center justify-center gap-5 overflow-hidden rounded-full bg-white/5 px-8 py-4 shadow-[0_18px_46px_rgba(18,0,42,0.35)] backdrop-blur-sm light-sheen"
-            whileHover={prefersReduced ? {} : { scale: 1.02 }}
+            className="relative inline-flex items-center justify-center gap-5 overflow-hidden rounded-full bg-white/5 px-10 py-5 shadow-[0_22px_52px_rgba(18,0,42,0.4)] backdrop-blur-sm light-sheen"
+            whileHover={prefersReduced ? {} : { scale: 1.04 }}
           >
-            <BrandIcons.GraduationCap className="h-14 w-14 text-white sm:h-16 sm:w-16 md:h-20 md:w-20" />
-            <span className="text-[3.5rem] font-semibold tracking-tight text-white sm:text-[4rem] md:text-[4.5rem]">
+            {!prefersReduced && (
+              <motion.div
+                className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.35),transparent_65%)] blur-2xl"
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              />
+            )}
+            {!prefersReduced && (
+              <motion.div
+                className="pointer-events-none absolute -inset-10 -z-20 rounded-full border border-white/10"
+                animate={{ rotate: [0, 12, -12, 0] }}
+                transition={{ duration: 14, ease: "easeInOut", repeat: Infinity }}
+              />
+            )}
+            <BrandIcons.GraduationCap className="h-16 w-16 text-white sm:h-[4.5rem] sm:w-[4.5rem] md:h-20 md:w-20" />
+            <motion.span
+              className="bg-gradient-to-r from-white via-[#d1c4ff] to-[#a78bfa] bg-clip-text text-[4rem] font-black tracking-tight text-transparent sm:text-[4.75rem] md:text-[5.5rem]"
+              style={{
+                backgroundSize: "240% 240%",
+              }}
+              animate={
+                prefersReduced
+                  ? {}
+                  : {
+                      letterSpacing: ["-0.04em", "-0.065em", "-0.04em"],
+                      textShadow: [
+                        "0 0 18px rgba(124,58,237,0.45)",
+                        "0 0 28px rgba(99,102,241,0.55)",
+                        "0 0 18px rgba(124,58,237,0.45)",
+                      ],
+                      backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                    }
+              }
+              transition={{
+                duration: 10,
+                repeat: prefersReduced ? 0 : Infinity,
+                ease: "easeInOut",
+              }}
+            >
               JobPing
-            </span>
+            </motion.span>
           </motion.div>
+          {!prefersReduced && (
+            <motion.div
+              className="h-px w-44 rounded-full bg-gradient-to-r from-transparent via-white/70 to-transparent"
+              initial={{ opacity: 0, scaleX: 0 }}
+              animate={{ opacity: 1, scaleX: 1 }}
+              transition={{ duration: 0.6, delay: 0.35, ease: "easeOut" }}
+              aria-hidden
+            />
+          )}
         </motion.div>
 
         <motion.span

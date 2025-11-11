@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 // import { EmailVerificationOracle } from '@/Utils/emailVerification';
 import { errorResponse } from '@/Utils/errorResponse';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-?
-
 import { ENV } from '@/Utils/constants';
 import { markUserVerified, verifyVerificationToken } from '@/Utils/emailVerification';
 

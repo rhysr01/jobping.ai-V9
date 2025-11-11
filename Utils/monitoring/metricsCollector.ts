@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 
 export interface SystemMetrics {
   timestamp: string;
@@ -35,6 +36,12 @@ export interface SystemMetrics {
     email_errors_24h: number;
     queue_errors_24h: number;
   };
+  rate_limiter: {
+    redis_connected: boolean;
+    redis_keys: number;
+    memory_keys: number;
+    scraper: Record<string, any>;
+  };
 }
 
 export class MetricsCollector {
@@ -60,12 +67,14 @@ export class MetricsCollector {
       performanceMetrics,
       businessMetrics,
       queueMetrics,
-      errorMetrics
+      errorMetrics,
+      rateLimiterMetrics
     ] = await Promise.allSettled([
       this.collectPerformanceMetrics(),
       this.collectBusinessMetrics(),
       this.collectQueueMetrics(),
-      this.collectErrorMetrics()
+      this.collectErrorMetrics(),
+      this.collectRateLimiterMetrics()
     ]);
 
     const responseTime = Date.now() - startTime;
@@ -99,11 +108,47 @@ export class MetricsCollector {
         database_errors_24h: 0,
         email_errors_24h: 0,
         queue_errors_24h: 0
+      },
+      rate_limiter: rateLimiterMetrics.status === 'fulfilled' ? rateLimiterMetrics.value : {
+        redis_connected: false,
+        redis_keys: 0,
+        memory_keys: 0,
+        scraper: {}
       }
     };
 
     console.log(` Metrics collected in ${responseTime}ms`);
     return metrics;
+  }
+
+  private async collectRateLimiterMetrics(): Promise<{
+    redis_connected: boolean;
+    redis_keys: number;
+    memory_keys: number;
+    scraper: Record<string, any>;
+  }> {
+    try {
+      const limiter = getProductionRateLimiter();
+      const [stats, scraperStats] = await Promise.all([
+        limiter.getStats(),
+        Promise.resolve(limiter.getScraperStats())
+      ]);
+
+      return {
+        redis_connected: stats.redisConnected,
+        redis_keys: stats.totalKeys,
+        memory_keys: stats.memoryKeys,
+        scraper: scraperStats
+      };
+    } catch (error) {
+      console.error('Error collecting rate limiter metrics:', error);
+      return {
+        redis_connected: false,
+        redis_keys: 0,
+        memory_keys: 0,
+        scraper: {}
+      };
+    }
   }
 
   private async collectPerformanceMetrics(): Promise<any> {

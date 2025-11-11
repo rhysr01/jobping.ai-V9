@@ -22,6 +22,7 @@ import { semanticRetrievalService } from '@/Utils/matching/semanticRetrieval';
 import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilterJobs';
 import { integratedMatchingService } from '@/Utils/matching/integrated-matching.service';
 import { batchMatchingProcessor } from '@/Utils/matching/batch-processor.service';
+import { withRedisLock } from '@/Utils/locks';
 import { distributeJobsWithDiversity, getDistributionStats } from '@/Utils/matching/jobDistribution';
 import { fetchActiveUsers, transformUsers, UserFetchError } from '@/Utils/matching/userBatchService';
 import { fetchCandidateJobs, JobFetchError } from '@/Utils/matching/jobSearchService';
@@ -69,49 +70,6 @@ const JOB_LIMIT = IS_TEST ? 300 : 10000; // Keep test limit for safety
 // Lock key helper
 const LOCK_KEY = (rid: string) => `${IS_TEST ? 'jobping:test' : 'jobping:prod'}:lock:match-users:${rid}`;
 
-// Redis locking helper with guaranteed release
-async function withRedisLock<T>(
-  key: string, 
-  ttlSeconds: number, 
-  fn: () => Promise<T>
-): Promise<T | null> {
-  const limiter = getProductionRateLimiter();
-  await limiter.initializeRedis();
-  const redis = (limiter as any).redisClient;
-  
-  if (!redis) {
-    apiLogger.warn('Redis not available, proceeding without lock');
-    return await fn();
-  }
-
-  const token = crypto.randomUUID();
-  const lockKey = key;
-  
-  try {
-    // Try to acquire lock
-    const acquired = await redis.set(lockKey, token, { NX: true, EX: ttlSeconds });
-    if (!acquired) {
-      apiLogger.debug(`Lock ${lockKey} already held, skipping operation`, { lockKey });
-      return null;
-    }
-
-    apiLogger.debug(`Acquired lock ${lockKey} for ${ttlSeconds}s`, { lockKey, ttlSeconds });
-    return await fn();
-  } finally {
-    // Always try to release lock
-    try {
-      const currentToken = await redis.get(lockKey);
-      if (currentToken === token) {
-        await redis.del(lockKey);
-        apiLogger.debug(`Released lock ${lockKey}`, { lockKey });
-      }
-    } catch (error) {
-      apiLogger.warn(`Failed to release lock ${lockKey}`, { lockKey, error: error instanceof Error ? error.message : String(error) });
-      // TTL will release it naturally
-    }
-  }
-}
-
 // Enhanced monitoring and performance tracking
 interface PerformanceMetrics {
   jobFetchTime: number;
@@ -123,12 +81,6 @@ interface PerformanceMetrics {
   totalRequests: number;
 }
 
-// Rate limiting and job caps managed by production middleware and SEND_PLAN
-
-// Use SEND_PLAN config instead of separate JOB_DISTRIBUTION
-// This consolidates all job distribution logic in one place
-
-// Production-ready job interface with validation
 interface Job {
   id: string;
   title: string;
@@ -143,14 +95,6 @@ interface Job {
   original_posted_date: string | null;
   last_seen_at: string | null;
 }
-
-
-// User interface extensions (simplified)
-
-
-
-
-
 
 
 // Database schema validation

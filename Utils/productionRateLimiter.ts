@@ -397,7 +397,7 @@ class ProductionRateLimiter {
               'unknown-ip';
     
     const userAgent = req.headers.get('user-agent') || 'unknown-ua';
-    // Create a simple fingerprint
+    // Create a short, non-reversible fingerprint (base64) so we can correlate bursts without storing raw UA/IP
     const fingerprint = Buffer.from(`${ip}:${userAgent.slice(0, 50)}`).toString('base64').slice(0, 16);
     
     return `${ip}:${fingerprint}`;
