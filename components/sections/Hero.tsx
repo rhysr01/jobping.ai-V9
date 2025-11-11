@@ -46,13 +46,13 @@ export default function Hero() {
 
         if (data) {
           setActiveJobsTarget(parseStat(data.activeJobs ?? data.activeJobsFormatted, 12748));
-          setInternshipsTarget(parseStat(data.internships, 0));
-          setGraduatesTarget(parseStat(data.graduates, 0));
-          setTotalUsersTarget(parseStat(data.totalUsers ?? data.totalUsersFormatted, 0));
+          setInternshipsTarget(parseStat(data.internships, 4997));
+          setGraduatesTarget(parseStat(data.graduates, 3953));
+          setTotalUsersTarget(parseStat(data.totalUsers ?? data.totalUsersFormatted, 3400));
         }
       } catch (err) {
         console.error('Failed to fetch stats:', err);
-        // Keep the default value "12,748" if fetch fails
+        // Keep defaults when the stats API is unreachable
       } finally {
         setIsLoading(false);
       }

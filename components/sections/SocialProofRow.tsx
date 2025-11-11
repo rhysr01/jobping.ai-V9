@@ -48,16 +48,19 @@ export default function SocialProofRow() {
   const items = [
     {
       icon: <BrandIcons.Users className="h-5 w-5" />,
+      eyebrow: 'Students across Europe',
       title: `Join ${totalUsers}+ students`,
-      description: 'Early-career candidates across Europe rely on JobPing each week.',
+      description: 'Early-career candidates rely on JobPing each week.',
     },
     {
       icon: <BrandIcons.Mail className="h-5 w-5" />,
-      title: `${FREE_ROLES_PER_SEND} curated roles per drop`,
+      eyebrow: 'Every drop',
+      title: `${FREE_ROLES_PER_SEND} curated roles per send`,
       description: `${PREMIUM_ROLES_PER_WEEK} premium roles weekly (~${PREMIUM_ROLES_PER_MONTH} every month).`,
     },
     {
       icon: <BrandIcons.Target className="h-5 w-5" />,
+      eyebrow: 'Opportunities live now',
       title: `${activeJobs} active opportunities`,
       description: 'Filtered by city, visa status, and experience to fit real applicants.',
     },
@@ -83,7 +86,7 @@ export default function SocialProofRow() {
               </span>
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-200">
-                  {loading && index === 0 ? 'Loading…' : 'Trusted across Europe'}
+                  {loading && index === 0 ? 'Loading…' : item.eyebrow}
                 </p>
                 <h3 className="mt-2 text-lg font-semibold text-white sm:text-xl">{item.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-300">{item.description}</p>

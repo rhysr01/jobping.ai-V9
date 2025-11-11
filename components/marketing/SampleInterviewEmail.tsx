@@ -12,7 +12,7 @@ export default function SampleInterviewEmail() {
           <div className="text-zinc-400 text-[12px]">hello@getjobping.com</div>
         </div>
         <div className="mt-3 text-[17px] font-bold text-white leading-tight">
-          Your matches this week → 3 roles picked for you
+          Your matches this week → 5 roles picked for you
         </div>
         <div className="mt-2 text-[13px] text-zinc-400 font-medium">
           London, Berlin, Dublin → early-career roles based on your profile
@@ -23,7 +23,7 @@ export default function SampleInterviewEmail() {
       <div className="rounded-xl border border-border-subtle bg-glass-subtle p-5 shadow-base backdrop-blur-sm">
         <p className="text-[14px] text-zinc-200 leading-relaxed mb-6">
           Hi <span className="font-semibold text-white">Alex</span>,<br />
-          <span className="mt-2 block">We found three roles that closely match your degree, skills, and location preferences. Reply to this email if you want intros → or apply directly below.</span>
+          <span className="mt-2 block">We found five roles that closely match your degree, skills, and location preferences. Reply to this email if you want intros → or apply directly below.</span>
         </p>
 
         {/* Job 1 */}
@@ -68,6 +68,38 @@ export default function SampleInterviewEmail() {
           <a
             href="#"
             aria-label="View role: Operations Intern at Revolut in Dublin"
+            className="mt-3 inline-block rounded-lg bg-white/10 hover:bg-white/15 px-4 py-2.5 text-[13px] font-semibold text-white border border-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all"
+          >
+            View role
+          </a>
+        </div>
+
+        {/* Job 4 */}
+        <div className="mt-4 rounded-lg border border-border-subtle bg-glass-subtle p-4 shadow-base backdrop-blur-sm hover:border-border-default transition-all">
+          <div className="flex items-center justify-between mb-2">
+            <div className="font-bold text-[15px] text-white">Marketing Intern → Spotify</div>
+            <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-300 border border-amber-400/30">Stockholm</span>
+          </div>
+          <div className="mt-2 text-[13px] text-zinc-400 font-medium">Campaigns → Analytics → Paid internship (6 months)</div>
+          <a
+            href="#"
+            aria-label="View role: Marketing Intern at Spotify in Stockholm"
+            className="mt-3 inline-block rounded-lg bg-white/10 hover:bg-white/15 px-4 py-2.5 text-[13px] font-semibold text-white border border-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all"
+          >
+            View role
+          </a>
+        </div>
+
+        {/* Job 5 */}
+        <div className="mt-4 rounded-lg border border-border-subtle bg-glass-subtle p-4 shadow-base backdrop-blur-sm hover:border-border-default transition-all">
+          <div className="flex items-center justify-between mb-2">
+            <div className="font-bold text-[15px] text-white">Strategy Analyst → McKinsey</div>
+            <span className="rounded-full bg-purple-500/15 px-2.5 py-1 text-[11px] font-semibold text-purple-200 border border-purple-400/30">Paris</span>
+          </div>
+          <div className="mt-2 text-[13px] text-zinc-400 font-medium">Consulting → Early-career → Visa sponsorship</div>
+          <a
+            href="#"
+            aria-label="View role: Strategy Analyst at McKinsey in Paris"
             className="mt-3 inline-block rounded-lg bg-white/10 hover:bg-white/15 px-4 py-2.5 text-[13px] font-semibold text-white border border-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all"
           >
             View role
