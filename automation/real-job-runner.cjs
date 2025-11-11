@@ -68,6 +68,38 @@ class RealJobRunner {
     this.totalJobsSaved = 0;
     this.runCount = 0;
     this.currentCycleStats = { total: 0, perSource: {} };
+    this.embeddingRefreshRunning = false;
+    this.lastEmbeddingRefresh = null;
+  }
+
+  async runEmbeddingRefresh(trigger = 'cron') {
+    if (this.embeddingRefreshRunning) {
+      console.log(`⚠️  Embedding refresh already in progress, skipping (${trigger})`);
+      return;
+    }
+
+    const command = process.env.EMBEDDING_REFRESH_COMMAND || 'npx tsx scripts/generate_all_embeddings.ts';
+
+    console.log(`\n🧠 Starting embedding refresh (${trigger}) using \
+"${command}" at ${new Date().toISOString()}`);
+    this.embeddingRefreshRunning = true;
+
+    try {
+      const { stdout, stderr } = await execAsync(command, {
+        cwd: process.cwd(),
+        env: process.env
+      });
+
+      if (stdout) process.stdout.write(stdout);
+      if (stderr) process.stderr.write(stderr);
+
+      this.lastEmbeddingRefresh = new Date();
+      console.log(`✅ Embedding refresh complete at ${this.lastEmbeddingRefresh.toISOString()}`);
+    } catch (error) {
+      console.error('❌ Embedding refresh failed:', error);
+    } finally {
+      this.embeddingRefreshRunning = false;
+    }
   }
 
   async getSignupTargets() {
@@ -696,13 +728,21 @@ class RealJobRunner {
     
     // Run immediately on startup
     this.runScrapingCycle();
-    
+    this.runEmbeddingRefresh('startup');
+ 
     // Schedule runs 3 times per day (morning, lunch, evening) to avoid duplicate jobs
     cron.schedule('0 8,13,18 * * *', () => {
       console.log('\n⏰ Scheduled scraping cycle starting...');
       this.runScrapingCycle();
     });
-    
+ 
+    // Schedule embedding refresh every 72 hours (default time 02:00 UTC)
+    const embeddingCron = process.env.EMBEDDING_REFRESH_CRON || '0 2 */3 * *';
+    const embeddingTz = process.env.EMBEDDING_REFRESH_TZ || 'UTC';
+    cron.schedule(embeddingCron, () => this.runEmbeddingRefresh('cron'), {
+      timezone: embeddingTz
+    });
+
     // Schedule daily health check
     cron.schedule('0 9 * * *', async () => {
       console.log('\n🏥 Daily health check...');

@@ -6,6 +6,14 @@ import { SuccessAnimation } from '@/components/ui/SuccessAnimation';
 import { BrandIcons } from '@/components/ui/BrandIcons';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import {
+  FREE_ROLES_PER_SEND,
+  FREE_SEND_DAY_LABEL,
+  PREMIUM_ROLES_PER_WEEK,
+  PREMIUM_SENDS_PER_WEEK,
+  PREMIUM_SEND_DAYS_LABEL,
+  PREMIUM_ROLES_PER_MONTH,
+} from '@/lib/productMetrics';
 
 function SignupSuccessContent() {
   const [showSuccess, setShowSuccess] = useState(true);
@@ -134,7 +142,9 @@ function SignupSuccessContent() {
                 </div>
                 <div>
                   <div className="font-semibold text-white mb-1">Stay in sync</div>
-                   <div className="text-zinc-400 text-sm">Free: 5 jobs every Thursday · Premium: 15 jobs each week (Mon / Wed / Fri).</div>
+                  <div className="text-zinc-400 text-sm">
+                    {`Free: ${FREE_ROLES_PER_SEND} jobs every ${FREE_SEND_DAY_LABEL} · Premium: ${PREMIUM_ROLES_PER_WEEK} jobs each week (${PREMIUM_SENDS_PER_WEEK} drops: ${PREMIUM_SEND_DAYS_LABEL}).`}
+                  </div>
                 </div>
               </div>
             </div>
@@ -152,7 +162,7 @@ function SignupSuccessContent() {
                   Need more roles each week?
                 </h3>
                 <p className="text-zinc-300 text-lg mb-6">
-                  Premium sends <span className="text-brand-300 font-semibold">15 jobs per week</span> with early access and hot match alerts.
+                  Premium sends <span className="text-brand-300 font-semibold">{`${PREMIUM_ROLES_PER_WEEK} jobs per week (~${PREMIUM_ROLES_PER_MONTH} per month)`}</span> with early access and hot match alerts.
                 </p>
                 <Link 
                   href="/billing" 

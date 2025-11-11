@@ -1,9 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getResendClient, EMAIL_CONFIG, assertValidFrom } from '@/Utils/email/clients';
 import { apiLogger } from '@/lib/api-logger';
+import { requireSystemKey } from '@/Utils/auth/withAuth';
 
 export const GET = async (req: NextRequest) => {
   const startTime = Date.now();
+
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  try {
+    requireSystemKey(req);
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Unauthorized', message: error instanceof Error ? error.message : 'Access denied' },
+      { status: 401 }
+    );
+  }
   try {
     apiLogger.info('=== RESEND TEST START ===');
     

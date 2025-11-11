@@ -116,7 +116,12 @@ async function generateAllEmbeddings() {
 
   // Dynamic imports after env vars are verified
   const { getDatabaseClient } = await import('@/Utils/databasePool');
-  const { embeddingService } = await import('@/Utils/matching/embedding.service');
+  const module = await import('@/Utils/matching/embedding.service');
+  const embeddingService = (module as any).embeddingService;
+  console.log('Debug embeddingService import keys:', Object.keys(module));
+  if (!embeddingService) {
+    console.error('embeddingService import failed');
+  }
 
   const supabase = getDatabaseClient();
   const BATCH_SIZE = 1000;
@@ -133,7 +138,6 @@ async function generateAllEmbeddings() {
     const { data: jobs, error: fetchError } = await supabase
       .from('jobs')
       .select('*')
-      .eq('is_active', true)
       .is('embedding', null)
       .limit(BATCH_SIZE)
       .range(offset, offset + BATCH_SIZE - 1);

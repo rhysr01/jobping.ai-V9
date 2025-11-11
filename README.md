@@ -43,8 +43,7 @@ Weekly AI-matched job recommendations for internships, graduate schemes, and jun
 npm install
 
 # Environment
-cp .env.example .env
-# Fill in required keys
+# Configure required keys as documented in PRODUCTION_GUIDE.md
 
 # Start
 npm run dev
@@ -85,7 +84,7 @@ app/           # Next.js app
 components/    # Shared UI
 Utils/         # Email + matching + supabase
 scripts/       # Automation & SQL
-docs/          # API/architecture/deployment
+migrations/    # Supabase SQL migrations
 ```
 
 ## Email Templates (Production-Ready)
@@ -109,17 +108,11 @@ docs/          # API/architecture/deployment
 
 ## Documentation
 
-- **[Project Status](docs/project-status.md)** - Current system status, metrics, and architecture
-- **[Email System](docs/email-system.md)** - Email configuration, testing, and troubleshooting
-- **[API Documentation](docs/API.md)** - API endpoints and usage
-- **[Deployment Guide](docs/deployment/production-guide.md)** - Production setup and deployment
-- **[Vector Embeddings](docs/vector-embeddings-batch-processing.md)** - Batch processing guide
-- **[Architecture](docs/architecture/system-design.md)** - System design and architecture
-- **[Contributing](CONTRIBUTING.md)** - Contribution guidelines
+- **[PRODUCTION_GUIDE.md](PRODUCTION_GUIDE.md)** – Environment configuration, deployment, monitoring.
+- **[RUNBOOK.md](RUNBOOK.md)** – Operational procedures and incident response.
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** – Contribution guidelines.
 
-### Archived Documentation
-
-Historical documentation, cleanup reports, and completion summaries are archived in `docs/archive/` for reference.
+Everything else has been folded into the two canonical guides above.
 
 ## Troubleshooting
 
@@ -137,6 +130,10 @@ npm run start
 npm test
 npm run type-check
 ```
+
+## Operational Checks
+
+- `npm run pilot:smoke` — runs the production readiness smoke test and writes `PILOT_SMOKE.md`. Requires Supabase service credentials (`NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`) and optional `PILOT_BASE_URL` for staging/prod targets.
 
 ## Deployment
 

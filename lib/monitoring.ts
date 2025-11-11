@@ -353,7 +353,8 @@ export function logUserAction(
 // Performance monitoring utilities
 export class PerformanceMonitor {
   private static instance: PerformanceMonitor;
-  private metrics: Map<string, number[]> = new Map();
+  private readonly metrics: Map<string, number[]> = new Map();
+  private readonly maxSamples = 2000;
 
   static getInstance(): PerformanceMonitor {
     if (!PerformanceMonitor.instance) {
@@ -363,20 +364,28 @@ export class PerformanceMonitor {
   }
 
   recordMetric(name: string, value: number): void {
-    if (!this.metrics.has(name)) {
-      this.metrics.set(name, []);
-    }
-    this.metrics.get(name)!.push(value);
+    const bucket = this.metrics.get(name) ?? [];
+    bucket.push(value);
 
-    // Log significant metrics
+    if (bucket.length > this.maxSamples) {
+      bucket.splice(0, bucket.length - this.maxSamples);
+    }
+
+    this.metrics.set(name, bucket);
+
     if (name.includes('error') || name.includes('failure')) {
       logger.warn(`Performance metric: ${name} = ${value}`);
     }
   }
 
-  getMetricStats(name: string): { count: number; avg: number; min: number; max: number } | null {
+  getMetricValues(name: string): number[] {
     const values = this.metrics.get(name);
-    if (!values || values.length === 0) return null;
+    return values ? [...values] : [];
+  }
+
+  getMetricStats(name: string): { count: number; avg: number; min: number; max: number } | null {
+    const values = this.getMetricValues(name);
+    if (values.length === 0) return null;
 
     return {
       count: values.length,
@@ -386,9 +395,75 @@ export class PerformanceMonitor {
     };
   }
 
+  getPercentiles(name: string, percentiles: number[]): Record<string, number> | null {
+    const values = this.getMetricValues(name).sort((a, b) => a - b);
+    if (values.length === 0) return null;
+
+    const result: Record<string, number> = {};
+    percentiles.forEach((p) => {
+      const rank = (p / 100) * (values.length - 1);
+      const lower = Math.floor(rank);
+      const upper = Math.ceil(rank);
+      if (lower === upper) {
+        result[`p${p}`] = values[lower];
+      } else {
+        const weight = rank - lower;
+        result[`p${p}`] = values[lower] * (1 - weight) + values[upper] * weight;
+      }
+    });
+    return result;
+  }
+
+  getHistogram(name: string, buckets: number[]): Array<{ bucket: string; count: number }> {
+    const values = this.getMetricValues(name);
+    if (values.length === 0) return [];
+
+    const sortedBuckets = [...buckets].sort((a, b) => a - b);
+    const counts = new Array(sortedBuckets.length + 1).fill(0);
+
+    values.forEach((value) => {
+      let placed = false;
+      for (let i = 0; i < sortedBuckets.length; i++) {
+        if (value <= sortedBuckets[i]) {
+          counts[i] += 1;
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        counts[counts.length - 1] += 1;
+      }
+    });
+
+    const histogram: Array<{ bucket: string; count: number }> = [];
+    for (let i = 0; i < sortedBuckets.length; i++) {
+      const label = i === 0 ? `<=${sortedBuckets[i]}` : `${sortedBuckets[i - 1] + 1}-${sortedBuckets[i]}`;
+      histogram.push({ bucket: label, count: counts[i] });
+    }
+    histogram.push({
+      bucket: `>${sortedBuckets[sortedBuckets.length - 1]}`,
+      count: counts[counts.length - 1],
+    });
+
+    return histogram;
+  }
+
+  getMetricsByPrefix(prefix: string): Record<string, { count: number; avg: number; min: number; max: number }> {
+    const result: Record<string, { count: number; avg: number; min: number; max: number }> = {};
+    for (const name of this.metrics.keys()) {
+      if (name.startsWith(prefix)) {
+        const stats = this.getMetricStats(name);
+        if (stats) {
+          result[name] = stats;
+        }
+      }
+    }
+    return result;
+  }
+
   getAllMetrics(): Record<string, any> {
     const result: Record<string, any> = {};
-    for (const [name, values] of this.metrics.entries()) {
+    for (const name of this.metrics.keys()) {
       result[name] = this.getMetricStats(name);
     }
     return result;
@@ -444,6 +519,11 @@ export class BusinessMetrics {
       duration,
       metadata: { endpoint, method, statusCode, success: statusCode < 400 },
     });
+
+    const monitor = PerformanceMonitor.getInstance();
+    monitor.recordMetric('api.latency', duration);
+    const endpointKey = endpoint.replace(/\s+/g, '').replace(/[:]/g, '_');
+    monitor.recordMetric(`api.latency:${endpointKey}`, duration);
   }
 }
 

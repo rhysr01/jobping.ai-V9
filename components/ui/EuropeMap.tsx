@@ -24,6 +24,30 @@ const OFFSET: Record<string, { dx: number; dy: number }> = {
   Hamburg: { dx: -3, dy: -2 },
 };
 
+const EU_OUTLINE_PATHS = [
+  // Iberian Peninsula
+  "M150 566L120 512L140 456L190 424L236 432L272 484L244 530Z",
+  // France & Low Countries
+  "M236 432L272 404L320 382L360 348L396 336L430 342L420 380L376 412L332 432L300 460Z",
+  // British Isles
+  "M214 420L202 386L220 350L250 352L270 386L256 416Z",
+  "M194 406L182 372L198 348L214 356L220 380Z",
+  // Western & Central Mainland
+  "M300 460L332 432L376 412L420 380L464 358L510 352L546 360L584 386L612 424L650 438L690 454L722 488L736 522L722 560L688 586L640 600L600 612L566 612L524 602L488 618L448 640L396 648L348 638L312 606Z",
+  // Scandinavia
+  "M500 276L532 228L580 198L630 198L672 220L700 268L688 314L656 338L618 336L586 316L556 300Z",
+  // Italy & Sicily
+  "M420 520L444 490L468 522L476 560L462 598L438 588L446 548Z",
+  "M438 632L460 640L452 660L430 650Z",
+  // Balkans & Greece
+  "M468 532L512 516L556 528L574 558L556 594L516 586L484 570Z",
+  "M524 604L548 612L540 634L514 624Z",
+  // Eastern Europe
+  "M612 424L648 404L690 408L726 436L752 474L760 514L744 550L706 568L664 560L630 534Z",
+  // Scandinavia north (Norway/Sweden top)
+  "M520 224L540 178L584 152L630 150L676 168L700 206L696 238L664 252L620 248L582 236Z",
+];
+
 type CityCoordinate = {
   lat: number;
   lon: number;
@@ -171,8 +195,8 @@ export default function EuropeMap({
     >
       {/* Brand-colored background gradients matching app design */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#060013] via-[#0a001e] to-[#120033]">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(154,106,255,0.05)_0%,transparent_60%)] blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.04)_0%,transparent_60%)] blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(154,106,255,0.035)_0%,transparent_60%)] blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.028)_0%,transparent_60%)] blur-3xl" />
       </div>
 
       {/* Subtle grid overlay */}
@@ -238,19 +262,16 @@ export default function EuropeMap({
         <g
           aria-hidden="true"
           fill="rgba(255,255,255,0.05)"
-          stroke="rgba(255,255,255,0.22)"
-          strokeWidth="1.2"
+          stroke="rgba(255,255,255,0.25)"
+          strokeWidth="1.3"
           strokeLinejoin="round"
           strokeLinecap="round"
-          opacity="0.38"
-          style={{ filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.1))' }}
+          opacity="0.42"
+          style={{ filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.12))' }}
         >
-          <path d="M90 520L80 474 104 420 140 388 180 352 196 312 230 276 280 236 328 210 372 180 420 168 468 148 522 134 568 108 620 94 674 90 722 104 760 130 802 152 824 192 864 218 904 244 924 284 948 324 946 372 924 410 910 448 888 478 860 506 810 534 766 560 732 584 706 612 668 636 630 648 588 640 548 626 504 622 460 636 416 658 370 668 320 674 274 660 244 626 206 594 166 572 126 548 96 530Z" />
-          <path d="M628 758L646 780 674 788 704 780 716 758 712 732 684 722 656 736 632 748Z" />
-          <path d="M354 358L370 328 404 308 436 312 452 338 440 364 410 384 376 382Z" />
-          <path d="M300 384L312 356 334 344 354 352 364 378 348 402 322 408 304 394Z" />
-          <path d="M704 650L718 624 748 612 776 624 790 650 786 680 758 694 726 690Z" />
-          <path d="M604 600L616 562 614 522 596 488 594 454 610 428 642 418 670 430 694 454 706 486 714 518 708 554 692 594 676 632 660 664 640 694 620 724 600 734 584 722 586 684 594 648 604 600Z" />
+          {EU_OUTLINE_PATHS.map((d, index) => (
+            <path key={index} d={d} />
+          ))}
         </g>
 
         {/* City markers */}
@@ -375,8 +396,16 @@ export default function EuropeMap({
                     transition={{ duration: 0.2 }}
                     style={selected ? {
                       filter: 'drop-shadow(0 0 4px rgba(154,106,255,0.5))',
-                      textShadow: '0 0 8px rgba(154,106,255,0.4)'
-                    } : {}}
+                      textShadow: '0 0 8px rgba(154,106,255,0.4)',
+                      paintOrder: 'stroke fill',
+                      stroke: 'rgba(12,0,40,0.55)',
+                      strokeWidth: 0.45
+                    } : {
+                      paintOrder: 'stroke fill',
+                      stroke: 'rgba(8,0,32,0.45)',
+                      strokeWidth: 0.35,
+                      textShadow: '0 0 4px rgba(12,0,32,0.4)'
+                    }}
                     aria-hidden="true"
                   >
                     {city}

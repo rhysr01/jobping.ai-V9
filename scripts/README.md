@@ -27,7 +27,7 @@ npm run dev
 ### Run All Tests
 ```bash
 # Run pilot smoke test
-JOBPING_TEST_MODE=1 NODE_ENV=test npx tsx scripts/pilot-smoke.ts
+npm run pilot:smoke
 
 # Run lock and rate limit tests
 JOBPING_TEST_MODE=1 NODE_ENV=test npx tsx scripts/lock-and-rl-check.ts
@@ -42,22 +42,22 @@ JOBPING_TEST_MODE=1 NODE_ENV=test node scripts/pilot-testing.js
 Validates complete end-to-end functionality for pilot readiness.
 
 ### What It Tests
-1. **System Health** - `/api/health` endpoint
-2. **Job Scraping** - All 5 scrapers with funnel validation
-3. **User Registration** - Webhook processing and user creation
-4. **AI Matching** - Job matching with minimum match requirements
-5. **Email Delivery** - Scheduled email sending
+1. **System Health** - `/api/health` endpoint + dependency summaries
+2. **Scraper Freshness** - Jobs table volume + new jobs in last 24h
+3. **Matching Throughput** - Matches created in the last 7 days
+4. **Email Delivery** - Email ledger entries in the last 7 days
+5. **Queue Health** - Job queue outcomes over the last 24h
 
 ### Usage
 ```bash
-# Basic usage (localhost)
-JOBPING_TEST_MODE=1 NODE_ENV=test npx tsx scripts/pilot-smoke.ts
+# Basic usage (defaults to http://localhost:3000)
+npm run pilot:smoke
 
 # Custom base URL
-npx tsx scripts/pilot-smoke.ts --base https://staging.jobping.ai
+npm run pilot:smoke -- --base https://staging.jobping.ai
 
 # Production testing
-npx tsx scripts/pilot-smoke.ts --base https://jobping.ai
+npm run pilot:smoke -- --base https://jobping.ai
 ```
 
 ### Output
@@ -66,16 +66,17 @@ npx tsx scripts/pilot-smoke.ts --base https://jobping.ai
 - **Exit Code**: 0 for success, 1 for failures
 
 ### Validation Criteria
-- **System Health**: Must return 200
-- **Job Scraping**: Each scraper must meet funnel metrics
-  - `raw > 0`
-  - `eligible > 0`
-  - `inserted + updated  1`
-  - `error < 10%`
-  - `unknownLocation within caps`
-  - `career slug coverage  95%`
-- **AI Matching**: Average 3 matches per user
-- **Email Delivery**: Success and 1 email sent
+- **System Health**: All dependencies `healthy`
+- **Job Scraping**: Recent jobs count > 0 (last 24h)
+- **Matching**: Matches > 0 (last 7 days)
+- **Email Delivery**: Ledger entries > 0 (last 7 days)
+- **Queue Health**: Failed jobs ≤ 10 (last 24h)
+- **Report**: `PILOT_SMOKE.md` saved with detailed metrics
+
+### Environment Requirements
+- `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` — service role key for metrics queries
+- Optional: `PILOT_BASE_URL` or `--base` flag to target staging/production APIs
 
 ##  Lock & Rate Limit Harness (`lock-and-rl-check.ts`)
 

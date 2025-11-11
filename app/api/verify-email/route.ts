@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 // import { EmailVerificationOracle } from '@/Utils/emailVerification';
 import { errorResponse } from '@/Utils/errorResponse';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-import { getDatabaseClient } from '@/Utils/databasePool';
 import { ENV } from '@/Utils/constants';
+import { markUserVerified, verifyVerificationToken } from '@/Utils/emailVerification';
 
 // Test mode helper - using professional pattern
 const isTestMode = () => ENV.isTest();
@@ -22,33 +22,58 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { token } = await request.json();
-    
-    if (!token) {
-      return errorResponse.badRequest(request, 'Verification token required');
+    const { token, email } = await request.json();
+
+    if (!token || !email) {
+      return errorResponse.badRequest(request, 'Email and verification token required');
     }
 
-    const supabase = getDatabaseClient();
-    // const result = await EmailVerificationOracle.verifyEmail(token, supabase);
-    
-    // Temporary placeholder - email verification coming soon
-    const result = { success: false, message: 'Email verification temporarily disabled' };
-    
-    return NextResponse.json(result, { 
-      status: result.success ? 200 : 400 
-    });
-    
+    const verification = await verifyVerificationToken(email, token);
+    if (!verification.valid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid or expired token',
+          reason: verification.reason,
+        },
+        { status: 400 }
+      );
+    }
+
+    await markUserVerified(email);
+
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error(' Verify email API error:', error);
     return errorResponse.internal(request, 'Verification failed');
   }
 }
 
-export async function GET() {
-  return NextResponse.json({ 
-    message: 'Email verification endpoint active',
-    method: 'POST',
-    required: { token: 'string' },
-    testMode: isTestMode()
-  });
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const token = searchParams.get('token');
+  const email = searchParams.get('email');
+
+  if (!token || !email) {
+    return NextResponse.json(
+      { success: false, error: 'Missing email or token' },
+      { status: 400 }
+    );
+  }
+
+  const verification = await verifyVerificationToken(email, token);
+  if (!verification.valid) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Invalid or expired token',
+        reason: verification.reason,
+      },
+      { status: 400 }
+    );
+  }
+
+  await markUserVerified(email);
+
+  return NextResponse.json({ success: true }, { status: 200 });
 }

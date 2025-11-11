@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { getSupabaseClient } from '@/Utils/supabase';
 import { asyncHandler } from '@/lib/errors';
+import { performanceMonitor } from '@/lib/monitoring';
 
 // Helper function to get database metrics
 async function getDatabaseMetrics(): Promise<Record<string, any>> {
@@ -54,22 +55,41 @@ function getScraperMetrics() {
 
 // Helper function to get performance metrics
 function getDetailedPerformanceMetrics() {
-  // const report = PerformanceMonitor.getPerformanceReport();
-  
-  const operations: any[] = [];
-  
-  const totalOperations = 0;
-  const averageLatency = 0;
-  
+  const summaryStats = performanceMonitor.getMetricStats('api.latency');
+  const percentiles = performanceMonitor.getPercentiles('api.latency', [50, 95, 99]);
+  const histogram = performanceMonitor.getHistogram('api.latency', [50, 100, 250, 500, 1000, 2500, 5000]);
+  const perOperation = performanceMonitor.getMetricsByPrefix('api.latency:');
+
+  const operations = Object.entries(perOperation).map(([key, stats]) => ({
+    operation: key.replace('api.latency:', ''),
+    count: stats.count,
+    average: stats.avg,
+    min: stats.min,
+    max: stats.max
+  }));
+
+  const operationsByVolume = [...operations].sort((a, b) => b.count - a.count).slice(0, 10);
+  const slowestOperations = [...operations]
+    .sort((a, b) => b.average - a.average)
+    .slice(0, 5);
+
   return {
-    summary: {
-      totalOperations,
-      uniqueOperations: operations.length,
-      averageLatency: Math.round(averageLatency),
-      slowestOperation: operations.sort((a, b) => b.average - a.average)[0]?.name || 'none'
-    },
-    operations: operations.sort((a, b) => b.count - a.count).slice(0, 10), // Top 10 by volume
-    slowestOperations: operations.sort((a, b) => b.average - a.average).slice(0, 5) // Top 5 by latency
+    summary: summaryStats
+      ? {
+          samples: summaryStats.count,
+          averageLatency: Math.round(summaryStats.avg),
+          minLatency: summaryStats.min,
+          maxLatency: summaryStats.max,
+          p50Latency: percentiles ? Math.round(percentiles.p50 ?? summaryStats.avg) : null,
+          p95Latency: percentiles ? Math.round(percentiles.p95 ?? summaryStats.avg) : null,
+          p99Latency: percentiles ? Math.round(percentiles.p99 ?? summaryStats.max) : null,
+        }
+      : {
+          message: 'No API latency samples recorded yet.',
+        },
+    histogram,
+    operations: operationsByVolume,
+    slowestOperations,
   };
 }
 
