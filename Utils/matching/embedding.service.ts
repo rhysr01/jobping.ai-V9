@@ -13,6 +13,7 @@ export class EmbeddingService {
   private supabase = getDatabaseClient();
   private readonly MODEL = 'text-embedding-3-small'; // 1536 dimensions, cheapest
   private readonly BATCH_SIZE = 100; // OpenAI allows up to 2048 per batch
+  private readonly EMBEDDING_DIMENSION = 1536;
 
   constructor() {
     // Don't initialize OpenAI client at construction time
@@ -183,7 +184,8 @@ export class EmbeddingService {
 
         // Map embeddings back to job hashes
         response.data.forEach((embedding, index) => {
-          embeddings.set(texts[index].id, embedding.embedding);
+          const key = texts[index].id ?? String((batch[index] as any).id);
+          embeddings.set(key, embedding.embedding);
         });
 
         // Log batch metrics
@@ -244,20 +246,47 @@ export class EmbeddingService {
       // Update each job individually but in parallel
       const updatePromises = batch.map(async ([jobHash, embedding]) => {
         try {
-          const { error } = await this.supabase
+          if (!Array.isArray(embedding)) {
+            console.error(`Embedding for job ${jobHash} is not an array`, typeof embedding);
+            return false;
+          }
+          if (embedding.length !== this.EMBEDDING_DIMENSION) {
+            console.error(`Embedding length mismatch for job ${jobHash}: expected ${this.EMBEDDING_DIMENSION}, got ${embedding.length}`);
+            return false;
+          }
+
+          const { data: existing, error: fetchError } = await this.supabase
+            .from('jobs')
+            .select('id, embedding')
+            .eq('job_hash', jobHash)
+            .maybeSingle();
+
+          if (fetchError) {
+            console.error(`Pre-update fetch error for job ${jobHash}:`, fetchError.message);
+            return false;
+          }
+
+          if (!existing) {
+            console.error(`No job found for hash ${jobHash} before update`);
+            return false;
+          }
+
+          const { error, data } = await this.supabase
             .from('jobs')
             .update({ 
-              embedding: embedding // Pass as native array - Supabase/pgvector handles conversion
+              embedding
             })
-            .eq('job_hash', jobHash);
+            .eq('job_hash', jobHash)
+            .select('id')
+            .single();
 
-          if (error) {
-            console.error(`Failed to store embedding for job_hash ${jobHash.substring(0, 8)}...:`, error.message);
+          if (error || !data) {
+            console.error(`Failed to store embedding for job ${jobHash}:`, error?.message ?? 'no rows updated');
             return false;
           }
           return true;
         } catch (error) {
-          console.error(`Error storing embedding for job_hash ${jobHash.substring(0, 8)}...:`, error);
+          console.error(`Error storing embedding for job ${jobHash}:`, error);
           return false;
         }
       });
@@ -284,8 +313,9 @@ export class EmbeddingService {
     preferenceHash?: string
   ): Promise<void> {
     try {
+      const vectorLiteral = `[${embedding.join(',')}]`;
       const updateData: any = { 
-        preference_embedding: embedding // Pass as native array
+        preference_embedding: vectorLiteral
       };
       
       if (preferenceHash) {
@@ -322,6 +352,7 @@ export class EmbeddingService {
    * Build text representation of job for embedding
    */
   private buildJobText(job: Job): string {
+    const metadata = job as unknown as Record<string, unknown>;
     const parts: string[] = [];
 
     if (job.title) parts.push(`Title: ${job.title}`);
@@ -329,28 +360,35 @@ export class EmbeddingService {
     if (job.location) parts.push(`Location: ${job.location}`);
     if (job.city) parts.push(`City: ${job.city}`);
     if (job.country) parts.push(`Country: ${job.country}`);
-    
+
     // Add categories as keywords
     if (job.categories && job.categories.length > 0) {
       parts.push(`Categories: ${job.categories.join(', ')}`);
     }
 
-    // Add key parts of description (first 500 chars)
-    if (job.description) {
-      const desc = job.description.substring(0, 500);
-      parts.push(`Description: ${desc}`);
+    const salaryRange = metadata.salary_range as string | undefined;
+    if (salaryRange) {
+      parts.push(`Salary: ${salaryRange}`);
     }
 
-    // Add early career indicators
-    if (job.is_graduate) parts.push('Graduate program');
-    if (job.is_internship) parts.push('Internship');
-    if (job.experience_required) {
-      parts.push(`Experience: ${job.experience_required}`);
+    const experienceLevel = metadata.experience_level as string | undefined;
+    if (experienceLevel) {
+      parts.push(`Experience: ${experienceLevel}`);
     }
 
-    // Add language requirements
-    if (job.language_requirements && job.language_requirements.length > 0) {
-      parts.push(`Languages: ${job.language_requirements.join(', ')}`);
+    const remoteWork = metadata.remote_work_allowed as boolean | undefined;
+    if (typeof remoteWork === 'boolean') {
+      parts.push(`Remote work: ${remoteWork ? 'Yes' : 'No'}`);
+    }
+
+    const educationRequirements = metadata.education_requirements as string | undefined;
+    if (educationRequirements) {
+      parts.push(`Education: ${educationRequirements}`);
+    }
+
+    const languageRequirements = metadata.language_requirements as string[] | undefined;
+    if (Array.isArray(languageRequirements) && languageRequirements.length > 0) {
+      parts.push(`Languages: ${languageRequirements.join(', ')}`);
     }
 
     // Add work environment
@@ -364,83 +402,151 @@ export class EmbeddingService {
   /**
    * Build text representation of user preferences for embedding
    */
-  private buildUserPreferencesText(prefs: UserPreferences): string {
+  private buildUserPreferencesText(preferences: UserPreferences): string {
+    const pref = preferences as unknown as Record<string, unknown>;
     const parts: string[] = [];
 
-    if (prefs.career_path && prefs.career_path.length > 0) {
-      parts.push(`Career path: ${prefs.career_path.join(', ')}`);
+    const jobTitle = pref.job_title as string | undefined;
+    if (jobTitle) parts.push(`Job Title: ${jobTitle}`);
+
+    const company = pref.company as string | undefined;
+    if (company) parts.push(`Company: ${company}`);
+
+    const location = pref.location as string | undefined;
+    if (location) parts.push(`Location: ${location}`);
+
+    const city = pref.city as string | undefined;
+    if (city) parts.push(`City: ${city}`);
+
+    const country = pref.country as string | undefined;
+    if (country) parts.push(`Country: ${country}`);
+
+    const salaryRange = pref.salary_range as string | undefined;
+    if (salaryRange) {
+      parts.push(`Salary: ${salaryRange}`);
     }
 
-    if (prefs.roles_selected && prefs.roles_selected.length > 0) {
-      parts.push(`Roles: ${prefs.roles_selected.join(', ')}`);
+    const experienceLevel = pref.experience_level as string | undefined;
+    if (experienceLevel) {
+      parts.push(`Experience: ${experienceLevel}`);
     }
 
-    if (prefs.target_cities && prefs.target_cities.length > 0) {
-      parts.push(`Target cities: ${prefs.target_cities.join(', ')}`);
+    const remoteWork = pref.remote_work_allowed as boolean | undefined;
+    if (typeof remoteWork === 'boolean') {
+      parts.push(`Remote work: ${remoteWork ? 'Yes' : 'No'}`);
     }
 
-    if (prefs.work_environment) {
-      parts.push(`Work environment: ${prefs.work_environment}`);
+    const educationLevel = pref.education_level as string | undefined;
+    if (educationLevel) {
+      parts.push(`Education: ${educationLevel}`);
     }
 
-    if (prefs.entry_level_preference) {
-      parts.push(`Experience level: ${prefs.entry_level_preference}`);
+    const skills = pref.skills as string[] | undefined;
+    if (Array.isArray(skills) && skills.length > 0) {
+      parts.push(`Skills: ${skills.join(', ')}`);
     }
 
-    if (prefs.company_types && prefs.company_types.length > 0) {
-      parts.push(`Company types: ${prefs.company_types.join(', ')}`);
+    const preferredLocation = pref.preferred_location as string | undefined;
+    if (preferredLocation) {
+      parts.push(`Preferred Location: ${preferredLocation}`);
     }
 
-    if (prefs.languages_spoken && prefs.languages_spoken.length > 0) {
-      parts.push(`Languages: ${prefs.languages_spoken.join(', ')}`);
+    const preferredSalary = pref.preferred_salary as string | undefined;
+    if (preferredSalary) {
+      parts.push(`Preferred Salary: ${preferredSalary}`);
     }
 
-    // Skills (optional field)
-    if ((prefs as any).skills && Array.isArray((prefs as any).skills) && (prefs as any).skills.length > 0) {
-      parts.push(`Skills: ${(prefs as any).skills.join(', ')}`);
+    const preferredExperience = pref.preferred_experience as string | undefined;
+    if (preferredExperience) {
+      parts.push(`Preferred Experience: ${preferredExperience}`);
+    }
+
+    const preferredRemoteWork = pref.preferred_remote_work as boolean | undefined;
+    if (typeof preferredRemoteWork === 'boolean') {
+      parts.push(`Preferred Remote Work: ${preferredRemoteWork ? 'Yes' : 'No'}`);
+    }
+
+    const preferredEducation = pref.preferred_education as string | undefined;
+    if (preferredEducation) {
+      parts.push(`Preferred Education: ${preferredEducation}`);
+    }
+
+    const preferredSkills = pref.preferred_skills as string[] | undefined;
+    if (Array.isArray(preferredSkills) && preferredSkills.length > 0) {
+      parts.push(`Preferred Skills: ${preferredSkills.join(', ')}`);
     }
 
     return parts.join('. ');
   }
 
-  /**
-   * Check if embeddings are available for jobs
-   */
   async checkEmbeddingCoverage(): Promise<{
     total: number;
     withEmbeddings: number;
     coverage: number;
   }> {
-    const { count: total } = await this.supabase
-      .from('jobs')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_active', true);
+    try {
+      const totalQuery = await this.supabase
+        .from('jobs')
+        .select('id', { count: 'exact', head: true });
 
-    const { count: withEmbeddings } = await this.supabase
-      .from('jobs')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_active', true)
-      .not('embedding', 'is', null);
+      if (totalQuery.error) {
+        throw totalQuery.error;
+      }
 
-    const coverage = total && total > 0 
-      ? (withEmbeddings || 0) / total 
-      : 0;
+      const withEmbeddingQuery = await this.supabase
+        .from('jobs')
+        .select('id', { count: 'exact', head: true })
+        .not('embedding', 'is', null);
 
-    return {
-      total: total || 0,
-      withEmbeddings: withEmbeddings || 0,
-      coverage
-    };
+      if (withEmbeddingQuery.error) {
+        throw withEmbeddingQuery.error;
+      }
+
+      const total = totalQuery.count ?? 0;
+      const withEmbeddings = withEmbeddingQuery.count ?? 0;
+      const coverage = total === 0 ? 0 : withEmbeddings / total;
+
+      return { total, withEmbeddings, coverage };
+    } catch (error) {
+      console.error('Failed to calculate embedding coverage:', error);
+      return { total: 0, withEmbeddings: 0, coverage: 0 };
+    }
+  }
+
+  /**
+   * Check if semantic search is available
+   * Returns true if pgvector extension and job embeddings are set up
+   */
+  async isSemanticSearchAvailable(): Promise<boolean> {
+    try {
+      const { data: extension } = await this.supabase
+        .from('pg_extension')
+        .select('extname')
+        .eq('extname', 'pgvector')
+        .single();
+
+      if (!extension) {
+        console.warn('pgvector extension not found. Semantic search will not be available.');
+        return false;
+      }
+
+      const { data: jobsWithEmbeddings } = await this.supabase
+        .from('jobs')
+        .select('embedding')
+        .not('embedding', 'is', null)
+        .limit(1);
+
+      if (!jobsWithEmbeddings || jobsWithEmbeddings.length === 0) {
+        console.warn('No job embeddings found. Semantic search will not be available.');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Failed to check semantic search availability:', error);
+      return false;
+    }
   }
 }
 
-// Export singleton instance (lazy initialization prevents build-time errors)
-let embeddingServiceInstance: EmbeddingService | null = null;
-
-export const embeddingService = (() => {
-  if (!embeddingServiceInstance) {
-    embeddingServiceInstance = new EmbeddingService();
-  }
-  return embeddingServiceInstance;
-})();
-
+export const embeddingService = new EmbeddingService();

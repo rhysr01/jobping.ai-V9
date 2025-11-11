@@ -1,22 +1,12 @@
-import { GET, POST } from '@/app/api/verify-email/route';
 import { NextRequest } from 'next/server';
-import { errorResponse } from '@/Utils/errorResponse';
+
+import { GET, POST } from '@/app/api/verify-email/route';
 
 jest.mock('@/Utils/errorResponse', () => ({
   errorResponse: {
-    badRequest: jest.fn((req, msg) => 
-      new Response(JSON.stringify({ error: msg }), { status: 400 })
-    ),
-    internal: jest.fn((req, msg) => 
-      new Response(JSON.stringify({ error: msg }), { status: 500 })
-    ),
+    badRequest: jest.fn((_req, msg) => new Response(JSON.stringify({ error: msg }), { status: 400 })),
+    internal: jest.fn((_req, msg) => new Response(JSON.stringify({ error: msg }), { status: 500 })),
   },
-}));
-
-jest.mock('@/Utils/databasePool', () => ({
-  getDatabaseClient: jest.fn(() => ({
-    from: jest.fn(),
-  })),
 }));
 
 jest.mock('@/Utils/productionRateLimiter', () => ({
@@ -31,51 +21,86 @@ jest.mock('@/Utils/constants', () => ({
   },
 }));
 
-describe('GET /api/verify-email', () => {
-  it('should return endpoint info', async () => {
-    const response = await GET();
-    const data = await response.json();
+jest.mock('@/Utils/emailVerification', () => ({
+  verifyVerificationToken: jest.fn(),
+  markUserVerified: jest.fn(),
+}));
 
-    expect(response.status).toBe(200);
-    expect(data).toHaveProperty('message');
-    expect(data).toHaveProperty('method');
-    expect(data.method).toBe('POST');
+describe('/api/verify-email', () => {
+  const { verifyVerificationToken, markUserVerified } = require('@/Utils/emailVerification');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('should indicate test mode', async () => {
-    const response = await GET();
-    const data = await response.json();
-    expect(data).toHaveProperty('testMode');
+  describe('GET', () => {
+    it('returns 400 when parameters missing', async () => {
+      const request = new NextRequest('http://localhost/api/verify-email');
+      const response = await GET(request);
+      expect(response.status).toBe(400);
+    });
+
+    it('verifies token and marks user when valid', async () => {
+      verifyVerificationToken.mockResolvedValue({ valid: true });
+      const request = new NextRequest('http://localhost/api/verify-email?email=user@example.com&token=abc');
+
+      const response = await GET(request);
+      const body = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(body.success).toBe(true);
+      expect(verifyVerificationToken).toHaveBeenCalledWith('user@example.com', 'abc');
+      expect(markUserVerified).toHaveBeenCalledWith('user@example.com');
+    });
+
+    it('returns 400 for invalid token', async () => {
+      verifyVerificationToken.mockResolvedValue({ valid: false, reason: 'expired' });
+      const request = new NextRequest('http://localhost/api/verify-email?email=user@example.com&token=bad');
+
+      const response = await GET(request);
+      const body = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(body.reason).toBe('expired');
+    });
+  });
+
+  describe('POST', () => {
+    it('requires email and token', async () => {
+      const request = {
+        json: async () => ({}),
+      } as unknown as NextRequest;
+
+      const response = await POST(request);
+      expect(response.status).toBe(400);
+    });
+
+    it('verifies payload and marks user', async () => {
+      verifyVerificationToken.mockResolvedValue({ valid: true });
+      const request = {
+        json: async () => ({ email: 'user@example.com', token: 'abc' }),
+      } as unknown as NextRequest;
+
+      const response = await POST(request);
+      const body = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(body.success).toBe(true);
+      expect(verifyVerificationToken).toHaveBeenCalledWith('user@example.com', 'abc');
+      expect(markUserVerified).toHaveBeenCalledWith('user@example.com');
+    });
+
+    it('returns 400 for invalid token', async () => {
+      verifyVerificationToken.mockResolvedValue({ valid: false, reason: 'expired' });
+      const request = {
+        json: async () => ({ email: 'user@example.com', token: 'bad' }),
+      } as unknown as NextRequest;
+
+      const response = await POST(request);
+      const body = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(body.reason).toBe('expired');
+    });
   });
 });
-
-describe('POST /api/verify-email', () => {
-  it('should require token', async () => {
-    const req = {
-      json: async () => ({}),
-    } as NextRequest;
-
-    const response = await POST(req);
-    expect(response.status).toBe(400);
-  });
-
-  it('should handle token verification', async () => {
-    const req = {
-      json: async () => ({ token: 'test-token' }),
-    } as NextRequest;
-
-    const response = await POST(req);
-    const data = await response.json();
-    expect(data).toHaveProperty('success');
-  });
-
-  it('should return error response on failure', async () => {
-    const req = {
-      json: async () => ({ token: 'invalid' }),
-    } as NextRequest;
-
-    const response = await POST(req);
-    expect(response.status).toBeGreaterThanOrEqual(400);
-  });
-});
-

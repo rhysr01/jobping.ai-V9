@@ -8,6 +8,7 @@ import EmailPhoneShowcase from "@/components/marketing/EmailPhoneShowcase";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import ExitIntentPopup from "@/components/ui/ExitIntentPopup";
 import { SkeletonCard } from "@/components/ui/Skeleton";
+import SocialProofRow from "@/components/sections/SocialProofRow";
 
 function SectionSkeleton() {
   return (
@@ -23,24 +24,27 @@ export default function Page() {
   return (
     <>
       <main id="main-content">
-      <Suspense fallback={<SectionSkeleton />}>
-      <Hero />
-      </Suspense>
-      <Suspense fallback={<SectionSkeleton />}>
-      <EmailPhoneShowcase />
-      </Suspense>
-      <Suspense fallback={<SectionSkeleton />}>
-      <HowItWorks />
-      </Suspense>
-      <Suspense fallback={<SectionSkeleton />}>
-      <BuiltForStudents />
-      </Suspense>
-      <Suspense fallback={<SectionSkeleton />}>
-      <SecondaryCTA />
-      </Suspense>
-      <Suspense fallback={<SectionSkeleton />}>
-      <Pricing />
-      </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <Hero />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <SocialProofRow />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <EmailPhoneShowcase />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <HowItWorks />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <BuiltForStudents />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <Pricing />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <SecondaryCTA />
+        </Suspense>
       </main>
       <StickyMobileCTA />
       <ExitIntentPopup />

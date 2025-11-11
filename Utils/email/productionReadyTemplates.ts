@@ -3,6 +3,12 @@
 
 import { EmailJobCard } from './types';
 import { getBaseUrl } from '../url-helpers';
+import {
+  FREE_ROLES_PER_SEND,
+  PREMIUM_ROLES_PER_WEEK,
+  PREMIUM_ROLES_PER_MONTH,
+} from '../../lib/productMetrics';
+import { buildPreferencesLink } from '../preferences/links';
 
 const COLORS = {
   bg: '#0a0a0a',
@@ -130,8 +136,8 @@ function formatJobTags(job: Record<string, any>): string[] {
 }
 
 function wrapEmail(title: string, body: string, footerEmail?: string): string {
-  const encodedEmail = footerEmail ? encodeURIComponent(footerEmail) : '';
   const baseUrl = getBaseUrl();
+  const preferencesLink = buildPreferencesLink(footerEmail);
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -215,7 +221,7 @@ function wrapEmail(title: string, body: string, footerEmail?: string): string {
               </div>
               <div class="footer-text">
                 <a class="footer-link" href="${baseUrl}/legal/unsubscribe">Unsubscribe</a> · 
-                <a class="footer-link" href="${baseUrl}/preferences?email=${encodedEmail}&token=temp" style="color:#8B5CF6;">Update Preferences</a>
+                <a class="footer-link" href="${preferencesLink}" style="color:#8B5CF6;">Update Preferences</a>
               </div>
               <div class="footer-text" style="color:${COLORS.gray500}; font-size:12px;">
                 You're receiving this because you created a JobPing account. Prefer the browser? Copy &amp; paste <a class="footer-link" href="${baseUrl}">${baseUrl}</a>
@@ -254,7 +260,7 @@ export function createWelcomeEmail(
       </ul>
       ${vmlButton(getBaseUrl(), 'View my matches', COLORS.indigo, COLORS.purple)}
       <p class="text" style="color:${COLORS.gray500}; font-size:13px; margin-top:20px;">Prefer a direct link? <a href="${getBaseUrl()}" style="color:#8B5CF6;">${getBaseUrl()}</a></p>
-      <p class="text" style="color:${COLORS.gray500}; font-size:14px; margin-top:28px;">Need to tweak anything? <a href="${getBaseUrl()}/preferences?email=${encodeURIComponent(userEmail || '')}&token=temp" style="color:#8B5CF6; text-decoration:underline;">Update your preferences</a> any time — or reply to this email and we'll handle it for you.</p>
+      <p class="text" style="color:${COLORS.gray500}; font-size:14px; margin-top:28px;">Need to tweak anything? <a href="${buildPreferencesLink(userEmail)}" style="color:#8B5CF6; text-decoration:underline;">Update your preferences</a> any time — or reply to this email and we'll handle it for you.</p>
     </td>
   </tr>`;
   return wrapEmail('Welcome to JobPing', body, userEmail);
@@ -327,7 +333,7 @@ export function createJobMatchesEmail(
           Get More Matches for €5 Now
         </h3>
         <p class="text" style="margin-bottom:24px; color:${COLORS.gray300}; font-size:16px; line-height:1.6;">
-          Upgrade to Premium and get <span style="color:#8B5CF6; font-weight:600;">15 jobs per week</span> instead of 5. Cancel anytime.
+          Upgrade to Premium and get <span style="color:#8B5CF6; font-weight:600;">${PREMIUM_ROLES_PER_WEEK} jobs per week (~${PREMIUM_ROLES_PER_MONTH} per month)</span> instead of ${FREE_ROLES_PER_SEND}. Cancel anytime.
         </p>
         ${vmlButton(upgradeUrl, 'Upgrade to Premium - €5/month', COLORS.purple, COLORS.indigo)}
         <p style="color:${COLORS.gray500}; font-size:12px; margin:16px 0 0 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; line-height:1.5;">

@@ -49,8 +49,8 @@ async function backfillDescriptions() {
       
       // If description is missing or empty
       if (!newDescription || newDescription.trim() === '') {
-        // TODO: In future, could attempt to fetch from job_url
-        // For now, use placeholder
+        // Future improvement: fetch description from job_url when available
+        // For now, rely on fallback text
         newDescription = PLACEHOLDER_DESCRIPTION;
         
         updates.push({

@@ -17,12 +17,14 @@ import {
   MATCH_RULES
 } from '@/Utils/sendConfiguration';
 import { Job as ScrapersJob } from '@/scrapers/types';
-import { getCategoryPriorityScore, jobMatchesUserCategories, WORK_TYPE_CATEGORIES, mapFormLabelToDatabase, getStudentSatisfactionScore, getDatabaseCategoriesForForm } from '@/Utils/matching/categoryMapper';
+import { getCategoryPriorityScore, jobMatchesUserCategories, WORK_TYPE_CATEGORIES, mapFormLabelToDatabase, getStudentSatisfactionScore } from '@/Utils/matching/categoryMapper';
 import { semanticRetrievalService } from '@/Utils/matching/semanticRetrieval';
 import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilterJobs';
 import { integratedMatchingService } from '@/Utils/matching/integrated-matching.service';
 import { batchMatchingProcessor } from '@/Utils/matching/batch-processor.service';
 import { distributeJobsWithDiversity, getDistributionStats } from '@/Utils/matching/jobDistribution';
+import { fetchActiveUsers, transformUsers, UserFetchError } from '@/Utils/matching/userBatchService';
+import { fetchCandidateJobs, JobFetchError } from '@/Utils/matching/jobSearchService';
 import { z } from 'zod';
 
 // Zod validation schemas
@@ -53,9 +55,13 @@ type User = Database['public']['Tables']['users']['Row'];
 const HEALTH_SLO_MS = 100; // SLO: health checks should respond in <100ms
 const MATCH_SLO_MS = 2000; // SLO: match-users endpoint should respond in <2s
 
+const SCHEMA_VALIDATION_TTL_MS = 5 * 60 * 1000; // 5 minutes
+let schemaValidationCache: { timestamp: number; result: { valid: boolean; missingColumns?: string[] } } | null = null;
+
 // Environment flags and limits
 const IS_TEST = process.env.NODE_ENV === 'test';
 const IS_DEBUG = process.env.DEBUG_MATCHING === 'true' || IS_TEST;
+const SEMANTIC_RETRIEVAL_ENABLED = process.env.ENABLE_SEMANTIC_RETRIEVAL === 'true';
 // Use config values instead of hardcoded limits
 const USER_LIMIT = IS_TEST ? 3 : 50; // Keep test limit for safety
 const JOB_LIMIT = IS_TEST ? 300 : 10000; // Keep test limit for safety
@@ -149,11 +155,25 @@ interface Job {
 
 // Database schema validation
 async function validateDatabaseSchema(supabase: SupabaseClient): Promise<{ valid: boolean; missingColumns?: string[] }> {
+  const now = Date.now();
+
+  if (process.env.SKIP_SCHEMA_VALIDATION === 'true') {
+    const result = { valid: true };
+    schemaValidationCache = { timestamp: now, result };
+    return result;
+  }
+
+  if (schemaValidationCache && now - schemaValidationCache.timestamp < SCHEMA_VALIDATION_TTL_MS) {
+    return schemaValidationCache.result;
+  }
+
   try {
     // Skip schema validation in test environment
     if (process.env.NODE_ENV === 'test') {
       apiLogger.debug('Test mode: Skipping database schema validation');
-      return { valid: true };
+      const result = { valid: true };
+      schemaValidationCache = { timestamp: now, result };
+      return result;
     }
     
     // Check if required columns exist by attempting a sample query with timeout
@@ -175,14 +195,20 @@ async function validateDatabaseSchema(supabase: SupabaseClient): Promise<{ valid
       const missingColumns = requiredColumns.filter(col => 
         error.message?.toLowerCase().includes(col.toLowerCase())
       );
-      return { valid: false, missingColumns };
+      const result = { valid: false, missingColumns };
+      schemaValidationCache = { timestamp: Date.now(), result };
+      return result;
     }
     
     apiLogger.debug('Database schema validation passed');
-    return { valid: true };
+    const result = { valid: true };
+    schemaValidationCache = { timestamp: Date.now(), result };
+    return result;
   } catch (err) {
     apiLogger.error('Database schema validation error', err as Error);
-    return { valid: false, missingColumns: ['status', 'original_posted_date', 'last_seen_at'] };
+    const result = { valid: false, missingColumns: ['status', 'original_posted_date', 'last_seen_at'] };
+    schemaValidationCache = { timestamp: Date.now(), result };
+    return result;
   }
 }
 
@@ -473,13 +499,19 @@ const matchUsersHandler = async (req: NextRequest) => {
 
     const { userLimit, jobLimit, forceRun, dryRun, signature, timestamp } = parseResult.data;
 
-    // Verify HMAC authentication (mandatory in prod, optional in dev/test)
-    const hmacResult = verifyHMAC(`${userLimit}:${jobLimit}:${timestamp}`, signature || '', timestamp || 0);
-    if (!hmacResult.isValid) {
-      return NextResponse.json({ 
-        error: 'Authentication failed', 
-        details: hmacResult.error 
-      }, { status: 401 });
+    // Verify HMAC authentication only when configured (mandatory in prod, optional elsewhere)
+    if (isHMACRequired()) {
+      const hmacResult = verifyHMAC(
+        `${userLimit}:${jobLimit}:${timestamp}`,
+        signature || '',
+        timestamp || 0
+      );
+      if (!hmacResult.isValid) {
+        return NextResponse.json({
+          error: 'Authentication failed',
+          details: hmacResult.error
+        }, { status: 401 });
+      }
     }
     const performanceTracker = trackPerformance();
   const reservationId = `batch_${Date.now()}`;
@@ -533,23 +565,21 @@ const matchUsersHandler = async (req: NextRequest) => {
     
     let users: User[];
     try {
-      // Get active users directly from database
-      const { data: usersData, error: usersError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('is_active', true)
-        .limit(userCap);
-      
-      if (usersError) {
-        throw usersError;
+      users = await fetchActiveUsers(supabase, userCap);
+    } catch (error) {
+      if (error instanceof UserFetchError) {
+        return NextResponse.json({
+          error: 'Failed to fetch users',
+          code: 'USER_FETCH_ERROR',
+          details: error.details
+        }, { status: 500 });
       }
-      users = usersData || [];
-    } catch (error: any) {
+
       apiLogger.error('Failed to fetch users', error as Error, { userCap });
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Failed to fetch users',
         code: 'USER_FETCH_ERROR',
-        details: error 
+        details: error instanceof Error ? error.message : error
       }, { status: 500 });
     }
 
@@ -567,35 +597,7 @@ const matchUsersHandler = async (req: NextRequest) => {
 
     // Transform user data to match expected format
     // CRITICAL: Include ALL user preferences from signup form (target_cities, roles_selected, etc.)
-    const transformedUsers = users.map(user => ({
-      id: user.id,
-      email: user.email,
-      full_name: user.full_name,
-      preferences: {
-        email: user.email,
-        // CRITICAL FIELDS FROM SIGNUP FORM - these were missing!
-        target_cities: Array.isArray(user.target_cities) ? user.target_cities : (user.target_cities ? [user.target_cities] : []),
-        roles_selected: Array.isArray(user.roles_selected) ? user.roles_selected : (user.roles_selected ? [user.roles_selected] : []),
-        languages_spoken: Array.isArray(user.languages_spoken) ? user.languages_spoken : (user.languages_spoken ? [user.languages_spoken] : []),
-        career_path: user.career_path ? [user.career_path] : [],
-        work_environment: user.work_environment as 'remote' | 'hybrid' | 'on-site' | 'unclear' | undefined,
-        entry_level_preference: user.entry_level_preference || 'entry',
-        company_types: user.company_types || [],
-        professional_expertise: user.professional_expertise || user.career_path || undefined,
-        // Legacy fields (kept for compatibility)
-        location_preference: 'any',
-        salary_expectations: 'any',
-        remote_preference: 'any',
-        visa_sponsorship: false,
-        graduate_scheme: false,
-        internship: false,
-        work_authorization: 'any'
-      } as UserPreferences,
-      subscription_tier: (user.subscription_active ? 'premium' : 'free') as 'free' | 'premium',
-      created_at: user.created_at,
-      last_email_sent: user.last_email_sent,
-      is_active: user.active
-    }));
+    const transformedUsers = transformUsers(users);
 
     // 2. Fetch active jobs for accuracy-focused matching
     const jobFetchStart = Date.now();
@@ -607,89 +609,68 @@ const matchUsersHandler = async (req: NextRequest) => {
 
     let jobs: any[] = [];
 
-    // NOTE: Semantic search is disabled for batch processing because it requires per-user queries
-    // Instead, we use keyword-based search and let preFilterJobs handle filtering
-    // This is more efficient for batch processing multiple users
-    if (false && isSemanticAvailable && transformedUsers.length === 1) {
-      // Only use semantic search for single-user requests (not batch)
-      apiLogger.info('Using semantic retrieval for single-user matching');
-      
-      const user = transformedUsers[0];
-      if (user) {
-        const semanticJobs = await semanticRetrievalService.getSemanticCandidates(
-          user.preferences as UserPreferences,
-          200 // Get top 200 semantic matches
+    // Fallback to traditional keyword-based search if semantic search fails or returns no results
+    if (jobs.length === 0) {
+      try {
+        const { jobs: fetchedJobs } = await fetchCandidateJobs(
+          supabase,
+          jobCap,
+          transformedUsers
         );
-        
-        if (semanticJobs.length > 0) {
-          jobs = semanticJobs;
-          apiLogger.info(`Found ${semanticJobs.length} semantic job candidates`, { count: semanticJobs.length });
+        jobs = fetchedJobs;
+      } catch (error) {
+        if (error instanceof JobFetchError) {
+          return NextResponse.json({
+            error: 'Failed to fetch jobs',
+            code: 'JOB_FETCH_ERROR',
+            details: error.details
+          }, { status: 500 });
         }
+
+        apiLogger.error('Failed to fetch jobs', error as Error, { userCap, jobCap });
+        return NextResponse.json({
+          error: 'Failed to fetch jobs',
+          code: 'JOB_FETCH_ERROR',
+          details: error instanceof Error ? error.message : error
+        }, { status: 500 });
       }
     }
 
-    // Fallback to traditional keyword-based search if semantic search fails or returns no results
-    if (jobs.length === 0) {
-      apiLogger.info('Using optimized database filtering for job search');
-      
-      // OPTIMIZATION: Collect all unique cities and career paths from users
-      // Then fetch jobs matching ANY of these combinations at database level
-      // This reduces data transfer significantly (e.g., 1200 → 200 jobs)
-      const allCities = new Set<string>();
-      const allCareerPaths = new Set<string>();
-      
-      transformedUsers.forEach(user => {
-        if (user.preferences.target_cities) {
-          user.preferences.target_cities.forEach(city => allCities.add(city));
-        }
-        if (user.preferences.career_path) {
-          user.preferences.career_path.forEach(path => {
-            // Map form value to database category
-            const dbCategories = getDatabaseCategoriesForForm(path);
-            dbCategories.forEach(cat => allCareerPaths.add(cat));
+    // Augment shared job pool with semantic candidates when available
+    if (SEMANTIC_RETRIEVAL_ENABLED && isSemanticAvailable) {
+      const existingHashes = new Set(jobs.map((job: any) => job.job_hash));
+      let semanticAdds = 0;
+
+      for (const user of transformedUsers) {
+        try {
+          const semanticCandidates = await semanticRetrievalService.getSemanticCandidates(
+            user.preferences as UserPreferences,
+            120
+          );
+
+          for (const candidate of semanticCandidates) {
+            if (!candidate?.job_hash || existingHashes.has(candidate.job_hash)) {
+              continue;
+            }
+            jobs.push(candidate);
+            existingHashes.add(candidate.job_hash);
+            semanticAdds++;
+          }
+        } catch (error) {
+          apiLogger.debug('Semantic retrieval failed for user', {
+            user: user.email,
+            error: error instanceof Error ? error.message : error
           });
         }
-      });
-      
-      // Build optimized query using database indexes
-      let query = supabase
-        .from('jobs')
-        .select('job_hash, title, company, location, description, source, created_at, original_posted_date, last_seen_at, status, job_url, is_active, is_graduate, is_internship, categories, city, country, skills')
-        .eq('is_active', true);
-      
-      // OPTIMIZATION: Filter by cities at database level (uses idx_jobs_city index)
-      if (allCities.size > 0 && allCities.size <= 50) { // Only if reasonable number of cities
-        const citiesArray = Array.from(allCities);
-        query = query.in('city', citiesArray);
-        apiLogger.debug(`Filtering by ${citiesArray.length} cities at DB level`, { cities: citiesArray.slice(0, 5) });
-      }
-      
-      // OPTIMIZATION: Filter by categories at database level (uses idx_jobs_categories GIN index)
-      if (allCareerPaths.size > 0 && allCareerPaths.size <= 20) { // Only if reasonable number of categories
-        const categoriesArray = Array.from(allCareerPaths);
-        query = query.overlaps('categories', categoriesArray);
-        apiLogger.debug(`Filtering by ${categoriesArray.length} categories at DB level`, { categories: categoriesArray.slice(0, 5) });
-      }
-      
-      query = query.order('created_at', { ascending: false }).limit(jobCap);
-      
-      const { data: jobsData, error: jobsError } = await query;
-      
-      if (jobsError) {
-        apiLogger.error('Failed to fetch jobs', jobsError as Error, { userCap, jobCap });
-        return NextResponse.json({ 
-          error: 'Failed to fetch jobs',
-          code: 'JOB_FETCH_ERROR',
-          details: jobsError 
-        }, { status: 500 });
       }
 
-      jobs = jobsData || [];
-      apiLogger.info(`Fetched ${jobs.length} jobs using optimized database filtering`, { 
-        citiesFiltered: allCities.size,
-        categoriesFiltered: allCareerPaths.size,
-        jobsReturned: jobs.length
-      });
+      if (semanticAdds > 0) {
+        apiLogger.info('Semantic retrieval augmented job pool', {
+          semanticAdds,
+          totalJobs: jobs.length,
+          usersProcessed: transformedUsers.length
+        });
+      }
     }
 
     const jobFetchTime = Date.now() - jobFetchStart;

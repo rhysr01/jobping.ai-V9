@@ -44,6 +44,8 @@ const schema = z.object({
   ADMIN_BASIC_PASS: z.string().optional(),
   SYSTEM_API_KEY: z.string().min(10),
   UNSUBSCRIBE_SECRET: z.string().min(20).optional(),
+  PREFERENCES_SECRET: z.string().min(32).optional(),
+  EMAIL_VERIFICATION_SECRET: z.string().min(32).optional(),
   
   // Job Matching Configuration
   FREE_JOBS_PER_USER: z.coerce.number().min(1).max(50).default(5),

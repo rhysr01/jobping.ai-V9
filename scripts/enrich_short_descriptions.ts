@@ -56,7 +56,7 @@ async function enrichShortDescriptions() {
     const updates: Array<{ id: number; description: string }> = [];
     
     for (const job of shortJobs) {
-      // TODO: In future, could:
+      // Future improvement: fetch full description from job_url if available
       // 1. Attempt to fetch full description from job_url
       // 2. Use AI to expand description based on title/company
       // For now, we'll just log them for manual review

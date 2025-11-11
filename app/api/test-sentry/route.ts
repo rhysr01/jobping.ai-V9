@@ -8,8 +8,9 @@
  * - GET /api/test-sentry - Checks Sentry status and sends a test event
  */
 
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
+import { requireSystemKey } from '@/Utils/auth/withAuth';
 
 interface SentryStatus {
   configured: boolean;
@@ -79,7 +80,20 @@ function maskDsn(dsn: string): string {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  try {
+    requireSystemKey(req);
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Unauthorized', message: error instanceof Error ? error.message : 'Access denied' },
+      { status: 401 }
+    );
+  }
+
   const status = getSentryStatus();
   
   // If Sentry is not configured, return early with helpful message

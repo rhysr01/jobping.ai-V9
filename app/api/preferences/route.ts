@@ -1,31 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseClient } from '@/Utils/databasePool';
-import { createHash } from 'crypto';
-
-// Generate secure token for preferences access
-function generatePreferencesToken(email: string): string {
-  const secret = process.env.PREFERENCES_SECRET || 'default-secret-change-in-production';
-  const hash = createHash('sha256');
-  hash.update(`${email}-${secret}-${Date.now()}`);
-  return hash.digest('hex').substring(0, 32);
-}
-
-// Verify token - TODO: Implement proper JWT or signed token verification
-function verifyPreferencesToken(email: string, token: string): boolean {
-  // SECURITY: In production, implement proper token verification
-  // For now, accept 'temp' token for development/testing
-  // In production, generate signed tokens in emails and verify them here
-  if (token === 'temp') {
-    // Allow temp token for development - REMOVE IN PRODUCTION
-    return process.env.NODE_ENV !== 'production';
-  }
-  
-  // TODO: Implement proper token verification
-  // const secret = process.env.PREFERENCES_SECRET;
-  // return verifySignedToken(token, email, secret);
-  
-  return token.length > 0;
-}
+import { verifySecureToken } from '@/Utils/auth/secureTokens';
 
 export async function GET(req: NextRequest) {
   try {
@@ -37,8 +12,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Token and email required' }, { status: 400 });
     }
 
-    if (!verifyPreferencesToken(email, token)) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    const verification = verifySecureToken(email, token, 'preferences');
+    if (!verification.valid) {
+      return NextResponse.json(
+        { error: 'Invalid token', reason: verification.reason },
+        { status: 401 }
+      );
     }
 
     const supabase = getDatabaseClient();
@@ -70,8 +49,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Token and email required' }, { status: 400 });
     }
 
-    if (!verifyPreferencesToken(email, token)) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    const verification = verifySecureToken(email, token, 'preferences');
+    if (!verification.valid) {
+      return NextResponse.json(
+        { error: 'Invalid token', reason: verification.reason },
+        { status: 401 }
+      );
     }
 
     const supabase = getDatabaseClient();

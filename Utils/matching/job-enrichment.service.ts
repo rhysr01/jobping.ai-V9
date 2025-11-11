@@ -75,9 +75,9 @@ function calculateMarketDemand(job: Job): number {
 
 function extractSalaryRange(description: string): string {
   const salaryPatterns = [
-    /‚¬(\d{1,3}(?:,\d{3})*(?:k)?)\s*-\s*‚¬(\d{1,3}(?:,\d{3})*(?:k)?)/i,
-    /‚¬(\d{1,3}(?:,\d{3})*(?:k)?)\s*to\s*‚¬(\d{1,3}(?:,\d{3})*(?:k)?)/i,
-    /‚¬(\d{1,3}(?:,\d{3})*(?:k)?)\s*per\s*(?:month|year)/i
+    /ï¿½ï¿½(\d{1,3}(?:,\d{3})*(?:k)?)\s*-\s*ï¿½ï¿½(\d{1,3}(?:,\d{3})*(?:k)?)/i,
+    /ï¿½ï¿½(\d{1,3}(?:,\d{3})*(?:k)?)\s*to\s*ï¿½ï¿½(\d{1,3}(?:,\d{3})*(?:k)?)/i,
+    /ï¿½ï¿½(\d{1,3}(?:,\d{3})*(?:k)?)\s*per\s*(?:month|year)/i
   ];
   
   for (const pattern of salaryPatterns) {
@@ -303,7 +303,7 @@ export function extractCareerPath(jobTitle: string, description: string): string
 
 export function extractStartDate(description: string): string {
   if (!description || typeof description !== 'string') {
-    return 'TBD';
+    return 'unspecified';
   }
 
   const startDatePatterns = [
@@ -333,5 +333,5 @@ export function extractStartDate(description: string): string {
     }
   }
 
-  return 'TBD';
+        return 'unspecified';
 }
