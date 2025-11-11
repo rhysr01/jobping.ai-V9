@@ -19,8 +19,8 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 
 // Hero section
 export const HERO_TITLE = "JobPing";
-export const HERO_HEADLINE = "Stop scrolling job boards.";
-export const HERO_SUBLINE = "Pick your cities and we’ll email internships and grad roles within 48 hours.";
+export const HERO_HEADLINE = "Internships and graduate roles across Europe.";
+export const HERO_SUBLINE = "Stop scrolling job boards. Pick your cities and we’ll email internships and grad roles within 48 hours.";
 export const HERO_SUBTITLE = VP_TAGLINE;
 export const HERO_CTA = "Get EU jobs in my inbox for free";
 export const HERO_PILL = "Internships and graduate roles across Europe";

@@ -194,9 +194,9 @@ export default function EuropeMap({
       aria-label="Interactive Europe map for city selection"
     >
       {/* Brand-colored background gradients matching app design */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#060013] via-[#0a001e] to-[#120033]">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(154,106,255,0.035)_0%,transparent_60%)] blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.028)_0%,transparent_60%)] blur-3xl" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#050014] via-[#070021] to-[#0D012E]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_35%_25%,rgba(154,106,255,0.08)_0%,transparent_65%)] blur-xl opacity-70" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.06)_0%,transparent_65%)] blur-xl opacity-70" />
       </div>
 
       {/* Subtle grid overlay */}
@@ -227,14 +227,14 @@ export default function EuropeMap({
         <defs>
           {/* Country gradient with brand colors */}
           <linearGradient id="europeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#9A6AFF" stopOpacity="0.04" />
-            <stop offset="50%" stopColor="#6B4EFF" stopOpacity="0.07" />
-            <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0.03" />
+            <stop offset="0%" stopColor="#B9A9FF" stopOpacity="0.32" />
+            <stop offset="50%" stopColor="#8C79FF" stopOpacity="0.26" />
+            <stop offset="100%" stopColor="#7C6DFF" stopOpacity="0.28" />
           </linearGradient>
           
           {/* Brand-colored glow filter */}
           <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur" in="SourceGraphic"/>
+            <feGaussianBlur stdDeviation="2.2" result="coloredBlur" in="SourceGraphic"/>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
               <feMergeNode in="SourceGraphic"/>
@@ -243,7 +243,7 @@ export default function EuropeMap({
           
           {/* Stronger glow for selected cities */}
           <filter id="glowStrong" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="4.5" result="coloredBlur" in="SourceGraphic"/>
+            <feGaussianBlur stdDeviation="3.2" result="coloredBlur" in="SourceGraphic"/>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
               <feMergeNode in="SourceGraphic"/>
@@ -252,22 +252,21 @@ export default function EuropeMap({
           
           {/* Animated gradient for selected cities */}
           <linearGradient id="selectedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#9A6AFF" />
-            <stop offset="50%" stopColor="#8B5CF6" />
-            <stop offset="100%" stopColor="#6366F1" />
+            <stop offset="0%" stopColor="#C9B6FF" />
+            <stop offset="50%" stopColor="#A58BFF" />
+            <stop offset="100%" stopColor="#7C6DFF" />
           </linearGradient>
         </defs>
 
         {/* Europe outline (real) */}
         <g
           aria-hidden="true"
-          fill="rgba(255,255,255,0.05)"
-          stroke="rgba(255,255,255,0.25)"
-          strokeWidth="1.3"
+          fill="url(#europeGradient)"
+          stroke="rgba(213,198,255,0.55)"
+          strokeWidth="1.6"
           strokeLinejoin="round"
           strokeLinecap="round"
-          opacity="0.42"
-          style={{ filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.12))' }}
+          opacity="0.88"
         >
           {EU_OUTLINE_PATHS.map((d, index) => (
             <path key={index} d={d} />
