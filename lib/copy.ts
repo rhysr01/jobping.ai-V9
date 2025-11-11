@@ -19,15 +19,15 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 
 // Hero section
 export const HERO_TITLE = "JobPing";
-export const HERO_HEADLINE = "Internships and graduate roles across Europe.";
-export const HERO_SUBLINE = "Stop scrolling job boards. Pick your cities and we’ll email internships and grad roles within 48 hours.";
+export const HERO_HEADLINE = "Stop scrolling job boards.";
+export const HERO_SUBLINE = "Tell us your cities and we’ll send internships and grad roles within 48 hours—curated by humans, not feeds.";
 export const HERO_SUBTITLE = VP_TAGLINE;
 export const HERO_CTA = "Get EU jobs in my inbox for free";
-export const HERO_PILL = "Internships and graduate roles across Europe";
+export const HERO_PILL = "Curated Europe-wide internships & grad roles";
 export const HERO_FEATURES = [
   "Humans double-check every shortlist before it sends",
-  "Only internships and graduate roles that fit your city, visa, and experience",
-  `${FREE_ROLES_PER_SEND} curated links per drop · Premium unlocks ${PREMIUM_ROLES_PER_WEEK} each week (~${PREMIUM_ROLES_PER_MONTH} monthly)`
+  "We filter by city, visa, and experience so you only see roles you can take",
+  `${FREE_ROLES_PER_SEND} roles per drop · Premium unlocks ${PREMIUM_ROLES_PER_WEEK} each week (~${PREMIUM_ROLES_PER_MONTH} monthly)`
 ];
 export const HERO_SOCIAL_PROOF = "Trusted by students across 20+ European cities.";
 export const HERO_FINE_PRINT = `Free forever • Cancel anytime • Premium unlocks ${PREMIUM_ROLES_PER_WEEK} roles/week (~${PREMIUM_ROLES_PER_MONTH}/month)`;
