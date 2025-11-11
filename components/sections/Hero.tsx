@@ -193,53 +193,66 @@ export default function Hero() {
           transition={{ duration: 0.5 }}
           className="flex flex-col items-center gap-6"
         >
-          <motion.div
-            className="relative inline-flex items-center justify-center gap-5 overflow-hidden rounded-full bg-white/5 px-10 py-5 shadow-[0_22px_52px_rgba(18,0,42,0.4)] backdrop-blur-sm light-sheen"
-            whileHover={prefersReduced ? {} : { scale: 1.04 }}
-          >
-            {!prefersReduced && (
-              <motion.div
-                className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.35),transparent_65%)] blur-2xl"
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-              />
-            )}
-            {!prefersReduced && (
-              <motion.div
-                className="pointer-events-none absolute -inset-10 -z-20 rounded-full border border-white/10"
-                animate={{ rotate: [0, 12, -12, 0] }}
-                transition={{ duration: 14, ease: "easeInOut", repeat: Infinity }}
-              />
-            )}
-            <BrandIcons.GraduationCap className="h-16 w-16 text-white sm:h-[4.5rem] sm:w-[4.5rem] md:h-20 md:w-20" />
-            <motion.span
-              className="bg-gradient-to-r from-white via-[#d1c4ff] to-[#a78bfa] bg-clip-text text-[4rem] font-black tracking-tight text-transparent sm:text-[4.75rem] md:text-[5.5rem]"
-              style={{
-                backgroundSize: "240% 240%",
-              }}
+          <div className="hero-logo-wrapper w-full max-w-4xl px-4">
+            <motion.div
+              className="hero-logo-capsule w-full justify-between sm:justify-center"
+              style={{ transformStyle: "preserve-3d" }}
               animate={
                 prefersReduced
                   ? {}
                   : {
-                      letterSpacing: ["-0.04em", "-0.065em", "-0.04em"],
-                      textShadow: [
-                        "0 0 18px rgba(124,58,237,0.45)",
-                        "0 0 28px rgba(99,102,241,0.55)",
-                        "0 0 18px rgba(124,58,237,0.45)",
-                      ],
-                      backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                      scale: [1, 1.02, 1],
+                      rotateX: [0, 4, 0],
+                      rotateY: [0, -3, 0],
+                      y: [0, -3, 0],
                     }
               }
-              transition={{
-                duration: 10,
-                repeat: prefersReduced ? 0 : Infinity,
-                ease: "easeInOut",
-              }}
+              transition={{ duration: 9, ease: "easeInOut", repeat: prefersReduced ? 0 : Infinity }}
+              whileHover={prefersReduced ? {} : { scale: 1.04 }}
             >
-              JobPing
-            </motion.span>
-          </motion.div>
+              {!prefersReduced && (
+                <motion.span
+                  aria-hidden
+                  className="hero-logo-glow"
+                  initial={{ opacity: 0.2 }}
+                  animate={{ opacity: [0.2, 0.5, 0.2] }}
+                  transition={{ duration: 4, ease: "easeInOut", repeat: Infinity }}
+                />
+              )}
+              {!prefersReduced && (
+                <motion.div
+                  className="pointer-events-none absolute -inset-12 -z-20 rounded-full border border-white/10"
+                  animate={{ rotate: [0, 10, -10, 0] }}
+                  transition={{ duration: 16, ease: "easeInOut", repeat: Infinity }}
+                />
+              )}
+              <BrandIcons.GraduationCap className="hidden h-16 w-16 text-white sm:block sm:h-[4.5rem] sm:w-[4.5rem] md:h-20 md:w-20" />
+              <motion.span
+                className="hero-logo-text hero-text-gradient"
+                style={{ backgroundSize: "240% 240%" }}
+                animate={
+                  prefersReduced
+                    ? {}
+                    : {
+                        letterSpacing: ["-0.04em", "-0.065em", "-0.04em"],
+                        textShadow: [
+                          "0 0 18px rgba(124,58,237,0.45)",
+                          "0 0 28px rgba(99,102,241,0.55)",
+                          "0 0 18px rgba(124,58,237,0.45)",
+                        ],
+                        backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                      }
+                }
+                transition={{
+                  duration: 10,
+                  repeat: prefersReduced ? 0 : Infinity,
+                  ease: "easeInOut",
+                }}
+              >
+                JobPing
+              </motion.span>
+            </motion.div>
+          </div>
           {!prefersReduced && (
             <motion.div
               className="h-px w-44 rounded-full bg-gradient-to-r from-transparent via-white/70 to-transparent"
@@ -378,6 +391,20 @@ export default function Hero() {
         </motion.div>
 
       </div>
+
+      {!prefersReduced && (
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10"
+          style={{
+            background:
+              "radial-gradient(circle at 30% 30%, rgba(164,91,255,0.18), transparent 60%), radial-gradient(circle at 70% 70%, rgba(99,102,241,0.16), transparent 65%)",
+            backgroundSize: "140% 140%",
+          }}
+          animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
+          transition={{ duration: 20, ease: "linear", repeat: Infinity }}
+        />
+      )}
 
       <motion.div
         aria-hidden

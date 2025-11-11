@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 
 // Projection bounds control the visible portion of Europe
-const BOUNDS = { lonMin: -9, lonMax: 30, latMin: 37, latMax: 63 };
+const BOUNDS = { lonMin: -11, lonMax: 31, latMin: 35, latMax: 71 };
 const VIEW = { w: 1000, h: 800 };
 
 const project = (lat: number, lon: number) => {
@@ -23,30 +23,6 @@ const OFFSET: Record<string, { dx: number; dy: number }> = {
   Zurich: { dx: 3, dy: -3 },
   Hamburg: { dx: -3, dy: -2 },
 };
-
-const EU_OUTLINE_PATHS = [
-  // Iberian Peninsula
-  "M150 566L120 512L140 456L190 424L236 432L272 484L244 530Z",
-  // France & Low Countries
-  "M236 432L272 404L320 382L360 348L396 336L430 342L420 380L376 412L332 432L300 460Z",
-  // British Isles
-  "M214 420L202 386L220 350L250 352L270 386L256 416Z",
-  "M194 406L182 372L198 348L214 356L220 380Z",
-  // Western & Central Mainland
-  "M300 460L332 432L376 412L420 380L464 358L510 352L546 360L584 386L612 424L650 438L690 454L722 488L736 522L722 560L688 586L640 600L600 612L566 612L524 602L488 618L448 640L396 648L348 638L312 606Z",
-  // Scandinavia
-  "M500 276L532 228L580 198L630 198L672 220L700 268L688 314L656 338L618 336L586 316L556 300Z",
-  // Italy & Sicily
-  "M420 520L444 490L468 522L476 560L462 598L438 588L446 548Z",
-  "M438 632L460 640L452 660L430 650Z",
-  // Balkans & Greece
-  "M468 532L512 516L556 528L574 558L556 594L516 586L484 570Z",
-  "M524 604L548 612L540 634L514 624Z",
-  // Eastern Europe
-  "M612 424L648 404L690 408L726 436L752 474L760 514L744 550L706 568L664 560L630 534Z",
-  // Scandinavia north (Norway/Sweden top)
-  "M520 224L540 178L584 152L630 150L676 168L700 206L696 238L664 252L620 248L582 236Z",
-];
 
 type CityCoordinate = {
   lat: number;
@@ -195,8 +171,8 @@ export default function EuropeMap({
     >
       {/* Brand-colored background gradients matching app design */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#050014] via-[#070021] to-[#0D012E]">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_35%_25%,rgba(154,106,255,0.08)_0%,transparent_65%)] blur-xl opacity-70" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.06)_0%,transparent_65%)] blur-xl opacity-70" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_35%_25%,rgba(154,106,255,0.08)_0%,transparent_65%)] blur-xl opacity-60" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.06)_0%,transparent_65%)] blur-xl opacity-60" />
       </div>
 
       {/* Subtle grid overlay */}
@@ -225,13 +201,6 @@ export default function EuropeMap({
       >
         {/* Enhanced gradients and filters matching brand */}
         <defs>
-          {/* Country gradient with brand colors */}
-          <linearGradient id="europeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#B9A9FF" stopOpacity="0.32" />
-            <stop offset="50%" stopColor="#8C79FF" stopOpacity="0.26" />
-            <stop offset="100%" stopColor="#7C6DFF" stopOpacity="0.28" />
-          </linearGradient>
-          
           {/* Brand-colored glow filter */}
           <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="2.2" result="coloredBlur" in="SourceGraphic"/>
@@ -258,20 +227,29 @@ export default function EuropeMap({
           </linearGradient>
         </defs>
 
-        {/* Europe outline (real) */}
-        <g
+        {/* Real Europe outline (behind dots) */}
+        <image
+          href="/maps/europe-lite.svg"
+          x={0}
+          y={0}
+          width={VIEW.w}
+          height={VIEW.h}
+          opacity="0.85"
+          style={{ filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.10))' }}
           aria-hidden="true"
-          fill="url(#europeGradient)"
-          stroke="rgba(213,198,255,0.55)"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          opacity="0.88"
-        >
-          {EU_OUTLINE_PATHS.map((d, index) => (
-            <path key={index} d={d} />
-          ))}
-        </g>
+        />
+
+        {/* Country borders overlay */}
+        <image
+          href="/maps/europe-borders-lite.svg"
+          x={0}
+          y={0}
+          width={VIEW.w}
+          height={VIEW.h}
+          opacity="0.55"
+          style={{ mixBlendMode: 'screen' }}
+          aria-hidden="true"
+        />
 
         {/* City markers */}
         <g aria-label="Selectable cities">
