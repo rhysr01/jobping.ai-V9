@@ -202,11 +202,17 @@ export default function EuropeMap({
           </filter>
 
           {/* Soft purple fill glow for land mass */}
-          <filter id="mapFillGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="26" result="fill-blur" />
-            <feFlood floodColor="#7C3AED" floodOpacity="0.2" result="fill-color" />
-            <feComposite in="fill-color" in2="fill-blur" operator="in" result="fill-glow" />
-            <feBlend in="fill-glow" in2="SourceGraphic" mode="screen" />
+          <filter id="mapFillGlow" x="-18%" y="-18%" width="136%" height="136%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="32" result="fill-soft" />
+            <feFlood floodColor="#7C3AED" floodOpacity="0.22" result="fill-soft-color" />
+            <feComposite in="fill-soft-color" in2="fill-soft" operator="in" result="fill-soft-glow" />
+            <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="fill-core" />
+            <feFlood floodColor="#E4DAFF" floodOpacity="0.55" result="fill-core-color" />
+            <feComposite in="fill-core-color" in2="fill-core" operator="in" result="fill-core-mask" />
+            <feMerge>
+              <feMergeNode in="fill-core-mask" />
+              <feMergeNode in="fill-soft-glow" />
+            </feMerge>
           </filter>
           
           {/* Animated gradient for selected cities */}
@@ -224,8 +230,8 @@ export default function EuropeMap({
           y={0}
           width={VIEW.w}
           height={VIEW.h}
-          opacity="0.4"
-          style={{ filter: 'url(#mapFillGlow)', mixBlendMode: 'screen' }}
+          opacity="0.65"
+          style={{ filter: 'url(#mapFillGlow)' }}
           aria-hidden="true"
         />
 
