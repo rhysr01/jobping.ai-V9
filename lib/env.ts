@@ -35,7 +35,6 @@ const schema = z.object({
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
   SENTRY_ORG: z.string().optional(),
   SENTRY_PROJECT: z.string().optional(),
-  SENTRY_AUTH_TOKEN: z.string().optional(),
   
   // Security & Authentication
   INTERNAL_API_HMAC_SECRET: z.string().min(32),
