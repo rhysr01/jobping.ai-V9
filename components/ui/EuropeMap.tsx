@@ -169,7 +169,8 @@ export default function EuropeMap({
       role="application"
       aria-label="Interactive Europe map for city selection"
     >
-      <div className="absolute inset-0 bg-zinc-950/90 backdrop-blur-lg" aria-hidden="true" />
+      <div className="absolute inset-0 bg-zinc-950/95" aria-hidden="true" />
+      <div className="absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_45%,rgba(124,58,237,0.14),transparent_70%)]" aria-hidden="true" />
       
       {/* Europe Map SVG */}
       <svg
@@ -179,9 +180,7 @@ export default function EuropeMap({
         aria-label="Map of Europe showing available cities"
         style={{ aspectRatio: '5/4' }}
       >
-        {/* Enhanced gradients and filters matching brand */}
         <defs>
-          {/* Brand-colored glow filter */}
           <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="2.2" result="coloredBlur" in="SourceGraphic"/>
             <feMerge>
@@ -189,51 +188,13 @@ export default function EuropeMap({
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
           </filter>
-
-          {/* Inner purple glow for country fills */}
-          <filter id="mapInnerGlow" x="-15%" y="-15%" width="130%" height="130%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="map-blur" />
-            <feComponentTransfer in="map-blur" result="map-alpha">
-              <feFuncA type="gamma" exponent="1.4" amplitude="1" offset="0" />
-            </feComponentTransfer>
-            <feFlood floodColor="#9A6AFF" floodOpacity="0.32" result="map-color" />
-            <feComposite in="map-color" in2="map-alpha" operator="in" result="map-glow" />
-            <feBlend in="SourceGraphic" in2="map-glow" mode="screen" />
-          </filter>
-
-          {/* Soft purple fill glow for land mass */}
-          <filter id="mapFillGlow" x="-18%" y="-18%" width="136%" height="136%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="32" result="fill-soft" />
-            <feFlood floodColor="#7C3AED" floodOpacity="0.22" result="fill-soft-color" />
-            <feComposite in="fill-soft-color" in2="fill-soft" operator="in" result="fill-soft-glow" />
-            <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="fill-core" />
-            <feFlood floodColor="#E4DAFF" floodOpacity="0.55" result="fill-core-color" />
-            <feComposite in="fill-core-color" in2="fill-core" operator="in" result="fill-core-mask" />
-            <feMerge>
-              <feMergeNode in="fill-core-mask" />
-              <feMergeNode in="fill-soft-glow" />
-            </feMerge>
-          </filter>
           
-          {/* Animated gradient for selected cities */}
           <linearGradient id="selectedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#C9B6FF" />
             <stop offset="50%" stopColor="#A58BFF" />
             <stop offset="100%" stopColor="#7C6DFF" />
           </linearGradient>
         </defs>
-
-        {/* Landmass glow */}
-        <image
-          href="/maps/europe-lite.svg"
-          x={0}
-          y={0}
-          width={VIEW.w}
-          height={VIEW.h}
-          opacity="0.65"
-          style={{ filter: 'url(#mapFillGlow)' }}
-          aria-hidden="true"
-        />
 
         {/* Detailed Europe outline with country borders */}
         <image
@@ -242,8 +203,7 @@ export default function EuropeMap({
           y={0}
           width={VIEW.w}
           height={VIEW.h}
-          opacity="0.9"
-          style={{ filter: 'url(#mapInnerGlow)' }}
+          opacity="0.88"
           aria-hidden="true"
         />
 
