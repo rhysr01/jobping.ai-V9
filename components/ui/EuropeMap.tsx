@@ -200,6 +200,14 @@ export default function EuropeMap({
             <feComposite in="map-color" in2="map-alpha" operator="in" result="map-glow" />
             <feBlend in="SourceGraphic" in2="map-glow" mode="screen" />
           </filter>
+
+          {/* Soft purple fill glow for land mass */}
+          <filter id="mapFillGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="26" result="fill-blur" />
+            <feFlood floodColor="#7C3AED" floodOpacity="0.2" result="fill-color" />
+            <feComposite in="fill-color" in2="fill-blur" operator="in" result="fill-glow" />
+            <feBlend in="fill-glow" in2="SourceGraphic" mode="screen" />
+          </filter>
           
           {/* Animated gradient for selected cities */}
           <linearGradient id="selectedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -208,6 +216,18 @@ export default function EuropeMap({
             <stop offset="100%" stopColor="#7C6DFF" />
           </linearGradient>
         </defs>
+
+        {/* Landmass glow */}
+        <image
+          href="/maps/europe-lite.svg"
+          x={0}
+          y={0}
+          width={VIEW.w}
+          height={VIEW.h}
+          opacity="0.4"
+          style={{ filter: 'url(#mapFillGlow)', mixBlendMode: 'screen' }}
+          aria-hidden="true"
+        />
 
         {/* Detailed Europe outline with country borders */}
         <image
