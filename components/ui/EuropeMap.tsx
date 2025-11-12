@@ -171,8 +171,8 @@ export default function EuropeMap({
     >
       {/* Brand-colored background gradients matching app design */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#050014] via-[#070021] to-[#0D012E]">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_35%_25%,rgba(154,106,255,0.08)_0%,transparent_65%)] blur-xl opacity-60" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.06)_0%,transparent_65%)] blur-xl opacity-60" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_35%_25%,rgba(154,106,255,0.05)_0%,transparent_65%)] blur-xl opacity-60" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.04)_0%,transparent_65%)] blur-xl opacity-60" />
       </div>
 
       {/* Subtle grid overlay */}
@@ -199,6 +199,20 @@ export default function EuropeMap({
         aria-label="Map of Europe showing available cities"
         style={{ aspectRatio: '5/4' }}
       >
+        <g aria-hidden="true" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.28)" strokeWidth={1.2}>
+          <path
+            d="M35.7 777.8 L47.6 622.2 L142.9 577.8 L214.3 511.1 L261.9 466.7 L309.5 433.3 L404.8 377.8 L452.4 333.3 L500 288.9 L381 222.2 L428.6 133.3 L547.6 44.4 L785.7 22.2 L976.2 22.2 L976.2 244.4 L976.2 311.1 L928.6 355.6 L833.3 311.1 L785.7 377.8 L738.1 400 L714.3 422.2 L833.3 444.4 L976.2 511.1 L952.4 555.6 L904.8 622.2 L833.3 666.7 L785.7 711.1 L738.1 755.6 L690.5 733.3 L642.9 688.9 L619 666.7 L595.2 622.2 L547.6 600 L500 588.9 L452.4 611.1 L404.8 622.2 L357.1 644.4 L309.5 666.7 L261.9 666.7 L238.1 688.9 L214.3 722.2 L142.9 766.7 L95.2 777.8 L47.6 777.8 Z"
+            vectorEffect="non-scaling-stroke"
+          />
+          <path
+            d="M119 488.9 L142.9 355.6 L190.5 288.9 L238.1 277.8 L285.7 355.6 L261.9 422.2 L214.3 466.7 L166.7 444.4 Z"
+            vectorEffect="non-scaling-stroke"
+          />
+          <path
+            d="M23.8 422.2 L47.6 355.6 L71.4 377.8 L95.2 433.3 L59.5 455.6 L35.7 444.4 Z"
+            vectorEffect="non-scaling-stroke"
+          />
+        </g>
         {/* Enhanced gradients and filters matching brand */}
         <defs>
           {/* Brand-colored glow filter */}

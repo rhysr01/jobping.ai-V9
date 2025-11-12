@@ -193,9 +193,31 @@ export default function Hero() {
           transition={{ duration: 0.5 }}
           className="flex flex-col items-center gap-6"
         >
-          <div className="hero-logo-wrapper w-full max-w-4xl px-4">
+          <div className="hero-logo-wrapper relative w-full max-w-4xl px-4">
+            {!prefersReduced && (
+              <>
+                <motion.div
+                  aria-hidden
+                  className="pointer-events-none absolute -inset-16 rounded-[48px]"
+                  style={{
+                    background: 'radial-gradient(60% 80% at 30% 20%, rgba(164,91,255,0.18), transparent 60%)'
+                  }}
+                  animate={{ x: [0, 10, 0], y: [0, -6, 0] }}
+                  transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.div
+                  aria-hidden
+                  className="pointer-events-none absolute -inset-24 rounded-[64px]"
+                  style={{
+                    background: 'radial-gradient(40% 60% at 70% 60%, rgba(102,126,234,0.16), transparent 70%)'
+                  }}
+                  animate={{ x: [0, -12, 0], y: [0, 8, 0] }}
+                  transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
+                />
+              </>
+            )}
             <motion.div
-              className="hero-logo-capsule w-full justify-between sm:justify-center"
+              className="hero-logo-capsule will-change-transform"
               style={{ transformStyle: "preserve-3d" }}
               animate={
                 prefersReduced
@@ -208,7 +230,16 @@ export default function Hero() {
                     }
               }
               transition={{ duration: 9, ease: "easeInOut", repeat: prefersReduced ? 0 : Infinity }}
-              whileHover={prefersReduced ? {} : { scale: 1.04 }}
+              whileHover={
+                prefersReduced
+                  ? {}
+                  : {
+                      rotateX: -2,
+                      rotateY: 3,
+                      transition: { type: 'spring', stiffness: 120, damping: 14 }
+                    }
+              }
+              whileTap={prefersReduced ? {} : { scale: 0.99 }}
             >
               {!prefersReduced && (
                 <motion.span
@@ -219,6 +250,7 @@ export default function Hero() {
                   transition={{ duration: 4, ease: "easeInOut", repeat: Infinity }}
                 />
               )}
+              {!prefersReduced && <span className="logoSheen" aria-hidden />} 
               {!prefersReduced && (
                 <motion.div
                   className="pointer-events-none absolute -inset-12 -z-20 rounded-full border border-white/10"
@@ -228,18 +260,13 @@ export default function Hero() {
               )}
               <BrandIcons.GraduationCap className="hidden h-16 w-16 text-white sm:block sm:h-[4.5rem] sm:w-[4.5rem] md:h-20 md:w-20" />
               <motion.span
-                className="hero-logo-text hero-text-gradient"
+                className="hero-logo-text hero-text-gradient text-[4.4rem] sm:text-[5.2rem] md:text-[6rem] font-black tracking-tight"
                 style={{ backgroundSize: "240% 240%" }}
                 animate={
                   prefersReduced
                     ? {}
                     : {
-                        letterSpacing: ["-0.04em", "-0.065em", "-0.04em"],
-                        textShadow: [
-                          "0 0 18px rgba(124,58,237,0.45)",
-                          "0 0 28px rgba(99,102,241,0.55)",
-                          "0 0 18px rgba(124,58,237,0.45)",
-                        ],
+                        letterSpacing: ["-0.02em", "0em", "-0.02em"],
                         backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                       }
                 }
@@ -264,15 +291,15 @@ export default function Hero() {
           )}
         </motion.div>
 
-        <motion.span
-          initial={{ opacity: 0, y: 16 }}
+        <motion.p
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-2 text-sm font-semibold text-brand-200 backdrop-blur-md"
+          transition={{ delay: 0.2, duration: 0.45, ease: "easeOut" }}
+          className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/12 px-4 py-2 text-sm font-semibold text-brand-200/95 backdrop-blur-md"
         >
           <BrandIcons.Mail className="h-4 w-4 text-brand-300" />
           {Copy.HERO_PILL}
-        </motion.span>
+        </motion.p>
 
         <motion.h1
           initial={{ opacity: 0, y: 24 }}
