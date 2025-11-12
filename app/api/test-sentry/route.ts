@@ -81,13 +81,16 @@ function maskDsn(dsn: string): string {
 }
 
 export async function GET(req: NextRequest) {
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  const isProduction = process.env.NODE_ENV === 'production';
 
   try {
     requireSystemKey(req);
   } catch (error) {
+    if (isProduction) {
+      // In production we hide the existence of the route unless the correct key is provided
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+
     return NextResponse.json(
       { error: 'Unauthorized', message: error instanceof Error ? error.message : 'Access denied' },
       { status: 401 }

@@ -688,7 +688,7 @@ function SignupForm() {
                     <div>
                       <label className="block text-base font-bold text-white mb-3">Professional Experience *</label>
                       <p className="text-sm text-zinc-200 mb-4">How much professional experience do you have?</p>
-                  <div className="mt-6">
+                  <div className="mt-10 md:mt-12">
                     <ExperienceTimeline
                       selected={formData.experience}
                       onChange={(exp) => setFormData({...formData, experience: exp})}

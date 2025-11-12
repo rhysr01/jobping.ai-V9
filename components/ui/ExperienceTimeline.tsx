@@ -34,7 +34,7 @@ export default function ExperienceTimeline({ selected, onChange }: ExperienceTim
   const SelectedIcon = selectedLevel?.Icon;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       {/* Timeline visualization */}
       <div className="relative">
         {/* Background track */}
