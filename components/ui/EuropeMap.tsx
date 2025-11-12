@@ -198,26 +198,14 @@ export default function EuropeMap({
           </linearGradient>
         </defs>
 
-        {/* Real Europe outline (behind dots) */}
-        <image
-          href="/maps/europe-lite.svg"
-          x={0}
-          y={0}
-          width={VIEW.w}
-          height={VIEW.h}
-          opacity="0.82"
-          aria-hidden="true"
-        />
-
-        {/* Country borders overlay */}
+        {/* Detailed Europe outline with country borders */}
         <image
           href="/maps/europe-borders-lite.svg"
           x={0}
           y={0}
           width={VIEW.w}
           height={VIEW.h}
-          opacity="0.55"
-          style={{ mixBlendMode: 'screen' }}
+          opacity="0.9"
           aria-hidden="true"
         />
 
