@@ -189,6 +189,17 @@ export default function EuropeMap({
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
           </filter>
+
+          {/* Inner purple glow for country fills */}
+          <filter id="mapInnerGlow" x="-15%" y="-15%" width="130%" height="130%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="map-blur" />
+            <feComponentTransfer in="map-blur" result="map-alpha">
+              <feFuncA type="gamma" exponent="1.4" amplitude="1" offset="0" />
+            </feComponentTransfer>
+            <feFlood floodColor="#9A6AFF" floodOpacity="0.32" result="map-color" />
+            <feComposite in="map-color" in2="map-alpha" operator="in" result="map-glow" />
+            <feBlend in="SourceGraphic" in2="map-glow" mode="screen" />
+          </filter>
           
           {/* Animated gradient for selected cities */}
           <linearGradient id="selectedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -206,6 +217,7 @@ export default function EuropeMap({
           width={VIEW.w}
           height={VIEW.h}
           opacity="0.9"
+          style={{ filter: 'url(#mapInnerGlow)' }}
           aria-hidden="true"
         />
 
