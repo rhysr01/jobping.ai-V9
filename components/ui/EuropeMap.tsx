@@ -169,27 +169,7 @@ export default function EuropeMap({
       role="application"
       aria-label="Interactive Europe map for city selection"
     >
-      {/* Brand-colored background gradients matching app design */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#050014] via-[#070021] to-[#0D012E]">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_35%_25%,rgba(154,106,255,0.035)_0%,transparent_65%)] blur-xl opacity-60" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_80%,rgba(99,102,241,0.025)_0%,transparent_65%)] blur-xl opacity-60" />
-      </div>
-
-      {/* Subtle grid overlay */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(154,106,255,0.08) 0.5px, transparent 0.5px), linear-gradient(90deg, rgba(154,106,255,0.08) 0.5px, transparent 0.5px)',
-          backgroundSize: '72px 72px',
-          backgroundPosition: '-1px -1px',
-          opacity: 0.08
-        }}
-        aria-hidden="true"
-      />
-      
-      {/* Glass morphism overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-white/[0.02] backdrop-blur-[1px]" aria-hidden="true" />
+      <div className="absolute inset-0 bg-zinc-950/90 backdrop-blur-lg" aria-hidden="true" />
       
       {/* Europe Map SVG */}
       <svg
@@ -204,15 +184,6 @@ export default function EuropeMap({
           {/* Brand-colored glow filter */}
           <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="2.2" result="coloredBlur" in="SourceGraphic"/>
-            <feMerge>
-              <feMergeNode in="coloredBlur"/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-          
-          {/* Stronger glow for selected cities */}
-          <filter id="glowStrong" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="3.2" result="coloredBlur" in="SourceGraphic"/>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
               <feMergeNode in="SourceGraphic"/>
@@ -234,8 +205,7 @@ export default function EuropeMap({
           y={0}
           width={VIEW.w}
           height={VIEW.h}
-          opacity="0.85"
-          style={{ filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.10))' }}
+          opacity="0.82"
           aria-hidden="true"
         />
 
@@ -354,7 +324,7 @@ export default function EuropeMap({
                         : { duration: 0.2, ease: 'easeOut' }
                   }
                   style={selected ? {
-                    filter: 'drop-shadow(0 0 6px rgba(154,106,255,0.3))'
+                    filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.25))'
                   } : {}}
                 />
                 
@@ -372,8 +342,8 @@ export default function EuropeMap({
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.2 }}
                     style={selected ? {
-                      filter: 'drop-shadow(0 0 4px rgba(154,106,255,0.5))',
-                      textShadow: '0 0 8px rgba(154,106,255,0.4)',
+                      filter: 'drop-shadow(0 0 2px rgba(255,255,255,0.3))',
+                      textShadow: '0 0 5px rgba(200,200,255,0.35)',
                       paintOrder: 'stroke fill',
                       stroke: 'rgba(12,0,40,0.55)',
                       strokeWidth: 0.45
@@ -402,7 +372,7 @@ export default function EuropeMap({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.9 }}
             transition={{ duration: 0.2 }}
-            className="absolute z-50 px-3 py-2 bg-zinc-900/95 backdrop-blur-md rounded-lg border border-brand-500/30 shadow-glow-subtle pointer-events-none"
+            className="absolute z-50 px-3 py-2 bg-zinc-900/95 backdrop-blur-md rounded-lg border border-zinc-700/40 shadow-glow-subtle pointer-events-none"
             style={{
               left: `${tooltip.x}px`,
               top: `${tooltip.y}px`,
@@ -419,17 +389,17 @@ export default function EuropeMap({
         )}
       </AnimatePresence>
 
-      {/* Enhanced Legend with brand styling - better spacing */}
+      {/* Legend */}
       <div 
-        className="absolute bottom-5 left-5 right-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs bg-gradient-to-r from-brand-500/10 via-purple-600/10 to-brand-500/10 backdrop-blur-md rounded-xl px-6 py-4 border border-brand-500/30 shadow-glow-subtle"
+        className="absolute bottom-5 left-5 right-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs bg-zinc-900/70 backdrop-blur-md rounded-xl px-6 py-4 border border-zinc-700/40"
         role="status"
         aria-live="polite"
         aria-label={`${selectedCities.length} of ${maxSelections} cities selected`}
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
           <div className="flex items-center gap-3">
-            <div className="relative w-4 h-4 rounded-full bg-gradient-to-br from-brand-500 to-purple-600 shadow-glow-subtle" aria-hidden="true">
-              <div className="absolute inset-0 rounded-full bg-brand-500/40 animate-pulse" />
+            <div className="relative w-4 h-4 rounded-full bg-zinc-100" aria-hidden="true">
+              <div className="absolute inset-0 rounded-full bg-zinc-100/50 animate-pulse" />
             </div>
             <span className="font-semibold text-white/90 text-sm">Selected</span>
           </div>
