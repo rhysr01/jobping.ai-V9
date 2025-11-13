@@ -25,6 +25,7 @@ export default function Hero() {
   const [displayGraduates, setDisplayGraduates] = useState(0);
   const [displayTotalUsers, setDisplayTotalUsers] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [statsStale, setStatsStale] = useState(false);
   const prefersReduced = useReducedMotion();
 
   useEffect(() => {
@@ -45,14 +46,33 @@ export default function Hero() {
         };
 
         if (data) {
-          setActiveJobsTarget(parseStat(data.activeJobs ?? data.activeJobsFormatted, 12748));
-          setInternshipsTarget(parseStat(data.internships, 4997));
-          setGraduatesTarget(parseStat(data.graduates, 3953));
-          setTotalUsersTarget(parseStat(data.totalUsers ?? data.totalUsersFormatted, 3400));
+          const activeJobs = parseStat(data.activeJobs ?? data.activeJobsFormatted, 0);
+          const internships = parseStat(data.internships, 0);
+          const graduates = parseStat(data.graduates, 0);
+          const totalUsers = parseStat(data.totalUsers ?? data.totalUsersFormatted, 0);
+
+          const hasFreshStats =
+            activeJobs > 0 && totalUsers > 0;
+
+          setActiveJobsTarget(hasFreshStats && activeJobs > 0 ? activeJobs : 12748);
+          setInternshipsTarget(hasFreshStats && internships > 0 ? internships : 4997);
+          setGraduatesTarget(hasFreshStats && graduates > 0 ? graduates : 3953);
+          setTotalUsersTarget(hasFreshStats && totalUsers > 0 ? totalUsers : 3400);
+          setStatsStale(!hasFreshStats);
+        } else {
+          setStatsStale(true);
+          setActiveJobsTarget(12748);
+          setInternshipsTarget(4997);
+          setGraduatesTarget(3953);
+          setTotalUsersTarget(3400);
         }
       } catch (err) {
         console.error('Failed to fetch stats:', err);
-        // Keep defaults when the stats API is unreachable
+        setStatsStale(true);
+        setActiveJobsTarget(12748);
+        setInternshipsTarget(4997);
+        setGraduatesTarget(3953);
+        setTotalUsersTarget(3400);
       } finally {
         setIsLoading(false);
       }
@@ -395,6 +415,11 @@ export default function Hero() {
               </div>
             )}
           </div>
+          {!isLoading && statsStale && (
+            <p className="mt-3 max-w-xl text-center text-xs text-amber-300 sm:text-sm">
+              Live stats are temporarily unavailable — showing a typical week until fresh data syncs.
+            </p>
+          )}
         </motion.div>
 
         <motion.div

@@ -10,30 +10,52 @@ import {
   FREE_ROLES_PER_SEND,
 } from '@/lib/productMetrics';
 
-interface StatsResponse {
-  totalUsersFormatted?: string;
-  activeJobsFormatted?: string;
-}
-
 export default function SocialProofRow() {
-  const [stats, setStats] = useState<StatsResponse>({});
+  const [activeJobs, setActiveJobs] = useState('12,000');
+  const [totalUsers, setTotalUsers] = useState('3,400');
   const [loading, setLoading] = useState(true);
+  const [statsStale, setStatsStale] = useState(true);
 
   useEffect(() => {
     let isSubscribed = true;
 
+    const normalize = (value: unknown): number => {
+      if (typeof value === 'number' && !Number.isNaN(value)) return value;
+      if (typeof value === 'string') {
+        const numeric = Number(value.replace(/,/g, ''));
+        if (!Number.isNaN(numeric)) return numeric;
+      }
+      return 0;
+    };
+
     fetch('/api/stats')
       .then((res) => (res.ok ? res.json() : null))
-      .then((data: StatsResponse | null) => {
-        if (isSubscribed && data) {
-          setStats({
-            totalUsersFormatted: data.totalUsersFormatted,
-            activeJobsFormatted: data.activeJobsFormatted,
-          });
+      .then((data: Record<string, unknown> | null) => {
+        if (!isSubscribed) return;
+
+        if (data) {
+          const activeValue = normalize(data.activeJobs ?? data.activeJobsFormatted);
+          const totalValue = normalize(data.totalUsers ?? data.totalUsersFormatted);
+          const hasFreshStats = activeValue > 0 && totalValue > 0;
+
+          setActiveJobs(
+            hasFreshStats ? activeValue.toLocaleString('en-US') : '12,000'
+          );
+          setTotalUsers(
+            hasFreshStats ? totalValue.toLocaleString('en-US') : '3,400'
+          );
+          setStatsStale(!hasFreshStats);
+        } else {
+          setActiveJobs('12,000');
+          setTotalUsers('3,400');
+          setStatsStale(true);
         }
       })
       .catch(() => {
-        // swallow errors gracefully; we'll use defaults below
+        if (!isSubscribed) return;
+        setActiveJobs('12,000');
+        setTotalUsers('3,400');
+        setStatsStale(true);
       })
       .finally(() => isSubscribed && setLoading(false));
 
@@ -42,14 +64,11 @@ export default function SocialProofRow() {
     };
   }, []);
 
-  const activeJobs = stats.activeJobsFormatted ?? '12,000';
-  const totalUsers = stats.totalUsersFormatted ?? '3,400';
-
   const items = [
     {
       icon: <BrandIcons.Users className="h-5 w-5" />,
       eyebrow: 'Students across Europe',
-      title: `Join ${totalUsers}+ students`,
+      title: statsStale ? 'Thousands of students rely on JobPing' : `Join ${totalUsers}+ students`,
       description: 'Early-career candidates rely on JobPing each week.',
     },
     {
@@ -60,7 +79,7 @@ export default function SocialProofRow() {
     },
     {
       icon: <BrandIcons.Target className="h-5 w-5" />,
-      eyebrow: 'Opportunities live now',
+      eyebrow: statsStale ? 'Opportunities (typical week)' : 'Opportunities live now',
       title: `${activeJobs} active opportunities`,
       description: 'Filtered by city, visa status, and experience to fit real applicants.',
     },
@@ -94,6 +113,11 @@ export default function SocialProofRow() {
             </div>
           ))}
         </motion.div>
+        {!loading && statsStale && (
+          <p className="mt-4 text-center text-sm text-amber-300">
+            Live stats are temporarily unavailable — showing a typical week until fresh data syncs.
+          </p>
+        )}
       </div>
     </section>
   );

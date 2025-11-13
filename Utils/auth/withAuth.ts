@@ -8,8 +8,8 @@ export interface AuthConfig {
 }
 
 export function requireSystemKey(req: NextRequest): void {
-  const apiKey = req.headers.get('x-api-key');
-  const systemKey = process.env.SYSTEM_API_KEY;
+  const apiKey = req.headers.get('x-api-key')?.trim();
+  const systemKey = process.env.SYSTEM_API_KEY?.trim();
   
   if (!systemKey) {
     throw new Error('SYSTEM_API_KEY not configured');
