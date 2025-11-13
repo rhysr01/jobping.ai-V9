@@ -79,7 +79,7 @@ export default function SocialProofRow() {
     },
     {
       icon: <BrandIcons.Target className="h-5 w-5" />,
-      eyebrow: statsStale ? 'Opportunities (typical week)' : 'Opportunities live now',
+      eyebrow: 'Opportunities live now',
       title: `${activeJobs} active opportunities`,
       description: 'Filtered by city, visa status, and experience to fit real applicants.',
     },
@@ -113,11 +113,6 @@ export default function SocialProofRow() {
             </div>
           ))}
         </motion.div>
-        {!loading && statsStale && (
-          <p className="mt-4 text-center text-sm text-amber-300">
-            Live stats are temporarily unavailable — showing a typical week until fresh data syncs.
-          </p>
-        )}
       </div>
     </section>
   );

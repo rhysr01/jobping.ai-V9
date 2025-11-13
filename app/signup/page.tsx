@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useReducedMotion } from '@/components/ui/useReducedMotion';
 import { BrandIcons } from '@/components/ui/BrandIcons';
 import * as Copy from '@/lib/copy';
+import { SIGNUP_INITIAL_ROLES } from '@/lib/productMetrics';
 import { FormFieldError, FormFieldSuccess, FormFieldHelper } from '@/components/ui/FormFieldFeedback';
 import { useAriaAnnounce } from '@/components/ui/AriaLiveRegion';
 import { useEmailValidation, useRequiredValidation } from '@/hooks/useFormValidation';
@@ -365,11 +366,6 @@ function SignupForm() {
               First drop arrives within 48 hours
             </span>
           </div>
-          {!isLoadingStats && statsStale && (
-            <p className="mt-4 text-xs text-amber-300 sm:text-sm">
-              Live stats are temporarily unavailable — showing a typical week until fresh data syncs.
-            </p>
-          )}
         </motion.div>
 
         {/* Progress Indicator */}
@@ -505,7 +501,7 @@ function SignupForm() {
 
                 <div>
                   <label htmlFor="email" className="block text-base font-bold text-white mb-2">Email *</label>
-                  <p className="text-sm text-zinc-400 mb-3">We’ll email your first set within 48 hours.</p>
+                  <p className="text-sm text-zinc-400 mb-3">Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops every 48 hours.</p>
                   <input
                     ref={formRefs.email}
                     id="email"

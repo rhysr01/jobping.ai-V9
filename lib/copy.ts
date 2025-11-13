@@ -20,7 +20,7 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 // Hero section
 export const HERO_TITLE = "JobPing";
 export const HERO_HEADLINE = "Stop scrolling job boards.";
-export const HERO_SUBLINE = "Tell us your cities and we’ll send internships and grad roles within 48 hours—curated by humans, not feeds.";
+export const HERO_SUBLINE = `Get ${SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops every 48 hours—curated by humans, not feeds.`;
 export const HERO_SUBTITLE = VP_TAGLINE;
 export const HERO_CTA = "Get EU jobs in my inbox for free";
 export const HERO_PILL = "Curated Europe-wide internships & grad roles";
@@ -38,7 +38,7 @@ export const HOW_IT_WORKS_SUMMARY = "Share your preferences and we’ll surface 
 export const HOW_IT_WORKS_STEPS = [
   { title: "Share your preferences", description: "Pick cities, work rights, and roles in under two minutes." },
   { title: "We search every day", description: "JobPing scans European boards and company pages and filters the noise." },
-  { title: "Shortlist arrives by email", description: `You get ${FREE_ROLES_PER_SEND} roles per send; Premium adds ${PREMIUM_SENDS_PER_WEEK} drops totaling ${PREMIUM_ROLES_PER_WEEK} each week.` },
+  { title: "Shortlist arrives by email", description: `Get ${SIGNUP_INITIAL_ROLES} jobs in your welcome email, then ${FREE_ROLES_PER_SEND} roles per drop every 48 hours. Premium adds ${PREMIUM_SENDS_PER_WEEK} drops totaling ${PREMIUM_ROLES_PER_WEEK} each week.` },
 ];
 
 // Built for students
@@ -76,7 +76,7 @@ export const FREE_PLAN_FEATURES = [
   "Salary hints and visa context in every drop",
   "Pause or cancel in one click"
 ];
-export const FREE_PLAN_DESCRIPTION = `${SIGNUP_INITIAL_ROLES} jobs on signup, then ${FREE_ROLES_PER_SEND} curated roles every ${FREE_SEND_DAY_LABEL}.`;
+export const FREE_PLAN_DESCRIPTION = `${SIGNUP_INITIAL_ROLES} jobs in your welcome email, then ${FREE_ROLES_PER_SEND} curated roles every 48 hours.`;
 
 // Premium plan
 export const PREMIUM_PLAN_TITLE = "Premium";
@@ -90,7 +90,7 @@ export const PREMIUM_PLAN_FEATURES = [
   "Hot-match alerts for urgent openings",
   "Priority tweaks and intro support"
 ];
-export const PREMIUM_PLAN_DESCRIPTION = `${SIGNUP_INITIAL_ROLES} jobs on signup plus ${PREMIUM_ROLES_PER_WEEK} new roles each week (${PREMIUM_SENDS_PER_WEEK} drops on ${PREMIUM_SEND_DAYS_LABEL}).`;
+export const PREMIUM_PLAN_DESCRIPTION = `${SIGNUP_INITIAL_ROLES} jobs in your welcome email, then ${PREMIUM_ROLES_PER_WEEK} new roles each week (${PREMIUM_SENDS_PER_WEEK} drops every 48 hours on ${PREMIUM_SEND_DAYS_LABEL}).`;
 
 // Reassurance
 export const REASSURANCE_ITEMS = [

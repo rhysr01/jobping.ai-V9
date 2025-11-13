@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Button from "@/components/ui/Button";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 import {
+  SIGNUP_INITIAL_ROLES,
   FREE_ROLES_PER_SEND,
   PREMIUM_ROLES_PER_WEEK,
   PREMIUM_ROLES_PER_MONTH,
@@ -32,7 +33,7 @@ export default function SecondaryCTA() {
                 Your first curated drop lands within 48 hours.
               </h3>
               <p className="text-base text-zinc-300 sm:text-lg">
-                We hand-check every shortlist. Free users receive {FREE_ROLES_PER_SEND} roles in the first drop,
+                Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops every 48 hours. Free users receive {FREE_ROLES_PER_SEND} roles per drop,
                 and Premium keeps {PREMIUM_ROLES_PER_WEEK} new opportunities flowing each week (~{PREMIUM_ROLES_PER_MONTH} per month).
               </p>
               <p className="text-sm text-zinc-400">
