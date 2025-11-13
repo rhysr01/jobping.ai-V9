@@ -249,21 +249,27 @@ export function HeroGeometric() {
       className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#05010f] via-[#090018] to-[#11002c]"
       style={{ minHeight: '100vh', position: 'relative', zIndex: 1 }}
     >
-      {/* Background gradient - brighter */}
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-500/[0.12] via-purple-600/[0.08] to-brand-500/[0.10] blur-3xl" />
+      {/* Background gradient - brighter with cyan accents */}
+      <div className="absolute inset-0 bg-gradient-to-br from-brand-500/[0.12] via-cyan-500/[0.08] to-purple-600/[0.10] blur-3xl" />
 
       {/* Sparkles particles effect */}
       {!prefersReduced && (
         <div className="absolute inset-0 z-0">
+          {/* Gradient lines like original demo */}
+          <div className="absolute inset-x-20 top-[20%] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent h-[2px] w-3/4 blur-sm" />
+          <div className="absolute inset-x-20 top-[20%] bg-gradient-to-r from-transparent via-cyan-400/80 to-transparent h-px w-3/4" />
+          <div className="absolute inset-x-60 top-[30%] bg-gradient-to-r from-transparent via-sky-400/60 to-transparent h-[5px] w-1/4 blur-sm" />
+          <div className="absolute inset-x-60 top-[30%] bg-gradient-to-r from-transparent via-sky-400/80 to-transparent h-px w-1/4" />
+          
           <SparklesCore
             id="hero-sparkles"
             background="transparent"
-            minSize={2}
-            maxSize={5}
-            particleDensity={300}
+            minSize={1.5}
+            maxSize={4}
+            particleDensity={250}
             className="w-full h-full"
-            particleColor="#9A6AFF"
-            speed={5}
+            particleColor="#FFFFFF"
+            speed={4}
           />
         </div>
       )}
@@ -337,16 +343,8 @@ export function HeroGeometric() {
             animate="visible"
           >
             <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold mb-6 md:mb-8 tracking-tight">
-              <span className="bg-clip-text text-transparent bg-gradient-to-b from-white to-white/80">
-                {Copy.HERO_HEADLINE}
-              </span>
-              <br />
-              <span
-                className={cn(
-                  "bg-clip-text text-transparent bg-gradient-to-r from-brand-300 via-white/90 to-purple-300"
-                )}
-              >
-                {Copy.HERO_SUBLINE.split("—")[0]}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-300 via-white to-purple-300">
+                JobPing
               </span>
             </h1>
           </motion.div>
@@ -359,7 +357,7 @@ export function HeroGeometric() {
             animate="visible"
           >
             <p className="text-base sm:text-lg md:text-xl text-white/70 mb-8 leading-relaxed font-light tracking-wide max-w-xl mx-auto px-4">
-              {Copy.HERO_SUBLINE.split("—")[1] || "Curated by humans, not feeds."}
+              {Copy.HERO_SUBLINE}
             </p>
           </motion.div>
 

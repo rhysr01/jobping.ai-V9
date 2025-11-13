@@ -20,7 +20,7 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 // Hero section
 export const HERO_TITLE = "JobPing";
 export const HERO_HEADLINE = "Stop scrolling job boards.";
-export const HERO_SUBLINE = `Get ${SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops every 48 hours—curated by humans, not feeds.`;
+export const HERO_SUBLINE = `Get ${SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops every 48 hours—only from JobPing.`;
 export const HERO_SUBTITLE = VP_TAGLINE;
 export const HERO_CTA = "Get EU jobs in my inbox for free";
 export const HERO_PILL = "Curated Europe-wide internships & grad roles";
