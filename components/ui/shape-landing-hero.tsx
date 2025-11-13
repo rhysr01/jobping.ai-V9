@@ -69,17 +69,17 @@ function ElegantShape({
         }}
         className="relative"
       >
-        <div
-          className={cn(
-            "absolute inset-0 rounded-full",
-            "bg-gradient-to-r to-transparent",
-            gradient,
-            "backdrop-blur-[2px] border-2 border-white/[0.20]",
-            "shadow-[0_8px_32px_0_rgba(154,106,255,0.30)]",
-            "after:absolute after:inset-0 after:rounded-full",
-            "after:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2),transparent_70%)]"
-          )}
-        />
+            <div
+              className={cn(
+                "absolute inset-0 rounded-full",
+                "bg-gradient-to-r to-transparent",
+                gradient,
+                "backdrop-blur-[1px] border border-cyan-400/20",
+                "shadow-[0_4px_16px_0_rgba(34,211,238,0.15)]",
+                "after:absolute after:inset-0 after:rounded-full",
+                "after:bg-[radial-gradient(circle_at_50%_50%,rgba(34,211,238,0.1),transparent_70%)]"
+              )}
+            />
       </motion.div>
     </motion.div>
   );
@@ -252,27 +252,6 @@ export function HeroGeometric() {
       {/* Background gradient - brighter with cyan accents */}
       <div className="absolute inset-0 bg-gradient-to-br from-brand-500/[0.12] via-cyan-500/[0.08] to-purple-600/[0.10] blur-3xl" />
 
-      {/* Sparkles particles effect */}
-      {!prefersReduced && (
-        <div className="absolute inset-0 z-0">
-          {/* Gradient lines like original demo */}
-          <div className="absolute inset-x-20 top-[20%] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent h-[2px] w-3/4 blur-sm" />
-          <div className="absolute inset-x-20 top-[20%] bg-gradient-to-r from-transparent via-cyan-400/80 to-transparent h-px w-3/4" />
-          <div className="absolute inset-x-60 top-[30%] bg-gradient-to-r from-transparent via-sky-400/60 to-transparent h-[5px] w-1/4 blur-sm" />
-          <div className="absolute inset-x-60 top-[30%] bg-gradient-to-r from-transparent via-sky-400/80 to-transparent h-px w-1/4" />
-          
-          <SparklesCore
-            id="hero-sparkles"
-            background="transparent"
-            minSize={1.5}
-            maxSize={4}
-            particleDensity={250}
-            className="w-full h-full"
-            particleColor="#FFFFFF"
-            speed={4}
-          />
-        </div>
-      )}
 
       {/* Animated geometric shapes */}
       <div className="absolute inset-0 overflow-hidden z-[1]">
@@ -281,7 +260,7 @@ export function HeroGeometric() {
           width={600}
           height={140}
           rotate={12}
-          gradient="from-brand-500/[0.25]"
+          gradient="from-cyan-400/[0.15]"
           className="left-[-10%] md:left-[-5%] top-[15%] md:top-[20%]"
         />
         <ElegantShape
@@ -289,7 +268,7 @@ export function HeroGeometric() {
           width={500}
           height={120}
           rotate={-15}
-          gradient="from-purple-600/[0.25]"
+          gradient="from-sky-400/[0.15]"
           className="right-[-5%] md:right-[0%] top-[70%] md:top-[75%]"
         />
         <ElegantShape
@@ -297,7 +276,7 @@ export function HeroGeometric() {
           width={300}
           height={80}
           rotate={-8}
-          gradient="from-brand-400/[0.25]"
+          gradient="from-cyan-300/[0.15]"
           className="left-[5%] md:left-[10%] bottom-[5%] md:bottom-[10%]"
         />
         <ElegantShape
@@ -305,7 +284,7 @@ export function HeroGeometric() {
           width={200}
           height={60}
           rotate={20}
-          gradient="from-brand-600/[0.25]"
+          gradient="from-sky-300/[0.15]"
           className="right-[15%] md:right-[20%] top-[10%] md:top-[15%]"
         />
         <ElegantShape
@@ -313,7 +292,7 @@ export function HeroGeometric() {
           width={150}
           height={40}
           rotate={-25}
-          gradient="from-purple-500/[0.25]"
+          gradient="from-cyan-500/[0.15]"
           className="left-[20%] md:left-[25%] top-[5%] md:top-[10%]"
         />
       </div>
@@ -347,6 +326,28 @@ export function HeroGeometric() {
                 JobPing
               </span>
             </h1>
+            
+            {/* Sparkles particles effect - positioned directly below JobPing title */}
+            {!prefersReduced && (
+              <div className="relative w-full h-40 -mt-4 mb-4">
+                {/* Gradient lines like original demo */}
+                <div className="absolute inset-x-20 top-0 bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent h-[2px] w-3/4 blur-sm" />
+                <div className="absolute inset-x-20 top-0 bg-gradient-to-r from-transparent via-cyan-400/80 to-transparent h-px w-3/4" />
+                <div className="absolute inset-x-60 top-10 bg-gradient-to-r from-transparent via-sky-400/60 to-transparent h-[5px] w-1/4 blur-sm" />
+                <div className="absolute inset-x-60 top-10 bg-gradient-to-r from-transparent via-sky-400/80 to-transparent h-px w-1/4" />
+                
+                <SparklesCore
+                  id="hero-sparkles"
+                  background="transparent"
+                  minSize={0.8}
+                  maxSize={2}
+                  particleDensity={60}
+                  className="w-full h-full"
+                  particleColor="#FFFFFF"
+                  speed={3}
+                />
+              </div>
+            )}
           </motion.div>
 
           {/* Subtitle */}

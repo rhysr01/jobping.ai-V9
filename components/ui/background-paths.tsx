@@ -3,30 +3,46 @@
 import { motion } from "framer-motion";
 
 function FloatingPaths({ position }: { position: number }) {
-  const paths = Array.from({ length: 36 }, (_, i) => ({
+  const paths = Array.from({ length: 15 }, (_, i) => ({
     id: i,
     d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${380 - i * 5 * position} -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${152 - i * 5 * position} ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${684 - i * 5 * position} ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
     color: `rgba(15,23,42,${0.1 + i * 0.03})`,
-    width: 0.3 + i * 0.01,
+    width: 0.15 + i * 0.003,
   }));
 
   return (
     <div className="absolute inset-0 pointer-events-none">
-      <svg className="w-full h-full text-cyan-400/30" viewBox="0 0 696 316" fill="none">
+      <svg className="w-full h-full text-cyan-400/40" viewBox="0 0 696 316" fill="none" preserveAspectRatio="xMidYMid slice">
         <title>Background Paths</title>
+        <defs>
+          <linearGradient id={`path-gradient-${position}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="rgb(34, 211, 238)" stopOpacity="0.4" />
+            <stop offset="50%" stopColor="rgb(56, 189, 248)" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="rgb(125, 211, 252)" stopOpacity="0.2" />
+          </linearGradient>
+        </defs>
         {paths.map((path) => (
           <motion.path
             key={path.id}
             d={path.d}
-            stroke="currentColor"
+            stroke={`url(#path-gradient-${position})`}
             strokeWidth={path.width}
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeOpacity={0.15 + path.id * 0.02}
+            strokeOpacity={0.2 + path.id * 0.015}
             fill="none"
-            initial={{ pathLength: 0.3, opacity: 0.6 }}
-            animate={{ pathLength: 1, opacity: [0.3, 0.6, 0.3], pathOffset: [0, 1, 0] }}
-            transition={{ duration: 20 + Math.random() * 10, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ 
+              pathLength: [0, 1, 0], 
+              opacity: [0, 0.4 + path.id * 0.02, 0],
+              pathOffset: [0, 1, 0]
+            }}
+            transition={{ 
+              duration: 15 + path.id * 2 + Math.random() * 5, 
+              repeat: Number.POSITIVE_INFINITY, 
+              ease: "easeInOut",
+              delay: path.id * 0.1
+            }}
           />
         ))}
       </svg>
@@ -39,8 +55,8 @@ export function BackgroundPaths({ title = "Background Paths" }: { title?: string
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#05010f] via-[#090018] to-[#11002c]">
-      {/* Background gradient matching JobPing theme - brighter */}
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-500/[0.12] via-purple-600/[0.08] to-brand-500/[0.10] blur-3xl" />
+      {/* Background gradient matching JobPing theme with cyan accents */}
+      <div className="absolute inset-0 bg-gradient-to-br from-brand-500/[0.12] via-cyan-500/[0.08] to-purple-600/[0.10] blur-3xl" />
       
       <div className="absolute inset-0">
         <FloatingPaths position={1} />
