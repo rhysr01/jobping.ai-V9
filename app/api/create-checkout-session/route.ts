@@ -3,36 +3,8 @@ import { createCheckoutSession, STRIPE_CONFIG } from '@/Utils/stripe';
 import { validatePromoCode } from '@/Utils/promo';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { errorResponse } from '@/Utils/errorResponse';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { getDatabaseClient } from '@/Utils/databasePool';
 import { getBaseUrl } from '@/Utils/url-helpers';
-
-let _supabaseClient: SupabaseClient | null = null;
-
-function getSupabaseClient() {
-  // Lazy initialization to prevent build-time execution
-  if (_supabaseClient) return _supabaseClient;
-  
-  // Only initialize during runtime, not build time
-  if (typeof window !== 'undefined') {
-    throw new Error('Supabase client should only be used server-side');
-  }
-  
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase configuration');
-  }
-  
-  _supabaseClient = createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
-  
-  return _supabaseClient;
-}
 
 export async function POST(req: NextRequest) {
   // PRODUCTION: Rate limiting for payment checkout (prevent abuse)
@@ -56,7 +28,7 @@ export async function POST(req: NextRequest) {
         return errorResponse.badRequest(req, validation.reason || 'Invalid promo code');
       }
 
-      const supabase = getSupabaseClient();
+      const supabase = getDatabaseClient();
       const now = new Date().toISOString();
 
       // Idempotency: if already premium, return success
@@ -106,7 +78,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify user exists and is email verified
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('*')

@@ -51,8 +51,23 @@ export async function verifySentryWorking(): Promise<{
   }
 
   try {
-    // Dynamic import to avoid issues if Sentry isn't initialized
-    const Sentry = await import('@sentry/nextjs');
+    // Try to require Sentry to avoid TypeScript errors with dynamic import
+    let Sentry: any;
+    try {
+      Sentry = require('@sentry/nextjs');
+    } catch {
+      return {
+        working: false,
+        error: 'Sentry package is not installed'
+      };
+    }
+    
+    if (!Sentry) {
+      return {
+        working: false,
+        error: 'Sentry package is not installed'
+      };
+    }
     
     // Try to capture a silent test message
     Sentry.captureMessage('Sentry health check', 'debug');

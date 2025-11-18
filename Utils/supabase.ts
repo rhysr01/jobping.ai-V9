@@ -24,11 +24,10 @@ export function getSupabaseClient(): SupabaseClient {
     throw new Error('Supabase client should only be used server-side');
   }
 
-  // Validate environment variables (try multiple var names for compatibility)
+  // Validate environment variables - prioritize service role key for security
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
-                      process.env.SUPABASE_KEY || 
-                      process.env.SUPABASE_ANON_KEY;
+  // Only use service role key - never fall back to anon key for security
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
     console.error(' Supabase env vars missing:', {

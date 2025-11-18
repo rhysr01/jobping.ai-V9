@@ -17,7 +17,7 @@ import crypto from 'crypto';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { AppError, ValidationError, UnauthorizedError } from '@/lib/errors';
 import type { CleanupLogEntry, CleanupContext } from '@/lib/types';
-import * as Sentry from '@sentry/nextjs';
+import { captureException, setTag, setContext } from '@/lib/sentry-utils';
 
 // Security configuration
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
@@ -214,7 +214,7 @@ class JobCleanupAPI {
           this.metrics.errors++;
           
           // Report batch errors to Sentry
-          Sentry.captureException(new AppError(`Batch deletion failed: ${error.message}`, 500, 'DATABASE_ERROR'));
+captureException(new AppError(`Batch deletion failed: ${error.message}`, 500, 'DATABASE_ERROR'));
           continue;
         }
 
@@ -229,7 +229,7 @@ class JobCleanupAPI {
       } catch (error) {
         this.log('error', `Unexpected error in batch ${batchNumber}`, { error });
         this.metrics.errors++;
-        Sentry.captureException(error instanceof Error ? error : new Error('Batch processing error'));
+captureException(error instanceof Error ? error : new Error('Batch processing error'));
       }
     }
 
@@ -297,8 +297,8 @@ export const POST = async (req: NextRequest) => {
   
   try {
     // Set Sentry context
-    Sentry.setTag('operation', 'job-cleanup');
-    Sentry.setContext('request', { requestId });
+setTag('operation', 'job-cleanup');
+setContext('request', { requestId });
 
     // Authenticate the request
     authenticateRequest(req);
@@ -332,7 +332,7 @@ export const POST = async (req: NextRequest) => {
     console.error(`[${requestId}] Cleanup API error:`, error);
     
     // Report errors to Sentry
-    Sentry.captureException(error instanceof Error ? error : new Error('Cleanup API error'));
+captureException(error instanceof Error ? error : new Error('Cleanup API error'));
     
     return NextResponse.json({
       success: false,

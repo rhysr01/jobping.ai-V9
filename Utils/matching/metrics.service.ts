@@ -4,7 +4,7 @@
  */
 
 import { getDatabaseClient } from '@/Utils/databasePool';
-import * as Sentry from '@sentry/nextjs';
+import { addBreadcrumb } from '@/lib/sentry-utils';
 
 export interface MatchMetrics {
   recallAt50: number; // Recall@50: Percentage of relevant jobs in top 50 results
@@ -82,7 +82,7 @@ export async function logMatchMetrics(metrics: MatchMetrics): Promise<void> {
     }
     
     // Log to Sentry for monitoring
-    Sentry.addBreadcrumb({
+    addBreadcrumb({
       message: 'Match metrics logged',
       level: 'info',
       data: {

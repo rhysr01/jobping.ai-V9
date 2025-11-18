@@ -5,7 +5,7 @@ import { verifyHMAC, isHMACRequired } from '@/Utils/auth/hmac';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { getDatabaseClient } from '@/Utils/databasePool';
-import * as Sentry from '@sentry/nextjs';
+import { captureException, addBreadcrumb, setContext, captureMessage, setTag } from '@/lib/sentry-utils';
 import {
   logMatchSession
 } from '@/Utils/matching/logging.service';
@@ -176,7 +176,7 @@ function distributeJobs(
   const startTime = Date.now();
   
   // Log job distribution to Sentry breadcrumb
-  Sentry.addBreadcrumb({
+addBreadcrumb({
     message: 'Job distribution started',
     level: 'debug',
     data: { userTier, userId, totalJobs: jobs.length }
@@ -259,7 +259,7 @@ function distributeJobs(
   const processingTime = Date.now() - startTime;
   
   // Log job selection completion to Sentry breadcrumb
-  Sentry.addBreadcrumb({
+addBreadcrumb({
     message: 'Job selection completed',
     level: 'debug',
     data: { userId, userTier, selectedCount: selectedJobs.length, processingTime }
@@ -397,7 +397,7 @@ const matchUsersHandler = async (req: NextRequest) => {
   });
   
   // Sentry context for API monitoring
-  Sentry.setContext('api', {
+setContext('api', {
     endpoint: '/api/match-users',
     method: 'POST',
     startTime: new Date().toISOString(),
@@ -429,7 +429,7 @@ const matchUsersHandler = async (req: NextRequest) => {
     const parseResult = matchUsersRequestSchema.safeParse(body);
     
     if (!parseResult.success) {
-      Sentry.addBreadcrumb({
+addBreadcrumb({
         message: 'Invalid request parameters',
         level: 'warning',
         data: { errors: parseResult.error.issues }
@@ -533,7 +533,7 @@ const matchUsersHandler = async (req: NextRequest) => {
     }
 
     // Log user count to Sentry breadcrumb (no console spam)
-    Sentry.addBreadcrumb({
+addBreadcrumb({
       message: 'Active users found',
       level: 'info',
       data: { userCount: users.length }
@@ -625,7 +625,7 @@ const matchUsersHandler = async (req: NextRequest) => {
     }
 
     // Log job fetch results to Sentry breadcrumb
-    Sentry.addBreadcrumb({
+addBreadcrumb({
       message: 'Jobs fetched successfully',
       level: 'info',
       data: { jobCount: jobs.length, fetchTime: jobFetchTime }
@@ -675,7 +675,7 @@ const matchUsersHandler = async (req: NextRequest) => {
 
     // Log overall job distribution
     // Log total jobs to Sentry breadcrumb
-    Sentry.addBreadcrumb({
+addBreadcrumb({
       message: 'Total jobs processed',
       level: 'debug',
       data: { totalJobs: jobs.length }
@@ -766,7 +766,7 @@ const matchUsersHandler = async (req: NextRequest) => {
         // Top 50 contains all perfect/great matches from pre-filtering
         const considered = preFilteredJobs.slice(0, 50);
         // Log pre-filter results to Sentry breadcrumb
-        Sentry.addBreadcrumb({
+addBreadcrumb({
           message: 'Pre-filter results',
           level: 'debug',
           data: {
@@ -781,7 +781,7 @@ const matchUsersHandler = async (req: NextRequest) => {
           const top10Scores = preFilteredJobs.slice(0, 10).map((j: any) => (j as any).score || 'N/A');
           const next40Scores = preFilteredJobs.slice(10, 50).map((j: any) => (j as any).score || 'N/A');
           
-          Sentry.addBreadcrumb({
+addBreadcrumb({
             message: 'Job score distribution analysis',
             level: 'debug',
             data: {
@@ -1074,7 +1074,7 @@ const matchUsersHandler = async (req: NextRequest) => {
               };
               
               // Log diversity improvement to Sentry breadcrumb
-              Sentry.addBreadcrumb({
+addBreadcrumb({
                 message: 'Added alternative job for diversity',
                 level: 'debug',
                 data: {
@@ -1101,7 +1101,7 @@ const matchUsersHandler = async (req: NextRequest) => {
           const finalUniqueCities = new Set(finalCities);
           
           // Log final diversity to Sentry breadcrumb
-          Sentry.addBreadcrumb({
+addBreadcrumb({
             message: 'Final diversity achieved',
             level: 'debug',
             data: {
@@ -1128,12 +1128,43 @@ const matchUsersHandler = async (req: NextRequest) => {
           const matchesWithEmail = matches.map(m => ({ ...m, user_email: user.email }));
           
           try {
-            // NOTE: Match saving temporarily disabled - matches are logged for debugging
-            apiLogger.debug(`Would save matches for user`, {
-              userEmail: user.email,
-              matchCount: matchesWithEmail.length,
-              matches: matchesWithEmail.map(m => ({ job_hash: m.job_hash, match_score: m.match_score }))
-            });
+            // Save matches to database
+            const matchEntries = matchesWithEmail
+              .filter(m => m.job_hash) // Ensure job_hash exists
+              .map(match => ({
+                user_email: match.user_email,
+                job_hash: match.job_hash,
+                match_score: typeof match.match_score === 'number' 
+                  ? (match.match_score > 1 ? match.match_score / 100 : match.match_score) // Normalize to 0-1 range
+                  : 0.85, // Default score if missing
+                match_reason: match.match_reason || 'AI match',
+                matched_at: new Date().toISOString(),
+                created_at: new Date().toISOString(),
+                match_algorithm: finalProvenance.match_algorithm || 'ai',
+                ai_latency_ms: finalProvenance.ai_latency_ms || null,
+                cache_hit: finalProvenance.cache_hit || false,
+                fallback_reason: finalProvenance.fallback_reason || null,
+              }));
+
+            if (matchEntries.length > 0) {
+              const { error: saveError } = await supabase
+                .from('matches')
+                .upsert(matchEntries, {
+                  onConflict: 'user_email,job_hash',
+                });
+
+              if (saveError) {
+                apiLogger.error(`Failed to save matches for user`, saveError as Error, { 
+                  userEmail: user.email,
+                  error: saveError.message 
+                });
+              } else {
+                apiLogger.info(`Saved ${matchEntries.length} matches for user`, { 
+                  userEmail: user.email,
+                  matchCount: matchEntries.length 
+                });
+              }
+            }
           } catch (error) {
             apiLogger.error(`Failed to save matches for user`, error as Error, { userEmail: user.email });
           }
@@ -1176,7 +1207,7 @@ const matchUsersHandler = async (req: NextRequest) => {
         target: MATCH_SLO_MS,
         processed: users.length
       });
-      Sentry.addBreadcrumb({
+addBreadcrumb({
         message: 'Match-users SLO violation',
         level: 'warning',
         data: {
@@ -1197,10 +1228,7 @@ const matchUsersHandler = async (req: NextRequest) => {
     
     if (errorRate > 10) {
       apiLogger.warn(`High error rate detected`, { errorRate: errorRate.toFixed(2) });
-      Sentry.captureMessage(`High error rate: ${errorRate.toFixed(2)}%`, {
-        level: 'warning',
-        tags: { errorRate: errorRate.toFixed(2) }
-      });
+      captureMessage(`High error rate: ${errorRate.toFixed(2)}%`, 'warning');
     }
     
     lap('done');
@@ -1208,7 +1236,7 @@ const matchUsersHandler = async (req: NextRequest) => {
     // Summary breadcrumb for the entire request with comprehensive metrics
     const successfulResults = results.filter(r => r.success);
     
-    Sentry.addBreadcrumb({
+addBreadcrumb({
       message: 'Match-users request completed',
       level: 'info',
       data: {
@@ -1249,7 +1277,7 @@ const matchUsersHandler = async (req: NextRequest) => {
     apiLogger.error('Match-users processing error', error as Error, { requestId, requestDuration });
     
     // Sentry error tracking with context
-    Sentry.captureException(error, {
+captureException(error, {
       tags: {
         endpoint: 'match-users',
         operation: 'batch-processing',

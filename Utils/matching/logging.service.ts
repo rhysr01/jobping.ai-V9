@@ -3,26 +3,11 @@
  * Extracted from the massive jobMatching.ts file
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { getDatabaseClient } from '@/Utils/databasePool';
 
+// Use centralized database pool
 function getSupabaseClient() {
-  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'test') {
-    throw new Error('Supabase client should only be used server-side');
-  }
-  
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase configuration');
-  }
-  
-  return createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
+  return getDatabaseClient();
 }
 
 export interface MatchSessionLog {

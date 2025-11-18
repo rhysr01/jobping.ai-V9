@@ -3,13 +3,23 @@
  * 
  * This file configures Sentry for client-side error tracking in the browser.
  * It's automatically loaded by the Sentry Next.js plugin.
+ * 
+ * NOTE: Sentry is optional - this file will be a no-op if Sentry is not installed.
  */
 
-import * as Sentry from '@sentry/nextjs';
+// Using any type to avoid TypeScript errors when package is not installed
+let Sentry: any;
+try {
+  Sentry = require('@sentry/nextjs');
+} catch {
+  // Sentry not installed - that's okay, we'll work without it
+  Sentry = undefined;
+}
 
 const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.SENTRY_DSN;
 
-Sentry.init({
+if (Sentry && SENTRY_DSN) {
+  Sentry.init({
   dsn: SENTRY_DSN,
   environment: process.env.NODE_ENV || 'development',
   release: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || '1.0.0',
@@ -22,7 +32,7 @@ Sentry.init({
   replaysOnErrorSampleRate: 0,
   
   // Enhanced error filtering for client-side
-  beforeSend(event, hint) {
+  beforeSend(event: any, hint: any) {
     // Filter out common client-side noise
     const error = hint.originalException;
     
@@ -43,7 +53,7 @@ Sentry.init({
       
       // Filter out script errors from external domains
       if (error.message === 'Script error.' && 
-          !event.exception?.values?.[0]?.stacktrace?.frames?.some(frame => 
+          !event.exception?.values?.[0]?.stacktrace?.frames?.some((frame: any) => 
             frame.filename?.includes('getjobping.com') || 
             frame.filename?.includes('localhost')
           )) {
@@ -58,7 +68,7 @@ Sentry.init({
   integrations: [],
   
   // Additional client-side configuration
-  beforeBreadcrumb(breadcrumb) {
+  beforeBreadcrumb(breadcrumb: any) {
     // Filter out noisy navigation breadcrumbs
     if (breadcrumb.category === 'navigation' && 
         breadcrumb.data?.from === breadcrumb.data?.to) {
@@ -82,4 +92,5 @@ Sentry.init({
       component: 'frontend',
     },
   },
-});
+  });
+}

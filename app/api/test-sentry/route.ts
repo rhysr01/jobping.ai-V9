@@ -9,8 +9,17 @@
  */
 
 import { NextResponse, NextRequest } from 'next/server';
-import * as Sentry from '@sentry/nextjs';
 import { requireSystemKey } from '@/Utils/auth/withAuth';
+import { isSentryAvailable } from '@/lib/sentry-utils';
+
+// Try to import Sentry, but don't fail if it's not available
+// Using any type to avoid TypeScript errors when package is not installed
+let Sentry: any;
+try {
+  Sentry = require('@sentry/nextjs');
+} catch {
+  Sentry = undefined;
+}
 
 interface SentryStatus {
   configured: boolean;
@@ -32,6 +41,28 @@ interface SentryStatus {
 }
 
 function getSentryStatus(): SentryStatus {
+  // First check if Sentry package is installed
+  if (!Sentry) {
+    return {
+      configured: false,
+      initialized: false,
+      serverSide: {
+        dsnConfigured: false,
+        dsnValue: null,
+      },
+      clientSide: {
+        dsnConfigured: false,
+        dsnValue: null,
+      },
+      environment: process.env.NODE_ENV || 'unknown',
+      release: process.env.VERCEL_GIT_COMMIT_SHA || '1.0.0',
+      sampleRate: {
+        traces: 0,
+        profiles: 0,
+      },
+    };
+  }
+
   const serverDsn = process.env.SENTRY_DSN;
   const clientDsn = process.env.NEXT_PUBLIC_SENTRY_DSN || serverDsn;
   
@@ -128,6 +159,18 @@ export async function GET(req: NextRequest) {
   }
 
   // Sentry is configured - test it
+  if (!Sentry) {
+    return NextResponse.json({
+      success: false,
+      status: 'not_installed',
+      message: 'Sentry package is not installed',
+      details: {
+        package: '@sentry/nextjs',
+        hint: 'Sentry has been removed as an optional dependency. The application will work without it.'
+      }
+    }, { status: 200 });
+  }
+
   try {
     // Set user context for the test
     Sentry.setUser({

@@ -6,7 +6,7 @@
 import { Job as ScrapersJob } from '@/scrapers/types';
 import type { UserPreferences } from '@/Utils/matching/types';
 import { getDatabaseClient } from '@/Utils/databasePool';
-import * as Sentry from '@sentry/nextjs';
+import { addBreadcrumb } from '@/lib/sentry-utils';
 import { MATCH_RULES } from '@/Utils/sendConfiguration';
 import { getDatabaseCategoriesForForm } from './categoryMapper';
 
@@ -54,7 +54,7 @@ export async function preFilterJobsByUserPreferencesEnhanced(
       
       // Track feedback boosts for Sentry breadcrumb (no per-job logging)
       if (feedbackBoosts.size > 0) {
-        Sentry.addBreadcrumb({
+        addBreadcrumb({
           message: 'Feedback boosts applied',
           level: 'debug',
           data: {
@@ -412,7 +412,7 @@ export async function preFilterJobsByUserPreferencesEnhanced(
   const sourceCounts = Object.entries(sourceCount).map(([s, c]) => `${s}:${c}`).join(', ');
   
   // Log job filtering results to Sentry breadcrumb instead of console
-  Sentry.addBreadcrumb({
+  addBreadcrumb({
     message: 'Job filtering completed',
     level: 'info',
     data: {
