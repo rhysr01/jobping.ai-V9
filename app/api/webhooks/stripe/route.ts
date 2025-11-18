@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { constructWebhookEvent } from '@/Utils/stripe';
 import { getDatabaseClient } from '@/Utils/databasePool';
-import * as Sentry from '@sentry/nextjs';
+import { captureException, setContext, addBreadcrumb, captureMessage } from '@/lib/sentry-utils';
 import crypto from 'crypto';
 
 // Idempotency tracking: store processed event IDs in memory (for production, use Redis)
@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
       event = constructWebhookEvent(rawBody, signature);
     } catch (error) {
       console.error('Webhook signature verification failed:', error);
-      Sentry.captureException(error, {
+captureException(error, {
         tags: {
           endpoint: 'stripe-webhook',
           operation: 'signature-verification',
@@ -223,7 +223,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Set Sentry context
-    Sentry.setContext('stripe-webhook', {
+setContext('stripe-webhook', {
       eventId: event.id,
       eventType: event.type,
       requestId,
@@ -257,7 +257,7 @@ export async function POST(req: NextRequest) {
     const duration = Date.now() - startTime;
 
     // Log to Sentry
-    Sentry.addBreadcrumb({
+addBreadcrumb({
       message: 'Stripe webhook processed',
       level: result.success ? 'info' : 'error',
       data: {
@@ -269,14 +269,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!result.success) {
-      Sentry.captureMessage(`Stripe webhook processing failed: ${result.error}`, {
-        level: 'error',
-        tags: {
-          endpoint: 'stripe-webhook',
-          eventType: event.type,
-          requestId
-        }
-      });
+      captureMessage(`Stripe webhook processing failed: ${result.error}`, 'error');
     }
 
     return NextResponse.json({
@@ -291,7 +284,7 @@ export async function POST(req: NextRequest) {
     const duration = Date.now() - startTime;
     console.error('Stripe webhook error:', error);
     
-    Sentry.captureException(error, {
+captureException(error, {
       tags: {
         endpoint: 'stripe-webhook',
         operation: 'webhook-processing',

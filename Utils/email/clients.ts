@@ -15,23 +15,11 @@ export function getResendClient() {
   return new Resend(apiKey);
 }
 
-// Supabase client for email tracking
+// Supabase client for email tracking - uses centralized database pool
 export function getSupabaseClient() {
-  const { createClient } = require('@supabase/supabase-js');
-  
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase configuration');
-  }
-  
-  return createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
+  // Re-export from centralized database pool for consistency
+  const { getDatabaseClient } = require('../databasePool');
+  return getDatabaseClient();
 }
 
 // Use centralized helpers for consistency

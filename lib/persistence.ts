@@ -1,14 +1,9 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { getDatabaseClient } from "@/Utils/databasePool";
 
-let supabase: SupabaseClient | null = null;
+// Use centralized database pool instead of creating separate client
 function getClient(): SupabaseClient {
-  if (!supabase) {
-    const url = process.env.SUPABASE_URL as string;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
-    if (!url || !key) throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-    supabase = createClient(url, key);
-  }
-  return supabase;
+  return getDatabaseClient();
 }
 
 export async function upsertRaw(jobs: any[]) {

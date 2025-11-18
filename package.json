@@ -24,7 +24,6 @@
   },
   "dependencies": {
     "@radix-ui/react-slot": "1.2.4",
-    "@sentry/nextjs": "10.10.0",
     "@stripe/react-stripe-js": "3.9.2",
     "@stripe/stripe-js": "7.9.0",
     "@supabase/supabase-js": "2.57.4",

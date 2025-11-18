@@ -9,7 +9,7 @@
  */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import * as Sentry from '@sentry/nextjs';
+import { captureException, addBreadcrumb } from '@/lib/sentry-utils';
 
 class DatabasePool {
   private static instance: SupabaseClient | null = null;
@@ -48,24 +48,23 @@ class DatabasePool {
           }
         });
 
-        // Perform initial health check
-        this.performHealthCheck();
+        // Perform initial health check (fire and forget - don't block initialization)
+        // Errors will be logged but won't prevent pool initialization
+        this.performHealthCheck().catch(err => {
+          console.warn(' Initial health check failed (non-blocking):', err);
+        });
         
         console.log(' Database connection pool initialized');
         
       } catch (error) {
         console.error(' Failed to initialize database pool:', error);
         
-        // Sentry error tracking for database initialization failures
-        Sentry.captureException(error, {
-          tags: {
-            component: 'database-pool',
-            operation: 'initialization'
-          },
-          extra: {
-            supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'configured' : 'missing',
-            supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'configured' : 'missing'
-          }
+        // Error tracking for database initialization failures
+        captureException(error as Error, {
+          component: 'database-pool',
+          operation: 'initialization',
+          supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'configured' : 'missing',
+          supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'configured' : 'missing'
         });
         
         throw error;
@@ -87,8 +86,8 @@ class DatabasePool {
       if (error) {
         console.warn(' Database health check failed:', error.message);
         
-        // Sentry warning for database health check failures
-        Sentry.addBreadcrumb({
+        // Warning for database health check failures
+        addBreadcrumb({
           message: 'Database health check failed',
           level: 'warning',
           data: { error: error.message }

@@ -3,13 +3,23 @@
  * 
  * This file configures Sentry for server-side error tracking in Next.js.
  * It's automatically loaded by the Sentry Next.js plugin.
+ * 
+ * NOTE: Sentry is optional - this file will be a no-op if Sentry is not installed.
  */
 
-import * as Sentry from '@sentry/nextjs';
+// Using any type to avoid TypeScript errors when package is not installed
+let Sentry: any;
+try {
+  Sentry = require('@sentry/nextjs');
+} catch {
+  // Sentry not installed - that's okay, we'll work without it
+  Sentry = undefined;
+}
 
 const SENTRY_DSN = process.env.SENTRY_DSN;
 
-Sentry.init({
+if (Sentry && SENTRY_DSN) {
+  Sentry.init({
   dsn: SENTRY_DSN,
   environment: process.env.NODE_ENV || 'development',
   release: process.env.VERCEL_GIT_COMMIT_SHA || process.env.npm_package_version || '1.0.0',
@@ -19,7 +29,7 @@ Sentry.init({
   profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
   
   // Enhanced error filtering for server-side
-  beforeSend(event, hint) {
+  beforeSend(event: any, hint: any) {
     const error = hint.originalException;
     
     if (error instanceof Error) {
@@ -57,14 +67,14 @@ Sentry.init({
   },
   
   // Leave transactions unchanged (SDK typing for TransactionEvent is limited)
-  beforeSendTransaction(transaction) {
+  beforeSendTransaction(transaction: any) {
     return transaction;
   },
   
   // Use default integrations provided by @sentry/nextjs
   
   // Breadcrumb configuration
-  beforeBreadcrumb(breadcrumb) {
+  beforeBreadcrumb(breadcrumb: any) {
     // Filter out noisy HTTP breadcrumbs
     if (breadcrumb.category === 'http' && breadcrumb.data?.url) {
       // Skip health checks and static assets
@@ -109,7 +119,8 @@ Sentry.init({
       runtime: 'nodejs',
     },
   },
-});
+  });
+}
 
-// Export Sentry for use in other modules
+// Export Sentry for use in other modules (will be undefined if not installed)
 export { Sentry };

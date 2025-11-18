@@ -3,7 +3,7 @@ import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { HTTP_STATUS } from '@/Utils/constants';
 import { getDatabaseClient } from '@/Utils/databasePool';
 import { z } from 'zod';
-import * as Sentry from '@sentry/nextjs';
+import { captureException, addBreadcrumb } from '@/lib/sentry-utils';
 import type { UserMatchesResponse, UserMatchesRequest } from '@/lib/api-types';
 import { createSuccessResponse, createErrorResponse } from '@/lib/api-types';
 import { verifyHMAC, isHMACRequired } from '@/Utils/auth/hmac';
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Add Sentry breadcrumb for user context
-    Sentry.addBreadcrumb({
+addBreadcrumb({
       message: 'User matches request',
       level: 'info',
       data: { email, limit, minScore }
@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
       console.error('Failed to fetch user matches:', matchesError);
       
       // Capture error in Sentry
-      Sentry.captureException(matchesError, {
+captureException(matchesError, {
         tags: { component: 'user-matches-api' },
         extra: { email, limit, minScore }
       });
@@ -137,7 +137,7 @@ export async function GET(req: NextRequest) {
     console.error('User matches API error:', error);
     
     // Capture error in Sentry with user context
-    Sentry.captureException(error, {
+captureException(error, {
       tags: { component: 'user-matches-api' },
       extra: { 
         email: new URL(req.url).searchParams.get('email'),

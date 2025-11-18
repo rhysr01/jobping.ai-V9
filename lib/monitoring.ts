@@ -13,7 +13,15 @@
  * - Development vs production logging strategies
  */
 
-import * as Sentry from '@sentry/nextjs';
+// Optional Sentry import - will be undefined if package is not installed
+// Using any type to avoid TypeScript errors when package is not installed
+let Sentry: any;
+try {
+  Sentry = require('@sentry/nextjs');
+} catch {
+  // Sentry not installed - that's okay, we'll work without it
+  Sentry = undefined;
+}
 
 // Environment detection
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -44,7 +52,7 @@ let sentryInitialized = false;
 export function initializeMonitoring(): void {
   if (sentryInitialized || isTest) return;
 
-  if (MONITORING_CONFIG.sentry.dsn) {
+  if (MONITORING_CONFIG.sentry.dsn && Sentry) {
     Sentry.init({
       dsn: MONITORING_CONFIG.sentry.dsn,
       environment: MONITORING_CONFIG.sentry.environment,
@@ -54,7 +62,7 @@ export function initializeMonitoring(): void {
       debug: MONITORING_CONFIG.sentry.debug,
 
       // Enhanced error filtering
-      beforeSend(event, hint) {
+      beforeSend(event: any, hint: any) {
         // Filter out noisy errors in development
         if (isDevelopment) {
           const error = hint.originalException;
@@ -87,7 +95,7 @@ export function initializeMonitoring(): void {
       },
 
       // Optional transaction filtering or tagging
-      beforeSendTransaction(transaction) {
+      beforeSendTransaction(transaction: any) {
         return transaction;
       },
 
@@ -209,9 +217,9 @@ class Logger {
   }
 
   private reportError(message: string, context: LogContext): void {
-    if (!sentryInitialized || isTest) return;
+    if (!sentryInitialized || isTest || !Sentry) return;
 
-    Sentry.withScope((scope) => {
+    Sentry.withScope((scope: any) => {
       // Set user context
       if (context.userId) {
         scope.setUser({ id: context.userId });
@@ -283,7 +291,7 @@ class Logger {
     });
 
     // Optional: forward as breadcrumb instead of metrics (metrics API not available in nextjs SDK)
-    if (sentryInitialized) {
+    if (sentryInitialized && Sentry) {
       Sentry.addBreadcrumb({
         category: 'metric',
         message: metricName,
@@ -317,7 +325,7 @@ class Logger {
         });
 
         // Optional: record timing as breadcrumb
-        if (sentryInitialized) {
+        if (sentryInitialized && Sentry) {
           Sentry.addBreadcrumb({
             category: 'timing',
             message: operation,
@@ -566,4 +574,5 @@ if (!isTest) {
 
 // Export monitoring utilities
 export const performanceMonitor = PerformanceMonitor.getInstance();
+// Export Sentry if available, otherwise export undefined
 export { Sentry };
