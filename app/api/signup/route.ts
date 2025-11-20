@@ -138,23 +138,33 @@ export async function POST(req: NextRequest) {
       
       // Handle RLS policy violation (42501) - indicates service role key issue
       if (userError.code === '42501') {
-        const hasServiceRoleKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        const hasServiceRoleKey = !!serviceRoleKey;
+        const keysMatch = serviceRoleKey && anonKey && serviceRoleKey === anonKey;
+        
         apiLogger.error('RLS policy violation during user creation', userError as Error, { 
           email: data.email,
           errorCode: userError.code,
           errorMessage: userError.message,
           hasServiceRoleKey,
-          serviceRoleKeyLength: process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0,
-          hint: hasServiceRoleKey 
-            ? 'Service role key is set but RLS is blocking. Check that the key is correct and policies exist.'
-            : 'SUPABASE_SERVICE_ROLE_KEY is missing in production environment!'
+          serviceRoleKeyLength: serviceRoleKey?.length || 0,
+          keysMatch,
+          serviceRoleKeyPrefix: serviceRoleKey ? serviceRoleKey.substring(0, 10) : 'N/A',
+          hint: keysMatch
+            ? 'CRITICAL: Service role key and anon key are the SAME! This is why RLS is blocking. Update SUPABASE_SERVICE_ROLE_KEY in Vercel with the actual service_role key from Supabase Dashboard.'
+            : hasServiceRoleKey 
+              ? 'Service role key is set but RLS is blocking. Verify the key is the service_role key (not anon key) from Supabase Dashboard → Settings → API → Service Role Key.'
+              : 'SUPABASE_SERVICE_ROLE_KEY is missing in production environment!'
         });
         return NextResponse.json({ 
           error: 'Failed to create user',
           code: 'RLS_POLICY_VIOLATION',
-          details: hasServiceRoleKey 
-            ? 'Service role key configured but RLS blocking. Verify key and policies.'
-            : 'SUPABASE_SERVICE_ROLE_KEY missing in production.'
+          details: keysMatch
+            ? 'Service role key and anon key are identical. Update SUPABASE_SERVICE_ROLE_KEY with the correct service_role key from Supabase.'
+            : hasServiceRoleKey 
+              ? 'Service role key configured but RLS blocking. Verify the key is the service_role key (not anon key) from Supabase Dashboard → Settings → API.'
+              : 'SUPABASE_SERVICE_ROLE_KEY missing in production.'
         }, { status: 500 });
       }
       
