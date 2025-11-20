@@ -96,6 +96,24 @@ const nextConfig: NextConfig = {
       })
     );
 
+    // Make @sentry/nextjs optional - ignore if not installed
+    // This allows the app to work without Sentry
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^@sentry\/nextjs$/,
+        checkResource(resource: string) {
+          // Only ignore if the module can't be resolved
+          // This allows it to work if installed, but doesn't fail if missing
+          try {
+            require.resolve(resource);
+            return false; // Don't ignore if it exists
+          } catch {
+            return true; // Ignore if it doesn't exist
+          }
+        },
+      })
+    );
+
     return config;
   },
 };
