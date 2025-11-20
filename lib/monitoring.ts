@@ -13,15 +13,9 @@
  * - Development vs production logging strategies
  */
 
-// Optional Sentry import - will be undefined if package is not installed
-// Using any type to avoid TypeScript errors when package is not installed
-let Sentry: any;
-try {
-  Sentry = require('@sentry/nextjs');
-} catch {
-  // Sentry not installed - that's okay, we'll work without it
-  Sentry = undefined;
-}
+// Sentry removed - no longer using error tracking service
+// All Sentry calls are now no-ops
+const Sentry: any = undefined;
 
 // Environment detection
 const isDevelopment = process.env.NODE_ENV === 'development';
