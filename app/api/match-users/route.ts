@@ -386,17 +386,10 @@ const matchUsersHandler = async (req: NextRequest) => {
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
   
-  // Start Sentry transaction for performance monitoring
-  const transaction = (Sentry as any).startTransaction?.({
-    name: 'match-users-api',
-    op: 'api.request',
-    tags: {
-      endpoint: 'match-users',
-      requestId
-    }
-  });
+  // Sentry removed - no longer using error tracking service
+  // Performance monitoring now handled by apiLogger
   
-  // Sentry context for API monitoring
+  // Context for API monitoring
 setContext('api', {
     endpoint: '/api/match-users',
     method: 'POST',
@@ -1295,10 +1288,7 @@ captureException(error, {
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   } finally {
-    // Complete Sentry transaction
-    if (transaction) {
-      transaction.finish();
-    }
+    // Sentry removed - transaction tracking no longer needed
   }
 };
 

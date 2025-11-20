@@ -16,7 +16,9 @@ const schema = z.object({
   // AI Services (OpenAI)
   OPENAI_API_KEY: z.string().refine(
     (val) => val.startsWith('sk-'),
-    (val) => ({ message: `OPENAI_API_KEY must start with 'sk-'. Got: ${val ? `'${val.substring(0, 10)}...' (${val.length} chars)` : 'undefined/empty'}` })
+    {
+      message: `OPENAI_API_KEY must start with 'sk-'`
+    }
   ),
   AI_TIMEOUT_MS: z.coerce.number().min(1000).max(60000).default(20000),
   AI_MAX_RETRIES: z.coerce.number().min(1).max(10).default(3),
@@ -134,29 +136,29 @@ if (isBuildTime) {
   };
   
   const buildResult = schema.safeParse(buildEnv);
-  if (!buildResult.success) {
-    // Even during build, critical vars like Supabase must be present
-    const criticalPaths = ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
-    const hasCriticalErrors = buildResult.error.errors.some(err => 
-      criticalPaths.includes(err.path.join('.'))
-    );
+    if (!buildResult.success) {
+      // Even during build, critical vars like Supabase must be present
+      const criticalPaths = ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+      const hasCriticalErrors = buildResult.error.issues.some(err => 
+        criticalPaths.includes(err.path.join('.'))
+      );
     
     if (hasCriticalErrors) {
       console.error('❌ Critical environment variables missing during build');
-      buildResult.error.errors.forEach(err => {
+      buildResult.error.issues.forEach(err => {
         console.error(`  - ${err.path.join('.')}: ${err.message}`);
       });
       throw buildResult.error;
     }
     
     // For non-critical errors during build, show warnings but try to continue
-    console.warn('⚠️  Some environment variables have validation issues during build:');
-    buildResult.error.errors.forEach(err => {
-      const path = err.path.join('.');
-      const value = buildEnv[path];
-      console.warn(`  - ${path}: ${err.message}`);
-      console.warn(`    Value: ${value ? `'${value.substring(0, 20)}...'` : 'undefined'}`);
-    });
+      console.warn('⚠️  Some environment variables have validation issues during build:');
+      buildResult.error.issues.forEach(err => {
+        const path = err.path.join('.');
+        const value = (buildEnv as Record<string, any>)[path];
+        console.warn(`  - ${path}: ${err.message}`);
+        console.warn(`    Value: ${value ? `'${String(value).substring(0, 20)}...'` : 'undefined'}`);
+      });
     
     // Try to parse anyway with the build env (might work if format issues are minor)
     try {
@@ -173,7 +175,7 @@ if (isBuildTime) {
   const parseResult = schema.safeParse(process.env);
   if (!parseResult.success) {
     console.error('❌ Environment variable validation failed:');
-    parseResult.error.errors.forEach(err => {
+    parseResult.error.issues.forEach(err => {
       const path = err.path.join('.');
       const value = process.env[path];
       console.error(`  - ${path}: ${err.message}`);
