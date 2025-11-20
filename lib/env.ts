@@ -14,7 +14,10 @@ const schema = z.object({
   SUPABASE_ANON_KEY: z.string().min(20).optional(),
   
   // AI Services (OpenAI)
-  OPENAI_API_KEY: z.string().startsWith('sk-'),
+  OPENAI_API_KEY: z.string().refine(
+    (val) => val.startsWith('sk-'),
+    (val) => ({ message: `OPENAI_API_KEY must start with 'sk-'. Got: ${val ? `'${val.substring(0, 10)}...' (${val.length} chars)` : 'undefined/empty'}` })
+  ),
   AI_TIMEOUT_MS: z.coerce.number().min(1000).max(60000).default(20000),
   AI_MAX_RETRIES: z.coerce.number().min(1).max(10).default(3),
   
@@ -95,7 +98,98 @@ const schema = z.object({
 });
 
 // Parse and validate environment variables
-export const ENV = schema.parse(process.env);
+// During build, some env vars might not be available, so we handle that gracefully
+// Check if we're in a build context (Next.js build phase or Vercel build)
+const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || 
+                    process.env.NEXT_PHASE === 'phase-development-build' ||
+                    process.env.NEXT_PHASE?.includes('build') ||
+                    (process.env.VERCEL === '1' && process.env.CI === '1') ||
+                    process.argv.includes('build') ||
+                    process.argv.some(arg => arg.includes('next') && arg.includes('build'));
+
+let ENV: z.infer<typeof schema>;
+
+if (isBuildTime) {
+  // During build, validate but be more lenient with API keys
+  // Log what we're checking for debugging
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (openaiKey) {
+    console.log(`🔍 Build: OPENAI_API_KEY is set (${openaiKey.length} chars, starts with: ${openaiKey.substring(0, 5)}...)`);
+    if (!openaiKey.startsWith('sk-')) {
+      console.warn(`⚠️  Build: OPENAI_API_KEY doesn't start with 'sk-', but continuing build...`);
+    }
+  } else {
+    console.warn('⚠️  Build: OPENAI_API_KEY not found, using placeholder for build validation');
+  }
+  
+  // During build, create a build-safe environment with dummy values for API keys if missing
+  // These are only needed at runtime, not during build
+  const buildEnv = {
+    ...process.env,
+    // Only use dummy values if the real ones are missing or invalid
+    OPENAI_API_KEY: (openaiKey && openaiKey.startsWith('sk-')) 
+      ? openaiKey 
+      : (openaiKey || 'sk-build-dummy-key-for-validation-only'),
+    RESEND_API_KEY: (process.env.RESEND_API_KEY?.startsWith('re_')) 
+      ? process.env.RESEND_API_KEY 
+      : (process.env.RESEND_API_KEY || 're_build_dummy_key_for_validation_only'),
+    POLAR_ACCESS_TOKEN: process.env.POLAR_ACCESS_TOKEN || 'build-dummy-token-for-validation-only',
+    INTERNAL_API_HMAC_SECRET: process.env.INTERNAL_API_HMAC_SECRET || 'build-dummy-secret-32-chars-minimum-length-here',
+    SYSTEM_API_KEY: process.env.SYSTEM_API_KEY || 'build-dummy-system-key-min-10-chars',
+  };
+  
+  const buildResult = schema.safeParse(buildEnv);
+  if (!buildResult.success) {
+    // Even during build, critical vars like Supabase must be present
+    const criticalPaths = ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+    const hasCriticalErrors = buildResult.error.errors.some(err => 
+      criticalPaths.includes(err.path.join('.'))
+    );
+    
+    if (hasCriticalErrors) {
+      console.error('❌ Critical environment variables missing during build');
+      buildResult.error.errors.forEach(err => {
+        console.error(`  - ${err.path.join('.')}: ${err.message}`);
+      });
+      throw buildResult.error;
+    }
+    
+    // For non-critical errors during build, show warnings but try to continue
+    console.warn('⚠️  Some environment variables have validation issues during build:');
+    buildResult.error.errors.forEach(err => {
+      const path = err.path.join('.');
+      const value = buildEnv[path];
+      console.warn(`  - ${path}: ${err.message}`);
+      console.warn(`    Value: ${value ? `'${value.substring(0, 20)}...'` : 'undefined'}`);
+    });
+    
+    // Try to parse anyway with the build env (might work if format issues are minor)
+    try {
+      ENV = schema.parse(buildEnv);
+    } catch (e) {
+      console.error('❌ Build validation failed even with fallbacks');
+      throw buildResult.error;
+    }
+  } else {
+    ENV = buildResult.data;
+  }
+} else {
+  // Runtime - strict validation with better error messages
+  const parseResult = schema.safeParse(process.env);
+  if (!parseResult.success) {
+    console.error('❌ Environment variable validation failed:');
+    parseResult.error.errors.forEach(err => {
+      const path = err.path.join('.');
+      const value = process.env[path];
+      console.error(`  - ${path}: ${err.message}`);
+      console.error(`    Current value: ${value ? `'${value.substring(0, 20)}...' (${value.length} chars)` : 'undefined/empty'}`);
+    });
+    throw parseResult.error;
+  }
+  ENV = parseResult.data;
+}
+
+export { ENV };
 
 // Type-safe environment variable access
 export type Environment = z.infer<typeof schema>;
