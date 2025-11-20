@@ -18,7 +18,7 @@ Weekly AI-matched job recommendations for internships, graduate schemes, and jun
 - **Backend**: Next.js API Routes (Serverless)
 - **Database**: Supabase (PostgreSQL with RLS)
 - **Auth**: Custom email verification system
-- **Payments**: Stripe subscriptions
+- **Payments**: Polar subscriptions
 - **Email**: Resend with custom templates
 - **AI**: OpenAI for job matching
 - **Job Sources**: Adzuna, Reed, JobSpy (LinkedIn, Indeed, Glassdoor)
@@ -34,7 +34,7 @@ Weekly AI-matched job recommendations for internships, graduate schemes, and jun
 - Supabase account
 - Resend API key
 - OpenAI API key
-- Stripe account (for payments)
+- Polar account (for payments)
 
 ### Installation
 
@@ -53,7 +53,7 @@ Visit http://localhost:3000
 
 ## Environment Variables
 
-See `.env.example` for required variables (DB, Email, AI, Stripe, System).
+See `.env.example` for required variables (DB, Email, AI, System).
 
 ## Key Features
 
@@ -119,7 +119,6 @@ Everything else has been folded into the two canonical guides above.
 - Health: `/api/health` (database, email, queue, external APIs)
 - Sentry: configure DSN to enable error reporting
 - Email: verify `RESEND_API_KEY` and domain (SPF/DKIM/DMARC) - see [Email System Docs](docs/email-system.md)
-- Stripe: set API version to a valid stable string
 
 ## Development
 

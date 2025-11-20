@@ -170,7 +170,9 @@ class RealJobRunner {
   }
 
   getCycleJobTarget() {
-    return parseInt(process.env.SCRAPER_CYCLE_JOB_TARGET || '300', 10);
+    // Increased target to allow more diversity: Reed, Greenhouse, and reduce Adzuna dependency
+    // Set to 0 to disable quota (run all scrapers) or high number like 2000
+    return parseInt(process.env.SCRAPER_CYCLE_JOB_TARGET || '0', 10);
   }
 
   async collectCycleStats(sinceIso) {
@@ -207,6 +209,7 @@ class RealJobRunner {
     const stats = await this.collectCycleStats(sinceIso);
     console.log(`📈 ${stage}: ${stats.total} unique job hashes ingested this cycle`);
     const target = this.getCycleJobTarget();
+    // If target is 0, run all scrapers (no limit)
     if (target > 0 && stats.total >= target) {
       console.log(`🎯 Cycle job target (${target}) reached after ${stage}; skipping remaining scrapers.`);
       return true;
@@ -635,7 +638,37 @@ class RealJobRunner {
 
       let stopDueToQuota = await this.evaluateStopCondition('JobSpy pipelines', cycleStartIso);
 
-      // Then Adzuna, unless skipped
+      // Run Reed BEFORE Adzuna to increase its usage (currently only 4.43%)
+      let reedJobs = 0;
+      if (!stopDueToQuota) {
+        try {
+          reedJobs = await this.runReedScraper(signupTargets);
+          console.log(`✅ Reed completed: ${reedJobs} jobs`);
+        } catch (error) {
+          console.error('❌ Reed scraper failed, continuing with other scrapers:', error.message);
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        stopDueToQuota = await this.evaluateStopCondition('Reed scraper', cycleStartIso);
+      } else {
+        console.log('⏹️  Skipping Reed scraper - cycle job target reached.');
+      }
+
+      // Run Greenhouse to expand its usage (currently only 7 jobs)
+      let greenhouseJobs = 0;
+      if (!stopDueToQuota) {
+        try {
+          greenhouseJobs = await this.runGreenhouseScraper();
+          console.log(`✅ Greenhouse completed: ${greenhouseJobs} jobs`);
+        } catch (error) {
+          console.error('❌ Greenhouse scraper failed, continuing with other scrapers:', error.message);
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        stopDueToQuota = await this.evaluateStopCondition('Greenhouse scraper', cycleStartIso);
+      } else {
+        console.log('⏹️  Skipping Greenhouse scraper - cycle job target reached.');
+      }
+
+      // Then Adzuna (reduced priority to decrease dependency from 52.76% to <40%)
       let adzunaJobs = 0;
       if (!SKIP_ADZUNA && !stopDueToQuota) {
         try {
@@ -652,25 +685,12 @@ class RealJobRunner {
         console.log('⏹️  Skipping Adzuna scraper - cycle job target reached.');
       }
       
-      let reedJobs = 0;
-      if (!stopDueToQuota) {
-        try {
-          reedJobs = await this.runReedScraper(signupTargets);
-          console.log(`✅ Reed completed: ${reedJobs} jobs`);
-        } catch (error) {
-          console.error('❌ Reed scraper failed, continuing with other scrapers:', error.message);
-        }
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      } else {
-        console.log('⏹️  Skipping Reed scraper - cycle job target reached.');
-      }
-      
       if (!stopDueToQuota) {
         await this.evaluateStopCondition('Full cycle', cycleStartIso);
       }
       
       // Update stats with all scrapers
-      this.totalJobsSaved += (adzunaJobs + jobspyJobs + jobspyInternshipsJobs + reedJobs);
+      this.totalJobsSaved += (adzunaJobs + jobspyJobs + jobspyInternshipsJobs + reedJobs + greenhouseJobs);
       this.runCount++;
       this.lastRun = new Date();
       
@@ -684,7 +704,7 @@ class RealJobRunner {
       console.log('\n✅ SCRAPING CYCLE COMPLETE');
       console.log('============================');
       console.log(`⏱️  Duration: ${duration.toFixed(1)} seconds`);
-      console.log(`📊 Jobs processed this cycle: ${adzunaJobs + jobspyJobs + jobspyInternshipsJobs + reedJobs}`);
+      console.log(`📊 Jobs processed this cycle: ${adzunaJobs + jobspyJobs + jobspyInternshipsJobs + reedJobs + greenhouseJobs}`);
       console.log(`📈 Total jobs processed: ${this.totalJobsSaved}`);
       console.log(`🔄 Total cycles run: ${this.runCount}`);
       console.log(`📅 Last run: ${this.lastRun.toISOString()}`);
@@ -694,8 +714,9 @@ class RealJobRunner {
       console.log(`🎯 Core scrapers breakdown:`);
       console.log(`   - JobSpy (General): ${jobspyJobs} jobs`);
       console.log(`   - JobSpy (Internships Only): ${jobspyInternshipsJobs} jobs`);
-      console.log(`   - Adzuna: ${adzunaJobs} jobs`);
-      console.log(`   - Reed: ${reedJobs} jobs`);
+      console.log(`   - Reed: ${reedJobs} jobs (increased priority)`);
+      console.log(`   - Greenhouse: ${greenhouseJobs} jobs (expanded)`);
+      console.log(`   - Adzuna: ${adzunaJobs} jobs (reduced priority)`);
       console.log(`🧮 Unique job hashes this cycle: ${this.currentCycleStats.total}`);
       console.log(`📦 Per-source breakdown this cycle: ${JSON.stringify(this.currentCycleStats.perSource)}`);
       

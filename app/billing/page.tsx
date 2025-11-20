@@ -13,7 +13,6 @@ interface BillingPageProps {
 
 interface Subscription {
   id: string;
-  stripe_subscription_id: string;
   user_id: string;
   status: string;
   current_period_start: string;
@@ -37,7 +36,7 @@ interface BillingData {
   currentSubscription: Subscription | null;
   invoices?: Invoice[];
   paymentMethods?: any[];
-  hasStripeCustomer: boolean;
+  hasPaymentCustomer: boolean;
 }
 
 export default function BillingPage({ params }: BillingPageProps) {
@@ -400,7 +399,7 @@ export default function BillingPage({ params }: BillingPageProps) {
               <GlassCard variant="subtle" className="p-12 text-center">
                 <CreditCard className="w-16 h-16 mx-auto mb-4 text-zinc-400" />
                 <h3 className="text-xl font-semibold mb-2">Payment Methods</h3>
-                <p className="text-zinc-400 mb-6">Manage your payment methods securely through Stripe.</p>
+                <p className="text-zinc-400 mb-6">Manage your payment methods securely.</p>
                 <Button
                   onClick={handleManageBilling}
                   disabled={processing || !billingData?.currentSubscription}
@@ -427,7 +426,7 @@ export default function BillingPage({ params }: BillingPageProps) {
             <span className="w-px h-4 bg-white/10" />
             <span className="flex items-center gap-2"><span className="w-2 h-2 bg-brand-500 rounded-full"></span> 256-bit SSL Encryption</span>
             <span className="w-px h-4 bg-white/10" />
-            <span className="flex items-center gap-2"><span className="w-2 h-2 bg-amber-500 rounded-full"></span> Stripe Powered</span>
+            <span className="flex items-center gap-2"><span className="w-2 h-2 bg-amber-500 rounded-full"></span> Secure Payments</span>
           </div>
         </div>
       </div>

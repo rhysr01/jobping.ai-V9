@@ -30,7 +30,19 @@ class DatabasePool {
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
         
         if (!supabaseUrl || !supabaseKey) {
-          throw new Error('Missing Supabase configuration');
+          const errorDetails = {
+            hasUrl: !!supabaseUrl,
+            hasServiceRoleKey: !!supabaseKey,
+            hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+            nodeEnv: process.env.NODE_ENV,
+          };
+          console.error('❌ Missing Supabase configuration:', errorDetails);
+          throw new Error(`Missing Supabase configuration. SUPABASE_SERVICE_ROLE_KEY is required but was ${supabaseKey ? 'found' : 'MISSING'}. This will cause RLS errors.`);
+        }
+        
+        // Warn if service role key seems incorrect (too short = might be anon key)
+        if (supabaseKey.length < 100) {
+          console.warn('⚠️  WARNING: SUPABASE_SERVICE_ROLE_KEY seems too short. Service role keys are typically 200+ characters. This might be the anon key instead!');
         }
 
         this.instance = createClient(supabaseUrl, supabaseKey, {

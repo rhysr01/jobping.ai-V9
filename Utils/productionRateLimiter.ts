@@ -43,11 +43,6 @@ export const RATE_LIMIT_CONFIG = {
     maxRequests: 3, // 3 payment attempts per 5 minutes
     skipSuccessfulRequests: false
   },
-  'webhooks-stripe': {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 100, // High limit for Stripe webhooks
-    skipSuccessfulRequests: true
-  },
   // Default for unspecified endpoints
   'default': {
     windowMs: 60 * 1000, // 1 minute

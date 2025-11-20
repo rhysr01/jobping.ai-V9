@@ -22,9 +22,10 @@ const schema = z.object({
   RESEND_API_KEY: z.string().startsWith('re_'),
   EMAIL_DOMAIN: z.string().default('getjobping.com'),
   
-  // Payments (Stripe)
-  STRIPE_SECRET_KEY: z.string().startsWith('sk_'),
-  STRIPE_PUBLISHABLE_KEY: z.string().startsWith('pk_').optional(),
+  // Payments (Polar)
+  POLAR_ACCESS_TOKEN: z.string().min(20),
+  POLAR_WEBHOOK_SECRET: z.string().optional(),
+  POLAR_SUCCESS_URL: z.string().url().default('https://getjobping.com/success?checkout_id={CHECKOUT_ID}'),
   
   // Caching (Redis)
   REDIS_URL: z.string().url().optional(),

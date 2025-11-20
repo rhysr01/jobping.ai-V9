@@ -136,6 +136,28 @@ export async function POST(req: NextRequest) {
         }, { status: 409 });
       }
       
+      // Handle RLS policy violation (42501) - indicates service role key issue
+      if (userError.code === '42501') {
+        const hasServiceRoleKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+        apiLogger.error('RLS policy violation during user creation', userError as Error, { 
+          email: data.email,
+          errorCode: userError.code,
+          errorMessage: userError.message,
+          hasServiceRoleKey,
+          serviceRoleKeyLength: process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0,
+          hint: hasServiceRoleKey 
+            ? 'Service role key is set but RLS is blocking. Check that the key is correct and policies exist.'
+            : 'SUPABASE_SERVICE_ROLE_KEY is missing in production environment!'
+        });
+        return NextResponse.json({ 
+          error: 'Failed to create user',
+          code: 'RLS_POLICY_VIOLATION',
+          details: hasServiceRoleKey 
+            ? 'Service role key configured but RLS blocking. Verify key and policies.'
+            : 'SUPABASE_SERVICE_ROLE_KEY missing in production.'
+        }, { status: 500 });
+      }
+      
       apiLogger.error('Failed to create user', userError as Error, { 
         email: data.email,
         errorCode: userError.code,

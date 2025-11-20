@@ -94,12 +94,11 @@ export function middleware(request: NextRequest) {
   response.headers.set(
     'Content-Security-Policy',
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://cdn.jsdelivr.net https://js.stripe.com; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://cdn.jsdelivr.net; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
     "img-src 'self' data: https: blob:; " +
-    "connect-src 'self' https://*.supabase.co https://api.resend.com https://api.openai.com https://api.stripe.com; " +
-    "frame-src https://js.stripe.com; " +
+    "connect-src 'self' https://*.supabase.co https://api.resend.com https://api.openai.com; " +
     "object-src 'none'; " +
     "base-uri 'self'; " +
     "form-action 'self'"

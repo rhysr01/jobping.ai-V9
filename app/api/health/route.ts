@@ -102,8 +102,7 @@ function checkEnvironment(): { status: HealthStatus; message: string; missing: s
     'REDIS_URL',
     'OPENAI_API_KEY',
     'RESEND_API_KEY',
-    'STRIPE_SECRET_KEY',
-    'STRIPE_WEBHOOK_SECRET',
+    'POLAR_ACCESS_TOKEN',
     'SENTRY_DSN'
   ];
 

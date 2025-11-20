@@ -52,24 +52,28 @@ async function saveJobs(jobs, source) {
   const supabase = getSupabase();
   const nowIso = new Date().toISOString();
   const nonRemote = jobs.filter(j => !((j.location||'').toLowerCase().includes('remote')));
-  const rows = nonRemote.map(j => ({
-    job_hash: hashJob(j.title, j.company, j.location),
-    title: (j.title||'').trim(),
-    company: (j.company||'').trim(),
-    location: (j.location||'').trim(),
-    description: (j.company_description || j.skills || '').trim(),
-    job_url: (j.job_url || j.url || '').trim(),
-    source,
-    posted_at: j.posted_at || nowIso,
-    categories: ['internship', 'early-career'],
-    work_environment: 'on-site',
-    experience_required: 'entry-level',
-    is_internship: true, // Flag as internship
-    original_posted_date: j.posted_at || nowIso,
-    last_seen_at: nowIso,
-    is_active: true,
-    created_at: nowIso
-  }));
+  const rows = nonRemote.map(j => {
+    const companyName = (j.company||'').trim();
+    return {
+      job_hash: hashJob(j.title, companyName, j.location),
+      title: (j.title||'').trim(),
+      company: companyName,
+      company_name: companyName, // Fix: Map company to company_name for proper data quality
+      location: (j.location||'').trim(),
+      description: (j.company_description || j.skills || '').trim(),
+      job_url: (j.job_url || j.url || '').trim(),
+      source,
+      posted_at: j.posted_at || nowIso,
+      categories: ['internship', 'early-career'],
+      work_environment: 'on-site',
+      experience_required: 'entry-level',
+      is_internship: true, // Flag as internship
+      original_posted_date: j.posted_at || nowIso,
+      last_seen_at: nowIso,
+      is_active: true,
+      created_at: nowIso
+    };
+  });
   const unique = Array.from(new Map(rows.map(r=>[r.job_hash,r])).values());
   for (let i=0;i<unique.length;i+=150){
     const slice = unique.slice(i,i+150);

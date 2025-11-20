@@ -11,7 +11,7 @@ This guide consolidates everything required to operate JobPing in production. It
 - **Redis** – Optional cache layer for rate limiting and matching accelerators (`Utils/productionRateLimiter.ts`).
 - **Background & Scraping Jobs** – Triggered via script entry points under `scripts/` and `automation/`, authenticated with system keys and unified locking.
 - **Email Delivery** – Resend (transactional) driven by `Utils/email/sender.ts` with signed preference links and verification flows.
-- **Billing** – Stripe-based checkout/endpoints under `app/api/billing/*` and `app/api/create-checkout-session`.
+- **Billing** – Polar-based checkout/endpoints under `app/api/billing/*`.
 - **Dashboards & Monitoring** – `/api/dashboard` and `/api/health` expose health metrics. All structured logging funnels through `lib/monitoring.ts`.
 
 Consistency rules:
@@ -36,7 +36,7 @@ Maintain a single `.env.production` (or Vercel environment values) covering **al
 | Email | `RESEND_API_KEY`, `EMAIL_DOMAIN`, `EMAIL_VERIFICATION_SECRET`, `PREFERENCES_SECRET` | Secrets must be ≥32 chars. |
 | Auth & Security | `SYSTEM_API_KEY`, `INTERNAL_API_HMAC_SECRET`, `ADMIN_API_KEY` | Rotate quarterly; store in secrets manager. |
 | AI Matching | `OPENAI_API_KEY`, optional overrides (`AI_TIMEOUT_MS`, etc.) | Ensure OpenAI usage quotas are monitored. |
-| Billing | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` | Add webhook secret in Vercel environment (used in route handlers). |
+| Billing | Polar configuration | Configure Polar webhook secret in Vercel environment (used in route handlers). |
 | Observability | `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN` (optional) | Required for error pipelines. |
 
 Optional values (`REDIS_URL`, scraper knobs, etc.) are already typed and defaulted in `lib/env.ts`. Review before enabling experimental modes.
@@ -59,7 +59,7 @@ Optional values (`REDIS_URL`, scraper knobs, etc.) are already typed and default
 4. **Post-Deploy Validation**
    - Hit `/api/health`, `/api/dashboard`, and the marketing landing page.
    - Perform a signup flow end-to-end (ensure verification email arrives).
-   - Trigger billing checkout in test mode to confirm Stripe connectivity.
+   - Trigger billing checkout in test mode to confirm Polar connectivity.
 
 ---
 
@@ -77,7 +77,7 @@ Alerts should be configured for:
 - Sentry issue spikes
 - Elevated 5xx rates on Vercel
 - Redis unavailability (if enabled)
-- Stripe webhook failures
+- Polar webhook failures
 
 ---
 
@@ -95,7 +95,7 @@ Alerts should be configured for:
 
 ### Billing & Support Tools
 - Admin endpoints require `SYSTEM_API_KEY` headers (`Utils/auth/withAuth.ts`).
-- Stripe webhook handler lives at `/api/webhooks/stripe`; verify signing secret on each deploy.
+- Polar webhook handler (to be implemented); verify signing secret on each deploy.
 - Dashboard functionality is exposed via `/api/dashboard`; the UI is an internal Next.js page.
 
 ---

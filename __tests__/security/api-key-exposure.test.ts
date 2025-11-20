@@ -10,19 +10,15 @@ import { join } from 'path';
 // Patterns that should NEVER appear in client bundle
 const SECRET_PATTERNS = [
   /sk-[a-zA-Z0-9]{32,}/, // OpenAI API keys
-  /pk_live_[a-zA-Z0-9]{32,}/, // Stripe publishable keys (live)
-  /sk_live_[a-zA-Z0-9]{32,}/, // Stripe secret keys
   /SUPABASE_SERVICE_ROLE_KEY/i,
-  /STRIPE_SECRET_KEY/i,
   /RESEND_API_KEY/i,
-  /process\.env\.(OPENAI_API_KEY|STRIPE_SECRET_KEY|SUPABASE_SERVICE_ROLE_KEY|RESEND_API_KEY|SYSTEM_API_KEY|ADMIN_API_KEY)/,
+  /process\.env\.(OPENAI_API_KEY|SUPABASE_SERVICE_ROLE_KEY|RESEND_API_KEY|SYSTEM_API_KEY|ADMIN_API_KEY)/,
 ];
 
 // Patterns that are OK in client bundle (safe to expose)
 const ALLOWED_PATTERNS = [
   /NEXT_PUBLIC_/, // Public env vars are OK
   /pk_test_/, // Test keys are OK
-  /STRIPE_PUBLISHABLE_KEY/, // Publishable keys are OK
 ];
 
 describe('Security: API Key Exposure', () => {

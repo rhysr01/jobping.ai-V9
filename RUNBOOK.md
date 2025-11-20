@@ -85,7 +85,7 @@ Store the dump in a secure bucket (never commit raw dumps).
 | Engineering lead | — | — |
 | On-call engineer | PagerDuty → JobPing Rotation |
 | Email provider | Resend Support (`support@resend.com`) |
-| Payments | Stripe Support |
+| Payments | Polar Support |
 
 Populate blanks with the current rotation each time ownership changes. Keep the master contact list in the secure ops vault.
 

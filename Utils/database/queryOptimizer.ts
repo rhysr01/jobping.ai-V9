@@ -423,7 +423,7 @@ export const RECOMMENDED_INDEXES = [
   'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_matches_created_at ON matches(created_at DESC);',
 
   // Subscriptions table indexes
-  'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_subscriptions_customer ON subscriptions(stripe_customer_id);',
+  // Note: stripe_customer_id index removed - using Polar instead
   'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);',
   'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);'
 ];
