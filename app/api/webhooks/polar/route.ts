@@ -4,31 +4,15 @@ import { ENV } from '@/lib/env';
 import { getDatabaseClient } from '@/Utils/databasePool';
 import { apiLogger } from '@/lib/api-logger';
 
-// Polar webhook event types
-interface PolarWebhookPayload {
-  type: string;
-  data: {
-    id: string;
-    customer_id?: string;
-    customer?: {
-      id?: string;
-      email?: string;
-    };
-    email?: string;
-    status?: string;
-    subscription?: {
-      id?: string;
-      status?: string;
-      customer_id?: string;
-    };
-    [key: string]: any;
-  };
-}
+// Use any for payload since Polar SDK has complex union types
+// We'll extract what we need from the payload dynamically
+type PolarWebhookPayload = any;
 
 // Handle order paid event (most important - payment actually received)
 async function handleOrderPaid(payload: PolarWebhookPayload) {
   const order = payload.data;
-  const customerEmail = order.customer?.email || order.email;
+  // Extract email from various possible locations in Polar payload
+  const customerEmail = order.customer?.email || order.customer_email || order.email || (order.customer_id ? null : null);
   
   if (!customerEmail) {
     apiLogger.warn('Order paid but no email found', { orderId: order.id });
@@ -79,7 +63,7 @@ async function handleCheckoutEvent(payload: PolarWebhookPayload) {
 async function handleSubscriptionEvent(payload: PolarWebhookPayload) {
   const subscription = payload.data;
   // Try to get email from customer object or subscription metadata
-  const customerEmail = subscription.customer?.email || subscription.email;
+  const customerEmail = subscription.customer?.email || subscription.customer_email || subscription.email;
   
   if (!customerEmail) {
     // For subscription events, we might need to fetch customer by ID
@@ -146,7 +130,7 @@ async function handleSubscriptionEvent(payload: PolarWebhookPayload) {
 // Handle subscription canceled/revoked events
 async function handleSubscriptionCanceled(payload: PolarWebhookPayload) {
   const subscription = payload.data;
-  const customerEmail = subscription.customer?.email || subscription.email;
+  const customerEmail = subscription.customer?.email || subscription.customer_email || subscription.email;
   
   if (!customerEmail) {
     apiLogger.warn('Subscription canceled but no email found', { subscriptionId: subscription.id });
@@ -205,7 +189,7 @@ async function handleCustomerEvent(payload: PolarWebhookPayload) {
 // Create Polar webhook handler
 export const POST = Webhooks({
   webhookSecret: ENV.POLAR_WEBHOOK_SECRET || '',
-  onPayload: async (payload: PolarWebhookPayload) => {
+  onPayload: async (payload: PolarWebhookPayload): Promise<void> => {
     const startTime = Date.now();
     const eventType = payload.type;
 
@@ -271,7 +255,7 @@ export const POST = Webhooks({
         duration
       });
 
-      return result;
+      // Don't return result - onPayload should return void
     } catch (error) {
       const duration = Date.now() - startTime;
       apiLogger.error('Polar webhook processing failed', error as Error, {
