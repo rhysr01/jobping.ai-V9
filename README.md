@@ -23,7 +23,7 @@ Weekly AI-matched job recommendations for internships, graduate schemes, and jun
 - **AI**: OpenAI for job matching
 - **Job Sources**: Adzuna, Reed, JobSpy (LinkedIn, Indeed, Glassdoor)
 - **Hosting**: Vercel Edge Network
-- **Monitoring**: Sentry + structured logging
+- **Monitoring**: Structured logging
 - **Testing**: Jest (unit/integration), Playwright (E2E)
 
 ## Quick Start
@@ -117,7 +117,6 @@ Everything else has been folded into the two canonical guides above.
 ## Troubleshooting
 
 - Health: `/api/health` (database, email, queue, external APIs)
-- Sentry: configure DSN to enable error reporting
 - Email: verify `RESEND_API_KEY` and domain (SPF/DKIM/DMARC) - see [Email System Docs](docs/email-system.md)
 
 ## Development

@@ -34,11 +34,6 @@ const schema = z.object({
   REDIS_URL: z.string().url().optional(),
   CACHE_TTL_MS: z.coerce.number().min(60000).default(1800000),
   
-  // Monitoring (Sentry)
-  SENTRY_DSN: z.string().url().optional(),
-  NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
-  SENTRY_ORG: z.string().optional(),
-  SENTRY_PROJECT: z.string().optional(),
   
   // Security & Authentication
   INTERNAL_API_HMAC_SECRET: z.string().min(32),

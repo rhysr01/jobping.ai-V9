@@ -37,7 +37,7 @@ Maintain a single `.env.production` (or Vercel environment values) covering **al
 | Auth & Security | `SYSTEM_API_KEY`, `INTERNAL_API_HMAC_SECRET`, `ADMIN_API_KEY` | Rotate quarterly; store in secrets manager. |
 | AI Matching | `OPENAI_API_KEY`, optional overrides (`AI_TIMEOUT_MS`, etc.) | Ensure OpenAI usage quotas are monitored. |
 | Billing | Polar configuration | Configure Polar webhook secret in Vercel environment (used in route handlers). |
-| Observability | `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN` (optional) | Required for error pipelines. |
+| Observability | Logging via structured logs | Error tracking via application logs. |
 
 Optional values (`REDIS_URL`, scraper knobs, etc.) are already typed and defaulted in `lib/env.ts`. Review before enabling experimental modes.
 
@@ -55,7 +55,7 @@ Optional values (`REDIS_URL`, scraper knobs, etc.) are already typed and default
    - Verify `email_verification_requests` table, indexes, and RLS policies.
 3. **Deploy**
    - `vercel deploy --prod` (or via GitHub integration) once all checks pass.
-   - Monitor logs for 15 minutes post-deploy (`vercel logs` + Sentry dashboard).
+   - Monitor logs for 15 minutes post-deploy (`vercel logs`).
 4. **Post-Deploy Validation**
    - Hit `/api/health`, `/api/dashboard`, and the marketing landing page.
    - Perform a signup flow end-to-end (ensure verification email arrives).
@@ -65,7 +65,7 @@ Optional values (`REDIS_URL`, scraper knobs, etc.) are already typed and default
 
 ## 4. Monitoring & Alerting
 
-- **Sentry** – Server and client DSNs configured to capture errors. The `/api/test-sentry` endpoint is locked behind `SYSTEM_API_KEY` for manual validation in non-production environments.
+- **Error Tracking** – Structured logging via `lib/monitoring.ts` for error tracking and debugging.
 - **Rate Limiting & Abuse Detection** – Centralised via `Utils/productionRateLimiter.ts`; check Redis metrics if throttle issues trigger.
 - **Business Metrics** – Output through `lib/monitoring.ts` (`logger.metric`, `performanceMonitor`). Ensure log streams feed into your observability stack (e.g. DataDog, Vercel Analytics).
 - **Health Endpoints**
@@ -74,7 +74,7 @@ Optional values (`REDIS_URL`, scraper knobs, etc.) are already typed and default
 
 Alerts should be configured for:
 
-- Sentry issue spikes
+- Elevated error rates in logs
 - Elevated 5xx rates on Vercel
 - Redis unavailability (if enabled)
 - Polar webhook failures
@@ -102,7 +102,7 @@ Alerts should be configured for:
 
 ## 6. Incident Response Summary
 
-1. Detect issue (Sentry alert, synthetic check failure, manual report).
+1. Detect issue (log monitoring, synthetic check failure, manual report).
 2. Check `/api/health` and `/api/dashboard` to scope the failure (database vs. external services).
 3. If database-related, follow PITR guidance in `RUNBOOK.md` and the Supabase dashboards.
 4. For critical incidents, freeze deploys, communicate in the #incident channel, and follow the postmortem template (also in `RUNBOOK.md`).

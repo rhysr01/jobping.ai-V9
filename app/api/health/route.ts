@@ -102,8 +102,7 @@ function checkEnvironment(): { status: HealthStatus; message: string; missing: s
     'REDIS_URL',
     'OPENAI_API_KEY',
     'RESEND_API_KEY',
-    'POLAR_ACCESS_TOKEN',
-    'SENTRY_DSN'
+    'POLAR_ACCESS_TOKEN'
   ];
 
   const missing = requiredVars.filter((varName) => !process.env[varName]);
