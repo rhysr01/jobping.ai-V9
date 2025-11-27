@@ -39,15 +39,31 @@ export default function BuiltForStudents() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: index * 0.05 }}
-                className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 text-left backdrop-blur-sm transition-all duration-300 hover:-translate-y-[3px] hover:border-brand-500/25 hover:bg-white/10 sm:p-8"
+                className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 text-left backdrop-blur-sm transition-all duration-300 hover:-translate-y-[4px] hover:border-brand-500/30 hover:bg-white/10 hover:shadow-[0_8px_24px_rgba(99,102,241,0.15)] sm:p-8"
               >
-                <span className="absolute -right-4 top-6 text-6xl font-black text-white/5">
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <motion.span 
+                  className="absolute -right-4 top-6 text-6xl font-black text-white/5 transition-all duration-300 group-hover:text-white/10 group-hover:scale-110"
+                  animate={{ 
+                    opacity: [0.05, 0.1, 0.05],
+                  }}
+                  transition={{ 
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: index * 0.5
+                  }}
+                >
                   {feature.num}
-                </span>
+                </motion.span>
                 <div className="flex items-center gap-4">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-200">
+                  <motion.span 
+                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-200 transition-all duration-300 group-hover:bg-brand-500/25 group-hover:scale-110"
+                    whileHover={{ rotate: [0, -10, 10, 0] }}
+                    transition={{ duration: 0.5 }}
+                  >
                     <Icon className="h-5 w-5" />
-                  </span>
+                  </motion.span>
                   <h3 className="text-lg font-semibold text-white sm:text-xl">
                     {feature.title}
                   </h3>

@@ -96,21 +96,34 @@ export default function SocialProofRow() {
           className="grid gap-4 rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-[0_20px_70px_rgba(10,0,40,0.28)] backdrop-blur-md sm:grid-cols-3 sm:gap-6 sm:p-8"
         >
           {items.map((item, index) => (
-            <div
+            <motion.div
               key={item.title}
-              className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/10 p-4 sm:p-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              whileHover={{ 
+                y: -4,
+                transition: { type: 'spring', stiffness: 300, damping: 20 }
+              }}
+              className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-white/10 bg-black/10 p-4 transition-all duration-300 hover:border-brand-500/30 hover:bg-black/20 hover:shadow-[0_8px_24px_rgba(99,102,241,0.15)] sm:p-6"
             >
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-brand-200 shadow-[0_0_18px_rgba(99,102,241,0.25)]">
+              <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <motion.span 
+                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-brand-200 shadow-[0_0_18px_rgba(99,102,241,0.25)] transition-all duration-300 group-hover:bg-brand-500/25 group-hover:scale-110 group-hover:shadow-[0_0_24px_rgba(99,102,241,0.4)]"
+                whileHover={{ rotate: [0, -10, 10, 0] }}
+                transition={{ duration: 0.5 }}
+              >
                 {item.icon}
-              </span>
+              </motion.span>
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-200">
                   {loading && index === 0 ? 'Loading…' : item.eyebrow}
                 </p>
                 <h3 className="mt-2 text-lg font-semibold text-white sm:text-xl">{item.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-300">{item.description}</p>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-300 transition-colors duration-300 group-hover:text-zinc-200">{item.description}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
         </motion.div>
       </div>

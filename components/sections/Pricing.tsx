@@ -114,14 +114,27 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.55, delay: index * 0.1 }}
-      className={`relative flex h-full flex-col justify-between rounded-3xl border ${
+      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border ${
         isPremium ? 'border-brand-500/40 bg-brand-500/10' : 'border-white/10 bg-white/5'
-      } p-8 backdrop-blur-sm transition-all duration-300 hover:-translate-y-[3px] hover:border-brand-500/30 hover:bg-white/10 sm:p-9`}
+      } p-8 backdrop-blur-sm transition-all duration-300 hover:-translate-y-[4px] hover:border-brand-500/40 hover:bg-white/10 hover:shadow-[0_12px_40px_rgba(99,102,241,0.2)] sm:p-9`}
     >
+      {isPremium && (
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-purple-500/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      )}
       {plan.badge && (
-        <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-brand-500 to-purple-600 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow-[0_8px_24px_rgba(99,102,241,0.45)]">
+        <motion.span 
+          className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-brand-500 to-purple-600 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow-[0_8px_24px_rgba(99,102,241,0.45)]"
+          animate={{ 
+            boxShadow: [
+              '0_8px_24px_rgba(99,102,241,0.45)',
+              '0_8px_32px_rgba(139,92,246,0.6)',
+              '0_8px_24px_rgba(99,102,241,0.45)'
+            ]
+          }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        >
           {plan.badge}
-        </span>
+        </motion.span>
       )}
 
       <div className="space-y-5">
@@ -146,17 +159,31 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
       </div>
 
       <div className="mt-8 flex flex-col gap-3">
-        <Link
-          href={plan.cta.href}
-          className={`inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold transition-all duration-200 sm:text-base ${
-            isPremium
-              ? 'bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-[0_12px_32px_rgba(99,102,241,0.35)] hover:shadow-[0_16px_40px_rgba(99,102,241,0.45)]'
-              : 'border border-white/15 bg-white/5 text-white hover:border-brand-500/40 hover:bg-brand-500/10'
-          }`}
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
-          {plan.cta.label}
-          <BrandIcons.ArrowRight className="ml-2 h-4 w-4" />
-        </Link>
+          <Link
+            href={plan.cta.href}
+            className={`group relative inline-flex items-center justify-center overflow-hidden rounded-2xl px-6 py-3 text-sm font-semibold transition-all duration-300 sm:text-base ${
+              isPremium
+                ? 'bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-[0_12px_32px_rgba(99,102,241,0.35)] hover:shadow-[0_16px_40px_rgba(99,102,241,0.5)]'
+                : 'border border-white/15 bg-white/5 text-white hover:border-brand-500/40 hover:bg-brand-500/10'
+            }`}
+          >
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+            <span className="relative flex items-center gap-2">
+              {plan.cta.label}
+              <motion.span
+                animate={{ x: [0, 4, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                className="inline-block"
+              >
+                <BrandIcons.ArrowRight className="h-4 w-4" />
+              </motion.span>
+            </span>
+          </Link>
+        </motion.div>
 
         <div className="flex items-center gap-2 text-xs text-zinc-400">
           <BrandIcons.Shield className="h-4 w-4" />

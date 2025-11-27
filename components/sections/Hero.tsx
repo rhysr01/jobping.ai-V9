@@ -152,7 +152,7 @@ export default function Hero() {
       className="section-padding-hero relative flex flex-col items-center justify-center overflow-hidden text-center"
     >
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[#05010f] via-[#090018] to-[#11002c]">
-        <div className="absolute inset-0 bg-[radial-gradient(72%_60%_at_50%_0%,rgba(124,58,237,0.28),transparent_65%)] blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(72%_60%_at_50%_0%,rgba(99,102,241,0.12),transparent_65%)] blur-3xl" />
       </div>
       {!prefersReduced && (
         <div className="pointer-events-none absolute inset-0 -z-10">
@@ -165,8 +165,8 @@ export default function Hero() {
                 left: `${left}%`,
                 width: size,
                 height: size,
-                opacity,
-                boxShadow: `0 0 ${size * 4}px rgba(167, 139, 250, 0.35)`,
+                opacity: opacity * 0.6,
+                boxShadow: `0 0 ${size * 3}px rgba(99, 102, 241, 0.2)`,
               }}
               initial={{ y: 0, scale: 0.6 }}
               animate={{
@@ -200,19 +200,28 @@ export default function Hero() {
                   aria-hidden
                   className="pointer-events-none absolute -inset-16 rounded-[48px]"
                   style={{
-                    background: 'radial-gradient(60% 80% at 30% 20%, rgba(164,91,255,0.18), transparent 60%)'
+                    background: 'radial-gradient(60% 80% at 30% 20%, rgba(139,92,246,0.25), transparent 60%)'
                   }}
-                  animate={{ x: [0, 10, 0], y: [0, -6, 0] }}
-                  transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+                  animate={{ x: [0, 12, 0], y: [0, -8, 0], scale: [1, 1.1, 1] }}
+                  transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
                 />
                 <motion.div
                   aria-hidden
                   className="pointer-events-none absolute -inset-24 rounded-[64px]"
                   style={{
-                    background: 'radial-gradient(40% 60% at 70% 60%, rgba(102,126,234,0.16), transparent 70%)'
+                    background: 'radial-gradient(40% 60% at 70% 60%, rgba(99,102,241,0.2), transparent 70%)'
                   }}
-                  animate={{ x: [0, -12, 0], y: [0, 8, 0] }}
-                  transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
+                  animate={{ x: [0, -12, 0], y: [0, 8, 0], scale: [1, 1.15, 1] }}
+                  transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.div
+                  aria-hidden
+                  className="pointer-events-none absolute -inset-32 rounded-[80px] blur-2xl"
+                  style={{
+                    background: 'radial-gradient(50% 50% at 50% 50%, rgba(168,85,247,0.15), transparent 70%)'
+                  }}
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
                 />
               </>
             )}
@@ -224,60 +233,73 @@ export default function Hero() {
                   ? {}
                   : {
                       scale: [1, 1.02, 1],
-                      rotateX: [0, 4, 0],
-                      rotateY: [0, -3, 0],
                       y: [0, -3, 0],
                     }
               }
-              transition={{ duration: 9, ease: "easeInOut", repeat: prefersReduced ? 0 : Infinity }}
+              transition={{ duration: 6, ease: "easeInOut", repeat: prefersReduced ? 0 : Infinity }}
               whileHover={
                 prefersReduced
                   ? {}
                   : {
-                      rotateX: -2,
-                      rotateY: 3,
-                      transition: { type: 'spring', stiffness: 120, damping: 14 }
+                      scale: 1.05,
+                      transition: { type: 'spring', stiffness: 200, damping: 15 }
                     }
               }
-              whileTap={prefersReduced ? {} : { scale: 0.99 }}
             >
-              {!prefersReduced && (
-                <motion.span
-                  aria-hidden
-                  className="hero-logo-glow"
-                  initial={{ opacity: 0.2 }}
-                  animate={{ opacity: [0.2, 0.5, 0.2] }}
-                  transition={{ duration: 4, ease: "easeInOut", repeat: Infinity }}
-                />
-              )}
-              {!prefersReduced && <span className="logoSheen" aria-hidden />} 
+              {!prefersReduced && <span className="logoSheen" aria-hidden />}
               {!prefersReduced && (
                 <motion.div
-                  className="pointer-events-none absolute -inset-12 -z-20 rounded-full border border-white/10"
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 16, ease: "easeInOut", repeat: Infinity }}
+                  className="absolute inset-0 rounded-full opacity-30"
+                  style={{
+                    background: 'conic-gradient(from 0deg, transparent, rgba(139, 92, 246, 0.4), transparent)',
+                  }}
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                  aria-hidden
                 />
               )}
-              <BrandIcons.GraduationCap className="hidden h-16 w-16 text-white sm:block sm:h-[4.5rem] sm:w-[4.5rem] md:h-20 md:w-20" />
-              <motion.span
-                className="hero-logo-text hero-text-gradient text-[4.4rem] sm:text-[5.2rem] md:text-[6rem] font-black tracking-tight"
-                style={{ backgroundSize: "240% 240%" }}
-                animate={
-                  prefersReduced
-                    ? {}
-                    : {
-                        letterSpacing: ["-0.02em", "0em", "-0.02em"],
-                        backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                      }
-                }
-                transition={{
-                  duration: 10,
-                  repeat: prefersReduced ? 0 : Infinity,
-                  ease: "easeInOut",
-                }}
+              <motion.div
+                className="relative flex items-center gap-4 sm:gap-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
               >
-                JobPing
-              </motion.span>
+                <motion.div
+                  className="relative"
+                  animate={
+                    prefersReduced
+                      ? {}
+                      : {
+                          y: [0, -4, 0],
+                          rotate: [0, -2, 0],
+                        }
+                  }
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <div className="absolute inset-0 blur-xl opacity-50">
+                    <BrandIcons.GraduationCap className="h-12 w-12 text-brand-400 sm:h-16 sm:w-16 md:h-[4.5rem] md:w-[4.5rem] lg:h-20 lg:w-20" />
+                  </div>
+                  <BrandIcons.GraduationCap className="relative h-12 w-12 text-white drop-shadow-[0_0_20px_rgba(139,92,246,0.6)] sm:h-16 sm:w-16 md:h-[4.5rem] md:w-[4.5rem] lg:h-20 lg:w-20" />
+                </motion.div>
+                <motion.span
+                  className="hero-logo-text hero-text-gradient text-[4.4rem] sm:text-[5.2rem] md:text-[6rem] font-black tracking-tight relative"
+                  style={{ backgroundSize: "200% 200%" }}
+                  animate={
+                    prefersReduced
+                      ? {}
+                      : {
+                          backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                        }
+                  }
+                  transition={{
+                    duration: 6,
+                    repeat: prefersReduced ? 0 : Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  JobPing
+                </motion.span>
+              </motion.div>
             </motion.div>
           </div>
           {!prefersReduced && (
@@ -292,12 +314,25 @@ export default function Hero() {
         </motion.div>
 
         <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 12, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.45, ease: "easeOut" }}
-          className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/12 px-4 py-2 text-sm font-semibold text-brand-200/95 backdrop-blur-md"
+          whileHover={{ scale: 1.05 }}
+          className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/12 px-4 py-2 text-sm font-semibold text-brand-200/95 backdrop-blur-md transition-all duration-300 hover:border-brand-500/60 hover:bg-brand-500/20 hover:shadow-[0_4px_16px_rgba(99,102,241,0.3)]"
         >
-          <BrandIcons.Mail className="h-4 w-4 text-brand-300" />
+          <motion.span
+            animate={{ 
+              rotate: [0, 10, -10, 0],
+            }}
+            transition={{ 
+              duration: 2,
+              repeat: Infinity,
+              repeatDelay: 3,
+              ease: "easeInOut"
+            }}
+          >
+            <BrandIcons.Mail className="h-4 w-4 text-brand-300" />
+          </motion.span>
           {Copy.HERO_PILL}
         </motion.p>
 
@@ -328,15 +363,27 @@ export default function Hero() {
           {Copy.HERO_FEATURES.map((feature, index) => {
             const Icon = featureIcons[index] ?? BrandIcons.Target;
             return (
-              <li
+              <motion.li
                 key={feature}
-                className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-zinc-200 backdrop-blur-sm transition-all duration-300 sm:text-base hover:-translate-y-[3px] hover:border-brand-500/25 hover:bg-white/10"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
+                whileHover={{ 
+                  y: -4,
+                  transition: { type: 'spring', stiffness: 300, damping: 20 }
+                }}
+                className="group relative flex items-start gap-3 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-zinc-200 backdrop-blur-sm transition-all duration-300 sm:text-base hover:border-brand-500/30 hover:bg-white/10 hover:shadow-[0_8px_24px_rgba(99,102,241,0.15)]"
               >
-                <span className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/12 text-brand-200">
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <motion.span 
+                  className="relative mt-1 inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/12 text-brand-200 transition-all duration-300 group-hover:bg-brand-500/20 group-hover:scale-110"
+                  whileHover={{ rotate: [0, -10, 10, 0] }}
+                  transition={{ duration: 0.5 }}
+                >
                   <Icon className="h-5 w-5" />
-                </span>
-                <span className="leading-snug">{feature}</span>
-              </li>
+                </motion.span>
+                <span className="relative leading-snug transition-colors duration-300 group-hover:text-white">{feature}</span>
+              </motion.li>
             );
           })}
         </motion.ul>
@@ -368,19 +415,37 @@ export default function Hero() {
           transition={{ delay: 0.45, duration: 0.6 }}
           className="flex flex-col items-center gap-4 text-sm text-zinc-300 sm:flex-row"
         >
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-brand-200">
+          <motion.div 
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-brand-200 transition-all duration-300 hover:border-brand-500/30 hover:bg-brand-500/10 hover:shadow-[0_4px_12px_rgba(99,102,241,0.2)]"
+            whileHover={{ scale: 1.05 }}
+          >
             <BrandIcons.Users className="h-4 w-4 text-brand-300" />
             {Copy.HERO_SOCIAL_PROOF}
-          </div>
+          </motion.div>
           <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-400">
-            <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1.5 text-sm text-brand-200">
-              <BrandIcons.Target className="h-4 w-4 text-brand-300" />
+            <motion.div 
+              className="group inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1.5 text-sm text-brand-200 transition-all duration-300 hover:border-brand-500/60 hover:bg-brand-500/15 hover:shadow-[0_4px_12px_rgba(99,102,241,0.25)]"
+              whileHover={{ scale: 1.05, y: -2 }}
+            >
+              <motion.span
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                }}
+                transition={{ 
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatDelay: 2,
+                  ease: "easeInOut"
+                }}
+              >
+                <BrandIcons.Target className="h-4 w-4 text-brand-300" />
+              </motion.span>
               {isLoading ? (
                 <Skeleton className="h-4 w-20" />
               ) : (
-                <span>{`${formatNumber(displayActiveJobs)} active jobs this week`}</span>
+                <span className="font-medium">{`${formatNumber(displayActiveJobs)} active jobs this week`}</span>
               )}
-            </div>
+            </motion.div>
             {(hasInternships || hasGraduates) && (
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5">
                 {hasInternships && <span>{`${formatNumber(displayInternships)} internships`}</span>}
@@ -425,11 +490,11 @@ export default function Hero() {
           className="pointer-events-none absolute inset-0 -z-10"
           style={{
             background:
-              "radial-gradient(circle at 30% 30%, rgba(164,91,255,0.18), transparent 60%), radial-gradient(circle at 70% 70%, rgba(99,102,241,0.16), transparent 65%)",
+              "radial-gradient(circle at 30% 30%, rgba(99,102,241,0.08), transparent 60%), radial-gradient(circle at 70% 70%, rgba(99,102,241,0.06), transparent 65%)",
             backgroundSize: "140% 140%",
           }}
           animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
-          transition={{ duration: 20, ease: "linear", repeat: Infinity }}
+          transition={{ duration: 25, ease: "linear", repeat: Infinity }}
         />
       )}
 
@@ -439,15 +504,12 @@ export default function Hero() {
         animate={{
           opacity: 1,
           scale: 1,
-          rotate: prefersReduced ? 0 : [0, 0.6, -0.6, 0],
         }}
         transition={{
           duration: 14,
           ease: "easeInOut",
-          repeat: prefersReduced ? 0 : Infinity,
-          repeatType: "reverse",
         }}
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(124,58,237,0.18),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(99,102,241,0.16),transparent_60%)]"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.08),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(99,102,241,0.06),transparent_60%)]"
       />
     </section>
   );

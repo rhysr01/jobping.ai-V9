@@ -120,11 +120,18 @@ async function verify() {
 
   // Test 3: Check if we can query RLS policies (service role should be able to)
   console.log('\n4. Testing Admin Access:');
-  const { data: policyData, error: policyError } = await supabase
-    .rpc('exec_sql', { 
-      query: `SELECT policyname, roles FROM pg_policies WHERE tablename = 'users' AND cmd = 'INSERT'` 
-    })
-    .catch(() => ({ data: null, error: { message: 'RPC not available' } }));
+  let policyData, policyError;
+  try {
+    const result = await supabase
+      .rpc('exec_sql', { 
+        query: `SELECT policyname, roles FROM pg_policies WHERE tablename = 'users' AND cmd = 'INSERT'` 
+      });
+    policyData = result.data;
+    policyError = result.error;
+  } catch (err) {
+    policyData = null;
+    policyError = { message: 'RPC not available' };
+  }
 
   if (policyError && policyError.message !== 'RPC not available') {
     console.log('   ⚠️  Cannot query policies directly (this is normal)');

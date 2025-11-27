@@ -44,15 +44,28 @@ export default function HowItWorks() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.55, delay: index * 0.1 }}
-              className="flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 text-left backdrop-blur-sm transition-all duration-300 hover:-translate-y-[3px] hover:border-brand-500/25 hover:bg-white/10 sm:p-7"
+                whileHover={{ 
+                  y: -4,
+                  transition: { type: 'spring', stiffness: 300, damping: 20 }
+                }}
+                className="group relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 text-left backdrop-blur-sm transition-all duration-300 hover:border-brand-500/30 hover:bg-white/10 hover:shadow-[0_8px_24px_rgba(99,102,241,0.15)] sm:p-7"
               >
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-sm font-semibold text-brand-200">
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <motion.span 
+                  className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-sm font-semibold text-brand-200 transition-all duration-300 group-hover:bg-brand-500/25 group-hover:scale-110"
+                  whileHover={{ rotate: [0, -10, 10, 0] }}
+                  transition={{ duration: 0.5 }}
+                >
                   {index + 1}
-                </span>
+                </motion.span>
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-500/12 text-brand-200">
+                  <motion.span 
+                    className="relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-500/12 text-brand-200 transition-all duration-300 group-hover:bg-brand-500/20 group-hover:scale-110"
+                    whileHover={{ rotate: 360 }}
+                    transition={{ duration: 0.6 }}
+                  >
                     <Icon className="h-4 w-4" />
-                  </span>
+                  </motion.span>
                   <h3 className="text-lg font-semibold text-white sm:text-xl">{step.title}</h3>
                 </div>
                 <p className="text-sm leading-relaxed text-zinc-300 sm:text-base">{step.description}</p>
