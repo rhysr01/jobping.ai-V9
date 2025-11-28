@@ -23,6 +23,46 @@ function hashJob(title, company, location) {
   return Math.abs(hash).toString(36);
 }
 
+// Parse location to extract city and country
+function parseLocation(location) {
+  if (!location) return { city: '', country: '' };
+  const loc = location.toLowerCase().trim();
+  
+  // Check for remote indicators
+  const isRemote = /remote|work\s+from\s+home|wfh|anywhere/i.test(loc);
+  if (isRemote) return { city: '', country: '', isRemote: true };
+  
+  // Known EU cities from signup form (only these are valid)
+  const euCities = new Set([
+    'dublin', 'london', 'paris', 'amsterdam', 'manchester', 'birmingham',
+    'madrid', 'barcelona', 'berlin', 'hamburg', 'munich', 'zurich',
+    'milan', 'rome', 'brussels', 'stockholm', 'copenhagen', 'vienna',
+    'prague', 'warsaw'
+  ]);
+  
+  // Extract city and country using comma separation
+  const parts = loc.split(',').map(p => p.trim()).filter(Boolean);
+  const city = parts.length > 0 ? parts[0] : loc;
+  let country = parts.length > 1 ? parts[parts.length - 1] : '';
+  
+  // If single part and it's a known city, leave country empty
+  if (parts.length === 1 && euCities.has(city)) {
+    country = '';
+  }
+  
+  // Capitalize first letter of each word for city
+  const capitalizedCity = city.split(' ').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ');
+  
+  return { 
+    city: capitalizedCity || city, 
+    country: country ? country.split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ') : ''
+  };
+}
+
 function parseCsv(csv) {
   const lines = csv.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
@@ -54,13 +94,16 @@ async function saveJobs(jobs, source) {
   const nonRemote = jobs.filter(j => !((j.location||'').toLowerCase().includes('remote')));
   const rows = nonRemote.map(j => {
     const companyName = (j.company||'').trim();
+    const { city, country } = parseLocation(j.location || '');
     return {
       job_hash: hashJob(j.title, companyName, j.location),
       title: (j.title||'').trim(),
       company: companyName,
       company_name: companyName, // Fix: Map company to company_name for proper data quality
       location: (j.location||'').trim(),
-      description: (j.company_description || j.skills || '').trim(),
+      city: city, // Extract city from location
+      country: country, // Extract country from location
+      description: (j.company_description || j.skills || j.description || '').trim(),
       job_url: (j.job_url || j.url || '').trim(),
       source,
       posted_at: j.posted_at || nowIso,
