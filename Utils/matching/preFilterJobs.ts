@@ -252,21 +252,60 @@ export async function preFilterJobsByUserPreferencesEnhanced(
       }
     }
     
-    // 5. Entry level preference matching
+    // 5. Entry level preference matching (improved with flags)
     if (user.entry_level_preference) {
       const entryLevel = user.entry_level_preference.toLowerCase();
+      const jobIsInternship = (job as any).is_internship === true;
+      const jobIsGraduate = (job as any).is_graduate === true;
+      const jobIsEarlyCareer = (job as any).is_early_career === true || 
+                               ((job as any).categories && Array.isArray((job as any).categories) && 
+                                (job as any).categories.includes('early-career'));
+      
+      // Check for working student terms in job (werkstudent, part-time student, etc.)
+      const workingStudentTerms = ['werkstudent', 'working student', 'part-time student', 'student worker', 'student job'];
+      const isWorkingStudentJob = workingStudentTerms.some(term => 
+        jobTitle.includes(term) || jobDesc.includes(term)
+      );
+      
+      // Use flags first (most accurate)
+      if (entryLevel.includes('intern') && jobIsInternship) {
+        score += 15; // Perfect match for internship
+      } else if (entryLevel.includes('intern') && !jobIsInternship) {
+        score -= 5; // Penalty if user wants internship but job isn't
+      }
+      
+      // Working Student preference: boost internships, especially those with working student terms
+      if (entryLevel.includes('working student')) {
+        if (jobIsInternship && isWorkingStudentJob) {
+          score += 15; // Perfect match for working student role
+        } else if (jobIsInternship) {
+          score += 12; // Good match (internship, but not explicitly working student)
+        } else if (isWorkingStudentJob) {
+          score += 10; // Text match for working student terms
+        }
+      }
+      
+      if (entryLevel.includes('graduate') && jobIsGraduate) {
+        score += 15; // Perfect match for graduate programme
+      } else if (entryLevel.includes('graduate') && !jobIsGraduate && !jobIsInternship) {
+        score -= 5; // Penalty if user wants graduate but job isn't
+      }
+      
+      if (entryLevel.includes('entry level') && jobIsEarlyCareer && !jobIsInternship && !jobIsGraduate) {
+        score += 10; // Match for entry-level roles
+      }
+      
+      // Fallback to text matching
       const entryKeywords = ['intern', 'internship', 'graduate', 'grad', 'entry', 'junior', 'trainee', 'associate', 'assistant'];
       const seniorKeywords = ['senior', 'lead', 'principal', 'manager', 'director', 'head', 'executive'];
       
       const isEntryLevel = entryKeywords.some(kw => jobTitle.includes(kw) || jobDesc.includes(kw));
       const isSenior = seniorKeywords.some(kw => jobTitle.includes(kw) || jobDesc.includes(kw));
       
-      if (entryLevel.includes('entry') && isEntryLevel) {
-        score += 8; // Entry level match
+      if (entryLevel.includes('entry') && isEntryLevel && !jobIsInternship && !jobIsGraduate) {
+        score += 8; // Entry level match (text-based)
       } else if (entryLevel.includes('entry') && isSenior) {
         score -= 15; // Strong penalty for senior jobs when user wants entry
-      } else if (entryLevel.includes('senior') && isSenior) {
-        score += 8; // Senior level match
       }
     }
     
@@ -288,24 +327,37 @@ export async function preFilterJobsByUserPreferencesEnhanced(
       }
     }
     
-    // 7. Language scoring (if specified)
-    if (user.languages_spoken && user.languages_spoken.length > 0) {
-      const languages = Array.isArray(user.languages_spoken) ? user.languages_spoken : [user.languages_spoken];
-      const hasLanguageMatch = languages.some(lang => {
-        if (!lang) return false;
-        const langLower = lang.toLowerCase();
-        // Check description for language requirements
-        return jobDesc.includes(langLower) || 
-               jobDesc.includes(`${langLower} speaking`) ||
-               jobDesc.includes(`${langLower} language`) ||
-               ((job as any).language_requirements && Array.isArray((job as any).language_requirements) &&
-                (job as any).language_requirements.some((req: string) => req.toLowerCase().includes(langLower)));
-      });
-      if (hasLanguageMatch) {
-        score += 7; // Language match
+    // 7. Language scoring (improved - uses extracted language_requirements)
+    if (user.languages_spoken && Array.isArray(user.languages_spoken) && user.languages_spoken.length > 0) {
+      const jobLanguages = (job as any).language_requirements;
+      
+      // Use extracted language_requirements field first (most accurate)
+      if (jobLanguages && Array.isArray(jobLanguages) && jobLanguages.length > 0 && user.languages_spoken && Array.isArray(user.languages_spoken)) {
+        const matchingLanguages = jobLanguages.filter((lang: string) => 
+          user.languages_spoken!.some(userLang => 
+            userLang.toLowerCase().includes(lang.toLowerCase()) || 
+            lang.toLowerCase().includes(userLang.toLowerCase())
+          )
+        );
+        if (matchingLanguages.length > 0) {
+          score += 10; // Bonus for language match (increased from 7)
+        } else {
+          score -= 3; // Small penalty if job requires languages user doesn't speak
+        }
       } else {
-        // Small penalty if language specified but not found (might be required)
-        score -= 3;
+        // Fallback to text matching in description
+        const languages = Array.isArray(user.languages_spoken) ? user.languages_spoken : [user.languages_spoken];
+        const hasLanguageMatch = languages.some(lang => {
+          if (!lang) return false;
+          const langLower = lang.toLowerCase();
+          return jobDesc.includes(langLower) || 
+                 jobDesc.includes(`${langLower} speaking`) ||
+                 jobDesc.includes(`fluent in ${langLower}`) ||
+                 jobDesc.includes(`native ${langLower}`);
+        });
+        if (hasLanguageMatch) {
+          score += 5; // Lower score for text-based match
+        }
       }
     }
     

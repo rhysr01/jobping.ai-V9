@@ -1,5 +1,5 @@
 import { GET } from '@/app/api/stats/route';
-import { getSupabaseClient } from '@/Utils/supabase';
+import { getDatabaseClient } from '@/Utils/databasePool';
 
 // Mock Supabase client
 const mockSupabase = {
@@ -13,8 +13,8 @@ const mockSupabase = {
   })),
 };
 
-jest.mock('@/Utils/supabase', () => ({
-  getSupabaseClient: jest.fn(() => mockSupabase),
+jest.mock('@/Utils/databasePool', () => ({
+  getDatabaseClient: jest.fn(() => mockSupabase),
 }));
 
 describe('GET /api/stats', () => {

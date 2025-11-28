@@ -8,7 +8,7 @@ import {
   API_MESSAGES,
   ENV,
   TIMEOUTS
-} from '@/Utils/constants';
+} from '@/lib/constants';
 
 describe('Application Constants', () => {
   describe('HTTP_STATUS', () => {

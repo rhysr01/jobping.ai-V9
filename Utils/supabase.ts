@@ -1,10 +1,18 @@
 /**
  * Centralized Supabase Client Management
- * Professional pattern for consistent database access across the application
- * Enhanced with retry logic and timeout handling
+ * 
+ * @deprecated This module is deprecated. Use getDatabaseClient() from '@/Utils/databasePool' instead.
+ * 
+ * This module now delegates to the canonical databasePool implementation for consistency.
+ * The utility functions (wrapDatabaseResponse, executeWithRetry, etc.) are still available.
+ * 
+ * Migration guide:
+ * - Replace: import { getSupabaseClient } from '@/Utils/supabase'
+ * - With: import { getDatabaseClient } from '@/Utils/databasePool'
  */
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { getDatabaseClient } from './databasePool';
 
 // Singleton pattern for server-side Supabase client
 let _supabaseClient: SupabaseClient | null = null;
@@ -12,69 +20,47 @@ let _supabaseClient: SupabaseClient | null = null;
 /**
  * Gets a server-side Supabase client with proper error handling
  * Uses singleton pattern to avoid multiple client creation
+ * 
+ * @deprecated Use getDatabaseClient() from '@/Utils/databasePool' instead.
+ * This function now delegates to databasePool for consistency.
+ * Will be removed in v2.0.0
  */
 export function getSupabaseClient(): SupabaseClient {
-  // Return existing client if available
-  if (_supabaseClient) {
-    return _supabaseClient;
+  // Show deprecation warning in development
+  if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
+    const stack = new Error().stack;
+    const caller = stack?.split('\n')[2]?.trim() || 'unknown';
+    console.warn(
+      `[DEPRECATED] getSupabaseClient() is deprecated. ` +
+      `Use getDatabaseClient() from '@/Utils/databasePool' instead.\n` +
+      `Called from: ${caller}`
+    );
   }
-
-  // Prevent client-side usage
-  if (typeof window !== 'undefined') {
-    throw new Error('Supabase client should only be used server-side');
-  }
-
-  // Validate environment variables - prioritize service role key for security
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  // Only use service role key - never fall back to anon key for security
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
-
-  if (!supabaseUrl || !supabaseKey) {
-    console.error(' Supabase env vars missing:', {
-      SUPABASE_URL: !!process.env.SUPABASE_URL,
-      NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      SUPABASE_KEY: !!process.env.SUPABASE_KEY,
-      SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY
-    });
-    throw new Error('Missing required Supabase environment variables');
-  }
-
-  // Create and cache client
-  _supabaseClient = createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
-
-  return _supabaseClient;
+  
+  // Delegate to the canonical implementation
+  return getDatabaseClient();
 }
 
 /**
  * Creates a new Supabase client (for special cases where singleton isn't appropriate)
+ * 
+ * @deprecated Use getDatabaseClient() from '@/Utils/databasePool' instead.
+ * The databasePool uses a singleton pattern which is recommended for all use cases.
+ * Will be removed in v2.0.0
  */
 export function createSupabaseClient(): SupabaseClient {
-  if (typeof window !== 'undefined') {
-    throw new Error('Supabase client should only be used server-side');
+  if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
+    const stack = new Error().stack;
+    const caller = stack?.split('\n')[2]?.trim() || 'unknown';
+    console.warn(
+      `[DEPRECATED] createSupabaseClient() is deprecated. ` +
+      `Use getDatabaseClient() from '@/Utils/databasePool' instead.\n` +
+      `Called from: ${caller}`
+    );
   }
-
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
-                      process.env.SUPABASE_KEY || 
-                      process.env.SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseKey) {
-    console.error(' Supabase env vars missing in createSupabaseClient');
-    throw new Error('Missing required Supabase environment variables');
-  }
-
-  return createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
+  
+  // Delegate to the canonical implementation (singleton is fine for all cases)
+  return getDatabaseClient();
 }
 
 /**
@@ -190,7 +176,8 @@ function delay(ms: number): Promise<void> {
  */
 export async function checkDatabaseHealth(): Promise<{ healthy: boolean; message: string }> {
   try {
-    const supabase = getSupabaseClient();
+    // Use the canonical implementation
+    const supabase = getDatabaseClient();
     const { error } = await supabase.from('users').select('count').limit(1);
     
     if (error) {

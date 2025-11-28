@@ -9,17 +9,32 @@ export class ScoringService {
   }
 
   calculateMatchScore(job: Job, user: UserPreferences): MatchScore {
-    const eligibility = (job.categories || []).includes('early-career') ? 100 : 0;
+    // Simplified scoring for testing - uses new weight structure
     const careerPath = (job.categories || []).includes('career:tech') ? 100 : 70;
     const location = (job.categories || []).includes('loc:san-francisco') ? 100 : 50;
     const w = getScoringWeights();
     const overall = Math.round(
-      eligibility * w.eligibility +
       careerPath * w.careerPath +
-      location * w.location
+      location * w.location +
+      50 * w.workEnvironment + // Default work env score
+      50 * w.roleFit + // Default role fit score
+      50 * w.experienceLevel + // Default experience score
+      50 * w.companyCulture + // Default company score
+      50 * w.skills + // Default skills score
+      50 * w.timing // Default timing score
     );
 
-    return { overall, eligibility, career_path: careerPath as any, careerPath, location, keywords: 0, work_environment: 0, visa_sponsorship: 0, experience_level: 0, languages: 0, company_type: 0, roles: 0 } as any;
+    return { 
+      overall, 
+      careerPath, 
+      location, 
+      workEnvironment: 50,
+      roleFit: 50,
+      experienceLevel: 50,
+      companyCulture: 50,
+      skills: 50,
+      timing: 50
+    };
   }
 
   calculateConfidenceScore(job: Job, _user: UserPreferences): number {

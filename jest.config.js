@@ -24,10 +24,10 @@ const customJestConfig = {
   ],
   coverageThreshold: {
     global: {
-      branches: 5,
-      functions: 5,
-      lines: 5,
-      statements: 5,
+      branches: 10,
+      functions: 10,
+      lines: 10,
+      statements: 10,
     },
     // Realistic thresholds for critical modules (will increase over time)
     'Utils/consolidatedMatching.ts': {

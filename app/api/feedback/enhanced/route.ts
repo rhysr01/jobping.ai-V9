@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/Utils/supabase';
+import { getDatabaseClient } from '@/Utils/databasePool';
 
 // Enhanced feedback data interface
 interface EnhancedFeedbackData {
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get context for learning
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
     
     const { data: job } = await supabase
       .from('jobs')
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Email parameter required' }, { status: 400 });
     }
 
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
 
     // Get recent feedback for the user
     const { data: feedback, error } = await supabase
@@ -151,7 +151,7 @@ export async function GET(request: NextRequest) {
 
 // Record feedback to match_logs table with decay logic
 async function recordFeedbackToMatchLogs(feedbackData: EnhancedFeedbackData) {
-  const supabase = getSupabaseClient();
+  const supabase = getDatabaseClient();
 
   // Check for existing feedback on this job to apply decay
   const { data: existingFeedback } = await supabase
@@ -213,7 +213,7 @@ async function recordFeedbackToMatchLogs(feedbackData: EnhancedFeedbackData) {
 
 // Record feedback to feedback table (backward compatibility)
 async function recordFeedbackToDatabase(feedbackData: EnhancedFeedbackData) {
-  const supabase = getSupabaseClient();
+  const supabase = getDatabaseClient();
 
   const { error } = await supabase
     .from('feedback')
@@ -237,13 +237,15 @@ async function recordFeedbackToDatabase(feedbackData: EnhancedFeedbackData) {
   }
 }
 
-// Lightweight re-rank function using feedback signals
+// Lightweight re-rank function using feedback signals (reserved for future use)
+// Commented out to fix unused variable error - can be re-enabled when needed
+/*
 async function applyFeedbackReranking(
   jobs: any[], 
   userEmail: string
 ): Promise<any[]> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
 
     // Get recent feedback for the user (last 30 days)
     const thirtyDaysAgo = new Date();
@@ -287,3 +289,4 @@ async function applyFeedbackReranking(
     return jobs; // Return original jobs if reranking fails
   }
 }
+*/

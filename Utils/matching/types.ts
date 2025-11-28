@@ -4,7 +4,7 @@
  */
 
 import { Job } from '../../scrapers/types';
-import type { Tables } from '../../lib/db-types';
+import type { Tables } from '@/lib/database.types';
 
 // Re-export Job type for convenience
 export type { Job } from '../../scrapers/types';
@@ -12,7 +12,17 @@ export type { Job } from '../../scrapers/types';
 // Use generated database types
 export type UserRow = Tables<'users'>;
 export type JobRow = Tables<'jobs'>;
-export type MatchRow = Tables<'matches'>;
+
+// MatchRow type - matches table structure (not in generated types yet)
+export type MatchRow = {
+  id: number;
+  user_email: string;
+  job_hash: string;
+  match_score: number;
+  match_reason: string | null;
+  created_at: string;
+  provenance?: unknown;
+};
 
 
 // ================================
@@ -82,12 +92,15 @@ export interface UserPreferences {
 
 export interface MatchScore {
   overall: number;
-  eligibility: number;
+  careerPath: number;
   location: number;
-  experience: number;
+  workEnvironment: number;
+  roleFit: number;
+  experienceLevel: number;
+  companyCulture: number;
   skills: number;
-  company: number;
   timing: number;
+  semanticBoost?: number; // Optional semantic similarity boost (0-10%)
 }
 
 export interface MatchResult {

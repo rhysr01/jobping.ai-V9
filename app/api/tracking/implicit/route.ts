@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/Utils/supabase';
+import { getDatabaseClient } from '@/Utils/databasePool';
 
 // Implicit signal data interface
 interface ImplicitSignalData {
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Email parameter required' }, { status: 400 });
     }
 
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
 
     let query = supabase
       .from('implicit_signals')
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
 
 // Record implicit signal to database
 async function recordImplicitSignal(signalData: ImplicitSignalData) {
-  const supabase = getSupabaseClient();
+  const supabase = getDatabaseClient();
 
   const { error } = await supabase
     .from('implicit_signals')
@@ -166,7 +166,7 @@ async function recordImplicitSignal(signalData: ImplicitSignalData) {
 
 // Record significant signals as feedback for learning
 async function recordAsFeedbackSignal(signalData: ImplicitSignalData) {
-  const supabase = getSupabaseClient();
+  const supabase = getDatabaseClient();
 
   // Determine verdict based on signal
   let verdict: 'positive' | 'negative' | 'neutral' = 'neutral';
@@ -222,7 +222,7 @@ async function calculateEngagementScore(
   days: number = 30
 ): Promise<number> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
 
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
@@ -272,7 +272,7 @@ async function calculateEngagementScore(
 // Get user behavior insights
 async function getUserBehaviorInsights(userEmail: string) {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

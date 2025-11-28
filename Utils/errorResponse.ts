@@ -1,6 +1,31 @@
+/**
+ * @deprecated Use @/lib/errors instead.
+ * This module is deprecated and will be removed in v2.0.0
+ * 
+ * Migration guide:
+ * - Replace `errorResponse.badRequest(req, msg)` with `throw new ValidationError(msg)`
+ * - Replace `errorResponse.unauthorized(req, msg)` with `throw new UnauthorizedError(msg)`
+ * - Replace `errorResponse.notFound(req, msg)` with `throw new NotFoundError(msg)`
+ * - Replace `errorResponse.internal(req, msg)` with `throw new AppError(msg, 500)`
+ * - Wrap your handler with `asyncHandler()` from @/lib/errors
+ * 
+ * Example:
+ * ```typescript
+ * // Old:
+ * export async function POST(req: NextRequest) {
+ *   if (!data) return errorResponse.badRequest(req, 'Missing data');
+ * }
+ * 
+ * // New:
+ * export const POST = asyncHandler(async (req: NextRequest) => {
+ *   if (!data) throw new ValidationError('Missing data');
+ * });
+ * ```
+ */
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { HTTP_STATUS, ERROR_CODES, type HttpStatusCode, type ErrorCode } from './constants';
+import { HTTP_STATUS, ERROR_CODES, type HttpStatusCode, type ErrorCode } from '@/lib/constants';
 
 export type ApiErrorBody = {
   code: string;

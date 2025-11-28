@@ -47,10 +47,17 @@ describe('database clients', () => {
     });
   });
 
-  describe('getSupabaseClient', () => {
-    it('should return supabase client', () => {
+  describe('getSupabaseClient (deprecated, delegates to getDatabaseClient)', () => {
+    it('should return supabase client (delegates to getDatabaseClient)', () => {
       const client = getSupabaseClient();
       expect(client).toBeDefined();
+    });
+
+    it('should return same instance as getDatabaseClient', () => {
+      const dbClient = getDatabaseClient();
+      const supabaseClient = getSupabaseClient();
+      // Both should return the same instance since getSupabaseClient delegates
+      expect(supabaseClient).toBe(dbClient);
     });
 
     it('should return client with from method', () => {
@@ -59,7 +66,7 @@ describe('database clients', () => {
       expect(typeof client.from).toBe('function');
     });
 
-    it('should handle missing URL gracefully', () => {
+    it('should handle missing URL gracefully (delegates to getDatabaseClient)', () => {
       const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       delete process.env.NEXT_PUBLIC_SUPABASE_URL;
       process.env.SUPABASE_URL = undefined;
@@ -67,7 +74,7 @@ describe('database clients', () => {
       process.env.NEXT_PUBLIC_SUPABASE_URL = originalUrl;
     });
 
-    it('should handle missing key gracefully', () => {
+    it('should handle missing key gracefully (delegates to getDatabaseClient)', () => {
       const originalKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
       delete process.env.SUPABASE_SERVICE_ROLE_KEY;
       delete process.env.SUPABASE_KEY;

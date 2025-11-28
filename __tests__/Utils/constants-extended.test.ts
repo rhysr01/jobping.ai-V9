@@ -7,7 +7,7 @@ import {
   type HttpStatusCode,
   type ErrorCode,
   type ApiMessage,
-} from '@/Utils/constants';
+} from '@/lib/constants';
 
 describe('constants', () => {
   describe('HTTP_STATUS', () => {

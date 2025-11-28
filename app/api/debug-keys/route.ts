@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   try {
     const supabase = getDatabaseClient();
     const testEmail = `test-debug-${Date.now()}@example.com`;
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('users')
       .insert([{
         email: testEmail,

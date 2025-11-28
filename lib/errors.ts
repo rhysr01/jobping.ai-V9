@@ -6,6 +6,23 @@
 import { logger } from './monitoring';
 import { NextRequest, NextResponse } from 'next/server';
 
+// Request ID helper (for consistent request tracking)
+function getRequestId(req: NextRequest): string {
+  const headerVal = req.headers.get('x-request-id');
+  if (headerVal && headerVal.length > 0) {
+    return headerVal;
+  }
+  
+  // Generate request ID
+  try {
+    // eslint-disable-next-line
+    const nodeCrypto = require('crypto');
+    return nodeCrypto.randomUUID ? nodeCrypto.randomUUID() : nodeCrypto.randomBytes(16).toString('hex');
+  } catch {
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+}
+
 export class AppError extends Error {
   constructor(
     message: string,
@@ -44,35 +61,54 @@ export class RateLimitError extends AppError {
 
 /**
  * Centralized error handler
- * Logs errors and returns consistent JSON response
+ * Logs errors and returns consistent JSON response with requestId
  */
-export function handleError(error: unknown): NextResponse {
+export function handleError(error: unknown, req?: NextRequest): NextResponse {
+  const requestId = req ? getRequestId(req) : undefined;
+  
   if (error instanceof AppError) {
     logger.warn(error.message, {
       metadata: {
         statusCode: error.statusCode,
         code: error.code,
         details: error.details,
+        requestId,
       },
     });
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         error: error.message,
         code: error.code,
         details: error.details,
+        ...(requestId && { requestId }),
       },
       { status: error.statusCode }
     );
+    
+    if (requestId) {
+      response.headers.set('x-request-id', requestId);
+    }
+    
+    return response;
   }
 
   // Unknown error - log with full stack
   logger.error('Unhandled error', { error: error instanceof Error ? error : new Error(String(error)) });
 
-  return NextResponse.json(
-    { error: 'Internal server error' },
+  const response = NextResponse.json(
+    { 
+      error: 'Internal server error',
+      ...(requestId && { requestId }),
+    },
     { status: 500 }
   );
+  
+  if (requestId) {
+    response.headers.set('x-request-id', requestId);
+  }
+  
+  return response;
 }
 
 /**
@@ -92,7 +128,7 @@ export function asyncHandler(
     try {
       return await handler(req, context);
     } catch (error) {
-      return handleError(error);
+      return handleError(error, req);
     }
   };
 }

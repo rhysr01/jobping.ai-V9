@@ -10,9 +10,11 @@ import {
   cats,
   hasEligibility,
   careerSlugs,
-  locTag
+  locTag,
+  toWorkEnv
 } from './normalizers';
 import { validateLocationCompatibility } from './validators';
+import { getScoringWeights } from '../config/matching';
 
 // ================================
 // RULE-BASED MATCHING
@@ -55,46 +57,72 @@ export function applyHardGates(job: Job, userPrefs: UserPreferences): { passed: 
   return { passed: true, reason: 'Passed all hard gates' };
 }
 
-export function calculateMatchScore(job: Job, userPrefs: UserPreferences): MatchScore {
+export function calculateMatchScore(
+  job: Job, 
+  userPrefs: UserPreferences,
+  semanticScore?: number
+): MatchScore {
   const categories = normalizeToString(job.categories);
   const tags = cats(categories);
 
-  // Eligibility score (0-100)
-  const eligibilityScore = hasEligibility(categories) ? 100 : 0;
+  // Career path score (0-100) - MOST IMPORTANT
+  const careerPathScore = calculateCareerPathScore(job, userPrefs, categories);
 
-  // Location score (0-100)
+  // Location score (0-100) - Hard requirement
   const locationScore = calculateLocationScore(job, userPrefs);
 
-  // Experience level score (0-100)
-  const experienceScore = calculateExperienceScore(job, userPrefs);
+  // Work environment score (0-100) - Form options only: Office/Hybrid/Remote
+  const workEnvironmentScore = calculateWorkEnvironmentScore(job, userPrefs);
 
-  // Skills/company type score (0-100)
+  // Role fit score (0-100) - Specific role within career path
+  const roleFitScore = calculateRoleFitScore(job, userPrefs);
+
+  // Experience level score (0-100)
+  const experienceLevelScore = calculateExperienceScore(job, userPrefs);
+
+  // Company culture score (0-100) - Company type preference
+  const companyCultureScore = calculateCompanyScore(job, userPrefs);
+
+  // Skills score (0-100) - Technical/soft skills alignment
   const skillsScore = calculateSkillsScore(job, userPrefs);
 
-  // Company type score (0-100)
-  const companyScore = calculateCompanyScore(job, userPrefs);
-
-  // Timing score (0-100)
+  // Timing score (0-100) - Job freshness
   const timingScore = calculateTimingScore(job);
 
+  // Get weights from config
+  const weights = getScoringWeights();
+
   // Calculate overall score (weighted average)
-  const overallScore = Math.round(
-    (eligibilityScore * 0.3) +
-    (locationScore * 0.2) +
-    (experienceScore * 0.2) +
-    (skillsScore * 0.15) +
-    (companyScore * 0.1) +
-    (timingScore * 0.05)
+  let overallScore = Math.round(
+    (careerPathScore * weights.careerPath) +
+    (locationScore * weights.location) +
+    (workEnvironmentScore * weights.workEnvironment) +
+    (roleFitScore * weights.roleFit) +
+    (experienceLevelScore * weights.experienceLevel) +
+    (companyCultureScore * weights.companyCulture) +
+    (skillsScore * weights.skills) +
+    (timingScore * weights.timing)
   );
+
+  // Apply semantic boost if provided (hybrid approach)
+  let semanticBoost = 0;
+  if (semanticScore !== undefined && semanticScore > 0.65) {
+    // Semantic boost: (similarity - 0.65) * 0.15 = max 5.25% boost at 1.0 similarity
+    semanticBoost = Math.min(10, Math.round((semanticScore - 0.65) * 0.15 * 100)) / 100;
+    overallScore = Math.min(100, Math.round(overallScore * (1 + semanticBoost)));
+  }
 
   return {
     overall: overallScore,
-    eligibility: eligibilityScore,
+    careerPath: careerPathScore,
     location: locationScore,
-    experience: experienceScore,
+    workEnvironment: workEnvironmentScore,
+    roleFit: roleFitScore,
+    experienceLevel: experienceLevelScore,
+    companyCulture: companyCultureScore,
     skills: skillsScore,
-    company: companyScore,
-    timing: timingScore
+    timing: timingScore,
+    semanticBoost: semanticBoost > 0 ? semanticBoost : undefined
   };
 }
 
@@ -149,10 +177,16 @@ export function generateMatchExplanation(
   const reasons: string[] = [];
   const matchTags: string[] = [];
 
-  // Eligibility
-  if (scoreBreakdown.eligibility > 80) {
+  // Early career eligibility (always checked in hard gates, so just note it)
+  if (hasEligibility(categories)) {
     reasons.push('Perfect for early career');
     matchTags.push('early-career');
+  }
+
+  // Career path
+  if (scoreBreakdown.careerPath > 80) {
+    reasons.push('Perfect career path match');
+    matchTags.push('career-match');
   }
 
   // Location
@@ -161,22 +195,34 @@ export function generateMatchExplanation(
     matchTags.push('location-match');
   }
 
+  // Work environment
+  if (scoreBreakdown.workEnvironment > 80) {
+    reasons.push('Preferred work environment');
+    matchTags.push('work-env-match');
+  }
+
+  // Role fit
+  if (scoreBreakdown.roleFit > 80) {
+    reasons.push('Ideal role match');
+    matchTags.push('role-match');
+  }
+
   // Experience level
-  if (scoreBreakdown.experience > 80) {
+  if (scoreBreakdown.experienceLevel > 80) {
     reasons.push('Right experience level');
     matchTags.push('experience-match');
   }
 
-  // Skills/company type
+  // Company culture
+  if (scoreBreakdown.companyCulture > 80) {
+    reasons.push('Preferred company type');
+    matchTags.push('company-match');
+  }
+
+  // Skills
   if (scoreBreakdown.skills > 80) {
     reasons.push('Strong skill alignment');
     matchTags.push('skill-match');
-  }
-
-  // Company type
-  if (scoreBreakdown.company > 80) {
-    reasons.push('Preferred company type');
-    matchTags.push('company-match');
   }
 
   // Timing
@@ -185,21 +231,10 @@ export function generateMatchExplanation(
     matchTags.push('fresh');
   }
 
-  // Career path match
-  const userCareerPaths = userPrefs.career_path || [];
-  const jobCareerSlugs = careerSlugs(categories);
-  
-  if (userCareerPaths.length > 0 && jobCareerSlugs.length > 0) {
-    const hasCareerMatch = userCareerPaths.some(userPath => 
-      jobCareerSlugs.some(jobSlug => 
-        jobSlug.includes(userPath.toLowerCase())
-      )
-    );
-    
-    if (hasCareerMatch) {
-      reasons.push('Career path alignment');
-      matchTags.push('career-match');
-    }
+  // Semantic boost indicator
+  if (scoreBreakdown.semanticBoost && scoreBreakdown.semanticBoost > 0) {
+    reasons.push('Strong semantic match');
+    matchTags.push('semantic-boost');
   }
 
   const reason = reasons.length > 0 
@@ -227,7 +262,11 @@ export function categorizeMatches(matches: MatchResult[]): { confident: MatchRes
   return { confident, promising };
 }
 
-export function performRobustMatching(jobs: Job[], userPrefs: UserPreferences): MatchResult[] {
+export function performRobustMatching(
+  jobs: Job[], 
+  userPrefs: UserPreferences,
+  semanticScores?: Map<string, number> // Optional: job_hash -> semantic_score
+): MatchResult[] {
   const matches: MatchResult[] = [];
   
   for (const job of jobs) {
@@ -237,8 +276,11 @@ export function performRobustMatching(jobs: Job[], userPrefs: UserPreferences): 
       continue;
     }
 
-    // Calculate match score
-    const scoreBreakdown = calculateMatchScore(job, userPrefs);
+    // Get semantic score if available (for hybrid approach)
+    const semanticScore = semanticScores?.get(job.job_hash);
+
+    // Calculate match score with optional semantic boost
+    const scoreBreakdown = calculateMatchScore(job, userPrefs, semanticScore);
     
     // Skip low-scoring matches
     if (scoreBreakdown.overall < 50) {
@@ -256,8 +298,8 @@ export function performRobustMatching(jobs: Job[], userPrefs: UserPreferences): 
     
     // Create provenance
     const provenance: AiProvenance = {
-      match_algorithm: 'rules',
-      fallback_reason: 'Rule-based matching'
+      match_algorithm: semanticScore ? 'hybrid' : 'rules',
+      fallback_reason: semanticScore ? 'Hybrid matching (rule-based + semantic)' : 'Rule-based matching'
     };
 
     matches.push({
@@ -316,27 +358,56 @@ function calculateLocationScore(job: Job, userPrefs: UserPreferences): number {
 }
 
 function calculateExperienceScore(job: Job, userPrefs: UserPreferences): number {
-  const userExperience = userPrefs.entry_level_preference || 'entry';
+  const userExperience = userPrefs.entry_level_preference?.toLowerCase() || 'entry';
   const jobDescription = job.description?.toLowerCase() || '';
   const jobTitle = job.title?.toLowerCase() || '';
-  
   const combinedText = `${jobDescription} ${jobTitle}`;
   
-  // Check for experience level indicators
+  // Check for working student terms
+  const workingStudentTerms = ['werkstudent', 'working student', 'part-time student', 'student worker', 'student job'];
+  const isWorkingStudentJob = workingStudentTerms.some(term => 
+    combinedText.includes(term)
+  );
+  
+  // Use flags first (most accurate)
+  if (job.is_internship) {
+    if (userExperience.includes('intern')) {
+      return 100; // Perfect match
+    }
+    // Working Student preference: boost internships, especially those with working student terms
+    if (userExperience.includes('working student')) {
+      return isWorkingStudentJob ? 100 : 85; // Perfect match if explicitly working student, otherwise good match
+    }
+    return 60; // Still early-career, but not user's preference
+  }
+  
+  if (job.is_graduate) {
+    if (userExperience.includes('graduate') || userExperience.includes('grad')) {
+      return 100; // Perfect match
+    }
+    return 60; // Still early-career, but not user's preference
+  }
+  
+  // Check for experience level indicators in text
   if (combinedText.includes('senior') || combinedText.includes('lead')) {
-    return userExperience === 'senior' ? 100 : 20;
+    return userExperience.includes('senior') ? 100 : 20;
   }
   
   if (combinedText.includes('mid-level') || combinedText.includes('intermediate')) {
-    return userExperience === 'mid' ? 100 : 40;
+    return userExperience.includes('mid') ? 100 : 40;
   }
   
   if (combinedText.includes('junior') || combinedText.includes('associate')) {
-    return userExperience === 'entry' ? 100 : 60;
+    return userExperience.includes('entry') ? 100 : 60;
   }
   
-  // Default to entry level
-  return userExperience === 'entry' ? 80 : 50;
+  // Working Student preference: check text for working student terms even if not flagged as internship
+  if (userExperience.includes('working student') && isWorkingStudentJob) {
+    return 90; // Good match for working student roles
+  }
+  
+  // Default to entry level (all jobs are early-career)
+  return userExperience.includes('entry') || !userExperience ? 80 : 50;
 }
 
 function calculateSkillsScore(job: Job, userPrefs: UserPreferences): number {
@@ -407,6 +478,130 @@ function calculateTimingScore(job: Job): number {
   if (daysSincePosted < 14) return 50; // Older
   
   return 30; // Stale
+}
+
+/**
+ * Calculate career path score (0-100)
+ * Career path is the MOST IMPORTANT factor (40% weight)
+ */
+function calculateCareerPathScore(job: Job, userPrefs: UserPreferences, categories: string): number {
+  const userCareerPaths = userPrefs.career_path || [];
+  
+  if (userCareerPaths.length === 0) {
+    return 70; // Neutral score if no preference
+  }
+  
+  const jobCareerSlugs = careerSlugs(categories);
+  const jobCategories = cats(categories);
+  
+  // Check for exact career path match
+  const hasCareerMatch = userCareerPaths.some(userPath => {
+    const userPathLower = userPath.toLowerCase();
+    
+    // Check job categories for career path match
+    return jobCareerSlugs.some(jobSlug => 
+      jobSlug.includes(userPathLower) || userPathLower.includes(jobSlug)
+    ) || jobCategories.some(cat => 
+      cat.toLowerCase().includes(userPathLower) || userPathLower.includes(cat.toLowerCase())
+    );
+  });
+  
+  if (hasCareerMatch) {
+    return 100; // Perfect match
+  }
+  
+  // Partial match (related career paths)
+  const hasPartialMatch = userCareerPaths.some(userPath => {
+    const userPathLower = userPath.toLowerCase();
+    const jobText = `${job.title || ''} ${job.description || ''}`.toLowerCase();
+    return jobText.includes(userPathLower);
+  });
+  
+  return hasPartialMatch ? 60 : 30; // Partial match or no match
+}
+
+/**
+ * Calculate work environment score (0-100)
+ * Only considers form options: Office, Hybrid, Remote
+ * Normalized to: on-site, hybrid, remote
+ */
+function calculateWorkEnvironmentScore(job: Job, userPrefs: UserPreferences): number {
+  // Normalize user preference (form values: 'Office', 'Hybrid', 'Remote')
+  const userWorkEnv = toWorkEnv(userPrefs.work_environment);
+  const jobWorkEnv = toWorkEnv(job.work_environment);
+  
+  // If no preference specified, neutral score
+  if (!userWorkEnv) {
+    return 50;
+  }
+  
+  // If job work environment is unclear, neutral score
+  if (!jobWorkEnv) {
+    return 50;
+  }
+  
+  // Exact match
+  if (userWorkEnv === jobWorkEnv) {
+    return 100;
+  }
+  
+  // Compatibility rules (form options only)
+  if (userWorkEnv === 'remote') {
+    // Remote users accept: remote (100), hybrid (60)
+    if (jobWorkEnv === 'hybrid') return 60;
+    if (jobWorkEnv === 'on-site') return 20;
+  }
+  
+  if (userWorkEnv === 'hybrid') {
+    // Hybrid users accept: hybrid (100), remote (90), on-site (40)
+    if (jobWorkEnv === 'remote') return 90;
+    if (jobWorkEnv === 'on-site') return 40;
+  }
+  
+  if (userWorkEnv === 'on-site') {
+    // Office users accept: on-site (100), hybrid (70), remote (20)
+    if (jobWorkEnv === 'hybrid') return 70;
+    if (jobWorkEnv === 'remote') return 20;
+  }
+  
+  return 30; // Mismatch
+}
+
+/**
+ * Calculate role fit score (0-100)
+ * Specific role within career path (e.g., "Analyst" within "Finance")
+ */
+function calculateRoleFitScore(job: Job, userPrefs: UserPreferences): number {
+  const userRoles = userPrefs.roles_selected || [];
+  
+  if (userRoles.length === 0) {
+    return 70; // Neutral score if no role preference
+  }
+  
+  const jobTitle = (job.title || '').toLowerCase();
+  const jobDescription = (job.description || '').toLowerCase();
+  const combinedText = `${jobTitle} ${jobDescription}`;
+  
+  // Check for exact role match
+  const hasExactMatch = userRoles.some(role => {
+    const roleLower = role.toLowerCase();
+    return jobTitle.includes(roleLower) || 
+           jobDescription.includes(roleLower);
+  });
+  
+  if (hasExactMatch) {
+    return 100; // Perfect match
+  }
+  
+  // Check for partial match (role keywords)
+  const hasPartialMatch = userRoles.some(role => {
+    const roleKeywords = role.toLowerCase().split(' ');
+    return roleKeywords.some(keyword => 
+      keyword.length > 3 && combinedText.includes(keyword)
+    );
+  });
+  
+  return hasPartialMatch ? 60 : 40; // Partial match or no match
 }
 
 function getMatchQuality(score: number): string {

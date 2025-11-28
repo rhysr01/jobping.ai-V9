@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseClient } from '@/Utils/databasePool';
 
-// Email feedback interface
-interface EmailFeedbackData {
-  action: 'positive' | 'negative' | 'neutral';
-  score: number;
-  email: string;
-  source?: 'email';
-}
+// Email feedback interface removed - not currently used
 
 // POST endpoint for email feedback
 export async function POST(request: NextRequest) {

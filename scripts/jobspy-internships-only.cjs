@@ -42,12 +42,37 @@ function parseLocation(location) {
   
   // Extract city and country using comma separation
   const parts = loc.split(',').map(p => p.trim()).filter(Boolean);
-  const city = parts.length > 0 ? parts[0] : loc;
+  let city = parts.length > 0 ? parts[0] : loc;
   let country = parts.length > 1 ? parts[parts.length - 1] : '';
+  
+  // Clean up city name - remove common suffixes like "ENG", "GB", "DE", etc.
+  city = city.replace(/\s+(eng|gb|de|fr|es|it|nl|be|ch|ie|se|dk|at|cz|pl)$/i, '');
   
   // If single part and it's a known city, leave country empty
   if (parts.length === 1 && euCities.has(city)) {
     country = '';
+  }
+  
+  // If we have a country code, normalize it
+  if (country) {
+    const countryMap = {
+      'eng': 'GB', 'england': 'GB', 'united kingdom': 'GB', 'uk': 'GB', 'great britain': 'GB',
+      'de': 'DE', 'germany': 'DE', 'deutschland': 'DE',
+      'fr': 'FR', 'france': 'FR',
+      'es': 'ES', 'spain': 'ES', 'españa': 'ES',
+      'it': 'IT', 'italy': 'IT', 'italia': 'IT',
+      'nl': 'NL', 'netherlands': 'NL', 'holland': 'NL',
+      'be': 'BE', 'belgium': 'BE', 'belgië': 'BE', 'belgique': 'BE',
+      'ch': 'CH', 'switzerland': 'CH', 'schweiz': 'CH', 'suisse': 'CH',
+      'ie': 'IE', 'ireland': 'IE', 'éire': 'IE',
+      'se': 'SE', 'sweden': 'SE', 'sverige': 'SE',
+      'dk': 'DK', 'denmark': 'DK', 'danmark': 'DK',
+      'at': 'AT', 'austria': 'AT', 'österreich': 'AT',
+      'cz': 'CZ', 'czech republic': 'CZ', 'czechia': 'CZ',
+      'pl': 'PL', 'poland': 'PL', 'polska': 'PL'
+    };
+    const normalizedCountry = country.toLowerCase();
+    country = countryMap[normalizedCountry] || country.toUpperCase();
   }
   
   // Capitalize first letter of each word for city
@@ -57,10 +82,42 @@ function parseLocation(location) {
   
   return { 
     city: capitalizedCity || city, 
-    country: country ? country.split(' ').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ') : ''
+    country: country || ''
   };
+}
+
+// Detect work environment from location and description
+function detectWorkEnvironment(job) {
+  const location = (job.location || '').toLowerCase();
+  const description = (job.description || job.company_description || job.skills || '').toLowerCase();
+  const text = `${location} ${description}`;
+  
+  if (/remote|work\s+from\s+home|wfh|anywhere|fully\s+remote|100%\s+remote/i.test(text)) {
+    return 'remote';
+  }
+  if (/hybrid|flexible|partially\s+remote|2-3\s+days|3\s+days\s+remote|mix\s+of\s+remote/i.test(text)) {
+    return 'hybrid';
+  }
+  return 'on-site';
+}
+
+// Extract language requirements
+function extractLanguageRequirements(description) {
+  if (!description) return [];
+  const desc = description.toLowerCase();
+  const languages = [];
+  const languageMap = {
+    'english': 'English', 'french': 'French', 'german': 'German', 'spanish': 'Spanish',
+    'italian': 'Italian', 'dutch': 'Dutch', 'portuguese': 'Portuguese',
+    'fluent in english': 'English', 'fluent in french': 'French', 'fluent in german': 'German',
+    'fluent in spanish': 'Spanish', 'native english': 'English', 'native french': 'French', 'native german': 'German'
+  };
+  for (const [keyword, lang] of Object.entries(languageMap)) {
+    if (desc.includes(keyword) && !languages.includes(lang)) {
+      languages.push(lang);
+    }
+  }
+  return languages;
 }
 
 function parseCsv(csv) {
@@ -93,24 +150,33 @@ async function saveJobs(jobs, source) {
   const nowIso = new Date().toISOString();
   const nonRemote = jobs.filter(j => !((j.location||'').toLowerCase().includes('remote')));
   const rows = nonRemote.map(j => {
-    const companyName = (j.company||'').trim();
+    // Clean company name - remove extra whitespace, trim
+    const companyName = (j.company || '').trim().replace(/\s+/g, ' ');
     const { city, country } = parseLocation(j.location || '');
+    const description = (j.company_description || j.skills || j.description || '').trim();
+    
+    // Extract metadata
+    const workEnv = detectWorkEnvironment(j);
+    const languages = extractLanguageRequirements(description);
+    
     return {
       job_hash: hashJob(j.title, companyName, j.location),
       title: (j.title||'').trim(),
-      company: companyName,
-      company_name: companyName, // Fix: Map company to company_name for proper data quality
+      company: companyName, // Clean company name
       location: (j.location||'').trim(),
       city: city, // Extract city from location
       country: country, // Extract country from location
-      description: (j.company_description || j.skills || j.description || '').trim(),
+      description: description,
       job_url: (j.job_url || j.url || '').trim(),
       source,
       posted_at: j.posted_at || nowIso,
       categories: ['internship', 'early-career'],
-      work_environment: 'on-site',
-      experience_required: 'entry-level',
-      is_internship: true, // Flag as internship
+      work_environment: workEnv, // Detect from location/description
+      experience_required: 'internship',
+      is_internship: true, // Maps to form: "Internship"
+      is_graduate: false, // Mutually exclusive
+      is_early_career: false, // Mutually exclusive (this is internship, not entry-level)
+      language_requirements: languages.length > 0 ? languages : null, // Extract languages
       original_posted_date: j.posted_at || nowIso,
       last_seen_at: nowIso,
       is_active: true,
