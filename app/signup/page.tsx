@@ -309,45 +309,45 @@ function SignupForm() {
         aria-hidden="true"
       />
 
-      <div className="relative container-page max-w-4xl py-12 sm:py-20">
+      <div className="relative container-page max-w-5xl py-16 sm:py-24">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-12 text-center sm:mb-16"
+          className="mb-16 text-center sm:mb-20"
         >
           {tier === 'premium' && (
-            <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1 text-xs font-semibold text-brand-200">
-              <BrandIcons.Star className="h-3.5 w-3.5" />
+            <span className="mb-6 inline-flex items-center gap-2 rounded-full border-2 border-brand-500/50 bg-brand-500/15 px-5 py-2 text-sm font-bold text-brand-100 shadow-[0_0_20px_rgba(99,102,241,0.3)]">
+              <BrandIcons.Star className="h-4 w-4" />
               Premium selected · €5/mo
             </span>
           )}
 
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.28em] text-brand-200">
             Onboarding
           </span>
-          <h1 className="mt-4 text-3xl font-semibold text-white sm:text-4xl md:text-5xl">
+          <h1 className="mt-6 text-4xl font-bold leading-tight text-white sm:text-5xl md:text-6xl">
             Tell us where to send your first matches
           </h1>
-          <p className="mt-3 text-base text-zinc-300 sm:text-lg">
+          <p className="mt-4 text-lg font-medium leading-relaxed text-zinc-100 sm:text-xl">
             We only ask for the essentials so we can filter internships and graduate roles you can actually land.
           </p>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm text-zinc-300 sm:text-base">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm font-medium text-zinc-100 sm:text-base">
             {Copy.REASSURANCE_ITEMS.map(item => (
               <span
                 key={item}
-                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-1.5"
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/8 px-4 py-2 backdrop-blur-sm"
               >
-                <BrandIcons.Check className="h-4 w-4 text-brand-200" />
+                <BrandIcons.Check className="h-4 w-4 text-brand-300" />
                 {item}
               </span>
             ))}
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-400 sm:text-sm">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-brand-200">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm font-medium text-zinc-300 sm:text-base">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-2 text-brand-100 backdrop-blur-sm">
               <BrandIcons.Target className="h-4 w-4 text-brand-300" />
               {isLoadingStats ? (
                 <span className="inline-block h-4 w-20 animate-pulse rounded bg-white/15" />
@@ -356,12 +356,12 @@ function SignupForm() {
               )}
             </span>
             {!isLoadingStats && totalUsers && parseInt(totalUsers.replace(/\D/g, ''), 10) > 0 && (
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-2 backdrop-blur-sm">
                 <BrandIcons.Users className="h-4 w-4 text-brand-300" />
                 {`${totalUsers}+ students on JobPing`}
               </span>
             )}
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-2 backdrop-blur-sm">
               <BrandIcons.Clock className="h-4 w-4 text-brand-300" />
               First drop arrives within 48 hours
             </span>
@@ -369,26 +369,26 @@ function SignupForm() {
         </motion.div>
 
         {/* Progress Indicator */}
-        <div className="mb-12">
-          <div className="flex justify-between mb-3 px-4">
+        <div className="mb-16">
+          <div className="flex justify-between mb-4 px-2">
             {[1, 2, 3].map(i => (
-              <div key={i} className="flex items-center gap-2">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-                  i < step ? 'bg-green-500 text-white' :
-                  i === step ? 'bg-gradient-to-br from-brand-500 to-purple-600 text-white' :
-                  'bg-zinc-800 text-zinc-400'
+              <div key={i} className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base transition-all shadow-lg ${
+                  i < step ? 'bg-green-500 text-white shadow-green-500/30' :
+                  i === step ? 'bg-gradient-to-br from-brand-500 to-purple-600 text-white shadow-[0_0_24px_rgba(99,102,241,0.4)]' :
+                  'bg-zinc-800/60 border-2 border-zinc-700 text-zinc-400'
                 }`}>
-                  {i < step ? '' : i}
+                  {i < step ? <BrandIcons.Check className="h-6 w-6" /> : i}
                 </div>
-                <span className="hidden sm:inline text-sm font-semibold text-zinc-400">
+                <span className="hidden sm:inline text-sm font-bold text-zinc-300">
                   {i === 1 ? 'Basics' : i === 2 ? 'Preferences' : 'Career'}
                 </span>
               </div>
             ))}
           </div>
-          <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+          <div className="h-2.5 bg-zinc-800/60 rounded-full overflow-hidden border border-zinc-700/50">
             <motion.div 
-              className="h-full bg-gradient-to-r from-brand-500 via-purple-600 to-purple-500"
+              className="h-full bg-gradient-to-r from-brand-500 via-purple-600 to-purple-500 shadow-[0_0_20px_rgba(99,102,241,0.4)]"
               initial={{ width: 0 }}
               animate={{ width: `${(step / 3) * 100}%` }}
               transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
@@ -416,7 +416,7 @@ function SignupForm() {
         {Announcement}
 
         {/* Form Container */}
-        <div className="glass-card rounded-3xl p-6 sm:p-8 md:p-12 shadow-glow-strong">
+        <div className="glass-card rounded-3xl border-2 border-white/20 p-8 sm:p-10 md:p-14 shadow-[0_30px_100px_rgba(0,0,0,0.5)] backdrop-blur-xl">
           <AnimatePresence mode="wait">
             {/* Step 1: Basics */}
             {step === 1 && (
@@ -426,15 +426,15 @@ function SignupForm() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4 }}
-                className="space-y-8 sm:space-y-10"
+                className="space-y-10 sm:space-y-12"
               >
                 <div>
-                  <h2 className="text-3xl font-black text-white mb-2 text-shadow-sm">Let's get started</h2>
-                  <p className="text-zinc-300">Tell us about yourself</p>
+                  <h2 className="text-3xl font-black text-white mb-3 sm:text-4xl">Let's get started</h2>
+                  <p className="text-lg font-medium text-zinc-100">Tell us about yourself</p>
                 </div>
 
                 {/* GDPR Consent - MOVED TO STEP 1 (Required) */}
-                <div className="bg-gradient-to-r from-brand-500/10 via-purple-600/10 to-brand-500/10 border-2 border-brand-500/30 rounded-xl p-6">
+                <div className="bg-gradient-to-r from-brand-500/15 via-purple-600/15 to-brand-500/15 border-2 border-brand-500/40 rounded-2xl p-7 shadow-[0_0_30px_rgba(99,102,241,0.2)]">
                   <label className="flex items-start gap-4 cursor-pointer group">
                     <input
                       type="checkbox"
@@ -466,7 +466,7 @@ function SignupForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="fullName" className="block text-base font-bold text-white mb-3">Full Name *</label>
+                  <label htmlFor="fullName" className="block text-lg font-bold text-white mb-3">Full Name *</label>
                   <input
                     ref={formRefs.fullName}
                     id="fullName"
@@ -480,8 +480,8 @@ function SignupForm() {
                         announce('Full name is valid', 'polite');
                       }
                     }}
-                    className={`w-full px-5 py-4 bg-black/40 border-2 rounded-xl text-white placeholder-zinc-500 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/20 transition-all text-lg ${
-                      formData.fullName ? (nameValidation.isValid ? 'border-green-500/50' : 'border-zinc-700') : 'border-zinc-700'
+                    className={`w-full px-6 py-5 bg-black/50 border-2 rounded-2xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-lg font-medium backdrop-blur-sm ${
+                      formData.fullName ? (nameValidation.isValid ? 'border-green-500/60 shadow-[0_0_20px_rgba(34,197,94,0.2)]' : 'border-zinc-700') : 'border-zinc-700 hover:border-zinc-600'
                     }`}
                     placeholder="John Smith"
                     autoComplete="name"
@@ -500,8 +500,8 @@ function SignupForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-base font-bold text-white mb-2">Email *</label>
-                  <p className="text-sm text-zinc-400 mb-3">Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops every 48 hours.</p>
+                  <label htmlFor="email" className="block text-lg font-bold text-white mb-3">Email *</label>
+                  <p className="text-sm font-medium text-zinc-300 mb-4">Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops weekly.</p>
                   <input
                     ref={formRefs.email}
                     id="email"
@@ -515,8 +515,8 @@ function SignupForm() {
                         announce('Email address is valid', 'polite');
                       }
                     }}
-                    className={`w-full px-5 py-4 bg-black/40 border-2 rounded-xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/20 transition-all text-lg ${
-                      formData.email ? (emailValidation.isValid ? 'border-green-500/50' : emailValidation.error ? 'border-red-500/50' : 'border-zinc-700') : 'border-zinc-700'
+                    className={`w-full px-6 py-5 bg-black/50 border-2 rounded-2xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-lg font-medium backdrop-blur-sm ${
+                      formData.email ? (emailValidation.isValid ? 'border-green-500/60 shadow-[0_0_20px_rgba(34,197,94,0.2)]' : emailValidation.error ? 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.2)]' : 'border-zinc-700') : 'border-zinc-700 hover:border-zinc-600'
                     }`}
                     placeholder="you@example.com"
                     autoComplete="email"
@@ -656,7 +656,7 @@ function SignupForm() {
                   disabled={!formData.fullName || !formData.email || formData.cities.length === 0 || formData.languages.length === 0 || !formData.gdprConsent}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="btn-primary w-full text-xl py-6 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="w-full bg-gradient-to-r from-brand-500 via-purple-500 to-brand-500 text-white font-bold text-xl py-6 rounded-2xl shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-[0_20px_50px_rgba(99,102,241,0.4)]"
                 >
                   Continue to Preferences →
                 </motion.button>
@@ -677,11 +677,11 @@ function SignupForm() {
                   <div className="pointer-events-none absolute -top-24 right-0 h-48 w-48 rounded-full bg-brand-500/25 blur-3xl" />
                   <div className="pointer-events-none absolute -bottom-28 left-12 h-56 w-56 bg-purple-600/20 blur-[120px]" />
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(155,106,255,0.15),transparent_55%)]" />
-                  <div className="relative z-10 space-y-8 sm:space-y-10">
+                  <div className="relative z-10 space-y-10 sm:space-y-12">
                     <div>
-                      <h2 className="text-3xl font-black text-white mb-2">Your preferences</h2>
-                      <p className="text-zinc-200">Help us match you perfectly</p>
-                      <p className="text-sm text-zinc-300 mt-1">These fields improve the quality of your first 5 jobs.</p>
+                      <h2 className="text-3xl font-black text-white mb-3 sm:text-4xl">Your preferences</h2>
+                      <p className="text-lg font-medium text-zinc-100">Help us match you perfectly</p>
+                      <p className="text-sm font-medium text-zinc-300 mt-2">These fields improve the quality of your first 5 jobs.</p>
 
                       {/* Progress Helper */}
                       <div className="mt-4 rounded-2xl border border-brand-500/30 bg-gradient-to-r from-brand-500/10 via-purple-600/10 to-brand-500/10 p-4 shadow-glow-subtle">
@@ -802,12 +802,12 @@ function SignupForm() {
                   </div>
                 </div>
 
-                    <div className="flex gap-4 pt-4">
+                    <div className="flex gap-4 pt-6">
                       <motion.button
                         onClick={() => setStep(1)}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="btn-secondary flex-1 py-5 text-lg"
+                        className="flex-1 py-5 text-lg font-bold border-2 border-white/25 bg-white/[0.08] text-white rounded-2xl hover:border-brand-500/50 hover:bg-white/12 transition-all"
                       >
                         ← Back
                       </motion.button>
@@ -818,7 +818,7 @@ function SignupForm() {
                         className={`relative flex-1 py-6 sm:py-7 text-xl sm:text-2xl font-black uppercase tracking-wide rounded-2xl overflow-hidden transition-all ${
                           !formData.experience || !formData.visaStatus || formData.entryLevelPreferences.length === 0
                             ? 'opacity-40 cursor-not-allowed bg-zinc-700 text-zinc-400'
-                            : 'bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-glow-signup hover:shadow-glow-medium hover:scale-105'
+                            : 'bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] hover:scale-105'
                         }`}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -846,13 +846,13 @@ function SignupForm() {
                   <div className="pointer-events-none absolute -top-24 left-6 h-48 w-48 rounded-full bg-purple-600/25 blur-3xl" />
                   <div className="pointer-events-none absolute -bottom-28 right-0 h-56 w-56 bg-brand-500/25 blur-[120px]" />
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(99,102,241,0.12),transparent_60%)]" />
-                  <div className="relative z-10 space-y-8 sm:space-y-10">
+                  <div className="relative z-10 space-y-10 sm:space-y-12">
                     <div>
-                      <h2 className="text-3xl font-black text-white mb-2">Your career path</h2>
-                      <p className="text-zinc-200">What type of roles interest you?</p>
+                      <h2 className="text-3xl font-black text-white mb-3 sm:text-4xl">Your career path</h2>
+                      <p className="text-lg font-medium text-zinc-100">What type of roles interest you?</p>
 
                       {/* Progress Helper */}
-                      <div className="mt-4 rounded-2xl border border-brand-500/30 bg-gradient-to-r from-brand-500/10 via-purple-600/10 to-brand-500/10 p-4 shadow-glow-subtle">
+                      <div className="mt-6 rounded-2xl border-2 border-brand-500/40 bg-gradient-to-r from-brand-500/15 via-purple-600/15 to-brand-500/15 p-5 shadow-[0_0_30px_rgba(99,102,241,0.25)]">
                         <h3 className="text-sm font-bold text-white/80 mb-2">Required for next step:</h3>
                         <div className="space-y-1 text-sm">
                           <div className={`flex items-center gap-2 ${formData.careerPath ? 'text-brand-200' : 'text-zinc-300'}`}>

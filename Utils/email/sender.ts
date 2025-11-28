@@ -149,6 +149,7 @@ export async function sendMatchedJobsEmail(args: {
     console.log(`[EMAIL] Resend client initialized for matched jobs. API Key present: true`);
     
     // Convert jobs to EmailJobCard format for template
+    // Include ALL fields needed for email template (tags, formatting, etc.)
     const jobCards: EmailJobCard[] = args.jobs.map(job => ({
       job: {
         id: job.id || '',
@@ -156,12 +157,37 @@ export async function sendMatchedJobsEmail(args: {
         company: job.company || 'Company',
         location: job.location || 'Location',
         description: job.description || '',
-        job_url: job.job_url || '',
-        user_email: args.to
+        job_url: job.job_url || job.jobUrl || '',
+        user_email: args.to,
+        // Fields needed for formatJobTags
+        career_path: job.career_path,
+        careerPath: job.careerPath,
+        primary_category: job.primary_category || (Array.isArray(job.categories) ? job.categories[0] : undefined),
+        categories: job.categories || [],
+        career_paths: job.career_paths || job.categories || [],
+        work_environment: job.work_environment,
+        work_arrangement: job.work_arrangement,
+        work_mode: job.work_mode,
+        employment_type: job.employment_type,
+        job_type: job.job_type,
+        contract_type: job.contract_type,
+        source: job.source,
+        language_requirement: job.language_requirement,
+        language: job.language,
+        primary_language: job.primary_language,
+        salary_min: job.salary_min,
+        salary_max: job.salary_max,
+        salary: job.salary,
+        salary_currency: job.salary_currency,
+        currency: job.currency,
+        compensation_min: job.compensation_min,
+        compensation_max: job.compensation_max,
+        // Include any other fields that might be present
+        ...(job as any)
       },
       matchResult: {
         match_score: job.match_score || 85,
-        reasoning: job.reasoning || 'AI-matched based on your preferences'
+        reasoning: job.reasoning || job.match_reason || 'AI-matched based on your preferences'
       },
       isConfident: (job.match_score || 85) >= 80,
       isPromising: (job.match_score || 85) >= 70,

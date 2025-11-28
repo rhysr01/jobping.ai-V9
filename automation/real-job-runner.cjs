@@ -340,6 +340,50 @@ class RealJobRunner {
     }
   }
 
+  // Run JobSpy Career Path Roles scraper (searches for all roles across career paths)
+  async runJobSpyCareerPathRolesScraper(targets) {
+    try {
+      console.log('🎯 Running JobSpy Career Path Roles scraper...');
+      const env = {
+        ...process.env,
+        NODE_ENV: 'production',
+      };
+      if (targets?.cities?.length) {
+        env.TARGET_CITIES = JSON.stringify(targets.cities);
+      }
+      
+      const { stdout } = await execAsync('NODE_ENV=production node scripts/jobspy-career-path-roles.cjs', {
+        cwd: process.cwd(),
+        timeout: 600000, // 10 minutes timeout
+        env,
+      });
+      
+      // Parse job count from the result
+      let jobsSaved = 0;
+      const savedMatch = stdout.match(/✅ Career Path Roles: total_saved=(\d+)/);
+      if (savedMatch) {
+        jobsSaved = parseInt(savedMatch[1]);
+      } else {
+        // Fallback to DB count (last 10 minutes)
+        const { count, error } = await supabase
+          .from('jobs')
+          .select('id', { count: 'exact', head: false })
+          .eq('source', 'jobspy-career-roles')
+          .gte('created_at', new Date(Date.now() - 10*60*1000).toISOString());
+        jobsSaved = error ? 0 : (count || 0);
+        if (jobsSaved) {
+          console.log(`ℹ️  Career Path Roles: DB fallback count: ${jobsSaved} jobs`);
+        }
+      }
+      
+      console.log(`✅ Career Path Roles: ${jobsSaved} jobs processed`);
+      return jobsSaved;
+    } catch (error) {
+      console.error('❌ Career Path Roles scraper failed:', error.message);
+      return 0;
+    }
+  }
+
   // Run Reed scraper with real API
   async runReedScraper(targets) {
     try {
@@ -605,7 +649,7 @@ class RealJobRunner {
     try {
       console.log('\n🚀 STARTING AUTOMATED SCRAPING CYCLE');
       console.log('=====================================');
-      console.log('🎯 Running streamlined scrapers: JobSpy, JobSpy Internships, Adzuna, Reed');
+      console.log('🎯 Running streamlined scrapers: JobSpy, JobSpy Internships, Career Path Roles, Adzuna, Reed');
       
       const cycleStartIso = new Date().toISOString();
       const signupTargets = await this.getSignupTargets();
@@ -637,6 +681,21 @@ class RealJobRunner {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       let stopDueToQuota = await this.evaluateStopCondition('JobSpy pipelines', cycleStartIso);
+
+      // Run JobSpy Career Path Roles scraper (searches for all roles across career paths)
+      let careerPathRolesJobs = 0;
+      if (!stopDueToQuota) {
+        try {
+          careerPathRolesJobs = await this.runJobSpyCareerPathRolesScraper(signupTargets);
+          console.log(`✅ Career Path Roles completed: ${careerPathRolesJobs} jobs`);
+        } catch (error) {
+          console.error('❌ Career Path Roles scraper failed, continuing with other scrapers:', error.message);
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        stopDueToQuota = await this.evaluateStopCondition('Career Path Roles scraper', cycleStartIso);
+      } else {
+        console.log('⏹️  Skipping Career Path Roles scraper - cycle job target reached.');
+      }
 
       // Run Reed BEFORE Adzuna to increase its usage (currently only 4.43%)
       let reedJobs = 0;
@@ -690,7 +749,7 @@ class RealJobRunner {
       }
       
       // Update stats with all scrapers
-      this.totalJobsSaved += (adzunaJobs + jobspyJobs + jobspyInternshipsJobs + reedJobs + greenhouseJobs);
+      this.totalJobsSaved += (adzunaJobs + jobspyJobs + jobspyInternshipsJobs + careerPathRolesJobs + reedJobs + greenhouseJobs);
       this.runCount++;
       this.lastRun = new Date();
       
@@ -704,7 +763,7 @@ class RealJobRunner {
       console.log('\n✅ SCRAPING CYCLE COMPLETE');
       console.log('============================');
       console.log(`⏱️  Duration: ${duration.toFixed(1)} seconds`);
-      console.log(`📊 Jobs processed this cycle: ${adzunaJobs + jobspyJobs + jobspyInternshipsJobs + reedJobs + greenhouseJobs}`);
+      console.log(`📊 Jobs processed this cycle: ${adzunaJobs + jobspyJobs + jobspyInternshipsJobs + careerPathRolesJobs + reedJobs + greenhouseJobs}`);
       console.log(`📈 Total jobs processed: ${this.totalJobsSaved}`);
       console.log(`🔄 Total cycles run: ${this.runCount}`);
       console.log(`📅 Last run: ${this.lastRun.toISOString()}`);
@@ -714,6 +773,7 @@ class RealJobRunner {
       console.log(`🎯 Core scrapers breakdown:`);
       console.log(`   - JobSpy (General): ${jobspyJobs} jobs`);
       console.log(`   - JobSpy (Internships Only): ${jobspyInternshipsJobs} jobs`);
+      console.log(`   - Career Path Roles: ${careerPathRolesJobs} jobs`);
       console.log(`   - Reed: ${reedJobs} jobs (increased priority)`);
       console.log(`   - Greenhouse: ${greenhouseJobs} jobs (expanded)`);
       console.log(`   - Adzuna: ${adzunaJobs} jobs (reduced priority)`);
@@ -776,7 +836,7 @@ class RealJobRunner {
     console.log('   - 3x daily scraping cycles (8am, 1pm, 6pm)');
     console.log('   - Daily health checks');
     console.log('   - Database monitoring');
-    console.log('   - 5 core scrapers: JobSpy, JobSpy Internships, Adzuna, Reed, Greenhouse');
+    console.log('   - 6 core scrapers: JobSpy, JobSpy Internships, Career Path Roles, Adzuna, Reed, Greenhouse');
   }
 
   // Get status

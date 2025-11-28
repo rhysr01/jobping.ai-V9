@@ -26,13 +26,13 @@ export default function Button({
   
   const variants = {
     primary:
-      'bg-gradient-to-r from-brand-500 via-purple-500 to-brand-500 text-white shadow-[0_16px_40px_rgba(99,102,241,0.35)] hover:-translate-y-0.5 hover:shadow-[0_22px_50px_rgba(99,102,241,0.45)] active:translate-y-0',
+      'bg-gradient-to-r from-brand-500 via-purple-500 to-brand-500 text-white font-semibold shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] active:translate-y-0',
     secondary:
-      'border border-white/15 bg-white/5 text-white hover:bg-white/10',
+      'border-2 border-white/25 bg-white/[0.08] text-white font-medium hover:border-brand-500/50 hover:bg-white/12',
     ghost:
-      'text-zinc-400 hover:text-white hover:bg-white/5',
+      'text-zinc-300 hover:text-white hover:bg-white/8 font-medium',
     danger:
-      'border border-red-500/20 bg-red-500/10 text-red-200 hover:bg-red-500/20'
+      'border-2 border-red-500/30 bg-red-500/15 text-red-200 hover:bg-red-500/25 font-medium'
   };
 
   const sizes = {

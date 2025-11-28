@@ -45,7 +45,7 @@ export async function fetchCandidateJobs(
   let query = supabase
     .from('jobs')
     .select(
-      'job_hash, title, company, location, description, source, created_at, original_posted_date, last_seen_at, status, job_url, is_active, is_graduate, is_internship, categories, city, country, skills'
+      'job_hash, title, company, location, description, source, created_at, original_posted_date, last_seen_at, status, job_url, is_active, is_graduate, is_internship, categories, city, country, skills, work_environment, experience_required, language_requirements'
     )
     .eq('is_active', true);
 

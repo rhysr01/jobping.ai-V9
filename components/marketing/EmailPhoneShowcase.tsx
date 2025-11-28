@@ -26,21 +26,21 @@ export default function EmailPhoneShowcase() {
             transition={{ duration: 0.6 }}
             className="space-y-7 text-left"
           >
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.28em] text-brand-200">
               {Copy.EMAIL_SHOWCASE_KICKER}
             </span>
-            <h2 className="text-3xl font-semibold text-white sm:text-4xl">
+            <h2 className="text-3xl font-bold text-white sm:text-4xl md:text-5xl">
               {Copy.EMAIL_SHOWCASE_TITLE}
             </h2>
-            <p className="max-w-xl text-base text-zinc-300 sm:text-lg">
+            <p className="max-w-xl text-base font-medium leading-relaxed text-zinc-100 sm:text-lg">
               {Copy.EMAIL_SHOWCASE_SUBTITLE}
             </p>
             <ul className="space-y-4">
               {Copy.EMAIL_SHOWCASE_POINTS.map((point, index) => {
                 const Icon = pointIcons[index] || BrandIcons.Check;
                 return (
-                  <li key={point} className="flex items-start gap-3 text-sm text-zinc-300 sm:text-base">
-                    <span className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand-500/15 text-brand-200">
+                  <li key={point} className="flex items-start gap-3 text-sm font-medium text-zinc-100 sm:text-base">
+                    <span className="mt-0.5 inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-brand-200 shadow-[0_0_12px_rgba(99,102,241,0.3)]">
                       <Icon className="h-3.5 w-3.5" />
                     </span>
                     <span className="leading-relaxed">{point}</span>

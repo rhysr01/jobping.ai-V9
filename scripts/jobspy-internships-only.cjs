@@ -171,7 +171,7 @@ async function main() {
 from jobspy import scrape_jobs
 import pandas as pd
 df = scrape_jobs(
-  site_name=['indeed', 'glassdoor'],
+  site_name=['indeed', 'glassdoor', 'google', 'zip_recruiter'],
   search_term='''${term.replace(/'/g, "''")}''',
   location='''${city}''',
   country_indeed='''${country}''',

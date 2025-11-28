@@ -22,9 +22,11 @@ export default function DeviceFrame({ children, className }: Props) {
         <Image
           src="/device/iphone-14.svg"
           alt="iPhone displaying JobPing email preview"
-          priority
+          priority={false}
+          loading="lazy"
           fill
-          sizes="390px"
+          sizes="(max-width: 768px) 390px, 440px"
+          quality={85}
           className="pointer-events-none select-none relative z-10"
         />
         {/* Screen content: align to the inner screen rect (x:12,y:12,w:366,h:820) */}
@@ -34,7 +36,14 @@ export default function DeviceFrame({ children, className }: Props) {
         >
           {/* Status bar */}
           <div className="relative z-10 px-4 pt-2 pb-1">
-            <Image src="/device/statusbar-dark.svg" alt="" width={366} height={20} aria-hidden="true" />
+            <Image 
+              src="/device/statusbar-dark.svg" 
+              alt="" 
+              width={366} 
+              height={20} 
+              loading="lazy"
+              aria-hidden="true" 
+            />
           </div>
           {/* Scrollable email body */}
           <motion.div 
