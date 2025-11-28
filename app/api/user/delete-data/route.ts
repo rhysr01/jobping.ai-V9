@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/Utils/supabase';
+import { getDatabaseClient } from '@/Utils/databasePool';
 import { asyncHandler, ValidationError } from '@/lib/errors';
 
 export const POST = asyncHandler(async (request: NextRequest) => {
@@ -9,7 +9,7 @@ export const POST = asyncHandler(async (request: NextRequest) => {
     throw new ValidationError('Email is required');
   }
 
-  const supabase = getSupabaseClient();
+  const supabase = getDatabaseClient();
 
   console.log(`  Processing data deletion request for: ${email}`);
 

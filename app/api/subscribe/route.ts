@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getDatabaseClient } from '@/Utils/databasePool';
 import { asyncHandler, ValidationError, AppError } from '@/lib/errors';
 
 export const POST = asyncHandler(async (request: NextRequest) => {
@@ -14,15 +14,8 @@ export const POST = asyncHandler(async (request: NextRequest) => {
     throw new ValidationError('Invalid email format');
   }
 
-  // Initialize Supabase client
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    throw new AppError('Database configuration error', 500, 'CONFIG_ERROR');
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  // Use centralized database client
+  const supabase = getDatabaseClient();
 
   // Check if user already exists
   const { data: existingUser } = await supabase

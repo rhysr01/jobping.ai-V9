@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-import { getSupabaseClient } from '@/Utils/supabase';
+import { getDatabaseClient } from '@/Utils/databasePool';
 import { asyncHandler } from '@/lib/errors';
 import { performanceMonitor } from '@/lib/monitoring';
 
 // Helper function to get database metrics
 async function getDatabaseMetrics(): Promise<Record<string, any>> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
     
     // Get counts for key tables
     const [usersResult, jobsResult, matchesResult] = await Promise.allSettled([
@@ -174,5 +174,19 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     }
   };
 
-  return NextResponse.json(dashboard, { status: 200 });
+  // Dashboard uses custom format for monitoring tools - keep as is
+  // But add requestId header for consistency
+  const response = NextResponse.json(dashboard, { status: 200 });
+  const requestId = req.headers.get('x-request-id') || 
+    (() => {
+      try {
+        // eslint-disable-next-line
+        const nodeCrypto = require('crypto');
+        return nodeCrypto.randomUUID ? nodeCrypto.randomUUID() : nodeCrypto.randomBytes(16).toString('hex');
+      } catch {
+        return Math.random().toString(36).slice(2) + Date.now().toString(36);
+      }
+    })();
+  response.headers.set('x-request-id', requestId);
+  return response;
 });

@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-import { HTTP_STATUS } from '@/Utils/constants';
 import { getDatabaseClient } from '@/Utils/databasePool';
 import { z } from 'zod';
 import { captureException, addBreadcrumb } from '@/lib/sentry-utils';
-import type { UserMatchesResponse, UserMatchesRequest } from '@/lib/api-types';
 import { createSuccessResponse, createErrorResponse } from '@/lib/api-types';
-import { verifyHMAC, isHMACRequired } from '@/Utils/auth/hmac';
+import { verifyHMAC } from '@/Utils/auth/hmac';
+import { asyncHandler, AppError } from '@/lib/errors';
 
 // Input validation schema
 const userMatchesQuerySchema = z.object({
@@ -20,7 +19,22 @@ const userMatchesQuerySchema = z.object({
 
 // HMAC verification now handled by shared utility
 
-export async function GET(req: NextRequest) {
+// Helper to get requestId from request
+function getRequestId(req: NextRequest): string {
+  const headerVal = req.headers.get('x-request-id');
+  if (headerVal && headerVal.length > 0) {
+    return headerVal;
+  }
+  try {
+    // eslint-disable-next-line
+    const nodeCrypto = require('crypto');
+    return nodeCrypto.randomUUID ? nodeCrypto.randomUUID() : nodeCrypto.randomBytes(16).toString('hex');
+  } catch {
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+}
+
+export const GET = asyncHandler(async (req: NextRequest) => {
   // PRODUCTION: Stricter rate limiting for user matches endpoint
   const rateLimitResult = await getProductionRateLimiter().middleware(req, 'user-matches', {
     windowMs: 60 * 1000, // 1 minute
@@ -30,122 +44,126 @@ export async function GET(req: NextRequest) {
     return rateLimitResult;
   }
 
-  try {
-    const { searchParams } = new URL(req.url);
-    
-    // Parse and validate input
-    const parseResult = userMatchesQuerySchema.safeParse({
-      email: searchParams.get('email'),
-      limit: searchParams.get('limit'),
-      minScore: searchParams.get('minScore'),
-      signature: searchParams.get('signature'),
-      timestamp: searchParams.get('timestamp')
-    });
+  const requestId = getRequestId(req);
+  const { searchParams } = new URL(req.url);
+  
+  // Parse and validate input
+  const parseResult = userMatchesQuerySchema.safeParse({
+    email: searchParams.get('email'),
+    limit: searchParams.get('limit'),
+    minScore: searchParams.get('minScore'),
+    signature: searchParams.get('signature'),
+    timestamp: searchParams.get('timestamp')
+  });
 
-    if (!parseResult.success) {
-      return NextResponse.json({ 
-        error: 'Invalid input parameters',
-        details: parseResult.error.issues 
-      }, { status: 400 });
-    }
-
-    const { email, limit, minScore, signature, timestamp } = parseResult.data;
-
-    // Verify authentication (mandatory in prod, optional in dev/test)
-    const hmacResult = verifyHMAC(`${email}:${timestamp}`, signature, timestamp, 5);
-    if (!hmacResult.isValid) {
-      return NextResponse.json({ 
-        error: 'Authentication failed',
-        details: hmacResult.error 
-      }, { status: 401 });
-    }
-
-    // Add Sentry breadcrumb for user context
-addBreadcrumb({
-      message: 'User matches request',
-      level: 'info',
-      data: { email, limit, minScore }
-    });
-
-    const supabase = getDatabaseClient();
-
-    // Get user matches with job details - with timeout
-    const queryPromise = supabase
-      .from('matches')
-      .select(`
-        *,
-        jobs (
-          id,
-          title,
-          company,
-          location,
-          job_url,
-          description,
-          categories,
-          experience_required,
-          work_environment,
-          language_requirements,
-          company_profile_url,
-          posted_at
-        )
-      `)
-      .eq('user_email', email)
-      .gte('match_score', minScore)
-      .order('match_score', { ascending: false })
-      .limit(limit);
-
-    // Add 10 second timeout
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Query timeout')), 10000)
+  if (!parseResult.success) {
+    const errorResponse = createErrorResponse(
+      'Invalid input parameters',
+      'VALIDATION_ERROR',
+      parseResult.error.issues,
+      undefined,
+      requestId
     );
+    const response = NextResponse.json(errorResponse, { status: 400 });
+    response.headers.set('x-request-id', requestId);
+    return response;
+  }
 
-    const { data: matches, error: matchesError } = await Promise.race([
-      queryPromise,
-      timeoutPromise
-    ]) as any;
+  const { email, limit, minScore, signature, timestamp } = parseResult.data;
 
-    if (matchesError) {
-      console.error('Failed to fetch user matches:', matchesError);
-      
-      // Capture error in Sentry
-captureException(matchesError, {
-        tags: { component: 'user-matches-api' },
-        extra: { email, limit, minScore }
-      });
-      
-      return NextResponse.json({ error: 'Failed to fetch matches' }, { status: 500 });
-    }
+  // Verify authentication (mandatory in prod, optional in dev/test)
+  const hmacResult = verifyHMAC(`${email}:${timestamp}`, signature, timestamp, 5);
+  if (!hmacResult.isValid) {
+    const errorResponse = createErrorResponse(
+      'Authentication failed',
+      'UNAUTHORIZED',
+      hmacResult.error,
+      undefined,
+      requestId
+    );
+    const response = NextResponse.json(errorResponse, { status: 401 });
+    response.headers.set('x-request-id', requestId);
+    return response;
+  }
 
-    // Transform the data to a cleaner format
-    const transformedMatches = matches?.map((match: any) => ({
-      id: match.id,
-      match_score: match.match_score,
-      match_reason: match.match_reason,
-      match_quality: match.match_quality,
-      match_tags: match.match_tags,
-      matched_at: match.matched_at,
-      job: match.jobs
-    })) || [];
+  // Add Sentry breadcrumb for user context
+  addBreadcrumb({
+    message: 'User matches request',
+    level: 'info',
+    data: { email, limit, minScore }
+  });
 
-    return NextResponse.json({
+  const supabase = getDatabaseClient();
+
+  // Get user matches with job details - with timeout
+  const queryPromise = supabase
+    .from('matches')
+    .select(`
+      *,
+      jobs (
+        id,
+        title,
+        company,
+        location,
+        job_url,
+        description,
+        categories,
+        experience_required,
+        work_environment,
+        language_requirements,
+        company_profile_url,
+        posted_at
+      )
+    `)
+    .eq('user_email', email)
+    .gte('match_score', minScore)
+    .order('match_score', { ascending: false })
+    .limit(limit);
+
+  // Add 10 second timeout
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Query timeout')), 10000)
+  );
+
+  const { data: matches, error: matchesError } = await Promise.race([
+    queryPromise,
+    timeoutPromise
+  ]) as any;
+
+  if (matchesError) {
+    console.error('Failed to fetch user matches:', matchesError);
+    
+    // Capture error in Sentry
+    captureException(matchesError, {
+      tags: { component: 'user-matches-api' },
+      extra: { email, limit, minScore }
+    });
+    
+    throw new AppError('Failed to fetch matches', 500, 'DATABASE_ERROR', matchesError);
+  }
+
+  // Transform the data to a cleaner format
+  const transformedMatches = matches?.map((match: any) => ({
+    id: match.id,
+    match_score: match.match_score,
+    match_reason: match.match_reason,
+    match_quality: match.match_quality,
+    match_tags: match.match_tags,
+    matched_at: match.matched_at,
+    job: match.jobs
+  })) || [];
+
+  const successResponse = createSuccessResponse(
+    {
       user_email: email,
       total_matches: transformedMatches.length,
       matches: transformedMatches
-    });
-
-  } catch (error) {
-    console.error('User matches API error:', error);
-    
-    // Capture error in Sentry with user context
-captureException(error, {
-      tags: { component: 'user-matches-api' },
-      extra: { 
-        email: new URL(req.url).searchParams.get('email'),
-        limit: new URL(req.url).searchParams.get('limit'),
-        minScore: new URL(req.url).searchParams.get('minScore')
-      }
-    });
-    
-    return NextResponse.json({ error: 'Server error' }, { status: HTTP_STATUS.INTERNAL_ERROR });
-  }
-}
+    },
+    undefined,
+    requestId
+  );
+  
+  const response = NextResponse.json(successResponse, { status: 200 });
+  response.headers.set('x-request-id', requestId);
+  return response;
+});

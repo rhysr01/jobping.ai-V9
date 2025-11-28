@@ -21,7 +21,7 @@ if (existsSync(envPath)) {
 // Import after env is loaded
 let getDatabaseClient: any;
 
-// Parse location function (matches scrapers/utils.ts)
+  // Parse location function (matches scrapers/utils.ts)
 function parseLocation(location: string): { city: string; country: string } {
   if (!location) return { city: '', country: '' };
   const loc = location.toLowerCase().trim();
@@ -38,11 +38,36 @@ function parseLocation(location: string): { city: string; country: string } {
   ]);
   
   const parts = loc.split(',').map(p => p.trim()).filter(Boolean);
-  const city = parts.length > 0 ? parts[0] : loc;
+  let city = parts.length > 0 ? parts[0] : loc;
   let country = parts.length > 1 ? parts[parts.length - 1] : '';
+  
+  // Clean up city name - remove common suffixes like "ENG", "GB", "DE", etc.
+  city = city.replace(/\s+(eng|gb|de|fr|es|it|nl|be|ch|ie|se|dk|at|cz|pl)$/i, '');
   
   if (parts.length === 1 && euCities.has(city)) {
     country = '';
+  }
+  
+  // If we have a country code, normalize it
+  if (country) {
+    const countryMap: Record<string, string> = {
+      'eng': 'GB', 'england': 'GB', 'united kingdom': 'GB', 'uk': 'GB', 'great britain': 'GB',
+      'de': 'DE', 'germany': 'DE', 'deutschland': 'DE',
+      'fr': 'FR', 'france': 'FR',
+      'es': 'ES', 'spain': 'ES', 'españa': 'ES',
+      'it': 'IT', 'italy': 'IT', 'italia': 'IT',
+      'nl': 'NL', 'netherlands': 'NL', 'holland': 'NL',
+      'be': 'BE', 'belgium': 'BE', 'belgië': 'BE', 'belgique': 'BE',
+      'ch': 'CH', 'switzerland': 'CH', 'schweiz': 'CH', 'suisse': 'CH',
+      'ie': 'IE', 'ireland': 'IE', 'éire': 'IE',
+      'se': 'SE', 'sweden': 'SE', 'sverige': 'SE',
+      'dk': 'DK', 'denmark': 'DK', 'danmark': 'DK',
+      'at': 'AT', 'austria': 'AT', 'österreich': 'AT',
+      'cz': 'CZ', 'czech republic': 'CZ', 'czechia': 'CZ',
+      'pl': 'PL', 'poland': 'PL', 'polska': 'PL'
+    };
+    const normalizedCountry = country.toLowerCase();
+    country = countryMap[normalizedCountry] || country.toUpperCase();
   }
   
   const capitalizedCity = city.split(' ').map(word => 
@@ -51,9 +76,7 @@ function parseLocation(location: string): { city: string; country: string } {
   
   return { 
     city: capitalizedCity || city, 
-    country: country ? country.split(' ').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ') : ''
+    country: country || ''
   };
 }
 
@@ -65,14 +88,45 @@ async function backfillLocations() {
   
   console.log('🔍 Finding jobs with missing city/country data...');
   
-  // Get jobs missing city or country
-  const { data: jobs, error: fetchError } = await supabase
-    .from('jobs')
-    .select('id, location, city, country')
-    .eq('is_active', true)
-    .or('city.is.null,city.eq.,country.is.null,country.eq.')
-    .not('location', 'is', null)
-    .neq('location', '');
+  // Get jobs missing city or country - process ALL jobs (no limit)
+  let allJobs: any[] = [];
+  let offset = 0;
+  const pageSize = 1000;
+  let fetchError: any = null;
+  
+  console.log('🔍 Fetching all jobs with missing city/country data...');
+  
+  while (true) {
+    const { data: jobs, error } = await supabase
+      .from('jobs')
+      .select('id, location, city, country')
+      .eq('is_active', true)
+      .or('city.is.null,city.eq.,country.is.null,country.eq.')
+      .not('location', 'is', null)
+      .neq('location', '')
+      .range(offset, offset + pageSize - 1);
+    
+    fetchError = error;
+    if (fetchError) {
+      console.error('❌ Error fetching jobs:', fetchError);
+      break;
+    }
+    
+    if (!jobs || jobs.length === 0) {
+      break;
+    }
+    
+    allJobs = allJobs.concat(jobs);
+    console.log(`   Fetched ${allJobs.length} jobs so far...`);
+    
+    if (jobs.length < pageSize) {
+      break; // Last page
+    }
+    
+    offset += pageSize;
+  }
+  
+  const jobs = allJobs;
   
   if (fetchError) {
     console.error('❌ Error fetching jobs:', fetchError);

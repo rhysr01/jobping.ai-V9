@@ -4,12 +4,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/Utils/supabase';
+import { getDatabaseClient } from '@/Utils/databasePool';
 import { getCVParser } from '@/Utils/cv/parser.service';
 import { asyncHandler, AppError } from '@/lib/errors';
 
 export const GET = asyncHandler(async (_req: NextRequest) => {
-  const supabase = getSupabaseClient();
+  const supabase = getDatabaseClient();
   const parser = getCVParser();
   
   // Get users with CVs that haven't been parsed yet

@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseClient } from '@/Utils/databasePool';
 import { createClient as createRedisClient } from 'redis';
 
+// Helper to get requestId from request
+function getRequestId(req: NextRequest): string {
+  const headerVal = req.headers.get('x-request-id');
+  if (headerVal && headerVal.length > 0) {
+    return headerVal;
+  }
+  try {
+    // eslint-disable-next-line
+    const nodeCrypto = require('crypto');
+    return nodeCrypto.randomUUID ? nodeCrypto.randomUUID() : nodeCrypto.randomBytes(16).toString('hex');
+  } catch {
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+}
+
 type HealthStatus = 'healthy' | 'degraded' | 'unhealthy';
 
 type ServiceCheck = {
@@ -15,6 +30,7 @@ const HEALTH_SLO_MS = 100; // SLO: health checks should respond in <100ms
 
 export async function GET(req: NextRequest) {
   const start = Date.now();
+  const requestId = getRequestId(req);
   
   try {
     const [database, redis, openai] = await Promise.all([
@@ -38,7 +54,8 @@ export async function GET(req: NextRequest) {
     ]);
     const ok = overallStatus === 'healthy';
 
-    return NextResponse.json(
+    // Health endpoint uses custom format for monitoring tools - keep format but add requestId
+    const response = NextResponse.json(
       {
         ok,
         status: overallStatus,
@@ -47,6 +64,7 @@ export async function GET(req: NextRequest) {
         uptimeSeconds: process.uptime(),
         responseTime: duration,
         timestamp: new Date().toISOString(),
+        requestId,
         slo: {
           targetMs: HEALTH_SLO_MS,
           actualMs: duration,
@@ -57,13 +75,16 @@ export async function GET(req: NextRequest) {
         status: overallStatus === 'unhealthy' ? 503 : 200
       }
     );
+    response.headers.set('x-request-id', requestId);
+    return response;
   } catch (error) {
     console.error('Health check failed:', error);
     const duration = Date.now() - start;
-    return NextResponse.json({ 
+    const response = NextResponse.json({ 
       ok: false,
       status: 'unhealthy',
       error: 'Health check failed',
+      requestId,
       responseTime: duration,
       duration: duration,
       slo: {
@@ -72,6 +93,8 @@ export async function GET(req: NextRequest) {
         met: duration <= HEALTH_SLO_MS
       }
     }, { status: 503 });
+    response.headers.set('x-request-id', requestId);
+    return response;
   }
 }
 

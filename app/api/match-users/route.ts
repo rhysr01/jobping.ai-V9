@@ -5,7 +5,7 @@ import { verifyHMAC, isHMACRequired } from '@/Utils/auth/hmac';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { getDatabaseClient } from '@/Utils/databasePool';
-import { captureException, addBreadcrumb, setContext, captureMessage, setTag } from '@/lib/sentry-utils';
+import { captureException, addBreadcrumb, setContext, captureMessage } from '@/lib/sentry-utils';
 import {
   logMatchSession
 } from '@/Utils/matching/logging.service';
@@ -13,14 +13,13 @@ import type { UserPreferences, JobMatch } from '@/Utils/matching/types';
 import { apiLogger } from '@/lib/api-logger';
 import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
 import { 
-  SEND_PLAN,
-  MATCH_RULES
+  SEND_PLAN
 } from '@/Utils/sendConfiguration';
 import { Job as ScrapersJob } from '@/scrapers/types';
-import { getCategoryPriorityScore, jobMatchesUserCategories, WORK_TYPE_CATEGORIES, mapFormLabelToDatabase, getStudentSatisfactionScore } from '@/Utils/matching/categoryMapper';
+import { WORK_TYPE_CATEGORIES, mapFormLabelToDatabase, getStudentSatisfactionScore } from '@/Utils/matching/categoryMapper';
 import { semanticRetrievalService } from '@/Utils/matching/semanticRetrieval';
 import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilterJobs';
-import { integratedMatchingService } from '@/Utils/matching/integrated-matching.service';
+// import { integratedMatchingService } from '@/Utils/matching/integrated-matching.service'; // Reserved for future use
 import { batchMatchingProcessor } from '@/Utils/matching/batch-processor.service';
 import { withRedisLock } from '@/Utils/locks';
 import { distributeJobsWithDiversity, getDistributionStats } from '@/Utils/matching/jobDistribution';
@@ -39,21 +38,22 @@ const matchUsersRequestSchema = z.object({
   timestamp: isHMACRequired() ? z.coerce.number().min(1, 'Timestamp required') : z.coerce.number().optional()
 });
 
-const userPreferencesSchema = z.object({
-  target_cities: z.array(z.string()).optional(),
-  roles_selected: z.array(z.string()).optional(),
-  subscription_tier: z.enum(['free', 'premium']).default('free'),
-  email_verified: z.boolean().default(false)
-});
+// userPreferencesSchema reserved for future validation
+// const userPreferencesSchema = z.object({
+//   target_cities: z.array(z.string()).optional(),
+//   roles_selected: z.array(z.string()).optional(),
+//   subscription_tier: z.enum(['free', 'premium']).default('free'),
+//   email_verified: z.boolean().default(false)
+// });
 
 // Import centralized type definitions
 import type { MatchMetrics, MatchProvenance } from '@/lib/types';
-import { getDateDaysAgo } from '@/lib/date-helpers';
+// import { getDateDaysAgo } from '@/lib/date-helpers'; // Reserved for future use
 import { Database } from '@/lib/database.types';
 
 type User = Database['public']['Tables']['users']['Row'];
 
-const HEALTH_SLO_MS = 100; // SLO: health checks should respond in <100ms
+// const HEALTH_SLO_MS = 100; // Reserved for future use
 const MATCH_SLO_MS = 2000; // SLO: match-users endpoint should respond in <2s
 
 const SCHEMA_VALIDATION_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -65,7 +65,7 @@ const IS_DEBUG = process.env.DEBUG_MATCHING === 'true' || IS_TEST;
 const SEMANTIC_RETRIEVAL_ENABLED = process.env.ENABLE_SEMANTIC_RETRIEVAL === 'true';
 // Use config values instead of hardcoded limits
 const USER_LIMIT = IS_TEST ? 3 : 50; // Keep test limit for safety
-const JOB_LIMIT = IS_TEST ? 300 : 10000; // Keep test limit for safety
+// const JOB_LIMIT = IS_TEST ? 300 : 10000; // Reserved for future use
 
 // Lock key helper
 const LOCK_KEY = (rid: string) => `${IS_TEST ? 'jobping:test' : 'jobping:prod'}:lock:match-users:${rid}`;
@@ -131,7 +131,7 @@ async function validateDatabaseSchema(supabase: SupabaseClient): Promise<{ valid
       setTimeout(() => reject(new Error('Query timeout')), 5000)
     );
     
-    const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
+    const { error } = await Promise.race([queryPromise, timeoutPromise]) as any;
     
     if (error) {
       apiLogger.error('Database schema validation failed', error as Error, { requiredColumns });
@@ -169,9 +169,9 @@ function distributeJobs(
   userId: string,
   userCareerPath?: string,
   userFormValues?: string[],
-  userWorkEnvironment?: string,
-  userEntryLevel?: string,
-  userCompanyTypes?: string[]
+  _userWorkEnvironment?: string,
+  _userEntryLevel?: string,
+  _userCompanyTypes?: string[]
 ): { jobs: ScrapersJob[], metrics: MatchMetrics } {
   const startTime = Date.now();
   
@@ -307,9 +307,11 @@ function trackPerformance(): { startTime: number; startMemory: number; getMetric
  * - "Putney Heath, South West London" matches "London"
  * - "Paris, Île-de-France, France" matches "Paris"
  */
-function matchesLocation(jobLocation: string, targetCity: string): boolean {
-  const jobLoc = jobLocation.toLowerCase();
-  const target = targetCity.toLowerCase();
+// Location matching function (reserved for future use)
+// eslint-disable-next-line
+function matchesLocation(_jobLocation: string, _targetCity: string): boolean {
+  const jobLoc = _jobLocation.toLowerCase();
+  const target = _targetCity.toLowerCase();
   
   // Direct substring match (most common)
   if (jobLoc.includes(target)) return true;
@@ -349,7 +351,8 @@ function matchesLocation(jobLocation: string, targetCity: string): boolean {
 // OpenAI client creation moved to ConsolidatedMatchingEngine
 
 // Database query helper with timeout
-async function queryWithTimeout<T>(
+// eslint-disable-next-line
+async function _queryWithTimeout<T>(
   queryPromise: Promise<any>,
   timeoutMs: number = 10000
 ): Promise<{ data: T | null; error: { code: string; message: string; details?: unknown } | null }> {
@@ -434,7 +437,8 @@ addBreadcrumb({
       }, { status: 400 });
     }
 
-    const { userLimit, jobLimit, forceRun, dryRun, signature, timestamp } = parseResult.data;
+    const { userLimit, jobLimit, signature, timestamp } = parseResult.data;
+    // forceRun and dryRun reserved for future use
 
     // Verify HMAC authentication only when configured (mandatory in prod, optional elsewhere)
     if (isHMACRequired()) {

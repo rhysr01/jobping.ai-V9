@@ -36,7 +36,8 @@ export async function POST(req: NextRequest) {
     }
 
     const body = JSON.parse(bodyText);
-    const { batchSize = 100, jobLimit = 1000 } = body;
+    const { jobLimit = 1000 } = body;
+    // batchSize is reserved for future use
 
     const supabase = getDatabaseClient();
 
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const coverage = await embeddingService.checkEmbeddingCoverage();
 

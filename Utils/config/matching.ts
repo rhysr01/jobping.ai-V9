@@ -29,10 +29,16 @@ export const MATCHING_CONFIG = {
   // Scoring Configuration
   scoring: {
     // Weight distribution (must sum to 100)
+    // Career coach priorities: Career path > Location > Work environment > Role > Experience
     weights: {
-      eligibility: 40,
-      careerPath: 35,
-      location: 25,
+      careerPath: 40,        // Career direction (Strategy, Finance, Tech, etc.) - MOST IMPORTANT
+      location: 20,          // Geographic match (hard requirement)
+      workEnvironment: 15,   // Office/Hybrid/Remote - IMPORTANT for early career
+      roleFit: 10,           // Specific role within career path (reduced from 20%)
+      experienceLevel: 10,   // Entry/junior/mid level matching
+      companyCulture: 3,     // Startup vs corporate, company type
+      skills: 1,             // Technical/soft skills alignment
+      timing: 1,             // Job freshness, urgency
     },
     
     // Score thresholds (use decimals for tests expecting 0-1 scale)
@@ -129,9 +135,14 @@ export function getTierConfig(userTier: 'free' | 'premium' = 'free') {
 export function getScoringWeights() {
   const weights = MATCHING_CONFIG.scoring.weights;
   return {
-    eligibility: weights.eligibility / 100,
     careerPath: weights.careerPath / 100,
     location: weights.location / 100,
+    workEnvironment: weights.workEnvironment / 100,
+    roleFit: weights.roleFit / 100,
+    experienceLevel: weights.experienceLevel / 100,
+    companyCulture: weights.companyCulture / 100,
+    skills: weights.skills / 100,
+    timing: weights.timing / 100,
   };
 }
 
@@ -144,6 +155,13 @@ export function validateConfig(): { valid: boolean; errors: string[] } {
   if (weightSum !== 100) {
     errors.push(`Scoring weights must sum to 100, got ${weightSum}`);
   }
+  
+  // Validate individual weights are non-negative
+  Object.entries(MATCHING_CONFIG.scoring.weights).forEach(([key, weight]) => {
+    if (weight < 0 || weight > 100) {
+      errors.push(`Invalid weight for ${key}: ${weight} (must be between 0 and 100)`);
+    }
+  });
   
   // Validate thresholds are in correct order
   const { thresholds } = MATCHING_CONFIG.scoring;

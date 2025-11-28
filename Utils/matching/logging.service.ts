@@ -5,10 +5,8 @@
 
 import { getDatabaseClient } from '@/Utils/databasePool';
 
-// Use centralized database pool
-function getSupabaseClient() {
-  return getDatabaseClient();
-}
+// Use centralized database pool directly
+// (Removed local wrapper function for consistency)
 
 export interface MatchSessionLog {
   user_email: string;
@@ -34,7 +32,7 @@ export async function logMatchSession(
   }
 ): Promise<void> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
     
     const logData: MatchSessionLog = {
       user_email: userEmail,
@@ -71,7 +69,7 @@ export async function getMatchSessionStats(
   totalCost: number;
 }> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
     
     let query = supabase
       .from('match_logs')

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { errorJson, errorResponse, getRequestId } from '@/Utils/errorResponse';
-import { HTTP_STATUS, ERROR_CODES } from '@/Utils/constants';
+import { HTTP_STATUS, ERROR_CODES } from '@/lib/constants';
 
 // Mock NextRequest
 function createMockRequest(headers?: Record<string, string>): NextRequest {

@@ -1,28 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getDatabaseClient } from '@/Utils/databasePool';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-
-// Initialize Supabase client
-function getSupabaseClient() {
-  // Only initialize during runtime, not build time
-  if (typeof window !== 'undefined') {
-    throw new Error('Supabase client should only be used server-side');
-  }
-  
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase configuration');
-  }
-  
-  return createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
-}
 
 export async function POST(req: NextRequest) {
   // PRODUCTION: Rate limiting for cleanup endpoint (automation use)
@@ -45,7 +23,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const { daysThreshold = 7 } = await req.json();
-    const supabase = getSupabaseClient();
+    const supabase = getDatabaseClient();
 
     console.log(` Starting job cleanup for jobs not seen in ${daysThreshold} days`);
 
@@ -113,7 +91,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  const supabase = getSupabaseClient();
+  const supabase = getDatabaseClient();
 
   try {
     // Get job statistics

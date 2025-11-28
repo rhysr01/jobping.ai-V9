@@ -1,6 +1,6 @@
 # Contributing to JobPing
 
-Thanks for your interest in contributing! �
+Thanks for your interest in contributing! �
 
 ## Setup
 
@@ -59,6 +59,22 @@ All must pass before opening a PR.
 - Use `logger` from `@/lib/monitoring`
 - Log user actions with `logUserAction()`
 - Never use `console.log` in production code
+
+### Import Paths
+We use a consistent import path convention:
+
+- **`@/lib/`** - Shared utilities, types, config, and infrastructure
+  - Examples: `@/lib/errors`, `@/lib/monitoring`, `@/lib/types`, `@/lib/database.types`
+  - Use for: Error handling, logging, type definitions, database types, schemas, constants
+
+- **`@/Utils/`** - Business logic, services, and domain-specific code
+  - Examples: `@/Utils/databasePool`, `@/Utils/matching/`, `@/Utils/email/`
+  - Use for: Database clients, matching services, email services, business logic
+
+**Guidelines:**
+- If it's shared infrastructure → `@/lib/`
+- If it's business/domain logic → `@/Utils/`
+- When in doubt, ask or check existing patterns in the codebase
 
 ## Testing
 

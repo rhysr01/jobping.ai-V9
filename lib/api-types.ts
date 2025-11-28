@@ -244,12 +244,23 @@ export function createSuccessResponse<T>(
   message?: string,
   requestId?: string
 ): SuccessResponse<T> {
+  // Generate requestId if not provided
+  const id = requestId || (() => {
+    try {
+      // eslint-disable-next-line
+      const nodeCrypto = require('crypto');
+      return nodeCrypto.randomUUID ? nodeCrypto.randomUUID() : nodeCrypto.randomBytes(16).toString('hex');
+    } catch {
+      return Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
+  })();
+  
   return {
     success: true,
     data,
     message,
     timestamp: new Date().toISOString(),
-    requestId,
+    requestId: id,
   };
 }
 
@@ -260,6 +271,17 @@ export function createErrorResponse(
   field?: string,
   requestId?: string
 ): ErrorResponse {
+  // Generate requestId if not provided
+  const id = requestId || (() => {
+    try {
+      // eslint-disable-next-line
+      const nodeCrypto = require('crypto');
+      return nodeCrypto.randomUUID ? nodeCrypto.randomUUID() : nodeCrypto.randomBytes(16).toString('hex');
+    } catch {
+      return Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
+  })();
+  
   return {
     success: false,
     error,
@@ -267,6 +289,6 @@ export function createErrorResponse(
     details,
     field,
     timestamp: new Date().toISOString(),
-    requestId,
+    requestId: id,
   };
 }

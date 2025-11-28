@@ -14,9 +14,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { getDatabaseClient } from '@/Utils/databasePool';
 import { AppError, ValidationError, UnauthorizedError } from '@/lib/errors';
-import type { CleanupLogEntry, CleanupContext } from '@/lib/types';
+import type { CleanupLogEntry } from '@/lib/types';
 import { captureException, setTag, setContext } from '@/lib/sentry-utils';
 
 // Security configuration
@@ -68,17 +69,8 @@ class JobCleanupAPI {
       deletionPercentage: 0,
     };
 
-    // Initialize Supabase with service role
-    this.supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
+    // Use centralized database client
+    this.supabase = getDatabaseClient();
   }
 
   private log(level: 'info' | 'warn' | 'error', message: string, data?: unknown) {

@@ -968,9 +968,15 @@ Requirements:
     const graduateTerms = ['graduate', 'new grad', 'grad scheme', 'grad program', 'graduate programme', 'trainee program', 'grad trainee'];
     const juniorTerms = ['junior', 'entry level', 'associate', 'assistant', 'junior analyst', 'junior consultant'];
     const programmeTerms = ['programme', 'program', 'scheme', 'rotation', 'campus'];
+    const workingStudentTerms = ['werkstudent', 'working student', 'part-time student', 'student worker', 'student job'];
 
     // Get user's preference (if available)
     const userPreference = userPrefs?.entry_level_preference?.toLowerCase() || '';
+    
+    // Check for working student terms in job
+    const isWorkingStudentJob = workingStudentTerms.some(term => 
+      jobText.includes(term) || title.includes(term)
+    );
     
     // Check job flags first (most accurate)
     // BALANCED: Role type match is important but not overwhelming
@@ -978,6 +984,12 @@ Requirements:
       if (job.is_internship) {
         if (userPreference.includes('intern')) {
           return { points: 25, reason: 'internship (perfect match)' };
+        }
+        // Working Student preference: boost internships, especially those with working student terms
+        if (userPreference.includes('working student')) {
+          return isWorkingStudentJob 
+            ? { points: 25, reason: 'working student role (perfect match)' }
+            : { points: 22, reason: 'internship (good match for working student)' };
         }
         return { points: 20, reason: 'internship role' };
       }
@@ -992,11 +1004,20 @@ Requirements:
     // Fallback to text matching with user preference boost
     // BALANCED: +5 bonus for preference match, but not dominant
     
+    // Working Student: check text for working student terms
+    if (userPreference.includes('working student') && isWorkingStudentJob) {
+      return { points: 23, reason: 'working student role (text match)' };
+    }
+    
     // Internships
     for (const term of internshipTerms) {
       if (jobText.includes(term) || title.includes(term)) {
         if (userPreference.includes('intern')) {
           return { points: 25, reason: 'internship (preference match)' };
+        }
+        // Also boost for working student preference
+        if (userPreference.includes('working student')) {
+          return { points: 22, reason: 'internship (good match for working student)' };
         }
         return { points: 20, reason: 'internship role' };
       }

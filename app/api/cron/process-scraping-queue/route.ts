@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getDatabaseClient } from '@/Utils/databasePool';
 // import { withAuth } from '../../../../lib/auth';
 import { asyncHandler, AppError } from '@/lib/errors';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Use centralized database client
+const supabase = getDatabaseClient();
 
 // Configuration
 const BATCH_SIZE = parseInt(process.env.SCRAPING_BATCH_SIZE || '3');

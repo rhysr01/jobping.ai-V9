@@ -16,8 +16,12 @@ export function getResendClient() {
 }
 
 // Supabase client for email tracking - uses centralized database pool
+/**
+ * @deprecated Use getDatabaseClient() from '@/Utils/databasePool' directly instead.
+ * This function is kept for backwards compatibility with email module exports.
+ */
 export function getSupabaseClient() {
-  // Re-export from centralized database pool for consistency
+  // Import the canonical implementation
   const { getDatabaseClient } = require('../databasePool');
   return getDatabaseClient();
 }

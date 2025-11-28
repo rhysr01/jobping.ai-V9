@@ -1,118 +1,123 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createSuccessResponse } from '@/lib/api-types';
+import { asyncHandler } from '@/lib/errors';
 // import { withAuth } from '../../../lib/auth';
 // import { getMemoryStats, getMemoryReport, isMemoryUsageHigh } from '../../../Utils/performance/memoryOptimizer';
 // import { queryOptimizer } from '../../../Utils/performance/queryOptimizer';
 // import { responseOptimizer } from '../../../Utils/performance/responseOptimizer';
 
-const getPerformanceHandler = async (request: NextRequest) => {
-  const startTime = Date.now();
-  
+// Helper to get requestId from request
+function getRequestId(req: NextRequest): string {
+  const headerVal = req.headers.get('x-request-id');
+  if (headerVal && headerVal.length > 0) {
+    return headerVal;
+  }
   try {
-    console.log(' Collecting performance metrics...');
-    
-    // Get query parameters
-    const { searchParams } = new URL(request.url);
-    const includeRecommendations = searchParams.get('recommendations') === 'true';
-    
-    // Collect performance data in parallel
-    const [
-      memoryStats,
-      memoryReport,
-      queryCacheStats,
-      responseCacheStats
-    ] = await Promise.allSettled([
-      Promise.resolve({ heapUsed: 0, heapTotal: 0, external: 0, rss: 0 }),
-      Promise.resolve({ trend: { trend: 'stable' } }),
-      Promise.resolve({ size: 0, hitRate: '0%' }),
-      Promise.resolve({ size: 0, hitRate: '0%' })
-    ]);
+    // eslint-disable-next-line
+    const nodeCrypto = require('crypto');
+    return nodeCrypto.randomUUID ? nodeCrypto.randomUUID() : nodeCrypto.randomBytes(16).toString('hex');
+  } catch {
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+}
 
-    const performanceData = {
-      timestamp: new Date().toISOString(),
-      collection_time: Date.now() - startTime,
-      memory: {
-        current: memoryStats.status === 'fulfilled' ? memoryStats.value : null,
-        report: memoryReport.status === 'fulfilled' ? memoryReport.value : null,
-        is_high: false
-      },
-      caches: {
-        query_cache: queryCacheStats.status === 'fulfilled' ? queryCacheStats.value : null,
-        response_cache: responseCacheStats.status === 'fulfilled' ? responseCacheStats.value : null
-      },
-      system: {
-        uptime: process.uptime(),
-        node_version: process.version,
-        platform: process.platform,
-        arch: process.arch,
-        cpu_usage: process.cpuUsage(),
-        memory_usage: process.memoryUsage()
-      }
-    };
+const getPerformanceHandler = asyncHandler(async (request: NextRequest) => {
+  const startTime = Date.now();
+  const requestId = getRequestId(request);
+  
+  console.log(' Collecting performance metrics...');
+  
+  // Get query parameters
+  const { searchParams } = new URL(request.url);
+  const includeRecommendations = searchParams.get('recommendations') === 'true';
+  
+  // Collect performance data in parallel
+  const [
+    memoryStats,
+    memoryReport,
+    queryCacheStats,
+    responseCacheStats
+  ] = await Promise.allSettled([
+    Promise.resolve({ heapUsed: 0, heapTotal: 0, external: 0, rss: 0 }),
+    Promise.resolve({ trend: { trend: 'stable' } }),
+    Promise.resolve({ size: 0, hitRate: '0%' }),
+    Promise.resolve({ size: 0, hitRate: '0%' })
+  ]);
 
-    // Add recommendations if requested
-    if (includeRecommendations) {
-      (performanceData as any).recommendations = generatePerformanceRecommendations(performanceData);
+  const performanceData = {
+    timestamp: new Date().toISOString(),
+    collection_time: Date.now() - startTime,
+    memory: {
+      current: memoryStats.status === 'fulfilled' ? memoryStats.value : null,
+      report: memoryReport.status === 'fulfilled' ? memoryReport.value : null,
+      is_high: false
+    },
+    caches: {
+      query_cache: queryCacheStats.status === 'fulfilled' ? queryCacheStats.value : null,
+      response_cache: responseCacheStats.status === 'fulfilled' ? responseCacheStats.value : null
+    },
+    system: {
+      uptime: process.uptime(),
+      node_version: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      cpu_usage: process.cpuUsage(),
+      memory_usage: process.memoryUsage()
     }
+  };
 
-    return NextResponse.json(performanceData);
-
-  } catch (error) {
-    console.error(' Performance collection error:', error);
-    return NextResponse.json({
-      error: 'Failed to collect performance metrics',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      collection_time: Date.now() - startTime
-    }, { status: 500 });
+  // Add recommendations if requested
+  if (includeRecommendations) {
+    (performanceData as any).recommendations = generatePerformanceRecommendations(performanceData);
   }
-};
 
-const optimizePerformanceHandler = async (request: NextRequest) => {
+  const successResponse = createSuccessResponse(performanceData, undefined, requestId);
+  const response = NextResponse.json(successResponse, { status: 200 });
+  response.headers.set('x-request-id', requestId);
+  return response;
+});
+
+const optimizePerformanceHandler = asyncHandler(async (request: NextRequest) => {
   const startTime = Date.now();
+  const requestId = getRequestId(request);
   
-  try {
-    console.log(' Starting performance optimization...');
-    
-    const optimizationResults = {
-      timestamp: new Date().toISOString(),
-      optimization_time: Date.now() - startTime,
-      actions: [] as string[],
-      memory_before: { heapUsed: 0, heapTotal: 0, external: 0, rss: 0 },
-      memory_after: null as any,
-      cache_clears: {
-        query_cache: false,
-        response_cache: false
-      }
-    };
+  console.log(' Starting performance optimization...');
+  
+  const optimizationResults = {
+    timestamp: new Date().toISOString(),
+    optimization_time: Date.now() - startTime,
+    actions: [] as string[],
+    memory_before: { heapUsed: 0, heapTotal: 0, external: 0, rss: 0 },
+    memory_after: null as any,
+    cache_clears: {
+      query_cache: false,
+      response_cache: false
+    }
+  };
 
-    // Clear query cache - temporarily disabled
-    optimizationResults.actions.push('Query cache clear disabled');
-    optimizationResults.cache_clears.query_cache = false;
+  // Clear query cache - temporarily disabled
+  optimizationResults.actions.push('Query cache clear disabled');
+  optimizationResults.cache_clears.query_cache = false;
 
-    // Clear response cache - temporarily disabled
-    optimizationResults.actions.push('Response cache clear disabled');
-    optimizationResults.cache_clears.response_cache = false;
+  // Clear response cache - temporarily disabled
+  optimizationResults.actions.push('Response cache clear disabled');
+  optimizationResults.cache_clears.response_cache = false;
 
-    optimizationResults.actions.push('Performance analysis complete');
+  optimizationResults.actions.push('Performance analysis complete');
 
-    // Get memory stats after optimization
-    optimizationResults.memory_after = { heapUsed: 0, heapTotal: 0, external: 0, rss: 0 };
-    
-    const memorySaved = optimizationResults.memory_before.heapUsed - optimizationResults.memory_after.heapUsed;
-    optimizationResults.actions.push(`Memory freed: ${memorySaved} bytes`);
+  // Get memory stats after optimization
+  optimizationResults.memory_after = { heapUsed: 0, heapTotal: 0, external: 0, rss: 0 };
+  
+  const memorySaved = optimizationResults.memory_before.heapUsed - optimizationResults.memory_after.heapUsed;
+  optimizationResults.actions.push(`Memory freed: ${memorySaved} bytes`);
 
-    console.log(` Performance optimization completed in ${optimizationResults.optimization_time}ms`);
+  console.log(` Performance optimization completed in ${optimizationResults.optimization_time}ms`);
 
-    return NextResponse.json(optimizationResults);
-
-  } catch (error) {
-    console.error(' Performance optimization error:', error);
-    return NextResponse.json({
-      error: 'Failed to optimize performance',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      optimization_time: Date.now() - startTime
-    }, { status: 500 });
-  }
-};
+  const successResponse = createSuccessResponse(optimizationResults, undefined, requestId);
+  const response = NextResponse.json(successResponse, { status: 200 });
+  response.headers.set('x-request-id', requestId);
+  return response;
+});
 
 function generatePerformanceRecommendations(performanceData: any): string[] {
   const recommendations: string[] = [];

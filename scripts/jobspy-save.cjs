@@ -44,12 +44,37 @@ function parseLocation(location) {
   
   // Extract city and country using comma separation
   const parts = loc.split(',').map(p => p.trim()).filter(Boolean);
-  const city = parts.length > 0 ? parts[0] : loc;
+  let city = parts.length > 0 ? parts[0] : loc;
   let country = parts.length > 1 ? parts[parts.length - 1] : '';
+  
+  // Clean up city name - remove common suffixes like "ENG", "GB", "DE", etc.
+  city = city.replace(/\s+(eng|gb|de|fr|es|it|nl|be|ch|ie|se|dk|at|cz|pl)$/i, '');
   
   // If single part and it's a known city, leave country empty
   if (parts.length === 1 && euCities.has(city)) {
     country = '';
+  }
+  
+  // If we have a country code, normalize it
+  if (country) {
+    const countryMap = {
+      'eng': 'GB', 'england': 'GB', 'united kingdom': 'GB', 'uk': 'GB', 'great britain': 'GB',
+      'de': 'DE', 'germany': 'DE', 'deutschland': 'DE',
+      'fr': 'FR', 'france': 'FR',
+      'es': 'ES', 'spain': 'ES', 'españa': 'ES',
+      'it': 'IT', 'italy': 'IT', 'italia': 'IT',
+      'nl': 'NL', 'netherlands': 'NL', 'holland': 'NL',
+      'be': 'BE', 'belgium': 'BE', 'belgië': 'BE', 'belgique': 'BE',
+      'ch': 'CH', 'switzerland': 'CH', 'schweiz': 'CH', 'suisse': 'CH',
+      'ie': 'IE', 'ireland': 'IE', 'éire': 'IE',
+      'se': 'SE', 'sweden': 'SE', 'sverige': 'SE',
+      'dk': 'DK', 'denmark': 'DK', 'danmark': 'DK',
+      'at': 'AT', 'austria': 'AT', 'österreich': 'AT',
+      'cz': 'CZ', 'czech republic': 'CZ', 'czechia': 'CZ',
+      'pl': 'PL', 'poland': 'PL', 'polska': 'PL'
+    };
+    const normalizedCountry = country.toLowerCase();
+    country = countryMap[normalizedCountry] || country.toUpperCase();
   }
   
   // Capitalize first letter of each word for city
@@ -59,10 +84,256 @@ function parseLocation(location) {
   
   return { 
     city: capitalizedCity || city, 
-    country: country ? country.split(' ').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ') : ''
+    country: country || ''
   };
+}
+
+// Classify job as internship, graduate, or neither
+function classifyJobType(job) {
+  const title = (job.title || '').toLowerCase();
+  const description = (job.description || job.company_description || job.skills || '').toLowerCase();
+  const text = `${title} ${description}`;
+  
+  // Internship indicators (multilingual)
+  const internshipTerms = [
+    'intern', 'internship', 'stage', 'praktikum', 'prácticas', 'tirocinio',
+    'stagiaire', 'stagiar', 'becario', 'werkstudent', 'placement',
+    'summer intern', 'winter intern', 'co-op', 'coop'
+  ];
+  
+  // Graduate program indicators
+  const graduateTerms = [
+    'graduate', 'grad scheme', 'grad program', 'graduate programme',
+    'graduate program', 'graduate scheme', 'graduate trainee',
+    'management trainee', 'trainee program', 'trainee programme',
+    'rotational program', 'rotational programme', 'campus hire',
+    'new grad', 'recent graduate'
+  ];
+  
+  // Check for internship first (more specific)
+  const isInternship = internshipTerms.some(term => 
+    title.includes(term) || description.includes(term)
+  );
+  
+  // Check for graduate program
+  const isGraduate = !isInternship && graduateTerms.some(term => 
+    title.includes(term) || description.includes(term)
+  );
+  
+  return { isInternship, isGraduate };
+}
+
+// Detect work environment from location and description
+function detectWorkEnvironment(job) {
+  const location = (job.location || '').toLowerCase();
+  const description = (job.description || job.company_description || job.skills || '').toLowerCase();
+  const text = `${location} ${description}`;
+  
+  // Remote indicators (strongest signal)
+  if (/remote|work\s+from\s+home|wfh|anywhere|fully\s+remote|100%\s+remote/i.test(text)) {
+    return 'remote';
+  }
+  
+  // Hybrid indicators
+  if (/hybrid|flexible|partially\s+remote|2-3\s+days|3\s+days\s+remote|mix\s+of\s+remote/i.test(text)) {
+    return 'hybrid';
+  }
+  
+  // Default to on-site
+  return 'on-site';
+}
+
+// Extract industries from description
+function extractIndustries(description) {
+  if (!description) return [];
+  const desc = description.toLowerCase();
+  const industries = [];
+  
+  const industryMap = {
+    'technology': 'Technology',
+    'tech': 'Technology',
+    'software': 'Technology',
+    'fintech': 'Technology',
+    'finance': 'Finance',
+    'financial': 'Finance',
+    'banking': 'Finance',
+    'investment': 'Finance',
+    'consulting': 'Consulting',
+    'consultant': 'Consulting',
+    'healthcare': 'Healthcare',
+    'health': 'Healthcare',
+    'medical': 'Healthcare',
+    'retail': 'Retail',
+    'manufacturing': 'Manufacturing',
+    'energy': 'Energy',
+    'media': 'Media',
+    'education': 'Education',
+    'government': 'Government',
+    'non-profit': 'Non-profit',
+    'real estate': 'Real Estate',
+    'transportation': 'Transportation',
+    'automotive': 'Automotive',
+    'fashion': 'Fashion',
+    'food': 'Food & Beverage',
+    'beverage': 'Food & Beverage',
+    'travel': 'Travel'
+  };
+  
+  for (const [keyword, industry] of Object.entries(industryMap)) {
+    if (desc.includes(keyword) && !industries.includes(industry)) {
+      industries.push(industry);
+    }
+  }
+  
+  return industries;
+}
+
+// Extract company size from description
+function extractCompanySize(description, company) {
+  if (!description) return null;
+  const desc = description.toLowerCase();
+  const companyLower = (company || '').toLowerCase();
+  
+  // Check for explicit size mentions
+  if (/startup|start-up|early.?stage|seed.?stage|1-50|1 to 50/i.test(desc)) {
+    return 'startup';
+  }
+  
+  if (/scale.?up|scaleup|50-500|50 to 500|51-500/i.test(desc)) {
+    return 'scaleup';
+  }
+  
+  if (/enterprise|500\+|500\+|large.?company|multinational|fortune/i.test(desc)) {
+    return 'enterprise';
+  }
+  
+  // Check company name for known large companies
+  const largeCompanies = ['google', 'microsoft', 'amazon', 'meta', 'facebook', 'apple', 'netflix', 'tesla', 'oracle', 'ibm', 'sap', 'salesforce'];
+  if (largeCompanies.some(large => companyLower.includes(large))) {
+    return 'enterprise';
+  }
+  
+  return null; // Unknown
+}
+
+// Extract skills from description
+function extractSkills(description) {
+  if (!description) return [];
+  const desc = description.toLowerCase();
+  const skills = [];
+  
+  const skillMap = {
+    'excel': 'Excel',
+    'powerpoint': 'PowerPoint',
+    'word': 'Word',
+    'python': 'Python',
+    'r ': 'R',
+    'sql': 'SQL',
+    'powerbi': 'PowerBI',
+    'tableau': 'Tableau',
+    'google analytics': 'Google Analytics',
+    'salesforce': 'Salesforce',
+    'hubspot': 'HubSpot',
+    'jira': 'Jira',
+    'confluence': 'Confluence',
+    'slack': 'Slack',
+    'microsoft office': 'Microsoft Office',
+    'google workspace': 'Google Workspace',
+    'adobe creative suite': 'Adobe Creative Suite',
+    'canva': 'Canva',
+    'data analysis': 'Data Analysis',
+    'project management': 'Project Management',
+    'digital marketing': 'Digital Marketing',
+    'social media': 'Social Media',
+    'email marketing': 'Email Marketing',
+    'content creation': 'Content Creation',
+    'research': 'Research',
+    'presentation skills': 'Presentation Skills',
+    'communication': 'Communication',
+    'leadership': 'Leadership',
+    'problem solving': 'Problem Solving',
+    'analytical thinking': 'Analytical Thinking'
+  };
+  
+  for (const [keyword, skill] of Object.entries(skillMap)) {
+    if (desc.includes(keyword) && !skills.includes(skill)) {
+      skills.push(skill);
+    }
+  }
+  
+  return skills;
+}
+
+// Extract language requirements
+function extractLanguageRequirements(description) {
+  if (!description) return [];
+  const desc = description.toLowerCase();
+  const languages = [];
+  
+  const languageMap = {
+    'english': 'English',
+    'french': 'French',
+    'german': 'German',
+    'spanish': 'Spanish',
+    'italian': 'Italian',
+    'dutch': 'Dutch',
+    'portuguese': 'Portuguese',
+    'fluent in english': 'English',
+    'fluent in french': 'French',
+    'fluent in german': 'German',
+    'fluent in spanish': 'Spanish',
+    'native english': 'English',
+    'native french': 'French',
+    'native german': 'German'
+  };
+  
+  for (const [keyword, lang] of Object.entries(languageMap)) {
+    if (desc.includes(keyword) && !languages.includes(lang)) {
+      languages.push(lang);
+    }
+  }
+  
+  return languages;
+}
+
+// Detect visa/sponsorship requirements
+function detectVisaRequirements(description) {
+  if (!description) return null;
+  const desc = description.toLowerCase();
+  
+  // Check for sponsorship requirements
+  if (/sponsorship|sponsor|work permit|visa sponsorship|right to work|eu citizen|eea citizen|uk citizen/i.test(desc)) {
+    if (/sponsorship|sponsor|work permit|visa sponsorship|require sponsorship|non-eu|non-uk/i.test(desc)) {
+      return 'Non-EU (require sponsorship)';
+    }
+    if (/eu citizen|eea citizen|uk citizen|right to work|open to all/i.test(desc)) {
+      return 'EU citizen'; // Flexible
+    }
+  }
+  
+  return null;
+}
+
+// Extract salary range
+function extractSalaryRange(description) {
+  if (!description) return null;
+  
+  // Match various salary formats
+  const patterns = [
+    /(?:€|EUR|euro)\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i,
+    /(?:£|GBP|pound)\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i,
+    /(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*(?:€|EUR|£|GBP)/i,
+    /salary[:\s]+(?:€|£|EUR|GBP)?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i
+  ];
+  
+  for (const pattern of patterns) {
+    const match = description.match(pattern);
+    if (match) {
+      return match[0].trim();
+    }
+  }
+  
+  return null;
 }
 
 function parseCsv(csv) {
@@ -97,20 +368,49 @@ async function saveJobs(jobs, source) {
   const nonRemote = jobs.filter(j => !((j.location||'').toLowerCase().includes('remote')));
   const rows = nonRemote.map(j => {
     const { city, country } = parseLocation(j.location || '');
+    const { isInternship, isGraduate } = classifyJobType(j);
+    const description = (j.company_description || j.skills || j.description || '').trim();
+    
+    // Build categories array
+    const categories = ['early-career'];
+    if (isInternship) {
+      categories.push('internship');
+    }
+    
+    // Clean company name - remove extra whitespace, trim
+    const companyName = (j.company || '').trim().replace(/\s+/g, ' ');
+    
+    // Extract all metadata
+    const workEnv = detectWorkEnvironment(j);
+    const industries = extractIndustries(description);
+    const companySize = extractCompanySize(description, companyName);
+    const skills = extractSkills(description);
+    const languages = extractLanguageRequirements(description);
+    const visaStatus = detectVisaRequirements(description);
+    const salary = extractSalaryRange(description);
+    
+    // Mutually exclusive categorization: internship OR graduate OR early-career
+    // Maps to form options: "Internship", "Graduate Programmes", "Entry Level"
+    const isEarlyCareer = !isInternship && !isGraduate; // Entry-level roles
+    
     return {
-      job_hash: hashJob(j.title, j.company, j.location),
+      job_hash: hashJob(j.title, companyName, j.location),
       title: (j.title||'').trim(),
-      company: (j.company||'').trim(),
+      company: companyName, // Clean company name
       location: (j.location||'').trim(),
       city: city, // Extract city from location
       country: country, // Extract country from location
-      description: (j.company_description || j.skills || j.description || '').trim(),
+      description: description,
       job_url: (j.job_url || j.url || '').trim(),
       source,
       posted_at: j.posted_at || nowIso,
-      categories: ['early-career'],
-      work_environment: 'on-site',
-      experience_required: 'entry-level',
+      categories: categories,
+      work_environment: workEnv, // Detect from location/description
+      experience_required: isInternship ? 'internship' : (isGraduate ? 'graduate' : 'entry-level'),
+      is_internship: isInternship, // Maps to form: "Internship"
+      is_graduate: isGraduate, // Maps to form: "Graduate Programmes"
+      is_early_career: isEarlyCareer, // Maps to form: "Entry Level" (mutually exclusive)
+      language_requirements: languages.length > 0 ? languages : null, // Extract languages
       original_posted_date: j.posted_at || nowIso,
       last_seen_at: nowIso,
       is_active: true,
