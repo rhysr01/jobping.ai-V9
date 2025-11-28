@@ -155,7 +155,10 @@ async function handleSendScheduledEmails(req: NextRequest) {
     let usersWithoutMatches = 0;
 
     // Process each user
-    for (const user of transformedUsers) {
+    for (let i = 0; i < transformedUsers.length; i++) {
+      const user = transformedUsers[i];
+      const originalUser = users[i] as User;
+      
       try {
         const userTier = (user.subscription_tier || 'free') as 'free' | 'premium';
         
@@ -223,7 +226,7 @@ async function handleSendScheduledEmails(req: NextRequest) {
             return {
               ...job,
               match_score: match.match_score,
-              match_reason: match.reasoning || match.reason || 'AI-matched'
+              match_reason: match.match_reason || 'AI-matched'
             };
           })
           .filter(j => j !== null)
@@ -261,7 +264,7 @@ async function handleSendScheduledEmails(req: NextRequest) {
           .from('users')
           .update({
             last_email_sent: new Date().toISOString(),
-            email_count: (user.email_count || 0) + 1
+            email_count: (originalUser.email_count || 0) + 1
           })
           .eq('email', user.email);
 
