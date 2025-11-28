@@ -18,40 +18,54 @@ const PURPOSE_SECRETS: Record<TokenPurpose, string | undefined> = {
 };
 
 function resolveSecret(purpose: TokenPurpose): string {
+  // Primary: Use purpose-specific secret if available
   const envSecret = PURPOSE_SECRETS[purpose];
   if (envSecret && envSecret.length >= 32) {
     return envSecret;
   }
 
-  const fallback = process.env.INTERNAL_API_HMAC_SECRET;
-  if (fallback && fallback.length >= 32) {
-    return fallback;
+  // Fallback 1: INTERNAL_API_HMAC_SECRET (required in production, should always be available)
+  const hmacSecret = process.env.INTERNAL_API_HMAC_SECRET;
+  if (hmacSecret && hmacSecret.length >= 32) {
+    // Log info in production to encourage using dedicated secret
+    if (process.env.NODE_ENV === 'production' && !envSecret) {
+      console.warn(
+        `[SECURITY] Using INTERNAL_API_HMAC_SECRET for ${purpose} token generation. ` +
+        `For better security isolation, set PREFERENCES_SECRET environment variable (≥32 chars).`
+      );
+    }
+    return hmacSecret;
   }
 
-  // Additional fallbacks for production resilience
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (supabaseServiceKey && supabaseServiceKey.length >= 32) {
-    // Use first 64 chars of service key as secret (it's long enough)
-    return supabaseServiceKey.substring(0, 64);
-  }
-
-  // Last resort: use a deterministic secret based on environment
-  // This is less secure but prevents production failures
+  // Fallback 2: Generate deterministic secret from available environment variables
+  // This ensures production doesn't fail but is less secure than dedicated secrets
   if (process.env.NODE_ENV === 'production') {
-    const envBasedSecret = process.env.VERCEL ? 
-      `jobping-vercel-${process.env.VERCEL_ENV || 'production'}-secret` :
-      `jobping-production-secret-${process.env.NODE_ENV}`;
+    // Use crypto to create a deterministic but non-obvious secret
+    const seed = [
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      process.env.VERCEL ? process.env.VERCEL_ENV : process.env.NODE_ENV,
+      purpose,
+      'jobping-secure-token-seed'
+    ].filter(Boolean).join(':');
     
-    // Log warning but don't fail
-    console.warn(
-      `[SECURITY] Using fallback secret for ${purpose} token generation. ` +
-      `Please set PREFERENCES_SECRET or INTERNAL_API_HMAC_SECRET environment variable (≥32 chars) for production security.`
+    const deterministicSecret = crypto
+      .createHash('sha256')
+      .update(seed)
+      .digest('hex')
+      .substring(0, 64); // Use first 64 chars for consistency
+    
+    // Log prominent warning
+    console.error(
+      `[SECURITY WARNING] Using fallback deterministic secret for ${purpose} token generation. ` +
+      `This is less secure! Please set PREFERENCES_SECRET or ensure INTERNAL_API_HMAC_SECRET ` +
+      `is configured (≥32 chars) in your production environment variables.`
     );
-    return envBasedSecret;
+    
+    return deterministicSecret;
   }
 
-  // Non-production fallback
-  return 'jobping-nonprod-secret-key';
+  // Non-production fallback (development/test)
+  return 'jobping-nonprod-secret-key-for-development-only';
 }
 
 function toBase64Url(value: string): string {
