@@ -141,21 +141,39 @@ export async function POST(req: NextRequest) {
         const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
         const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
         const hasServiceRoleKey = !!serviceRoleKey;
-        const keysMatch = serviceRoleKey && anonKey && serviceRoleKey === anonKey;
+        const hasAnonKey = !!anonKey;
+        // Only compare if both exist
+        const keysMatch = hasServiceRoleKey && hasAnonKey && serviceRoleKey === anonKey;
+        
+        // Additional diagnostic: Check what key the client is actually using
+        const clientKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
+        const clientKeyPrefix = clientKey ? clientKey.substring(0, 20) : 'N/A';
+        const anonKeyPrefix = anonKey ? anonKey.substring(0, 20) : 'N/A';
+        
+        // Check if service role key looks valid (JWT format, correct length)
+        const looksLikeServiceRole = serviceRoleKey && serviceRoleKey.length > 100 && serviceRoleKey.startsWith('eyJ');
         
         apiLogger.error('RLS policy violation during user creation', userError as Error, { 
           email: data.email,
           errorCode: userError.code,
           errorMessage: userError.message,
           hasServiceRoleKey,
+          hasAnonKey,
           serviceRoleKeyLength: serviceRoleKey?.length || 0,
+          anonKeyLength: anonKey?.length || 0,
           keysMatch,
-          serviceRoleKeyPrefix: serviceRoleKey ? serviceRoleKey.substring(0, 10) : 'N/A',
+          looksLikeServiceRole,
+          serviceRoleKeyPrefix: serviceRoleKey ? serviceRoleKey.substring(0, 20) : 'N/A',
+          anonKeyPrefix: anonKey ? anonKey.substring(0, 20) : 'N/A',
+          clientKeyPrefix,
+          keysAreIdentical: keysMatch,
           hint: keysMatch
-            ? 'CRITICAL: Service role key and anon key are the SAME! This is why RLS is blocking. Update SUPABASE_SERVICE_ROLE_KEY in Vercel with the actual service_role key from Supabase Dashboard.'
-            : hasServiceRoleKey 
-              ? 'Service role key is set but RLS is blocking. Verify the key is the service_role key (not anon key) from Supabase Dashboard → Settings → API → Service Role Key.'
-              : 'SUPABASE_SERVICE_ROLE_KEY is missing in production environment!'
+            ? 'CRITICAL: Service role key and anon key are the SAME! This is why RLS is blocking. The service role key MUST be different from the anon key. Go to Supabase Dashboard → Settings → API → copy the "service_role" key (NOT "anon public") and update SUPABASE_SERVICE_ROLE_KEY in Vercel.'
+            : !hasServiceRoleKey
+              ? 'SUPABASE_SERVICE_ROLE_KEY is missing in production environment! Add it in Vercel → Settings → Environment Variables.'
+              : !looksLikeServiceRole
+                ? 'Service role key format looks incorrect. Service role keys should be 200+ characters and start with "eyJ". Verify you copied the correct "service_role" key from Supabase Dashboard → Settings → API → Service Role Key.'
+                : 'Service role key is set but RLS is blocking. Possible causes: 1) RLS policies not applied (run migrations/fix_signup_rls_service_role.sql), 2) Key was rotated in Supabase but not updated in Vercel, 3) Wrong project key. Verify the key is the service_role key from Supabase Dashboard → Settings → API → Service Role Key.'
         });
         return NextResponse.json({ 
           error: 'Failed to create user',
@@ -215,6 +233,7 @@ export async function POST(req: NextRequest) {
       }
       
       // Build optimized query using database indexes
+      // Select all fields needed for email template (including tags, work_environment, etc.)
       let query = supabase
         .from('jobs')
         .select('*')

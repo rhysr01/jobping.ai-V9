@@ -9,6 +9,7 @@ import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import ExitIntentPopup from "@/components/ui/ExitIntentPopup";
 import { SkeletonCard } from "@/components/ui/Skeleton";
 import SocialProofRow from "@/components/sections/SocialProofRow";
+import TrustBadges from "@/components/sections/TrustBadges";
 
 function SectionSkeleton() {
   return (
@@ -41,6 +42,9 @@ export default function Page() {
         </Suspense>
         <Suspense fallback={<SectionSkeleton />}>
           <Pricing />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <TrustBadges />
         </Suspense>
         <Suspense fallback={<SectionSkeleton />}>
           <SecondaryCTA />

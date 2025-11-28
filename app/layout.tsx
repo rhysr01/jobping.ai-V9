@@ -1,4 +1,5 @@
 import "./globals.css";
+import "@/lib/web-vitals";
 import type { Metadata } from "next";
 import StructuredData from "@/components/StructuredData";
 import FAQSchema from "@/components/FAQSchema";

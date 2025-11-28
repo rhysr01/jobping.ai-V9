@@ -35,7 +35,7 @@ function vmlButton(href: string, label: string, gradientFrom: string, gradientTo
   </v:roundrect>
   <![endif]-->
   <!--[if !mso]><!-- -->
-  <a href="${href}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:linear-gradient(135deg,${gradientFrom},${gradientTo});color:#ffffff;padding:16px 36px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;box-shadow:0 4px 16px rgba(99,102,241,0.4);transition:all 0.2s ease;margin-top:20px;letter-spacing:0.2px;">
+  <a href="${href}" target="_blank" rel="noopener noreferrer" class="gmail-button" style="display:inline-block !important;background:linear-gradient(135deg,${gradientFrom},${gradientTo}) !important;color:#ffffff !important;padding:16px 36px !important;border-radius:8px !important;text-decoration:none !important;font-weight:600 !important;font-size:16px !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif !important;box-shadow:0 4px 16px rgba(99,102,241,0.4) !important;margin-top:20px !important;letter-spacing:0.2px !important;-webkit-text-size-adjust:none !important;mso-hide:all;">
 ${label}
   </a>
   <!--<![endif]-->
@@ -52,7 +52,7 @@ function vmlFeedbackButton(href: string, label: string, gradientFrom: string, gr
   </v:roundrect>
   <![endif]-->
   <!--[if !mso]><!-- -->
-  <a href="${href}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:linear-gradient(135deg,${gradientFrom},${gradientTo});color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;box-shadow:0 3px 12px rgba(99,102,241,0.3);transition:all 0.2s ease;min-width:130px;text-align:center;">
+  <a href="${href}" target="_blank" rel="noopener noreferrer" class="gmail-button" style="display:inline-block !important;background:linear-gradient(135deg,${gradientFrom},${gradientTo}) !important;color:#ffffff !important;padding:12px 24px !important;border-radius:8px !important;text-decoration:none !important;font-weight:600 !important;font-size:14px !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif !important;box-shadow:0 3px 12px rgba(99,102,241,0.3) !important;min-width:130px !important;text-align:center !important;-webkit-text-size-adjust:none !important;mso-hide:all;">
 ${label}
   </a>
   <!--<![endif]-->
@@ -96,11 +96,59 @@ function formatJobTags(job: Record<string, any>): string[] {
     tags.add(trimmed);
   };
 
-  const careerPath = job.career_path ?? job.careerPath ?? job.primary_category;
-  addTag(careerPath);
+  // Helper function to convert database category to readable tag
+  const formatCategoryTag = (category: string): string => {
+    if (!category) return '';
+    // Skip non-career-path categories like "early-career", "internship"
+    if (['early-career', 'internship', 'graduate', 'experienced'].includes(category.toLowerCase())) {
+      return '';
+    }
+    // Convert "strategy-business-design" to "Strategy & Business Design"
+    if (category.includes('-')) {
+      return category
+        .split('-')
+        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' & ');
+    }
+    return category.charAt(0).toUpperCase() + category.slice(1);
+  };
 
+  // Extract career path from multiple possible sources
+  // Priority: career_path > careerPath > primary_category > categories array
+  let careerPath = job.career_path ?? job.careerPath ?? job.primary_category;
+  
+  // If no direct career path, try to extract from categories array
+  if (!careerPath && Array.isArray(job.categories) && job.categories.length > 0) {
+    // Find first career-path category (skip "early-career", "internship", etc.)
+    const categoryWithCareerPath = job.categories.find((cat: string) => 
+      cat && cat.includes('-') && !['early-career', 'internship', 'graduate', 'experienced'].includes(cat.toLowerCase())
+    );
+    if (categoryWithCareerPath) {
+      careerPath = formatCategoryTag(categoryWithCareerPath);
+    }
+  }
+  if (careerPath) {
+    const formatted = formatCategoryTag(careerPath);
+    if (formatted) addTag(formatted);
+  }
+
+  // Add additional career paths from array (limit to 1 more to keep tags concise)
   if (Array.isArray(job.career_paths)) {
-    job.career_paths.slice(0, 2).forEach((path: string) => addTag(path));
+    job.career_paths.slice(0, 1).forEach((path: string) => {
+      const formatted = formatCategoryTag(path);
+      if (formatted) addTag(formatted);
+    });
+  } else if (Array.isArray(job.categories) && careerPath) {
+    // Add one more category if available (skip if already added)
+    const additionalCategory = job.categories.find((cat: string) => 
+      cat && cat.includes('-') && 
+      !['early-career', 'internship', 'graduate', 'experienced'].includes(cat.toLowerCase()) &&
+      formatCategoryTag(cat) !== formatCategoryTag(careerPath)
+    );
+    if (additionalCategory) {
+      const formatted = formatCategoryTag(additionalCategory);
+      if (formatted) addTag(formatted);
+    }
   }
 
   const workEnv = job.work_arrangement ?? job.work_environment ?? job.work_mode;
@@ -145,11 +193,15 @@ function wrapEmail(title: string, body: string, footerEmail?: string): string {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="x-ua-compatible" content="ie=edge" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="supported-color-schemes" content="dark light" />
   <title>${title}</title>
-  <!-- Gmail preheader text -->
-  <div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
+  <!-- Gmail preheader text - optimized for Gmail preview -->
+  <div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all;">
     Fresh job matches tailored just for you. Hand-picked opportunities waiting.
   </div>
+  <!-- Gmail app preview text -->
+  <span style="display: none !important; visibility: hidden; opacity: 0; color: transparent; height: 0; width: 0; font-size: 0; line-height: 0; max-height: 0; max-width: 0; mso-hide: all;">Fresh job matches tailored just for you. Hand-picked opportunities waiting.</span>
   <style>
     /* Client resets */
     html, body { margin:0; padding:0; }
@@ -170,9 +222,33 @@ function wrapEmail(title: string, body: string, footerEmail?: string): string {
     .text { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; color:${COLORS.gray300}; font-size:16px; line-height:1.65; margin:0 0 24px 0; }
     
     /* Gmail-specific optimizations */
-    .gmail-fix { min-width: 600px; }
-    .gmail-spacing { mso-line-height-rule: exactly; }
-    .gmail-table { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    .gmail-fix { min-width: 600px !important; }
+    .gmail-spacing { mso-line-height-rule: exactly; line-height: 1.6 !important; }
+    .gmail-table { border-collapse: collapse !important; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    
+    /* Gmail dark mode support */
+    [data-ogsc] .header { background: linear-gradient(135deg,${COLORS.indigo} 0%,#7C3AED 50%,${COLORS.purple} 100%) !important; }
+    [data-ogsc] .card { background: #0f0f0f !important; border-color: rgba(99,102,241,0.15) !important; }
+    [data-ogsc] .text { color: ${COLORS.gray300} !important; }
+    
+    /* Gmail mobile app fixes */
+    u + .body .gmail-fix { min-width: 0 !important; }
+    .mobile-hide { display: block !important; }
+    @media only screen and (max-width: 600px) {
+      .mobile-hide { display: none !important; }
+      .gmail-fix { min-width: 100% !important; width: 100% !important; }
+    }
+    
+    /* Gmail button rendering fix */
+    .gmail-button { 
+      display: inline-block !important;
+      text-decoration: none !important;
+      -webkit-text-size-adjust: none !important;
+      mso-hide: all;
+    }
+    
+    /* Prevent Gmail from auto-linking */
+    .no-link { color: inherit !important; text-decoration: none !important; }
     .pill { display:inline-block; background:rgba(0,0,0,0.3); color:${COLORS.white}; border:1px solid rgba(255,255,255,0.2); padding:10px 22px; border-radius:999px; font-weight:600; font-size:14px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; box-shadow:0 4px 20px rgba(0,0,0,0.2); margin-bottom:28px; backdrop-filter:blur(10px); }
 
     /* Premium Card Design */
@@ -190,22 +266,45 @@ function wrapEmail(title: string, body: string, footerEmail?: string): string {
     .footer-text { color:${COLORS.gray500}; font-size:13px; margin:8px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; }
     .footer-link { color:#667eea; text-decoration:none; font-weight:600; }
 
-    @media (max-width:600px) { 
-      .container { padding:0; }
-      .shell { border-radius:0; }
-      .content { padding:36px 28px; } 
-      .header { padding:40px 28px; }
-      .title { font-size:24px; }
-      .card { padding:24px; }
-      .job { font-size:20px; }
+    /* Gmail mobile optimizations */
+    @media only screen and (max-width:600px) { 
+      .container { padding:0 !important; }
+      .shell { border-radius:0 !important; max-width: 100% !important; }
+      .content { padding:32px 24px !important; } 
+      .header { padding:36px 24px !important; }
+      .title { font-size:24px !important; line-height: 1.3 !important; }
+      .card { padding:20px !important; margin-bottom: 20px !important; }
+      .job { font-size:20px !important; line-height: 1.3 !important; }
+      .text { font-size:15px !important; line-height: 1.6 !important; }
+      .badge, .score { font-size:11px !important; padding:6px 14px !important; }
+      .pill { font-size:13px !important; padding:8px 18px !important; }
+    }
+    
+    /* Gmail desktop web client */
+    @media screen and (min-width: 601px) {
+      .gmail-fix { width: 600px !important; }
     }
   </style>
 </head>
-<body style="margin:0; background:${COLORS.bg};">
-  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="container gmail-table">
+<body style="margin:0; padding:0; background:${COLORS.bg}; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%;">
+  <!-- Gmail wrapper fix -->
+  <div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">
+    Fresh job matches tailored just for you. Hand-picked opportunities waiting.
+  </div>
+  <!--[if mso]>
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:${COLORS.bg};">
     <tr>
-      <td align="center" style="padding:20px 0;">
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="shell gmail-fix gmail-table">
+      <td>
+  <![endif]-->
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="container gmail-table" style="width:100%; background-color:${COLORS.bg};">
+    <tr>
+      <td align="center" style="padding:20px 0; background-color:${COLORS.bg};">
+        <!--[if mso]>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color:${COLORS.panel};">
+        <![endif]-->
+        <!--[if !mso]><!-- -->
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="shell gmail-fix gmail-table" style="max-width:600px; background-color:${COLORS.panel};">
+        <!--<![endif]-->
           <tr>
             <td class="header">
               <div class="logo">JobPing</div>
@@ -229,9 +328,17 @@ function wrapEmail(title: string, body: string, footerEmail?: string): string {
             </td>
           </tr>
         </table>
+        <!--[if mso]>
+        </table>
+        <![endif]-->
       </td>
     </tr>
   </table>
+  <!--[if mso]>
+  </td>
+  </tr>
+  </table>
+  <![endif]-->
 </body>
 </html>
   `.trim();

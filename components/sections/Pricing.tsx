@@ -57,14 +57,14 @@ export default function Pricing() {
           transition={{ duration: 0.5 }}
           className="mx-auto max-w-3xl text-left sm:text-center"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.28em] text-brand-200">
             <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
             Pricing
           </span>
-          <h2 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">
+          <h2 className="mt-4 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             {Copy.PRICING_TITLE}
           </h2>
-          <p className="mt-3 text-base text-zinc-300 sm:text-lg">{Copy.PRICING_SUBTITLE}</p>
+          <p className="mt-4 text-base font-medium leading-relaxed text-zinc-100 sm:text-lg">{Copy.PRICING_SUBTITLE}</p>
         </motion.div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2">
@@ -78,16 +78,16 @@ export default function Pricing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-16 overflow-hidden rounded-3xl border border-brand-500/20 bg-gradient-to-r from-[#0b031d] via-[#120033] to-[#1f0546] px-6 py-10 text-center shadow-[0_24px_80px_rgba(17,0,45,0.35)] sm:px-10"
+          className="mt-20 overflow-hidden rounded-3xl border-2 border-brand-500/40 bg-gradient-to-r from-[#0b031d] via-[#120033] to-[#1f0546] px-8 py-12 text-center shadow-[0_30px_100px_rgba(17,0,45,0.5)] backdrop-blur-sm sm:px-12"
         >
           <div className="flex flex-col items-center gap-5">
             <span className="inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
               🚀 Over 12 000 jobs matched this month
             </span>
-            <h3 className="text-2xl font-semibold text-white sm:text-3xl">
+            <h3 className="text-2xl font-bold text-white sm:text-3xl">
               Start free today—see your first five matches before the weekend.
             </h3>
-            <p className="max-w-2xl text-sm text-zinc-300 sm:text-base">
+            <p className="max-w-2xl text-sm font-medium leading-relaxed text-zinc-100 sm:text-base">
               We refresh the pipeline every morning and route hot roles instantly. If we miss the mark, reply to any email and we retune within 24 hours.
             </p>
             <Link
@@ -114,9 +114,9 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.55, delay: index * 0.1 }}
-      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border ${
-        isPremium ? 'border-brand-500/40 bg-brand-500/10' : 'border-white/10 bg-white/5'
-      } p-8 backdrop-blur-sm transition-all duration-300 hover:-translate-y-[4px] hover:border-brand-500/40 hover:bg-white/10 hover:shadow-[0_12px_40px_rgba(99,102,241,0.2)] sm:p-9`}
+      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border-2 ${
+        isPremium ? 'border-brand-500/60 bg-gradient-to-br from-brand-500/15 via-brand-500/10 to-purple-500/10 shadow-[0_20px_60px_rgba(99,102,241,0.3)]' : 'border-white/20 bg-white/[0.08]'
+      } p-8 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/60 hover:shadow-[0_24px_60px_rgba(99,102,241,0.35)] sm:p-10`}
     >
       {isPremium && (
         <div className="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-purple-500/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -139,17 +139,17 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
 
       <div className="space-y-5">
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-semibold text-white sm:text-4xl">{plan.price}</span>
-          {plan.suffix && <span className="text-sm font-medium text-zinc-400">{plan.suffix}</span>}
+          <span className="text-4xl font-bold text-white sm:text-5xl">{plan.price}</span>
+          {plan.suffix && <span className="text-base font-medium text-zinc-300">{plan.suffix}</span>}
         </div>
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-200">{plan.name}</p>
-        <h3 className="text-xl font-semibold text-white sm:text-2xl">{plan.headline}</h3>
-        <p className="text-sm leading-relaxed text-zinc-300 sm:text-base">{plan.description}</p>
+        <p className="text-xs font-bold uppercase tracking-[0.3em] text-brand-300">{plan.name}</p>
+        <h3 className="text-xl font-bold text-white sm:text-2xl">{plan.headline}</h3>
+        <p className="text-sm font-medium leading-relaxed text-zinc-100 sm:text-base">{plan.description}</p>
 
-        <ul className="mt-6 space-y-3">
+        <ul className="mt-6 space-y-4">
           {plan.features.map(feature => (
-            <li key={feature} className="flex items-start gap-3 text-sm text-zinc-300 sm:text-base">
-              <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-500/15 text-brand-200">
+            <li key={feature} className="flex items-start gap-3 text-sm font-medium text-zinc-100 sm:text-base">
+              <span className="mt-0.5 inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-brand-200 shadow-[0_0_12px_rgba(99,102,241,0.3)]">
                 <BrandIcons.Check className="h-3.5 w-3.5" />
               </span>
               <span className="leading-relaxed">{feature}</span>

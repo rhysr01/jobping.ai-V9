@@ -261,6 +261,16 @@ body {
     text-shadow: 0 4px 8px rgba(0,0,0,0.5);
   }
   
+  /* Premium text shadows for headlines */
+  .text-shadow-premium {
+    text-shadow: 0 0 30px rgba(139,92,246,0.3), 0 2px 4px rgba(0,0,0,0.5);
+  }
+  
+  /* Premium glow for CTAs */
+  .glow-premium {
+    box-shadow: 0 0 40px rgba(99,102,241,0.4), 0 20px 50px rgba(99,102,241,0.3);
+  }
+  
   /* Brand glow utilities */
   .glow-brand-subtle {
     box-shadow: 0 0 20px rgba(99,102,241,.2);
@@ -361,11 +371,11 @@ body {
   
   /* Consistent spacing rhythm */
   .section-padding {
-    @apply py-14 md:py-24;
+    @apply py-16 md:py-28 lg:py-32;
   }
   
   .section-padding-hero {
-    @apply py-24 md:py-32 lg:py-40;
+    @apply py-28 md:py-36 lg:py-48;
   }
   
   .container-rhythm {
@@ -512,7 +522,7 @@ a.underline:hover {
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   overflow: hidden;
-  will-change: transform, filter;
+  /* will-change removed - now managed dynamically in component */
 }
 
 @media (max-width: 640px) {
@@ -559,4 +569,24 @@ html {
   html {
     scroll-behavior: auto;
   }
+  
+  /* Performance: Remove animations for users who prefer reduced motion */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .hero-logo-capsule,
+  .hero-logo-text {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* Performance: Only add will-change when actually animating */
+.hero-logo-capsule {
+  will-change: auto;
 }

@@ -19,7 +19,7 @@ export default function SecondaryCTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
-          className="relative overflow-hidden rounded-3xl border border-brand-500/25 bg-gradient-to-r from-[#090021] via-[#120037] to-[#20054f] px-12 py-12 shadow-[0_30px_90px_rgba(12,0,42,0.45)]"
+          className="relative overflow-hidden rounded-3xl border-2 border-brand-500/40 bg-gradient-to-r from-[#090021] via-[#120037] to-[#20054f] px-12 py-14 shadow-[0_40px_120px_rgba(12,0,42,0.6)] backdrop-blur-sm"
         >
           <div className="pointer-events-none absolute -left-24 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full bg-brand-500/20 blur-[140px]" />
           <div className="pointer-events-none absolute -right-10 top-1/3 h-72 w-72 rounded-full bg-purple-500/20 blur-[160px]" />
@@ -29,14 +29,14 @@ export default function SecondaryCTA() {
                 <BrandIcons.Mail className="h-4 w-4 text-brand-300" />
                 Early-career inbox
               </span>
-              <h3 className="text-3xl font-semibold text-white sm:text-4xl">
+              <h3 className="text-3xl font-bold text-white sm:text-4xl">
                 Your first curated drop lands within 48 hours.
               </h3>
-              <p className="text-base text-zinc-300 sm:text-lg">
-                Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops every 48 hours. Free users receive {FREE_ROLES_PER_SEND} roles per drop,
+              <p className="text-base font-medium leading-relaxed text-zinc-100 sm:text-lg">
+                Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops weekly. Free users receive {FREE_ROLES_PER_SEND} roles per drop,
                 and Premium keeps {PREMIUM_ROLES_PER_WEEK} new opportunities flowing each week (~{PREMIUM_ROLES_PER_MONTH} per month).
               </p>
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm font-medium text-zinc-300">
                 Proven deliverability, unsubscribe in one click, and {FREE_ROLES_PER_SEND} roles to get started immediately.
               </p>
             </div>
@@ -45,7 +45,7 @@ export default function SecondaryCTA() {
               href="/signup"
               variant="primary"
               size="lg"
-              className="min-w-[220px] self-start lg:self-auto"
+              className="min-w-[240px] self-start font-semibold lg:self-auto"
             >
               Claim my first drop
             </Button>

@@ -93,7 +93,7 @@ export default function SocialProofRow() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
-          className="grid gap-4 rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-[0_20px_70px_rgba(10,0,40,0.28)] backdrop-blur-md sm:grid-cols-3 sm:gap-6 sm:p-8"
+          className="grid gap-6 rounded-3xl border border-white/20 bg-white/[0.06] p-8 shadow-[0_24px_80px_rgba(10,0,40,0.4)] backdrop-blur-md sm:grid-cols-3 sm:gap-8 sm:p-10"
         >
           {items.map((item, index) => (
             <motion.div
@@ -106,7 +106,7 @@ export default function SocialProofRow() {
                 y: -4,
                 transition: { type: 'spring', stiffness: 300, damping: 20 }
               }}
-              className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-white/10 bg-black/10 p-4 transition-all duration-300 hover:border-brand-500/30 hover:bg-black/20 hover:shadow-[0_8px_24px_rgba(99,102,241,0.15)] sm:p-6"
+              className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-white/20 bg-black/15 p-6 transition-all duration-300 hover:border-brand-500/50 hover:bg-black/25 hover:shadow-[0_12px_32px_rgba(99,102,241,0.25)] sm:p-7"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <motion.span 
@@ -117,11 +117,11 @@ export default function SocialProofRow() {
                 {item.icon}
               </motion.span>
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-200">
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-brand-300">
                   {loading && index === 0 ? 'Loading…' : item.eyebrow}
                 </p>
-                <h3 className="mt-2 text-lg font-semibold text-white sm:text-xl">{item.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-300 transition-colors duration-300 group-hover:text-zinc-200">{item.description}</p>
+                <h3 className="mt-2 text-lg font-bold text-white sm:text-xl">{item.title}</h3>
+                <p className="mt-2 text-sm font-medium leading-relaxed text-zinc-100 transition-colors duration-300 group-hover:text-white">{item.description}</p>
               </div>
             </motion.div>
           ))}

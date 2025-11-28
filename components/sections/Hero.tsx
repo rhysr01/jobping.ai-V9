@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Skeleton from "@/components/ui/Skeleton";
 import Button from "@/components/ui/Button";
 import { useReducedMotion } from "@/components/ui/useReducedMotion";
+import { shouldThrottleAnimations } from "@/lib/performance";
 import * as Copy from "@/lib/copy";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 
@@ -25,7 +26,9 @@ export default function Hero() {
   const [displayGraduates, setDisplayGraduates] = useState(0);
   const [displayTotalUsers, setDisplayTotalUsers] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [shouldLoadAnimations, setShouldLoadAnimations] = useState(false);
   const prefersReduced = useReducedMotion();
+  const shouldThrottle = shouldThrottleAnimations();
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -59,6 +62,14 @@ export default function Hero() {
     };
 
     fetchStats();
+  }, []);
+
+  // Lazy load animations after initial paint
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShouldLoadAnimations(true);
+    }, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   const featureIcons = [BrandIcons.Zap, BrandIcons.Target, BrandIcons.Sparkles];
@@ -133,8 +144,9 @@ export default function Hero() {
   }, [totalUsersTarget, prefersReduced]);
 
   const particles = useMemo(() => {
-    if (prefersReduced) return [];
-    return Array.from({ length: 26 }).map((_, index) => ({
+    if (prefersReduced || shouldThrottle) return [];
+    // REDUCED: From 26 to 8 particles (70% reduction)
+    return Array.from({ length: 8 }).map((_, index) => ({
       id: index,
       top: Math.random() * 100,
       left: Math.random() * 100,
@@ -144,7 +156,7 @@ export default function Hero() {
       drift: 8 + Math.random() * 6,
       opacity: 0.25 + Math.random() * 0.35,
     }));
-  }, [prefersReduced]);
+  }, [prefersReduced, shouldThrottle]);
 
   return (
     <section
@@ -154,7 +166,7 @@ export default function Hero() {
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[#05010f] via-[#090018] to-[#11002c]">
         <div className="absolute inset-0 bg-[radial-gradient(72%_60%_at_50%_0%,rgba(99,102,241,0.12),transparent_65%)] blur-3xl" />
       </div>
-      {!prefersReduced && (
+      {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
         <div className="pointer-events-none absolute inset-0 -z-10">
           {particles.map(({ id, top, left, size, duration, delay, drift, opacity }) => (
             <motion.span
@@ -167,13 +179,14 @@ export default function Hero() {
                 height: size,
                 opacity: opacity * 0.6,
                 boxShadow: `0 0 ${size * 3}px rgba(99, 102, 241, 0.2)`,
+                willChange: shouldLoadAnimations ? 'transform, opacity' : 'auto',
               }}
               initial={{ y: 0, scale: 0.6 }}
-              animate={{
+              animate={shouldLoadAnimations ? {
                 y: [-drift, drift, -drift],
                 opacity: [opacity * 0.5, opacity, opacity * 0.4],
                 scale: [0.6, 1, 0.6],
-              }}
+              } : {}}
               transition={{
                 duration,
                 repeat: Infinity,
@@ -194,42 +207,30 @@ export default function Hero() {
           className="flex flex-col items-center gap-6"
         >
           <div className="hero-logo-wrapper relative w-full max-w-4xl px-4">
-            {!prefersReduced && (
-              <>
-                <motion.div
-                  aria-hidden
-                  className="pointer-events-none absolute -inset-16 rounded-[48px]"
-                  style={{
-                    background: 'radial-gradient(60% 80% at 30% 20%, rgba(139,92,246,0.25), transparent 60%)'
-                  }}
-                  animate={{ x: [0, 12, 0], y: [0, -8, 0], scale: [1, 1.1, 1] }}
-                  transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
-                />
-                <motion.div
-                  aria-hidden
-                  className="pointer-events-none absolute -inset-24 rounded-[64px]"
-                  style={{
-                    background: 'radial-gradient(40% 60% at 70% 60%, rgba(99,102,241,0.2), transparent 70%)'
-                  }}
-                  animate={{ x: [0, -12, 0], y: [0, 8, 0], scale: [1, 1.15, 1] }}
-                  transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-                />
-                <motion.div
-                  aria-hidden
-                  className="pointer-events-none absolute -inset-32 rounded-[80px] blur-2xl"
-                  style={{
-                    background: 'radial-gradient(50% 50% at 50% 50%, rgba(168,85,247,0.15), transparent 70%)'
-                  }}
-                  animate={{ rotate: [0, 360] }}
-                  transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-                />
-              </>
+            {/* REDUCED: From 3 gradient overlays to 1 */}
+            {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
+              <motion.div
+                aria-hidden
+                className="pointer-events-none absolute -inset-24 rounded-[64px]"
+                style={{
+                  background: 'radial-gradient(50% 50% at 50% 50%, rgba(139,92,246,0.15), transparent 70%)',
+                  willChange: shouldLoadAnimations ? 'transform, opacity' : 'auto',
+                }}
+                animate={shouldLoadAnimations ? { 
+                  scale: [1, 1.1, 1],
+                  opacity: [0.15, 0.2, 0.15]
+                } : {}}
+                transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+              />
             )}
             <motion.div
-              className="hero-logo-capsule will-change-transform"
-              style={{ transformStyle: "preserve-3d" }}
+              className="hero-logo-capsule"
+              style={{ 
+                transformStyle: "preserve-3d",
+                willChange: shouldLoadAnimations && !prefersReduced && !shouldThrottle ? 'transform' : 'auto'
+              }}
               animate={
-                prefersReduced
+                prefersReduced || shouldThrottle || !shouldLoadAnimations
                   ? {}
                   : {
                       scale: [1, 1.02, 1],
@@ -238,7 +239,7 @@ export default function Hero() {
               }
               transition={{ duration: 6, ease: "easeInOut", repeat: prefersReduced ? 0 : Infinity }}
               whileHover={
-                prefersReduced
+                prefersReduced || shouldThrottle || !shouldLoadAnimations
                   ? {}
                   : {
                       scale: 1.05,
@@ -246,14 +247,15 @@ export default function Hero() {
                     }
               }
             >
-              {!prefersReduced && <span className="logoSheen" aria-hidden />}
-              {!prefersReduced && (
+              {!prefersReduced && !shouldThrottle && shouldLoadAnimations && <span className="logoSheen" aria-hidden />}
+              {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
                 <motion.div
                   className="absolute inset-0 rounded-full opacity-30"
                   style={{
                     background: 'conic-gradient(from 0deg, transparent, rgba(139, 92, 246, 0.4), transparent)',
+                    willChange: shouldLoadAnimations ? 'transform' : 'auto',
                   }}
-                  animate={{ rotate: 360 }}
+                  animate={shouldLoadAnimations ? { rotate: 360 } : {}}
                   transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
                   aria-hidden
                 />
@@ -266,8 +268,11 @@ export default function Hero() {
               >
                 <motion.div
                   className="relative"
+                  style={{
+                    willChange: shouldLoadAnimations && !prefersReduced && !shouldThrottle ? 'transform' : 'auto'
+                  }}
                   animate={
-                    prefersReduced
+                    prefersReduced || shouldThrottle || !shouldLoadAnimations
                       ? {}
                       : {
                           y: [0, -4, 0],
@@ -283,9 +288,12 @@ export default function Hero() {
                 </motion.div>
                 <motion.span
                   className="hero-logo-text hero-text-gradient text-[4.4rem] sm:text-[5.2rem] md:text-[6rem] font-black tracking-tight relative"
-                  style={{ backgroundSize: "200% 200%" }}
+                  style={{ 
+                    backgroundSize: "200% 200%",
+                    willChange: shouldLoadAnimations && !prefersReduced && !shouldThrottle ? 'background-position' : 'auto'
+                  }}
                   animate={
-                    prefersReduced
+                    prefersReduced || shouldThrottle || !shouldLoadAnimations
                       ? {}
                       : {
                           backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
@@ -302,11 +310,11 @@ export default function Hero() {
               </motion.div>
             </motion.div>
           </div>
-          {!prefersReduced && (
+          {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
             <motion.div
               className="h-px w-44 rounded-full bg-gradient-to-r from-transparent via-white/70 to-transparent"
               initial={{ opacity: 0, scaleX: 0 }}
-              animate={{ opacity: 1, scaleX: 1 }}
+              animate={shouldLoadAnimations ? { opacity: 1, scaleX: 1 } : {}}
               transition={{ duration: 0.6, delay: 0.35, ease: "easeOut" }}
               aria-hidden
             />
@@ -318,7 +326,7 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.45, ease: "easeOut" }}
           whileHover={{ scale: 1.05 }}
-          className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/12 px-4 py-2 text-sm font-semibold text-brand-200/95 backdrop-blur-md transition-all duration-300 hover:border-brand-500/60 hover:bg-brand-500/20 hover:shadow-[0_4px_16px_rgba(99,102,241,0.3)]"
+          className="inline-flex items-center gap-2 rounded-full border-2 border-brand-500/50 bg-brand-500/15 px-5 py-2.5 text-sm font-bold text-brand-100 backdrop-blur-md transition-all duration-300 hover:border-brand-500/70 hover:bg-brand-500/25 hover:shadow-[0_8px_24px_rgba(99,102,241,0.4)]"
         >
           <motion.span
             animate={{ 
@@ -340,7 +348,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.6, ease: "easeOut" }}
-          className="text-balance text-4xl leading-tight text-white sm:text-6xl sm:leading-[1.05] md:text-7xl"
+          className="text-balance text-4xl font-black leading-[1.05] text-white drop-shadow-[0_0_30px_rgba(139,92,246,0.3)] sm:text-6xl md:text-7xl"
         >
           {Copy.HERO_HEADLINE}
         </motion.h1>
@@ -349,7 +357,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.6 }}
-          className="max-w-2xl text-balance text-lg text-zinc-300 sm:text-xl"
+          className="max-w-2xl text-balance text-lg font-medium leading-relaxed text-zinc-100 sm:text-xl"
         >
           {Copy.HERO_SUBLINE}
         </motion.p>
@@ -358,7 +366,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
-          className="grid w-full gap-4 text-left sm:grid-cols-3"
+          className="grid w-full gap-4 text-left sm:grid-cols-2"
         >
           {Copy.HERO_FEATURES.map((feature, index) => {
             const Icon = featureIcons[index] ?? BrandIcons.Target;
@@ -372,7 +380,7 @@ export default function Hero() {
                   y: -4,
                   transition: { type: 'spring', stiffness: 300, damping: 20 }
                 }}
-                className="group relative flex items-start gap-3 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-zinc-200 backdrop-blur-sm transition-all duration-300 sm:text-base hover:border-brand-500/30 hover:bg-white/10 hover:shadow-[0_8px_24px_rgba(99,102,241,0.15)]"
+                className="group relative flex items-start gap-3 overflow-hidden rounded-2xl border border-white/20 bg-white/[0.06] px-6 py-5 text-sm font-medium text-zinc-100 backdrop-blur-md transition-all duration-300 sm:text-base hover:border-brand-500/50 hover:bg-white/12 hover:shadow-[0_12px_32px_rgba(99,102,241,0.25)]"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <motion.span 
@@ -398,7 +406,7 @@ export default function Hero() {
             href="/signup"
             variant="primary"
             size="lg"
-            className="min-w-[220px]"
+            className="min-w-[240px] text-base font-semibold shadow-[0_20px_50px_rgba(99,102,241,0.4)]"
             aria-label={Copy.HERO_CTA}
           >
             <span className="flex items-center gap-2">
@@ -406,7 +414,7 @@ export default function Hero() {
               <BrandIcons.ArrowRight className="h-5 w-5" />
             </span>
           </Button>
-          <p className="text-sm text-zinc-400">{Copy.HERO_FINE_PRINT}</p>
+          <p className="text-sm font-medium text-zinc-300">{Copy.HERO_FINE_PRINT}</p>
         </motion.div>
 
         <motion.div
@@ -484,7 +492,7 @@ export default function Hero() {
 
       </div>
 
-      {!prefersReduced && (
+      {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
         <motion.div
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10"
@@ -492,25 +500,28 @@ export default function Hero() {
             background:
               "radial-gradient(circle at 30% 30%, rgba(99,102,241,0.08), transparent 60%), radial-gradient(circle at 70% 70%, rgba(99,102,241,0.06), transparent 65%)",
             backgroundSize: "140% 140%",
+            willChange: shouldLoadAnimations ? 'background-position' : 'auto',
           }}
-          animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
+          animate={shouldLoadAnimations ? { backgroundPosition: ["0% 0%", "100% 100%"] } : {}}
           transition={{ duration: 25, ease: "linear", repeat: Infinity }}
         />
       )}
 
-      <motion.div
-        aria-hidden
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{
-          opacity: 1,
-          scale: 1,
-        }}
-        transition={{
-          duration: 14,
-          ease: "easeInOut",
-        }}
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.08),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(99,102,241,0.06),transparent_60%)]"
-      />
+      {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
+        <motion.div
+          aria-hidden
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={shouldLoadAnimations ? {
+            opacity: 1,
+            scale: 1,
+          } : {}}
+          transition={{
+            duration: 14,
+            ease: "easeInOut",
+          }}
+          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.08),transparent_55%),radial-gradient(circle_at_80%_80%,rgba(99,102,241,0.06),transparent_60%)]"
+        />
+      )}
     </section>
   );
 }

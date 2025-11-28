@@ -17,14 +17,14 @@ export default function BuiltForStudents() {
           transition={{ duration: 0.5 }}
           className="mx-auto max-w-3xl text-left sm:text-center"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.28em] text-brand-200">
             <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
             {Copy.BUILT_FOR_STUDENTS_KICKER}
           </span>
-          <h2 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">
+          <h2 className="mt-4 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             {Copy.BUILT_FOR_STUDENTS_TITLE}
           </h2>
-          <p className="mt-3 text-base text-zinc-300 sm:text-lg">
+          <p className="mt-4 text-base font-medium leading-relaxed text-zinc-100 sm:text-lg">
             {Copy.BUILT_FOR_STUDENTS_SUBTITLE}
           </p>
         </motion.div>
@@ -39,7 +39,7 @@ export default function BuiltForStudents() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: index * 0.05 }}
-                className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 text-left backdrop-blur-sm transition-all duration-300 hover:-translate-y-[4px] hover:border-brand-500/30 hover:bg-white/10 hover:shadow-[0_8px_24px_rgba(99,102,241,0.15)] sm:p-8"
+                className="group relative overflow-hidden rounded-3xl border border-white/20 bg-white/[0.08] p-7 text-left backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/50 hover:bg-white/12 hover:shadow-[0_16px_40px_rgba(99,102,241,0.25)] sm:p-9"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <motion.span 
@@ -64,11 +64,11 @@ export default function BuiltForStudents() {
                   >
                     <Icon className="h-5 w-5" />
                   </motion.span>
-                  <h3 className="text-lg font-semibold text-white sm:text-xl">
+                  <h3 className="text-lg font-bold text-white sm:text-xl">
                     {feature.title}
                   </h3>
                 </div>
-                <p className="mt-4 text-sm leading-relaxed text-zinc-300 sm:text-base">
+                <p className="mt-4 text-sm font-medium leading-relaxed text-zinc-100 sm:text-base">
                   {feature.body}
                 </p>
               </motion.li>

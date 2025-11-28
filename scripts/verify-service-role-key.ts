@@ -123,8 +123,8 @@ async function verify() {
   let policyData, policyError;
   try {
     const result = await supabase
-      .rpc('exec_sql', { 
-        query: `SELECT policyname, roles FROM pg_policies WHERE tablename = 'users' AND cmd = 'INSERT'` 
+    .rpc('exec_sql', { 
+      query: `SELECT policyname, roles FROM pg_policies WHERE tablename = 'users' AND cmd = 'INSERT'` 
       });
     policyData = result.data;
     policyError = result.error;
