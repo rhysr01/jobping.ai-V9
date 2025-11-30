@@ -1,28 +1,23 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 
 /**
  * Trust Badges Component
- * Shows company logos and data sources to build credibility
- * Modern SaaS pattern: "Trusted by" or "Powered by"
+ * Shows company names as text labels for consistency
  */
 export default function TrustBadges() {
   const badges = [
     {
       name: "Reed.co.uk",
-      logo: "/logos/reed.svg",
       description: "UK's largest job board"
     },
     {
       name: "Adzuna",
-      logo: "/logos/adzuna.svg",
       description: "Global job aggregator"
     },
     {
       name: "Greenhouse",
-      logo: "/logos/greenhouse.svg",
       description: "Company career pages"
     },
   ];
@@ -40,7 +35,7 @@ export default function TrustBadges() {
           <p className="mb-3 text-center text-[11px] uppercase tracking-[0.22em] text-zinc-300">
             Opportunities sourced from trusted platforms
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3" role="list" aria-label="Trusted job board partners">
             {badges.map((badge, index) => (
               <motion.div
                 key={badge.name}
@@ -49,29 +44,10 @@ export default function TrustBadges() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: index * 0.08 }}
                 whileHover={{ scale: 1.05 }}
-                className="group relative flex items-center justify-center transition-all duration-200 hover:-translate-y-1 bg-white/[0.08] border border-white/10 px-4 py-3 rounded-xl hover:border-white/20 hover:bg-white/[0.12] hover:shadow-[0_4px_12px_rgba(124,94,255,0.15)]"
+                className="group relative flex items-center justify-center transition-all duration-200 hover:-translate-y-1 bg-white/[0.08] border border-white/10 px-4 py-2 rounded-xl hover:border-white/20 hover:bg-white/[0.12] hover:shadow-[0_4px_12px_rgba(124,94,255,0.15)]"
                 role="listitem"
               >
-                <div className="relative h-8 w-auto text-white">
-                  <Image
-                    src={badge.logo}
-                    alt={badge.name}
-                    width={120}
-                    height={40}
-                    className="h-8 w-auto object-contain transition-all duration-300 opacity-90 group-hover:opacity-100 group-hover:brightness-110 group-hover:scale-105"
-                    loading="lazy"
-                    unoptimized
-                    onError={(e) => {
-                      // Fallback: Show text if image fails to load
-                      const target = e.target as HTMLImageElement;
-                      const parent = target.parentElement;
-                      if (parent) {
-                        parent.innerHTML = `<span class="text-sm font-semibold text-white">${badge.name}</span>`;
-                      }
-                    }}
-                  />
-                </div>
-                {/* Fallback text (hidden, shown via onError) */}
+                <span className="text-sm font-semibold text-white">{badge.name}</span>
                 <span className="sr-only">{badge.description}</span>
               </motion.div>
             ))}

@@ -1,7 +1,6 @@
 "use client";
 import { motion, animate } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import Skeleton from "@/components/ui/Skeleton";
 import Button from "@/components/ui/Button";
 import { useReducedMotion } from "@/components/ui/useReducedMotion";
@@ -178,6 +177,7 @@ export default function Hero() {
     >
       {/* Cinematic dark background */}
       <div className="absolute inset-0 -z-10 bg-black" />
+      {/* Background animations - must be above black background */}
       <HeroBackgroundAura />
       {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
         <div className="pointer-events-none absolute inset-0 -z-10">
@@ -335,43 +335,25 @@ export default function Hero() {
           </div>
         </motion.div>
 
-        {/* Powered by section */}
+        {/* Powered by section - Text labels only for consistency */}
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.55, duration: 0.6 }}
-          className="mt-10 flex flex-col items-center gap-3"
+          className="mt-10 flex flex-col items-center gap-4"
         >
-          <span className="text-xs uppercase tracking-wider text-zinc-400">Opportunities sourced from trusted platforms</span>
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-5">
-            {trustSignals.map(({ label, logo, description }, index) => (
+          <span className="text-xs uppercase tracking-wider text-zinc-300">Opportunities sourced from trusted platforms</span>
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+            {trustSignals.map(({ label, description }, index) => (
               <motion.div
                 key={label}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.55 + index * 0.06, duration: 0.4 }}
                 whileHover={{ scale: 1.05 }}
-                className="group relative flex items-center justify-center transition-opacity duration-300 hover:opacity-100"
+                className="group relative flex items-center justify-center transition-all duration-200 hover:-translate-y-1 bg-white/[0.08] border border-white/10 px-4 py-2 rounded-xl hover:border-white/20 hover:bg-white/[0.12]"
               >
-                <div className="relative h-8 w-auto text-white">
-                  <Image
-                    src={logo}
-                    alt={description}
-                    width={120}
-                    height={40}
-                    className="h-8 w-auto object-contain transition-all duration-300 opacity-90 group-hover:opacity-100 group-hover:brightness-110 group-hover:scale-105"
-                    loading="lazy"
-                    unoptimized
-                    onError={(e) => {
-                      // Fallback: Show text if image fails to load
-                      const target = e.target as HTMLImageElement;
-                      const parent = target.parentElement;
-                      if (parent) {
-                        parent.innerHTML = `<span class="text-xs font-semibold text-white">${description}</span>`;
-                      }
-                    }}
-                  />
-                </div>
+                <span className="text-sm font-semibold text-white">{label}</span>
                 <span className="sr-only">{description}</span>
               </motion.div>
             ))}

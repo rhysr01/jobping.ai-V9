@@ -40,40 +40,38 @@ export default function HeroBackgroundAura() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 -z-[8] overflow-hidden"
+      className="pointer-events-none absolute inset-0 -z-[9] overflow-hidden"
     >
-      {/* Spotlight glow behind hero - Enhanced visibility */}
+      {/* Spotlight glow behind hero - Much more visible */}
       <div
-        className="absolute left-1/2 top-[12%] h-[380px] w-[1200px] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#a855f7]/55 via-[#6366f1]/35 to-transparent blur-[100px] animate-slow-spotlight"
+        className="absolute left-1/2 top-[12%] h-[500px] w-[1400px] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#a855f7]/80 via-[#6366f1]/60 to-transparent blur-[120px] animate-slow-spotlight"
         style={{
-          // Ensure cross-browser compatibility
           willChange: 'transform, opacity',
           transform: 'translateZ(0)',
         }}
       />
 
-      {/* Grid pattern with fallback - Enhanced visibility */}
+      {/* Grid pattern with fallback - Much more visible */}
       <div
         ref={gridRef}
-        className="absolute inset-[-200px] bg-[url('/grid.svg')] bg-center bg-[length:900px_900px] opacity-[0.15] animate-grid-fade"
+        className="absolute inset-[-200px] bg-[url('/grid.svg')] bg-center bg-[length:900px_900px] opacity-[0.25] animate-grid-fade"
         style={{
-          // Ensure cross-browser compatibility
           willChange: 'opacity',
           transform: 'translateZ(0)',
         }}
       />
       
-      {/* Fallback: CSS grid if SVG pattern fails */}
+      {/* Fallback: CSS grid if SVG pattern fails - More visible */}
       <div
         ref={fallbackRef}
-        className="absolute inset-[-200px] opacity-[0.08] animate-grid-fade"
+        className="absolute inset-[-200px] opacity-[0.2] animate-grid-fade"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+            linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
           `,
           backgroundSize: '60px 60px',
-          display: 'none', // Hidden by default, shown via JS if SVG fails
+          display: 'none',
         }}
         aria-hidden="true"
       />
