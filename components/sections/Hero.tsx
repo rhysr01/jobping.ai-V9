@@ -353,13 +353,13 @@ export default function Hero() {
                 whileHover={{ scale: 1.05 }}
                 className="group relative flex items-center justify-center transition-opacity duration-300 hover:opacity-100"
               >
-                <div className="relative h-5 w-auto text-white">
+                <div className="relative h-8 w-auto text-white">
                   <Image
                     src={logo}
                     alt={description}
                     width={120}
                     height={40}
-                    className="h-full w-auto object-contain transition-all duration-300"
+                    className="h-8 w-auto object-contain transition-all duration-300 opacity-90 group-hover:opacity-100"
                     loading="lazy"
                     unoptimized
                   />
