@@ -251,7 +251,7 @@ export default function Hero() {
                 JobPing
               </span>
             </div>
-            <p className="text-sm md:text-base text-zinc-400">
+            <p className="text-base md:text-lg lg:text-xl text-zinc-300">
               Early-career roles across Europe, filtered for real applicants.
             </p>
           </motion.div>
