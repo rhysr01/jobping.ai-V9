@@ -253,7 +253,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.6, ease: "easeOut" }}
-          className="relative z-10 w-full max-w-3xl mt-10 md:mt-12 rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-xl px-6 md:px-8 lg:px-12 py-10 md:py-12 shadow-hero"
+          className="relative z-10 w-full max-w-3xl mt-10 md:mt-12 rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-md px-6 md:px-8 lg:px-12 py-10 md:py-12 shadow-hero"
         >
           {/* Subtle spotlight behind card */}
           <div className="pointer-events-none absolute inset-x-0 -top-24 h-64 blur-3xl opacity-80 bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.28),_transparent_60%)] -z-10" />
