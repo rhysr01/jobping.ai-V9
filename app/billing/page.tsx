@@ -8,7 +8,8 @@ import Button from '@/components/ui/Button';
 import Skeleton, { SkeletonText } from '@/components/ui/Skeleton';
 
 interface BillingPageProps {
-  params: Promise<{ userId: string }>;
+  params?: Promise<{ userId?: string }>;
+  searchParams?: Promise<{ userId?: string; email?: string }>;
 }
 
 interface Subscription {
@@ -40,24 +41,59 @@ interface BillingData {
   email?: string; // User email for checkout
 }
 
-export default function BillingPage({ params }: BillingPageProps) {
+export default function BillingPage({ params, searchParams }: BillingPageProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'payment-methods'>('overview');
   const [userId, setUserId] = useState<string>('');
+  const [userEmail, setUserEmail] = useState<string>('');
   const [billingData, setBillingData] = useState<BillingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [processing, setProcessing] = useState(false);
 
-  // Handle async params
+  // Handle async params and searchParams
   React.useEffect(() => {
-    params.then((resolvedParams) => {
-      setUserId(resolvedParams.userId);
-    });
-  }, [params]);
+    const loadParams = async () => {
+      let resolvedUserId = '';
+      let resolvedEmail = '';
+      
+      // Try to get userId from params (dynamic route)
+      if (params) {
+        const resolvedParams = await params;
+        resolvedUserId = resolvedParams?.userId || '';
+      }
+      
+      // Try to get userId/email from searchParams (query string)
+      if (searchParams) {
+        const resolvedSearchParams = await searchParams;
+        if (resolvedSearchParams?.userId) {
+          resolvedUserId = resolvedSearchParams.userId;
+        }
+        if (resolvedSearchParams?.email) {
+          resolvedEmail = resolvedSearchParams.email;
+        }
+      }
+      
+      // Also check URL search params directly (fallback)
+      if (typeof window !== 'undefined' && !resolvedUserId) {
+        const urlParams = new URLSearchParams(window.location.search);
+        resolvedUserId = urlParams.get('userId') || '';
+        resolvedEmail = urlParams.get('email') || resolvedEmail;
+      }
+      
+      setUserId(resolvedUserId);
+      setUserEmail(resolvedEmail);
+    };
+    
+    loadParams();
+  }, [params, searchParams]);
 
-  // Fetch billing data
+  // Fetch billing data (only if userId is available)
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      // If no userId, still allow checkout but don't fetch billing data
+      setLoading(false);
+      return;
+    }
 
     const fetchBillingData = async () => {
       try {
@@ -68,6 +104,10 @@ export default function BillingPage({ params }: BillingPageProps) {
         
         if (response.ok) {
           setBillingData(data);
+          // Update email from billing data if available
+          if (data.email && !userEmail) {
+            setUserEmail(data.email);
+          }
         } else {
           setError(data.error || 'Failed to load billing information');
         }
@@ -80,7 +120,7 @@ export default function BillingPage({ params }: BillingPageProps) {
     };
 
     fetchBillingData();
-  }, [userId]);
+  }, [userId, userEmail]);
 
   const handleManageBilling = async () => {
     if (!billingData?.currentSubscription) return;
@@ -113,15 +153,15 @@ export default function BillingPage({ params }: BillingPageProps) {
       setProcessing(true);
       setError('');
       
-      // Get user email from billing data if available
-      const userEmail = billingData?.email || null;
+      // Get user email from billing data, state, or query params
+      const emailForCheckout = billingData?.email || userEmail || null;
       
       // Call API to get checkout URL (product ID is server-side only)
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customerEmail: userEmail || undefined,
+          customerEmail: emailForCheckout || undefined,
         }),
       });
 
@@ -549,9 +589,14 @@ export default function BillingPage({ params }: BillingPageProps) {
                     <CreditCard className="w-20 h-20 mx-auto mb-6 text-zinc-300" />
                     <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3">No Active Subscription</h3>
                     <p className="text-zinc-100 text-lg font-medium mb-8 max-w-xl mx-auto">You don't have an active subscription yet. Upgrade to Premium to unlock more job matches.</p>
+                    {error && (
+                      <div className="mb-4 p-4 rounded-lg bg-red-500/20 border border-red-500/50 text-red-200 text-sm">
+                        {error}
+                      </div>
+                    )}
                     <Button 
                       onClick={handleStartCheckout}
-                      disabled={processing}
+                      disabled={processing || loading}
                       variant="primary" 
                       size="lg" 
                       className="min-w-[240px]"
