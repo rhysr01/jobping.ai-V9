@@ -335,30 +335,6 @@ export default function Hero() {
           </div>
         </motion.div>
 
-        {/* Powered by section - Text labels only for consistency */}
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.55, duration: 0.6 }}
-          className="mt-10 flex flex-col items-center gap-4"
-        >
-          <span className="text-xs uppercase tracking-wider text-zinc-300">Opportunities sourced from trusted platforms</span>
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-            {trustSignals.map(({ label, description }, index) => (
-              <motion.div
-                key={label}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.55 + index * 0.06, duration: 0.4 }}
-                whileHover={{ scale: 1.05 }}
-                className="group relative flex items-center justify-center transition-all duration-200 hover:-translate-y-1 bg-white/[0.08] border border-white/10 px-4 py-2 rounded-xl hover:border-white/20 hover:bg-white/[0.12]"
-              >
-                <span className="text-sm font-semibold text-white">{label}</span>
-                <span className="sr-only">{description}</span>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
 
       </div>
 

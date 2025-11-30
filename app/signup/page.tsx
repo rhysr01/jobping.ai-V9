@@ -25,6 +25,9 @@ function SignupForm() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
+  const [hasRestoredData, setHasRestoredData] = useState(false);
   const [activeJobs, setActiveJobs] = useState('Updating…');
   const [totalUsers, setTotalUsers] = useState('');
   const [isLoadingStats, setIsLoadingStats] = useState(true);
@@ -206,6 +209,7 @@ function SignupForm() {
   const handleSubmit = useCallback(async () => {
     setLoading(true);
     setError('');
+    setFieldErrors({});
     
     try {
       const response = await fetch('/api/signup', {
@@ -222,12 +226,26 @@ function SignupForm() {
         const redirectUrl = result.redirectUrl || `/signup/success?tier=${tier}`;
         setTimeout(() => router.push(redirectUrl), 500);
       } else {
-        const errorMessage = result.error || 'Signup failed. Please check your information and try again.';
-        setError(errorMessage);
-        showToast.error(errorMessage, {
-          label: 'Retry',
-          onClick: () => handleSubmit(),
-        });
+        // Handle field-specific errors
+        if (result.field && result.error) {
+          setFieldErrors({ [result.field]: result.error });
+          // Focus the problematic field
+          if (result.field === 'email' && formRefs.email.current) {
+            formRefs.email.current.focus();
+            setStep(1); // Navigate to step with the field
+          } else if (result.field === 'fullName' && formRefs.fullName.current) {
+            formRefs.fullName.current.focus();
+            setStep(1);
+          }
+          announce(result.error, 'assertive');
+        } else {
+          const errorMessage = result.error || 'Unable to create account. Please check that your email is correct and try again. If the problem persists, contact support.';
+          setError(errorMessage);
+          showToast.error(errorMessage, {
+            label: 'Retry',
+            onClick: () => handleSubmit(),
+          });
+        }
       }
     } catch (error) {
       const errorMessage = 'Unable to connect. Please check your internet connection and try again.';
@@ -239,7 +257,7 @@ function SignupForm() {
     } finally {
       setLoading(false);
     }
-  }, [formData, tier, router]);
+  }, [formData, tier, router, announce]);
 
   // Keyboard shortcuts for power users
   useEffect(() => {
@@ -274,6 +292,39 @@ function SignupForm() {
     return arr.includes(value) ? arr.filter(v => v !== value) : [...arr, value];
   };
 
+  // Helper to determine if field error should be shown
+  const shouldShowError = (fieldName: string, hasValue: boolean, isValid: boolean) => {
+    return (touchedFields.has(fieldName) || step === 1) && hasValue && !isValid;
+  };
+
+  // Helper to get disabled button message
+  const getDisabledMessage = (stepNumber: number) => {
+    if (stepNumber === 1) {
+      const missing = [];
+      if (!formData.fullName.trim()) missing.push('Full Name');
+      if (!formData.email.trim() || !emailValidation.isValid) missing.push('Email');
+      if (formData.cities.length === 0) missing.push('Preferred Cities');
+      if (formData.languages.length === 0) missing.push('Languages');
+      if (!formData.gdprConsent) missing.push('GDPR Consent');
+      if (missing.length === 0) return 'Continue to Preferences →';
+      return `Complete: ${missing.join(', ')}`;
+    } else if (stepNumber === 2) {
+      const missing = [];
+      if (!formData.experience) missing.push('Professional Experience');
+      if (!formData.visaStatus) missing.push('Work Authorization');
+      if (formData.entryLevelPreferences.length === 0) missing.push('Entry Level Preferences');
+      if (missing.length === 0) return 'Continue to Career Path →';
+      return `Complete: ${missing.join(', ')}`;
+    } else if (stepNumber === 3) {
+      const missing = [];
+      if (!formData.careerPath) missing.push('Career Path');
+      if (formData.roles.length === 0) missing.push('Role Selection');
+      if (missing.length === 0) return 'Complete Signup';
+      return `Complete: ${missing.join(', ')}`;
+    }
+    return '';
+  };
+
   const selectAllRoles = (careerPath: string) => {
     const career = CAREER_PATHS.find(c => c.value === careerPath);
     if (career) {
@@ -292,11 +343,13 @@ function SignupForm() {
       try {
         const parsed = JSON.parse(saved);
         setFormData(prev => ({ ...prev, ...parsed }));
+        setHasRestoredData(true);
+        announce('Previous form data restored. You can continue where you left off.', 'polite');
       } catch (e) {
         console.error('Failed to load saved form data:', e);
       }
     }
-  }, []);
+  }, [announce]);
 
   // Save form data to localStorage on change (error recovery)
   useEffect(() => {
@@ -304,29 +357,29 @@ function SignupForm() {
   }, [formData]);
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
+    <div className="min-h-screen bg-black relative overflow-hidden pb-safe">
       {/* Background Effects */}
       <div className="absolute inset-0 enhanced-grid opacity-30" aria-hidden="true" />
       <motion.div
-        className="absolute top-20 right-10 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl"
+        className="absolute top-20 right-10 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl hidden sm:block"
         animate={prefersReduced ? { scale: 1, opacity: 0.3 } : { scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
         transition={{ duration: 8, repeat: prefersReduced ? 0 : Infinity }}
         aria-hidden="true"
       />
       <motion.div
-        className="absolute bottom-20 left-10 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl"
+        className="absolute bottom-20 left-10 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl hidden sm:block"
         animate={prefersReduced ? { scale: 1, opacity: 0.3 } : { scale: [1.2, 1, 1.2], opacity: [0.3, 0.5, 0.3] }}
         transition={{ duration: 10, repeat: prefersReduced ? 0 : Infinity }}
         aria-hidden="true"
       />
 
-      <div className="relative container-page max-w-5xl py-16 sm:py-24">
+      <div className="relative container-page max-w-5xl py-8 px-4 sm:py-16 sm:px-6 md:py-24">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-16 text-center sm:mb-20"
+          className="mb-10 text-center sm:mb-16 md:mb-20"
         >
           {tier === 'premium' && (
             <span className="mb-6 inline-flex items-center gap-2 rounded-full border-2 border-brand-500/50 bg-brand-500/15 px-5 py-2 text-sm font-bold text-brand-100 shadow-[0_0_20px_rgba(99,102,241,0.3)]">
@@ -338,14 +391,14 @@ function SignupForm() {
           <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.28em] text-brand-200">
             Onboarding
           </span>
-          <h1 className="mt-6 text-4xl font-bold leading-tight text-white sm:text-5xl md:text-6xl">
+          <h1 className="mt-4 sm:mt-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white">
             Tell us where to send your first matches
           </h1>
-          <p className="mt-4 text-lg font-medium leading-relaxed text-zinc-100 sm:text-xl">
+          <p className="mt-3 sm:mt-4 text-base sm:text-lg md:text-xl font-medium leading-relaxed text-zinc-100 px-2">
             We only ask for the essentials so we can filter internships and graduate roles you can actually land.
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm font-medium text-zinc-100 sm:text-base">
+          <div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm md:text-base font-medium text-zinc-100">
             {Copy.REASSURANCE_ITEMS.map(item => (
               <span
                 key={item}
@@ -357,7 +410,7 @@ function SignupForm() {
             ))}
           </div>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm font-medium text-zinc-300 sm:text-base">
+          <div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm md:text-base font-medium text-zinc-300">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-2 text-brand-100 backdrop-blur-sm">
               <BrandIcons.Target className="h-4 w-4 text-brand-300" />
               {isLoadingStats ? (
@@ -380,11 +433,11 @@ function SignupForm() {
         </motion.div>
 
         {/* Progress Indicator */}
-        <div className="mb-16">
-          <div className="flex justify-between mb-4 px-2">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base transition-all shadow-lg ${
+        <div className="mb-10 sm:mb-16">
+          <div className="flex justify-between mb-3 sm:mb-4 px-1 sm:px-2">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="flex items-center gap-1 sm:gap-3">
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-sm sm:text-base transition-all shadow-lg ${
                   i < step ? 'bg-green-500 text-white shadow-green-500/30' :
                   i === step ? 'bg-gradient-to-br from-brand-500 to-purple-600 text-white shadow-[0_0_24px_rgba(99,102,241,0.4)]' :
                   'bg-zinc-800/60 border-2 border-zinc-700 text-zinc-400'
@@ -392,8 +445,11 @@ function SignupForm() {
                   {i < step ? <BrandIcons.Check className="h-6 w-6" /> : i}
                 </div>
                 <span className="hidden sm:inline text-sm font-bold text-zinc-300">
-                  {i === 1 ? 'Basics' : i === 2 ? 'Preferences' : 'Career'}
+                  {i === 1 ? 'Basics' : i === 2 ? 'Preferences' : i === 3 ? 'Career' : 'Optional'}
                 </span>
+                {i === 4 && (
+                  <span className="hidden sm:inline text-xs text-zinc-500 ml-1">(Optional)</span>
+                )}
               </div>
             ))}
           </div>
@@ -401,11 +457,31 @@ function SignupForm() {
             <motion.div 
               className="h-full bg-gradient-to-r from-brand-500 via-purple-600 to-purple-500 shadow-[0_0_20px_rgba(99,102,241,0.4)]"
               initial={{ width: 0 }}
-              animate={{ width: `${(step / 3) * 100}%` }}
+              animate={{ width: `${(step / 4) * 100}%` }}
               transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
             />
           </div>
+          <div className="text-xs text-zinc-400 text-center mt-2">
+            {Math.round((step / 4) * 100)}% complete
+          </div>
         </div>
+
+        {/* Form Abandonment Recovery Message */}
+        <AnimatePresence>
+          {hasRestoredData && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-6 p-4 bg-brand-500/10 border-2 border-brand-500/50 rounded-xl text-brand-200 text-center"
+              role="status"
+              aria-live="polite"
+            >
+              <BrandIcons.CheckCircle className="w-5 h-5 inline mr-2" />
+              Previous form data restored. You can continue where you left off.
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Error Message */}
         <AnimatePresence>
@@ -427,7 +503,7 @@ function SignupForm() {
         {Announcement}
 
         {/* Form Container */}
-        <div className="glass-card rounded-3xl border-2 border-white/20 p-8 sm:p-10 md:p-14 shadow-[0_30px_100px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+        <div className="glass-card rounded-2xl sm:rounded-3xl border-2 border-white/20 p-4 sm:p-6 md:p-8 lg:p-14 shadow-[0_30px_100px_rgba(0,0,0,0.5)] backdrop-blur-xl">
           <AnimatePresence mode="wait">
             {/* Step 1: Basics */}
             {step === 1 && (
@@ -437,11 +513,11 @@ function SignupForm() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4 }}
-                className="space-y-10 sm:space-y-12"
+                className="space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12"
               >
                 <div>
-                  <h2 className="text-3xl font-black text-white mb-3 sm:text-4xl">Let's get started</h2>
-                  <p className="text-lg font-medium text-zinc-100">Tell us about yourself</p>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2 sm:mb-3">Let's get started</h2>
+                  <p className="text-base sm:text-lg font-medium text-zinc-100">Tell us about yourself</p>
                 </div>
 
                 {/* GDPR Consent - MOVED TO STEP 1 (Required) */}
@@ -449,30 +525,37 @@ function SignupForm() {
                   <label className="flex items-start gap-4 cursor-pointer group">
                     <input
                       type="checkbox"
+                      id="gdpr-consent"
                       checked={formData.gdprConsent}
-                      onChange={(e) => setFormData({...formData, gdprConsent: e.target.checked})}
+                      onChange={(e) => {
+                        setFormData({...formData, gdprConsent: e.target.checked});
+                        setTouchedFields(prev => new Set(prev).add('gdprConsent'));
+                      }}
+                      onBlur={() => setTouchedFields(prev => new Set(prev).add('gdprConsent'))}
                       className="mt-1 w-5 h-5 rounded border-2 border-zinc-600 bg-zinc-800 checked:bg-brand-500 checked:border-brand-500 cursor-pointer"
                       required
+                      aria-required="true"
+                      aria-describedby={shouldShowError('gdprConsent', true, formData.gdprConsent) ? 'gdpr-error' : undefined}
                     />
                     <div className="flex-1">
                       <p className="text-white font-medium mb-1">
-                        I agree to receive job recommendations via email *
+                        I agree to receive job recommendations via email <span className="text-red-400">*</span>
                       </p>
                       <p className="text-sm text-zinc-400">
                         By checking this box, you consent to receive personalized job matches and agree to our{' '}
-                        <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:text-brand-300 underline">
+                        <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:text-brand-300 underline font-semibold">
                           Privacy Policy
                         </a>
                         {' '}and{' '}
-                        <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:text-brand-300 underline">
+                        <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:text-brand-300 underline font-semibold">
                           Terms of Service
                         </a>
                         . You can unsubscribe at any time.
                       </p>
                     </div>
                   </label>
-                  {!formData.gdprConsent && step === 1 && (
-                    <FormFieldError error="GDPR consent is required to continue" />
+                  {shouldShowError('gdprConsent', true, formData.gdprConsent) && (
+                    <FormFieldError error="Please check the box to agree to receive job recommendations" id="gdpr-error" />
                   )}
                 </div>
 
@@ -483,8 +566,16 @@ function SignupForm() {
                     id="fullName"
                     type="text"
                     value={formData.fullName}
-                    onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                    onChange={(e) => {
+                      setFormData({...formData, fullName: e.target.value});
+                      setFieldErrors(prev => {
+                        const next = { ...prev };
+                        delete next.fullName;
+                        return next;
+                      });
+                    }}
                     onBlur={() => {
+                      setTouchedFields(prev => new Set(prev).add('fullName'));
                       if (!formData.fullName.trim() && formData.fullName.length > 0) {
                         announce('Full name is required', 'polite');
                       } else if (formData.fullName.trim().length > 0) {
@@ -492,19 +583,20 @@ function SignupForm() {
                       }
                     }}
                     className={`w-full px-6 py-5 bg-black/50 border-2 rounded-2xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-lg font-medium backdrop-blur-sm ${
-                      formData.fullName ? (nameValidation.isValid ? 'border-green-500/60 shadow-[0_0_20px_rgba(34,197,94,0.2)]' : 'border-zinc-700') : 'border-zinc-700 hover:border-zinc-600'
+                      formData.fullName ? (nameValidation.isValid ? 'border-green-500/60 shadow-[0_0_20px_rgba(34,197,94,0.2)]' : (fieldErrors.fullName || nameValidation.error ? 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.2)]' : 'border-zinc-700')) : 'border-zinc-700 hover:border-zinc-600'
                     }`}
                     placeholder="John Smith"
                     autoComplete="name"
-                    aria-invalid={formData.fullName.length > 0 && !nameValidation.isValid}
-                    aria-describedby={formData.fullName.length > 0 ? 'fullName-error' : undefined}
+                    aria-invalid={(formData.fullName.length > 0 && !nameValidation.isValid) || !!fieldErrors.fullName}
+                    aria-describedby={formData.fullName.length > 0 ? (nameValidation.isValid ? 'fullName-success' : 'fullName-error') : undefined}
+                    aria-required="true"
                   />
                   {formData.fullName.length > 0 && (
                     <>
-                      {nameValidation.isValid ? (
+                      {nameValidation.isValid && !fieldErrors.fullName ? (
                         <FormFieldSuccess message="Looks good!" id="fullName-success" />
                       ) : (
-                        <FormFieldError error={nameValidation.error} id="fullName-error" />
+                        <FormFieldError error={fieldErrors.fullName || nameValidation.error} id="fullName-error" />
                       )}
                     </>
                   )}
@@ -518,52 +610,65 @@ function SignupForm() {
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    onChange={(e) => {
+                      setFormData({...formData, email: e.target.value});
+                      setFieldErrors(prev => {
+                        const next = { ...prev };
+                        delete next.email;
+                        return next;
+                      });
+                    }}
                     onBlur={() => {
-                      if (emailValidation.error) {
-                        announce(emailValidation.error, 'assertive');
+                      setTouchedFields(prev => new Set(prev).add('email'));
+                      if (emailValidation.error || fieldErrors.email) {
+                        announce(fieldErrors.email || emailValidation.error || '', 'assertive');
                       } else if (emailValidation.isValid) {
                         announce('Email address is valid', 'polite');
                       }
                     }}
                     className={`w-full px-6 py-5 bg-black/50 border-2 rounded-2xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-lg font-medium backdrop-blur-sm ${
-                      formData.email ? (emailValidation.isValid ? 'border-green-500/60 shadow-[0_0_20px_rgba(34,197,94,0.2)]' : emailValidation.error ? 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.2)]' : 'border-zinc-700') : 'border-zinc-700 hover:border-zinc-600'
+                      formData.email ? (emailValidation.isValid && !fieldErrors.email ? 'border-green-500/60 shadow-[0_0_20px_rgba(34,197,94,0.2)]' : (emailValidation.error || fieldErrors.email ? 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.2)]' : 'border-zinc-700')) : 'border-zinc-700 hover:border-zinc-600'
                     }`}
                     placeholder="you@example.com"
                     autoComplete="email"
-                    aria-invalid={formData.email.length > 0 && !emailValidation.isValid}
-                    aria-describedby={formData.email.length > 0 && !emailValidation.isValid ? 'email-error' : formData.email.length > 0 && emailValidation.isValid ? 'email-success' : undefined}
+                    aria-invalid={(formData.email.length > 0 && !emailValidation.isValid) || !!fieldErrors.email}
+                    aria-describedby={formData.email.length > 0 ? ((emailValidation.isValid && !fieldErrors.email) ? 'email-success' : 'email-error') : undefined}
                     aria-required="true"
                   />
                   {formData.email.length > 0 && (
                     <>
-                      {emailValidation.isValid ? (
+                      {emailValidation.isValid && !fieldErrors.email ? (
                         <FormFieldSuccess message="Email looks good!" id="email-success" />
                       ) : (
-                        <FormFieldError error={emailValidation.error} id="email-error" />
+                        <FormFieldError error={fieldErrors.email || emailValidation.error} id="email-error" />
                       )}
                     </>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-base font-bold text-white mb-3">
+                  <label id="cities-label" htmlFor="cities-field" className="block text-base font-bold text-white mb-3">
                     Preferred Cities * <span className="text-zinc-400 font-normal">(Select up to 3)</span>
                   </label>
-                  <p className="text-sm text-zinc-400 mb-4">Choose up to 3 cities where you'd like to work</p>
+                  <p className="text-sm text-zinc-400 mb-4">Choose up to 3 cities where you'd like to work. You can click on the map or use the buttons below.</p>
                   
                   {/* Interactive Europe Map */}
                   <motion.div
+                    id="cities-field"
+                    aria-labelledby="cities-label"
+                    aria-describedby={shouldShowError('cities', formData.cities.length > 0, citiesValidation.isValid) ? 'cities-error' : formData.cities.length > 0 && citiesValidation.isValid ? 'cities-success' : undefined}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
                     className="mb-6 sm:mb-8 md:mb-10"
+                    onBlur={() => setTouchedFields(prev => new Set(prev).add('cities'))}
                   >
                     <EuropeMap
                       selectedCities={formData.cities}
                       onCityClick={(city) => {
                         if (formData.cities.length < 3 || formData.cities.includes(city)) {
                           setFormData({...formData, cities: toggleArray(formData.cities, city)});
+                          setTouchedFields(prev => new Set(prev).add('cities'));
                           if (formData.cities.length === 0 && !formData.cities.includes(city)) {
                             announce(`Selected ${city}. ${formData.cities.length + 1} of 3 cities selected.`, 'polite');
                           } else if (formData.cities.includes(city)) {
@@ -628,14 +733,14 @@ function SignupForm() {
                   <div className="mt-2 flex items-center justify-between">
                     <p className="text-xs text-zinc-400">{formData.cities.length}/3 selected</p>
                     {formData.cities.length > 0 && citiesValidation.isValid && (
-                      <FormFieldSuccess message={`${formData.cities.length} city${formData.cities.length > 1 ? 'ies' : ''} selected`} />
+                      <FormFieldSuccess message={`${formData.cities.length} city${formData.cities.length > 1 ? 'ies' : ''} selected`} id="cities-success" />
                     )}
                   </div>
                   {formData.cities.length > 0 && (
                     <p className="mt-1 text-xs text-zinc-300">{formData.cities.join(', ')}</p>
                   )}
-                  {formData.cities.length === 0 && step === 1 && (
-                    <FormFieldError error="Please select at least one city" />
+                  {shouldShowError('cities', formData.cities.length === 0, citiesValidation.isValid) && (
+                    <FormFieldError error="Please select at least one city. You can click on the map or use the buttons below." id="cities-error" />
                   )}
                   {formData.cities.length >= 3 && (
                     <p className="text-xs text-amber-400 mt-1 hidden sm:block">Maximum 3 cities selected. Deselect one to choose another.</p>
@@ -643,34 +748,42 @@ function SignupForm() {
                 </div>
 
                 <div>
-                  <label className="block text-base font-bold text-white mb-3">Languages (Professional Level) *</label>
+                  <label id="languages-label" htmlFor="languages-field" className="block text-base font-bold text-white mb-3">Languages (Professional Level) *</label>
                   <p className="text-sm text-zinc-400 mb-4">Select languages you can use professionally</p>
-                  <LanguageSelector
-                    languages={LANGUAGES}
-                    selected={formData.languages}
-                    onChange={(lang) => {
-                      setFormData({...formData, languages: toggleArray(formData.languages, lang)});
-                      if (formData.languages.length === 0) {
-                        announce(`Selected ${lang}. ${formData.languages.length + 1} language selected.`, 'polite');
-                      }
-                    }}
-                  />
+                  <div
+                    id="languages-field"
+                    aria-labelledby="languages-label"
+                    aria-describedby={shouldShowError('languages', formData.languages.length > 0, languagesValidation.isValid) ? 'languages-error' : formData.languages.length > 0 && languagesValidation.isValid ? 'languages-success' : undefined}
+                    onBlur={() => setTouchedFields(prev => new Set(prev).add('languages'))}
+                  >
+                    <LanguageSelector
+                      languages={LANGUAGES}
+                      selected={formData.languages}
+                      onChange={(lang) => {
+                        setFormData({...formData, languages: toggleArray(formData.languages, lang)});
+                        setTouchedFields(prev => new Set(prev).add('languages'));
+                        if (formData.languages.length === 0) {
+                          announce(`Selected ${lang}. ${formData.languages.length + 1} language selected.`, 'polite');
+                        }
+                      }}
+                    />
+                  </div>
                   {formData.languages.length > 0 && languagesValidation.isValid && (
-                    <FormFieldSuccess message={`${formData.languages.length} language${formData.languages.length > 1 ? 's' : ''} selected`} />
+                    <FormFieldSuccess message={`${formData.languages.length} language${formData.languages.length > 1 ? 's' : ''} selected`} id="languages-success" />
                   )}
-                  {formData.languages.length === 0 && step === 1 && (
-                    <FormFieldError error="Please select at least one language" />
+                  {shouldShowError('languages', formData.languages.length === 0, languagesValidation.isValid) && (
+                    <FormFieldError error="Please select at least one language" id="languages-error" />
                   )}
                 </div>
 
                 <motion.button
                   onClick={() => setStep(2)}
-                  disabled={!formData.fullName || !formData.email || formData.cities.length === 0 || formData.languages.length === 0 || !formData.gdprConsent}
+                  disabled={!formData.fullName.trim() || !formData.email.trim() || !emailValidation.isValid || formData.cities.length === 0 || formData.languages.length === 0 || !formData.gdprConsent}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="w-full bg-gradient-to-r from-brand-500 via-purple-500 to-brand-500 text-white font-bold text-xl py-6 rounded-2xl shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-[0_20px_50px_rgba(99,102,241,0.4)]"
                 >
-                  Continue to Preferences →
+                  {getDisabledMessage(1)}
                 </motion.button>
               </motion.div>
             )}
@@ -726,14 +839,26 @@ function SignupForm() {
                 </div>
 
                     <div>
-                      <label className="block text-base font-bold text-white mb-3">Professional Experience *</label>
+                      <label id="experience-label" htmlFor="experience-field" className="block text-base font-bold text-white mb-3">Professional Experience *</label>
                       <p className="text-sm text-zinc-200 mb-4">How much professional experience do you have?</p>
-                  <div className="mt-10 md:mt-12">
+                  <div
+                    id="experience-field"
+                    aria-labelledby="experience-label"
+                    aria-describedby={shouldShowError('experience', !!formData.experience, !!formData.experience) ? 'experience-error' : undefined}
+                    className="mt-10 md:mt-12"
+                    onBlur={() => setTouchedFields(prev => new Set(prev).add('experience'))}
+                  >
                     <ExperienceTimeline
                       selected={formData.experience}
-                      onChange={(exp) => setFormData({...formData, experience: exp})}
+                      onChange={(exp) => {
+                        setFormData({...formData, experience: exp});
+                        setTouchedFields(prev => new Set(prev).add('experience'));
+                      }}
                     />
                   </div>
+                  {shouldShowError('experience', !formData.experience, !!formData.experience) && (
+                    <FormFieldError error="Please select your professional experience level" id="experience-error" />
+                  )}
                 </div>
 
                     <div>
@@ -746,9 +871,16 @@ function SignupForm() {
                 </div>
 
                     <div>
-                      <label className="block text-base font-bold text-white mb-3">Work Authorization *</label>
+                      <label id="visa-label" htmlFor="visa-field" className="block text-base font-bold text-white mb-3">Work Authorization *</label>
                       <p className="text-sm text-zinc-200 mb-3">Select your work authorization status in the EU/UK</p>
-                  <div className="space-y-2">
+                  <div
+                    id="visa-field"
+                    role="group"
+                    aria-labelledby="visa-label"
+                    aria-describedby={shouldShowError('visaStatus', !!formData.visaStatus, !!formData.visaStatus) ? 'visa-error' : undefined}
+                    className="space-y-2"
+                    onBlur={() => setTouchedFields(prev => new Set(prev).add('visaStatus'))}
+                  >
                     {[
                       'EU citizen',
                       'EEA citizen (Iceland, Liechtenstein, Norway)',
@@ -763,7 +895,10 @@ function SignupForm() {
                       <motion.button
                         key={visa}
                         type="button"
-                        onClick={() => setFormData({...formData, visaStatus: visa})}
+                        onClick={() => {
+                          setFormData({...formData, visaStatus: visa});
+                          setTouchedFields(prev => new Set(prev).add('visaStatus'));
+                        }}
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
                         className={`w-full px-5 py-4 rounded-xl border-2 transition-all font-medium text-left ${
@@ -776,19 +911,38 @@ function SignupForm() {
                       </motion.button>
                     ))}
                   </div>
+                  {shouldShowError('visaStatus', !formData.visaStatus, !!formData.visaStatus) && (
+                    <FormFieldError error="Please select your work authorization status" id="visa-error" />
+                  )}
                 </div>
 
                     <div>
-                      <label className="block text-base font-bold text-white mb-3">Entry Level Preference *</label>
+                      <label id="entry-level-label" htmlFor="entry-level-field" className="block text-base font-bold text-white mb-3">Entry Level Preference *</label>
                       <p className="text-sm text-zinc-200 mb-4">What type of roles are you looking for?</p>
-                  <EntryLevelSelector
-                    selected={formData.entryLevelPreferences}
-                    onChange={(pref) => setFormData({...formData, entryLevelPreferences: toggleArray(formData.entryLevelPreferences, pref)})}
-                  />
+                  <div
+                    id="entry-level-field"
+                    aria-labelledby="entry-level-label"
+                    aria-describedby={shouldShowError('entryLevelPreferences', formData.entryLevelPreferences.length > 0, formData.entryLevelPreferences.length > 0) ? 'entry-level-error' : formData.entryLevelPreferences.length > 0 ? 'entry-level-success' : undefined}
+                    onBlur={() => setTouchedFields(prev => new Set(prev).add('entryLevelPreferences'))}
+                  >
+                    <EntryLevelSelector
+                      selected={formData.entryLevelPreferences}
+                      onChange={(pref) => {
+                        setFormData({...formData, entryLevelPreferences: toggleArray(formData.entryLevelPreferences, pref)});
+                        setTouchedFields(prev => new Set(prev).add('entryLevelPreferences'));
+                      }}
+                    />
+                  </div>
                   {formData.entryLevelPreferences.length > 0 && (
-                    <p className="text-sm text-zinc-200 mt-4">
-                      <span className="font-bold text-brand-200">{formData.entryLevelPreferences.length}</span> selected
-                    </p>
+                    <>
+                      <FormFieldSuccess message={`${formData.entryLevelPreferences.length} preference${formData.entryLevelPreferences.length > 1 ? 's' : ''} selected`} id="entry-level-success" />
+                      <p className="text-sm text-zinc-200 mt-2">
+                        <span className="font-bold text-brand-200">{formData.entryLevelPreferences.length}</span> selected
+                      </p>
+                    </>
+                  )}
+                  {shouldShowError('entryLevelPreferences', formData.entryLevelPreferences.length === 0, formData.entryLevelPreferences.length > 0) && (
+                    <FormFieldError error="Please select at least one entry level preference" id="entry-level-error" />
                   )}
                 </div>
 
@@ -834,9 +988,7 @@ function SignupForm() {
                         }`}
                         whileTap={{ scale: 0.98 }}
                       >
-                        {(!formData.experience || !formData.visaStatus || formData.entryLevelPreferences.length === 0)
-                          ? 'Complete Required Fields'
-                          : 'Continue to Career Path →'}
+                        {getDisabledMessage(2)}
                       </motion.button>
                     </div>
                   </div>
@@ -880,9 +1032,16 @@ function SignupForm() {
                     </div>
 
                 <div>
-                  <label className="block text-base font-bold text-white mb-4">Select Your Career Path *</label>
+                  <label id="career-path-label" htmlFor="career-path-field" className="block text-base font-bold text-white mb-4">Select Your Career Path *</label>
                   <p className="text-sm text-zinc-400 mb-6">Choose the career path that interests you most</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div
+                    id="career-path-field"
+                    role="group"
+                    aria-labelledby="career-path-label"
+                    aria-describedby={shouldShowError('careerPath', !!formData.careerPath, !!formData.careerPath) ? 'career-path-error' : undefined}
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                    onBlur={() => setTouchedFields(prev => new Set(prev).add('careerPath'))}
+                  >
                     {CAREER_PATHS.map(path => (
                       <motion.button
                         key={path.value}
@@ -956,6 +1115,9 @@ function SignupForm() {
                       </motion.button>
                     ))}
                   </div>
+                  {shouldShowError('careerPath', !formData.careerPath, !!formData.careerPath) && (
+                    <FormFieldError error="Please select a career path" id="career-path-error" />
+                  )}
                 </div>
 
                 {(() => {
@@ -969,7 +1131,7 @@ function SignupForm() {
                       transition={{ delay: 0.2 }}
                       className="border-2 border-brand-500/30 rounded-2xl p-6 bg-gradient-to-br from-brand-500/5 to-purple-600/5"
                     >
-                      <label className="block text-lg font-black text-white mb-4">
+                      <label id="roles-label" htmlFor="roles-field" className="block text-lg font-black text-white mb-4">
                         <span className="text-2xl mr-2">{selectedCareer.emoji}</span>
                         {selectedCareer.label} Roles
                         <span className="text-zinc-400 font-normal text-base ml-2">(Select at least one - required)</span>
@@ -999,7 +1161,14 @@ function SignupForm() {
                         </motion.button>
                       </div>
 
-                      <div className="max-h-[350px] overflow-y-auto custom-scrollbar pr-2 -mr-2">
+                      <div
+                        id="roles-field"
+                        role="group"
+                        aria-labelledby="roles-label"
+                        aria-describedby={shouldShowError('roles', formData.roles.length > 0, formData.roles.length > 0) ? 'roles-error' : formData.roles.length > 0 ? 'roles-success' : undefined}
+                        className="max-h-[350px] overflow-y-auto custom-scrollbar pr-2 -mr-2"
+                        onBlur={() => setTouchedFields(prev => new Set(prev).add('roles'))}
+                      >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {selectedCareer.roles.map((role: string, idx: number) => (
                             <motion.button
@@ -1038,6 +1207,12 @@ function SignupForm() {
                           ))}
                         </div>
                       </div>
+                      {formData.roles.length > 0 && (
+                        <FormFieldSuccess message={`${formData.roles.length} role${formData.roles.length > 1 ? 's' : ''} selected`} id="roles-success" />
+                      )}
+                      {shouldShowError('roles', formData.roles.length === 0, formData.roles.length > 0) && (
+                        <FormFieldError error="Please select at least one role" id="roles-error" />
+                      )}
                     </motion.div>
                   );
                 })()}
@@ -1091,7 +1266,7 @@ function SignupForm() {
                           ) : (
                             <>
                               <span>→</span>
-                              <span>{formData.careerPath && formData.roles.length === 0 ? 'Select Roles to Finish' : 'Complete Signup'}</span>
+                              <span>{getDisabledMessage(3)}</span>
                               <motion.span
                                 animate={{ x: [0, 4, 0] }}
                                 transition={{ duration: 1, repeat: Infinity, repeatDelay: 0.5 }}
@@ -1208,17 +1383,28 @@ function SignupForm() {
                   <p className="text-sm text-zinc-400">Describe what you're looking for in your own words (optional)</p>
                   <p className="text-xs text-zinc-400">Examples: "customer-facing", "data-driven", "creative problem-solving", "client interaction", "analytical work"</p>
                   <textarea
+                    id="career-keywords"
                     value={formData.careerKeywords}
                     onChange={(e) => setFormData({...formData, careerKeywords: e.target.value})}
                     placeholder="e.g., customer-facing roles, data-driven positions, creative problem-solving, client interaction..."
                     className="w-full px-4 py-3 rounded-xl border-2 border-zinc-600 bg-zinc-900/70 text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/20 transition-colors resize-none"
                     rows={3}
                     maxLength={200}
+                    aria-describedby="career-keywords-helper"
                   />
-                  <FormFieldHelper 
-                    characterCount={formData.careerKeywords.length}
-                    maxLength={200}
-                  />
+                  <div id="career-keywords-helper" className="flex items-center justify-between mt-2">
+                    <FormFieldHelper 
+                      characterCount={formData.careerKeywords.length}
+                      maxLength={200}
+                    />
+                    <span className={`text-xs font-medium ${
+                      formData.careerKeywords.length > 180 ? 'text-red-400' :
+                      formData.careerKeywords.length > 150 ? 'text-yellow-400' :
+                      'text-zinc-400'
+                    }`}>
+                      {formData.careerKeywords.length}/200
+                    </span>
+                  </div>
                 </div>
 
                 {/* Skills */}

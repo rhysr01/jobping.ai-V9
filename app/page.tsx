@@ -7,7 +7,6 @@ import EmailPhoneShowcase from "@/components/marketing/EmailPhoneShowcase";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import ExitIntentPopup from "@/components/ui/ExitIntentPopup";
 import SocialProofRow from "@/components/sections/SocialProofRow";
-import TrustBadges from "@/components/sections/TrustBadges";
 import Footer from "@/components/sections/Footer";
 
 export default function Page() {
@@ -20,7 +19,6 @@ export default function Page() {
         <HowItWorks />
         <BuiltForStudents />
         <Pricing />
-        <TrustBadges />
       </main>
       <div className="h-16 w-full bg-gradient-to-b from-transparent to-black/40" />
       <Footer />
