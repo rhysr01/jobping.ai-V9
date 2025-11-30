@@ -12,7 +12,7 @@ import {
 
 export default function SecondaryCTA() {
   return (
-    <section className="section-padding pt-0 scroll-snap-section relative">
+    <section className="section-padding pt-0 pb-12 md:pb-16 scroll-snap-section relative">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       <div className="container-page relative z-10">

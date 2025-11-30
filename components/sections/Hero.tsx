@@ -173,7 +173,7 @@ export default function Hero() {
   return (
     <section
       data-testid="hero-section"
-      className="section-padding-hero relative flex flex-col items-center justify-start overflow-hidden text-center min-h-screen"
+      className="section-padding-hero pt-32 pb-14 md:pb-20 lg:pb-28 relative flex flex-col items-center justify-start overflow-hidden text-center min-h-screen"
     >
       {/* Cinematic dark background */}
       <div className="absolute inset-0 -z-10 bg-black" />
@@ -319,16 +319,21 @@ export default function Hero() {
           )}
         </motion.div>
 
-        {/* Hero card container - glassmorphism with unified warm gradient */}
+        {/* Hero card container - glassmorphism */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.6, ease: "easeOut" }}
-          className="relative w-full max-w-3xl rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-xl px-8 md:p-12 shadow-[0_4px_18px_rgba(0,0,0,0.35)]"
+          className="relative w-full max-w-3xl rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-xl px-8 md:px-12 shadow-[0_8px_20px_rgba(0,0,0,0.4)]"
         >
+          {/* Top highlight line for glass effect */}
+          <div className="absolute inset-x-0 top-0 h-px bg-white/20" />
+          
+          {/* Ground shadow below card */}
+          <div className="absolute -bottom-14 left-1/2 w-[70%] h-28 bg-black/40 blur-3xl rounded-full -translate-x-1/2 opacity-40"></div>
           
           {/* Content inside card */}
-          <div className="relative z-10 flex flex-col text-left">
+          <div className="relative z-10 flex flex-col text-left py-8 md:py-12">
             {/* Badge */}
             <motion.p
               initial={{ opacity: 0, y: 12 }}
@@ -345,7 +350,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25, duration: 0.6 }}
-              className="text-balance text-5xl font-semibold tracking-[-0.02em] text-white md:text-6xl mb-2"
+              className="text-balance text-5xl md:text-6xl leading-[1.06] font-semibold mb-3 text-white"
             >
               {Copy.HERO_HEADLINE}
             </motion.h1>
@@ -355,7 +360,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
-              className="text-balance text-xl text-zinc-300 md:text-2xl mb-5"
+              className="text-balance text-lg md:text-xl text-zinc-200 font-normal mb-5"
             >
               5 curated matches weekly
             </motion.p>
@@ -365,13 +370,13 @@ export default function Hero() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35, duration: 0.6 }}
-              className="flex flex-col gap-3 mt-5"
+              className="flex flex-col gap-3"
             >
               <Button
                 href="/signup"
                 variant="primary"
                 size="lg"
-                className="w-full sm:w-auto sm:min-w-[280px]"
+                className="w-full sm:w-auto sm:min-w-[280px] px-8 py-4 md:py-5 text-base md:text-lg rounded-xl shadow-md shadow-purple-900/40"
                 aria-label="Get my first drop"
               >
                 <span className="flex items-center justify-center gap-2">
@@ -379,7 +384,7 @@ export default function Hero() {
                   <BrandIcons.ArrowRight className="h-5 w-5" />
                 </span>
               </Button>
-              <p className="text-xs uppercase tracking-wider text-zinc-400">
+              <p className="text-xs text-zinc-500 mt-4">
                 Join thousands of early-career jobseekers across Europe.
               </p>
             </motion.div>
@@ -391,7 +396,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.6 }}
-          className="flex flex-col items-center gap-3 text-sm w-full mt-4"
+          className="flex flex-col items-center gap-3 text-sm w-full mt-20"
         >
           <motion.div 
             className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-zinc-200 transition-all duration-300 hover:border-brand-500/40 hover:bg-brand-500/15"
