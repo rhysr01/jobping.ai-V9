@@ -57,17 +57,13 @@ export default function SocialProofRow() {
   ];
 
   return (
-    <section className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 scroll-snap-section relative">
+    <section className="pt-8 pb-12 md:pt-12 md:pb-16 lg:pt-16 lg:pb-20 scroll-snap-section relative">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       {/* Soft section band */}
       <div className="pointer-events-none absolute inset-x-0 -top-10 h-40 bg-gradient-to-b from-zinc-900/40 to-transparent" />
       <div className="container-page relative z-10">
-        <div className="space-y-4">
-          <p className="text-sm text-zinc-300 text-center">
-            Live activity across JobPing this week: students, curated roles, and early-career openings.
-          </p>
-          <div className="mt-8 md:mt-10">
+        <div className="mt-8 md:mt-10">
             <div className="mx-auto max-w-5xl rounded-3xl border border-white/5 bg-zinc-950/40 p-4 md:p-6">
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
