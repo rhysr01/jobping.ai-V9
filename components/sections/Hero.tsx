@@ -271,7 +271,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.6, ease: "easeOut" }}
-          className="relative w-full max-w-3xl mt-10 md:mt-12 rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-xl px-8 md:px-12 shadow-[0_8px_20px_rgba(0,0,0,0.4)]"
+          className="relative w-full max-w-3xl mt-10 md:mt-12 rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-xl px-6 md:px-8 lg:px-12 py-10 md:py-12 shadow-hero"
         >
           {/* Subtle spotlight behind card */}
           <div className="pointer-events-none absolute inset-x-0 -top-24 h-64 blur-3xl opacity-80 bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.28),_transparent_60%)] -z-10" />
@@ -282,7 +282,7 @@ export default function Hero() {
           <div className="absolute -bottom-14 left-1/2 w-[70%] h-28 bg-black/40 blur-3xl rounded-full -translate-x-1/2 opacity-40"></div>
           
           {/* Content inside card */}
-          <div className="relative z-10 flex flex-col text-left py-8 md:py-12">
+          <div className="relative z-10 flex flex-col text-left">
             {/* Badge */}
             <motion.p
               initial={{ opacity: 0, y: 12 }}

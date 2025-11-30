@@ -24,6 +24,9 @@ export default function HeroBackgroundAura() {
         if (fallbackRef.current) {
           fallbackRef.current.style.display = 'block';
         }
+        if (gridRef.current) {
+          gridRef.current.style.display = 'none';
+        }
       };
       testImg.src = '/grid.svg';
     };

@@ -248,6 +248,19 @@ body {
     box-shadow: 0 0 12px rgba(126, 97, 255, 0.2);
   }
   
+  /* Card shadow depth variation */
+  .shadow-hero {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  }
+  
+  .shadow-feature {
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  }
+  
+  .shadow-pricing {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  }
+  
   /* Scroll snap for kinetic feedback */
   .scroll-snap-section {
     scroll-snap-align: start;
@@ -555,7 +568,7 @@ html {
 }
 
 .animate-slow-spotlight {
-  animation: slow-spotlight 14s ease-in-out infinite;
+  animation: slow-spotlight 12s ease-in-out infinite;
   will-change: transform, opacity;
   /* Performance: Use GPU acceleration */
   transform: translateZ(0);
@@ -572,7 +585,7 @@ html {
 }
 
 .animate-grid-fade {
-  animation: grid-fade 16s ease-in-out infinite;
+  animation: grid-fade 14s ease-in-out infinite;
   will-change: opacity;
   /* Performance: Use GPU acceleration */
   transform: translateZ(0);

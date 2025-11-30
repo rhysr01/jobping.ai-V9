@@ -30,7 +30,7 @@ export default function EmailPhoneShowcase() {
             <span className="inline-flex items-center rounded-full border border-white/20 bg-white/[0.06] px-3 py-1 text-[11px] font-medium tracking-[0.22em] uppercase text-zinc-200">
               {Copy.EMAIL_SHOWCASE_KICKER}
             </span>
-          <h2 className="section-title text-5xl font-semibold tracking-[-0.02em] text-white md:text-6xl mb-2">
+          <h2 className="section-title mb-2">
             {Copy.EMAIL_SHOWCASE_TITLE}
           </h2>
           <p className="mb-10 text-xl text-zinc-300 md:text-2xl">

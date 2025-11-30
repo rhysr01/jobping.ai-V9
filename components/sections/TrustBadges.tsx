@@ -28,7 +28,7 @@ export default function TrustBadges() {
   ];
 
   return (
-    <section className="pt-20 pb-20 md:pt-24 md:pb-24 border-t border-white/10">
+    <section className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 border-t border-white/10">
       <div className="container-page">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -37,7 +37,7 @@ export default function TrustBadges() {
           transition={{ duration: 0.6 }}
           className="mx-auto max-w-4xl"
         >
-          <p className="mb-3 text-center text-[11px] uppercase tracking-[0.22em] text-zinc-400">
+          <p className="mb-3 text-center text-[11px] uppercase tracking-[0.22em] text-zinc-300">
             Opportunities sourced from trusted platforms
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">

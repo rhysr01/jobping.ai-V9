@@ -57,14 +57,14 @@ export default function SocialProofRow() {
   ];
 
   return (
-    <section className="pt-20 pb-20 md:pt-24 md:pb-24 scroll-snap-section relative">
+    <section className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 scroll-snap-section relative">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       {/* Guide line behind social proof row */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-transparent via-white/5 to-transparent blur-xl opacity-30" />
       <div className="container-page relative z-10">
         <div className="mt-8 md:mt-10 space-y-4">
-          <p className="text-sm text-zinc-400 text-center">
+          <p className="text-sm text-zinc-300 text-center">
             Based on recent activity across JobPing: students using the service, curated roles per email, and early-career opportunities live this week.
           </p>
           <motion.div
@@ -98,13 +98,22 @@ export default function SocialProofRow() {
                 {item.icon}
               </motion.span>
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.16em] text-zinc-400 mb-2">
+                <p className="text-xs uppercase tracking-[0.16em] text-zinc-300 mb-2">
                   {isLoading && index === 0 ? 'Loading…' : item.eyebrow}
                 </p>
-                <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
-                <p className="text-sm text-zinc-400 transition-colors duration-300 group-hover:text-zinc-300">
-                  {typeof item.description === 'string' ? item.description : item.description}
-                </p>
+                {isLoading && index === 0 ? (
+                  <div className="space-y-2 mb-2">
+                    <div className="h-6 w-32 bg-white/10 rounded animate-pulse" />
+                    <div className="h-4 w-24 bg-white/5 rounded animate-pulse" />
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
+                    <p className="text-sm text-zinc-300 transition-colors duration-300 group-hover:text-zinc-200">
+                      {typeof item.description === 'string' ? item.description : item.description}
+                    </p>
+                  </>
+                )}
               </div>
             </motion.div>
           ))}
