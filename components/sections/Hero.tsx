@@ -302,7 +302,7 @@ export default function Hero() {
                 href="/signup"
                 variant="primary"
                 size="lg"
-                className="w-full sm:w-auto sm:min-w-[280px] px-8 py-4 md:py-5 text-base md:text-lg rounded-xl shadow-[0_20px_40px_rgba(124,94,255,0.45)]"
+                className="w-full sm:w-auto sm:min-w-[280px] px-8 py-4 md:py-5 text-base md:text-lg shadow-[0_20px_40px_rgba(124,94,255,0.45)]"
                 aria-label="Get my first 5 matches"
               >
                 <span className="flex items-center justify-center gap-2">

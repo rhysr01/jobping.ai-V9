@@ -99,7 +99,7 @@ export default function Pricing() {
             </p>
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/15 hover:text-brand-100 sm:text-base"
+              className="inline-flex items-center justify-center gap-2 h-11 rounded-full bg-violet-500 px-6 text-sm font-medium text-white shadow-md shadow-purple-900/40 transition-all duration-200 hover:bg-violet-400 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-base"
             >
               Get my first 5 matches
               <BrandIcons.ArrowRight className="h-4 w-4" />
@@ -164,9 +164,9 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
         >
           <Link
             href={plan.cta.href}
-            className={`group relative inline-flex items-center justify-center overflow-hidden rounded-xl px-6 py-3 text-sm font-semibold transition-all duration-300 sm:text-base ${
+            className={`group relative inline-flex items-center justify-center overflow-hidden h-11 rounded-full px-6 text-sm font-medium transition-all duration-300 sm:text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
               isPremium
-                ? 'bg-brand-500 text-white shadow-glow-subtle hover:bg-brand-600 hover:shadow-[0_16px_40px_rgba(126,97,255,0.5)]'
+                ? 'bg-violet-500 text-white shadow-md shadow-purple-900/40 hover:bg-violet-400 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(126,97,255,0.5)]'
                 : 'border border-white/15 bg-white/5 text-white hover:border-brand-500/40 hover:bg-brand-500/10'
             }`}
           >
