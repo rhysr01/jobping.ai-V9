@@ -256,57 +256,6 @@ export default function Hero() {
                 JobPing
               </motion.span>
             </motion.div>
-
-            {/* Live stats integrated into hero - adds real value */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-wrap items-center justify-center gap-3 text-sm"
-            >
-              {statsLoading ? (
-                <Skeleton className="h-6 w-32" />
-              ) : (
-                <>
-                  <motion.div
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-wider text-zinc-400"
-                    whileHover={{ scale: 1.05, y: -1 }}
-                    transition={{ type: 'spring', stiffness: 400 }}
-                  >
-                    <BrandIcons.Target className="h-3.5 w-3.5 text-brand-300" />
-                    <span className="font-semibold text-white">{formatNumber(displayActiveJobs)}</span>
-                    <span className="text-zinc-200">jobs this week</span>
-                  </motion.div>
-                  {hasTotalUsers && (
-                    <motion.div
-                      className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-wider text-zinc-400"
-                      whileHover={{ scale: 1.05, y: -1 }}
-                      transition={{ type: 'spring', stiffness: 400 }}
-                    >
-                      <BrandIcons.Users className="h-3.5 w-3.5 text-brand-300" />
-                      <span className="font-bold text-white">{formatNumber(displayTotalUsers)}+</span>
-                      <span className="text-zinc-200">users</span>
-                    </motion.div>
-                  )}
-                  {(hasInternships || hasGraduates || hasEarlyCareer) && (
-                    <motion.div
-                      className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-wider text-zinc-400"
-                      whileHover={{ scale: 1.05, y: -1 }}
-                      transition={{ type: 'spring', stiffness: 400 }}
-                    >
-                      {hasInternships && <span className="font-bold text-white">{formatNumber(displayInternships)}</span>}
-                      {hasInternships && <span className="text-zinc-200">internships</span>}
-                      {(hasInternships && (hasGraduates || hasEarlyCareer)) && <span className="text-zinc-300 mx-1">•</span>}
-                      {hasGraduates && <span className="font-bold text-white">{formatNumber(displayGraduates)}</span>}
-                      {hasGraduates && <span className="text-zinc-200">grad roles</span>}
-                      {(hasGraduates && hasEarlyCareer) && <span className="text-zinc-300 mx-1">•</span>}
-                      {hasEarlyCareer && <span className="font-bold text-white">{formatNumber(displayEarlyCareer)}</span>}
-                      {hasEarlyCareer && <span className="text-zinc-200">early-career</span>}
-                    </motion.div>
-                  )}
-                </>
-              )}
-            </motion.div>
           </motion.div>
           {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
             <motion.div
@@ -324,7 +273,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.6, ease: "easeOut" }}
-          className="relative w-full max-w-3xl rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-xl px-8 md:px-12 shadow-[0_8px_20px_rgba(0,0,0,0.4)]"
+          className="relative w-full max-w-3xl mt-10 md:mt-12 rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-xl px-8 md:px-12 shadow-[0_8px_20px_rgba(0,0,0,0.4)]"
         >
           {/* Top highlight line for glass effect */}
           <div className="absolute inset-x-0 top-0 h-px bg-white/20" />
@@ -339,33 +288,28 @@ export default function Hero() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.45 }}
-              className="inline-flex items-center gap-2 self-start mb-6 rounded-full border border-brand-400/30 bg-brand-500/20 px-4 py-2 text-xs font-bold uppercase tracking-wider text-brand-200 backdrop-blur-sm"
+              className="inline-flex items-center gap-2 self-start mb-3 rounded-full border border-brand-400/30 bg-brand-500/20 px-4 py-2 text-xs font-bold uppercase tracking-wider text-brand-200 backdrop-blur-sm"
             >
               <BrandIcons.Mail className="h-3.5 w-3.5 text-brand-300" />
               {Copy.HERO_PILL}
             </motion.p>
 
-            {/* Headline */}
-            <motion.h1
+            {/* Headline + Subheadline */}
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25, duration: 0.6 }}
-              className="text-balance text-5xl md:text-6xl leading-[1.06] font-semibold mb-3 text-white"
+              className="mb-5"
             >
-              {Copy.HERO_HEADLINE}
-            </motion.h1>
+              <h1 className="text-balance text-5xl md:text-6xl leading-[1.06] font-semibold mb-3 text-white">
+                {Copy.HERO_HEADLINE}
+              </h1>
+              <p className="text-balance text-lg md:text-xl text-zinc-200 font-normal">
+                {Copy.HERO_SUBLINE}
+              </p>
+            </motion.div>
 
-            {/* Subheading */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-              className="text-balance text-lg md:text-xl text-zinc-200 font-normal mb-5"
-            >
-              5 curated matches weekly
-            </motion.p>
-
-            {/* CTA */}
+            {/* CTA + Microtrust */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -376,35 +320,19 @@ export default function Hero() {
                 href="/signup"
                 variant="primary"
                 size="lg"
-                className="w-full sm:w-auto sm:min-w-[280px] px-8 py-4 md:py-5 text-base md:text-lg rounded-xl shadow-md shadow-purple-900/40"
-                aria-label="Get my first drop"
+                className="w-full sm:w-auto sm:min-w-[280px] px-8 py-4 md:py-5 text-base md:text-lg rounded-xl shadow-[0_20px_40px_rgba(124,94,255,0.45)]"
+                aria-label="Get your first 5 roles"
               >
                 <span className="flex items-center justify-center gap-2">
-                  Get my first drop
+                  {Copy.HERO_CTA}
                   <BrandIcons.ArrowRight className="h-5 w-5" />
                 </span>
               </Button>
               <p className="text-xs text-zinc-500 mt-4">
-                Join thousands of early-career jobseekers across Europe.
+                {Copy.HERO_SOCIAL_PROOF}
               </p>
             </motion.div>
           </div>
-        </motion.div>
-
-        {/* Trust signal - moved below card, tightened spacing */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
-          className="flex flex-col items-center gap-3 text-sm w-full mt-20"
-        >
-          <motion.div 
-            className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-zinc-200 transition-all duration-300 hover:border-brand-500/40 hover:bg-brand-500/15"
-            whileHover={{ scale: 1.05 }}
-          >
-            <BrandIcons.Shield className="h-4 w-4 text-brand-300" />
-            <span>{Copy.HERO_SOCIAL_PROOF}</span>
-          </motion.div>
         </motion.div>
 
         {/* Powered by section */}
@@ -414,7 +342,7 @@ export default function Hero() {
           transition={{ delay: 0.55, duration: 0.6 }}
           className="mt-10 flex flex-col items-center gap-3"
         >
-          <span className="text-xs uppercase tracking-wider text-zinc-400">Trusted feeds from</span>
+          <span className="text-xs uppercase tracking-wider text-zinc-400">Opportunities sourced from trusted platforms</span>
           <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-5">
             {trustSignals.map(({ label, logo, description }, index) => (
               <motion.div

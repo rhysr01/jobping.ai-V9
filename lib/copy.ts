@@ -19,31 +19,26 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 
 // Hero section
 export const HERO_TITLE = "JobPing";
-export const HERO_HEADLINE ="Personalized EU Graduate Roles and Internships in your inbox";
-export const HERO_SUBLINE ="Stop scrolling job boards.";
-export const HERO_SUBTITLE = VP_TAGLINE;
-export const HERO_CTA = "Get EU jobs in my inbox for free";
-export const HERO_PILL = "Curated Europe-wide internships & grad roles";
-export const HERO_FEATURES = [
-  "We filter by city, visa, and experience, so you only see roles that are personalized to your goals",
-  `${FREE_ROLES_PER_SEND} roles per drop · Premium unlocks ${PREMIUM_ROLES_PER_WEEK} each week (~${PREMIUM_ROLES_PER_MONTH} monthly)`
-];
-export const HERO_SOCIAL_PROOF = "Trusted by students across 20+ European cities.";
-export const HERO_FINE_PRINT = `Free forever • Cancel anytime • Premium unlocks ${PREMIUM_ROLES_PER_WEEK} roles/week (~${PREMIUM_ROLES_PER_MONTH}/month)`;
+export const HERO_HEADLINE = "Find graduate roles and internships in your inbox";
+export const HERO_SUBLINE = "Internships and graduate roles across Europe.";
+export const HERO_SUBTITLE = "";
+export const HERO_CTA = "Get your first 5 roles";
+export const HERO_PILL = "Internships and graduate roles across Europe";
+export const HERO_SOCIAL_PROOF = "Join thousands of early-career jobseekers across Europe.";
 
 // How it works
 export const HOW_IT_WORKS_TITLE = "How it works";
-export const HOW_IT_WORKS_SUMMARY = "Share your preferences, and we'll surface early-career roles for you.";
+export const HOW_IT_WORKS_SUMMARY = "JobPing filters the entire EU market and sends you only the roles worth applying for.";
 export const HOW_IT_WORKS_STEPS = [
   { title: "Share your preferences", description: "Pick cities, work rights, and roles in under two minutes." },
-  { title: "We search every day", description: "JobPing scans European boards and company pages and filters the noise." },
-  { title: "Shortlist arrives by email", description: `Get ${SIGNUP_INITIAL_ROLES} jobs in your welcome email, then ${FREE_ROLES_PER_SEND} roles per drop weekly. Premium adds ${PREMIUM_SENDS_PER_WEEK} drops totaling ${PREMIUM_ROLES_PER_WEEK} each week.` },
+  { title: "We search every day", description: "JobPing scans European boards and company pages and filters the noise. No dashboards, no spam—just roles that match your filters." },
+  { title: "Matches arrive by email", description: `${FREE_ROLES_PER_SEND} curated roles weekly. Premium unlocks ${PREMIUM_ROLES_PER_WEEK} roles each week.` },
 ];
 
 // Built for students
-export const BUILT_FOR_STUDENTS_TITLE = "Built for students and recent grads";
-export const BUILT_FOR_STUDENTS_SUBTITLE = "JobPing helps first-time applicants land early-career roles they can actually secure.";
-export const BUILT_FOR_STUDENTS_KICKER = "For students and grads";
+export const BUILT_FOR_STUDENTS_TITLE = "Built for early-career jobseekers";
+export const BUILT_FOR_STUDENTS_SUBTITLE = "We help early-career applicants land roles they'll actually get interviews for.";
+export const BUILT_FOR_STUDENTS_KICKER = "For early-career jobseekers";
 export const BUILT_FOR_STUDENTS_FEATURES = [
   {
     num: 1,
@@ -52,8 +47,8 @@ export const BUILT_FOR_STUDENTS_FEATURES = [
   },
   {
     num: 2,
-    title: "Useful context in every send",
-    body: "Each email highlights salary clues (when available), visa notes, and why the role suits you."
+    title: "Useful context in every email",
+    body: "Every email includes salary hints, visa notes, and why the role fits you."
   },
   {
     num: 3,
@@ -63,8 +58,8 @@ export const BUILT_FOR_STUDENTS_FEATURES = [
 ];
 
 // Pricing
-export const PRICING_TITLE = "Start free. Upgrade when you need more.";
-export const PRICING_SUBTITLE = `EU early-career jobs delivered weekly. Premium unlocks ${PREMIUM_ROLES_PER_WEEK} roles/week (~${PREMIUM_ROLES_PER_MONTH}/month). Cancel anytime.`;
+export const PRICING_TITLE = "Start free. Unlock 15 curated roles per week with Premium.";
+export const PRICING_SUBTITLE = `Internships and graduate roles across Europe. Cancel anytime.`;
 export const PRICING_BADGE = "Simple pricing • Cancel anytime";
 
 // Free plan
@@ -72,10 +67,10 @@ export const FREE_PLAN_TITLE = "Free";
 export const FREE_PLAN_SUBTITLE = "weekly digest";
 export const FREE_PLAN_FEATURES = [
   `${FREE_ROLES_PER_SEND} curated roles every ${FREE_SEND_DAY_LABEL}`,
-  "Salary hints (when available) and visa context in every drop",
+  "Salary hints and visa context in every email",
   "Pause or cancel in one click"
 ];
-export const FREE_PLAN_DESCRIPTION = `${SIGNUP_INITIAL_ROLES} jobs in your welcome email, then ${FREE_ROLES_PER_SEND} curated roles weekly.`;
+export const FREE_PLAN_DESCRIPTION = `${FREE_ROLES_PER_SEND} curated roles weekly.`;
 
 // Premium plan
 export const PREMIUM_PLAN_TITLE = "Premium";
@@ -84,12 +79,12 @@ export const PREMIUM_PLAN_PRICE = "€5";
 export const PREMIUM_PLAN_PRICE_UNIT = "/mo";
 export const PREMIUM_PLAN_ANNUAL = "€20 for 3 months (save €1)";
 export const PREMIUM_PLAN_FEATURES = [
-  `${PREMIUM_ROLES_PER_WEEK} roles each week (${PREMIUM_SENDS_PER_WEEK} drops: ${PREMIUM_SEND_DAYS_LABEL})`,
+  `${PREMIUM_ROLES_PER_WEEK} roles each week (${PREMIUM_SENDS_PER_WEEK} emails: ${PREMIUM_SEND_DAYS_LABEL})`,
   "24-hour early access to fresh postings",
   "Hot-match alerts for urgent openings",
   "Priority tweaks and intro support"
 ];
-export const PREMIUM_PLAN_DESCRIPTION = `${SIGNUP_INITIAL_ROLES} jobs in your welcome email, then ${PREMIUM_ROLES_PER_WEEK} new roles each week (${PREMIUM_SENDS_PER_WEEK} drops on ${PREMIUM_SEND_DAYS_LABEL}).`;
+export const PREMIUM_PLAN_DESCRIPTION = `${PREMIUM_ROLES_PER_WEEK} curated roles each week.`;
 
 // Reassurance
 export const REASSURANCE_ITEMS = [
@@ -99,11 +94,11 @@ export const REASSURANCE_ITEMS = [
 ];
 
 // Email showcase
-export const EMAIL_SHOWCASE_KICKER = "What the drop looks like";
+export const EMAIL_SHOWCASE_KICKER = "What your emails look like";
 export const EMAIL_SHOWCASE_TITLE = "Emails built to help you apply faster";
-export const EMAIL_SHOWCASE_SUBTITLE = "Every send includes the context you need—visa notes, salary clues (when available), and why it fits you.";
+export const EMAIL_SHOWCASE_SUBTITLE = "Every email includes salary hints, visa notes, and why the role fits you.";
 export const EMAIL_SHOWCASE_POINTS = [
-  `${FREE_ROLES_PER_SEND} curated roles per email, focused on internships and grad programmes`,
-  "Clear summaries with salary cues (when available), visa notes, and why we chose the role",
-  "Direct apply buttons plus quick feedback links if we miss the mark"
+  `${FREE_ROLES_PER_SEND} curated roles per email`,
+  "Clear summaries with salary hints and visa notes",
+  "Direct apply buttons plus quick feedback links"
 ];

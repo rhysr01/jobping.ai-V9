@@ -372,11 +372,11 @@ body {
 
   /* Consistent spacing rhythm */
   .section-padding {
-    @apply py-12 md:py-28 lg:py-32;
+    @apply py-16 md:py-24 lg:py-28;
   }
 
   .section-padding-hero {
-    @apply py-14 md:py-20 lg:py-28;
+    @apply pt-20 md:pt-24 lg:pt-28 pb-20 md:pb-24 lg:pb-28;
   }
 
   /* Mobile-first button sizing */

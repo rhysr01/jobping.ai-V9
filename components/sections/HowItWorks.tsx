@@ -9,7 +9,7 @@ export default function HowItWorks() {
   return (
     <section
       data-testid="how-it-works"
-      className="section-padding bg-black scroll-snap-section relative"
+      className="pt-20 pb-20 md:pt-24 md:pb-24 bg-black scroll-snap-section relative"
     >
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
@@ -50,10 +50,10 @@ export default function HowItWorks() {
                   y: -4,
                   transition: { type: 'spring', stiffness: 300, damping: 20 }
                 }}
-                className="group relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-[0_4px_18px_rgba(0,0,0,0.35)] px-6 py-6 text-left transition-all duration-200 hover:-translate-y-1 sm:px-8 sm:py-8"
+                className="group relative flex h-full flex-col gap-2 overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-[0_4px_18px_rgba(0,0,0,0.35)] px-6 py-6 text-left transition-all duration-200 hover:-translate-y-1 md:px-7 md:py-7"
               >
                 <motion.span 
-                  className="number-chip brightness-95 h-10 w-10 text-sm font-semibold group-hover:bg-brand-500/25 group-hover:scale-110 shadow-md shadow-black/40"
+                  className="number-chip brightness-95 font-semibold group-hover:bg-brand-500/25 group-hover:scale-110 shadow-md shadow-black/40"
                   whileHover={{ rotate: [0, -10, 10, 0] }}
                   transition={{ duration: 0.5 }}
                 >
@@ -69,7 +69,16 @@ export default function HowItWorks() {
                   </motion.span>
                   <h3 className="text-xl font-semibold text-white sm:text-2xl mb-2">{step.title}</h3>
                 </div>
-                <p className="text-base text-zinc-300/90 leading-relaxed">{step.description}</p>
+                {index === 1 ? (
+                  <p className="text-sm text-zinc-300">
+                    {step.description}
+                    <span className="block text-zinc-400 mt-1">
+                      No dashboards, no spam—just roles that match your filters.
+                    </span>
+                  </p>
+                ) : (
+                  <p className="text-sm text-zinc-300">{step.description}</p>
+                )}
               </motion.article>
             );
           })}

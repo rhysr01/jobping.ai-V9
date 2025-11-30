@@ -35,8 +35,8 @@ export default function SocialProofRow() {
     },
     {
       icon: <BrandIcons.Mail className="h-5 w-5" />,
-      eyebrow: 'Every drop',
-      title: `${FREE_ROLES_PER_SEND} curated roles per send`,
+      eyebrow: 'Every email',
+      title: `${FREE_ROLES_PER_SEND} curated roles per email`,
       description: (
         <>
           <span className="inline-block bg-white/5 border border-white/10 rounded-md px-2 py-1 text-white/90 text-xs mr-1">
@@ -57,7 +57,7 @@ export default function SocialProofRow() {
   ];
 
   return (
-    <section className="section-padding scroll-snap-section relative">
+    <section className="pt-20 pb-20 md:pt-24 md:pb-24 scroll-snap-section relative">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       {/* Guide line behind social proof row */}
@@ -68,7 +68,7 @@ export default function SocialProofRow() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
-          className="grid gap-6 rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-[0_4px_18px_rgba(0,0,0,0.35)] px-6 py-6 hover:-translate-y-1 transition-all duration-200 sm:grid-cols-3 sm:gap-8 sm:px-8 sm:py-8"
+          className="grid gap-6 rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-[0_4px_18px_rgba(0,0,0,0.35)] px-6 py-6 hover:-translate-y-1 transition-all duration-200 sm:grid-cols-3 sm:gap-8 sm:px-7 sm:py-7"
         >
           {items.map((item, index) => (
             <motion.div
@@ -81,7 +81,7 @@ export default function SocialProofRow() {
                 y: -4,
                 transition: { type: 'spring', stiffness: 300, damping: 20 }
               }}
-              className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border-subtle bg-black/15 px-6 py-6 transition-all duration-200 hover:border-default hover:elevation-1 hover:-translate-y-1 sm:px-8 sm:py-8"
+              className="group relative flex flex-col gap-2 overflow-hidden rounded-xl border-subtle bg-black/15 px-6 py-6 transition-all duration-200 hover:border-default hover:elevation-1 hover:-translate-y-1 md:px-7 md:py-7"
             >
               {index < items.length - 1 && (
                 <span className="hidden md:inline absolute right-0 top-1/2 h-4 w-px bg-white/10 -translate-y-1/2" />
@@ -93,14 +93,14 @@ export default function SocialProofRow() {
               >
                 {item.icon}
               </motion.span>
-              <div className="space-y-1">
-                <p className="text-xs uppercase tracking-wider text-zinc-400">
+              <div className="space-y-2">
+                <p className="text-xs uppercase tracking-[0.16em] text-zinc-400 mb-2">
                   {isLoading && index === 0 ? 'Loading…' : item.eyebrow}
                 </p>
-                <h3 className="text-xl font-semibold text-white sm:text-2xl mb-2">{item.title}</h3>
-                <div className="text-base text-zinc-300/90 leading-relaxed transition-colors duration-300 group-hover:text-zinc-200">
+                <h3 className="text-lg md:text-xl font-semibold text-white mb-2">{item.title}</h3>
+                <p className="text-sm text-zinc-300 transition-colors duration-300 group-hover:text-zinc-200">
                   {typeof item.description === 'string' ? item.description : item.description}
-                </div>
+                </p>
               </div>
             </motion.div>
           ))}

@@ -28,7 +28,7 @@ export default function TrustBadges() {
   ];
 
   return (
-    <section className="section-padding py-16 border-t border-white/10">
+    <section className="pt-20 pb-20 md:pt-24 md:pb-24 border-t border-white/10">
       <div className="container-page">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -37,10 +37,10 @@ export default function TrustBadges() {
           transition={{ duration: 0.6 }}
           className="mx-auto max-w-4xl"
         >
-          <p className="mb-6 text-center text-xs uppercase tracking-wider text-zinc-400">
-            Powered by live feeds from
+          <p className="mb-3 text-center text-[11px] uppercase tracking-[0.22em] text-zinc-400">
+            Opportunities sourced from trusted platforms
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             {badges.map((badge, index) => (
               <motion.div
                 key={badge.name}
@@ -49,7 +49,7 @@ export default function TrustBadges() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: index * 0.08 }}
                 whileHover={{ scale: 1.05 }}
-                className="group relative flex items-center justify-center transition-all duration-200 hover:-translate-y-1 surface-base px-4 py-3 rounded-2xl"
+                className="group relative flex items-center justify-center transition-all duration-200 hover:-translate-y-1 bg-white/[0.08] border border-white/10 px-4 py-3 rounded-xl"
               >
                 <div className="relative h-5 w-auto text-white">
                   <Image

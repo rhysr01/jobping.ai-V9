@@ -26,7 +26,7 @@ const plans: PlanConfig[] = [
     description: Copy.FREE_PLAN_DESCRIPTION,
     price: '€0',
     suffix: 'forever',
-    cta: { label: 'Claim my first drop', href: '/signup?tier=free' },
+    cta: { label: 'Get your first 5 roles', href: '/signup?tier=free' },
     features: Copy.FREE_PLAN_FEATURES,
     footnote: Copy.PRICING_BADGE,
   },
@@ -46,7 +46,7 @@ const plans: PlanConfig[] = [
 
 export default function Pricing() {
   return (
-    <section data-testid="pricing" className="section-padding relative overflow-hidden bg-[#05010f] scroll-snap-section">
+    <section data-testid="pricing" className="pt-20 pb-20 md:pt-24 md:pb-24 relative overflow-hidden bg-[#05010f] scroll-snap-section">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       <div className="absolute inset-0 bg-black" />
@@ -80,23 +80,23 @@ export default function Pricing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-20 overflow-hidden rounded-2xl bg-white/[0.06] border border-white/10 shadow-[0_4px_18px_rgba(0,0,0,0.35)] backdrop-blur-xl px-6 py-6 text-center hover:-translate-y-1 transition-all duration-200 sm:px-8 sm:py-8 md:px-12 md:py-12"
+          className="mt-20 overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 shadow-[0_4px_18px_rgba(0,0,0,0.35)] backdrop-blur-xl px-6 py-6 text-center hover:-translate-y-1 transition-all duration-200 sm:px-8 sm:py-8 md:px-12 md:py-12"
         >
           <div className="flex flex-col items-center gap-5">
             <span className="inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
               🚀 Over 12,000 jobs matched this month
             </span>
             <h3 className="text-5xl font-semibold tracking-[-0.02em] text-white md:text-6xl mb-2">
-              Claim your first drop today—see your first five matches before the weekend.
+              See your first 5 matches before the weekend.
             </h3>
             <p className="max-w-2xl text-xl text-zinc-300 md:text-2xl">
-              We refresh the pipeline every morning and route hot roles instantly. If we miss the mark, reply to any email and we retune within 24 hours.
+              We refresh opportunities every morning. If we miss the mark, reply to any email and we retune within 24 hours.
             </p>
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/15 hover:text-brand-100 sm:text-base"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/15 hover:text-brand-100 sm:text-base"
             >
-              Claim my first drop
+              Get your first 5 roles
               <BrandIcons.ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -116,7 +116,9 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.55, delay: index * 0.1 }}
-      className="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-[0_4px_18px_rgba(0,0,0,0.35)] px-6 py-6 transition-all duration-200 hover:-translate-y-1 sm:px-8 sm:py-8"
+      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-xl border border-white/10 backdrop-blur-xl shadow-[0_4px_18px_rgba(0,0,0,0.35)] px-6 py-6 transition-all duration-200 hover:-translate-y-1 md:px-7 md:py-7 ${
+        isPremium ? 'bg-white/[0.08]' : 'bg-white/[0.06]'
+      }`}
     >
       {plan.badge && (
         <motion.span 
@@ -162,7 +164,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
         >
           <Link
             href={plan.cta.href}
-            className={`group relative inline-flex items-center justify-center overflow-hidden rounded-2xl px-6 py-3 text-sm font-semibold transition-all duration-300 sm:text-base ${
+            className={`group relative inline-flex items-center justify-center overflow-hidden rounded-xl px-6 py-3 text-sm font-semibold transition-all duration-300 sm:text-base ${
               isPremium
                 ? 'bg-brand-500 text-white shadow-glow-subtle hover:bg-brand-600 hover:shadow-[0_16px_40px_rgba(126,97,255,0.5)]'
                 : 'border border-white/15 bg-white/5 text-white hover:border-brand-500/40 hover:bg-brand-500/10'

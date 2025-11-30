@@ -12,7 +12,7 @@ export default function EmailPhoneShowcase() {
   const pointIcons = [BrandIcons.Check, BrandIcons.Shield, BrandIcons.Mail];
 
   return (
-    <section className="section-padding relative overflow-hidden bg-black scroll-snap-section">
+    <section className="pt-16 md:pt-20 pb-20 md:pb-24 relative overflow-hidden bg-black scroll-snap-section">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
 
@@ -23,15 +23,15 @@ export default function EmailPhoneShowcase() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="space-y-7 text-left"
+            className="space-y-7 text-left max-w-xl"
           >
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.28em] text-brand-200">
+            <span className="inline-flex items-center rounded-full border border-white/20 bg-white/[0.06] px-3 py-1 text-[11px] font-medium tracking-[0.22em] uppercase text-zinc-200">
               {Copy.EMAIL_SHOWCASE_KICKER}
             </span>
           <h2 className="section-title text-5xl font-semibold tracking-[-0.02em] text-white md:text-6xl mb-2">
             {Copy.EMAIL_SHOWCASE_TITLE}
           </h2>
-          <p className="max-w-xl mb-10 text-xl text-zinc-300 md:text-2xl">
+          <p className="mb-10 text-xl text-zinc-300 md:text-2xl">
             {Copy.EMAIL_SHOWCASE_SUBTITLE}
           </p>
             <ul className="space-y-4">

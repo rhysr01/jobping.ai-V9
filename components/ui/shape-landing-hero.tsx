@@ -370,20 +370,7 @@ export function HeroGeometric() {
             animate="visible"
             className="grid w-full gap-4 text-left sm:grid-cols-3 mb-8"
           >
-            {Copy.HERO_FEATURES.map((feature, index) => {
-              const Icon = [BrandIcons.Zap, BrandIcons.Target, BrandIcons.Sparkles][index] ?? BrandIcons.Target;
-              return (
-                <li
-                  key={feature}
-                  className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/[0.08] px-5 py-4 text-sm text-zinc-100 backdrop-blur-sm transition-all duration-300 sm:text-base hover:-translate-y-[3px] hover:border-brand-500/40 hover:bg-white/15"
-                >
-                  <span className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/12 text-brand-200">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <span className="leading-snug">{feature}</span>
-                </li>
-              );
-            })}
+            {/* Features removed - simplified hero */}
           </motion.ul>
 
           {/* CTA Button */}
@@ -406,7 +393,7 @@ export function HeroGeometric() {
                 <BrandIcons.ArrowRight className="h-5 w-5" />
               </span>
             </Button>
-            <p className="text-sm text-zinc-400">{Copy.HERO_FINE_PRINT}</p>
+            <p className="text-sm text-zinc-400">{Copy.HERO_SOCIAL_PROOF}</p>
           </motion.div>
 
           {/* Stats */}

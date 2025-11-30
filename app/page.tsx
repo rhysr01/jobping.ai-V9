@@ -19,9 +19,9 @@ export default function Page() {
         <EmailPhoneShowcase />
         <HowItWorks />
         <BuiltForStudents />
-        <TrustBadges />
         <Pricing />
         <SecondaryCTA />
+        <TrustBadges />
       </main>
       <div className="h-16 w-full bg-gradient-to-b from-transparent to-black/40" />
       <Footer />
