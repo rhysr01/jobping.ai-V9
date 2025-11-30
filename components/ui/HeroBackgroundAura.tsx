@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-export default function HeroBackgroundAura() {
+interface HeroBackgroundAuraProps {
+  offset?: number;
+}
+
+export default function HeroBackgroundAura({ offset = 0 }: HeroBackgroundAuraProps) {
+  const [pos, setPos] = useState({ x: 0, y: 0 });
   const gridRef = useRef<HTMLDivElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +49,7 @@ export default function HeroBackgroundAura() {
     >
       {/* Large ambient glow behind everything */}
       <div
-        className="absolute top-[-20%] left-1/2 -translate-x-1/2 h-[820px] w-[820px] md:h-[900px] md:w-[900px] blur-[90px] opacity-80 rounded-full bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.32),_rgba(15,23,42,0.2)_60%)] animate-[hero-blob_9s_ease-in-out_infinite_alternate]"
+        className="absolute top-[-20%] left-1/2 -translate-x-1/2 h-[820px] w-[820px] md:h-[900px] md:w-[900px] blur-md-hero opacity-80 rounded-full bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.32),_rgba(15,23,42,0.2)_60%)] animate-[hero-blob_9s_ease-in-out_infinite_alternate]"
         style={{
           willChange: 'transform, opacity',
           transform: 'translate(-50%, -50%)',
@@ -53,18 +58,23 @@ export default function HeroBackgroundAura() {
       
       {/* Spotlight glow behind hero card - positioned to shine through glass */}
       <div
-        className="absolute top-[10%] left-1/2 -translate-x-1/2 h-[580px] w-[580px] md:h-[640px] md:w-[640px] blur-[70px] opacity-90 rounded-full bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.45),_transparent_55%)] mix-blend-screen"
+        className="absolute top-[10%] left-1/2 -translate-x-1/2 h-[580px] w-[580px] md:h-[640px] md:w-[640px] blur-md-hero opacity-90 rounded-full bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.45),_transparent_55%)] mix-blend-screen"
         style={{
           willChange: 'transform, opacity',
-          transform: 'translate(-50%, -35%)',
+          transform: `translate(calc(-42% + ${pos.x}px), calc(-28% + ${offset}px + ${pos.y}px)) rotate(-6deg)`,
+        }}
+        onMouseMove={(e) => {
+          const x = (e.clientX / window.innerWidth) * 6;
+          const y = (e.clientY / window.innerHeight) * 6;
+          setPos({ x, y });
         }}
       />
 
       {/* Vertical light shaft */}
-      <div className="absolute inset-x-0 top-[-25%] h-[300px] bg-gradient-to-b from-violet-500/15 to-transparent blur-[80px]" />
+      <div className="absolute inset-x-0 top-[-25%] h-[300px] bg-gradient-to-b from-violet-500/15 to-transparent blur-md-hero" />
       
       {/* Side ambient glow */}
-      <div className="absolute left-[-20%] top-[10%] h-[500px] w-[500px] bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.25),transparent_70%)] blur-[120px]" />
+      <div className="absolute left-[-12%] top-[12%] h-[520px] w-[520px] bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.28),transparent_70%)] blur-lg-hero opacity-80" />
       
       {/* Glass haze */}
       <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent backdrop-blur-[1px] pointer-events-none" />

@@ -52,7 +52,7 @@ export default function Pricing() {
       {/* Soft section band */}
       <div className="pointer-events-none absolute inset-x-0 -top-10 h-40 bg-gradient-to-b from-indigo-900/40 to-transparent" />
       {/* Overhead spotlight crown */}
-      <div className="absolute inset-x-0 -top-40 h-60 bg-gradient-to-b from-violet-600/20 to-transparent blur-[120px] pointer-events-none" />
+      <div className="absolute inset-x-0 -top-36 h-44 bg-gradient-to-b from-violet-600/15 to-transparent blur-lg-hero pointer-events-none" />
       <div className="absolute inset-0 bg-black" />
 
       <div className="container-page relative z-10">
@@ -79,13 +79,18 @@ export default function Pricing() {
           ))}
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-20 max-w-3xl mx-auto rounded-2xl bg-white/[0.04] border border-white/10 p-10 backdrop-blur-xl shadow-[0_12px_60px_rgba(0,0,0,0.45)] ring-1 ring-white/5 text-center hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.65)] transition-all duration-200"
-        >
+        <div className="relative">
+          {/* Focus window - top */}
+          <div className="pointer-events-none absolute inset-x-0 -top-20 h-40 bg-gradient-to-b from-white/[0.06] to-transparent blur-md-hero" />
+          {/* Focus window - bottom */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-[-60px] h-40 bg-gradient-to-t from-white/[0.03] to-transparent blur-md-hero" />
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mt-20 max-w-3xl mx-auto rounded-2xl bg-white/[0.04] border border-white/10 p-10 backdrop-blur-xl shadow-[0_12px_60px_rgba(0,0,0,0.45)] ring-1 ring-white/5 text-center hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.65)] transition-all duration-200 relative z-10"
+          >
           <div className="flex flex-col items-center gap-5">
             <span className="inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
               🚀 Over 12,000 jobs matched this month
@@ -107,7 +112,8 @@ export default function Pricing() {
               <BrandIcons.ArrowRight className="h-4 w-4" />
             </Link>
           </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </section>
   );
@@ -131,7 +137,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
     >
       {isPremium && (
         <>
-          <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.5),_transparent_70%)] blur-[60px]" />
+          <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.35),_transparent_70%)] blur-sm-hero" />
           <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] ring-1 ring-violet-500/30" />
         </>
       )}

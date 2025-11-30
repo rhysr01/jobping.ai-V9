@@ -39,8 +39,19 @@ export default function HowItWorks() {
         </motion.div>
 
         <div className="relative mt-14 grid gap-4 sm:mt-16 md:grid-cols-3">
-          {/* Connecting line for desktop */}
-          <div className="pointer-events-none absolute left-1/2 top-10 hidden h-px w-[72%] -translate-x-1/2 md:block bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent" />
+          {/* Connecting line for desktop - curved */}
+          <svg
+            className="pointer-events-none absolute left-1/2 top-10 hidden md:block w-[72%] h-[60px] -translate-x-1/2"
+            viewBox="0 0 100 20"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M0,10 C30,0 70,20 100,10"
+              stroke="rgba(113,113,122,0.5)"
+              strokeWidth="1"
+              fill="none"
+            />
+          </svg>
           {Copy.HOW_IT_WORKS_STEPS.filter(step => step && step.title).map((step, index) => {
             const Icon = stepIcons[index] || BrandIcons.Target;
             return (

@@ -618,6 +618,21 @@ html {
   opacity: 1;
 }
 
+/* Unified blur grading system */
+@layer utilities {
+  .blur-sm-hero {
+    filter: blur(40px);
+  }
+
+  .blur-md-hero {
+    filter: blur(70px);
+  }
+
+  .blur-lg-hero {
+    filter: blur(110px);
+  }
+}
+
 /* Legacy animations kept for compatibility */
 @keyframes slow-spotlight {
   0% {
