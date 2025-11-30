@@ -274,7 +274,7 @@ export default function Hero() {
           className="relative w-full max-w-3xl mt-10 md:mt-12 rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-xl px-8 md:px-12 shadow-[0_8px_20px_rgba(0,0,0,0.4)]"
         >
           {/* Subtle spotlight behind card */}
-          <div className="pointer-events-none absolute inset-x-0 -top-32 h-64 opacity-60 blur-3xl bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.25),_transparent_60%)] -z-10" />
+          <div className="pointer-events-none absolute inset-x-0 -top-24 h-64 blur-3xl opacity-80 bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.28),_transparent_60%)] -z-10" />
           {/* Top highlight line for glass effect */}
           <div className="absolute inset-x-0 top-0 h-px bg-white/20" />
           
