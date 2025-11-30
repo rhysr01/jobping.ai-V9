@@ -80,7 +80,7 @@ export default function ExitIntentPopup() {
             <Link
               href="/signup"
               onClick={() => setShowPopup(false)}
-              className="block w-full bg-gradient-to-r from-brand-500 to-purple-600 text-white py-4 px-6 rounded-xl font-bold text-lg text-center hover:scale-105 transition-transform min-h-[48px] flex items-center justify-center"
+              className="block w-full bg-brand-500 text-white py-4 px-6 rounded-2xl font-semibold text-lg text-center hover:bg-brand-600 hover:-translate-y-0.5 transition-all min-h-[48px] flex items-center justify-center"
             >
               Claim my first drop →
             </Link>

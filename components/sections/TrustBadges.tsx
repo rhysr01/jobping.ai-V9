@@ -25,26 +25,6 @@ export default function TrustBadges() {
       logo: "/logos/greenhouse.svg",
       description: "Company career pages"
     },
-    {
-      name: "Indeed",
-      logo: "/logos/indeed.svg",
-      description: "Job board via JobSpy"
-    },
-    {
-      name: "Glassdoor",
-      logo: "/logos/glassdoor.svg",
-      description: "Job board via JobSpy"
-    },
-    {
-      name: "Google Jobs",
-      logo: "/logos/google-jobs.svg",
-      description: "Job aggregator via JobSpy"
-    },
-    {
-      name: "ZipRecruiter",
-      logo: "/logos/ziprecruiter.svg",
-      description: "Job board via JobSpy"
-    }
   ];
 
   return (
@@ -57,7 +37,7 @@ export default function TrustBadges() {
           transition={{ duration: 0.6 }}
           className="mx-auto max-w-4xl"
         >
-          <p className="mb-6 text-center text-[0.7rem] font-bold uppercase tracking-wider opacity-70 text-zinc-200">
+          <p className="mb-6 text-center text-xs uppercase tracking-wider text-zinc-400">
             Powered by live feeds from
           </p>
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8">
@@ -69,16 +49,17 @@ export default function TrustBadges() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: index * 0.08 }}
                 whileHover={{ scale: 1.05 }}
-                className="group relative flex items-center justify-center opacity-70 transition-all duration-200 hover:opacity-100 hover:-translate-y-1 surface-base px-4 py-3 rounded-2xl"
+                className="group relative flex items-center justify-center transition-all duration-200 hover:-translate-y-1 surface-base px-4 py-3 rounded-2xl"
               >
-                <div className="relative h-5 w-auto opacity-70">
+                <div className="relative h-5 w-auto text-white">
                   <Image
                     src={badge.logo}
                     alt={badge.name}
                     width={120}
                     height={40}
-                    className="h-full w-auto object-contain grayscale transition-all duration-300 group-hover:grayscale-0"
+                    className="h-full w-auto object-contain transition-all duration-300"
                     loading="lazy"
+                    unoptimized
                   />
                 </div>
                 <span className="sr-only">{badge.description}</span>

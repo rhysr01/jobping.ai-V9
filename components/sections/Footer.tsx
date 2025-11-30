@@ -23,7 +23,7 @@ export default function Footer() {
           className="flex flex-col items-center gap-6 text-center sm:flex-row sm:justify-between sm:text-left"
         >
           <div className="flex flex-col gap-2">
-            <p className="text-lg font-bold text-white">JobPing</p>
+            <p className="text-lg font-semibold text-white">JobPing</p>
             <p className="text-sm text-zinc-400">EU early-career roles in your inbox. weekly.</p>
           </div>
           

@@ -58,7 +58,7 @@ export default function StickyMobileCTA() {
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full bg-gradient-to-r from-brand-500 to-purple-600 text-white py-4 px-6 rounded-2xl font-bold text-lg text-center shadow-[0_8px_24px_rgba(99,102,241,0.5)] flex items-center justify-center gap-2"
+              className="w-full bg-brand-500 text-white py-4 px-6 rounded-2xl font-semibold text-lg text-center shadow-[0_8px_24px_rgba(126,97,255,0.5)] hover:bg-brand-600 transition-all flex items-center justify-center gap-2"
             >
               <span>Get EU jobs in my inbox</span>
               <BrandIcons.ArrowRight className="w-5 h-5" />
