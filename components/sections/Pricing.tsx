@@ -92,7 +92,7 @@ export default function Pricing() {
             <p className="max-w-2xl text-xl text-zinc-300 md:text-2xl mb-4">
               Sign up in under two minutes—your first curated set arrives within 48 hours.
             </p>
-            <p className="max-w-2xl text-base text-zinc-400 mb-6">
+            <p className="max-w-2xl text-base text-zinc-300 mb-6">
               If we miss the mark, reply to any email and we retune within 24 hours.
             </p>
             <Link
@@ -136,7 +136,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
           <span className="text-4xl font-semibold text-white sm:text-5xl leading-[1.05]">{plan.price}</span>
           {plan.suffix && <span className="text-base font-medium text-zinc-300 leading-[1.05]">{plan.suffix}</span>}
         </div>
-        <p className="text-xs uppercase tracking-wider text-zinc-400">{plan.name}</p>
+        <p className="text-xs uppercase tracking-wider text-zinc-300">{plan.name}</p>
         <h3 className="text-xl font-semibold text-white sm:text-2xl mb-2">{plan.headline}</h3>
         <p className="text-base text-zinc-300/90 leading-relaxed">{plan.description}</p>
 

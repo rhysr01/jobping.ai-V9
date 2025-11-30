@@ -25,7 +25,7 @@ export default function SecondaryCTA() {
         >
           <div className="flex flex-col md:grid md:grid-cols-[2fr_minmax(0,1fr)] md:items-center gap-6">
             <div className="text-left">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-400">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-300">
                 <BrandIcons.Mail className="h-4 w-4 text-brand-400" />
                 EARLY-CAREER INBOX
               </span>
