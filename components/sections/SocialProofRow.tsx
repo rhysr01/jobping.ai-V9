@@ -118,7 +118,6 @@ export default function SocialProofRow() {
               </motion.div>
             </div>
           </div>
-        </div>
       </div>
     </section>
   );

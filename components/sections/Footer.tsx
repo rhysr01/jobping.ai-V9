@@ -6,10 +6,10 @@ import { motion } from "framer-motion";
 export default function Footer() {
   const links = [
     { label: "About", href: "/about" },
-    { label: "Pricing", href: "/#pricing" },
+    { label: "Pricing", href: "/pricing" },
     { label: "Privacy Policy", href: "/legal/privacy" },
     { label: "Terms", href: "/legal/terms" },
-    { label: "Contact", href: "mailto:hello@getjobping.com" },
+    { label: "Contact", href: "/contact" },
   ];
 
   return (
