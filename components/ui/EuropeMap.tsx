@@ -79,8 +79,11 @@ export default function EuropeMap({
   const [focusedCity, setFocusedCity] = useState<string | null>(null);
   const [justSelected, setJustSelected] = useState<string | null>(null);
   const [shakeCity, setShakeCity] = useState<string | null>(null);
+  const [touchedCity, setTouchedCity] = useState<string | null>(null);
   const prevSelectedRef = useRef<string[]>([]);
   const shakeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const touchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const cityRefs = useRef<Map<string, SVGCircleElement>>(new Map());
   
   // Track when cities are selected to trigger highlight animation
   useEffect(() => {
@@ -99,6 +102,9 @@ export default function EuropeMap({
     return () => {
       if (shakeTimeoutRef.current) {
         clearTimeout(shakeTimeoutRef.current);
+      }
+      if (touchTimeoutRef.current) {
+        clearTimeout(touchTimeoutRef.current);
       }
     };
   }, []);
@@ -119,10 +125,9 @@ export default function EuropeMap({
     shakeTimeoutRef.current = setTimeout(() => setShakeCity(null), 450);
   }, []);
 
-  const handleCityHover = useCallback((city: string, event: React.MouseEvent<SVGCircleElement>) => {
-    setHoveredCity(city);
-    const rect = event.currentTarget.getBoundingClientRect();
-    const svg = event.currentTarget.closest('svg');
+  const updateTooltip = useCallback((city: string, element: SVGCircleElement) => {
+    const rect = element.getBoundingClientRect();
+    const svg = element.closest('svg');
     if (svg) {
       const svgRect = svg.getBoundingClientRect();
       const xRaw = rect.left + rect.width / 2 - svgRect.left;
@@ -137,6 +142,32 @@ export default function EuropeMap({
     }
   }, []);
 
+  const handleCityHover = useCallback((city: string, event: React.MouseEvent<SVGCircleElement>) => {
+    setHoveredCity(city);
+    updateTooltip(city, event.currentTarget);
+  }, [updateTooltip]);
+
+  const handleCityTouch = useCallback((city: string, event: React.TouchEvent<SVGCircleElement>) => {
+    // Prevent double-tap zoom on mobile
+    event.preventDefault();
+    setTouchedCity(city);
+    setHoveredCity(city);
+    updateTooltip(city, event.currentTarget);
+    
+    // Clear touch state after a delay
+    if (touchTimeoutRef.current) {
+      clearTimeout(touchTimeoutRef.current);
+    }
+    touchTimeoutRef.current = setTimeout(() => {
+      setTouchedCity(null);
+      // Keep tooltip visible for a bit longer on touch
+      setTimeout(() => {
+        setHoveredCity((prev) => prev === city ? null : prev);
+        setTooltip((prev) => prev?.city === city ? null : prev);
+      }, 2000);
+    }, 300);
+  }, [updateTooltip]);
+
   const handleCityLeave = useCallback(() => {
     setHoveredCity(null);
     setTooltip(null);
@@ -146,8 +177,30 @@ export default function EuropeMap({
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       handleCityClick(city);
+    } else if (event.key.startsWith('Arrow')) {
+      // Arrow key navigation between cities
+      event.preventDefault();
+      const cityList = Object.keys(CITY_COORDINATES);
+      const currentIndex = cityList.indexOf(city);
+      let nextIndex = currentIndex;
+      
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        nextIndex = (currentIndex + 1) % cityList.length;
+      } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        nextIndex = (currentIndex - 1 + cityList.length) % cityList.length;
+      }
+      
+      const nextCity = cityList[nextIndex];
+      const nextElement = cityRefs.current.get(nextCity);
+      const isDisabled = !isCitySelected(nextCity) && selectedCities.length >= maxSelections;
+      if (nextElement && !isDisabled) {
+        nextElement.focus();
+        setFocusedCity(nextCity);
+        // Show tooltip for focused city
+        updateTooltip(nextCity, nextElement);
+      }
     }
-  }, [handleCityClick]);
+  }, [handleCityClick, updateTooltip, isCitySelected, selectedCities.length, maxSelections]);
 
   const isCitySelected = useCallback((city: string) => selectedCities.includes(city), [selectedCities]);
   const isCityDisabled = useCallback((city: string) => 
@@ -165,9 +218,9 @@ export default function EuropeMap({
 
   return (
     <div 
-      className={`relative w-full h-full min-h-[420px] sm:min-h-[480px] md:min-h-[540px] lg:min-h-[600px] rounded-2xl border border-brand-500/20 overflow-hidden shadow-glow-strong ${className}`}
+      className={`relative w-full h-full min-h-[420px] sm:min-h-[480px] md:min-h-[540px] lg:min-h-[600px] rounded-2xl border border-brand-500/20 overflow-hidden shadow-glow-strong touch-manipulation ${className}`}
       role="application"
-      aria-label="Interactive Europe map for city selection"
+      aria-label="Interactive Europe map for city selection. Use arrow keys to navigate between cities, Enter or Space to select."
     >
       <div className="absolute inset-0 bg-zinc-950/95" aria-hidden="true" />
       <div className="absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_45%,rgba(124,58,237,0.14),transparent_70%)]" aria-hidden="true" />
@@ -219,6 +272,25 @@ export default function EuropeMap({
 
             return (
               <g key={city} aria-label={`${city}, ${coords.country}`}>
+                {/* Invisible larger touch target (44x44px) for better mobile accessibility */}
+                <circle
+                  cx={coords.x}
+                  cy={coords.y}
+                  r="22"
+                  fill="transparent"
+                  stroke="transparent"
+                  className="pointer-events-auto touch-manipulation"
+                  onClick={() => {
+                    if (disabled) {
+                      triggerShake(city);
+                    } else {
+                      handleCityClick(city);
+                    }
+                  }}
+                  onTouchStart={(e) => !disabled && handleCityTouch(city, e)}
+                  aria-hidden="true"
+                />
+
                 {/* Multi-layer pulsing glow for selected cities - brand colors */}
                 {selected && (
                   <>
@@ -229,7 +301,7 @@ export default function EuropeMap({
                       r="18"
                       fill="url(#selectedGradient)"
                       opacity={justSelected === city ? 0.18 : 0.1}
-                      className="animate-pulse"
+                      className="animate-pulse pointer-events-none"
                       aria-hidden="true"
                       initial={justSelected === city ? { scale: 0.85, opacity: 0 } : false}
                       animate={justSelected === city ? { 
@@ -245,7 +317,7 @@ export default function EuropeMap({
                       r="14"
                       fill="url(#selectedGradient)"
                       opacity="0.12"
-                      className="animate-pulse"
+                      className="animate-pulse pointer-events-none"
                       style={{ animationDelay: '0.35s' }}
                       aria-hidden="true"
                     />
@@ -256,23 +328,43 @@ export default function EuropeMap({
                       r="10"
                       fill="url(#selectedGradient)"
                       opacity="0.08"
-                      className="animate-pulse"
+                      className="animate-pulse pointer-events-none"
                       style={{ animationDelay: '0.6s' }}
                       aria-hidden="true"
                     />
                   </>
                 )}
+
+                {/* Touch feedback ring - visible on touch */}
+                {touchedCity === city && (
+                  <motion.circle
+                    cx={coords.x}
+                    cy={coords.y}
+                    r="22"
+                    fill="rgba(99, 102, 241, 0.2)"
+                    stroke="rgba(99, 102, 241, 0.4)"
+                    strokeWidth="2"
+                    className="pointer-events-none"
+                    aria-hidden="true"
+                    initial={{ scale: 0.8, opacity: 0.6 }}
+                    animate={{ scale: 1.2, opacity: 0 }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                  />
+                )}
                 
                 {/* City marker circle with brand colors - fully accessible */}
                 <motion.circle
+                  ref={(el) => {
+                    if (el) cityRefs.current.set(city, el);
+                  }}
                   cx={coords.x}
                   cy={coords.y}
-                  r={selected ? 11 : hovered || focused ? 10 : 9}
-                  fill={selected ? 'url(#selectedGradient)' : disabled ? '#3f3f46' : hovered || focused ? '#C2A8FF' : '#71717a'} // brand-300 for hover/focus
-                  stroke={selected ? '#9A6AFF' : hovered || focused ? '#C2A8FF' : '#52525b'} // brand-500 for selected, brand-300 for hover
-                  strokeWidth={selected ? 3.5 : hovered || focused ? 2.5 : 2}
-                  className={disabled ? 'cursor-not-allowed' : 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-transparent'}
-                  filter={selected ? undefined : hovered || focused ? 'url(#glow)' : undefined}
+                  r={selected ? 11 : hovered || focused || touchedCity === city ? 10 : 9}
+                  fill={selected ? 'url(#selectedGradient)' : disabled ? '#3f3f46' : hovered || focused || touchedCity === city ? '#C2A8FF' : '#71717a'} // brand-300 for hover/focus/touch
+                  stroke={selected ? '#9A6AFF' : hovered || focused || touchedCity === city ? '#C2A8FF' : '#52525b'} // brand-500 for selected, brand-300 for hover
+                  strokeWidth={selected ? 3.5 : hovered || focused || touchedCity === city ? 2.5 : 2}
+                  className={disabled ? 'cursor-not-allowed touch-manipulation' : 'cursor-pointer touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-transparent'}
+                  filter={selected ? undefined : hovered || focused || touchedCity === city ? 'url(#glow)' : undefined}
                   whileHover={!disabled ? { scale: 1.35, strokeWidth: 3.5 } : {}}
                   whileTap={!disabled ? { scale: 0.85 } : {}}
                   onClick={() => {
@@ -284,6 +376,7 @@ export default function EuropeMap({
                   }}
                   onMouseEnter={(e) => !disabled && handleCityHover(city, e)}
                   onMouseLeave={handleCityLeave}
+                  onTouchStart={(e) => !disabled && handleCityTouch(city, e)}
                   onFocus={() => !disabled && setFocusedCity(city)}
                   onBlur={() => setFocusedCity(null)}
                   onKeyDown={(e) => !disabled && handleKeyDown(city, e)}
@@ -315,7 +408,7 @@ export default function EuropeMap({
                 />
                 
                 {/* City label appears only when relevant */}
-                {showLabel && (
+                {(showLabel || touchedCity === city) && (
                   <motion.text
                     x={coords.x}
                     y={labelY}
@@ -352,13 +445,13 @@ export default function EuropeMap({
 
       {/* Tooltip */}
       <AnimatePresence>
-        {tooltip && hoveredCity && (
+        {tooltip && (hoveredCity || touchedCity) && (
           <motion.div
             initial={{ opacity: 0, y: 10, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.9 }}
             transition={{ duration: 0.2 }}
-            className="absolute z-50 px-3 py-2 bg-zinc-900/95 backdrop-blur-md rounded-lg border border-zinc-700/40 shadow-glow-subtle pointer-events-none"
+            className="absolute z-50 px-3 py-2 bg-zinc-900/95 backdrop-blur-md rounded-lg border border-zinc-700/40 shadow-glow-subtle pointer-events-none touch-manipulation"
             style={{
               left: `${tooltip.x}px`,
               top: `${tooltip.y}px`,
@@ -371,6 +464,9 @@ export default function EuropeMap({
             <div className="text-zinc-400 text-xs mt-0.5">
               {CITY_COORDINATES[tooltip.city]?.country}
             </div>
+            {selectedCities.includes(tooltip.city) && (
+              <div className="text-brand-300 text-xs mt-1 font-medium">✓ Selected</div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
