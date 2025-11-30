@@ -1,8 +1,39 @@
 "use client";
 
-import React from "react";
+import { useEffect, useRef } from "react";
 
 export default function HeroBackgroundAura() {
+  const gridRef = useRef<HTMLDivElement>(null);
+  const fallbackRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Check if SVG grid pattern loaded successfully
+    const checkGridPattern = () => {
+      if (!gridRef.current || !fallbackRef.current) return;
+      
+      // Test if SVG pattern is rendering
+      const testImg = new Image();
+      testImg.onload = () => {
+        // SVG loaded successfully
+        if (fallbackRef.current) {
+          fallbackRef.current.style.display = 'none';
+        }
+      };
+      testImg.onerror = () => {
+        // SVG failed, show CSS fallback
+        if (fallbackRef.current) {
+          fallbackRef.current.style.display = 'block';
+        }
+      };
+      testImg.src = '/grid.svg';
+    };
+
+    // Check after a short delay to allow SVG to load
+    const timeout = setTimeout(checkGridPattern, 100);
+    
+    return () => clearTimeout(timeout);
+  }, []);
+
   return (
     <div
       aria-hidden="true"
@@ -20,6 +51,7 @@ export default function HeroBackgroundAura() {
 
       {/* Grid pattern with fallback - Enhanced visibility */}
       <div
+        ref={gridRef}
         className="absolute inset-[-200px] bg-[url('/grid.svg')] bg-center bg-[length:900px_900px] opacity-[0.15] animate-grid-fade"
         style={{
           // Ensure cross-browser compatibility
@@ -30,7 +62,8 @@ export default function HeroBackgroundAura() {
       
       {/* Fallback: CSS grid if SVG pattern fails */}
       <div
-        className="absolute inset-[-200px] opacity-[0.05] animate-grid-fade"
+        ref={fallbackRef}
+        className="absolute inset-[-200px] opacity-[0.08] animate-grid-fade"
         style={{
           backgroundImage: `
             linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),

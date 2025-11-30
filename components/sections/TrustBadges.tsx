@@ -58,7 +58,7 @@ export default function TrustBadges() {
                     alt={badge.name}
                     width={120}
                     height={40}
-                    className="h-8 w-auto object-contain transition-all duration-300 opacity-90 group-hover:opacity-100 group-hover:brightness-110"
+                    className="h-8 w-auto object-contain transition-all duration-300 opacity-90 group-hover:opacity-100 group-hover:brightness-110 group-hover:scale-105"
                     loading="lazy"
                     unoptimized
                     onError={(e) => {
