@@ -173,6 +173,12 @@ export default function EuropeMap({
     setTooltip(null);
   }, []);
 
+  const isCitySelected = useCallback((city: string) => selectedCities.includes(city), [selectedCities]);
+  const isCityDisabled = useCallback((city: string) => 
+    !isCitySelected(city) && selectedCities.length >= maxSelections, 
+    [isCitySelected, selectedCities.length, maxSelections]
+  );
+
   const handleKeyDown = useCallback((city: string, event: React.KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -202,12 +208,6 @@ export default function EuropeMap({
     }
   }, [handleCityClick, updateTooltip, isCitySelected, selectedCities.length, maxSelections]);
 
-  const isCitySelected = useCallback((city: string) => selectedCities.includes(city), [selectedCities]);
-  const isCityDisabled = useCallback((city: string) => 
-    !isCitySelected(city) && selectedCities.length >= maxSelections, 
-    [isCitySelected, selectedCities.length, maxSelections]
-  );
-
   const cityEntries = useMemo<[string, ProjectedCity][]>(() => {
     return Object.entries(CITY_COORDINATES).map(([name, city]) => {
       const { x, y } = project(city.lat, city.lon);
@@ -218,12 +218,18 @@ export default function EuropeMap({
 
   return (
     <div 
-      className={`relative w-full h-full min-h-[420px] sm:min-h-[480px] md:min-h-[540px] lg:min-h-[600px] rounded-2xl border border-brand-500/20 overflow-hidden shadow-glow-strong touch-manipulation ${className}`}
+      className={`relative w-full h-full min-h-[420px] sm:min-h-[480px] md:min-h-[540px] lg:min-h-[600px] rounded-2xl border-2 border-brand-500/30 overflow-hidden shadow-[0_0_60px_rgba(99,102,241,0.15),inset_0_0_100px_rgba(99,102,241,0.05)] touch-manipulation ${className}`}
       role="application"
       aria-label="Interactive Europe map for city selection. Use arrow keys to navigate between cities, Enter or Space to select."
     >
-      <div className="absolute inset-0 bg-zinc-950/95" aria-hidden="true" />
-      <div className="absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_45%,rgba(124,58,237,0.14),transparent_70%)]" aria-hidden="true" />
+      {/* Enhanced multi-layer background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950" aria-hidden="true" />
+      <div className="absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_45%,rgba(124,58,237,0.18),transparent_70%)]" aria-hidden="true" />
+      <div className="absolute inset-0 bg-[radial-gradient(30%_30%_at_20%_80%,rgba(99,102,241,0.12),transparent_60%)]" aria-hidden="true" />
+      <div className="absolute inset-0 bg-[radial-gradient(40%_40%_at_80%_20%,rgba(168,85,247,0.10),transparent_60%)]" aria-hidden="true" />
+      
+      {/* Subtle grid overlay for depth */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] bg-[size:40px_40px] opacity-40" aria-hidden="true" />
       
       {/* Europe Map SVG */}
       <svg
@@ -234,29 +240,50 @@ export default function EuropeMap({
         style={{ aspectRatio: '5/4' }}
       >
         <defs>
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2.2" result="coloredBlur" in="SourceGraphic"/>
+          {/* Enhanced glow filter */}
+          <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur" in="SourceGraphic"/>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
           </filter>
           
+          {/* Stronger glow for selected cities */}
+          <filter id="selectedGlow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          
+          {/* Enhanced gradient for selected cities */}
           <linearGradient id="selectedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#C9B6FF" />
-            <stop offset="50%" stopColor="#A58BFF" />
-            <stop offset="100%" stopColor="#7C6DFF" />
+            <stop offset="0%" stopColor="#D4C5FF" />
+            <stop offset="30%" stopColor="#C9B6FF" />
+            <stop offset="60%" stopColor="#A58BFF" />
+            <stop offset="100%" stopColor="#8B6FFF" />
+          </linearGradient>
+          
+          {/* Hover gradient */}
+          <linearGradient id="hoverGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#E6D9FF" />
+            <stop offset="100%" stopColor="#C2A8FF" />
           </linearGradient>
         </defs>
 
-        {/* Detailed Europe outline with country borders */}
+        {/* Detailed Europe outline with country borders - enhanced */}
         <image
           href="/maps/europe-borders-lite.svg"
           x={0}
           y={0}
           width={VIEW.w}
           height={VIEW.h}
-          opacity="0.88"
+          opacity="0.92"
+          style={{
+            filter: 'drop-shadow(0 0 2px rgba(99,102,241,0.2))',
+          }}
           aria-hidden="true"
         />
 
@@ -291,82 +318,111 @@ export default function EuropeMap({
                   aria-hidden="true"
                 />
 
-                {/* Multi-layer pulsing glow for selected cities - brand colors */}
+                {/* Enhanced multi-layer pulsing glow for selected cities */}
                 {selected && (
                   <>
-                    {/* Outer glow ring - larger pulse */}
+                    {/* Outer glow ring - larger pulse with enhanced visibility */}
                     <motion.circle
                       cx={coords.x}
                       cy={coords.y}
-                      r="18"
+                      r="20"
                       fill="url(#selectedGradient)"
-                      opacity={justSelected === city ? 0.18 : 0.1}
-                      className="animate-pulse pointer-events-none"
+                      opacity={justSelected === city ? 0.25 : 0.12}
+                      className="pointer-events-none"
+                      filter="url(#selectedGlow)"
                       aria-hidden="true"
-                      initial={justSelected === city ? { scale: 0.85, opacity: 0 } : false}
+                      initial={justSelected === city ? { scale: 0.8, opacity: 0 } : false}
                       animate={justSelected === city ? { 
-                        scale: [0.85, 1.15, 1],
-                        opacity: [0.28, 0.18, 0.1]
-                      } : {}}
-                      transition={{ duration: 0.6, ease: 'easeOut' }}
+                        scale: [0.8, 1.2, 1],
+                        opacity: [0.35, 0.25, 0.12]
+                      } : {
+                        scale: [1, 1.1, 1],
+                        opacity: [0.12, 0.15, 0.12]
+                      }}
+                      transition={{ 
+                        duration: justSelected === city ? 0.7 : 3,
+                        ease: 'easeOut',
+                        repeat: justSelected === city ? 0 : Infinity
+                      }}
                     />
                     {/* Middle glow ring */}
-                    <circle
+                    <motion.circle
                       cx={coords.x}
                       cy={coords.y}
-                      r="14"
+                      r="15"
                       fill="url(#selectedGradient)"
-                      opacity="0.12"
-                      className="animate-pulse pointer-events-none"
-                      style={{ animationDelay: '0.35s' }}
+                      opacity="0.15"
+                      className="pointer-events-none"
                       aria-hidden="true"
+                      animate={{
+                        scale: [1, 1.08, 1],
+                        opacity: [0.15, 0.18, 0.15]
+                      }}
+                      transition={{ 
+                        duration: 2.5,
+                        ease: 'easeInOut',
+                        repeat: Infinity,
+                        delay: 0.4
+                      }}
                     />
                     {/* Inner glow ring */}
                     <circle
                       cx={coords.x}
                       cy={coords.y}
-                      r="10"
+                      r="11"
                       fill="url(#selectedGradient)"
-                      opacity="0.08"
-                      className="animate-pulse pointer-events-none"
-                      style={{ animationDelay: '0.6s' }}
+                      opacity="0.2"
+                      className="pointer-events-none"
                       aria-hidden="true"
                     />
                   </>
                 )}
 
-                {/* Touch feedback ring - visible on touch */}
+                {/* Enhanced touch feedback ring */}
                 {touchedCity === city && (
-                  <motion.circle
-                    cx={coords.x}
-                    cy={coords.y}
-                    r="22"
-                    fill="rgba(99, 102, 241, 0.2)"
-                    stroke="rgba(99, 102, 241, 0.4)"
-                    strokeWidth="2"
-                    className="pointer-events-none"
-                    aria-hidden="true"
-                    initial={{ scale: 0.8, opacity: 0.6 }}
-                    animate={{ scale: 1.2, opacity: 0 }}
-                    transition={{ duration: 0.4, ease: 'easeOut' }}
-                  />
+                  <>
+                    <motion.circle
+                      cx={coords.x}
+                      cy={coords.y}
+                      r="24"
+                      fill="rgba(99, 102, 241, 0.15)"
+                      stroke="rgba(168, 85, 247, 0.5)"
+                      strokeWidth="2.5"
+                      className="pointer-events-none"
+                      aria-hidden="true"
+                      initial={{ scale: 0.7, opacity: 0.7 }}
+                      animate={{ scale: 1.3, opacity: 0 }}
+                      transition={{ duration: 0.5, ease: 'easeOut' }}
+                    />
+                    <motion.circle
+                      cx={coords.x}
+                      cy={coords.y}
+                      r="20"
+                      fill="rgba(199, 182, 255, 0.2)"
+                      className="pointer-events-none"
+                      aria-hidden="true"
+                      initial={{ scale: 0.9, opacity: 0.5 }}
+                      animate={{ scale: 1.15, opacity: 0 }}
+                      transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
+                    />
+                  </>
                 )}
                 
-                {/* City marker circle with brand colors - fully accessible */}
+                {/* Enhanced city marker circle with premium styling */}
                 <motion.circle
                   ref={(el) => {
                     if (el) cityRefs.current.set(city, el);
                   }}
                   cx={coords.x}
                   cy={coords.y}
-                  r={selected ? 11 : hovered || focused || touchedCity === city ? 10 : 9}
-                  fill={selected ? 'url(#selectedGradient)' : disabled ? '#3f3f46' : hovered || focused || touchedCity === city ? '#C2A8FF' : '#71717a'} // brand-300 for hover/focus/touch
-                  stroke={selected ? '#9A6AFF' : hovered || focused || touchedCity === city ? '#C2A8FF' : '#52525b'} // brand-500 for selected, brand-300 for hover
-                  strokeWidth={selected ? 3.5 : hovered || focused || touchedCity === city ? 2.5 : 2}
+                  r={selected ? 12 : hovered || focused || touchedCity === city ? 11 : 9.5}
+                  fill={selected ? 'url(#selectedGradient)' : disabled ? '#3f3f46' : hovered || focused || touchedCity === city ? 'url(#hoverGradient)' : '#71717a'}
+                  stroke={selected ? '#8B6FFF' : hovered || focused || touchedCity === city ? '#C2A8FF' : '#52525b'}
+                  strokeWidth={selected ? 4 : hovered || focused || touchedCity === city ? 3 : 2}
                   className={disabled ? 'cursor-not-allowed touch-manipulation' : 'cursor-pointer touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-transparent'}
-                  filter={selected ? undefined : hovered || focused || touchedCity === city ? 'url(#glow)' : undefined}
-                  whileHover={!disabled ? { scale: 1.35, strokeWidth: 3.5 } : {}}
-                  whileTap={!disabled ? { scale: 0.85 } : {}}
+                  filter={selected ? 'url(#selectedGlow)' : hovered || focused || touchedCity === city ? 'url(#glow)' : undefined}
+                  whileHover={!disabled ? { scale: 1.4, strokeWidth: 4 } : {}}
+                  whileTap={!disabled ? { scale: 0.9 } : {}}
                   onClick={() => {
                     if (disabled) {
                       triggerShake(city);
@@ -385,52 +441,54 @@ export default function EuropeMap({
                   aria-label={`${city}, ${coords.country}. ${selected ? 'Selected' : disabled ? 'Maximum selections reached' : 'Click to select'}`}
                   aria-pressed={selected}
                   aria-disabled={disabled}
-                  initial={justSelected === city ? { scale: 0.5, opacity: 0 } : false}
+                  initial={justSelected === city ? { scale: 0.4, opacity: 0 } : false}
                   animate={
                     shakeCity === city
-                      ? { x: [-2, 2, -1, 1, 0], scale: selected ? 1 : 1 }
+                      ? { x: [-3, 3, -2, 2, 0], scale: selected ? 1 : 1 }
                       : justSelected === city
-                        ? { scale: [0.5, 1.3, 1], opacity: [0, 1, 1], x: 0 }
+                        ? { scale: [0.4, 1.4, 1], opacity: [0, 1, 1], x: 0 }
                         : selected
                           ? { scale: 1, x: 0 }
                           : { x: 0 }
                   }
                   transition={
                     shakeCity === city
-                      ? { duration: 0.45, ease: 'easeInOut' }
+                      ? { duration: 0.5, ease: 'easeInOut' }
                       : justSelected === city
-                        ? { duration: 0.6, ease: 'easeOut' }
-                        : { duration: 0.2, ease: 'easeOut' }
+                        ? { duration: 0.7, ease: [0.23, 1, 0.32, 1] }
+                        : { duration: 0.25, ease: 'easeOut' }
                   }
                   style={selected ? {
-                    filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.25))'
+                    filter: 'drop-shadow(0 0 6px rgba(199,182,255,0.4)) drop-shadow(0 0 12px rgba(139,111,255,0.3))'
+                  } : hovered || focused || touchedCity === city ? {
+                    filter: 'drop-shadow(0 0 4px rgba(194,168,255,0.3))'
                   } : {}}
                 />
                 
-                {/* City label appears only when relevant */}
+                {/* Enhanced city label with premium styling */}
                 {(showLabel || touchedCity === city) && (
                   <motion.text
                     x={coords.x}
                     y={labelY}
                     textAnchor="middle"
-                    fill={selected ? '#C2A8FF' : '#E6E1FF'} // brand-300 for selected
-                    fontSize={selected ? "13" : "12"}
-                    fontWeight={selected ? '700' : '600'}
+                    fill={selected ? '#D4C5FF' : '#F3E8FF'} // Lighter, more vibrant colors
+                    fontSize={selected ? "14" : "13"}
+                    fontWeight={selected ? '800' : '700'}
                     className="pointer-events-none select-none"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.2 }}
+                    initial={{ opacity: 0, y: 2 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
                     style={selected ? {
-                      filter: 'drop-shadow(0 0 2px rgba(255,255,255,0.3))',
-                      textShadow: '0 0 5px rgba(200,200,255,0.35)',
+                      filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.4)) drop-shadow(0 0 6px rgba(199,182,255,0.3))',
+                      textShadow: '0 0 8px rgba(212,197,255,0.5), 0 0 4px rgba(139,111,255,0.4)',
                       paintOrder: 'stroke fill',
-                      stroke: 'rgba(12,0,40,0.55)',
-                      strokeWidth: 0.45
+                      stroke: 'rgba(12,0,40,0.65)',
+                      strokeWidth: 0.5
                     } : {
                       paintOrder: 'stroke fill',
-                      stroke: 'rgba(8,0,32,0.45)',
-                      strokeWidth: 0.35,
-                      textShadow: '0 0 4px rgba(12,0,32,0.4)'
+                      stroke: 'rgba(8,0,32,0.55)',
+                      strokeWidth: 0.4,
+                      textShadow: '0 0 6px rgba(243,232,255,0.3), 0 0 3px rgba(194,168,255,0.2)'
                     }}
                     aria-hidden="true"
                   >
@@ -443,15 +501,15 @@ export default function EuropeMap({
         </g>
       </svg>
 
-      {/* Tooltip */}
+      {/* Enhanced premium tooltip */}
       <AnimatePresence>
         {tooltip && (hoveredCity || touchedCity) && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+            initial={{ opacity: 0, y: 8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.9 }}
-            transition={{ duration: 0.2 }}
-            className="absolute z-50 px-3 py-2 bg-zinc-900/95 backdrop-blur-md rounded-lg border border-zinc-700/40 shadow-glow-subtle pointer-events-none touch-manipulation"
+            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+            className="absolute z-50 px-4 py-2.5 bg-gradient-to-br from-zinc-900/98 via-zinc-800/95 to-zinc-900/98 backdrop-blur-xl rounded-xl border-2 border-brand-500/40 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_20px_rgba(99,102,241,0.3)] pointer-events-none touch-manipulation"
             style={{
               left: `${tooltip.x}px`,
               top: `${tooltip.y}px`,
@@ -460,38 +518,56 @@ export default function EuropeMap({
             role="tooltip"
             aria-live="polite"
           >
-            <div className="text-white font-semibold text-sm">{tooltip.city}</div>
-            <div className="text-zinc-400 text-xs mt-0.5">
+            <div className="flex items-center gap-2">
+              <div className="text-white font-bold text-sm leading-tight">{tooltip.city}</div>
+              {selectedCities.includes(tooltip.city) && (
+                <div className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" aria-hidden="true" />
+              )}
+            </div>
+            <div className="text-zinc-300 text-xs mt-1 font-medium">
               {CITY_COORDINATES[tooltip.city]?.country}
             </div>
             {selectedCities.includes(tooltip.city) && (
-              <div className="text-brand-300 text-xs mt-1 font-medium">✓ Selected</div>
+              <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-brand-500/30">
+                <svg className="w-3 h-3 text-brand-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                <span className="text-brand-300 text-xs font-semibold">Selected</span>
+              </div>
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Legend */}
+      {/* Enhanced premium legend */}
       <div 
-        className="absolute bottom-5 left-5 right-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs bg-zinc-900/70 backdrop-blur-md rounded-xl px-6 py-4 border border-zinc-700/40"
+        className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-5 sm:right-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-br from-zinc-900/90 via-zinc-800/85 to-zinc-900/90 backdrop-blur-xl rounded-xl px-5 py-3.5 sm:px-6 sm:py-4 border-2 border-brand-500/30 shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_0_40px_rgba(99,102,241,0.1)]"
         role="status"
         aria-live="polite"
         aria-label={`${selectedCities.length} of ${maxSelections} cities selected`}
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
-          <div className="flex items-center gap-3">
-            <div className="relative w-4 h-4 rounded-full bg-zinc-100" aria-hidden="true">
-              <div className="absolute inset-0 rounded-full bg-zinc-100/50 animate-pulse" />
+          <div className="flex items-center gap-2.5">
+            <div className="relative w-5 h-5 rounded-full bg-gradient-to-br from-brand-300 to-brand-500 shadow-[0_0_12px_rgba(199,182,255,0.4)]" aria-hidden="true">
+              <div className="absolute inset-0 rounded-full bg-brand-400/60 animate-pulse" />
+              <div className="absolute inset-0 rounded-full bg-brand-300/40 animate-ping" style={{ animationDuration: '2s' }} />
             </div>
-            <span className="font-semibold text-white/90 text-sm">Selected</span>
+            <span className="font-bold text-white text-sm">Selected</span>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded-full bg-zinc-600 border border-zinc-500/50" aria-hidden="true"></div>
-            <span className="text-zinc-400 text-sm">Available</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-5 h-5 rounded-full bg-zinc-700 border-2 border-zinc-600/60 shadow-inner" aria-hidden="true"></div>
+            <span className="text-zinc-300 text-sm font-medium">Available</span>
           </div>
         </div>
-        <div className="text-white/90 font-bold text-base">
-          {selectedCities.length}/{maxSelections} selected
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-brand-500/20 rounded-lg border border-brand-500/40">
+          <span className="text-brand-200 font-black text-base tabular-nums">
+            {selectedCities.length}
+          </span>
+          <span className="text-zinc-400 font-semibold text-sm">/</span>
+          <span className="text-white font-bold text-base tabular-nums">
+            {maxSelections}
+          </span>
+          <span className="text-zinc-300 text-xs font-medium ml-1">selected</span>
         </div>
       </div>
     </div>
