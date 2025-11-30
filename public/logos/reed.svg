@@ -1,3 +1,16 @@
-<svg width="70" height="32" viewBox="0 0 70 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <text x="0" y="20" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="currentColor">Reed</text>
+<svg width="90" height="32" viewBox="0 0 90 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Reed logo - stylized text with proper vector paths -->
+  <g fill="currentColor">
+    <!-- R -->
+    <path d="M4 4h4v8h-2V6h-2v6H4V4z" fill="currentColor"/>
+    <path d="M6 4h2v2h-2V4z"/>
+    <!-- e -->
+    <path d="M12 10h6v2h-6v-2zm0-2h6v2h-6V8z"/>
+    <!-- e -->
+    <path d="M20 10h6v2h-6v-2zm0-2h6v2h-6V8z"/>
+    <!-- d -->
+    <path d="M28 4h4v12h-2V6h-2v10h-2V4z"/>
+  </g>
+  <!-- Fallback: Text version -->
+  <text x="4" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="700" fill="currentColor" letter-spacing="0.05em">Reed</text>
 </svg>

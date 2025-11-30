@@ -538,36 +538,76 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Hero background animations */
+/* Hero background animations - More noticeable timing */
 @keyframes slow-spotlight {
   0% {
     transform: translate(-50%, -8%) rotate(0deg);
+    opacity: 0.5;
   }
   50% {
     transform: translate(-48%, -2%) rotate(6deg);
+    opacity: 0.7;
   }
   100% {
     transform: translate(-50%, -8%) rotate(0deg);
+    opacity: 0.5;
   }
 }
 
 .animate-slow-spotlight {
-  animation: slow-spotlight 18s ease-in-out infinite;
-  will-change: transform;
+  animation: slow-spotlight 14s ease-in-out infinite;
+  will-change: transform, opacity;
+  /* Performance: Use GPU acceleration */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 @keyframes grid-fade {
   0%, 100% {
-    opacity: 0.04;
+    opacity: 0.08;
   }
   50% {
-    opacity: 0.08;
+    opacity: 0.15;
   }
 }
 
 .animate-grid-fade {
-  animation: grid-fade 22s ease-in-out infinite;
+  animation: grid-fade 16s ease-in-out infinite;
   will-change: opacity;
+  /* Performance: Use GPU acceleration */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Performance monitoring: Detect low-end devices */
+@media (prefers-reduced-motion: no-preference) {
+  @media (max-width: 768px) {
+    /* Reduce animation complexity on mobile */
+    .animate-slow-spotlight {
+      animation-duration: 20s;
+    }
+    .animate-grid-fade {
+      animation-duration: 24s;
+    }
+  }
+  
+  /* Reduce animations on low-end devices (detected via max-width) */
+  @media (max-width: 480px) {
+    .animate-slow-spotlight,
+    .animate-grid-fade {
+      animation-duration: 30s;
+      opacity: 0.6;
+    }
+  }
+  
+  /* Detect reduced performance preference */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-slow-spotlight,
+    .animate-grid-fade {
+      animation: none !important;
+      opacity: 0.5 !important;
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,3 +1,19 @@
-<svg width="90" height="32" viewBox="0 0 90 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <text x="0" y="20" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="currentColor">Adzuna</text>
+<svg width="110" height="32" viewBox="0 0 110 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Adzuna logo - stylized text with proper vector paths -->
+  <g fill="currentColor">
+    <!-- A -->
+    <path d="M4 4h4l-2 8h-2l-2-8h4zm-2 6h2l1 2h-2l-1-2z"/>
+    <!-- d -->
+    <path d="M12 4h4v12h-2V6h-2v10h-2V4z"/>
+    <!-- z -->
+    <path d="M20 4h6v2h-4v2h4v2h-6V4z"/>
+    <!-- u -->
+    <path d="M28 4h2v10h4v2h-6V4z"/>
+    <!-- n -->
+    <path d="M36 4h2v12h-2V4zm0 4h4v8h-2V8h-2v8h-2V4z"/>
+    <!-- a -->
+    <path d="M44 10h6v2h-6v-2zm0-2h6v2h-6V8z"/>
+  </g>
+  <!-- Fallback: Text version -->
+  <text x="4" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="700" fill="currentColor" letter-spacing="0.05em">Adzuna</text>
 </svg>

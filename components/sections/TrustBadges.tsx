@@ -49,7 +49,8 @@ export default function TrustBadges() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: index * 0.08 }}
                 whileHover={{ scale: 1.05 }}
-                className="group relative flex items-center justify-center transition-all duration-200 hover:-translate-y-1 bg-white/[0.08] border border-white/10 px-4 py-3 rounded-xl"
+                className="group relative flex items-center justify-center transition-all duration-200 hover:-translate-y-1 bg-white/[0.08] border border-white/10 px-4 py-3 rounded-xl hover:border-white/20 hover:bg-white/[0.12] hover:shadow-[0_4px_12px_rgba(124,94,255,0.15)]"
+                role="listitem"
               >
                 <div className="relative h-8 w-auto text-white">
                   <Image
@@ -57,11 +58,20 @@ export default function TrustBadges() {
                     alt={badge.name}
                     width={120}
                     height={40}
-                    className="h-8 w-auto object-contain transition-all duration-300 opacity-90 group-hover:opacity-100"
+                    className="h-8 w-auto object-contain transition-all duration-300 opacity-90 group-hover:opacity-100 group-hover:brightness-110"
                     loading="lazy"
                     unoptimized
+                    onError={(e) => {
+                      // Fallback: Show text if image fails to load
+                      const target = e.target as HTMLImageElement;
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `<span class="text-sm font-semibold text-white">${badge.name}</span>`;
+                      }
+                    }}
                   />
                 </div>
+                {/* Fallback text (hidden, shown via onError) */}
                 <span className="sr-only">{badge.description}</span>
               </motion.div>
             ))}

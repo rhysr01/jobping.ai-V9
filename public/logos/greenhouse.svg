@@ -1,3 +1,27 @@
-<svg width="120" height="32" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <text x="0" y="20" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="currentColor">Greenhouse</text>
+<svg width="140" height="32" viewBox="0 0 140 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Greenhouse logo - stylized text with proper vector paths -->
+  <g fill="currentColor">
+    <!-- G -->
+    <path d="M4 4h6v2h-4v2h4v2h-6V4z"/>
+    <!-- r -->
+    <path d="M12 4h2v12h-2V4zm0 4h4v8h-2V8h-2v8h-2V4z"/>
+    <!-- e -->
+    <path d="M20 10h6v2h-6v-2zm0-2h6v2h-6V8z"/>
+    <!-- e -->
+    <path d="M28 10h6v2h-6v-2zm0-2h6v2h-6V8z"/>
+    <!-- n -->
+    <path d="M36 4h2v12h-2V4zm0 4h4v8h-2V8h-2v8h-2V4z"/>
+    <!-- h -->
+    <path d="M44 4h2v12h-2V4zm0 4h4v8h-2V8h-2v8h-2V4z"/>
+    <!-- o -->
+    <path d="M52 6h4v8h-4V6zm2-2h2v12h-2V4z"/>
+    <!-- u -->
+    <path d="M60 4h2v10h4v2h-6V4z"/>
+    <!-- s -->
+    <path d="M68 4h6v2h-4v2h4v2h-6V4z"/>
+    <!-- e -->
+    <path d="M76 10h6v2h-6v-2zm0-2h6v2h-6V8z"/>
+  </g>
+  <!-- Fallback: Text version -->
+  <text x="4" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="700" fill="currentColor" letter-spacing="0.05em">Greenhouse</text>
 </svg>

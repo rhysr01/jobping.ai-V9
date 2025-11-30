@@ -359,9 +359,17 @@ export default function Hero() {
                     alt={description}
                     width={120}
                     height={40}
-                    className="h-8 w-auto object-contain transition-all duration-300 opacity-90 group-hover:opacity-100"
+                    className="h-8 w-auto object-contain transition-all duration-300 opacity-90 group-hover:opacity-100 group-hover:brightness-110 group-hover:scale-105"
                     loading="lazy"
                     unoptimized
+                    onError={(e) => {
+                      // Fallback: Show text if image fails to load
+                      const target = e.target as HTMLImageElement;
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `<span class="text-xs font-semibold text-white">${description}</span>`;
+                      }
+                    }}
                   />
                 </div>
                 <span className="sr-only">{description}</span>
