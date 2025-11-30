@@ -19,7 +19,7 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 
 // Hero section
 export const HERO_TITLE = "JobPing";
-export const HERO_HEADLINE = "Find graduate roles and internships in your inbox";
+export const HERO_HEADLINE = "Find EU graduate roles and internships in your inbox";
 export const HERO_SUBLINE = "Internships and graduate roles across Europe.";
 export const HERO_SUBTITLE = "";
 export const HERO_CTA = "Get your first 5 roles";
