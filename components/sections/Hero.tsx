@@ -174,11 +174,11 @@ export default function Hero() {
   return (
     <section
       data-testid="hero-section"
-      className="section-padding-hero pt-32 pb-14 md:pb-20 lg:pb-28 relative flex flex-col items-center justify-start overflow-hidden text-center min-h-screen"
+      className="section-padding-hero pt-10 pb-24 relative flex flex-col items-center justify-start overflow-hidden text-center"
     >
-      <HeroBackgroundAura />
       {/* Cinematic dark background */}
       <div className="absolute inset-0 -z-10 bg-black" />
+      <HeroBackgroundAura />
       {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
         <div className="pointer-events-none absolute inset-0 -z-10">
           {particles.map(({ id, top, left, size, duration, delay, drift, opacity }) => (
@@ -228,16 +228,13 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="flex flex-col items-center gap-6"
+            className="flex flex-col items-center gap-3 mb-8"
+            aria-hidden="true"
           >
-            {/* Big wordmark with grad hat */}
-            <motion.div
-              className="relative flex items-center justify-center gap-4"
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-            >
+            {/* Smaller wordmark with grad hat */}
+            <div className="flex items-center justify-center gap-3">
               <svg
-                className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 text-white"
+                className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 text-white"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -250,28 +247,13 @@ export default function Hero() {
                 <path d="M22 10v4" />
                 <path d="M6 12v4c0 1.6 3 3.2 6 3.2s6-1.6 6-3.2v-4" />
               </svg>
-              <motion.span
-                className="hero-logo-text text-[5rem] sm:text-[6rem] md:text-[7rem] lg:text-[8rem] font-semibold tracking-[-0.02em] relative inline-block text-white"
-                style={{ 
-                  backgroundSize: "200% 200%",
-                  willChange: 'auto'
-                }}
-                animate={
-                  prefersReduced || shouldThrottle || !shouldLoadAnimations
-                    ? {}
-                    : {
-                        backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                      }
-                }
-                transition={{
-                  duration: 8,
-                  repeat: prefersReduced ? 0 : Infinity,
-                  ease: "easeInOut",
-                }}
-              >
+              <span className="text-[3rem] sm:text-[3.5rem] md:text-[4rem] font-semibold tracking-tight text-white">
                 JobPing
-              </motion.span>
-            </motion.div>
+              </span>
+            </div>
+            <p className="text-sm md:text-base text-zinc-400">
+              Early-career roles across Europe, filtered for real applicants.
+            </p>
           </motion.div>
           {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
             <motion.div
@@ -291,6 +273,8 @@ export default function Hero() {
           transition={{ delay: 0.15, duration: 0.6, ease: "easeOut" }}
           className="relative w-full max-w-3xl mt-10 md:mt-12 rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-xl px-8 md:px-12 shadow-[0_8px_20px_rgba(0,0,0,0.4)]"
         >
+          {/* Subtle spotlight behind card */}
+          <div className="pointer-events-none absolute inset-x-0 -top-32 h-64 opacity-60 blur-3xl bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.25),_transparent_60%)] -z-10" />
           {/* Top highlight line for glass effect */}
           <div className="absolute inset-x-0 top-0 h-px bg-white/20" />
           
@@ -320,7 +304,7 @@ export default function Hero() {
               <h1 className="text-balance text-5xl md:text-6xl leading-[1.06] font-semibold mb-3 text-white">
                 {Copy.HERO_HEADLINE}
               </h1>
-              <p className="text-balance text-lg md:text-xl text-zinc-200 font-normal">
+              <p className="text-balance text-lg md:text-xl text-zinc-300 font-normal">
                 {Copy.HERO_SUBLINE}
               </p>
             </motion.div>

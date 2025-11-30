@@ -69,16 +69,7 @@ export default function HowItWorks() {
                   </motion.span>
                   <h3 className="text-xl font-semibold text-white sm:text-2xl mb-2">{step.title}</h3>
                 </div>
-                {index === 1 ? (
-                  <p className="text-sm text-zinc-300">
-                    {step.description}
-                    <span className="block text-zinc-400 mt-1">
-                      No dashboards, no spam—just roles that match your filters.
-                    </span>
-                  </p>
-                ) : (
-                  <p className="text-sm text-zinc-300">{step.description}</p>
-                )}
+                <p className="text-sm text-zinc-300">{step.description}</p>
               </motion.article>
             );
           })}

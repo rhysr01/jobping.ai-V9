@@ -553,6 +553,7 @@ html {
 
 .animate-slow-spotlight {
   animation: slow-spotlight 18s ease-in-out infinite;
+  will-change: transform;
 }
 
 @keyframes grid-fade {
@@ -566,6 +567,7 @@ html {
 
 .animate-grid-fade {
   animation: grid-fade 22s ease-in-out infinite;
+  will-change: opacity;
 }
 
 @media (prefers-reduced-motion: reduce) {

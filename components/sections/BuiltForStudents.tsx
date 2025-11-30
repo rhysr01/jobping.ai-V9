@@ -72,6 +72,11 @@ export default function BuiltForStudents() {
                 <p className="text-base text-zinc-300/90 leading-relaxed">
                   {feature.body}
                 </p>
+                {feature.meta && (
+                  <p className="text-xs text-zinc-500 mt-1">
+                    {feature.meta}
+                  </p>
+                )}
               </motion.li>
             );
           })}

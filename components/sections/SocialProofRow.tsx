@@ -63,13 +63,17 @@ export default function SocialProofRow() {
       {/* Guide line behind social proof row */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-transparent via-white/5 to-transparent blur-xl opacity-30" />
       <div className="container-page relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.55 }}
-          className="grid gap-6 rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-[0_4px_18px_rgba(0,0,0,0.35)] px-6 py-6 hover:-translate-y-1 transition-all duration-200 sm:grid-cols-3 sm:gap-8 sm:px-7 sm:py-7"
-        >
+        <div className="mt-8 md:mt-10 space-y-4">
+          <p className="text-sm text-zinc-400 text-center">
+            Based on recent activity across JobPing: students using the service, curated roles per email, and early-career opportunities live this week.
+          </p>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.55 }}
+            className="grid gap-6 rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-[0_4px_18px_rgba(0,0,0,0.35)] px-6 py-6 hover:-translate-y-1 transition-all duration-200 sm:grid-cols-3 sm:gap-8 sm:px-7 sm:py-7"
+          >
           {items.map((item, index) => (
             <motion.div
               key={item.title}
@@ -97,14 +101,15 @@ export default function SocialProofRow() {
                 <p className="text-xs uppercase tracking-[0.16em] text-zinc-400 mb-2">
                   {isLoading && index === 0 ? 'Loading…' : item.eyebrow}
                 </p>
-                <h3 className="text-lg md:text-xl font-semibold text-white mb-2">{item.title}</h3>
-                <p className="text-sm text-zinc-300 transition-colors duration-300 group-hover:text-zinc-200">
+                <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
+                <p className="text-sm text-zinc-400 transition-colors duration-300 group-hover:text-zinc-300">
                   {typeof item.description === 'string' ? item.description : item.description}
                 </p>
               </div>
             </motion.div>
           ))}
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </section>
   );

@@ -87,16 +87,19 @@ export default function Pricing() {
               🚀 Over 12,000 jobs matched this month
             </span>
             <h3 className="text-5xl font-semibold tracking-[-0.02em] text-white md:text-6xl mb-2">
-              See your first 5 matches before the weekend.
+              See your first 5 matches before the weekend
             </h3>
-            <p className="max-w-2xl text-xl text-zinc-300 md:text-2xl">
-              We refresh opportunities every morning. If we miss the mark, reply to any email and we retune within 24 hours.
+            <p className="max-w-2xl text-xl text-zinc-300 md:text-2xl mb-4">
+              Sign up in under two minutes—your first curated set arrives within 48 hours.
+            </p>
+            <p className="max-w-2xl text-base text-zinc-400 mb-6">
+              If we miss the mark, reply to any email and we retune within 24 hours.
             </p>
             <Link
               href="/signup"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/15 hover:text-brand-100 sm:text-base"
             >
-              Get your first 5 roles
+              See my first matches
               <BrandIcons.ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -116,24 +119,16 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.55, delay: index * 0.1 }}
-      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-xl border border-white/10 backdrop-blur-xl shadow-[0_4px_18px_rgba(0,0,0,0.35)] px-6 py-6 transition-all duration-200 hover:-translate-y-1 md:px-7 md:py-7 ${
-        isPremium ? 'bg-white/[0.08]' : 'bg-white/[0.06]'
+      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 md:px-7 md:py-7 ${
+        isPremium 
+          ? 'bg-zinc-900 border border-purple-500/60 shadow-[0_24px_60px_rgba(129,140,248,0.35)]' 
+          : 'bg-white/[0.06] border border-white/10 shadow-[0_4px_18px_rgba(0,0,0,0.35)]'
       }`}
     >
       {plan.badge && (
-        <motion.span 
-          className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-brand-500 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow-[0_8px_24px_rgba(126,97,255,0.45)]"
-          animate={{ 
-            boxShadow: [
-              '0_8px_24px_rgba(126,97,255,0.45)',
-              '0_8px_32px_rgba(110,87,245,0.6)',
-              '0_8px_24px_rgba(126,97,255,0.45)'
-            ]
-          }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        >
-          {plan.badge}
-        </motion.span>
+        <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-xs px-3 py-1 rounded-full bg-purple-500/10 border border-purple-400/40 text-purple-200">
+          Most popular
+        </span>
       )}
 
       <div className="space-y-5">
@@ -181,19 +176,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
               </motion.span>
             </span>
           </Link>
-          <p className="text-xs leading-snug text-zinc-400 text-center">Cancel anytime. No lock-in.</p>
         </motion.div>
-
-        <div className="flex items-center gap-2 text-xs text-zinc-200">
-          <BrandIcons.Shield className="h-4 w-4" />
-          <span>Cancel anytime · GDPR compliant</span>
-        </div>
-
-        {plan.footnote && (
-          <p className="text-xs text-zinc-300">
-            {plan.footnote}
-          </p>
-        )}
       </div>
     </motion.article>
   );

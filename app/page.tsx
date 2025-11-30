@@ -20,7 +20,6 @@ export default function Page() {
         <HowItWorks />
         <BuiltForStudents />
         <Pricing />
-        <SecondaryCTA />
         <TrustBadges />
       </main>
       <div className="h-16 w-full bg-gradient-to-b from-transparent to-black/40" />
