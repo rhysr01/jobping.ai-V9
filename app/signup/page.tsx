@@ -521,8 +521,8 @@ function SignupForm() {
                 </div>
 
                 {/* GDPR Consent - MOVED TO STEP 1 (Required) */}
-                <div className="bg-gradient-to-r from-brand-500/15 via-purple-600/15 to-brand-500/15 border-2 border-brand-500/40 rounded-2xl p-7 shadow-[0_0_30px_rgba(99,102,241,0.2)]">
-                  <label className="flex items-start gap-4 cursor-pointer group">
+                <div className="bg-gradient-to-r from-brand-500/15 via-purple-600/15 to-brand-500/15 border-2 border-brand-500/40 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-7 shadow-[0_0_30px_rgba(99,102,241,0.2)]">
+                  <label className="flex items-start gap-3 sm:gap-4 cursor-pointer group touch-manipulation">
                     <input
                       type="checkbox"
                       id="gdpr-consent"
@@ -532,7 +532,7 @@ function SignupForm() {
                         setTouchedFields(prev => new Set(prev).add('gdprConsent'));
                       }}
                       onBlur={() => setTouchedFields(prev => new Set(prev).add('gdprConsent'))}
-                      className="mt-1 w-5 h-5 rounded border-2 border-zinc-600 bg-zinc-800 checked:bg-brand-500 checked:border-brand-500 cursor-pointer"
+                      className="mt-1 w-6 h-6 sm:w-5 sm:h-5 rounded border-2 border-zinc-600 bg-zinc-800 checked:bg-brand-500 checked:border-brand-500 cursor-pointer touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0"
                       required
                       aria-required="true"
                       aria-describedby={shouldShowError('gdprConsent', true, formData.gdprConsent) ? 'gdpr-error' : undefined}
@@ -560,7 +560,7 @@ function SignupForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="fullName" className="block text-lg font-bold text-white mb-3">Full Name *</label>
+                  <label htmlFor="fullName" className="block text-base sm:text-lg font-bold text-white mb-2 sm:mb-3">Full Name *</label>
                   <input
                     ref={formRefs.fullName}
                     id="fullName"
@@ -574,6 +574,14 @@ function SignupForm() {
                         return next;
                       });
                     }}
+                    onFocus={(e) => {
+                      // Scroll input into view on mobile to prevent keyboard covering
+                      if (window.innerWidth < 768) {
+                        setTimeout(() => {
+                          e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 300);
+                      }
+                    }}
                     onBlur={() => {
                       setTouchedFields(prev => new Set(prev).add('fullName'));
                       if (!formData.fullName.trim() && formData.fullName.length > 0) {
@@ -582,7 +590,7 @@ function SignupForm() {
                         announce('Full name is valid', 'polite');
                       }
                     }}
-                    className={`w-full px-6 py-5 bg-black/50 border-2 rounded-2xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-lg font-medium backdrop-blur-sm ${
+                    className={`w-full px-4 sm:px-6 py-4 sm:py-5 bg-black/50 border-2 rounded-xl sm:rounded-2xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-base sm:text-lg font-medium backdrop-blur-sm touch-manipulation ${
                       formData.fullName ? (nameValidation.isValid ? 'border-green-500/60 shadow-[0_0_20px_rgba(34,197,94,0.2)]' : (fieldErrors.fullName || nameValidation.error ? 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.2)]' : 'border-zinc-700')) : 'border-zinc-700 hover:border-zinc-600'
                     }`}
                     placeholder="John Smith"
@@ -603,8 +611,8 @@ function SignupForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-lg font-bold text-white mb-3">Email *</label>
-                  <p className="text-sm font-medium text-zinc-300 mb-4">Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops weekly.</p>
+                  <label htmlFor="email" className="block text-base sm:text-lg font-bold text-white mb-2 sm:mb-3">Email *</label>
+                  <p className="text-xs sm:text-sm font-medium text-zinc-300 mb-3 sm:mb-4">Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops weekly.</p>
                   <input
                     ref={formRefs.email}
                     id="email"
@@ -618,6 +626,14 @@ function SignupForm() {
                         return next;
                       });
                     }}
+                    onFocus={(e) => {
+                      // Scroll input into view on mobile to prevent keyboard covering
+                      if (window.innerWidth < 768) {
+                        setTimeout(() => {
+                          e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 300);
+                      }
+                    }}
                     onBlur={() => {
                       setTouchedFields(prev => new Set(prev).add('email'));
                       if (emailValidation.error || fieldErrors.email) {
@@ -626,7 +642,7 @@ function SignupForm() {
                         announce('Email address is valid', 'polite');
                       }
                     }}
-                    className={`w-full px-6 py-5 bg-black/50 border-2 rounded-2xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-lg font-medium backdrop-blur-sm ${
+                    className={`w-full px-4 sm:px-6 py-4 sm:py-5 bg-black/50 border-2 rounded-xl sm:rounded-2xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-base sm:text-lg font-medium backdrop-blur-sm touch-manipulation ${
                       formData.email ? (emailValidation.isValid && !fieldErrors.email ? 'border-green-500/60 shadow-[0_0_20px_rgba(34,197,94,0.2)]' : (emailValidation.error || fieldErrors.email ? 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.2)]' : 'border-zinc-700')) : 'border-zinc-700 hover:border-zinc-600'
                     }`}
                     placeholder="you@example.com"
@@ -652,7 +668,7 @@ function SignupForm() {
                   </label>
                   <p className="text-sm text-zinc-400 mb-4">Choose up to 3 cities where you'd like to work. You can click on the map or use the buttons below.</p>
                   
-                  {/* Interactive Europe Map */}
+                  {/* Interactive Europe Map - Hidden on mobile */}
                   <motion.div
                     id="cities-field"
                     aria-labelledby="cities-label"
@@ -660,7 +676,7 @@ function SignupForm() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="mb-6 sm:mb-8 md:mb-10"
+                    className="mb-4 sm:mb-6 md:mb-8 lg:mb-10 hidden sm:block"
                     onBlur={() => setTouchedFields(prev => new Set(prev).add('cities'))}
                   >
                     <EuropeMap
@@ -682,7 +698,7 @@ function SignupForm() {
                   </motion.div>
 
                   {/* Mobile-friendly city chips */}
-                  <div className="grid grid-cols-2 gap-2 sm:hidden">
+                  <div className="grid grid-cols-2 gap-2 sm:hidden" role="group" aria-labelledby="cities-label">
                     {CITIES.map(city => {
                       const isSelected = formData.cities.includes(city);
                       const isDisabled = !isSelected && formData.cities.length >= 3;
@@ -707,7 +723,7 @@ function SignupForm() {
                             }
                           }}
                           whileTap={{ scale: 0.97 }}
-                          className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-medium transition-colors ${
+                          className={`flex items-center justify-between rounded-xl border px-3 sm:px-4 py-3 sm:py-4 text-left text-sm font-medium transition-colors touch-manipulation min-h-[44px] ${
                             isSelected
                               ? 'border-brand-500 bg-brand-500/15 text-white shadow-glow-subtle'
                               : isDisabled
@@ -781,7 +797,7 @@ function SignupForm() {
                   disabled={!formData.fullName.trim() || !formData.email.trim() || !emailValidation.isValid || formData.cities.length === 0 || formData.languages.length === 0 || !formData.gdprConsent}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full bg-gradient-to-r from-brand-500 via-purple-500 to-brand-500 text-white font-bold text-xl py-6 rounded-2xl shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-[0_20px_50px_rgba(99,102,241,0.4)]"
+                  className="w-full bg-gradient-to-r from-brand-500 via-purple-500 to-brand-500 text-white font-bold text-base sm:text-lg md:text-xl py-4 sm:py-5 md:py-6 rounded-xl sm:rounded-2xl shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-[0_20px_50px_rgba(99,102,241,0.4)] touch-manipulation min-h-[48px] sm:min-h-[56px]"
                 >
                   {getDisabledMessage(1)}
                 </motion.button>
@@ -798,15 +814,15 @@ function SignupForm() {
                 transition={{ duration: 0.4 }}
                 className="relative"
               >
-                <div className="relative overflow-hidden rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#12002b]/40 to-purple-600/15 px-5 py-6 sm:px-8 sm:py-8">
-                  <div className="pointer-events-none absolute -top-24 right-0 h-48 w-48 rounded-full bg-brand-500/25 blur-3xl" />
-                  <div className="pointer-events-none absolute -bottom-28 left-12 h-56 w-56 bg-purple-600/20 blur-[120px]" />
+                <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#12002b]/40 to-purple-600/15 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
+                  <div className="pointer-events-none absolute -top-24 right-0 h-48 w-48 rounded-full bg-brand-500/25 blur-3xl hidden sm:block" />
+                  <div className="pointer-events-none absolute -bottom-28 left-12 h-56 w-56 bg-purple-600/20 blur-[120px] hidden sm:block" />
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(155,106,255,0.15),transparent_55%)]" />
-                  <div className="relative z-10 space-y-10 sm:space-y-12">
+                  <div className="relative z-10 space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12">
                     <div>
-                      <h2 className="text-3xl font-black text-white mb-3 sm:text-4xl">Your preferences</h2>
-                      <p className="text-lg font-medium text-zinc-100">Help us match you perfectly</p>
-                      <p className="text-sm font-medium text-zinc-300 mt-2">These fields improve the quality of your first 5 jobs.</p>
+                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2 sm:mb-3">Your preferences</h2>
+                      <p className="text-base sm:text-lg font-medium text-zinc-100">Help us match you perfectly</p>
+                      <p className="text-xs sm:text-sm font-medium text-zinc-300 mt-2">These fields improve the quality of your first 5 jobs.</p>
 
                       {/* Progress Helper */}
                       <div className="mt-4 rounded-2xl border border-brand-500/30 bg-gradient-to-r from-brand-500/10 via-purple-600/10 to-brand-500/10 p-4 shadow-glow-subtle">
@@ -901,7 +917,7 @@ function SignupForm() {
                         }}
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
-                        className={`w-full px-5 py-4 rounded-xl border-2 transition-all font-medium text-left ${
+                        className={`w-full px-4 sm:px-5 py-3 sm:py-4 rounded-xl border-2 transition-all font-medium text-left touch-manipulation min-h-[48px] ${
                           formData.visaStatus === visa
                             ? 'border-brand-500 bg-gradient-to-r from-brand-500/20 to-purple-600/10 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]'
                             : 'border-zinc-700 bg-zinc-900/40 text-zinc-300 hover:border-zinc-600'
@@ -968,12 +984,12 @@ function SignupForm() {
                   </div>
                 </div>
 
-                    <div className="flex gap-4 pt-6">
+                    <div className="flex gap-3 sm:gap-4 pt-4 sm:pt-6">
                       <motion.button
                         onClick={() => setStep(1)}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="flex-1 py-5 text-lg font-bold border-2 border-white/25 bg-white/[0.08] text-white rounded-2xl hover:border-brand-500/50 hover:bg-white/12 transition-all"
+                        className="flex-1 py-4 sm:py-5 text-base sm:text-lg font-bold border-2 border-white/25 bg-white/[0.08] text-white rounded-xl sm:rounded-2xl hover:border-brand-500/50 hover:bg-white/12 transition-all touch-manipulation min-h-[48px] sm:min-h-[56px]"
                       >
                         ← Back
                       </motion.button>
@@ -981,7 +997,7 @@ function SignupForm() {
                         onClick={() => setStep(3)}
                         disabled={!formData.experience || !formData.visaStatus || formData.entryLevelPreferences.length === 0}
                         whileHover={{ scale: 1.02 }}
-                        className={`relative flex-1 py-6 sm:py-7 text-xl sm:text-2xl font-black uppercase tracking-wide rounded-2xl overflow-hidden transition-all ${
+                        className={`relative flex-1 py-4 sm:py-6 md:py-7 text-base sm:text-xl md:text-2xl font-black uppercase tracking-wide rounded-xl sm:rounded-2xl overflow-hidden transition-all touch-manipulation min-h-[48px] sm:min-h-[56px] md:min-h-[64px] ${
                           !formData.experience || !formData.visaStatus || formData.entryLevelPreferences.length === 0
                             ? 'opacity-40 cursor-not-allowed bg-zinc-700 text-zinc-400'
                             : 'bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] hover:scale-105'
@@ -1006,14 +1022,14 @@ function SignupForm() {
                 transition={{ duration: 0.4 }}
                 className="relative"
               >
-                <div className="relative overflow-hidden rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#130433]/45 to-purple-600/15 px-5 py-6 sm:px-8 sm:py-8">
-                  <div className="pointer-events-none absolute -top-24 left-6 h-48 w-48 rounded-full bg-purple-600/25 blur-3xl" />
-                  <div className="pointer-events-none absolute -bottom-28 right-0 h-56 w-56 bg-brand-500/25 blur-[120px]" />
+                <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#130433]/45 to-purple-600/15 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
+                  <div className="pointer-events-none absolute -top-24 left-6 h-48 w-48 rounded-full bg-purple-600/25 blur-3xl hidden sm:block" />
+                  <div className="pointer-events-none absolute -bottom-28 right-0 h-56 w-56 bg-brand-500/25 blur-[120px] hidden sm:block" />
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(99,102,241,0.12),transparent_60%)]" />
-                  <div className="relative z-10 space-y-10 sm:space-y-12">
+                  <div className="relative z-10 space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12">
                     <div>
-                      <h2 className="text-3xl font-black text-white mb-3 sm:text-4xl">Your career path</h2>
-                      <p className="text-lg font-medium text-zinc-100">What type of roles interest you?</p>
+                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2 sm:mb-3">Your career path</h2>
+                      <p className="text-base sm:text-lg font-medium text-zinc-100">What type of roles interest you?</p>
 
                       {/* Progress Helper */}
                       <div className="mt-6 rounded-2xl border-2 border-brand-500/40 bg-gradient-to-r from-brand-500/15 via-purple-600/15 to-brand-500/15 p-5 shadow-[0_0_30px_rgba(99,102,241,0.25)]">
@@ -1055,7 +1071,7 @@ function SignupForm() {
                         }}
                         whileHover={{ scale: 1.02, y: -3 }}
                         whileTap={{ scale: 0.98 }}
-                        className={`relative px-6 py-6 rounded-2xl border-2 transition-all text-left overflow-hidden group ${
+                        className={`relative px-4 sm:px-6 py-4 sm:py-6 rounded-xl sm:rounded-2xl border-2 transition-all text-left overflow-hidden group touch-manipulation min-h-[80px] sm:min-h-[100px] ${
                           formData.careerPath === path.value
                             ? 'border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/15 shadow-glow-signup'
                             : 'border-zinc-700 bg-zinc-900/40 hover:border-zinc-600 hover:bg-zinc-900/60'
@@ -1138,13 +1154,13 @@ function SignupForm() {
                       </label>
 
                       {/* Select All / Clear All Controls */}
-                      <div className="flex gap-2 mb-4">
+                      <div className="flex flex-col sm:flex-row gap-2 mb-4">
                         <motion.button
                           type="button"
                           onClick={() => selectAllRoles(formData.careerPath)}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
-                          className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-glow-subtle hover:shadow-glow-medium"
+                          className="px-4 py-3 sm:py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-glow-subtle hover:shadow-glow-medium touch-manipulation min-h-[44px]"
                           title={`Select all ${selectedCareer.roles.length} roles in ${selectedCareer.label}`}
                         >
                           Select All {selectedCareer.roles.length} Roles
@@ -1154,7 +1170,7 @@ function SignupForm() {
                           onClick={clearAllRoles}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
-                          className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 text-sm font-semibold rounded-lg transition-colors"
+                          className="px-4 py-3 sm:py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 text-sm font-semibold rounded-lg transition-colors touch-manipulation min-h-[44px]"
                           title="Clear all selected roles"
                         >
                           Clear All
@@ -1180,7 +1196,7 @@ function SignupForm() {
                               transition={{ delay: idx * 0.02 }}
                               whileHover={{ scale: 1.02, x: 2 }}
                               whileTap={{ scale: 0.98 }}
-                              className={`px-4 py-3.5 rounded-xl border-2 transition-all font-semibold text-left text-sm relative overflow-hidden ${
+                              className={`px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl border-2 transition-all font-semibold text-left text-xs sm:text-sm relative overflow-hidden touch-manipulation min-h-[44px] ${
                                 formData.roles.includes(role)
                                   ? 'border-brand-500 bg-gradient-to-r from-brand-500/20 to-purple-600/15 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]'
                                   : 'border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80'
@@ -1217,12 +1233,12 @@ function SignupForm() {
                   );
                 })()}
 
-                    <div className="flex gap-4 pt-6">
+                    <div className="flex gap-3 sm:gap-4 pt-4 sm:pt-6">
                       <motion.button
                         onClick={() => setStep(2)}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="btn-secondary flex-1 py-5 text-lg"
+                        className="btn-secondary flex-1 py-4 sm:py-5 text-base sm:text-lg touch-manipulation min-h-[48px] sm:min-h-[56px]"
                         disabled={loading}
                       >
                         ← Back
@@ -1232,7 +1248,7 @@ function SignupForm() {
                         disabled={!formData.careerPath || formData.roles.length === 0}
                         whileHover={{ scale: loading ? 1 : 1.03 }}
                         whileTap={{ scale: loading ? 1 : 0.97 }}
-                        className="relative flex-1 py-6 sm:py-7 text-xl sm:text-2xl font-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 uppercase tracking-wide rounded-2xl overflow-hidden"
+                        className="relative flex-1 py-4 sm:py-6 md:py-7 text-base sm:text-xl md:text-2xl font-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 uppercase tracking-wide rounded-xl sm:rounded-2xl overflow-hidden touch-manipulation min-h-[48px] sm:min-h-[56px] md:min-h-[64px]"
                         style={{
                           background: loading ? 'linear-gradient(to right, #6366F1, #7C3AED, #8B5CF6)' : 'linear-gradient(135deg, #6366F1 0%, #7C3AED 50%, #8B5CF6 100%)',
                           boxShadow: '0 0 60px rgba(99,102,241,0.8), 0 20px 60px -18px rgba(99,102,241,0.9), inset 0 1px 0 rgba(255,255,255,0.3)',
@@ -1293,14 +1309,14 @@ function SignupForm() {
                 transition={{ duration: 0.4 }}
                 className="relative"
               >
-                <div className="relative overflow-hidden rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#0d0425]/45 to-purple-600/15 px-5 py-6 sm:px-8 sm:py-8">
-                  <div className="pointer-events-none absolute -top-28 right-8 h-52 w-52 rounded-full bg-brand-500/25 blur-[120px]" />
-                  <div className="pointer-events-none absolute -bottom-24 left-6 h-48 w-48 rounded-full bg-purple-600/20 blur-3xl" />
+                <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#0d0425]/45 to-purple-600/15 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
+                  <div className="pointer-events-none absolute -top-28 right-8 h-52 w-52 rounded-full bg-brand-500/25 blur-[120px] hidden sm:block" />
+                  <div className="pointer-events-none absolute -bottom-24 left-6 h-48 w-48 rounded-full bg-purple-600/20 blur-3xl hidden sm:block" />
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(136,84,255,0.12),transparent_60%)]" />
-                  <div className="relative z-10 space-y-8 sm:space-y-10">
+                  <div className="relative z-10 space-y-6 sm:space-y-8 md:space-y-10">
                     <div className="text-center">
-                      <h2 className="text-3xl font-black text-white mb-2">Additional Preferences</h2>
-                      <p className="text-zinc-200 mb-4">Optional - helps us match you even better</p>
+                      <h2 className="text-2xl sm:text-3xl font-black text-white mb-2">Additional Preferences</h2>
+                      <p className="text-sm sm:text-base text-zinc-200 mb-4">Optional - helps us match you even better</p>
                       <motion.button
                         type="button"
                         onClick={() => {
@@ -1437,12 +1453,12 @@ function SignupForm() {
                 </div>
 
 
-                <div className="flex gap-4 pt-6">
+                <div className="flex gap-3 sm:gap-4 pt-4 sm:pt-6">
                   <motion.button
                     onClick={() => setStep(3)}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="btn-secondary flex-1 py-5 text-lg"
+                    className="btn-secondary flex-1 py-4 sm:py-5 text-base sm:text-lg touch-manipulation min-h-[48px] sm:min-h-[56px]"
                   >
                     ← Back
                   </motion.button>
@@ -1451,7 +1467,7 @@ function SignupForm() {
                     disabled={loading}
                     whileHover={{ scale: loading ? 1 : 1.03 }}
                     whileTap={{ scale: loading ? 1 : 0.97 }}
-                    className="relative flex-1 py-6 sm:py-7 text-xl sm:text-2xl font-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 uppercase tracking-wide rounded-2xl overflow-hidden"
+                    className="relative flex-1 py-4 sm:py-6 md:py-7 text-base sm:text-xl md:text-2xl font-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 uppercase tracking-wide rounded-xl sm:rounded-2xl overflow-hidden touch-manipulation min-h-[48px] sm:min-h-[56px] md:min-h-[64px]"
                     style={{
                       background: loading ? 'linear-gradient(to right, #6366F1, #7C3AED, #8B5CF6)' : 'linear-gradient(135deg, #6366F1 0%, #7C3AED 50%, #8B5CF6 100%)',
                       boxShadow: '0 0 60px rgba(99,102,241,0.8), 0 20px 60px -18px rgba(99,102,241,0.9), inset 0 1px 0 rgba(255,255,255,0.3)',

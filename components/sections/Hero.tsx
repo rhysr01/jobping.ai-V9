@@ -11,24 +11,6 @@ import { SIGNUP_INITIAL_ROLES, FREE_ROLES_PER_SEND, PREMIUM_ROLES_PER_WEEK } fro
 import { useStats } from "@/hooks/useStats";
 import HeroBackgroundAura from "@/components/ui/HeroBackgroundAura";
 
-const trustSignals = [
-  { 
-    label: "Reed.co.uk", 
-    logo: "/logos/reed.svg",
-    description: "UK's largest job board"
-  },
-  { 
-    label: "Adzuna", 
-    logo: "/logos/adzuna.svg",
-    description: "Global job aggregator"
-  },
-  { 
-    label: "Greenhouse", 
-    logo: "/logos/greenhouse.svg",
-    description: "Company career pages"
-  },
-];
-
 const numberFormatter = new Intl.NumberFormat("en-US");
 
 export default function Hero() {
