@@ -63,7 +63,7 @@ export default function Pricing() {
           transition={{ duration: 0.5 }}
           className="mx-auto max-w-3xl text-left sm:text-center"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/40 bg-violet-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-violet-200">
+          <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200">
             <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
             Pricing
           </span>
@@ -71,6 +71,12 @@ export default function Pricing() {
             {Copy.PRICING_TITLE}
           </h2>
           <p className="mt-4 mb-10 text-base font-medium leading-relaxed text-zinc-100 sm:text-lg">{Copy.PRICING_SUBTITLE}</p>
+          <p className="hidden sm:block text-sm text-zinc-400 mb-6">
+            Start free. Upgrade when you need more opportunities.
+          </p>
+          <p className="hidden sm:block text-sm text-zinc-400 mb-6">
+            Start free. Upgrade anytime. Cancel in one click.
+          </p>
         </motion.div>
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -89,7 +95,7 @@ export default function Pricing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-20 max-w-3xl mx-auto rounded-2xl bg-white/[0.04] border border-white/10 p-10 backdrop-blur-xl shadow-[0_12px_60px_rgba(0,0,0,0.45)] ring-1 ring-white/5 text-center hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.65)] transition-all duration-200 relative z-10"
+            className="mt-20 max-w-3xl mx-auto rounded-2xl bg-white/[0.04] border border-white/10 p-10 backdrop-blur-xl shadow-hero ring-1 ring-white/5 text-center hover:-translate-y-1 hover:shadow-feature transition-all duration-200 relative z-10"
           >
           <div className="flex flex-col items-center gap-5">
             <span className="inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
@@ -106,7 +112,7 @@ export default function Pricing() {
             </p>
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center gap-2 h-11 rounded-full bg-violet-500 px-6 text-sm font-medium text-white shadow-md shadow-purple-900/40 transition-all duration-200 hover:bg-violet-400 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-base"
+              className="inline-flex items-center justify-center gap-2 h-11 rounded-full bg-brand-500 px-6 text-sm font-medium text-white shadow-md shadow-brand-500/40 transition-all duration-200 hover:bg-brand-500/90 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-base"
             >
               Get my first 5 matches
               <BrandIcons.ArrowRight className="h-4 w-4" />
@@ -129,15 +135,15 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.55, delay: index * 0.1 }}
-      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-xl backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.65)] md:px-7 md:py-7 md:scale-[1.02] md:-translate-y-1 ${
+      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-xl backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7 md:scale-[1.02] md:-translate-y-1 ${
         isPremium 
-          ? 'bg-zinc-900 border border-violet-500/60 shadow-[0_24px_60px_rgba(129,140,248,0.35)]' 
+          ? 'bg-zinc-900 border border-brand-500/60 shadow-pricing' 
           : 'bg-white/[0.06] border border-white/10 shadow-pricing md:scale-100 md:translate-y-0'
       }`}
     >
       {isPremium && (
         <>
-          <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.35),_transparent_70%)] blur-sm-hero" />
+          <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] bg-[radial-gradient(circle_at_center,theme(colors.brand.500/0.35),_transparent_70%)] blur-sm-hero" />
           <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] ring-1 ring-violet-500/30" />
         </>
       )}
@@ -177,7 +183,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
             href={plan.cta.href}
             className={`group relative inline-flex items-center justify-center overflow-hidden h-11 rounded-full px-6 text-sm font-medium transition-all duration-300 sm:text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
               isPremium
-                ? 'bg-violet-500 text-white shadow-md shadow-purple-900/40 hover:bg-violet-400 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(126,97,255,0.5)]'
+                ? 'bg-brand-500 text-white shadow-md shadow-brand-500/40 hover:bg-brand-500/90 hover:-translate-y-0.5 hover:shadow-feature'
                 : 'border border-white/15 bg-white/5 text-white hover:border-brand-500/40 hover:bg-brand-500/10'
             }`}
           >

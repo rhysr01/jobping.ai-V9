@@ -34,9 +34,12 @@ export default function ScrollHeader() {
             <path d="M22 10v4" />
             <path d="M6 12v4c0 1.6 3 3.2 6 3.2s6-1.6 6-3.2v-4" />
           </svg>
-          <span className="text-2xl font-semibold text-white">JobPing</span>
+          <div className="flex flex-col">
+            <span className="text-2xl font-semibold text-white">JobPing</span>
+            <span className="text-[10px] tracking-[0.2em] uppercase text-zinc-500">Future-first job discovery</span>
+          </div>
         </div>
-        <span className="text-sm text-zinc-300 leading-none">Early-career roles delivered weekly</span>
+        <span className="text-sm text-zinc-300 leading-none hidden sm:block">Early-career roles delivered weekly</span>
       </div>
     </div>
   );

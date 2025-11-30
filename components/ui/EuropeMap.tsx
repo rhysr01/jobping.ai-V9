@@ -227,7 +227,7 @@ export default function EuropeMap({
       <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950" aria-hidden="true" />
       <div className="absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_45%,rgba(124,58,237,0.18),transparent_70%)]" aria-hidden="true" />
       <div className="absolute inset-0 bg-[radial-gradient(30%_30%_at_20%_80%,rgba(99,102,241,0.12),transparent_60%)]" aria-hidden="true" />
-      <div className="absolute inset-0 bg-[radial-gradient(40%_40%_at_80%_20%,rgba(168,85,247,0.10),transparent_60%)]" aria-hidden="true" />
+      <div className="absolute inset-0 bg-[radial-gradient(40%_40%_at_80%_20%,theme(colors.brand.300/0.10),transparent_60%)]" aria-hidden="true" />
       
       {/* Subtle grid overlay for depth */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] bg-[size:40px_40px] opacity-40" aria-hidden="true" />

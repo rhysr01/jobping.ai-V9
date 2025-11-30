@@ -23,7 +23,7 @@ export default function HowItWorks() {
           transition={{ duration: 0.5 }}
           className="mx-auto max-w-3xl text-left sm:text-center"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/40 bg-violet-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-violet-200">
+          <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200">
             <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
             {Copy.HOW_IT_WORKS_TITLE}
           </span>
@@ -36,6 +36,9 @@ export default function HowItWorks() {
           <p className="mb-10 text-xl text-zinc-300 md:text-2xl">
             {Copy.HOW_IT_WORKS_SUMMARY}
           </p>
+          <p className="hidden sm:block text-sm text-zinc-400 mb-6">
+            No endless scrolling. No complex filters. Just matches that fit.
+          </p>
         </motion.div>
 
         <div className="relative mt-14 grid gap-4 sm:mt-16 md:grid-cols-3">
@@ -47,7 +50,7 @@ export default function HowItWorks() {
           >
             <path
               d="M0,10 C30,0 70,20 100,10"
-              stroke="rgba(113,113,122,0.5)"
+              stroke="rgb(113 113 122 / 0.5)"
               strokeWidth="1"
               fill="none"
             />
@@ -65,7 +68,7 @@ export default function HowItWorks() {
                   y: -4,
                   transition: { type: 'spring', stiffness: 300, damping: 20 }
                 }}
-                className="group relative flex h-full flex-col gap-2 overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-feature px-6 py-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.65)] md:px-7 md:py-7"
+                className="group relative flex h-full flex-col gap-2 overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-feature px-6 py-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7"
               >
                 <motion.span 
                   className="number-chip brightness-95 font-semibold group-hover:bg-brand-500/25 group-hover:scale-110 shadow-md shadow-black/40 h-12 w-12 md:h-14 md:w-14 text-lg md:text-xl"

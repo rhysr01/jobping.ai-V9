@@ -21,7 +21,7 @@ export default function BuiltForStudents() {
           transition={{ duration: 0.5 }}
           className="mx-auto max-w-3xl text-left sm:text-center"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/40 bg-violet-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-violet-200">
+          <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200">
             <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
             {Copy.BUILT_FOR_STUDENTS_KICKER}
           </span>
@@ -30,6 +30,9 @@ export default function BuiltForStudents() {
           </h2>
           <p className="mb-10 text-xl text-zinc-300 md:text-2xl">
             {Copy.BUILT_FOR_STUDENTS_SUBTITLE}
+          </p>
+          <p className="hidden sm:block text-sm text-zinc-400 mb-6">
+            Built for the way early-career jobseekers actually want to find opportunities.
           </p>
         </motion.div>
 
@@ -43,13 +46,13 @@ export default function BuiltForStudents() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: index * 0.05 }}
-                className="group relative overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 p-6 backdrop-blur-xl shadow-feature transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.65)]"
+                className="group relative overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 p-6 backdrop-blur-xl shadow-feature transition-all duration-200 hover:-translate-y-1 hover:shadow-hover"
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[radial-gradient(circle_at_center,rgba(129,140,248,0.4),transparent_70%)]">
-                    <Icon className="h-5 w-5 text-violet-300" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[radial-gradient(circle_at_center,theme(colors.brand.500/0.4),transparent_70%)]">
+                    <Icon className="h-5 w-5 text-brand-300" />
                   </div>
-                  <div>
+                  <div className="max-w-md">
                     <h3 className="text-base md:text-lg font-semibold text-white">
                       {feature.title}
                     </h3>
@@ -57,7 +60,7 @@ export default function BuiltForStudents() {
                       {feature.body}
                     </p>
                     {feature.meta && (
-                      <p className="text-xs text-zinc-500 mt-1">
+                      <p className="text-xs text-zinc-500 mt-1 hidden sm:block">
                         {feature.meta}
                       </p>
                     )}

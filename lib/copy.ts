@@ -20,7 +20,8 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 // Hero section
 export const HERO_TITLE = "JobPing";
 export const HERO_HEADLINE = "EU graduate and internship roles, matched to you.";
-export const HERO_SUBLINE = "Tell us your city, visa, and interests once. We send 5 curated matches each week—no dashboards, just email.";
+export const HERO_SUBLINE = "5 curated matches each week, filtered by city, visa, and experience.";
+export const HERO_SUBLINE_MICRO = "No dashboards. No job boards. Just roles you can actually apply for.";
 export const HERO_SUBTITLE = "";
 export const HERO_CTA = "Get my first 5 matches";
 export const HERO_PILL = "Graduate roles and internships across Europe";
@@ -30,9 +31,9 @@ export const HERO_SOCIAL_PROOF = "Join thousands of early-career jobseekers acro
 export const HOW_IT_WORKS_TITLE = "How it works";
 export const HOW_IT_WORKS_SUMMARY = "JobPing searches the EU market and sends you only the roles worth applying for.";
 export const HOW_IT_WORKS_STEPS = [
-  { title: "Share your preferences", description: "Pick cities, work rights, and roles in under two minutes." },
-  { title: "We search every day", description: "JobPing scans European boards and company pages and filters the noise. No dashboards, no spam—just roles that match your filters." },
-  { title: "Matches arrive by email", description: `You get ${FREE_ROLES_PER_SEND} curated roles each week. Premium unlocks ${PREMIUM_ROLES_PER_WEEK} roles per week for busy application seasons.` },
+  { title: "Tell us your targets", description: "Pick your cities, skills, and visa reality. We only show roles you can actually apply for." },
+  { title: "We search daily", description: "JobPing scans European boards and company pages. No dashboards, no spam—just matches." },
+  { title: "Matches arrive weekly", description: `${FREE_ROLES_PER_SEND} curated roles each week. Premium unlocks ${PREMIUM_ROLES_PER_WEEK} roles per week.` },
 ];
 
 // Built for students

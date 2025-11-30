@@ -18,12 +18,12 @@ export default function EmailPhoneShowcase() {
       {/* Soft section band */}
       <div className="pointer-events-none absolute inset-x-0 -top-10 h-40 bg-gradient-to-b from-indigo-900/40 to-transparent" />
       {/* Subtle spotlight behind email showcase */}
-      <div className="pointer-events-none absolute inset-x-0 -top-24 h-64 blur-lg-hero opacity-80 bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.28),_transparent_60%)] -z-10" />
+      <div className="pointer-events-none absolute inset-x-0 -top-24 h-64 blur-lg-hero opacity-80 bg-[radial-gradient(circle_at_center,theme(colors.brand.500/0.28),_transparent_60%)] -z-10" />
 
       <div className="container-page relative z-10 px-4 md:px-6">
         <div className="relative grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
           {/* Left-side spotlight */}
-          <div className="pointer-events-none absolute left-[5%] top-[30%] h-[400px] w-[400px] bg-[radial-gradient(circle_at_center,rgba(129,140,248,0.22),transparent_70%)] blur-md-hero opacity-70" />
+          <div className="pointer-events-none absolute left-[5%] top-[30%] h-[400px] w-[400px] bg-[radial-gradient(circle_at_center,_theme(colors.brand.500/0.22),_transparent_70%)] blur-md-hero opacity-70" />
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -31,7 +31,7 @@ export default function EmailPhoneShowcase() {
             transition={{ duration: 0.6 }}
             className="space-y-7 text-left max-w-xl relative z-10"
           >
-            <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/40 bg-violet-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-violet-200">
+            <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200">
               {Copy.EMAIL_SHOWCASE_KICKER}
             </span>
           <h2 className="section-title mb-2">
@@ -39,6 +39,9 @@ export default function EmailPhoneShowcase() {
           </h2>
           <p className="mb-10 text-xl text-zinc-300 md:text-2xl">
             {Copy.EMAIL_SHOWCASE_SUBTITLE}
+          </p>
+          <p className="hidden sm:block text-sm text-zinc-400 mb-6">
+            Each email is designed to help you decide in seconds—not minutes.
           </p>
             <ul className="space-y-4">
               {Copy.EMAIL_SHOWCASE_POINTS.map((point, index) => {

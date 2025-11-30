@@ -85,7 +85,7 @@ export default function SocialProofRow() {
                 y: -4,
                 transition: { type: 'spring', stiffness: 300, damping: 20 }
               }}
-              className="group relative flex flex-col gap-2 overflow-hidden rounded-2xl bg-zinc-950/80 px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.65)] md:px-7 md:py-7"
+              className="group relative flex flex-col gap-2 overflow-hidden rounded-2xl bg-zinc-950/80 px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7"
             >
               {index < items.length - 1 && (
                 <span className="hidden md:inline absolute right-0 top-1/2 h-4 w-px bg-white/10 -translate-y-1/2" />
@@ -120,6 +120,9 @@ export default function SocialProofRow() {
               </motion.div>
             </div>
           </div>
+          <p className="mt-4 text-xs md:text-sm text-zinc-500 text-center">
+            JobPing feels less like a job board and more like a weekly careers feed tuned only to you.
+          </p>
       </div>
     </section>
   );

@@ -16,6 +16,7 @@ const numberFormatter = new Intl.NumberFormat("en-US");
 export default function Hero() {
   const { stats, isLoading: statsLoading } = useStats();
   const [offset, setOffset] = useState(0);
+  const [enableMotion, setEnableMotion] = useState(true);
   const [activeJobsTarget, setActiveJobsTarget] = useState(12748);
   const [internshipsTarget, setInternshipsTarget] = useState(0);
   const [graduatesTarget, setGraduatesTarget] = useState(0);
@@ -138,13 +139,19 @@ export default function Hero() {
     return () => controls.stop();
   }, [totalUsersTarget, prefersReduced]);
 
+  // Check for reduced motion preference
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq.matches) setEnableMotion(false);
+  }, []);
+
   // Scroll parallax for aura
   useEffect(() => {
-    if (prefersReduced || shouldThrottle) return;
+    if (!enableMotion || prefersReduced || shouldThrottle) return;
     const onScroll = () => setOffset(window.scrollY * 0.03);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
-  }, [prefersReduced, shouldThrottle]);
+  }, [enableMotion, prefersReduced, shouldThrottle]);
 
   const particles = useMemo(() => {
     if (prefersReduced || shouldThrottle) return [];
@@ -164,12 +171,12 @@ export default function Hero() {
   return (
     <section
       data-testid="hero-section"
-      className="section-padding-hero pt-16 md:pt-20 pb-12 md:pb-16 relative overflow-hidden flex flex-col items-center justify-start text-center"
+      className="section-padding-hero pt-16 pb-16 md:pt-20 md:pb-20 relative overflow-hidden flex flex-col items-center justify-start text-center"
     >
       {/* Cinematic dark background */}
       <div className="absolute inset-0 -z-10 bg-black" />
       {/* Background animations - contained inside hero section */}
-      <HeroBackgroundAura offset={offset} />
+      <HeroBackgroundAura offset={enableMotion ? offset : 0} enableMotion={enableMotion} />
       {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
         <div className="pointer-events-none absolute inset-0 -z-10">
           {particles.map(({ id, top, left, size, duration, delay, drift, opacity }) => (
@@ -182,7 +189,7 @@ export default function Hero() {
                 width: size,
                 height: size,
                 opacity: opacity * 0.6,
-                boxShadow: `0 0 ${size * 3}px rgba(99, 102, 241, 0.2)`,
+                boxShadow: `0 0 ${size * 3}px rgb(99 102 241 / 0.2)`,
                 willChange: shouldLoadAnimations ? 'transform, opacity' : 'auto',
               }}
               initial={{ y: 0, scale: 0.6 }}
@@ -240,7 +247,7 @@ export default function Hero() {
               </svg>
               <span className="relative text-[4rem] sm:text-[4.5rem] md:text-[5rem] font-semibold tracking-tight text-white">
                 JobPing
-                <span className="absolute inset-0 blur-[3px] mix-blend-screen opacity-30 pointer-events-none bg-[linear-gradient(90deg,rgba(129,140,248,0.4),rgba(255,255,255,0),rgba(168,85,247,0.4))]" />
+                <span className="absolute inset-0 blur-sm mix-blend-screen opacity-30 pointer-events-none bg-[linear-gradient(90deg,_theme(colors.brand.500/0.4),_rgba(255,255,255,0),_theme(colors.brand.300/0.4))]" />
               </span>
             </div>
             <p className="mt-3 text-base text-zinc-400 md:text-lg">
@@ -263,15 +270,15 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.6, ease: "easeOut" }}
-          className="relative z-10 w-full max-w-3xl mt-8 md:mt-10 rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-md px-6 md:px-8 lg:px-12 py-10 md:py-12 shadow-hero"
+          className="relative z-10 w-full max-w-3xl mt-8 md:mt-10 rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-md px-4 py-5 md:px-8 md:py-10 lg:px-12 lg:py-12 shadow-hero"
         >
           {/* Subtle spotlight behind card */}
-          <div className="pointer-events-none absolute inset-x-0 -top-24 h-64 blur-3xl opacity-80 bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.28),_transparent_60%)] -z-10" />
+          <div className="pointer-events-none absolute inset-x-0 -top-24 h-64 blur-lg-hero opacity-80 bg-[radial-gradient(circle_at_center,_theme(colors.brand.500/0.28),_transparent_60%)] -z-10" />
           {/* Top highlight line for glass effect */}
           <div className="absolute inset-x-0 top-0 h-px bg-white/20" />
           
           {/* Ground shadow below card */}
-          <div className="absolute -bottom-14 left-1/2 w-[70%] h-28 bg-black/40 blur-3xl rounded-full -translate-x-1/2 opacity-40"></div>
+          <div className="absolute -bottom-14 left-1/2 w-[70%] h-28 bg-black/40 blur-lg-hero rounded-full -translate-x-1/2 opacity-40"></div>
           
           {/* Content inside card */}
           <div className="relative z-10 flex flex-col text-left">
@@ -280,7 +287,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.45 }}
-              className="inline-flex items-center gap-2 self-start mb-3 rounded-full border border-violet-500/40 bg-violet-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-violet-200"
+              className="inline-flex items-center gap-2 self-start mb-3 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200"
             >
               <BrandIcons.Mail className="h-3.5 w-3.5 text-brand-300" />
               {Copy.HERO_PILL}
@@ -296,9 +303,14 @@ export default function Hero() {
               <h1 className="text-balance text-5xl md:text-6xl leading-[1.06] font-semibold mb-3 text-white">
                 {Copy.HERO_HEADLINE}
               </h1>
-              <p className="text-balance text-lg md:text-xl text-zinc-300 font-normal">
-                {Copy.HERO_SUBLINE}
-              </p>
+              <div className="max-w-xl">
+                <p className="text-balance text-base md:text-[15px] text-zinc-300/90 font-normal">
+                  {Copy.HERO_SUBLINE}
+                </p>
+                <p className="text-sm text-zinc-400 mt-2">
+                  {Copy.HERO_SUBLINE_MICRO}
+                </p>
+              </div>
             </motion.div>
 
             {/* CTA + Microtrust */}
@@ -312,7 +324,7 @@ export default function Hero() {
                 href="/signup"
                 variant="primary"
                 size="lg"
-                className="w-full sm:w-auto sm:min-w-[280px] px-8 py-4 md:py-5 text-base md:text-lg shadow-[0_20px_40px_rgba(124,94,255,0.45)]"
+                className="w-full sm:w-auto sm:min-w-[280px] px-8 py-4 md:py-5 text-base md:text-lg shadow-hero"
                 aria-label="Get my first 5 matches"
               >
                 <span className="flex items-center justify-center gap-2">
@@ -327,7 +339,10 @@ export default function Hero() {
           </div>
         </motion.div>
 
-
+        {/* Future messaging */}
+        <p className="mt-4 text-xs md:text-sm text-zinc-500 max-w-xl mx-auto">
+          JobPing feels less like a job board and more like a weekly careers feed tuned only to you.
+        </p>
       </div>
 
       {/* Simplified background - removed excessive gradients */}
