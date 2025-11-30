@@ -22,11 +22,11 @@ export default function Button({
   ...props 
 }: ButtonProps) {
   const baseClasses =
-    'inline-flex items-center justify-center gap-2 rounded-2xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-50';
+    'inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-50';
   
   const variants = {
     primary:
-      'bg-[#7E61FF] text-white font-semibold shadow-md shadow-purple-900/40 hover:bg-[#6E57F5] hover:-translate-y-0.5 active:translate-y-0',
+      'h-11 bg-violet-500 text-white font-medium shadow-md shadow-purple-900/40 hover:bg-violet-400 hover:-translate-y-0.5 active:translate-y-0',
     secondary:
       'border-2 border-white/25 bg-white/[0.08] text-white font-medium hover:border-brand-500/50 hover:bg-white/12',
     ghost:

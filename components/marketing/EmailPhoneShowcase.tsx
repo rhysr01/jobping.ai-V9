@@ -15,19 +15,23 @@ export default function EmailPhoneShowcase() {
     <section className="pt-16 md:pt-20 pb-20 md:pb-24 relative overflow-hidden bg-black scroll-snap-section">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
+      {/* Soft section band */}
+      <div className="pointer-events-none absolute inset-x-0 -top-10 h-40 bg-gradient-to-b from-indigo-900/40 to-transparent" />
       {/* Subtle spotlight behind email showcase */}
       <div className="pointer-events-none absolute inset-x-0 -top-24 h-64 blur-3xl opacity-80 bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.28),_transparent_60%)] -z-10" />
 
       <div className="container-page relative z-10 px-4 md:px-6">
-        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
+        <div className="relative grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
+          {/* Left-side spotlight */}
+          <div className="pointer-events-none absolute left-0 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.22),_transparent_60%)] blur-[70px]" />
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="space-y-7 text-left max-w-xl"
+            className="space-y-7 text-left max-w-xl relative z-10"
           >
-            <span className="inline-flex items-center rounded-full border border-white/20 bg-white/[0.06] px-3 py-1 text-[11px] font-medium tracking-[0.22em] uppercase text-zinc-200">
+            <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/40 bg-violet-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-violet-200">
               {Copy.EMAIL_SHOWCASE_KICKER}
             </span>
           <h2 className="section-title mb-2">
