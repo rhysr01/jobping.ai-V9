@@ -64,7 +64,7 @@ export default function SocialProofRow() {
       <div className="pointer-events-none absolute inset-x-0 -top-10 h-40 bg-gradient-to-b from-zinc-900/40 to-transparent" />
       <div className="container-page relative z-10">
         <div className="mt-8 md:mt-10">
-            <div className="mx-auto max-w-5xl rounded-3xl border border-white/5 bg-zinc-950/40 p-4 md:p-6">
+            <div className="mx-auto max-w-6xl rounded-3xl border border-white/5 bg-white/[0.02] p-4 md:p-6 backdrop-blur-md">
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}

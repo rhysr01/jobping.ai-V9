@@ -437,6 +437,12 @@ async function saveJobs(jobs, source) {
 }
 
 function pickPythonCommand() {
+  // First check for PYTHON environment variable (used in CI/CD)
+  if (process.env.PYTHON) {
+    console.log(`✅ Using Python from PYTHON env: ${process.env.PYTHON}`);
+    return process.env.PYTHON;
+  }
+  
   // Use wrapper script that ensures correct Python 3.11 environment
   const scriptPath = require('path').join(__dirname, 'run-jobspy-python.sh');
   if (require('fs').existsSync(scriptPath)) {
@@ -444,7 +450,7 @@ function pickPythonCommand() {
     return scriptPath;
   }
   
-  // Fallback: try direct Python 3.11 path
+  // Fallback: try direct Python 3.11 path (macOS Homebrew)
   const directPath = '/opt/homebrew/opt/python@3.11/bin/python3.11';
   if (require('fs').existsSync(directPath)) {
     console.log(`✅ Using Python: ${directPath}`);

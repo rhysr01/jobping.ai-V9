@@ -60,6 +60,15 @@ export default function HeroBackgroundAura() {
         }}
       />
 
+      {/* Vertical light shaft */}
+      <div className="absolute inset-x-0 top-[-25%] h-[300px] bg-gradient-to-b from-violet-500/15 to-transparent blur-[80px]" />
+      
+      {/* Side ambient glow */}
+      <div className="absolute left-[-20%] top-[10%] h-[500px] w-[500px] bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.25),transparent_70%)] blur-[120px]" />
+      
+      {/* Glass haze */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent backdrop-blur-[1px] pointer-events-none" />
+
       {/* Grid pattern - behind all content for depth */}
       <div
         ref={gridRef}

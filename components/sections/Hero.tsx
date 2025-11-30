@@ -210,7 +210,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="flex flex-col items-center gap-3 mb-8"
+            className="flex flex-col items-center gap-3 mb-6 md:mb-8"
             aria-hidden="true"
           >
             {/* Smaller wordmark with grad hat */}
@@ -239,7 +239,7 @@ export default function Hero() {
           </motion.div>
           {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
             <motion.div
-              className="mt-6 h-px w-24 rounded-full bg-gradient-to-r from-transparent via-zinc-600/60 to-transparent"
+              className="h-px w-40 mx-auto bg-gradient-to-r from-transparent via-zinc-600/50 to-transparent my-6"
               initial={{ opacity: 0, scaleX: 0 }}
               animate={shouldLoadAnimations ? { opacity: 1, scaleX: 1 } : {}}
               transition={{ duration: 0.6, delay: 0.35, ease: "easeOut" }}
@@ -253,7 +253,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.6, ease: "easeOut" }}
-          className="relative z-10 w-full max-w-3xl mt-12 md:mt-16 rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-md px-6 md:px-8 lg:px-12 py-10 md:py-12 shadow-hero"
+          className="relative z-10 w-full max-w-3xl mt-8 md:mt-10 rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-md px-6 md:px-8 lg:px-12 py-10 md:py-12 shadow-hero"
         >
           {/* Subtle spotlight behind card */}
           <div className="pointer-events-none absolute inset-x-0 -top-24 h-64 blur-3xl opacity-80 bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.28),_transparent_60%)] -z-10" />

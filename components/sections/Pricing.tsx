@@ -51,6 +51,8 @@ export default function Pricing() {
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       {/* Soft section band */}
       <div className="pointer-events-none absolute inset-x-0 -top-10 h-40 bg-gradient-to-b from-indigo-900/40 to-transparent" />
+      {/* Overhead spotlight crown */}
+      <div className="absolute inset-x-0 -top-40 h-60 bg-gradient-to-b from-violet-600/20 to-transparent blur-[120px] pointer-events-none" />
       <div className="absolute inset-0 bg-black" />
 
       <div className="container-page relative z-10">
@@ -82,7 +84,7 @@ export default function Pricing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-20 overflow-hidden rounded-xl bg-zinc-900/90 border border-white/8 shadow-[0_4px_18px_rgba(0,0,0,0.35)] backdrop-blur-xl px-6 py-6 text-center hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.65)] transition-all duration-200 sm:px-8 sm:py-8 md:px-12 md:py-12"
+          className="mt-20 max-w-3xl mx-auto rounded-2xl bg-white/[0.04] border border-white/10 p-10 backdrop-blur-xl shadow-[0_12px_60px_rgba(0,0,0,0.45)] text-center hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.65)] transition-all duration-200"
         >
           <div className="flex flex-col items-center gap-5">
             <span className="inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
