@@ -31,6 +31,7 @@ const schema = z.object({
   POLAR_ACCESS_TOKEN: z.string().min(20),
   POLAR_WEBHOOK_SECRET: z.string().optional(),
   POLAR_SUCCESS_URL: z.string().url().default('https://getjobping.com/success?checkout_id={CHECKOUT_ID}'),
+  POLAR_PRODUCT_ID: z.string().optional(), // Premium subscription product ID
   
   // Caching (Redis)
   REDIS_URL: z.string().url().optional(),
@@ -131,6 +132,7 @@ if (isBuildTime) {
       ? process.env.RESEND_API_KEY 
       : (process.env.RESEND_API_KEY || 're_build_dummy_key_for_validation_only'),
     POLAR_ACCESS_TOKEN: process.env.POLAR_ACCESS_TOKEN || 'build-dummy-token-for-validation-only',
+    POLAR_PRODUCT_ID: process.env.POLAR_PRODUCT_ID || undefined,
     INTERNAL_API_HMAC_SECRET: process.env.INTERNAL_API_HMAC_SECRET || 'build-dummy-secret-32-chars-minimum-length-here',
     SYSTEM_API_KEY: process.env.SYSTEM_API_KEY || 'build-dummy-system-key-min-10-chars',
   };

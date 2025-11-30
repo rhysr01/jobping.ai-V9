@@ -37,6 +37,7 @@ interface BillingData {
   invoices?: Invoice[];
   paymentMethods?: any[];
   hasPaymentCustomer: boolean;
+  email?: string; // User email for checkout
 }
 
 export default function BillingPage({ params }: BillingPageProps) {
@@ -102,6 +103,41 @@ export default function BillingPage({ params }: BillingPageProps) {
     } catch (err) {
       setError('Failed to open billing portal');
       console.error('Portal error:', err);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleStartCheckout = async () => {
+    try {
+      setProcessing(true);
+      setError('');
+      
+      // Get user email from billing data if available
+      const userEmail = billingData?.email || null;
+      
+      // Call API to get checkout URL (product ID is server-side only)
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerEmail: userEmail || undefined,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.checkoutUrl) {
+        // Redirect to Polar checkout
+        window.location.href = data.checkoutUrl;
+      } else if (data.redirect) {
+        window.location.href = data.redirect;
+      } else {
+        setError(data.error || 'Failed to start checkout. Please contact support.');
+      }
+    } catch (err) {
+      setError('Failed to start checkout. Please try again.');
+      console.error('Checkout error:', err);
     } finally {
       setProcessing(false);
     }
@@ -513,8 +549,14 @@ export default function BillingPage({ params }: BillingPageProps) {
                     <CreditCard className="w-20 h-20 mx-auto mb-6 text-zinc-300" />
                     <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3">No Active Subscription</h3>
                     <p className="text-zinc-100 text-lg font-medium mb-8 max-w-xl mx-auto">You don't have an active subscription yet. Upgrade to Premium to unlock more job matches.</p>
-                    <Button href="/signup?tier=premium" variant="primary" size="lg" className="min-w-[240px]">
-                      Subscribe to Premium
+                    <Button 
+                      onClick={handleStartCheckout}
+                      disabled={processing}
+                      variant="primary" 
+                      size="lg" 
+                      className="min-w-[240px]"
+                    >
+                      {processing ? 'Processing...' : 'Subscribe to Premium'}
                     </Button>
                   </div>
 
