@@ -82,7 +82,7 @@ export default function ExitIntentPopup() {
               onClick={() => setShowPopup(false)}
               className="block w-full bg-gradient-to-r from-brand-500 to-purple-600 text-white py-4 px-6 rounded-xl font-bold text-lg text-center hover:scale-105 transition-transform min-h-[48px] flex items-center justify-center"
             >
-              Get Started Free →
+              Claim my first drop →
             </Link>
             <button
               onClick={() => setShowPopup(false)}

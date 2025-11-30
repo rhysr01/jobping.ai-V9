@@ -12,32 +12,36 @@ import {
 
 export default function SecondaryCTA() {
   return (
-    <section className="section-padding pt-0">
-      <div className="container-page">
+    <section className="section-padding pt-0 scroll-snap-section relative">
+      {/* Scroll momentum fade */}
+      <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
+      <div className="container-page relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
-          className="relative overflow-hidden rounded-3xl border-emphasis border-brand-500/40 bg-gradient-to-r from-[#090021] via-[#120037] to-[#20054f] px-12 py-14 elevation-2 backdrop-blur-sm"
+          className="relative overflow-hidden rounded-2xl border-emphasis border-brand-500/40 bg-gradient-to-b from-purple-950/85 to-purple-900/90 px-6 py-6 elevation-2 backdrop-blur-sm hover:-translate-y-1 transition-all duration-200 sm:px-8 sm:py-8 md:px-12 md:py-14"
         >
           <div className="pointer-events-none absolute -left-24 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full bg-brand-500/20 blur-[140px]" />
           <div className="pointer-events-none absolute -right-10 top-1/3 h-72 w-72 rounded-full bg-purple-500/20 blur-[160px]" />
-          <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+          {/* Anchoring shadow - fixed halo imbalance */}
+          <div className="absolute left-1/2 -translate-x-1/2 -bottom-10 h-24 w-[60%] bg-purple-900/20 blur-2xl" />
+          <div className="relative flex flex-col gap-6 md:grid md:grid-cols-[1.6fr_1fr] lg:flex lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-xl space-y-4 text-left">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
                 <BrandIcons.Mail className="h-4 w-4 text-brand-300" />
-                Early-career inbox
+                EARLY-CAREER INBOX
               </span>
               <h3 className="text-3xl font-bold text-white sm:text-4xl">
-                Your first curated drop lands within 48 hours.
+                Your first curated drop arrives within 48 hours.
               </h3>
               <p className="text-base font-medium leading-relaxed text-zinc-100 sm:text-lg">
                 Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops weekly. Free users receive {FREE_ROLES_PER_SEND} roles per drop,
                 and Premium keeps {PREMIUM_ROLES_PER_WEEK} new opportunities flowing each week (~{PREMIUM_ROLES_PER_MONTH} per month).
               </p>
               <p className="text-sm font-medium text-zinc-200">
-                Proven deliverability, unsubscribe in one click, and {FREE_ROLES_PER_SEND} roles to get started immediately.
+                Proven deliverability, unsubscribe in one click, and {FREE_ROLES_PER_SEND} roles to claim your first drop.
               </p>
             </div>
 

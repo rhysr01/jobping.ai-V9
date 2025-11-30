@@ -17,7 +17,7 @@ export default function StructuredData() {
     },
     "featureList": [
       "AI-powered job matching",
-      "Weekly email delivery",
+      "weekly email delivery",
       "Early-career focused",
       "European job market",
       "No spam, unsubscribe anytime"

@@ -26,7 +26,7 @@ const plans: PlanConfig[] = [
     description: Copy.FREE_PLAN_DESCRIPTION,
     price: '€0',
     suffix: 'forever',
-    cta: { label: 'Start free', href: '/signup?tier=free' },
+    cta: { label: 'Claim my first drop', href: '/signup?tier=free' },
     features: Copy.FREE_PLAN_FEATURES,
     footnote: Copy.PRICING_BADGE,
   },
@@ -46,7 +46,9 @@ const plans: PlanConfig[] = [
 
 export default function Pricing() {
   return (
-    <section data-testid="pricing" className="section-padding relative overflow-hidden bg-[#05010f]">
+    <section data-testid="pricing" className="section-padding relative overflow-hidden bg-[#05010f] scroll-snap-section">
+      {/* Scroll momentum fade */}
+      <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       <div className="absolute inset-0 bg-gradient-to-br from-[#05000d] via-[#09011a] to-[#170043] opacity-90" />
 
       <div className="container-page relative z-10">
@@ -61,13 +63,13 @@ export default function Pricing() {
             <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
             Pricing
           </span>
-          <h2 className="mt-4 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
+          <h2 className="section-title mt-4 text-3xl sm:text-4xl md:text-5xl">
             {Copy.PRICING_TITLE}
           </h2>
-          <p className="mt-4 text-base font-medium leading-relaxed text-zinc-100 sm:text-lg">{Copy.PRICING_SUBTITLE}</p>
+          <p className="mt-4 mb-10 text-base font-medium leading-relaxed text-zinc-100 sm:text-lg">{Copy.PRICING_SUBTITLE}</p>
         </motion.div>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
           {plans.map((plan, index) => (
             <PricingCard key={plan.id} plan={plan} index={index} />
           ))}
@@ -78,14 +80,14 @@ export default function Pricing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-20 overflow-hidden rounded-3xl border-2 border-brand-500/40 bg-gradient-to-r from-[#0b031d] via-[#120033] to-[#1f0546] px-8 py-12 text-center shadow-[0_30px_100px_rgba(17,0,45,0.5)] backdrop-blur-sm sm:px-12"
+          className="mt-20 overflow-hidden rounded-2xl border-2 border-brand-500/40 bg-gradient-to-r from-[#0b031d] via-[#120033] to-[#1f0546] px-6 py-6 text-center shadow-purple-900/30 backdrop-blur-sm hover:-translate-y-1 transition-all duration-200 sm:px-8 sm:py-8 md:px-12 md:py-12"
         >
           <div className="flex flex-col items-center gap-5">
             <span className="inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
               🚀 Over 12,000 jobs matched this month
             </span>
             <h3 className="text-2xl font-bold text-white sm:text-3xl">
-              Start free today—see your first five matches before the weekend.
+              Claim your first drop today—see your first five matches before the weekend.
             </h3>
             <p className="max-w-2xl text-sm font-medium leading-relaxed text-zinc-100 sm:text-base">
               We refresh the pipeline every morning and route hot roles instantly. If we miss the mark, reply to any email and we retune within 24 hours.
@@ -94,7 +96,7 @@ export default function Pricing() {
               href="/signup"
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/15 hover:text-brand-100 sm:text-base"
             >
-              Start free
+              Claim my first drop
               <BrandIcons.ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -114,11 +116,11 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.55, delay: index * 0.1 }}
-      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border-2 ${
+      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border-2 ${
         isPremium 
           ? 'border-strong border-brand-500/60 bg-gradient-to-br from-brand-500/15 via-brand-500/10 to-purple-500/10 elevation-3' 
           : 'border-default bg-white/[0.08] elevation-1'
-      } p-8 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:elevation-2 sm:p-10`}
+      } px-6 py-6 backdrop-blur-md transition-all duration-200 hover:-translate-y-1 hover:elevation-2 sm:px-8 sm:py-8`}
     >
       {isPremium && (
         <div className="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-purple-500/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -141,8 +143,8 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
 
       <div className="space-y-5">
         <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-bold text-white sm:text-5xl">{plan.price}</span>
-          {plan.suffix && <span className="text-base font-medium text-zinc-300">{plan.suffix}</span>}
+          <span className="text-4xl font-bold text-white sm:text-5xl leading-[1.05]">{plan.price}</span>
+          {plan.suffix && <span className="text-base font-medium text-zinc-300 leading-[1.05]">{plan.suffix}</span>}
         </div>
         <p className="text-xs font-bold uppercase tracking-[0.3em] text-brand-300">{plan.name}</p>
         <h3 className="text-xl font-bold text-white sm:text-2xl">{plan.headline}</h3>
@@ -169,7 +171,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
             href={plan.cta.href}
             className={`group relative inline-flex items-center justify-center overflow-hidden rounded-2xl px-6 py-3 text-sm font-semibold transition-all duration-300 sm:text-base ${
               isPremium
-                ? 'bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-[0_12px_32px_rgba(99,102,241,0.35)] hover:shadow-[0_16px_40px_rgba(99,102,241,0.5)]'
+                ? 'bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-glow-subtle hover:shadow-[0_16px_40px_rgba(99,102,241,0.5)]'
                 : 'border border-white/15 bg-white/5 text-white hover:border-brand-500/40 hover:bg-brand-500/10'
             }`}
           >
@@ -185,6 +187,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
               </motion.span>
             </span>
           </Link>
+          <p className="text-xs leading-snug text-zinc-400 text-center">Cancel anytime. No lock-in.</p>
         </motion.div>
 
         <div className="flex items-center gap-2 text-xs text-zinc-200">

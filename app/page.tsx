@@ -8,11 +8,12 @@ import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import ExitIntentPopup from "@/components/ui/ExitIntentPopup";
 import SocialProofRow from "@/components/sections/SocialProofRow";
 import TrustBadges from "@/components/sections/TrustBadges";
+import Footer from "@/components/sections/Footer";
 
 export default function Page() {
   return (
     <>
-      <main id="main-content">
+      <main id="main-content" className="scroll-snap-type-y-proximity" style={{ scrollSnapType: 'y proximity' }}>
         <Hero />
         <SocialProofRow />
         <EmailPhoneShowcase />
@@ -22,6 +23,8 @@ export default function Page() {
         <Pricing />
         <SecondaryCTA />
       </main>
+      <div className="h-16 w-full bg-gradient-to-b from-transparent to-black/40" />
+      <Footer />
       <StickyMobileCTA />
       <ExitIntentPopup />
     </>

@@ -25,7 +25,7 @@ export const HERO_SUBTITLE = VP_TAGLINE;
 export const HERO_CTA = "Get EU jobs in my inbox for free";
 export const HERO_PILL = "Curated Europe-wide internships & grad roles";
 export const HERO_FEATURES = [
-  "We filter by city, visa, and experience so you only see roles that are personalized to your goals",
+  "We filter by city, visa, and experience, so you only see roles that are personalized to your goals",
   `${FREE_ROLES_PER_SEND} roles per drop · Premium unlocks ${PREMIUM_ROLES_PER_WEEK} each week (~${PREMIUM_ROLES_PER_MONTH} monthly)`
 ];
 export const HERO_SOCIAL_PROOF = "Trusted by students across 20+ European cities.";
@@ -33,7 +33,7 @@ export const HERO_FINE_PRINT = `Free forever • Cancel anytime • Premium unlo
 
 // How it works
 export const HOW_IT_WORKS_TITLE = "How it works";
-export const HOW_IT_WORKS_SUMMARY = "Share your preferences and we’ll surface early-career roles for you.";
+export const HOW_IT_WORKS_SUMMARY = "Share your preferences, and we'll surface early-career roles for you.";
 export const HOW_IT_WORKS_STEPS = [
   { title: "Share your preferences", description: "Pick cities, work rights, and roles in under two minutes." },
   { title: "We search every day", description: "JobPing scans European boards and company pages and filters the noise." },
@@ -64,12 +64,12 @@ export const BUILT_FOR_STUDENTS_FEATURES = [
 
 // Pricing
 export const PRICING_TITLE = "Start free. Upgrade when you need more.";
-export const PRICING_SUBTITLE = `EU early-career jobs delivered to your inbox. Premium unlocks ${PREMIUM_ROLES_PER_WEEK} roles/week (~${PREMIUM_ROLES_PER_MONTH}/month). Cancel anytime.`;
+export const PRICING_SUBTITLE = `EU early-career jobs delivered weekly. Premium unlocks ${PREMIUM_ROLES_PER_WEEK} roles/week (~${PREMIUM_ROLES_PER_MONTH}/month). Cancel anytime.`;
 export const PRICING_BADGE = "Simple pricing • Cancel anytime";
 
 // Free plan
 export const FREE_PLAN_TITLE = "Free";
-export const FREE_PLAN_SUBTITLE = "Weekly digest";
+export const FREE_PLAN_SUBTITLE = "weekly digest";
 export const FREE_PLAN_FEATURES = [
   `${FREE_ROLES_PER_SEND} curated roles every ${FREE_SEND_DAY_LABEL}`,
   "Salary hints (when available) and visa context in every drop",

@@ -8,8 +8,10 @@ export default function BuiltForStudents() {
   const featureIcons = [BrandIcons.Briefcase, BrandIcons.CheckCircle, BrandIcons.Mail];
 
   return (
-    <section className="section-padding bg-gradient-to-br from-[#05030c] via-[#03010d] to-[#160233]">
-      <div className="container-page">
+    <section className="section-padding bg-gradient-to-br from-[#05030c] via-[#03010d] to-[#160233] scroll-snap-section relative">
+      {/* Scroll momentum fade */}
+      <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
+      <div className="container-page relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -21,15 +23,15 @@ export default function BuiltForStudents() {
             <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
             {Copy.BUILT_FOR_STUDENTS_KICKER}
           </span>
-          <h2 className="mt-4 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
+          <h2 className="section-title mt-4 text-3xl sm:text-4xl md:text-5xl">
             {Copy.BUILT_FOR_STUDENTS_TITLE}
           </h2>
-          <p className="mt-4 text-base font-medium leading-relaxed text-zinc-100 sm:text-lg">
+          <p className="mt-4 mb-10 text-base font-medium leading-relaxed text-zinc-100 sm:text-lg">
             {Copy.BUILT_FOR_STUDENTS_SUBTITLE}
           </p>
         </motion.div>
 
-        <ul className="mt-12 space-y-6 sm:space-y-7 sm:space-y-8">
+        <ul className="mb-12 space-y-6 sm:space-y-7 sm:space-y-8">
           {Copy.BUILT_FOR_STUDENTS_FEATURES.filter(feature => feature && feature.title).map((feature, index) => {
             const Icon = featureIcons[index] || BrandIcons.Sparkles;
             return (
@@ -39,7 +41,7 @@ export default function BuiltForStudents() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: index * 0.05 }}
-                className="group relative overflow-hidden rounded-3xl border-default bg-white/[0.08] p-7 text-left backdrop-blur-md elevation-1 transition-all duration-300 hover:-translate-y-1 hover:border-emphasis hover:elevation-2 sm:p-9"
+                className="group relative overflow-hidden rounded-2xl border-default bg-white/[0.08] px-6 py-6 text-left backdrop-blur-md elevation-1 transition-all duration-200 hover:-translate-y-1 hover:border-emphasis hover:elevation-2 sm:px-8 sm:py-8"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <motion.span 

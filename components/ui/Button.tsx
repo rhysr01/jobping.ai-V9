@@ -38,7 +38,7 @@ export default function Button({
   const sizes = {
     sm: 'px-4 py-2.5 text-sm min-h-[44px]', // Ensure 44px minimum touch target
     md: 'px-5 py-3 text-sm sm:text-base min-h-[44px]',
-    lg: 'px-7 py-3.5 text-base sm:text-lg min-h-[48px]'
+    lg: 'px-7 py-3.5 text-base sm:text-lg min-h-[48px] w-full sm:w-auto'
   };
 
   if (href) {

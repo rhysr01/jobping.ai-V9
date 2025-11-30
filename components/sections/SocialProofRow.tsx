@@ -37,7 +37,16 @@ export default function SocialProofRow() {
       icon: <BrandIcons.Mail className="h-5 w-5" />,
       eyebrow: 'Every drop',
       title: `${FREE_ROLES_PER_SEND} curated roles per send`,
-      description: `${PREMIUM_ROLES_PER_WEEK} premium roles weekly (~${PREMIUM_ROLES_PER_MONTH} every month).`,
+      description: (
+        <>
+          <span className="inline-block bg-white/5 border border-white/10 rounded-md px-2 py-1 text-white/90 text-xs mr-1">
+            {PREMIUM_ROLES_PER_WEEK} premium roles weekly
+          </span>
+          <span className="inline-block bg-white/5 border border-white/10 rounded-md px-2 py-1 text-white/90 text-xs">
+            ~{PREMIUM_ROLES_PER_MONTH} every month
+          </span>
+        </>
+      ),
     },
     {
       icon: <BrandIcons.Target className="h-5 w-5" />,
@@ -48,14 +57,18 @@ export default function SocialProofRow() {
   ];
 
   return (
-    <section className="section-padding">
-      <div className="container-page">
+    <section className="section-padding scroll-snap-section relative">
+      {/* Scroll momentum fade */}
+      <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
+      {/* Guide line behind social proof row */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-transparent via-white/5 to-transparent blur-xl opacity-30" />
+      <div className="container-page relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
-          className="grid gap-6 rounded-3xl border-default bg-white/[0.08] p-8 elevation-1 backdrop-blur-md sm:grid-cols-3 sm:gap-8 sm:p-10"
+          className="grid gap-6 rounded-2xl border-default bg-white/[0.08] px-6 py-6 elevation-1 backdrop-blur-md hover:-translate-y-1 transition-all duration-200 sm:grid-cols-3 sm:gap-8 sm:px-8 sm:py-8"
         >
           {items.map((item, index) => (
             <motion.div
@@ -68,9 +81,12 @@ export default function SocialProofRow() {
                 y: -4,
                 transition: { type: 'spring', stiffness: 300, damping: 20 }
               }}
-              className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border-subtle bg-black/15 p-6 transition-all duration-300 hover:border-default hover:elevation-1 sm:p-7"
+              className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border-subtle bg-black/15 px-6 py-6 transition-all duration-200 hover:border-default hover:elevation-1 hover:-translate-y-1 sm:px-8 sm:py-8"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              {index < items.length - 1 && (
+                <span className="hidden md:inline absolute right-0 top-1/2 h-4 w-px bg-white/10 -translate-y-1/2" />
+              )}
               <motion.span 
                 className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-brand-200 transition-all duration-300 group-hover:bg-brand-500/25 group-hover:scale-105"
                 whileHover={{ rotate: [0, -10, 10, 0] }}
@@ -78,12 +94,14 @@ export default function SocialProofRow() {
               >
                 {item.icon}
               </motion.span>
-              <div>
+              <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-[0.24em] text-brand-300">
                   {isLoading && index === 0 ? 'Loading…' : item.eyebrow}
                 </p>
-                <h3 className="mt-2 text-lg font-bold text-white sm:text-xl">{item.title}</h3>
-                <p className="mt-2 text-sm font-medium leading-relaxed text-zinc-100 transition-colors duration-300 group-hover:text-white">{item.description}</p>
+                <h3 className="text-lg font-bold text-white sm:text-xl">{item.title}</h3>
+                <div className="text-sm font-semibold leading-relaxed text-zinc-100 transition-colors duration-300 group-hover:text-white">
+                  {typeof item.description === 'string' ? item.description : item.description}
+                </div>
               </div>
             </motion.div>
           ))}

@@ -232,8 +232,11 @@ export default function Hero() {
         </div>
       )}
 
+      {/* Scroll momentum fade */}
+      <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
+      
       {/* Main hero card container - reduced width, better grouping */}
-      <div className="container-page relative z-10 mx-auto flex max-w-4xl flex-col items-center gap-6">
+      <div className="container-page relative z-10 mx-auto flex max-w-4xl flex-col items-center gap-6 scroll-snap-section">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -320,7 +323,7 @@ export default function Hero() {
                       {hasGraduates && <span className="text-zinc-200">grad roles</span>}
                       {(hasGraduates && hasEarlyCareer) && <span className="text-zinc-300 mx-1">•</span>}
                       {hasEarlyCareer && <span className="font-bold text-white">{formatNumber(displayEarlyCareer)}</span>}
-                      {hasEarlyCareer && <span className="text-zinc-200">early career</span>}
+                      {hasEarlyCareer && <span className="text-zinc-200">early-career</span>}
                     </motion.div>
                   )}
                 </>
@@ -343,16 +346,13 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.6, ease: "easeOut" }}
-          className="relative w-full max-w-3xl rounded-3xl border border-white/20 bg-gradient-to-br from-purple-950/50 via-purple-900/40 to-indigo-950/50 backdrop-blur-xl p-8 sm:p-10 md:p-12 shadow-[0_24px_80px_-20px_rgba(124,58,237,0.4),0_8px_24px_-8px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.1)]"
-          style={{
-            backgroundImage: 'linear-gradient(135deg, rgba(124,58,237,0.5) 0%, rgba(99,102,241,0.4) 100%)',
-          }}
+          className="relative w-full max-w-3xl rounded-2xl border border-white/20 bg-gradient-to-b from-purple-900/80 to-purple-950/90 backdrop-blur-xl px-6 py-6 shadow-lg shadow-purple-900/40 sm:px-8 sm:py-8 md:px-10 md:py-10 lg:px-12 lg:py-12"
         >
           {/* Subtle directional gradient overlay (left to right) */}
-          <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-transparent via-white/[0.02] to-transparent pointer-events-none" />
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/[0.02] to-transparent pointer-events-none" />
           
           {/* Content inside card */}
-          <div className="relative z-10 flex flex-col gap-6">
+          <div className="relative z-10 flex flex-col gap-3">
             {/* Badge - improved visibility */}
             <motion.p
               initial={{ opacity: 0, y: 12 }}
@@ -380,10 +380,10 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
-              className="text-balance text-xl font-medium leading-relaxed text-zinc-100 sm:text-2xl md:text-3xl"
+              className="text-balance text-lg md:text-xl font-medium leading-relaxed text-zinc-200 sm:text-xl"
               style={{ textShadow: '0 1px 4px rgba(0,0,0,0.4)' }}
             >
-              Stop scrolling job boards. Get personalized early-career roles delivered weekly to your inbox. No logins. Zero scrolling.
+              5 curated matches weekly
             </motion.p>
 
             {/* Features - increased spacing */}
@@ -407,18 +407,18 @@ export default function Hero() {
               </div>
             </motion.div>
 
-            {/* CTA - moved closer, grouped with content, reduced glow */}
+            {/* CTA - moved closer, grouped with content, increased dominance */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.6 }}
-              className="flex flex-col gap-4 mt-4"
+              className="flex flex-col gap-3 mt-6 md:mt-4"
             >
               <Button
                 href="/signup"
                 variant="primary"
                 size="lg"
-                className="w-full sm:w-auto sm:min-w-[280px] text-base font-semibold shadow-[0_12px_32px_rgba(99,102,241,0.28)] hover:shadow-[0_16px_40px_rgba(99,102,241,0.35)]"
+                className="w-full sm:w-auto sm:min-w-[280px] scale-[1.08] font-semibold shadow-glow-strong"
                 aria-label="Get my first drop"
               >
                 <span className="flex items-center justify-center gap-2">
@@ -426,17 +426,20 @@ export default function Hero() {
                   <BrandIcons.ArrowRight className="h-5 w-5" />
                 </span>
               </Button>
+              <p className="mt-2 text-sm text-zinc-400 text-center sm:text-left">
+                Join thousands of early-career jobseekers across Europe.
+              </p>
               <p className="text-base font-medium text-zinc-200 text-center sm:text-left">{Copy.HERO_FINE_PRINT}</p>
             </motion.div>
           </div>
         </motion.div>
 
-        {/* Trust signal - moved below card */}
+        {/* Trust signal - moved below card, tightened spacing */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.6 }}
-          className="flex flex-col items-center gap-3 text-sm w-full"
+          className="flex flex-col items-center gap-3 text-sm w-full mt-4"
         >
           <motion.div 
             className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-zinc-200 transition-all duration-300 hover:border-brand-500/40 hover:bg-brand-500/15"
@@ -452,7 +455,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.55, duration: 0.6 }}
-          className="mt-4 flex flex-col items-center gap-3 relative"
+          className="mt-4 flex flex-col items-center gap-3 relative pb-0"
         >
           {/* Subtle glow anchor behind logos */}
           <div className="absolute inset-x-0 top-1/2 h-20 bg-gradient-to-b from-purple-500/5 via-transparent to-transparent blur-xl -z-10" />
@@ -468,7 +471,7 @@ export default function Hero() {
                 whileHover={{ scale: 1.08 }}
                 className="group relative flex items-center justify-center opacity-70 transition-opacity duration-300 hover:opacity-100"
               >
-                <div className="relative h-9 w-auto sm:h-11">
+                <div className="relative h-5 w-auto opacity-70">
                   <Image
                     src={logo}
                     alt={description}
