@@ -155,7 +155,7 @@ export default function Hero() {
   return (
     <section
       data-testid="hero-section"
-      className="section-padding-hero pt-16 md:pt-20 pb-24 relative overflow-hidden flex flex-col items-center justify-start text-center"
+      className="section-padding-hero pt-16 md:pt-20 pb-12 md:pb-16 relative overflow-hidden flex flex-col items-center justify-start text-center"
     >
       {/* Cinematic dark background */}
       <div className="absolute inset-0 -z-10 bg-black" />
