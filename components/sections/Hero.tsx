@@ -15,6 +15,7 @@ const numberFormatter = new Intl.NumberFormat("en-US");
 
 export default function Hero() {
   const { stats, isLoading: statsLoading } = useStats();
+  const [offset, setOffset] = useState(0);
   const [activeJobsTarget, setActiveJobsTarget] = useState(12748);
   const [internshipsTarget, setInternshipsTarget] = useState(0);
   const [graduatesTarget, setGraduatesTarget] = useState(0);
@@ -137,6 +138,14 @@ export default function Hero() {
     return () => controls.stop();
   }, [totalUsersTarget, prefersReduced]);
 
+  // Scroll parallax for aura
+  useEffect(() => {
+    if (prefersReduced || shouldThrottle) return;
+    const onScroll = () => setOffset(window.scrollY * 0.03);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [prefersReduced, shouldThrottle]);
+
   const particles = useMemo(() => {
     if (prefersReduced || shouldThrottle) return [];
     // Professional: Minimal particles for subtle depth
@@ -160,7 +169,7 @@ export default function Hero() {
       {/* Cinematic dark background */}
       <div className="absolute inset-0 -z-10 bg-black" />
       {/* Background animations - contained inside hero section */}
-      <HeroBackgroundAura />
+      <HeroBackgroundAura offset={offset} />
       {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
         <div className="pointer-events-none absolute inset-0 -z-10">
           {particles.map(({ id, top, left, size, duration, delay, drift, opacity }) => (
@@ -229,8 +238,9 @@ export default function Hero() {
                 <path d="M22 10v4" />
                 <path d="M6 12v4c0 1.6 3 3.2 6 3.2s6-1.6 6-3.2v-4" />
               </svg>
-              <span className="text-[4rem] sm:text-[4.5rem] md:text-[5rem] font-semibold tracking-tight text-white">
+              <span className="relative text-[4rem] sm:text-[4.5rem] md:text-[5rem] font-semibold tracking-tight text-white">
                 JobPing
+                <span className="absolute inset-0 blur-[3px] mix-blend-screen opacity-30 pointer-events-none bg-[linear-gradient(90deg,rgba(129,140,248,0.4),rgba(255,255,255,0),rgba(168,85,247,0.4))]" />
               </span>
             </div>
             <p className="mt-3 text-base text-zinc-400 md:text-lg">

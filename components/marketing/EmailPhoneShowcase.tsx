@@ -18,12 +18,12 @@ export default function EmailPhoneShowcase() {
       {/* Soft section band */}
       <div className="pointer-events-none absolute inset-x-0 -top-10 h-40 bg-gradient-to-b from-indigo-900/40 to-transparent" />
       {/* Subtle spotlight behind email showcase */}
-      <div className="pointer-events-none absolute inset-x-0 -top-24 h-64 blur-3xl opacity-80 bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.28),_transparent_60%)] -z-10" />
+      <div className="pointer-events-none absolute inset-x-0 -top-24 h-64 blur-lg-hero opacity-80 bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.28),_transparent_60%)] -z-10" />
 
       <div className="container-page relative z-10 px-4 md:px-6">
         <div className="relative grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
           {/* Left-side spotlight */}
-          <div className="pointer-events-none absolute left-[5%] top-[30%] h-[400px] w-[400px] bg-[radial-gradient(circle_at_center,rgba(129,140,248,0.22),transparent_70%)] blur-[90px] opacity-70" />
+          <div className="pointer-events-none absolute left-[5%] top-[30%] h-[400px] w-[400px] bg-[radial-gradient(circle_at_center,rgba(129,140,248,0.22),transparent_70%)] blur-md-hero opacity-70" />
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -79,7 +79,7 @@ export default function EmailPhoneShowcase() {
               className="relative"
             >
               <div className="absolute inset-0 -z-10 translate-y-8">
-                <div className="h-full w-full scale-110 rounded-full bg-black/40 blur-[120px]" />
+                <div className="h-full w-full scale-110 rounded-full bg-black/40 blur-lg-hero" />
               </div>
               <DeviceFrame>
                 <SampleInterviewEmail />
