@@ -13,6 +13,8 @@ export default function HowItWorks() {
     >
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
+      {/* Soft section band */}
+      <div className="pointer-events-none absolute inset-x-0 -top-10 h-40 bg-gradient-to-b from-zinc-900/40 to-transparent" />
       <div className="container-page relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -21,7 +23,7 @@ export default function HowItWorks() {
           transition={{ duration: 0.5 }}
           className="mx-auto max-w-3xl text-left sm:text-center"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-300">
+          <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/40 bg-violet-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-violet-200">
             <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
             {Copy.HOW_IT_WORKS_TITLE}
           </span>
@@ -36,7 +38,9 @@ export default function HowItWorks() {
           </p>
         </motion.div>
 
-        <div className="mt-14 grid gap-6 sm:mt-16 sm:grid-cols-3">
+        <div className="relative mt-14 grid gap-4 sm:mt-16 md:grid-cols-3">
+          {/* Connecting line for desktop */}
+          <div className="pointer-events-none absolute left-1/2 top-10 hidden h-px w-[72%] -translate-x-1/2 md:block bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent" />
           {Copy.HOW_IT_WORKS_STEPS.filter(step => step && step.title).map((step, index) => {
             const Icon = stepIcons[index] || BrandIcons.Target;
             return (
@@ -50,7 +54,7 @@ export default function HowItWorks() {
                   y: -4,
                   transition: { type: 'spring', stiffness: 300, damping: 20 }
                 }}
-                className="group relative flex h-full flex-col gap-2 overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-feature px-6 py-6 text-left transition-all duration-200 hover:-translate-y-1 md:px-7 md:py-7"
+                className="group relative flex h-full flex-col gap-2 overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-feature px-6 py-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.65)] md:px-7 md:py-7"
               >
                 <motion.span 
                   className="number-chip brightness-95 font-semibold group-hover:bg-brand-500/25 group-hover:scale-110 shadow-md shadow-black/40"

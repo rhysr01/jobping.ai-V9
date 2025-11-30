@@ -239,7 +239,7 @@ export default function Hero() {
           </motion.div>
           {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
             <motion.div
-              className="h-px w-44 rounded-full bg-gradient-to-r from-transparent via-white/70 to-transparent"
+              className="mt-6 h-px w-24 rounded-full bg-gradient-to-r from-transparent via-zinc-600/60 to-transparent"
               initial={{ opacity: 0, scaleX: 0 }}
               animate={shouldLoadAnimations ? { opacity: 1, scaleX: 1 } : {}}
               transition={{ duration: 0.6, delay: 0.35, ease: "easeOut" }}
@@ -253,7 +253,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.6, ease: "easeOut" }}
-          className="relative z-10 w-full max-w-3xl mt-10 md:mt-12 rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-md px-6 md:px-8 lg:px-12 py-10 md:py-12 shadow-hero"
+          className="relative z-10 w-full max-w-3xl mt-12 md:mt-16 rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-md px-6 md:px-8 lg:px-12 py-10 md:py-12 shadow-hero"
         >
           {/* Subtle spotlight behind card */}
           <div className="pointer-events-none absolute inset-x-0 -top-24 h-64 blur-3xl opacity-80 bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.28),_transparent_60%)] -z-10" />
@@ -270,7 +270,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.45 }}
-              className="inline-flex items-center gap-2 self-start mb-3 rounded-full border border-brand-400/30 bg-brand-500/20 px-4 py-2 text-xs font-bold uppercase tracking-wider text-brand-200 backdrop-blur-sm"
+              className="inline-flex items-center gap-2 self-start mb-3 rounded-full border border-violet-500/40 bg-violet-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-violet-200"
             >
               <BrandIcons.Mail className="h-3.5 w-3.5 text-brand-300" />
               {Copy.HERO_PILL}

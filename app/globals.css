@@ -470,10 +470,10 @@ body {
   /* Number chip consistent styling */
   .number-chip {
     @apply inline-flex items-center justify-center rounded-full bg-brand-500/15 text-brand-200 transition-all duration-300;
-    width: 72px;
-    height: 72px;
+    width: 56px;
+    height: 56px;
     font-weight: 900;
-    font-size: 1.5rem;
+    font-size: 1.125rem;
     border: 2px solid rgba(99, 102, 241, 0.6);
     background: linear-gradient(
       135deg,
@@ -486,9 +486,9 @@ body {
   
   @media (min-width: 768px) {
     .number-chip {
-      width: 88px;
-      height: 88px;
-      font-size: 1.75rem;
+      width: 64px;
+      height: 64px;
+      font-size: 1.25rem;
     }
   }
   
