@@ -216,7 +216,7 @@ export default function Hero() {
             {/* Smaller wordmark with grad hat */}
             <div className="flex items-center justify-center gap-3">
               <svg
-                className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 text-white"
+                className="h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 text-white"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -229,11 +229,11 @@ export default function Hero() {
                 <path d="M22 10v4" />
                 <path d="M6 12v4c0 1.6 3 3.2 6 3.2s6-1.6 6-3.2v-4" />
               </svg>
-              <span className="text-[3rem] sm:text-[3.5rem] md:text-[4rem] font-semibold tracking-tight text-white">
+              <span className="text-[4rem] sm:text-[4.5rem] md:text-[5rem] font-semibold tracking-tight text-white">
                 JobPing
               </span>
             </div>
-            <p className="mt-3 text-sm text-zinc-500 md:text-base">
+            <p className="mt-3 text-base text-zinc-400 md:text-lg">
               Early-career roles across Europe, filtered for real applicants.
             </p>
           </motion.div>
