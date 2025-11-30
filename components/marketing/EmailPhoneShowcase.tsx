@@ -23,7 +23,7 @@ export default function EmailPhoneShowcase() {
       <div className="container-page relative z-10 px-4 md:px-6">
         <div className="relative grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
           {/* Left-side spotlight */}
-          <div className="pointer-events-none absolute left-0 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.22),_transparent_60%)] blur-[70px]" />
+          <div className="pointer-events-none absolute left-[5%] top-[30%] h-[400px] w-[400px] bg-[radial-gradient(circle_at_center,rgba(129,140,248,0.22),transparent_70%)] blur-[90px] opacity-70" />
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}

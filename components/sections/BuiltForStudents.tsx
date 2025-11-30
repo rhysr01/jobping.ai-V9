@@ -43,27 +43,21 @@ export default function BuiltForStudents() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: index * 0.05 }}
-                className="group relative overflow-hidden rounded-2xl bg-zinc-950/70 border border-white/5 p-5 md:p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.65)]"
+                className="group relative overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 p-6 backdrop-blur-xl shadow-feature transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.65)]"
               >
                 <div className="flex items-start gap-4">
-                  <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-full bg-[radial-gradient(circle_at_top,_rgba(129,140,248,0.45),_rgba(39,39,42,1)_70%)]">
-                    <motion.span 
-                      className="relative inline-flex h-10 w-10 items-center justify-center text-brand-200 transition-all duration-300 group-hover:scale-110"
-                      whileHover={{ rotate: [0, -10, 10, 0] }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </motion.span>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[radial-gradient(circle_at_center,rgba(129,140,248,0.4),transparent_70%)]">
+                    <Icon className="h-5 w-5 text-violet-300" />
                   </div>
                   <div>
-                    <h3 className="text-base md:text-lg font-semibold text-white mb-1">
+                    <h3 className="text-base md:text-lg font-semibold text-white">
                       {feature.title}
                     </h3>
-                    <p className="text-sm text-zinc-300 leading-relaxed">
+                    <p className="text-sm text-zinc-300 mt-1">
                       {feature.body}
                     </p>
                     {feature.meta && (
-                      <p className="mt-1 text-xs text-zinc-500">
+                      <p className="text-xs text-zinc-500 mt-1">
                         {feature.meta}
                       </p>
                     )}

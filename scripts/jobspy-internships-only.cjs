@@ -203,6 +203,11 @@ async function saveJobs(jobs, source) {
 }
 
 function pickPythonCommand() {
+  // First check for PYTHON environment variable (used in CI/CD)
+  if (process.env.PYTHON) {
+    return process.env.PYTHON;
+  }
+  
   const scriptPath = require('path').join(__dirname, 'run-jobspy-python.sh');
   if (require('fs').existsSync(scriptPath)) {
     return scriptPath;

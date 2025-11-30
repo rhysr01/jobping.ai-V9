@@ -57,7 +57,7 @@ export default function HowItWorks() {
                 className="group relative flex h-full flex-col gap-2 overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-feature px-6 py-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.65)] md:px-7 md:py-7"
               >
                 <motion.span 
-                  className="number-chip brightness-95 font-semibold group-hover:bg-brand-500/25 group-hover:scale-110 shadow-md shadow-black/40"
+                  className="number-chip brightness-95 font-semibold group-hover:bg-brand-500/25 group-hover:scale-110 shadow-md shadow-black/40 h-12 w-12 md:h-14 md:w-14 text-lg md:text-xl"
                   whileHover={{ rotate: [0, -10, 10, 0] }}
                   transition={{ duration: 0.5 }}
                 >
