@@ -40,35 +40,45 @@ export default function HeroBackgroundAura() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 -z-[9] overflow-hidden"
+      className="pointer-events-none fixed inset-0 -z-[1] overflow-hidden"
     >
-      {/* Spotlight glow behind hero - Much more visible */}
+      {/* Large ambient glow behind everything */}
       <div
-        className="absolute left-1/2 top-[12%] h-[500px] w-[1400px] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#a855f7]/80 via-[#6366f1]/60 to-transparent blur-[120px] animate-slow-spotlight"
+        className="absolute left-1/2 top-[20%] h-[800px] w-[2000px] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#a855f7]/40 via-[#6366f1]/30 to-transparent blur-[180px] animate-slow-spotlight"
         style={{
           willChange: 'transform, opacity',
           transform: 'translateZ(0)',
         }}
       />
+      
+      {/* Spotlight glow behind hero card - positioned to shine through glass */}
+      <div
+        className="absolute left-1/2 top-[35%] h-[600px] w-[1600px] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#a855f7]/70 via-[#6366f1]/50 to-transparent blur-[140px] animate-slow-spotlight"
+        style={{
+          willChange: 'transform, opacity',
+          transform: 'translateZ(0)',
+          animationDelay: '2s',
+        }}
+      />
 
-      {/* Grid pattern with fallback - Much more visible */}
+      {/* Grid pattern - behind all content for depth */}
       <div
         ref={gridRef}
-        className="absolute inset-[-200px] bg-[url('/grid.svg')] bg-center bg-[length:900px_900px] opacity-[0.25] animate-grid-fade"
+        className="absolute inset-[-300px] bg-[url('/grid.svg')] bg-center bg-[length:900px_900px] opacity-[0.3] animate-grid-fade"
         style={{
           willChange: 'opacity',
           transform: 'translateZ(0)',
         }}
       />
       
-      {/* Fallback: CSS grid if SVG pattern fails - More visible */}
+      {/* Fallback: CSS grid if SVG pattern fails */}
       <div
         ref={fallbackRef}
-        className="absolute inset-[-200px] opacity-[0.2] animate-grid-fade"
+        className="absolute inset-[-300px] opacity-[0.25] animate-grid-fade"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
+            linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px)
           `,
           backgroundSize: '60px 60px',
           display: 'none',
@@ -78,4 +88,5 @@ export default function HeroBackgroundAura() {
     </div>
   );
 }
+
 
