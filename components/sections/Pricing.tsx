@@ -46,7 +46,7 @@ const plans: PlanConfig[] = [
 
 export default function Pricing() {
   return (
-    <section data-testid="pricing" className="pt-20 pb-20 md:pt-24 md:pb-24 relative overflow-hidden bg-[#05010f] scroll-snap-section">
+    <section data-testid="pricing" className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 relative overflow-hidden bg-[#05010f] scroll-snap-section">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       <div className="absolute inset-0 bg-black" />
@@ -59,7 +59,7 @@ export default function Pricing() {
           transition={{ duration: 0.5 }}
           className="mx-auto max-w-3xl text-left sm:text-center"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-400">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-300">
             <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
             Pricing
           </span>
@@ -119,10 +119,10 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.55, delay: index * 0.1 }}
-      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 md:px-7 md:py-7 ${
+      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-xl backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 md:px-7 md:py-7 ${
         isPremium 
           ? 'bg-zinc-900 border border-purple-500/60 shadow-[0_24px_60px_rgba(129,140,248,0.35)]' 
-          : 'bg-white/[0.06] border border-white/10 shadow-[0_4px_18px_rgba(0,0,0,0.35)]'
+          : 'bg-white/[0.06] border border-white/10 shadow-pricing'
       }`}
     >
       {plan.badge && (

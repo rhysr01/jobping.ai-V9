@@ -9,7 +9,7 @@ export default function HowItWorks() {
   return (
     <section
       data-testid="how-it-works"
-      className="pt-20 pb-20 md:pt-24 md:pb-24 bg-black scroll-snap-section relative"
+      className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 bg-black scroll-snap-section relative"
     >
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
@@ -21,14 +21,14 @@ export default function HowItWorks() {
           transition={{ duration: 0.5 }}
           className="mx-auto max-w-3xl text-left sm:text-center"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-400">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-300">
             <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
             {Copy.HOW_IT_WORKS_TITLE}
           </span>
           <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/15 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.24em] text-emerald-200">
             Updated daily
           </span>
-          <h2 className="section-title mt-4 text-5xl font-semibold tracking-[-0.02em] text-white md:text-6xl mb-2">
+          <h2 className="section-title mt-4 mb-2">
             Less typing, more applying
           </h2>
           <p className="mb-10 text-xl text-zinc-300 md:text-2xl">
@@ -50,7 +50,7 @@ export default function HowItWorks() {
                   y: -4,
                   transition: { type: 'spring', stiffness: 300, damping: 20 }
                 }}
-                className="group relative flex h-full flex-col gap-2 overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-[0_4px_18px_rgba(0,0,0,0.35)] px-6 py-6 text-left transition-all duration-200 hover:-translate-y-1 md:px-7 md:py-7"
+                className="group relative flex h-full flex-col gap-2 overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-feature px-6 py-6 text-left transition-all duration-200 hover:-translate-y-1 md:px-7 md:py-7"
               >
                 <motion.span 
                   className="number-chip brightness-95 font-semibold group-hover:bg-brand-500/25 group-hover:scale-110 shadow-md shadow-black/40"
