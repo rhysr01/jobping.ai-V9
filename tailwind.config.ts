@@ -10,6 +10,7 @@ export default {
       // Spacing removed - Tailwind defaults are sufficient
       colors: {
         brand: {
+          200: "#D4C5FF",
           300: "#C2A8FF",
           400: "#B491FF",
           500: "#9A6AFF",
