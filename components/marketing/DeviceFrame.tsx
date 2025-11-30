@@ -14,7 +14,7 @@ export default function DeviceFrame({ children, className }: Props) {
   // Visual size reduced via responsive scale to avoid dominating the layout
   return (
     <div className={`inline-block origin-top scale-[0.82] sm:scale-[0.86] md:scale-[0.9] lg:scale-100 ${className ?? ""}`}>
-      <div className="relative mx-auto max-w-sm rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-1">
+      <div className="relative mx-auto max-w-sm rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-1 ring-1 ring-white/5 backdrop-blur-sm">
         <div className="relative w-[390px] h-[844px] drop-shadow-2xl">
         {/* Glow effect around device */}
         <div className="absolute -inset-4 bg-gradient-to-r from-brand-500/20 via-purple-500/20 to-brand-500/20 rounded-[80px] blur-2xl opacity-50" />
