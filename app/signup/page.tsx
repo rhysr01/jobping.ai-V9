@@ -257,7 +257,7 @@ function SignupForm() {
     } finally {
       setLoading(false);
     }
-  }, [formData, tier, router, announce]);
+  }, [formData, tier, router, announce, formRefs.email, formRefs.fullName]);
 
   // Keyboard shortcuts for power users
   useEffect(() => {

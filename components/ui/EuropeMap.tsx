@@ -173,6 +173,7 @@ export default function EuropeMap({
     setTooltip(null);
   }, []);
 
+  // Declare isCitySelected before handleKeyDown to avoid "used before declaration" error
   const isCitySelected = useCallback((city: string) => selectedCities.includes(city), [selectedCities]);
   const isCityDisabled = useCallback((city: string) => 
     !isCitySelected(city) && selectedCities.length >= maxSelections, 
@@ -206,7 +207,7 @@ export default function EuropeMap({
         updateTooltip(nextCity, nextElement);
       }
     }
-  }, [handleCityClick, updateTooltip, isCitySelected, selectedCities.length, maxSelections]);
+  }, [handleCityClick, updateTooltip, isCitySelected, selectedCities.length, maxSelections, cityRefs]);
 
   const cityEntries = useMemo<[string, ProjectedCity][]>(() => {
     return Object.entries(CITY_COORDINATES).map(([name, city]) => {
