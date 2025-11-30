@@ -155,11 +155,11 @@ export default function Hero() {
   return (
     <section
       data-testid="hero-section"
-      className="section-padding-hero pt-10 pb-24 relative flex flex-col items-center justify-start overflow-hidden text-center"
+      className="section-padding-hero pt-10 pb-24 relative overflow-hidden flex flex-col items-center justify-start text-center"
     >
       {/* Cinematic dark background */}
       <div className="absolute inset-0 -z-10 bg-black" />
-      {/* Background animations - positioned behind main content for depth */}
+      {/* Background animations - contained inside hero section */}
       <HeroBackgroundAura />
       {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
         <div className="pointer-events-none absolute inset-0 -z-10">

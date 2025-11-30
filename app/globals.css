@@ -574,7 +574,32 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Hero background animations - More noticeable timing */
+/* Hero background animations - Visible and dynamic */
+@keyframes hero-blob {
+  0% {
+    transform: translate(-50%, -10%) scale(1) rotate(0deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(-46%, 5%) scale(1.08) rotate(6deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(-50%, -5%) scale(1.02) rotate(-4deg);
+    opacity: 0.75;
+  }
+}
+
+@keyframes hero-grid-fade {
+  0% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0.5;
+  }
+}
+
+/* Legacy animations kept for compatibility */
 @keyframes slow-spotlight {
   0% {
     transform: translate(-50%, -5%) rotate(0deg) scale(1);
@@ -597,7 +622,6 @@ html {
 .animate-slow-spotlight {
   animation: slow-spotlight 12s ease-in-out infinite;
   will-change: transform, opacity;
-  /* Performance: Use GPU acceleration */
   transform: translateZ(0);
   backface-visibility: hidden;
 }
@@ -614,7 +638,6 @@ html {
 .animate-grid-fade {
   animation: grid-fade 14s ease-in-out infinite;
   will-change: opacity;
-  /* Performance: Use GPU acceleration */
   transform: translateZ(0);
   backface-visibility: hidden;
 }
