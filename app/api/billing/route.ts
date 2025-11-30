@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 
     const supabase = getDatabaseClient();
     
-    // Get user's subscription status
+    // Get user's subscription status and email
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('subscription_active, email')
@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
       currentSubscription: subscription || null,
       invoices: [],
       hasPaymentCustomer: false,
+      email: user?.email || null,
     });
 
   } catch (error) {
