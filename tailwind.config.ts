@@ -7,29 +7,8 @@ export default {
       sans: ['Satoshi', 'Inter', 'system-ui', 'sans-serif'],
     },
     extend: {
-      // 8pt base grid system
-      spacing: {
-        '0.5': '0.125rem', // 2px
-        '1': '0.25rem',    // 4px
-        '2': '0.5rem',     // 8px
-        '3': '0.75rem',    // 12px
-        '4': '1rem',       // 16px
-        '5': '1.25rem',    // 20px
-        '6': '1.5rem',     // 24px
-        '8': '2rem',       // 32px
-        '10': '2.5rem',    // 40px
-        '12': '3rem',      // 48px
-        '16': '4rem',      // 64px
-        '20': '5rem',      // 80px
-        '24': '6rem',      // 96px
-        '32': '8rem',      // 128px
-        '40': '10rem',     // 160px
-        '48': '12rem',     // 192px
-        '64': '16rem',     // 256px
-        '80': '20rem',     // 320px
-        '96': '24rem',     // 384px
-      },
-             colors: {
+      // Spacing removed - Tailwind defaults are sufficient
+      colors: {
                brand: {
                  300: "#C2A8FF",
                  400: "#B491FF",
@@ -116,18 +95,16 @@ export default {
         'body': ['1rem', { lineHeight: '1.6', letterSpacing: '0' }], // 16px - Body text
         'small': ['0.875rem', { lineHeight: '1.5', letterSpacing: '0' }], // 14px - Small text
       },
-      // Depth system - 3 surface levels
+      // Depth system - simplified
       boxShadow: {
         'base': '0 1px 2px 0 rgb(255 255 255 / 0.05)',
         'raised': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
         'overlay': '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
         'elev-1': "0 10px 30px -10px rgba(99,102,241,0.25)",
         'elev-2': "0 20px 60px -18px rgba(99,102,241,0.35)",
-        'glow-subtle': "0 0 20px rgba(99,102,241,0.3)",
-        'glow-medium': "0 0 40px rgba(99,102,241,0.4)",
-        'glow-strong': "0 0 80px rgba(99,102,241,0.3)",
-        'glow-signup': "0 0 30px rgba(99,102,241,0.4)",
-        'glow-signup-strong': "0 0 60px rgba(99,102,241,0.5)",
+        // Reduced glow utilities - use sparingly
+        'glow-subtle': "0 0 12px rgba(99,102,241,0.2)",
+        'glow-strong': "0 0 24px rgba(99,102,241,0.25)",
       },
       // Micro-interaction timing
       transitionDuration: {

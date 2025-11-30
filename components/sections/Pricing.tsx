@@ -49,7 +49,7 @@ export default function Pricing() {
     <section data-testid="pricing" className="section-padding relative overflow-hidden bg-[#05010f]">
       <div className="absolute inset-0 bg-gradient-to-br from-[#05000d] via-[#09011a] to-[#170043] opacity-90" />
 
-      <div className="container-page container-rhythm relative z-10">
+      <div className="container-page relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -81,8 +81,8 @@ export default function Pricing() {
           className="mt-20 overflow-hidden rounded-3xl border-2 border-brand-500/40 bg-gradient-to-r from-[#0b031d] via-[#120033] to-[#1f0546] px-8 py-12 text-center shadow-[0_30px_100px_rgba(17,0,45,0.5)] backdrop-blur-sm sm:px-12"
         >
           <div className="flex flex-col items-center gap-5">
-            <span className="inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
-              🚀 Over 12 000 jobs matched this month
+            <span className="inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
+              🚀 Over 12,000 jobs matched this month
             </span>
             <h3 className="text-2xl font-bold text-white sm:text-3xl">
               Start free today—see your first five matches before the weekend.
@@ -115,15 +115,17 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
       viewport={{ once: true }}
       transition={{ duration: 0.55, delay: index * 0.1 }}
       className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border-2 ${
-        isPremium ? 'border-brand-500/60 bg-gradient-to-br from-brand-500/15 via-brand-500/10 to-purple-500/10 shadow-[0_20px_60px_rgba(99,102,241,0.3)]' : 'border-white/20 bg-white/[0.08]'
-      } p-8 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/60 hover:shadow-[0_24px_60px_rgba(99,102,241,0.35)] sm:p-10`}
+        isPremium 
+          ? 'border-strong border-brand-500/60 bg-gradient-to-br from-brand-500/15 via-brand-500/10 to-purple-500/10 elevation-3' 
+          : 'border-default bg-white/[0.08] elevation-1'
+      } p-8 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:elevation-2 sm:p-10`}
     >
       {isPremium && (
         <div className="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-purple-500/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       )}
       {plan.badge && (
         <motion.span 
-          className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-brand-500 to-purple-600 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow-[0_8px_24px_rgba(99,102,241,0.45)]"
+          className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-brand-500 to-purple-600 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow-[0_8px_24px_rgba(99,102,241,0.45)]"
           animate={{ 
             boxShadow: [
               '0_8px_24px_rgba(99,102,241,0.45)',
@@ -149,7 +151,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
         <ul className="mt-6 space-y-4">
           {plan.features.map(feature => (
             <li key={feature} className="flex items-start gap-3 text-sm font-medium text-zinc-100 sm:text-base">
-              <span className="mt-0.5 inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-brand-200 shadow-[0_0_12px_rgba(99,102,241,0.3)]">
+              <span className="mt-0.5 inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-brand-200">
                 <BrandIcons.Check className="h-3.5 w-3.5" />
               </span>
               <span className="leading-relaxed">{feature}</span>

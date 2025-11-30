@@ -46,6 +46,7 @@ export default function Button({
       <a 
         href={href}
         target={target}
+        rel={target === '_blank' ? 'noreferrer noopener' : undefined}
         className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
         {...(props as any)}
       >

@@ -36,7 +36,7 @@ export default function SampleInterviewEmail() {
           <a
             href="#"
             aria-label="View role: Product Analyst at Monzo in London"
-            className="mt-3 inline-block rounded-lg bg-gradient-to-r from-[#9A6AFF] to-[#6B4EFF] px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_2px_10px_rgba(154,106,255,0.25)] hover:shadow-[0_4px_14px_rgba(154,106,255,0.35)] focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+            className="mt-3 inline-block rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_2px_10px_rgba(99,102,241,0.25)] hover:shadow-[0_4px_14px_rgba(99,102,241,0.35)] focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all"
           >
             View role
           </a>
@@ -110,7 +110,7 @@ export default function SampleInterviewEmail() {
         <a
           href="#"
           aria-label="Find my matches"
-          className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-[#9A6AFF] to-[#6B4EFF] px-4 py-3.5 text-[15px] font-bold text-white shadow-[0_2px_10px_rgba(154,106,255,0.25)] hover:shadow-[0_4px_14px_rgba(154,106,255,0.35)] focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+          className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-3.5 text-[15px] font-bold text-white shadow-[0_2px_10px_rgba(99,102,241,0.25)] hover:shadow-[0_4px_14px_rgba(99,102,241,0.35)] focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all"
         >
           Find my matches
         </a>

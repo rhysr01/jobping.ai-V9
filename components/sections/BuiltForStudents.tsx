@@ -9,7 +9,7 @@ export default function BuiltForStudents() {
 
   return (
     <section className="section-padding bg-gradient-to-br from-[#05030c] via-[#03010d] to-[#160233]">
-      <div className="container-page container-rhythm">
+      <div className="container-page">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -39,7 +39,7 @@ export default function BuiltForStudents() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: index * 0.05 }}
-                className="group relative overflow-hidden rounded-3xl border border-white/20 bg-white/[0.08] p-7 text-left backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/50 hover:bg-white/12 hover:shadow-[0_16px_40px_rgba(99,102,241,0.25)] sm:p-9"
+                className="group relative overflow-hidden rounded-3xl border-default bg-white/[0.08] p-7 text-left backdrop-blur-md elevation-1 transition-all duration-300 hover:-translate-y-1 hover:border-emphasis hover:elevation-2 sm:p-9"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <motion.span 

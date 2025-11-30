@@ -20,10 +20,12 @@ export default function Hero() {
   const [activeJobsTarget, setActiveJobsTarget] = useState(12748);
   const [internshipsTarget, setInternshipsTarget] = useState(0);
   const [graduatesTarget, setGraduatesTarget] = useState(0);
+  const [earlyCareerTarget, setEarlyCareerTarget] = useState(0);
   const [totalUsersTarget, setTotalUsersTarget] = useState(0);
   const [displayActiveJobs, setDisplayActiveJobs] = useState(0);
   const [displayInternships, setDisplayInternships] = useState(0);
   const [displayGraduates, setDisplayGraduates] = useState(0);
+  const [displayEarlyCareer, setDisplayEarlyCareer] = useState(0);
   const [displayTotalUsers, setDisplayTotalUsers] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [shouldLoadAnimations, setShouldLoadAnimations] = useState(false);
@@ -51,6 +53,7 @@ export default function Hero() {
           setActiveJobsTarget(parseStat(data.activeJobs ?? data.activeJobsFormatted, 12748));
           setInternshipsTarget(parseStat(data.internships, 4997));
           setGraduatesTarget(parseStat(data.graduates, 3953));
+          setEarlyCareerTarget(parseStat(data.earlyCareer, 0));
           setTotalUsersTarget(parseStat(data.totalUsers ?? data.totalUsersFormatted, 3400));
         }
       } catch (err) {
@@ -77,6 +80,7 @@ export default function Hero() {
     numberFormatter.format(Math.round(Math.max(0, value)));
   const hasInternships = !isLoading && displayInternships > 0;
   const hasGraduates = !isLoading && displayGraduates > 0;
+  const hasEarlyCareer = !isLoading && displayEarlyCareer > 0;
   const hasTotalUsers = !isLoading && displayTotalUsers > 0;
 
   useEffect(() => {
@@ -127,6 +131,23 @@ export default function Hero() {
   }, [graduatesTarget, prefersReduced]);
 
   useEffect(() => {
+    if (earlyCareerTarget <= 0) {
+      setDisplayEarlyCareer(0);
+      return;
+    }
+    if (prefersReduced) {
+      setDisplayEarlyCareer(earlyCareerTarget);
+      return;
+    }
+    const controls = animate(0, earlyCareerTarget, {
+      duration: 1.4,
+      ease: "easeOut",
+      onUpdate: setDisplayEarlyCareer,
+    });
+    return () => controls.stop();
+  }, [earlyCareerTarget, prefersReduced]);
+
+  useEffect(() => {
     if (totalUsersTarget <= 0) {
       setDisplayTotalUsers(0);
       return;
@@ -145,8 +166,8 @@ export default function Hero() {
 
   const particles = useMemo(() => {
     if (prefersReduced || shouldThrottle) return [];
-    // REDUCED: From 26 to 8 particles (70% reduction)
-    return Array.from({ length: 8 }).map((_, index) => ({
+    // Professional: Minimal particles for subtle depth
+    return Array.from({ length: 4 }).map((_, index) => ({
       id: index,
       top: Math.random() * 100,
       left: Math.random() * 100,
@@ -199,117 +220,100 @@ export default function Hero() {
         </div>
       )}
 
-      <div className="container-page container-rhythm relative z-10 mx-auto flex max-w-5xl flex-col items-center gap-10">
+      <div className="container-page relative z-10 mx-auto flex max-w-5xl flex-col items-center gap-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="flex flex-col items-center gap-6"
         >
-          <div className="hero-logo-wrapper relative w-full max-w-4xl px-4">
-            {/* REDUCED: From 3 gradient overlays to 1 */}
-            {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
-              <motion.div
-                aria-hidden
-                className="pointer-events-none absolute -inset-24 rounded-[64px]"
-                style={{
-                  background: 'radial-gradient(50% 50% at 50% 50%, rgba(139,92,246,0.15), transparent 70%)',
-                  willChange: shouldLoadAnimations ? 'transform, opacity' : 'auto',
-                }}
-                animate={shouldLoadAnimations ? { 
-                  scale: [1, 1.1, 1],
-                  opacity: [0.15, 0.2, 0.15]
-                } : {}}
-                transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-              />
-            )}
+          {/* Modern minimal wordmark with integrated live stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="flex flex-col items-center gap-6"
+          >
+            {/* Clean wordmark - no icon, pure typography */}
             <motion.div
-              className="hero-logo-capsule"
-              style={{ 
-                transformStyle: "preserve-3d",
-                willChange: shouldLoadAnimations && !prefersReduced && !shouldThrottle ? 'transform' : 'auto'
-              }}
-              animate={
-                prefersReduced || shouldThrottle || !shouldLoadAnimations
-                  ? {}
-                  : {
-                      scale: [1, 1.02, 1],
-                      y: [0, -3, 0],
-                    }
-              }
-              transition={{ duration: 6, ease: "easeInOut", repeat: prefersReduced ? 0 : Infinity }}
-              whileHover={
-                prefersReduced || shouldThrottle || !shouldLoadAnimations
-                  ? {}
-                  : {
-                      scale: 1.05,
-                      transition: { type: 'spring', stiffness: 200, damping: 15 }
-                    }
-              }
+              className="relative"
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             >
-              {!prefersReduced && !shouldThrottle && shouldLoadAnimations && <span className="logoSheen" aria-hidden />}
-              {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
-                <motion.div
-                  className="absolute inset-0 rounded-full opacity-30"
-                  style={{
-                    background: 'conic-gradient(from 0deg, transparent, rgba(139, 92, 246, 0.4), transparent)',
-                    willChange: shouldLoadAnimations ? 'transform' : 'auto',
-                  }}
-                  animate={shouldLoadAnimations ? { rotate: 360 } : {}}
-                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                  aria-hidden
-                />
-              )}
-              <motion.div
-                className="relative flex items-center gap-4 sm:gap-6"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
+              <motion.span
+                className="hero-logo-text hero-text-gradient text-[4.4rem] sm:text-[5.2rem] md:text-[6rem] lg:text-[7rem] font-black tracking-[-0.02em] relative text-depth-2 inline-block"
+                style={{ 
+                  backgroundSize: "200% 200%",
+                  willChange: 'auto'
+                }}
+                animate={
+                  prefersReduced || shouldThrottle || !shouldLoadAnimations
+                    ? {}
+                    : {
+                        backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                      }
+                }
+                transition={{
+                  duration: 8,
+                  repeat: prefersReduced ? 0 : Infinity,
+                  ease: "easeInOut",
+                }}
               >
-                <motion.div
-                  className="relative"
-                  style={{
-                    willChange: shouldLoadAnimations && !prefersReduced && !shouldThrottle ? 'transform' : 'auto'
-                  }}
-                  animate={
-                    prefersReduced || shouldThrottle || !shouldLoadAnimations
-                      ? {}
-                      : {
-                          y: [0, -4, 0],
-                          rotate: [0, -2, 0],
-                        }
-                  }
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <div className="absolute inset-0 blur-xl opacity-50">
-                    <BrandIcons.GraduationCap className="h-12 w-12 text-brand-400 sm:h-16 sm:w-16 md:h-[4.5rem] md:w-[4.5rem] lg:h-20 lg:w-20" />
-                  </div>
-                  <BrandIcons.GraduationCap className="relative h-12 w-12 text-white drop-shadow-[0_0_20px_rgba(139,92,246,0.6)] sm:h-16 sm:w-16 md:h-[4.5rem] md:w-[4.5rem] lg:h-20 lg:w-20" />
-                </motion.div>
-                <motion.span
-                  className="hero-logo-text hero-text-gradient text-[4.4rem] sm:text-[5.2rem] md:text-[6rem] font-black tracking-tight relative"
-                  style={{ 
-                    backgroundSize: "200% 200%",
-                    willChange: shouldLoadAnimations && !prefersReduced && !shouldThrottle ? 'background-position' : 'auto'
-                  }}
-                  animate={
-                    prefersReduced || shouldThrottle || !shouldLoadAnimations
-                      ? {}
-                      : {
-                          backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                        }
-                  }
-                  transition={{
-                    duration: 6,
-                    repeat: prefersReduced ? 0 : Infinity,
-                    ease: "easeInOut",
-                  }}
-                >
-                  JobPing
-                </motion.span>
-              </motion.div>
+                JobPing
+              </motion.span>
             </motion.div>
-          </div>
+
+            {/* Live stats integrated into hero - adds real value */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="flex flex-wrap items-center justify-center gap-3 text-sm"
+            >
+              {isLoading ? (
+                <Skeleton className="h-6 w-32" />
+              ) : (
+                <>
+                  <motion.div
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-zinc-200 elevation-1"
+                    whileHover={{ scale: 1.05, y: -1 }}
+                    transition={{ type: 'spring', stiffness: 400 }}
+                  >
+                    <BrandIcons.Target className="h-3.5 w-3.5 text-brand-300" />
+                    <span className="font-bold text-white">{formatNumber(displayActiveJobs)}</span>
+                    <span className="text-zinc-400">jobs this week</span>
+                  </motion.div>
+                  {hasTotalUsers && (
+                    <motion.div
+                      className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-zinc-200 elevation-1"
+                      whileHover={{ scale: 1.05, y: -1 }}
+                      transition={{ type: 'spring', stiffness: 400 }}
+                    >
+                      <BrandIcons.Users className="h-3.5 w-3.5 text-brand-300" />
+                      <span className="font-bold text-white">{formatNumber(displayTotalUsers)}+</span>
+                      <span className="text-zinc-400">users</span>
+                    </motion.div>
+                  )}
+                  {(hasInternships || hasGraduates || hasEarlyCareer) && (
+                    <motion.div
+                      className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-zinc-200 elevation-1"
+                      whileHover={{ scale: 1.05, y: -1 }}
+                      transition={{ type: 'spring', stiffness: 400 }}
+                    >
+                      {hasInternships && <span className="font-bold text-white">{formatNumber(displayInternships)}</span>}
+                      {hasInternships && <span className="text-zinc-400">internships</span>}
+                      {(hasInternships && (hasGraduates || hasEarlyCareer)) && <span className="text-zinc-500 mx-1">•</span>}
+                      {hasGraduates && <span className="font-bold text-white">{formatNumber(displayGraduates)}</span>}
+                      {hasGraduates && <span className="text-zinc-400">grad roles</span>}
+                      {(hasGraduates && hasEarlyCareer) && <span className="text-zinc-500 mx-1">•</span>}
+                      {hasEarlyCareer && <span className="font-bold text-white">{formatNumber(displayEarlyCareer)}</span>}
+                      {hasEarlyCareer && <span className="text-zinc-400">early career</span>}
+                    </motion.div>
+                  )}
+                </>
+              )}
+            </motion.div>
+          </motion.div>
           {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
             <motion.div
               className="h-px w-44 rounded-full bg-gradient-to-r from-transparent via-white/70 to-transparent"
@@ -348,7 +352,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.6, ease: "easeOut" }}
-          className="text-balance text-4xl font-black leading-[1.05] text-white drop-shadow-[0_0_30px_rgba(139,92,246,0.3)] sm:text-6xl md:text-7xl"
+          className="text-balance text-4xl font-black leading-[1.05] text-white text-depth-1 sm:text-6xl md:text-7xl"
         >
           {Copy.HERO_HEADLINE}
         </motion.h1>
@@ -380,7 +384,7 @@ export default function Hero() {
                   y: -4,
                   transition: { type: 'spring', stiffness: 300, damping: 20 }
                 }}
-                className="group relative flex items-start gap-3 overflow-hidden rounded-2xl border border-white/20 bg-white/[0.06] px-6 py-5 text-sm font-medium text-zinc-100 backdrop-blur-md transition-all duration-300 sm:text-base hover:border-brand-500/50 hover:bg-white/12 hover:shadow-[0_12px_32px_rgba(99,102,241,0.25)]"
+                className="group relative flex items-start gap-3 overflow-hidden rounded-2xl border border-white/20 bg-white/[0.08] px-6 py-5 text-sm font-medium text-zinc-100 backdrop-blur-md transition-all duration-300 sm:text-base hover:border-brand-500/50 hover:bg-white/12 hover:shadow-[0_12px_32px_rgba(99,102,241,0.25)]"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <motion.span 
@@ -406,7 +410,7 @@ export default function Hero() {
             href="/signup"
             variant="primary"
             size="lg"
-            className="min-w-[240px] text-base font-semibold shadow-[0_20px_50px_rgba(99,102,241,0.4)]"
+            className="min-w-[240px] text-base font-semibold"
             aria-label={Copy.HERO_CTA}
           >
             <span className="flex items-center gap-2">
@@ -417,57 +421,20 @@ export default function Hero() {
           <p className="text-sm font-medium text-zinc-300">{Copy.HERO_FINE_PRINT}</p>
         </motion.div>
 
+        {/* Trust signal - moved below, cleaner hierarchy */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45, duration: 0.6 }}
-          className="flex flex-col items-center gap-4 text-sm text-zinc-300 sm:flex-row"
+          transition={{ delay: 0.5, duration: 0.6 }}
+          className="flex flex-col items-center gap-3 text-sm"
         >
           <motion.div 
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-brand-200 transition-all duration-300 hover:border-brand-500/30 hover:bg-brand-500/10 hover:shadow-[0_4px_12px_rgba(99,102,241,0.2)]"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-zinc-300 transition-all duration-300 hover:border-brand-500/30 hover:bg-brand-500/10"
             whileHover={{ scale: 1.05 }}
           >
-            <BrandIcons.Users className="h-4 w-4 text-brand-300" />
-            {Copy.HERO_SOCIAL_PROOF}
+            <BrandIcons.Shield className="h-3.5 w-3.5 text-brand-300" />
+            <span>{Copy.HERO_SOCIAL_PROOF}</span>
           </motion.div>
-          <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-400">
-            <motion.div 
-              className="group inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1.5 text-sm text-brand-200 transition-all duration-300 hover:border-brand-500/60 hover:bg-brand-500/15 hover:shadow-[0_4px_12px_rgba(99,102,241,0.25)]"
-              whileHover={{ scale: 1.05, y: -2 }}
-            >
-              <motion.span
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatDelay: 2,
-                  ease: "easeInOut"
-                }}
-              >
-                <BrandIcons.Target className="h-4 w-4 text-brand-300" />
-              </motion.span>
-              {isLoading ? (
-                <Skeleton className="h-4 w-20" />
-              ) : (
-                <span className="font-medium">{`${formatNumber(displayActiveJobs)} active jobs this week`}</span>
-              )}
-            </motion.div>
-            {(hasInternships || hasGraduates) && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5">
-                {hasInternships && <span>{`${formatNumber(displayInternships)} internships`}</span>}
-                {hasInternships && hasGraduates && <span className="text-zinc-600">•</span>}
-                {hasGraduates && <span>{`${formatNumber(displayGraduates)} graduate programmes`}</span>}
-              </div>
-            )}
-            {hasTotalUsers && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5">
-                <BrandIcons.Star className="h-4 w-4 text-brand-300" />
-                <span>{`Join ${formatNumber(displayTotalUsers)}+ students`}</span>
-              </div>
-            )}
-          </div>
         </motion.div>
 
         <motion.div

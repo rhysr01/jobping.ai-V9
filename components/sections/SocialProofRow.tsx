@@ -86,14 +86,14 @@ export default function SocialProofRow() {
   ];
 
   return (
-    <section className="section-padding pt-10 pb-6 lg:pt-12 lg:pb-8">
-      <div className="container-page container-rhythm">
+    <section className="section-padding">
+      <div className="container-page">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
-          className="grid gap-6 rounded-3xl border border-white/20 bg-white/[0.06] p-8 shadow-[0_24px_80px_rgba(10,0,40,0.4)] backdrop-blur-md sm:grid-cols-3 sm:gap-8 sm:p-10"
+          className="grid gap-6 rounded-3xl border-default bg-white/[0.08] p-8 elevation-1 backdrop-blur-md sm:grid-cols-3 sm:gap-8 sm:p-10"
         >
           {items.map((item, index) => (
             <motion.div
@@ -106,11 +106,11 @@ export default function SocialProofRow() {
                 y: -4,
                 transition: { type: 'spring', stiffness: 300, damping: 20 }
               }}
-              className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-white/20 bg-black/15 p-6 transition-all duration-300 hover:border-brand-500/50 hover:bg-black/25 hover:shadow-[0_12px_32px_rgba(99,102,241,0.25)] sm:p-7"
+              className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border-subtle bg-black/15 p-6 transition-all duration-300 hover:border-default hover:elevation-1 sm:p-7"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <motion.span 
-                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-brand-200 shadow-[0_0_18px_rgba(99,102,241,0.25)] transition-all duration-300 group-hover:bg-brand-500/25 group-hover:scale-110 group-hover:shadow-[0_0_24px_rgba(99,102,241,0.4)]"
+                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-brand-200 transition-all duration-300 group-hover:bg-brand-500/25 group-hover:scale-105"
                 whileHover={{ rotate: [0, -10, 10, 0] }}
                 transition={{ duration: 0.5 }}
               >

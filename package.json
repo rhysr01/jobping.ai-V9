@@ -20,6 +20,7 @@
     "limiter:test": "tsx scripts/lock-rate-limit.ts",
     "automation:embeddings": "node automation/embedding-refresh.cjs",
     "check:performance": "tsx scripts/check-performance.ts",
+    "generate-secrets": "tsx scripts/generate-secrets.ts",
     "clean": "rm -rf .next out coverage test-results",
     "postinstall": "next telemetry disable"
   },

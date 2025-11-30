@@ -268,8 +268,8 @@ export default function EuropeMap({
                   cx={coords.x}
                   cy={coords.y}
                   r={selected ? 11 : hovered || focused ? 10 : 9}
-                  fill={selected ? 'url(#selectedGradient)' : disabled ? '#3f3f46' : hovered || focused ? '#C2A8FF' : '#71717a'}
-                  stroke={selected ? '#9A6AFF' : hovered || focused ? '#C2A8FF' : '#52525b'}
+                  fill={selected ? 'url(#selectedGradient)' : disabled ? '#3f3f46' : hovered || focused ? '#C2A8FF' : '#71717a'} // brand-300 for hover/focus
+                  stroke={selected ? '#9A6AFF' : hovered || focused ? '#C2A8FF' : '#52525b'} // brand-500 for selected, brand-300 for hover
                   strokeWidth={selected ? 3.5 : hovered || focused ? 2.5 : 2}
                   className={disabled ? 'cursor-not-allowed' : 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-transparent'}
                   filter={selected ? undefined : hovered || focused ? 'url(#glow)' : undefined}
@@ -320,7 +320,7 @@ export default function EuropeMap({
                     x={coords.x}
                     y={labelY}
                     textAnchor="middle"
-                    fill={selected ? '#C2A8FF' : '#E6E1FF'}
+                    fill={selected ? '#C2A8FF' : '#E6E1FF'} // brand-300 for selected
                     fontSize={selected ? "13" : "12"}
                     fontWeight={selected ? '700' : '600'}
                     className="pointer-events-none select-none"

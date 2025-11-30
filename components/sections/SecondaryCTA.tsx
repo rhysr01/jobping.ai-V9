@@ -13,13 +13,13 @@ import {
 export default function SecondaryCTA() {
   return (
     <section className="section-padding pt-0">
-      <div className="container-page container-rhythm">
+      <div className="container-page">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
-          className="relative overflow-hidden rounded-3xl border-2 border-brand-500/40 bg-gradient-to-r from-[#090021] via-[#120037] to-[#20054f] px-12 py-14 shadow-[0_40px_120px_rgba(12,0,42,0.6)] backdrop-blur-sm"
+          className="relative overflow-hidden rounded-3xl border-emphasis border-brand-500/40 bg-gradient-to-r from-[#090021] via-[#120037] to-[#20054f] px-12 py-14 elevation-2 backdrop-blur-sm"
         >
           <div className="pointer-events-none absolute -left-24 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full bg-brand-500/20 blur-[140px]" />
           <div className="pointer-events-none absolute -right-10 top-1/3 h-72 w-72 rounded-full bg-purple-500/20 blur-[160px]" />

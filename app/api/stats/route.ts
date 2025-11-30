@@ -76,6 +76,15 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     .eq('is_active', true)
     .eq('is_graduate', true);
 
+  // Get early career count (entry-level roles that aren't internships or graduate programs)
+  const { count: earlyCareer } = await supabase
+    .from('jobs')
+    .select('*', { count: 'exact', head: true })
+    .eq('is_active', true)
+    .contains('categories', ['early-career'])
+    .eq('is_internship', false)
+    .eq('is_graduate', false);
+
   // Get user count for social proof
   const { count: totalUsers } = await supabase
     .from('users')
@@ -93,6 +102,7 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     activeJobsFormatted: formatNumber(activeJobs || 0),
     internships: internships || 0,
     graduates: graduates || 0,
+    earlyCareer: earlyCareer || 0,
     totalUsers: totalUsers || 0,
     totalUsersFormatted: formatNumber(totalUsers || 0),
     lastUpdated: new Date().toISOString(),

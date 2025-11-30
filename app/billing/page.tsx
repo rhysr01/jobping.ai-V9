@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CreditCard, Settings, FileText, CheckCircle, XCircle, Calendar, DollarSign, ExternalLink, Download, Receipt } from 'lucide-react';
+import { CreditCard, Settings, FileText, CheckCircle, XCircle, Calendar, DollarSign, ExternalLink, Download, Receipt, Tag } from 'lucide-react';
 import GlassCard from '@/components/ui/GlassCard';
 import Button from '@/components/ui/Button';
 import Skeleton, { SkeletonText } from '@/components/ui/Skeleton';
@@ -123,6 +123,141 @@ export default function BillingPage({ params }: BillingPageProps) {
     }).format(amount / 100);
   };
 
+  // Promo Code Component
+  function PromoCodeSection() {
+    const [promoCode, setPromoCode] = useState('');
+    const [promoEmail, setPromoEmail] = useState('');
+    const [promoLoading, setPromoLoading] = useState(false);
+    const [promoError, setPromoError] = useState('');
+    const [promoSuccess, setPromoSuccess] = useState(false);
+
+    const handlePromoSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setPromoError('');
+      setPromoSuccess(false);
+      
+      if (!promoEmail || !promoCode) {
+        setPromoError('Please enter both email and promo code');
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(promoEmail)) {
+        setPromoError('Please enter a valid email address');
+        return;
+      }
+
+      setPromoLoading(true);
+      try {
+        const response = await fetch('/api/apply-promo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: promoEmail, promoCode: promoCode.trim() }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          setPromoSuccess(true);
+          setPromoCode('');
+          setPromoEmail('');
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        } else {
+          setPromoError(data.error || 'Invalid promo code');
+        }
+      } catch (err) {
+        setPromoError('Failed to apply promo code. Please try again.');
+      } finally {
+        setPromoLoading(false);
+      }
+    };
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="rounded-3xl border-2 border-brand-500/40 p-8 sm:p-10 md:p-12 bg-gradient-to-br from-brand-500/15 via-purple-600/10 to-brand-500/15 backdrop-blur-md shadow-[0_24px_80px_rgba(99,102,241,0.3)]"
+      >
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-500/20 mb-4">
+            <Tag className="w-8 h-8 text-brand-300" />
+          </div>
+          <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3">Have a Promo Code?</h3>
+          <p className="text-zinc-100 text-base font-medium max-w-xl mx-auto">
+            Enter your email and promo code to upgrade to Premium instantly.
+          </p>
+        </div>
+
+        <form onSubmit={handlePromoSubmit} className="space-y-4 max-w-md mx-auto">
+          <div>
+            <label htmlFor="promo-email" className="block text-sm font-semibold text-white mb-2">
+              Email Address
+            </label>
+            <input
+              id="promo-email"
+              type="email"
+              value={promoEmail}
+              onChange={(e) => setPromoEmail(e.target.value)}
+              placeholder="your@email.com"
+              required
+              disabled={promoLoading || promoSuccess}
+              className="w-full px-5 py-4 bg-black/50 border-2 border-white/20 rounded-2xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-base font-medium backdrop-blur-sm disabled:opacity-50"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="promo-code" className="block text-sm font-semibold text-white mb-2">
+              Promo Code
+            </label>
+            <input
+              id="promo-code"
+              type="text"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+              placeholder="Enter promo code"
+              required
+              disabled={promoLoading || promoSuccess}
+              className="w-full px-5 py-4 bg-black/50 border-2 border-white/20 rounded-2xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-base font-medium backdrop-blur-sm disabled:opacity-50"
+            />
+          </div>
+
+          {promoError && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 bg-red-500/10 border-2 border-red-500/50 rounded-xl text-red-300 text-sm font-medium"
+            >
+              {promoError}
+            </motion.div>
+          )}
+
+          {promoSuccess && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 bg-emerald-500/10 border-2 border-emerald-500/50 rounded-xl text-emerald-300 text-sm font-medium"
+            >
+              Promo code applied! Upgrading your account...
+            </motion.div>
+          )}
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            isLoading={promoLoading}
+            disabled={promoLoading || promoSuccess}
+            className="w-full"
+          >
+            Apply Promo Code
+          </Button>
+        </form>
+      </motion.div>
+    );
+  }
+
   const formatStatus = (status: string) => {
     const statusMap: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
       active: { label: 'Active', color: 'text-green-400', icon: <CheckCircle className="w-4 h-4" /> },
@@ -159,15 +294,15 @@ export default function BillingPage({ params }: BillingPageProps) {
         animate={{ opacity: 1, y: 0 }}
         className="border-b border-white/10"
       >
-        <div className="container-page py-10">
-          <div className="flex items-center justify-between">
+        <div className="container-page py-12 sm:py-16">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Billing & Payments</h1>
-              <p className="text-zinc-400 mt-2">{tabs.find(t => t.id === activeTab)?.description}</p>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-white">Billing & Payments</h1>
+              <p className="text-zinc-100 mt-3 text-lg font-medium">{tabs.find(t => t.id === activeTab)?.description}</p>
             </div>
-            <div className="flex items-center gap-2 text-zinc-400">
-              <FileText className="w-5 h-5" />
-              <span className="text-sm">Secure & Encrypted</span>
+            <div className="flex items-center gap-2 rounded-full border-2 border-white/20 bg-white/8 px-4 py-2 text-sm font-medium text-zinc-100 backdrop-blur-sm">
+              <FileText className="w-4 h-4 text-brand-300" />
+              <span>Secure & Encrypted</span>
             </div>
           </div>
         </div>
@@ -176,7 +311,7 @@ export default function BillingPage({ params }: BillingPageProps) {
       {/* Tabs */}
       <div className="border-b border-white/10">
         <div className="container-page">
-          <div className="flex space-x-8">
+          <div className="flex space-x-6 sm:space-x-8">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -184,14 +319,14 @@ export default function BillingPage({ params }: BillingPageProps) {
                 <motion.button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as 'overview' | 'payment-methods')}
-                  className={`flex items-center gap-3 py-4 px-2 border-b-2 transition-all duration-200 ${
-                    isActive ? 'border-brand-500 text-brand-300' : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                  className={`flex items-center gap-3 py-5 px-3 border-b-2 transition-all duration-200 font-semibold ${
+                    isActive ? 'border-brand-500 text-brand-200' : 'border-transparent text-zinc-400 hover:text-zinc-200'
                   }`}
-                  whileHover={{ y: -1 }}
+                  whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <Icon className="w-5 h-5" />
-                  <span className="font-medium">{tab.label}</span>
+                  <span>{tab.label}</span>
                 </motion.button>
               );
             })}
@@ -200,7 +335,7 @@ export default function BillingPage({ params }: BillingPageProps) {
       </div>
 
       {/* Content */}
-      <div className="container-page py-12">
+      <div className="container-page py-16 sm:py-20">
         <AnimatePresence mode="wait">
           {loading && (
             <motion.div
@@ -243,24 +378,24 @@ export default function BillingPage({ params }: BillingPageProps) {
               className="space-y-8"
             >
               <div>
-                <h2 className="text-2xl font-bold">Billing Overview</h2>
-                <p className="text-zinc-400 mt-1">Manage your subscription, view invoices, and control your billing settings.</p>
+                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">Billing Overview</h2>
+                <p className="text-zinc-100 text-lg font-medium">Manage your subscription, view invoices, and control your billing settings.</p>
               </div>
 
               {billingData?.currentSubscription ? (
                 <>
                   {/* Current Subscription Card */}
-                  <GlassCard variant="elevated" hover="lift" className="p-6 md:p-8">
-                    <div className="flex items-start justify-between mb-6">
+                  <div className="rounded-3xl border-2 border-white/20 bg-white/[0.08] p-8 sm:p-10 md:p-12 backdrop-blur-md shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8">
                       <div>
-                        <h3 className="text-xl font-bold mb-2">Current Subscription</h3>
-                        <div className="flex items-center gap-2">
+                        <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3">Current Subscription</h3>
+                        <div className="flex items-center gap-3">
                           {(() => {
                             const statusInfo = formatStatus(billingData.currentSubscription.status);
                             return (
                               <>
                                 <span className={statusInfo.color}>{statusInfo.icon}</span>
-                                <span className={`${statusInfo.color} font-medium`}>{statusInfo.label}</span>
+                                <span className={`${statusInfo.color} font-bold text-lg`}>{statusInfo.label}</span>
                               </>
                             );
                           })()}
@@ -271,7 +406,8 @@ export default function BillingPage({ params }: BillingPageProps) {
                         isLoading={processing}
                         disabled={processing}
                         variant="primary"
-                        size="md"
+                        size="lg"
+                        className="w-full sm:w-auto"
                       >
                         <ExternalLink className="w-4 h-4" />
                         Manage Subscription
@@ -279,25 +415,25 @@ export default function BillingPage({ params }: BillingPageProps) {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="flex items-start gap-4">
-                        <div className="p-2 bg-brand-500/10 rounded-lg">
-                          <Calendar className="w-5 h-5 text-brand-400" />
+                      <div className="flex items-start gap-4 p-5 rounded-2xl border border-white/10 bg-white/[0.05]">
+                        <div className="p-3 bg-brand-500/20 rounded-xl">
+                          <Calendar className="w-6 h-6 text-brand-300" />
                         </div>
                         <div>
-                          <p className="text-zinc-400 text-sm mb-1">Current Period</p>
-                          <p className="text-white font-medium">
+                          <p className="text-zinc-300 text-sm font-medium mb-2">Current Period</p>
+                          <p className="text-white font-bold text-base">
                             {formatDate(billingData.currentSubscription.current_period_start)} - {formatDate(billingData.currentSubscription.current_period_end)}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-start gap-4">
-                        <div className="p-2 bg-brand-500/10 rounded-lg">
-                          <DollarSign className="w-5 h-5 text-brand-400" />
+                      <div className="flex items-start gap-4 p-5 rounded-2xl border border-white/10 bg-white/[0.05]">
+                        <div className="p-3 bg-brand-500/20 rounded-xl">
+                          <DollarSign className="w-6 h-6 text-brand-300" />
                         </div>
                         <div>
-                          <p className="text-zinc-400 text-sm mb-1">Subscription Status</p>
-                          <p className="text-white font-medium">
+                          <p className="text-zinc-300 text-sm font-medium mb-2">Subscription Status</p>
+                          <p className="text-white font-bold text-base">
                             {billingData.currentSubscription.cancel_at_period_end 
                               ? 'Cancels at period end' 
                               : 'Renews automatically'}
@@ -305,11 +441,11 @@ export default function BillingPage({ params }: BillingPageProps) {
                         </div>
                       </div>
                     </div>
-                  </GlassCard>
+                  </div>
 
                   {/* Billing History */}
-                  <GlassCard variant="subtle" className="p-6 md:p-8">
-                    <h3 className="text-xl font-bold mb-6">Billing History</h3>
+                  <div className="rounded-3xl border-2 border-white/20 bg-white/[0.08] p-8 sm:p-10 md:p-12 backdrop-blur-md shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
+                    <h3 className="text-2xl sm:text-3xl font-bold text-white mb-8">Billing History</h3>
                     {billingData.invoices && billingData.invoices.length > 0 ? (
                       <div className="space-y-4">
                         {billingData.invoices.map((invoice) => {
@@ -319,17 +455,17 @@ export default function BillingPage({ params }: BillingPageProps) {
                               key={invoice.id}
                               initial={{ opacity: 0, x: -20 }}
                               animate={{ opacity: 1, x: 0 }}
-                              className="flex items-center justify-between p-4 bg-glass-subtle rounded-xl border border-border-subtle hover:border-border-default transition-all"
+                              className="flex items-center justify-between p-5 rounded-2xl border-2 border-white/10 bg-white/[0.05] hover:border-brand-500/30 hover:bg-white/[0.08] transition-all"
                             >
                               <div className="flex items-center gap-4">
                                 <div className="p-2 bg-glass-default rounded-lg">
                                   <Receipt className="w-5 h-5 text-brand-400" />
                                 </div>
                                 <div>
-                                  <p className="text-white font-medium">
+                                  <p className="text-white font-bold text-lg">
                                     {formatCurrency(invoice.amount, invoice.currency)}
                                   </p>
-                                  <p className="text-zinc-400 text-sm">
+                                  <p className="text-zinc-300 text-sm font-medium">
                                     {formatDate(invoice.created)}
                                   </p>
                                 </div>
@@ -356,30 +492,35 @@ export default function BillingPage({ params }: BillingPageProps) {
                         })}
                       </div>
                     ) : (
-                      <div className="text-center py-12 text-zinc-400">
-                        <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                        <p className="mb-4">No invoices yet</p>
+                      <div className="text-center py-12 text-zinc-300">
+                        <FileText className="w-16 h-16 mx-auto mb-6 opacity-50" />
+                        <p className="mb-6 text-lg font-medium">No invoices yet</p>
                         <Button
                           onClick={handleManageBilling}
                           disabled={processing}
                           variant="secondary"
-                          size="md"
+                          size="lg"
                         >
                           Open Customer Portal
                         </Button>
                       </div>
                     )}
-                  </GlassCard>
+                  </div>
                 </>
               ) : (
-                <GlassCard variant="subtle" className="p-12 text-center">
-                  <CreditCard className="w-16 h-16 mx-auto mb-4 text-zinc-400" />
-                  <h3 className="text-xl font-semibold mb-2">No Active Subscription</h3>
-                  <p className="text-zinc-400 mb-6">You don't have an active subscription yet.</p>
-                  <Button href="/signup?tier=premium" variant="primary" size="lg">
-                    Subscribe to Premium
-                  </Button>
-                </GlassCard>
+                <div className="space-y-8">
+                  <div className="rounded-3xl border-2 border-white/20 bg-white/[0.08] p-10 sm:p-12 md:p-16 text-center backdrop-blur-md shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
+                    <CreditCard className="w-20 h-20 mx-auto mb-6 text-zinc-300" />
+                    <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3">No Active Subscription</h3>
+                    <p className="text-zinc-100 text-lg font-medium mb-8 max-w-xl mx-auto">You don't have an active subscription yet. Upgrade to Premium to unlock more job matches.</p>
+                    <Button href="/signup?tier=premium" variant="primary" size="lg" className="min-w-[240px]">
+                      Subscribe to Premium
+                    </Button>
+                  </div>
+
+                  {/* Promo Code Section */}
+                  <PromoCodeSection />
+                </div>
               )}
             </motion.div>
           )}
@@ -393,26 +534,33 @@ export default function BillingPage({ params }: BillingPageProps) {
               className="space-y-8"
             >
               <div>
-                <h2 className="text-2xl font-bold">Payment Methods</h2>
-                <p className="text-zinc-400 mt-1">Add and manage your payment methods securely.</p>
+                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">Payment Methods</h2>
+                <p className="text-zinc-100 text-lg font-medium">Add and manage your payment methods securely.</p>
               </div>
-              <GlassCard variant="subtle" className="p-12 text-center">
-                <CreditCard className="w-16 h-16 mx-auto mb-4 text-zinc-400" />
-                <h3 className="text-xl font-semibold mb-2">Payment Methods</h3>
-                <p className="text-zinc-400 mb-6">Manage your payment methods securely.</p>
-                <Button
-                  onClick={handleManageBilling}
-                  disabled={processing || !billingData?.currentSubscription}
-                  isLoading={processing}
-                  variant="primary"
-                  size="lg"
-                >
-                  Manage Payment Methods
-                </Button>
+              <div className="space-y-8">
+                <div className="rounded-3xl border-2 border-white/20 bg-white/[0.08] p-10 sm:p-12 md:p-16 text-center backdrop-blur-md shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
+                  <CreditCard className="w-20 h-20 mx-auto mb-6 text-zinc-300" />
+                  <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3">Payment Methods</h3>
+                  <p className="text-zinc-100 text-lg font-medium mb-8 max-w-xl mx-auto">Manage your payment methods securely through our billing portal.</p>
+                  <Button
+                    onClick={handleManageBilling}
+                    disabled={processing || !billingData?.currentSubscription}
+                    isLoading={processing}
+                    variant="primary"
+                    size="lg"
+                    className="min-w-[240px]"
+                  >
+                    Manage Payment Methods
+                  </Button>
+                  {!billingData?.currentSubscription && (
+                    <p className="text-sm font-medium text-zinc-300 mt-6">Subscribe first to add payment methods</p>
+                  )}
+                </div>
+
                 {!billingData?.currentSubscription && (
-                  <p className="text-sm text-zinc-400 mt-4">Subscribe first to add payment methods</p>
+                  <PromoCodeSection />
                 )}
-              </GlassCard>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -420,12 +568,12 @@ export default function BillingPage({ params }: BillingPageProps) {
 
       {/* Footer bullets */}
       <div className="border-t border-white/10">
-        <div className="container-page py-8">
-          <div className="flex items-center justify-center gap-6 text-zinc-400 text-sm">
+        <div className="container-page py-10 sm:py-12">
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-zinc-300 text-sm font-medium">
             <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> PCI DSS Compliant</span>
-            <span className="w-px h-4 bg-white/10" />
+            <span className="hidden sm:block w-px h-4 bg-white/10" />
             <span className="flex items-center gap-2"><span className="w-2 h-2 bg-brand-500 rounded-full"></span> 256-bit SSL Encryption</span>
-            <span className="w-px h-4 bg-white/10" />
+            <span className="hidden sm:block w-px h-4 bg-white/10" />
             <span className="flex items-center gap-2"><span className="w-2 h-2 bg-amber-500 rounded-full"></span> Secure Payments</span>
           </div>
         </div>

@@ -19,24 +19,24 @@ export default function GlassCard({
   hover = true,
   ...motionProps 
 }: GlassCardProps) {
-  const baseClasses = 'rounded-2xl border transition-all duration-300 shadow-base backdrop-blur-sm';
+  const baseClasses = 'glass-card rounded-2xl border transition-all duration-300 backdrop-blur-sm';
   
   const variants = {
-    subtle: 'bg-glass-subtle border-border-subtle hover:border-border-default hover:shadow-[0_4px_12px_rgba(255,255,255,0.04)]',
-    default: 'bg-glass-default border-border-default hover:border-border-elevated hover:shadow-[0_4px_16px_rgba(255,255,255,0.06)]',
-    elevated: 'bg-glass-elevated border-border-elevated hover:border-border-elevated shadow-elev-1 hover:shadow-[0_8px_24px_rgba(255,255,255,0.08)]',
+    subtle: 'bg-glass-subtle border-border-subtle elevation-1',
+    default: 'bg-glass-default border-border-default elevation-2',
+    elevated: 'bg-glass-elevated border-border-elevated elevation-3',
   };
 
   const hoverEffects = {
-    lift: { y: -4 },
-    scale: { scale: 1.02 },
-    true: { scale: 1.02, y: -2 },
+    lift: { y: -2 },
+    scale: { scale: 1.01 },
+    true: { y: -2 },
   };
 
-  const motionHover = hover 
+  const hoverProps = hover 
     ? { 
         whileHover: hoverEffects[hover === true ? 'true' : hover] || hoverEffects.true,
-        transition: { duration: 0.3 }
+        transition: { duration: 0.2, ease: 'easeOut' as const }
       }
     : {};
 
@@ -45,7 +45,7 @@ export default function GlassCard({
   return (
     <Component 
       className={`${baseClasses} ${variants[variant]} ${className}`}
-      {...motionHover}
+      {...hoverProps}
       {...motionProps}
     >
       {children}

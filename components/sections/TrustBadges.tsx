@@ -29,7 +29,7 @@ export default function TrustBadges() {
 
   return (
     <section className="section-padding py-16 border-t border-white/10">
-      <div className="container-page container-rhythm">
+      <div className="container-page">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

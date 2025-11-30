@@ -1112,7 +1112,7 @@ function SignupForm() {
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(136,84,255,0.12),transparent_60%)]" />
                   <div className="relative z-10 space-y-8 sm:space-y-10">
                     <div className="text-center">
-                      <h2 className="text-3xl font-black text-white mb-2 text-shadow-sm">Additional Preferences</h2>
+                      <h2 className="text-3xl font-black text-white mb-2">Additional Preferences</h2>
                       <p className="text-zinc-200 mb-4">Optional - helps us match you even better</p>
                       <motion.button
                         type="button"

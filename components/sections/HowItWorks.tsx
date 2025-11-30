@@ -11,7 +11,7 @@ export default function HowItWorks() {
       data-testid="how-it-works"
       className="section-padding bg-gradient-to-br from-[#080018] via-[#050312] to-[#11022c]"
     >
-      <div className="container-page container-rhythm">
+      <div className="container-page">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -48,7 +48,7 @@ export default function HowItWorks() {
                   y: -4,
                   transition: { type: 'spring', stiffness: 300, damping: 20 }
                 }}
-                className="group relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border border-white/20 bg-white/[0.08] p-7 text-left backdrop-blur-md transition-all duration-300 hover:border-brand-500/50 hover:bg-white/12 hover:shadow-[0_12px_32px_rgba(99,102,241,0.25)] sm:p-8"
+                className="group relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border-default bg-white/[0.08] p-7 text-left backdrop-blur-md elevation-1 transition-all duration-300 hover:border-emphasis hover:elevation-2 sm:p-8"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <motion.span 

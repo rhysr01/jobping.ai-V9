@@ -33,8 +33,8 @@ Maintain a single `.env.production` (or Vercel environment values) covering **al
 | --- | --- | --- |
 | Application | `NODE_ENV`, `NEXT_PUBLIC_URL`, `NEXT_PUBLIC_DOMAIN` | `NODE_ENV` must be `production`. |
 | Supabase | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY` | Service role key is used for server-only operations. |
-| Email | `RESEND_API_KEY`, `EMAIL_DOMAIN`, `EMAIL_VERIFICATION_SECRET`, `PREFERENCES_SECRET` | Secrets must be ≥32 chars. |
-| Auth & Security | `SYSTEM_API_KEY`, `INTERNAL_API_HMAC_SECRET`, `ADMIN_API_KEY` | Rotate quarterly; store in secrets manager. |
+| Email | `RESEND_API_KEY`, `EMAIL_DOMAIN`, `EMAIL_VERIFICATION_SECRET`, `PREFERENCES_SECRET` | Secrets must be ≥32 chars. See `SECURITY_SECRETS_SETUP.md` for generation. |
+| Auth & Security | `SYSTEM_API_KEY`, `INTERNAL_API_HMAC_SECRET`, `ADMIN_API_KEY` | Rotate quarterly; store in secrets manager. See `SECURITY_SECRETS_SETUP.md` for setup. |
 | AI Matching | `OPENAI_API_KEY`, optional overrides (`AI_TIMEOUT_MS`, etc.) | Ensure OpenAI usage quotas are monitored. |
 | Billing | Polar configuration | Configure Polar webhook secret in Vercel environment (used in route handlers). |
 | Observability | Logging via structured logs | Error tracking via application logs. |

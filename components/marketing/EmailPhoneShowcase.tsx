@@ -17,7 +17,7 @@ export default function EmailPhoneShowcase() {
         <div className="absolute left-1/2 top-1/2 h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/14 blur-[140px]" />
       </div>
 
-      <div className="container-page container-rhythm">
+      <div className="container-page">
         <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -40,7 +40,7 @@ export default function EmailPhoneShowcase() {
                 const Icon = pointIcons[index] || BrandIcons.Check;
                 return (
                   <li key={point} className="flex items-start gap-3 text-sm font-medium text-zinc-100 sm:text-base">
-                    <span className="mt-0.5 inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-brand-200 shadow-[0_0_12px_rgba(99,102,241,0.3)]">
+                    <span className="mt-0.5 inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-brand-200">
                       <Icon className="h-3.5 w-3.5" />
                     </span>
                     <span className="leading-relaxed">{point}</span>
