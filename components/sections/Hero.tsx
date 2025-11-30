@@ -10,6 +10,7 @@ import * as Copy from "@/lib/copy";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 import { SIGNUP_INITIAL_ROLES, FREE_ROLES_PER_SEND, PREMIUM_ROLES_PER_WEEK } from "@/lib/productMetrics";
 import { useStats } from "@/hooks/useStats";
+import HeroBackgroundAura from "@/components/ui/HeroBackgroundAura";
 
 const trustSignals = [
   { 
@@ -175,6 +176,7 @@ export default function Hero() {
       data-testid="hero-section"
       className="section-padding-hero pt-32 pb-14 md:pb-20 lg:pb-28 relative flex flex-col items-center justify-start overflow-hidden text-center min-h-screen"
     >
+      <HeroBackgroundAura />
       {/* Cinematic dark background */}
       <div className="absolute inset-0 -z-10 bg-black" />
       {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
@@ -228,14 +230,28 @@ export default function Hero() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="flex flex-col items-center gap-6"
           >
-            {/* Clean wordmark - no icon, pure typography */}
+            {/* Big wordmark with grad hat */}
             <motion.div
-              className="relative"
+              className="relative flex items-center justify-center gap-4"
               whileHover={{ scale: 1.02 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             >
+              <svg
+                className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 text-white"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 3l10 5-10 5L2 8l10-5z" />
+                <path d="M22 10v4" />
+                <path d="M6 12v4c0 1.6 3 3.2 6 3.2s6-1.6 6-3.2v-4" />
+              </svg>
               <motion.span
-                className="hero-logo-text text-[4.4rem] sm:text-[5.2rem] md:text-[6rem] lg:text-[7rem] font-semibold tracking-[-0.02em] relative inline-block text-white"
+                className="hero-logo-text text-[5rem] sm:text-[6rem] md:text-[7rem] lg:text-[8rem] font-semibold tracking-[-0.02em] relative inline-block text-white"
                 style={{ 
                   backgroundSize: "200% 200%",
                   willChange: 'auto'

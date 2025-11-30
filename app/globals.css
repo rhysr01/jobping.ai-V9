@@ -538,12 +538,46 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Hero background animations */
+@keyframes slow-spotlight {
+  0% {
+    transform: translate(-50%, -8%) rotate(0deg);
+  }
+  50% {
+    transform: translate(-48%, -2%) rotate(6deg);
+  }
+  100% {
+    transform: translate(-50%, -8%) rotate(0deg);
+  }
+}
+
+.animate-slow-spotlight {
+  animation: slow-spotlight 18s ease-in-out infinite;
+}
+
+@keyframes grid-fade {
+  0%, 100% {
+    opacity: 0.04;
+  }
+  50% {
+    opacity: 0.08;
+  }
+}
+
+.animate-grid-fade {
+  animation: grid-fade 22s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
 
   /* Performance: Remove animations for users who prefer reduced motion */
+  .animate-slow-spotlight,
+  .animate-grid-fade {
+    animation: none;
+  }
   *,
   *::before,
   *::after {
