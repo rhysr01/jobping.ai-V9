@@ -19,16 +19,16 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 
 // Hero section
 export const HERO_TITLE = "JobPing";
-export const HERO_HEADLINE = "Find EU graduate roles and internships in your inbox";
-export const HERO_SUBLINE = "Internships and graduate roles across Europe.";
+export const HERO_HEADLINE = "EU graduate and internship roles, matched to you.";
+export const HERO_SUBLINE = "Tell us your city, visa, and interests once. We send 5 curated matches each week—no dashboards, just email.";
 export const HERO_SUBTITLE = "";
-export const HERO_CTA = "Get your first 5 roles";
+export const HERO_CTA = "Get my first 5 matches";
 export const HERO_PILL = "Graduate roles and internships across Europe";
 export const HERO_SOCIAL_PROOF = "Join thousands of early-career jobseekers across Europe.";
 
 // How it works
 export const HOW_IT_WORKS_TITLE = "How it works";
-export const HOW_IT_WORKS_SUMMARY = "JobPing filters the entire EU market and sends you only the roles worth applying for.";
+export const HOW_IT_WORKS_SUMMARY = "JobPing searches the EU market and sends you only the roles worth applying for.";
 export const HOW_IT_WORKS_STEPS = [
   { title: "Share your preferences", description: "Pick cities, work rights, and roles in under two minutes." },
   { title: "We search every day", description: "JobPing scans European boards and company pages and filters the noise. No dashboards, no spam—just roles that match your filters." },
@@ -37,7 +37,7 @@ export const HOW_IT_WORKS_STEPS = [
 
 // Built for students
 export const BUILT_FOR_STUDENTS_TITLE = "Built for early-career jobseekers";
-export const BUILT_FOR_STUDENTS_SUBTITLE = "We help first-time applicants land early-career roles they can actually secure.";
+export const BUILT_FOR_STUDENTS_SUBTITLE = "We help first-time applicants land early-career roles they can actually get.";
 export const BUILT_FOR_STUDENTS_KICKER = "For early-career jobseekers";
 export const BUILT_FOR_STUDENTS_FEATURES = [
   {
@@ -50,13 +50,13 @@ export const BUILT_FOR_STUDENTS_FEATURES = [
     num: 2,
     title: "Useful context in every email",
     body: "Every email includes salary hints, visa notes, and why the role fits you.",
-    meta: "Everything you need to apply faster."
+    meta: "Everything you need to decide in seconds."
   },
   {
     num: 3,
     title: "Inbox-first experience",
     body: "No dashboards. Open the email and apply when you like a role.",
-    meta: "No login required."
+    meta: "No login. Just open your email and apply."
   }
 ];
 
@@ -99,9 +99,9 @@ export const REASSURANCE_ITEMS = [
 // Email showcase
 export const EMAIL_SHOWCASE_KICKER = "What your emails look like";
 export const EMAIL_SHOWCASE_TITLE = "Emails built to help you apply faster";
-export const EMAIL_SHOWCASE_SUBTITLE = "Every email includes salary hints, visa notes, and why the role fits you.";
+export const EMAIL_SHOWCASE_SUBTITLE = "Each email includes salary hints, visa notes, and a short 'why you' summary.";
 export const EMAIL_SHOWCASE_POINTS = [
   `${FREE_ROLES_PER_SEND} curated roles per email`,
-  "Clear summaries with salary hints and visa notes",
-  "Direct apply buttons plus quick feedback links"
+  "Fast summaries with salary hints and visa notes",
+  "Direct apply buttons plus one-click feedback if we miss the mark"
 ];

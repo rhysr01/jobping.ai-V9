@@ -48,7 +48,7 @@ export default function SecondaryCTA() {
               size="lg"
               className="w-full md:w-auto px-7 py-4 md:py-5 text-base md:text-lg"
             >
-              Get your first 5 roles
+              Get my first 5 matches
             </Button>
             </div>
           </div>

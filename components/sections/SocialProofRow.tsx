@@ -63,16 +63,16 @@ export default function SocialProofRow() {
       {/* Guide line behind social proof row */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-transparent via-white/5 to-transparent blur-xl opacity-30" />
       <div className="container-page relative z-10">
-        <div className="mt-8 md:mt-10 space-y-4">
+        <div className="space-y-4">
           <p className="text-sm text-zinc-300 text-center">
-            Based on recent activity across JobPing: students using the service, curated roles per email, and early-career opportunities live this week.
+            Live activity across JobPing this week: students, curated roles, and early-career openings.
           </p>
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.55 }}
-            className="grid gap-6 rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-[0_4px_18px_rgba(0,0,0,0.35)] px-6 py-6 hover:-translate-y-1 transition-all duration-200 sm:grid-cols-3 sm:gap-8 sm:px-7 sm:py-7"
+            className="mt-8 md:mt-10 grid gap-6 rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-[0_4px_18px_rgba(0,0,0,0.35)] px-6 py-6 hover:-translate-y-1 transition-all duration-200 sm:grid-cols-3 sm:gap-8 sm:px-7 sm:py-7"
           >
           {items.map((item, index) => (
             <motion.div

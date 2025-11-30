@@ -155,7 +155,7 @@ export default function Hero() {
   return (
     <section
       data-testid="hero-section"
-      className="section-padding-hero pt-10 pb-24 relative overflow-hidden flex flex-col items-center justify-start text-center"
+      className="section-padding-hero pt-16 md:pt-20 pb-24 relative overflow-hidden flex flex-col items-center justify-start text-center"
     >
       {/* Cinematic dark background */}
       <div className="absolute inset-0 -z-10 bg-black" />
@@ -233,7 +233,7 @@ export default function Hero() {
                 JobPing
               </span>
             </div>
-            <p className="text-base md:text-lg lg:text-xl text-zinc-300">
+            <p className="mt-3 text-sm text-zinc-500 md:text-base">
               Early-career roles across Europe, filtered for real applicants.
             </p>
           </motion.div>
@@ -303,7 +303,7 @@ export default function Hero() {
                 variant="primary"
                 size="lg"
                 className="w-full sm:w-auto sm:min-w-[280px] px-8 py-4 md:py-5 text-base md:text-lg rounded-xl shadow-[0_20px_40px_rgba(124,94,255,0.45)]"
-                aria-label="Get your first 5 roles"
+                aria-label="Get my first 5 matches"
               >
                 <span className="flex items-center justify-center gap-2">
                   {Copy.HERO_CTA}

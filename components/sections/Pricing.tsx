@@ -26,7 +26,7 @@ const plans: PlanConfig[] = [
     description: Copy.FREE_PLAN_DESCRIPTION,
     price: '€0',
     suffix: 'forever',
-    cta: { label: 'Get your first 5 roles', href: '/signup?tier=free' },
+    cta: { label: 'Get my first 5 matches', href: '/signup?tier=free' },
     features: Copy.FREE_PLAN_FEATURES,
     footnote: Copy.PRICING_BADGE,
   },
@@ -90,7 +90,7 @@ export default function Pricing() {
               See your first 5 matches before the weekend
             </h3>
             <p className="max-w-2xl text-xl text-zinc-300 md:text-2xl mb-4">
-              Sign up in under two minutes—your first curated set arrives within 48 hours.
+              Sign up in under two minutes—your first 5 matches arrive within 48 hours.
             </p>
             <p className="max-w-2xl text-base text-zinc-300 mb-6">
               If we miss the mark, reply to any email and we retune within 24 hours.
@@ -99,7 +99,7 @@ export default function Pricing() {
               href="/signup"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/15 hover:text-brand-100 sm:text-base"
             >
-              See my first matches
+              Get my first 5 matches
               <BrandIcons.ArrowRight className="h-4 w-4" />
             </Link>
           </div>

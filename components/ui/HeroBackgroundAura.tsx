@@ -44,26 +44,26 @@ export default function HeroBackgroundAura() {
     >
       {/* Large ambient glow behind everything */}
       <div
-        className="absolute top-[-20%] left-1/2 -translate-x-1/2 h-[700px] w-[900px] blur-[90px] opacity-70 rounded-full bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.35),_transparent_60%)] animate-[hero-blob_9s_ease-in-out_infinite_alternate]"
+        className="absolute top-[-20%] left-1/2 -translate-x-1/2 h-[820px] w-[820px] md:h-[900px] md:w-[900px] blur-[90px] opacity-80 rounded-full bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.32),_rgba(15,23,42,0.2)_60%)] animate-[hero-blob_9s_ease-in-out_infinite_alternate]"
         style={{
           willChange: 'transform, opacity',
-          transform: 'translateZ(0)',
+          transform: 'translate(-50%, -50%)',
         }}
       />
       
       {/* Spotlight glow behind hero card - positioned to shine through glass */}
       <div
-        className="absolute top-[10%] left-1/2 -translate-x-1/2 h-[500px] w-[700px] blur-[70px] opacity-80 rounded-full bg-[radial-gradient(circle_at_center,_rgba(168,85,247,0.55),_transparent_65%)] mix-blend-screen"
+        className="absolute top-[10%] left-1/2 -translate-x-1/2 h-[580px] w-[580px] md:h-[640px] md:w-[640px] blur-[70px] opacity-90 rounded-full bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.45),_transparent_55%)] mix-blend-screen"
         style={{
           willChange: 'transform, opacity',
-          transform: 'translateZ(0)',
+          transform: 'translate(-50%, -35%)',
         }}
       />
 
       {/* Grid pattern - behind all content for depth */}
       <div
         ref={gridRef}
-        className="absolute inset-0 opacity-40 md:opacity-50 mix-blend-soft-light bg-[url('/grid.svg')] bg-center bg-[length:900px_900px] animate-[hero-grid-fade_14s_ease-in-out_infinite_alternate]"
+        className="absolute inset-0 opacity-50 mix-blend-soft-light bg-[url('/grid.svg')] bg-center bg-[length:900px_900px] animate-[hero-grid-fade_14s_ease-in-out_infinite_alternate]"
         style={{
           willChange: 'opacity',
           transform: 'translateZ(0)',
@@ -73,7 +73,7 @@ export default function HeroBackgroundAura() {
       {/* Fallback: CSS grid if SVG pattern fails */}
       <div
         ref={fallbackRef}
-        className="absolute inset-0 opacity-40 md:opacity-50 mix-blend-soft-light animate-[hero-grid-fade_14s_ease-in-out_infinite_alternate]"
+        className="absolute inset-0 opacity-50 mix-blend-soft-light animate-[hero-grid-fade_14s_ease-in-out_infinite_alternate]"
         style={{
           backgroundImage: `
             linear-gradient(rgba(255,255,255,0.25) 1px, transparent 1px),
