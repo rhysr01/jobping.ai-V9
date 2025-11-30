@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import StructuredData from "@/components/StructuredData";
 import FAQSchema from "@/components/FAQSchema";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import Toaster from "@/components/ui/Toaster";
 
 export const metadata: Metadata = {
   title: "JobPing → EU early-career roles in your inbox. Weekly.",
@@ -28,21 +29,21 @@ export const metadata: Metadata = {
     "graduate opportunities",
     "internship opportunities",
     "job alerts",
-    "job matching service"
+    "job matching service",
   ],
   authors: [{ name: "JobPing" }],
   creator: "JobPing",
   publisher: "JobPing",
-  robots: { 
-    index: true, 
+  robots: {
+    index: true,
     follow: true,
     googleBot: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    }
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
   openGraph: {
     title: "JobPing → EU early-career roles in your inbox. Weekly.",
@@ -64,7 +65,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "JobPing → EU early-career roles in your inbox. Weekly.",
-    description: "EU early-career roles delivered weekly. 5 hand-picked matches per email.",
+    description:
+      "EU early-career roles delivered weekly. 5 hand-picked matches per email.",
     creator: "@jobping",
     images: ["https://getjobping.com/og-image.png"],
   },
@@ -75,19 +77,27 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  viewportFit: 'cover',
+  viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <head>
         {/* Font preconnect for faster font loading */}
-        <link rel="preconnect" href="https://api.fontshare.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://api.fontshare.com"
+          crossOrigin="anonymous"
+        />
         <link
           href="https://api.fontshare.com/v2/css?f[]=satoshi@1,900,700,500,400&display=swap"
           rel="stylesheet"
@@ -116,13 +126,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              "name": "JobPing",
-              "url": "https://getjobping.com",
-              "logo": "https://getjobping.com/og-image.png",
-              "sameAs": [
-                "https://www.linkedin.com/company/jobping"
-              ]
-            })
+              name: "JobPing",
+              url: "https://getjobping.com",
+              logo: "https://getjobping.com/og-image.png",
+              sameAs: ["https://www.linkedin.com/company/jobping"],
+            }),
           }}
         />
       </head>
@@ -134,12 +142,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
-        <div className="container-page h-14 flex items-center justify-center" aria-hidden />
+        <div
+          className="container-page h-14 flex items-center justify-center"
+          aria-hidden
+        />
         <main id="main">
-          <ErrorBoundary>
-            {children}
-          </ErrorBoundary>
+          <ErrorBoundary>{children}</ErrorBoundary>
         </main>
+        <Toaster />
       </body>
     </html>
   );

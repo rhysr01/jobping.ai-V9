@@ -1,0 +1,76 @@
+-- ============================================================================
+-- MOVE VECTOR EXTENSION OUT OF PUBLIC SCHEMA (OPTIONAL)
+-- ============================================================================
+-- Security best practice: Extensions should not be in the public schema
+-- 
+-- WARNING: This migration is OPTIONAL and requires careful testing.
+-- The vector extension is heavily used in the codebase (embeddings, 
+-- similarity search). Moving it requires:
+-- 1. Dropping and recreating the extension (CASCADE will drop columns)
+-- 2. Recreating all vector columns and indexes
+-- 3. Updating all functions that use vector type
+-- 4. Extensive testing
+--
+-- RECOMMENDATION: 
+-- - For now, keep vector in public schema (low security risk)
+-- - Or schedule this for a maintenance window with full backup
+-- - Or use ALTER EXTENSION vector SET SCHEMA extensions (if supported)
+-- ============================================================================
+-- 
+-- If you proceed, this migration will:
+-- 1. Create extensions schema
+-- 2. Move vector extension (requires CASCADE - will drop vector columns temporarily)
+-- 3. Recreate vector columns and indexes
+-- 4. Update search_path
+--
+-- UNCOMMENT BELOW TO APPLY (NOT RECOMMENDED WITHOUT TESTING):
+-- ============================================================================
+
+-- BEGIN;
+
+-- -- Create extensions schema if it doesn't exist
+-- CREATE SCHEMA IF NOT EXISTS extensions;
+
+-- -- WARNING: This will temporarily drop all vector columns!
+-- -- Backup your data first!
+-- 
+-- -- Step 1: Drop extension (CASCADE drops columns)
+-- DROP EXTENSION IF EXISTS vector CASCADE;
+-- 
+-- -- Step 2: Recreate in extensions schema
+-- CREATE EXTENSION IF NOT EXISTS vector SCHEMA extensions;
+-- 
+-- -- Step 3: Recreate vector columns
+-- ALTER TABLE public.jobs ADD COLUMN IF NOT EXISTS embedding extensions.vector(1536);
+-- ALTER TABLE public.users ADD COLUMN IF NOT EXISTS preference_embedding extensions.vector(1536);
+-- 
+-- -- Step 4: Recreate indexes
+-- CREATE INDEX IF NOT EXISTS idx_jobs_embedding ON public.jobs 
+-- USING ivfflat (embedding vector_cosine_ops)
+-- WITH (lists = 100)
+-- WHERE embedding IS NOT NULL AND is_active = true;
+-- 
+-- CREATE INDEX IF NOT EXISTS idx_users_preference_embedding ON public.users 
+-- USING ivfflat (preference_embedding vector_cosine_ops)
+-- WITH (lists = 50)
+-- WHERE preference_embedding IS NOT NULL;
+-- 
+-- -- Step 5: Update search_path
+-- ALTER DATABASE current_database() SET search_path = public, extensions;
+
+-- COMMIT;
+
+-- ============================================================================
+-- VERIFICATION
+-- ============================================================================
+-- Check extension location:
+-- SELECT 
+--     extname,
+--     n.nspname as schema_name
+-- FROM pg_extension e
+-- JOIN pg_namespace n ON n.oid = e.extnamespace
+-- WHERE extname = 'vector';
+
+-- Check search_path:
+-- SHOW search_path;
+

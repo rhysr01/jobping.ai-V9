@@ -36,7 +36,7 @@ export default function SecondaryCTA() {
                 Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops weekly. Free users receive {FREE_ROLES_PER_SEND} roles per drop,
                 and Premium keeps {PREMIUM_ROLES_PER_WEEK} new opportunities flowing each week (~{PREMIUM_ROLES_PER_MONTH} per month).
               </p>
-              <p className="text-sm font-medium text-zinc-300">
+              <p className="text-sm font-medium text-zinc-200">
                 Proven deliverability, unsubscribe in one click, and {FREE_ROLES_PER_SEND} roles to get started immediately.
               </p>
             </div>

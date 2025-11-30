@@ -24,6 +24,26 @@ export default function TrustBadges() {
       name: "Greenhouse",
       logo: "/logos/greenhouse.svg",
       description: "Company career pages"
+    },
+    {
+      name: "Indeed",
+      logo: "/logos/indeed.svg",
+      description: "Job board via JobSpy"
+    },
+    {
+      name: "Glassdoor",
+      logo: "/logos/glassdoor.svg",
+      description: "Job board via JobSpy"
+    },
+    {
+      name: "Google Jobs",
+      logo: "/logos/google-jobs.svg",
+      description: "Job aggregator via JobSpy"
+    },
+    {
+      name: "ZipRecruiter",
+      logo: "/logos/ziprecruiter.svg",
+      description: "Job board via JobSpy"
     }
   ];
 
@@ -37,17 +57,17 @@ export default function TrustBadges() {
           transition={{ duration: 0.6 }}
           className="mx-auto max-w-4xl"
         >
-          <p className="mb-10 text-center text-xs font-bold uppercase tracking-[0.3em] text-zinc-400">
+          <p className="mb-10 text-center text-xs font-bold uppercase tracking-[0.3em] text-zinc-200">
             Powered by live feeds from
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8">
             {badges.map((badge, index) => (
               <motion.div
                 key={badge.name}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
+                transition={{ duration: 0.4, delay: index * 0.08 }}
                 whileHover={{ scale: 1.05 }}
                 className="group relative flex items-center justify-center opacity-60 transition-opacity duration-300 hover:opacity-100"
               >

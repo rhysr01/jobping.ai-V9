@@ -18,8 +18,8 @@ export default function Page() {
         <EmailPhoneShowcase />
         <HowItWorks />
         <BuiltForStudents />
-        <Pricing />
         <TrustBadges />
+        <Pricing />
         <SecondaryCTA />
       </main>
       <StickyMobileCTA />

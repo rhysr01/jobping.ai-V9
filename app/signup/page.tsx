@@ -11,6 +11,7 @@ import { FormFieldError, FormFieldSuccess, FormFieldHelper } from '@/components/
 import { useAriaAnnounce } from '@/components/ui/AriaLiveRegion';
 import { useEmailValidation, useRequiredValidation } from '@/hooks/useFormValidation';
 import EuropeMap from '@/components/ui/EuropeMap';
+import { showToast } from '@/lib/toast';
 import WorkEnvironmentSelector from '@/components/ui/WorkEnvironmentSelector';
 import ExperienceTimeline from '@/components/ui/ExperienceTimeline';
 import EntryLevelSelector from '@/components/ui/EntryLevelSelector';
@@ -217,14 +218,24 @@ function SignupForm() {
 
       if (response.ok) {
         localStorage.removeItem('jobping_signup_form'); // Clear saved data on success
+        showToast.success('Account created successfully! Redirecting...');
         const redirectUrl = result.redirectUrl || `/signup/success?tier=${tier}`;
-        router.push(redirectUrl);
+        setTimeout(() => router.push(redirectUrl), 500);
       } else {
-        setError(result.error || 'Signup failed. Please try again.');
+        const errorMessage = result.error || 'Signup failed. Please check your information and try again.';
+        setError(errorMessage);
+        showToast.error(errorMessage, {
+          label: 'Retry',
+          onClick: () => handleSubmit(),
+        });
       }
     } catch (error) {
-      console.error('Signup error:', error);
-      setError('Something went wrong. Please try again.');
+      const errorMessage = 'Unable to connect. Please check your internet connection and try again.';
+      setError(errorMessage);
+      showToast.error(errorMessage, {
+        label: 'Retry',
+        onClick: () => handleSubmit(),
+      });
     } finally {
       setLoading(false);
     }
@@ -491,7 +502,7 @@ function SignupForm() {
                   {formData.fullName.length > 0 && (
                     <>
                       {nameValidation.isValid ? (
-                        <FormFieldSuccess message="Looks good!" />
+                        <FormFieldSuccess message="Looks good!" id="fullName-success" />
                       ) : (
                         <FormFieldError error={nameValidation.error} id="fullName-error" />
                       )}
@@ -521,12 +532,13 @@ function SignupForm() {
                     placeholder="you@example.com"
                     autoComplete="email"
                     aria-invalid={formData.email.length > 0 && !emailValidation.isValid}
-                    aria-describedby={formData.email.length > 0 ? 'email-error' : undefined}
+                    aria-describedby={formData.email.length > 0 && !emailValidation.isValid ? 'email-error' : formData.email.length > 0 && emailValidation.isValid ? 'email-success' : undefined}
+                    aria-required="true"
                   />
                   {formData.email.length > 0 && (
                     <>
                       {emailValidation.isValid ? (
-                        <FormFieldSuccess message="Email looks good!" />
+                        <FormFieldSuccess message="Email looks good!" id="email-success" />
                       ) : (
                         <FormFieldError error={emailValidation.error} id="email-error" />
                       )}

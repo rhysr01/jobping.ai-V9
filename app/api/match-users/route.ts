@@ -918,34 +918,40 @@ addBreadcrumb({
           const sources = matchedJobs.map(m => (m as any).source).filter(Boolean);
           const uniqueSources = new Set(sources);
           
+          // Get actual user target cities (fix hardcoded ['any'])
+          const userTargetCities = user.preferences.target_cities || [];
+          
           // Check current city diversity
-          const targetCities = ['any']; // Temporarily disabled
           const matchedCities = new Set(
             matchedJobs.map(m => {
               const loc = (m as any).location?.toLowerCase() || '';
-              // Find which target city this job matches
-              return targetCities.find((city: string) => city && loc.includes(city.toLowerCase()));
+              const jobCity = (m as any).city?.toLowerCase() || '';
+              // Find which target city this job matches (check both location and city fields)
+              return userTargetCities.find((city: string) => {
+                const cityLower = city.toLowerCase();
+                return loc.includes(cityLower) || jobCity.includes(cityLower) || cityLower === jobCity;
+              });
             }).filter(Boolean)
           );
           
           apiLogger.debug(`City diversity coverage`, {
             citiesCovered: matchedCities.size,
-            totalCities: targetCities.length,
+            totalCities: userTargetCities.length,
             cities: Array.from(matchedCities)
           });
           
           // CITY DIVERSITY: Evenly distribute jobs across selected cities
-          if (targetCities.length >= 2 && matches.length >= 3) {
+          if (userTargetCities.length >= 2 && matches.length >= 3) {
             apiLogger.debug(`Ensuring even city distribution`, {
-              targetCities: targetCities.length,
+              targetCities: userTargetCities.length,
               availableJobs: distributedJobs.length
             });
             
             // Calculate target distribution (3+2 for 2 cities, 2+2+1 for 3 cities, etc.)
-            const jobsPerCity = Math.floor(5 / targetCities.length); // Base allocation
-            const extraJobs = 5 % targetCities.length; // Extra jobs to distribute
+            const jobsPerCity = Math.floor(matches.length / userTargetCities.length); // Base allocation
+            const extraJobs = matches.length % userTargetCities.length; // Extra jobs to distribute
             
-            const cityAllocations = targetCities.map((city: string, index: number) => ({
+            const cityAllocations = userTargetCities.map((city: string, index: number) => ({
               city,
               target: jobsPerCity + (index < extraJobs ? 1 : 0)
             }));
@@ -1038,46 +1044,80 @@ addBreadcrumb({
             // Only replace matches if we got enough jobs from all cities
             if (newMatches.length >= 3) {
               apiLogger.info(`Rebuilt ${newMatches.length} matches with city diversity`, { matchCount: newMatches.length });
-              matches = newMatches.slice(0, 5); // Ensure exactly 5
+              matches = newMatches.slice(0, matches.length); // Keep original count
             } else {
               apiLogger.debug(`Not enough jobs across all cities`, { matchCount: newMatches.length });
             }
           } else {
-            apiLogger.debug(`City diversity check skipped`, { cityCount: targetCities.length });
+            apiLogger.debug(`City diversity check skipped`, { cityCount: userTargetCities.length });
           }
           
-          // SOURCE DIVERSITY: Ensure matches include multiple job boards (preferred: at least 2)
-          if (uniqueSources.size === 1 && distributedJobs.length > 10) {
-            apiLogger.debug(`Adding source diversity`, {
-              currentSource: Array.from(uniqueSources)[0],
+          // SOURCE DIVERSITY: Ensure balanced distribution across sources (max 50% from one source)
+          const sourceCounts: Record<string, number> = {};
+          matchedJobs.forEach(m => {
+            const source = (m as any).source || 'unknown';
+            sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+          });
+          
+          const maxAllowedFromOneSource = Math.ceil(matches.length / 2); // Max 50% from one source
+          const dominantSource = Object.entries(sourceCounts).find(([_, count]) => count > maxAllowedFromOneSource);
+          
+          if (dominantSource && distributedJobs.length > 10) {
+            const [primarySource, count] = dominantSource;
+            const excess = count - maxAllowedFromOneSource;
+            
+            apiLogger.debug(`Enforcing source diversity`, {
+              dominantSource: primarySource,
+              currentCount: count,
+              maxAllowed: maxAllowedFromOneSource,
+              excess: excess,
               matchCount: matches.length
             });
             
             // Find jobs from OTHER sources in our pre-filtered pool
-            const primarySource = Array.from(uniqueSources)[0];
-            const alternativeSources = distributedJobs.filter(j => (j as any).source !== primarySource);
+            const alternativeSources = distributedJobs.filter(j => {
+              const jobSource = (j as any).source || 'unknown';
+              return jobSource !== primarySource;
+            });
             
             if (alternativeSources.length > 0) {
-              // Replace the LOWEST scoring match with a job from a different source
-              const lowestScoreIndex = matches.length - 1; // Last match has lowest score
-              const alternativeJob = alternativeSources[0];
+              // Replace excess jobs from dominant source with jobs from other sources
+              const jobsFromDominantSource = matchedJobs
+                .map((m, idx) => ({ match: m, index: idx }))
+                .filter(({ match }) => (match as any).source === primarySource)
+                .sort((a, b) => a.match.match_score - b.match.match_score); // Sort by score, lowest first
               
-              matches[lowestScoreIndex] = {
-                job_index: matches.length,
-                job_hash: alternativeJob.job_hash,
-                match_score: matches[lowestScoreIndex].match_score - 5, // Slightly lower score
-                match_reason: `Alternative source: ${alternativeJob.title} at ${alternativeJob.company}`,
-                confidence_score: 0.75
-              };
+              // Replace the lowest-scoring excess jobs
+              const toReplace = jobsFromDominantSource.slice(0, excess);
+              
+              for (let i = 0; i < toReplace.length && i < alternativeSources.length; i++) {
+                const { index } = toReplace[i];
+                const alternativeJob = alternativeSources[i % alternativeSources.length];
+                
+                matches[index] = {
+                  job_index: index + 1,
+                  job_hash: alternativeJob.job_hash,
+                  match_score: matches[index].match_score - 5, // Slightly lower score
+                  match_reason: `Source diversity: ${alternativeJob.title} at ${alternativeJob.company}`,
+                  confidence_score: 0.75
+                };
+                
+                apiLogger.debug(`Replaced job for source diversity`, {
+                  replacedSource: primarySource,
+                  newSource: (alternativeJob as any).source,
+                  jobTitle: alternativeJob.title
+                });
+              }
               
               // Log diversity improvement to Sentry breadcrumb
-addBreadcrumb({
-                message: 'Added alternative job for diversity',
+              addBreadcrumb({
+                message: 'Enforced source diversity',
                 level: 'debug',
                 data: {
                   userEmail: user.email,
-                  source: (alternativeJob as any).source,
-                  jobTitle: alternativeJob.title
+                  dominantSource: primarySource,
+                  replacedCount: toReplace.length,
+                  alternativeSources: [...new Set(alternativeSources.slice(0, excess).map(j => (j as any).source))]
                 }
               });
             }
@@ -1093,7 +1133,11 @@ addBreadcrumb({
           const finalCities = matches.map(m => {
             const job = distributedJobs.find(j => j.job_hash === m.job_hash);
             const loc = job?.location?.toLowerCase() || '';
-            return targetCities.find((city: string) => city && loc.includes(city.toLowerCase()));
+            const jobCity = job?.city?.toLowerCase() || '';
+            return userTargetCities.find((city: string) => {
+              const cityLower = city.toLowerCase();
+              return loc.includes(cityLower) || jobCity.includes(cityLower) || cityLower === jobCity;
+            });
           }).filter(Boolean);
           const finalUniqueCities = new Set(finalCities);
           

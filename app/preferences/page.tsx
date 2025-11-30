@@ -68,7 +68,8 @@ function PreferencesContent() {
         }
       })
       .catch(err => {
-        setError('Failed to load preferences');
+        const errorMessage = 'Unable to load preferences. Please check your connection and try again.';
+        setError(errorMessage);
         console.error(err);
       })
       .finally(() => setLoading(false));
@@ -95,10 +96,12 @@ function PreferencesContent() {
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
       } else {
-        setError(result.error || 'Failed to save preferences');
+        const errorMessage = result.error || 'Unable to save preferences. Please check your information and try again.';
+        setError(errorMessage);
       }
     } catch (err) {
-      setError('Failed to save preferences');
+      const errorMessage = 'Unable to connect. Please check your internet connection and try again.';
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }

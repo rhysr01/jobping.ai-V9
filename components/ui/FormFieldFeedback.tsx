@@ -36,16 +36,18 @@ export function FormFieldError({ error, id }: FormFieldErrorProps) {
 
 interface FormFieldSuccessProps {
   message?: string;
+  id?: string;
 }
 
 /**
  * Form field success indicator
  */
-export function FormFieldSuccess({ message }: FormFieldSuccessProps) {
+export function FormFieldSuccess({ message, id }: FormFieldSuccessProps) {
   if (!message) return null;
 
   return (
     <motion.p
+      id={id}
       initial={{ opacity: 0, y: -5 }}
       animate={{ opacity: 1, y: 0 }}
       className="mt-2 text-sm text-green-400 flex items-center gap-2 font-medium"

@@ -26,7 +26,7 @@ export default function Button({
   
   const variants = {
     primary:
-      'bg-gradient-to-r from-brand-500 via-purple-500 to-brand-500 text-white font-semibold shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] active:translate-y-0',
+      'bg-gradient-to-r from-brand-500 via-purple-500 to-brand-500 text-white font-semibold shadow-[0_10px_28px_rgba(99,102,241,0.28)] hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(99,102,241,0.35)] active:translate-y-0 relative overflow-hidden',
     secondary:
       'border-2 border-white/25 bg-white/[0.08] text-white font-medium hover:border-brand-500/50 hover:bg-white/12',
     ghost:
@@ -36,9 +36,9 @@ export default function Button({
   };
 
   const sizes = {
-    sm: 'px-4 py-2 text-sm',
-    md: 'px-5 py-3 text-sm sm:text-base',
-    lg: 'px-7 py-3.5 text-base sm:text-lg'
+    sm: 'px-4 py-2.5 text-sm min-h-[44px]', // Ensure 44px minimum touch target
+    md: 'px-5 py-3 text-sm sm:text-base min-h-[44px]',
+    lg: 'px-7 py-3.5 text-base sm:text-lg min-h-[48px]'
   };
 
   if (href) {
@@ -50,13 +50,17 @@ export default function Button({
         className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
         {...(props as any)}
       >
+        {/* Subtle shimmer effect for momentum */}
+        {variant === 'primary' && !isLoading && (
+          <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_3s_ease-in-out_infinite]" />
+        )}
         {isLoading ? (
           <>
             <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
             Loading...
           </>
         ) : (
-          children
+          <span className="relative z-10">{children}</span>
         )}
       </a>
     );
@@ -68,13 +72,17 @@ export default function Button({
       disabled={disabled || isLoading}
       {...props}
     >
+      {/* Subtle shimmer effect for momentum */}
+      {variant === 'primary' && !isLoading && (
+        <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_3s_ease-in-out_infinite]" />
+      )}
       {isLoading ? (
         <>
           <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
           Loading...
         </>
       ) : (
-        children
+        <span className="relative z-10">{children}</span>
       )}
     </button>
   );

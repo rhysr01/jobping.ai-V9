@@ -187,13 +187,13 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
           </Link>
         </motion.div>
 
-        <div className="flex items-center gap-2 text-xs text-zinc-400">
+        <div className="flex items-center gap-2 text-xs text-zinc-200">
           <BrandIcons.Shield className="h-4 w-4" />
           <span>Cancel anytime · GDPR compliant</span>
         </div>
 
         {plan.footnote && (
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-zinc-300">
             {plan.footnote}
           </p>
         )}

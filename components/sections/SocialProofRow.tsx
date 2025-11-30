@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
 import { BrandIcons } from '@/components/ui/BrandIcons';
+import { useStats } from '@/hooks/useStats';
 import {
   PREMIUM_ROLES_PER_MONTH,
   PREMIUM_ROLES_PER_WEEK,
@@ -11,58 +12,19 @@ import {
 } from '@/lib/productMetrics';
 
 export default function SocialProofRow() {
+  const { stats, isLoading } = useStats();
   const [activeJobs, setActiveJobs] = useState('12,000');
   const [totalUsers, setTotalUsers] = useState('3,400');
-  const [loading, setLoading] = useState(true);
   const [statsStale, setStatsStale] = useState(true);
 
   useEffect(() => {
-    let isSubscribed = true;
-
-    const normalize = (value: unknown): number => {
-      if (typeof value === 'number' && !Number.isNaN(value)) return value;
-      if (typeof value === 'string') {
-        const numeric = Number(value.replace(/,/g, ''));
-        if (!Number.isNaN(numeric)) return numeric;
-      }
-      return 0;
-    };
-
-    fetch('/api/stats')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: Record<string, unknown> | null) => {
-        if (!isSubscribed) return;
-
-        if (data) {
-          const activeValue = normalize(data.activeJobs ?? data.activeJobsFormatted);
-          const totalValue = normalize(data.totalUsers ?? data.totalUsersFormatted);
-          const hasFreshStats = activeValue > 0 && totalValue > 0;
-
-          setActiveJobs(
-            hasFreshStats ? activeValue.toLocaleString('en-US') : '12,000'
-          );
-          setTotalUsers(
-            hasFreshStats ? totalValue.toLocaleString('en-US') : '3,400'
-          );
-          setStatsStale(!hasFreshStats);
-        } else {
-          setActiveJobs('12,000');
-          setTotalUsers('3,400');
-          setStatsStale(true);
-        }
-      })
-      .catch(() => {
-        if (!isSubscribed) return;
-        setActiveJobs('12,000');
-        setTotalUsers('3,400');
-        setStatsStale(true);
-      })
-      .finally(() => isSubscribed && setLoading(false));
-
-    return () => {
-      isSubscribed = false;
-    };
-  }, []);
+    if (stats) {
+      const hasFreshStats = stats.activeJobs > 0 && stats.totalUsers > 0;
+      setActiveJobs(stats.activeJobs.toLocaleString('en-US'));
+      setTotalUsers(stats.totalUsers.toLocaleString('en-US'));
+      setStatsStale(!hasFreshStats);
+    }
+  }, [stats]);
 
   const items = [
     {
@@ -118,7 +80,7 @@ export default function SocialProofRow() {
               </motion.span>
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.24em] text-brand-300">
-                  {loading && index === 0 ? 'Loading…' : item.eyebrow}
+                  {isLoading && index === 0 ? 'Loading…' : item.eyebrow}
                 </p>
                 <h3 className="mt-2 text-lg font-bold text-white sm:text-xl">{item.title}</h3>
                 <p className="mt-2 text-sm font-medium leading-relaxed text-zinc-100 transition-colors duration-300 group-hover:text-white">{item.description}</p>
