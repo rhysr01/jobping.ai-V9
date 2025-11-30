@@ -578,7 +578,7 @@ html {
   /* Performance: Remove animations for users who prefer reduced motion */
   .animate-slow-spotlight,
   .animate-grid-fade {
-    animation: none;
+    animation: none !important;
   }
   *,
   *::before,

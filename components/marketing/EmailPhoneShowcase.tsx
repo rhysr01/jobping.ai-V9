@@ -16,7 +16,7 @@ export default function EmailPhoneShowcase() {
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       {/* Subtle spotlight behind email showcase */}
-      <div className="pointer-events-none absolute inset-x-0 -top-24 h-64 blur-3xl opacity-70 bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.22),_transparent_60%)] -z-10" />
+      <div className="pointer-events-none absolute inset-x-0 -top-24 h-64 blur-3xl opacity-80 bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.28),_transparent_60%)] -z-10" />
 
       <div className="container-page relative z-10 px-4 md:px-6">
         <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">

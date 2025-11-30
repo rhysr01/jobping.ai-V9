@@ -51,13 +51,13 @@ export default function TrustBadges() {
                 whileHover={{ scale: 1.05 }}
                 className="group relative flex items-center justify-center transition-all duration-200 hover:-translate-y-1 bg-white/[0.08] border border-white/10 px-4 py-3 rounded-xl"
               >
-                <div className="relative h-6 w-auto">
+                <div className="relative h-8 w-auto text-white">
                   <Image
                     src={badge.logo}
                     alt={badge.name}
                     width={120}
                     height={40}
-                    className="h-6 w-auto object-contain transition-all duration-300 opacity-90 group-hover:opacity-100 brightness-0 invert"
+                    className="h-8 w-auto object-contain transition-all duration-300 opacity-90 group-hover:opacity-100"
                     loading="lazy"
                     unoptimized
                   />
