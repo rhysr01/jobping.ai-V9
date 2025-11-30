@@ -84,7 +84,7 @@ export default function Pricing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-20 max-w-3xl mx-auto rounded-2xl bg-white/[0.04] border border-white/10 p-10 backdrop-blur-xl shadow-[0_12px_60px_rgba(0,0,0,0.45)] text-center hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.65)] transition-all duration-200"
+          className="mt-20 max-w-3xl mx-auto rounded-2xl bg-white/[0.04] border border-white/10 p-10 backdrop-blur-xl shadow-[0_12px_60px_rgba(0,0,0,0.45)] ring-1 ring-white/5 text-center hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.65)] transition-all duration-200"
         >
           <div className="flex flex-col items-center gap-5">
             <span className="inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
@@ -130,7 +130,10 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
       }`}
     >
       {isPremium && (
-        <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.4),_transparent_70%)] blur-[70px]" />
+        <>
+          <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.5),_transparent_70%)] blur-[60px]" />
+          <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] ring-1 ring-violet-500/30" />
+        </>
       )}
       {plan.badge && (
         <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-xs px-3 py-1 rounded-full bg-purple-500/10 border border-purple-400/40 text-purple-200">
