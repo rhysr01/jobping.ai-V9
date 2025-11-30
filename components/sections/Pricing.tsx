@@ -49,7 +49,7 @@ export default function Pricing() {
     <section data-testid="pricing" className="section-padding relative overflow-hidden bg-[#05010f] scroll-snap-section">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
-      <div className="absolute inset-0 bg-gradient-to-br from-[#05000d] via-[#09011a] to-[#170043] opacity-90" />
+      <div className="absolute inset-0 bg-black" />
 
       <div className="container-page relative z-10">
         <motion.div
@@ -59,11 +59,11 @@ export default function Pricing() {
           transition={{ duration: 0.5 }}
           className="mx-auto max-w-3xl text-left sm:text-center"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.28em] text-brand-200">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-400">
             <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
             Pricing
           </span>
-          <h2 className="section-title mt-4 text-3xl sm:text-4xl md:text-5xl">
+          <h2 className="section-title mt-4">
             {Copy.PRICING_TITLE}
           </h2>
           <p className="mt-4 mb-10 text-base font-medium leading-relaxed text-zinc-100 sm:text-lg">{Copy.PRICING_SUBTITLE}</p>
@@ -80,16 +80,16 @@ export default function Pricing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-20 overflow-hidden rounded-2xl border-2 border-brand-500/40 bg-gradient-to-r from-[#0b031d] via-[#120033] to-[#1f0546] px-6 py-6 text-center shadow-purple-900/30 backdrop-blur-sm hover:-translate-y-1 transition-all duration-200 sm:px-8 sm:py-8 md:px-12 md:py-12"
+          className="mt-20 overflow-hidden rounded-2xl bg-white/[0.06] border border-white/10 shadow-[0_4px_18px_rgba(0,0,0,0.35)] backdrop-blur-xl px-6 py-6 text-center hover:-translate-y-1 transition-all duration-200 sm:px-8 sm:py-8 md:px-12 md:py-12"
         >
           <div className="flex flex-col items-center gap-5">
             <span className="inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
               🚀 Over 12,000 jobs matched this month
             </span>
-            <h3 className="text-2xl font-bold text-white sm:text-3xl">
+            <h3 className="text-5xl font-semibold tracking-[-0.02em] text-white md:text-6xl mb-2">
               Claim your first drop today—see your first five matches before the weekend.
             </h3>
-            <p className="max-w-2xl text-sm font-medium leading-relaxed text-zinc-100 sm:text-base">
+            <p className="max-w-2xl text-xl text-zinc-300 md:text-2xl">
               We refresh the pipeline every morning and route hot roles instantly. If we miss the mark, reply to any email and we retune within 24 hours.
             </p>
             <Link
@@ -116,23 +116,16 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.55, delay: index * 0.1 }}
-      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border-2 ${
-        isPremium 
-          ? 'border-strong border-brand-500/60 bg-gradient-to-br from-brand-500/15 via-brand-500/10 to-purple-500/10 elevation-3' 
-          : 'border-default bg-white/[0.08] elevation-1'
-      } px-6 py-6 backdrop-blur-md transition-all duration-200 hover:-translate-y-1 hover:elevation-2 sm:px-8 sm:py-8`}
+      className="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-[0_4px_18px_rgba(0,0,0,0.35)] px-6 py-6 transition-all duration-200 hover:-translate-y-1 sm:px-8 sm:py-8"
     >
-      {isPremium && (
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-purple-500/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-      )}
       {plan.badge && (
         <motion.span 
-          className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-brand-500 to-purple-600 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow-[0_8px_24px_rgba(99,102,241,0.45)]"
+          className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-brand-500 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow-[0_8px_24px_rgba(126,97,255,0.45)]"
           animate={{ 
             boxShadow: [
-              '0_8px_24px_rgba(99,102,241,0.45)',
-              '0_8px_32px_rgba(139,92,246,0.6)',
-              '0_8px_24px_rgba(99,102,241,0.45)'
+              '0_8px_24px_rgba(126,97,255,0.45)',
+              '0_8px_32px_rgba(110,87,245,0.6)',
+              '0_8px_24px_rgba(126,97,255,0.45)'
             ]
           }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
@@ -143,12 +136,12 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
 
       <div className="space-y-5">
         <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-bold text-white sm:text-5xl leading-[1.05]">{plan.price}</span>
+          <span className="text-4xl font-semibold text-white sm:text-5xl leading-[1.05]">{plan.price}</span>
           {plan.suffix && <span className="text-base font-medium text-zinc-300 leading-[1.05]">{plan.suffix}</span>}
         </div>
-        <p className="text-xs font-bold uppercase tracking-[0.3em] text-brand-300">{plan.name}</p>
-        <h3 className="text-xl font-bold text-white sm:text-2xl">{plan.headline}</h3>
-        <p className="text-sm font-medium leading-relaxed text-zinc-100 sm:text-base">{plan.description}</p>
+        <p className="text-xs uppercase tracking-wider text-zinc-400">{plan.name}</p>
+        <h3 className="text-xl font-semibold text-white sm:text-2xl mb-2">{plan.headline}</h3>
+        <p className="text-base text-zinc-300/90 leading-relaxed">{plan.description}</p>
 
         <ul className="mt-6 space-y-4">
           {plan.features.map(feature => (
@@ -171,11 +164,10 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
             href={plan.cta.href}
             className={`group relative inline-flex items-center justify-center overflow-hidden rounded-2xl px-6 py-3 text-sm font-semibold transition-all duration-300 sm:text-base ${
               isPremium
-                ? 'bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-glow-subtle hover:shadow-[0_16px_40px_rgba(99,102,241,0.5)]'
+                ? 'bg-brand-500 text-white shadow-glow-subtle hover:bg-brand-600 hover:shadow-[0_16px_40px_rgba(126,97,255,0.5)]'
                 : 'border border-white/15 bg-white/5 text-white hover:border-brand-500/40 hover:bg-brand-500/10'
             }`}
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
             <span className="relative flex items-center gap-2">
               {plan.cta.label}
               <motion.span

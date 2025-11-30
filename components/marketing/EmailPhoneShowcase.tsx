@@ -12,14 +12,9 @@ export default function EmailPhoneShowcase() {
   const pointIcons = [BrandIcons.Check, BrandIcons.Shield, BrandIcons.Mail];
 
   return (
-    <section className="section-padding relative overflow-hidden bg-gradient-to-br from-[#080014] via-[#0a001a] to-[#1a0030] scroll-snap-section">
+    <section className="section-padding relative overflow-hidden bg-black scroll-snap-section">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
-      <div className="absolute inset-0 -z-10 opacity-80">
-        <div className="absolute left-1/2 top-1/2 h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/14 blur-[140px]" />
-      </div>
-      {/* Cool-toned backdrop behind phone */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 to-transparent blur-3xl" />
 
       <div className="container-page relative z-10 px-4 md:px-6">
         <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
@@ -33,21 +28,21 @@ export default function EmailPhoneShowcase() {
             <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.28em] text-brand-200">
               {Copy.EMAIL_SHOWCASE_KICKER}
             </span>
-          <h2 className="section-title text-3xl sm:text-4xl md:text-5xl">
+          <h2 className="section-title text-5xl font-semibold tracking-[-0.02em] text-white md:text-6xl mb-2">
             {Copy.EMAIL_SHOWCASE_TITLE}
           </h2>
-          <p className="max-w-xl mb-10 text-base font-medium leading-relaxed text-zinc-100 sm:text-lg">
+          <p className="max-w-xl mb-10 text-xl text-zinc-300 md:text-2xl">
             {Copy.EMAIL_SHOWCASE_SUBTITLE}
           </p>
             <ul className="space-y-4">
               {Copy.EMAIL_SHOWCASE_POINTS.map((point, index) => {
                 const Icon = pointIcons[index] || BrandIcons.Check;
                 return (
-                  <li key={point} className="flex items-start gap-3 text-sm font-medium text-zinc-100 sm:text-base">
+                  <li key={point} className="flex items-start gap-3 text-base text-zinc-300/90 leading-relaxed">
                     <span className="mt-0.5 inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-brand-200">
                       <Icon className="h-3.5 w-3.5" />
                     </span>
-                    <span className="leading-relaxed">{point}</span>
+                    <span>{point}</span>
                   </li>
                 );
               })}

@@ -8,7 +8,7 @@ export default function BuiltForStudents() {
   const featureIcons = [BrandIcons.Briefcase, BrandIcons.CheckCircle, BrandIcons.Mail];
 
   return (
-    <section className="section-padding bg-gradient-to-br from-[#05030c] via-[#03010d] to-[#160233] scroll-snap-section relative">
+    <section className="section-padding bg-black scroll-snap-section relative">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       <div className="container-page relative z-10">
@@ -19,14 +19,14 @@ export default function BuiltForStudents() {
           transition={{ duration: 0.5 }}
           className="mx-auto max-w-3xl text-left sm:text-center"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.28em] text-brand-200">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-400">
             <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
             {Copy.BUILT_FOR_STUDENTS_KICKER}
           </span>
-          <h2 className="section-title mt-4 text-3xl sm:text-4xl md:text-5xl">
+          <h2 className="section-title mt-4 text-5xl font-semibold tracking-[-0.02em] text-white md:text-6xl mb-2">
             {Copy.BUILT_FOR_STUDENTS_TITLE}
           </h2>
-          <p className="mt-4 mb-10 text-base font-medium leading-relaxed text-zinc-100 sm:text-lg">
+          <p className="mb-10 text-xl text-zinc-300 md:text-2xl">
             {Copy.BUILT_FOR_STUDENTS_SUBTITLE}
           </p>
         </motion.div>
@@ -41,11 +41,10 @@ export default function BuiltForStudents() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: index * 0.05 }}
-                className="group relative overflow-hidden rounded-2xl border-default bg-white/[0.08] px-6 py-6 text-left backdrop-blur-md elevation-1 transition-all duration-200 hover:-translate-y-1 hover:border-emphasis hover:elevation-2 sm:px-8 sm:py-8"
+                className="group relative overflow-hidden rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-[0_4px_18px_rgba(0,0,0,0.35)] px-6 py-6 text-left transition-all duration-200 hover:-translate-y-1 sm:px-8 sm:py-8"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <motion.span 
-                  className="absolute -right-4 top-6 text-6xl font-black text-white/5 transition-all duration-300 group-hover:text-white/10 group-hover:scale-110"
+                  className="absolute -right-4 top-6 text-6xl font-semibold text-white/5 transition-all duration-300 group-hover:text-white/10 group-hover:scale-110"
                   animate={{ 
                     opacity: [0.05, 0.1, 0.05],
                   }}
@@ -66,11 +65,11 @@ export default function BuiltForStudents() {
                   >
                     <Icon className="h-5 w-5" />
                   </motion.span>
-                  <h3 className="text-lg font-bold text-white sm:text-xl">
+                  <h3 className="text-xl font-semibold text-white sm:text-2xl mb-2">
                     {feature.title}
                   </h3>
                 </div>
-                <p className="mt-4 text-sm font-medium leading-relaxed text-zinc-100 sm:text-base">
+                <p className="text-base text-zinc-300/90 leading-relaxed">
                   {feature.body}
                 </p>
               </motion.li>

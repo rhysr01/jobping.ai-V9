@@ -10,11 +10,11 @@ export default {
       // Spacing removed - Tailwind defaults are sufficient
       colors: {
         brand: {
-          200: "#D4C5FF",
-          300: "#C2A8FF",
-          400: "#B491FF",
-          500: "#9A6AFF",
-          600: "#6B4EFF",
+          200: "#A996FF",
+          300: "#A996FF",
+          400: "#7E61FF",
+          500: "#7E61FF",
+          600: "#6E57F5",
         },
         // Semantic color system
         success: {

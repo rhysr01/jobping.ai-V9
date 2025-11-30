@@ -68,7 +68,7 @@ export default function SocialProofRow() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
-          className="grid gap-6 rounded-2xl border-default bg-white/[0.08] px-6 py-6 elevation-1 backdrop-blur-md hover:-translate-y-1 transition-all duration-200 sm:grid-cols-3 sm:gap-8 sm:px-8 sm:py-8"
+          className="grid gap-6 rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-[0_4px_18px_rgba(0,0,0,0.35)] px-6 py-6 hover:-translate-y-1 transition-all duration-200 sm:grid-cols-3 sm:gap-8 sm:px-8 sm:py-8"
         >
           {items.map((item, index) => (
             <motion.div
@@ -83,7 +83,6 @@ export default function SocialProofRow() {
               }}
               className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border-subtle bg-black/15 px-6 py-6 transition-all duration-200 hover:border-default hover:elevation-1 hover:-translate-y-1 sm:px-8 sm:py-8"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               {index < items.length - 1 && (
                 <span className="hidden md:inline absolute right-0 top-1/2 h-4 w-px bg-white/10 -translate-y-1/2" />
               )}
@@ -95,11 +94,11 @@ export default function SocialProofRow() {
                 {item.icon}
               </motion.span>
               <div className="space-y-1">
-                <p className="text-xs font-bold uppercase tracking-[0.24em] text-brand-300">
+                <p className="text-xs uppercase tracking-wider text-zinc-400">
                   {isLoading && index === 0 ? 'Loading…' : item.eyebrow}
                 </p>
-                <h3 className="text-lg font-bold text-white sm:text-xl">{item.title}</h3>
-                <div className="text-sm font-semibold leading-relaxed text-zinc-100 transition-colors duration-300 group-hover:text-white">
+                <h3 className="text-xl font-semibold text-white sm:text-2xl mb-2">{item.title}</h3>
+                <div className="text-base text-zinc-300/90 leading-relaxed transition-colors duration-300 group-hover:text-zinc-200">
                   {typeof item.description === 'string' ? item.description : item.description}
                 </div>
               </div>

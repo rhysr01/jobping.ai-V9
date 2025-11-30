@@ -21,26 +21,22 @@ export default function SecondaryCTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
-          className="relative overflow-hidden rounded-2xl border-emphasis border-brand-500/40 bg-gradient-to-b from-purple-950/85 to-purple-900/90 px-6 py-6 elevation-2 backdrop-blur-sm hover:-translate-y-1 transition-all duration-200 sm:px-8 sm:py-8 md:px-12 md:py-14"
+          className="relative overflow-hidden rounded-2xl bg-white/[0.06] border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.35)] backdrop-blur-xl p-8 md:p-12 hover:-translate-y-1 transition-all duration-200"
         >
-          <div className="pointer-events-none absolute -left-24 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full bg-brand-500/20 blur-[140px]" />
-          <div className="pointer-events-none absolute -right-10 top-1/3 h-72 w-72 rounded-full bg-purple-500/20 blur-[160px]" />
-          {/* Anchoring shadow - fixed halo imbalance */}
-          <div className="absolute left-1/2 -translate-x-1/2 -bottom-10 h-24 w-[60%] bg-purple-900/20 blur-2xl" />
           <div className="relative flex flex-col gap-6 md:grid md:grid-cols-[1.6fr_1fr] lg:flex lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-xl space-y-4 text-left">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
-                <BrandIcons.Mail className="h-4 w-4 text-brand-300" />
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-400">
+                <BrandIcons.Mail className="h-4 w-4 text-brand-400" />
                 EARLY-CAREER INBOX
               </span>
-              <h3 className="text-3xl font-bold text-white sm:text-4xl">
+              <h3 className="text-5xl font-semibold tracking-[-0.02em] text-white md:text-6xl">
                 Your first curated drop arrives within 48 hours.
               </h3>
-              <p className="text-base font-medium leading-relaxed text-zinc-100 sm:text-lg">
+              <p className="text-xl text-zinc-300 md:text-2xl">
                 Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops weekly. Free users receive {FREE_ROLES_PER_SEND} roles per drop,
                 and Premium keeps {PREMIUM_ROLES_PER_WEEK} new opportunities flowing each week (~{PREMIUM_ROLES_PER_MONTH} per month).
               </p>
-              <p className="text-sm font-medium text-zinc-200">
+              <p className="text-base text-zinc-300/90 leading-relaxed">
                 Proven deliverability, unsubscribe in one click, and {FREE_ROLES_PER_SEND} roles to claim your first drop.
               </p>
             </div>

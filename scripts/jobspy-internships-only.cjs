@@ -153,7 +153,12 @@ async function saveJobs(jobs, source) {
     // Clean company name - remove extra whitespace, trim
     const companyName = (j.company || '').trim().replace(/\s+/g, ' ');
     const { city, country } = parseLocation(j.location || '');
-    const description = (j.company_description || j.skills || j.description || '').trim();
+    // Prioritize description field, fallback to company_description + skills
+    const description = (
+      (j.description && j.description.trim().length > 50 ? j.description : '') ||
+      (j.company_description || '') ||
+      (j.skills || '')
+    ).trim();
     
     // Extract metadata
     const workEnv = detectWorkEnvironment(j);
@@ -290,7 +295,29 @@ df = scrape_jobs(
 )
 import sys
 print('Available columns:', list(df.columns), file=sys.stderr)
-cols=[c for c in ['title','company','location','job_url','company_description','skills','description'] if c in df.columns]
+# Try to get full description - check multiple possible column names
+desc_cols = ['description', 'job_description', 'full_description', 'job_details', 'details']
+desc_col = None
+for col in desc_cols:
+    if col in df.columns:
+        desc_col = col
+        break
+# If no description column, combine company_description and skills
+if desc_col is None:
+    df['description'] = df.apply(lambda x: ' '.join(filter(None, [
+        str(x.get('company_description', '') or ''),
+        str(x.get('skills', '') or ''),
+        str(x.get('job_function', '') or ''),
+        str(x.get('job_type', '') or '')
+    ])), axis=1)
+else:
+    # Use the found description column, but fallback to company_description if empty
+    df['description'] = df.apply(lambda x: (
+        str(x.get(desc_col, '') or '') or 
+        str(x.get('company_description', '') or '') or
+        str(x.get('skills', '') or '')
+    ), axis=1)
+cols=[c for c in ['title','company','location','job_url','description','company_description','skills'] if c in df.columns]
 print(df[cols].to_csv(index=False))
 `], { 
         encoding: 'utf8', 

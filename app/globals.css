@@ -46,32 +46,13 @@ body {
   }
 }
 
-/* Premium background - layered atmospheric perspective */
+/* Premium background - cinematic darkness */
 .premium-bg {
   position: relative;
   background-color: #000;
-  /* Layered depth: far (cooler/blurred) → near (warmer/sharper) */
   background-image:
-    /* Far background layer - cooler, more diffused */
-    radial-gradient(
-      140% 100% at 50% 0%,
-      rgba(99, 102, 241, 0.12),
-      transparent 70%
-    ),
-    /* Mid background layer - medium warmth */
-    radial-gradient(
-        100% 80% at 0% 50%,
-        rgba(124, 58, 237, 0.08),
-        transparent 65%
-      ),
-    /* Near background layer - warmer, sharper */
-    radial-gradient(
-        80% 60% at 100% 100%,
-        rgba(139, 92, 246, 0.15),
-        transparent 60%
-      ),
-    /* Base gradient for depth */
-    linear-gradient(#000 0%, #050505 20%, #0a0a0a 50%, #050505 80%, #000 100%);
+    radial-gradient(180% 100% at 50% -20%, rgba(60,60,90,0.55), transparent 70%),
+    linear-gradient(to bottom, #000 0%, #06060a 100%);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -88,44 +69,7 @@ body {
   mix-blend-mode: overlay;
 }
 
-.light-sheen {
-  position: relative;
-  overflow: hidden;
-}
-.light-sheen::after {
-  content: "";
-  position: absolute;
-  inset: -25%;
-  background: linear-gradient(
-    120deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.18) 40%,
-    rgba(255, 255, 255, 0.32) 50%,
-    rgba(255, 255, 255, 0.18) 60%,
-    transparent 100%
-  );
-  transform: translateX(-130%);
-  animation: sheen-glide 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  pointer-events: none;
-}
-@keyframes sheen-glide {
-  0%,
-  12% {
-    transform: translateX(-130%);
-  }
-  45%,
-  55% {
-    transform: translateX(130%);
-  }
-  100% {
-    transform: translateX(130%);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .light-sheen::after {
-    animation: none;
-  }
-}
+/* Removed light-sheen animations - too template-like */
 
 .enhanced-grid {
   background-image:
@@ -210,21 +154,17 @@ body {
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-2xl px-6 py-4 text-base sm:text-lg font-bold tracking-tight
+    @apply inline-flex items-center justify-center rounded-2xl px-6 py-4 text-base sm:text-lg font-semibold tracking-tight
            text-white focus:outline-none focus:ring-4 focus:ring-brand-500 focus:ring-offset-4 focus:ring-offset-black;
-    background-image: linear-gradient(to right, #6366f1, #7c3aed, #8b5cf6);
+    background-color: #7E61FF;
     box-shadow:
-      0 20px 60px -18px rgba(99, 102, 241, 0.7),
-      0 0 0 1px rgba(255, 255, 255, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      0 20px 60px -18px rgba(126, 97, 255, 0.7),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
     min-height: 48px;
     transition:
       transform 0.25s ease,
       box-shadow 0.25s ease,
-      filter 0.25s ease;
-    position: relative;
-    overflow: hidden;
+      background-color 0.25s ease;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
@@ -234,32 +174,12 @@ body {
       min-height: 64px;
     }
   }
-  .btn-primary::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.2),
-      transparent
-    );
-    transition: left 0.5s;
-  }
-  .btn-primary:hover::before {
-    left: 100%;
-  }
   .btn-primary:hover {
-    transform: translateY(-2px) scale(1.02);
+    background-color: #6E57F5;
+    transform: translateY(-2px);
     box-shadow:
-      0 32px 100px -16px rgba(99, 102, 241, 0.9),
-      0 0 0 1px rgba(255, 255, 255, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.25),
-      0 0 40px rgba(99, 102, 241, 0.4);
-    filter: brightness(1.12);
+      0 32px 100px -16px rgba(110, 87, 245, 0.9),
+      0 0 0 1px rgba(255, 255, 255, 0.15);
   }
   .btn-secondary {
     @apply inline-flex items-center justify-center rounded-2xl px-6 py-4 text-base sm:text-lg font-semibold text-white border-2 border-zinc-600;
@@ -278,11 +198,11 @@ body {
   }
   .btn-secondary:hover {
     @apply border-brand-500/60;
-    background: rgba(99, 102, 241, 0.15);
+    background: rgba(126, 97, 255, 0.15);
     transform: translateY(-2px);
     box-shadow:
-      0 16px 48px -12px rgba(99, 102, 241, 0.4),
-      0 0 0 1px rgba(99, 102, 241, 0.2);
+      0 16px 48px -12px rgba(126, 97, 255, 0.4),
+      0 0 0 1px rgba(126, 97, 255, 0.2);
   }
 
   .btn-outline {
@@ -305,8 +225,8 @@ body {
     @apply border-brand-500/50;
     transform: translateY(-2px);
     box-shadow:
-      0 8px 24px -8px rgba(99, 102, 241, 0.3),
-      0 0 0 1px rgba(99, 102, 241, 0.15);
+      0 8px 24px -8px rgba(126, 97, 255, 0.3),
+      0 0 0 1px rgba(126, 97, 255, 0.15);
   }
 
   .p-muted {
@@ -316,19 +236,19 @@ body {
   /* Single glow utility for primary CTA only */
   .glow-primary-cta {
     box-shadow:
-      0 0 40px rgba(99, 102, 241, 0.4),
-      0 20px 50px rgba(99, 102, 241, 0.3);
+      0 0 40px rgba(126, 97, 255, 0.4),
+      0 20px 50px rgba(126, 97, 255, 0.3);
   }
 }
 
 /* Design system utilities */
 @layer utilities {
   .shadow-glow-strong {
-    box-shadow: 0 0 24px rgba(99, 102, 241, 0.25);
+    box-shadow: 0 0 24px rgba(126, 97, 255, 0.25);
   }
   
   .shadow-glow-subtle {
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 12px rgba(126, 97, 255, 0.2);
   }
   
   /* Scroll snap for kinetic feedback */
@@ -511,7 +431,7 @@ body {
   
   /* Section title unified pattern */
   .section-title {
-    @apply text-heading text-white font-semibold text-balance mb-4;
+    @apply text-5xl font-semibold tracking-[-0.02em] text-white text-balance mb-2 md:text-6xl;
   }
   
   /* Number chip consistent styling */
@@ -569,7 +489,7 @@ a:not([class*="btn"]):not([class*="underline"]) {
 }
 
 a:not([class*="btn"]):not([class*="underline"]):hover {
-  color: #a78bfa;
+  color: #A996FF;
 }
 
 /* Animated underline for links */
@@ -596,15 +516,7 @@ a.underline:hover {
   border-radius: 4px;
 }
 
-/* Removed hero-sheen animation - excessive */
-
-.hero-logo-wrapper {
-  perspective: 1200px;
-}
-
-/* Removed hero-logo-capsule - replaced with minimal wordmark design */
-
-/* Removed logoSheen - excessive animation */
+/* Removed all sheen animations - too template-like */
 
 .hero-text-gradient {
   background: linear-gradient(
