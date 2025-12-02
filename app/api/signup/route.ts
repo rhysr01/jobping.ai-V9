@@ -284,6 +284,11 @@ export async function POST(req: NextRequest) {
         userPrefs as any
       );
       
+      // Ensure preFilteredJobs is an array
+      if (!Array.isArray(preFilteredJobs)) {
+        throw new Error('preFilterJobsByUserPreferencesEnhanced did not return an array');
+      }
+      
       apiLogger.info('Jobs filtered', { 
         email: data.email, 
         allJobsCount: allJobs?.length || 0,
@@ -301,15 +306,18 @@ export async function POST(req: NextRequest) {
         console.log(`[SIGNUP] Matching complete: ${matchResult.matches?.length || 0} matches found`);
         
         if (matchResult.matches && matchResult.matches.length > 0) {
-          // Get matched jobs with full data
-          const matchedJobsRaw = matchResult.matches.map(m => {
+          // Get matched jobs with full data - ensure we have valid preFilteredJobs array
+          const matchedJobsRaw: any[] = [];
+          for (const m of matchResult.matches) {
             const job = preFilteredJobs.find(j => j.job_hash === m.job_hash);
-            return job ? {
-              ...job,
-              match_score: m.match_score,
-              match_reason: m.match_reason,
-            } : null;
-          }).filter(j => j !== null);
+            if (job) {
+              matchedJobsRaw.push({
+                ...job,
+                match_score: m.match_score,
+                match_reason: m.match_reason,
+              });
+            }
+          }
 
           // DISTRIBUTION: Ensure source diversity and city balance
           const targetCount = Math.min(10, matchedJobsRaw.length);
