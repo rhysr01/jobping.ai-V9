@@ -120,9 +120,6 @@ export default function SocialProofRow() {
               </motion.div>
             </div>
           </div>
-          <p className="mt-4 text-xs md:text-sm text-zinc-500 text-center">
-            JobPing feels less like a job board and more like a weekly careers feed tuned only to you.
-          </p>
       </div>
     </section>
   );

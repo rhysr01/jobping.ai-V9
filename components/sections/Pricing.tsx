@@ -122,31 +122,32 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
   const isPremium = plan.id === 'premium';
 
   return (
-    <motion.article
-      data-testid={`${plan.id}-plan`}
-      initial={{ opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.55, delay: index * 0.1 }}
-      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-xl backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7 md:scale-[1.02] md:-translate-y-1 ${
-        isPremium 
-          ? 'bg-zinc-900 border border-brand-500/60 shadow-pricing' 
-          : 'bg-white/[0.06] border border-white/10 shadow-pricing md:scale-100 md:translate-y-0'
-      }`}
-    >
-      {isPremium && (
-        <>
-          <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] bg-[radial-gradient(circle_at_center,theme(colors.brand.500/0.35),_transparent_70%)] blur-sm-hero" />
-          <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] ring-1 ring-violet-500/30" />
-        </>
-      )}
+    <div className="relative">
       {plan.badge && (
-        <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-xs font-semibold px-4 py-1.5 rounded-full bg-yellow-400/20 border border-yellow-400/50 text-yellow-200 shadow-md shadow-yellow-400/20">
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 text-xs font-semibold px-4 py-1.5 rounded-full bg-yellow-400/20 border border-yellow-400/50 text-yellow-200 shadow-md shadow-yellow-400/20 whitespace-nowrap">
           Most popular
         </span>
       )}
+      <motion.article
+        data-testid={`${plan.id}-plan`}
+        initial={{ opacity: 0, y: 28 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.55, delay: index * 0.1 }}
+        className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-xl backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7 md:scale-[1.02] md:-translate-y-1 ${
+          isPremium 
+            ? 'bg-zinc-900 border border-brand-500/60 shadow-pricing' 
+            : 'bg-white/[0.06] border border-white/10 shadow-pricing md:scale-100 md:translate-y-0'
+        }`}
+      >
+        {isPremium && (
+          <>
+            <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] bg-[radial-gradient(circle_at_center,theme(colors.brand.500/0.35),_transparent_70%)] blur-sm-hero" />
+            <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] ring-1 ring-violet-500/30" />
+          </>
+        )}
 
-      <div className="space-y-5">
+        <div className="space-y-5">
         <div className="flex items-baseline gap-2">
           <span className="text-4xl font-semibold text-white sm:text-5xl leading-[1.05]">{plan.price}</span>
           {plan.suffix && <span className="text-base font-medium text-zinc-300 leading-[1.05]">{plan.suffix}</span>}
@@ -215,5 +216,6 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
         </motion.div>
       </div>
     </motion.article>
+    </div>
   );
 }
