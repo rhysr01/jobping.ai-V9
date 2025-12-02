@@ -36,9 +36,6 @@ export default function HowItWorks() {
           <p className="mb-10 text-xl text-zinc-300 md:text-2xl">
             {Copy.HOW_IT_WORKS_SUMMARY}
           </p>
-          <p className="hidden sm:block text-sm text-zinc-400 mb-6">
-            No endless scrolling. No complex filters. Just matches that fit.
-          </p>
         </motion.div>
 
         <div className="relative mt-14 grid gap-4 sm:mt-16 md:grid-cols-3">
@@ -71,7 +68,7 @@ export default function HowItWorks() {
                 className="group relative flex h-full flex-col gap-2 overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-feature px-6 py-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7"
               >
                 <motion.span 
-                  className="number-chip brightness-95 font-semibold group-hover:bg-brand-500/25 group-hover:scale-110 shadow-md shadow-black/40 h-12 w-12 md:h-14 md:w-14 text-lg md:text-xl"
+                  className="number-chip brightness-95 font-semibold group-hover:bg-brand-500/25 group-hover:scale-110 shadow-md shadow-black/40 h-12 w-12 md:h-14 md:w-14 text-2xl md:text-3xl text-brand-400"
                   whileHover={{ rotate: [0, -10, 10, 0] }}
                   transition={{ duration: 0.5 }}
                 >

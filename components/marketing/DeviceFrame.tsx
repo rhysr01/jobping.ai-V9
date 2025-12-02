@@ -13,8 +13,8 @@ export default function DeviceFrame({ children, className }: Props) {
   // iPhone 14 logical size used by our SVG: outer 390x844, inner screen 366x820 at (12,12)
   // Visual size reduced via responsive scale to avoid dominating the layout
   return (
-    <div className={`inline-block origin-top scale-[0.82] sm:scale-[0.86] md:scale-[0.9] lg:scale-100 ${className ?? ""}`}>
-      <div className="relative mx-auto max-w-sm rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-1 ring-1 ring-white/5 backdrop-blur-sm">
+    <div className={`inline-block origin-top scale-[0.82] sm:scale-[0.86] md:scale-[0.9] lg:scale-100 w-full max-w-[600px] mx-auto ${className ?? ""}`}>
+      <div className="relative mx-auto max-w-sm rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-[0_4px_6px_rgba(0,0,0,0.1),0_40px_80px_rgba(0,0,0,0.8)] p-1 ring-1 ring-white/5 backdrop-blur-sm">
         <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full bg-white/10" />
         <div className="relative w-[390px] h-[844px] drop-shadow-2xl">
         {/* Glow effect around device */}

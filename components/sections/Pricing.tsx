@@ -71,12 +71,6 @@ export default function Pricing() {
             {Copy.PRICING_TITLE}
           </h2>
           <p className="mt-4 mb-10 text-base font-medium leading-relaxed text-zinc-100 sm:text-lg">{Copy.PRICING_SUBTITLE}</p>
-          <p className="hidden sm:block text-sm text-zinc-400 mb-6">
-            Start free. Upgrade when you need more opportunities.
-          </p>
-          <p className="hidden sm:block text-sm text-zinc-400 mb-6">
-            Start free. Upgrade anytime. Cancel in one click.
-          </p>
         </motion.div>
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -104,16 +98,15 @@ export default function Pricing() {
             <h3 className="text-5xl font-semibold tracking-[-0.02em] text-white md:text-6xl mb-2">
               See your first 5 matches before the weekend
             </h3>
-            <p className="max-w-2xl text-xl text-zinc-300 md:text-2xl mb-4">
+            <p className="max-w-2xl text-xl text-zinc-300 md:text-2xl mb-6">
               Sign up in under two minutes—your first 5 matches arrive within 48 hours.
-            </p>
-            <p className="max-w-2xl text-base text-zinc-300 mb-6">
-              If we miss the mark, reply to any email and we retune within 24 hours.
             </p>
             <Link
               href="/signup"
+              aria-label="Get my first 5 matches"
               className="inline-flex items-center justify-center gap-2 h-11 rounded-full bg-brand-500 px-6 text-sm font-medium text-white shadow-md shadow-brand-500/40 transition-all duration-200 hover:bg-brand-500/90 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-base"
             >
+              <BrandIcons.Mail className="h-4 w-4" />
               Get my first 5 matches
               <BrandIcons.ArrowRight className="h-4 w-4" />
             </Link>
@@ -148,7 +141,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
         </>
       )}
       {plan.badge && (
-        <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-xs px-3 py-1 rounded-full bg-purple-500/10 border border-purple-400/40 text-purple-200">
+        <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-xs font-semibold px-4 py-1.5 rounded-full bg-yellow-400/20 border border-yellow-400/50 text-yellow-200 shadow-md shadow-yellow-400/20">
           Most popular
         </span>
       )}
@@ -161,6 +154,25 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
         <p className="text-xs uppercase tracking-wider text-zinc-300">{plan.name}</p>
         <h3 className="text-xl font-semibold text-white sm:text-2xl mb-2">{plan.headline}</h3>
         <p className="text-base text-zinc-300/90 leading-relaxed">{plan.description}</p>
+        
+        {/* Progress indicator for Premium */}
+        {isPremium && (
+          <div className="mt-4 p-3 rounded-lg bg-brand-500/10 border border-brand-500/30">
+            <div className="flex items-center justify-center gap-2 text-sm">
+              <span className="text-zinc-300">Free:</span>
+              <span className="flex items-center gap-1 text-brand-300">
+                <span className="text-lg">●</span>
+                <span className="text-zinc-400">○○</span>
+              </span>
+              <span className="text-zinc-400 mx-1">→</span>
+              <span className="text-zinc-300">Premium:</span>
+              <span className="flex items-center gap-1 text-brand-300">
+                <span className="text-lg">●●●</span>
+              </span>
+            </div>
+            <p className="text-xs text-center text-zinc-400 mt-1">5 matches → 15 matches per week</p>
+          </div>
+        )}
 
         <ul className="mt-6 space-y-4">
           {plan.features.map(feature => (
@@ -181,6 +193,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
         >
           <Link
             href={plan.cta.href}
+            aria-label={isPremium ? "Upgrade to Premium plan" : "Sign up for free matches"}
             className={`group relative inline-flex items-center justify-center overflow-hidden h-11 rounded-full px-6 text-sm font-medium transition-all duration-300 sm:text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
               isPremium
                 ? 'bg-brand-500 text-white shadow-md shadow-brand-500/40 hover:bg-brand-500/90 hover:-translate-y-0.5 hover:shadow-feature'
@@ -188,6 +201,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
             }`}
           >
             <span className="relative flex items-center gap-2">
+              {!isPremium && <BrandIcons.Mail className="h-4 w-4" />}
               {plan.cta.label}
               <motion.span
                 animate={{ x: [0, 4, 0] }}
@@ -199,6 +213,16 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
             </span>
           </Link>
         </motion.div>
+        
+        {/* Social proof for free tier */}
+        {!isPremium && (
+          <p className="text-xs text-zinc-400 italic text-center mt-2 flex items-center justify-center gap-1">
+            <span className="text-base">❝</span>
+            <span>Landed my Monzo internship—thanks JobPing!</span>
+            <span className="text-base">❞</span>
+            <span className="text-zinc-500 ml-1">— Alex, London</span>
+          </p>
+        )}
       </div>
     </motion.article>
   );

@@ -63,7 +63,7 @@ export default function EmailPhoneShowcase() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="flex justify-center"
+            className="flex justify-center max-w-full overflow-hidden"
           >
             <motion.div
               animate={
