@@ -232,7 +232,7 @@ export default function Hero() {
             {/* Smaller wordmark with grad hat */}
             <div className="flex items-center justify-center gap-3">
               <svg
-                className="h-[18.2px] w-[18.2px] sm:h-[20.8px] sm:w-[20.8px] md:h-[26px] md:w-[26px] text-white"
+                className="h-[48px] w-[48px] sm:h-[56px] sm:w-[56px] md:h-[70px] md:w-[70px] text-white"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
