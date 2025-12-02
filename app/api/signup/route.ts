@@ -313,12 +313,23 @@ export async function POST(req: NextRequest) {
 
           // DISTRIBUTION: Ensure source diversity and city balance
           const targetCount = Math.min(10, matchedJobsRaw.length);
-          const distributedJobs = distributeJobsWithDiversity(matchedJobsRaw as any[], {
+          let distributedJobs = distributeJobsWithDiversity(matchedJobsRaw as any[], {
             targetCount,
             targetCities: userData.target_cities || [],
             maxPerSource: Math.ceil(targetCount / 3), // Max 1/3 from any source
             ensureCityBalance: true
           });
+
+          // FALLBACK: If distribution returns empty (due to strict constraints), use raw matches
+          if (distributedJobs.length === 0 && matchedJobsRaw.length > 0) {
+            console.warn(`[SIGNUP] Distribution returned empty, using ${Math.min(5, matchedJobsRaw.length)} raw matches as fallback`);
+            apiLogger.warn('Distribution returned empty, using raw matches', { 
+              email: data.email,
+              rawMatchesCount: matchedJobsRaw.length,
+              targetCities: userData.target_cities
+            });
+            distributedJobs = matchedJobsRaw.slice(0, Math.min(5, matchedJobsRaw.length)) as any[];
+          }
 
           // Log distribution stats
           const stats = getDistributionStats(distributedJobs);
@@ -329,6 +340,17 @@ export async function POST(req: NextRequest) {
             totalJobs: stats.totalJobs
           });
           console.log(`[SIGNUP] Distribution: Sources=${JSON.stringify(stats.sourceDistribution)}, Cities=${JSON.stringify(stats.cityDistribution)}`);
+
+          // CRITICAL: Don't proceed if no jobs to send
+          if (distributedJobs.length === 0) {
+            console.error(`[SIGNUP] ❌ No jobs to send after distribution! Raw matches: ${matchedJobsRaw.length}`);
+            apiLogger.error('No jobs after distribution', { 
+              email: data.email,
+              rawMatchesCount: matchedJobsRaw.length,
+              distributedCount: distributedJobs.length
+            });
+            throw new Error('No jobs available to send after distribution');
+          }
 
           // Save matches
           const matchesToSave = distributedJobs
@@ -359,8 +381,14 @@ export async function POST(req: NextRequest) {
 
           // Send welcome email with matched jobs
           try {
-            apiLogger.info('Preparing to send matched jobs email', { email: data.email, matchesCount });
-            console.log(`[SIGNUP] Preparing to send matched jobs email to ${data.email}`);
+            apiLogger.info('Preparing to send matched jobs email', { email: data.email, matchesCount, jobsToSend: distributedJobs.length });
+            console.log(`[SIGNUP] Preparing to send matched jobs email to ${data.email} with ${distributedJobs.length} jobs`);
+            
+            // CRITICAL: Validate jobs array before sending
+            if (!distributedJobs || distributedJobs.length === 0) {
+              throw new Error(`Cannot send email: distributedJobs is empty. Matches saved: ${matchesCount}`);
+            }
+            
             const matchedJobs = distributedJobs;
 
             await sendMatchedJobsEmail({
