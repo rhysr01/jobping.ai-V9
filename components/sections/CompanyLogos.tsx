@@ -157,11 +157,18 @@ export default function CompanyLogos() {
                       height={100}
                       className="object-contain h-[90px] w-auto opacity-90 transition-all duration-300 group-hover:opacity-100 group-hover:scale-105"
                       onError={(e) => {
+                        console.error(`Failed to load logo: ${company.logoPath}`, e);
                         // Hide broken logos - no text fallback
-                        (e.target as HTMLElement).parentElement?.parentElement?.parentElement?.remove();
+                        const parent = (e.target as HTMLElement).parentElement?.parentElement?.parentElement;
+                        if (parent) {
+                          parent.style.display = 'none';
+                        }
+                      }}
+                      onLoad={() => {
+                        console.log(`Successfully loaded logo: ${company.logoPath}`);
                       }}
                       loading="lazy"
-                      unoptimized={company.logoPath.endsWith('.svg')}
+                      unoptimized={true}
                     />
                   </div>
                   
