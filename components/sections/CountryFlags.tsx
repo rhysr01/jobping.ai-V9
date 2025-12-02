@@ -126,15 +126,15 @@ export default function CountryFlags() {
             return (
               <motion.div
                 key={countryData.country}
-                initial={prefersReduced ? false : { opacity: 0, scale: 0.9, y: 20 }}
-                whileInView={prefersReduced ? false : { opacity: 1, scale: 1, y: 0 }}
+                initial={prefersReduced ? undefined : { opacity: 0, scale: 0.9, y: 20 }}
+                whileInView={prefersReduced ? undefined : { opacity: 1, scale: 1, y: 0 }}
                 viewport={{ once: true, margin: '-50px' }}
                 transition={{ 
                   duration: prefersReduced ? 0 : 0.4, 
                   delay: animationDelay, 
                   ease: [0.23, 1, 0.32, 1] 
                 }}
-                whileHover={prefersReduced ? {} : { 
+                whileHover={prefersReduced ? undefined : { 
                   y: -6,
                   scale: 1.02,
                   transition: { type: 'spring', stiffness: 400, damping: 25 }
@@ -159,8 +159,8 @@ export default function CountryFlags() {
                     countryData.cities.map((city, cityIndex) => (
                       <motion.span
                         key={`${countryData.country}-${city}`}
-                        initial={prefersReduced ? false : { opacity: 0, scale: 0.8 }}
-                        whileInView={prefersReduced ? false : { opacity: 1, scale: 1 }}
+                        initial={prefersReduced ? undefined : { opacity: 0, scale: 0.8 }}
+                        whileInView={prefersReduced ? undefined : { opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
                         transition={{ 
                           delay: cityAnimationDelay + (prefersReduced ? 0 : cityIndex * 0.03), 
