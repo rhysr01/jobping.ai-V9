@@ -31,9 +31,6 @@ export default function BuiltForStudents() {
           <p className="mb-10 text-xl text-zinc-300 md:text-2xl">
             {Copy.BUILT_FOR_STUDENTS_SUBTITLE}
           </p>
-          <p className="hidden sm:block text-sm text-zinc-400 mb-6">
-            Built for the way early-career jobseekers actually want to find opportunities.
-          </p>
         </motion.div>
 
         <div className="mt-10 space-y-3 max-w-4xl mx-auto">
@@ -56,14 +53,9 @@ export default function BuiltForStudents() {
                     <h3 className="text-base md:text-lg font-semibold text-white">
                       {feature.title}
                     </h3>
-                    <p className="text-sm text-zinc-300 mt-1">
+                    <p className="text-sm text-zinc-300 mt-1 max-w-[600px]">
                       {feature.body}
                     </p>
-                    {feature.meta && (
-                      <p className="text-xs text-zinc-500 mt-1 hidden sm:block">
-                        {feature.meta}
-                      </p>
-                    )}
                   </div>
                 </div>
               </motion.li>

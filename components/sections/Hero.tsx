@@ -173,8 +173,8 @@ export default function Hero() {
       data-testid="hero-section"
       className="section-padding-hero pt-16 pb-16 md:pt-20 md:pb-20 relative overflow-hidden flex flex-col items-center justify-start text-center"
     >
-      {/* Cinematic dark background */}
-      <div className="absolute inset-0 -z-10 bg-black" />
+      {/* Cinematic dark background with subtle gradient */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-zinc-900 via-black to-black" />
       {/* Background animations - contained inside hero section */}
       <HeroBackgroundAura offset={enableMotion ? offset : 0} enableMotion={enableMotion} />
       {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
@@ -250,9 +250,6 @@ export default function Hero() {
                 <span className="absolute inset-0 blur-sm mix-blend-screen opacity-30 pointer-events-none bg-[linear-gradient(90deg,_theme(colors.brand.500/0.4),_rgba(255,255,255,0),_theme(colors.brand.300/0.4))]" />
               </span>
             </div>
-            <p className="mt-3 text-base text-zinc-400 md:text-lg">
-              Early-career roles across Europe, filtered for real applicants.
-            </p>
           </motion.div>
           {!prefersReduced && !shouldThrottle && shouldLoadAnimations && (
             <motion.div
@@ -307,9 +304,6 @@ export default function Hero() {
                 <p className="text-balance text-base md:text-[15px] text-zinc-300/90 font-normal">
                   {Copy.HERO_SUBLINE}
                 </p>
-                <p className="text-sm text-zinc-400 mt-2">
-                  {Copy.HERO_SUBLINE_MICRO}
-                </p>
               </div>
             </motion.div>
 
@@ -328,21 +322,14 @@ export default function Hero() {
                 aria-label="Get my first 5 matches"
               >
                 <span className="flex items-center justify-center gap-2">
+                  <BrandIcons.Mail className="h-5 w-5" />
                   {Copy.HERO_CTA}
                   <BrandIcons.ArrowRight className="h-5 w-5" />
                 </span>
               </Button>
-              <p className="text-xs text-zinc-500 mt-4">
-                {Copy.HERO_SOCIAL_PROOF}
-              </p>
             </motion.div>
           </div>
         </motion.div>
-
-        {/* Future messaging */}
-        <p className="mt-4 text-xs md:text-sm text-zinc-500 max-w-xl mx-auto">
-          JobPing feels less like a job board and more like a weekly careers feed tuned only to you.
-        </p>
       </div>
 
       {/* Simplified background - removed excessive gradients */}

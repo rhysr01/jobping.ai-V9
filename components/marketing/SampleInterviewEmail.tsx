@@ -20,7 +20,7 @@ export default function SampleInterviewEmail() {
       </div>
 
       {/* Email card container */}
-      <div className="rounded-xl border border-border-subtle bg-glass-subtle p-5 shadow-base backdrop-blur-sm">
+      <div className="rounded-lg border border-zinc-800/50 bg-white/[0.03] p-5 shadow-[0_4px_6px_rgba(0,0,0,0.1)] backdrop-blur-sm">
         <p className="text-[14px] text-zinc-200 leading-relaxed mb-4">
           Hi <span className="font-semibold text-white">Alex</span>, here's what our matcher surfaced for you today. Every role below cleared the filters you set — location, career path, visa, and early-career fit.
         </p>
@@ -29,7 +29,7 @@ export default function SampleInterviewEmail() {
         </p>
 
         {/* Job 1 */}
-        <div className="mt-5 rounded-lg border border-border-subtle bg-glass-subtle p-4 shadow-base backdrop-blur-sm hover:border-border-default transition-all">
+        <div className="mt-5 rounded-lg border border-zinc-800/50 bg-white/[0.03] p-4 shadow-[0_2px_4px_rgba(0,0,0,0.1)] backdrop-blur-sm hover:border-zinc-700/50 transition-all">
           <div className="flex items-center justify-between mb-2">
             <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 border border-emerald-400/30">85% Match</span>
           </div>
@@ -51,7 +51,7 @@ export default function SampleInterviewEmail() {
         </div>
 
         {/* Job 2 */}
-        <div className="mt-4 rounded-lg border border-border-subtle bg-glass-subtle p-4 shadow-base backdrop-blur-sm hover:border-border-default transition-all">
+        <div className="mt-4 rounded-lg border border-zinc-800/50 bg-white/[0.03] p-4 shadow-[0_2px_4px_rgba(0,0,0,0.1)] backdrop-blur-sm hover:border-zinc-700/50 transition-all">
           <div className="flex items-center justify-between mb-2">
             <span className="rounded-full bg-orange-500/15 px-2.5 py-1 text-[11px] font-semibold text-orange-300 border border-orange-400/30">🔥 Hot Match 92%</span>
           </div>
@@ -73,7 +73,7 @@ export default function SampleInterviewEmail() {
         </div>
 
         {/* Job 3 */}
-        <div className="mt-4 rounded-lg border border-border-subtle bg-glass-subtle p-4 shadow-base backdrop-blur-sm hover:border-border-default transition-all">
+        <div className="mt-4 rounded-lg border border-zinc-800/50 bg-white/[0.03] p-4 shadow-[0_2px_4px_rgba(0,0,0,0.1)] backdrop-blur-sm hover:border-zinc-700/50 transition-all">
           <div className="flex items-center justify-between mb-2">
             <span className="rounded-full bg-sky-500/15 px-2.5 py-1 text-[11px] font-semibold text-sky-300 border border-sky-400/30">88% Match</span>
           </div>
@@ -94,7 +94,7 @@ export default function SampleInterviewEmail() {
         </div>
 
         {/* Job 4 */}
-        <div className="mt-4 rounded-lg border border-border-subtle bg-glass-subtle p-4 shadow-base backdrop-blur-sm hover:border-border-default transition-all">
+        <div className="mt-4 rounded-lg border border-zinc-800/50 bg-white/[0.03] p-4 shadow-[0_2px_4px_rgba(0,0,0,0.1)] backdrop-blur-sm hover:border-zinc-700/50 transition-all">
           <div className="flex items-center justify-between mb-2">
             <span className="rounded-full bg-brand-500/15 px-2.5 py-1 text-[11px] font-semibold text-brand-200 border border-brand-400/30">86% Match</span>
           </div>
@@ -115,7 +115,7 @@ export default function SampleInterviewEmail() {
         </div>
 
         {/* Job 5 */}
-        <div className="mt-4 rounded-lg border border-border-subtle bg-glass-subtle p-4 shadow-base backdrop-blur-sm hover:border-border-default transition-all">
+        <div className="mt-4 rounded-lg border border-zinc-800/50 bg-white/[0.03] p-4 shadow-[0_2px_4px_rgba(0,0,0,0.1)] backdrop-blur-sm hover:border-zinc-700/50 transition-all">
           <div className="flex items-center justify-between mb-2">
             <span className="rounded-full bg-indigo-500/15 px-2.5 py-1 text-[11px] font-semibold text-indigo-300 border border-indigo-400/30">90% Match</span>
           </div>
@@ -149,7 +149,6 @@ export default function SampleInterviewEmail() {
           >
             Upgrade to Premium - €5/month
           </a>
-          <p className="text-[11px] text-zinc-500 mt-3 text-center">No commitment · Cancel anytime</p>
         </div>
 
         {/* Feedback section */}
@@ -159,23 +158,42 @@ export default function SampleInterviewEmail() {
             Help us improve! Rate these roles to get better matches next time.
           </p>
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <button className="rounded-lg bg-brand-500/20 hover:bg-brand-500/30 px-3 py-2 text-[12px] font-semibold text-brand-200 border border-brand-400/30 transition-all">
+            <button 
+              className="rounded-lg bg-brand-500/20 hover:bg-brand-500/30 px-3 py-2 text-[12px] font-semibold text-brand-200 border border-brand-400/30 transition-all"
+              title="Loved it"
+              aria-label="Rate matches: Loved it"
+            >
               😍 Loved it
             </button>
-            <button className="rounded-lg bg-brand-500/20 hover:bg-brand-500/30 px-3 py-2 text-[12px] font-semibold text-brand-200 border border-brand-400/30 transition-all">
+            <button 
+              className="rounded-lg bg-brand-500/20 hover:bg-brand-500/30 px-3 py-2 text-[12px] font-semibold text-brand-200 border border-brand-400/30 transition-all"
+              title="Good"
+              aria-label="Rate matches: Good"
+            >
               😊 Good
             </button>
-            <button className="rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 px-3 py-2 text-[12px] font-semibold text-indigo-200 border border-indigo-400/30 transition-all">
+            <button 
+              className="rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 px-3 py-2 text-[12px] font-semibold text-indigo-200 border border-indigo-400/30 transition-all"
+              title="It's fine"
+              aria-label="Rate matches: It's fine"
+            >
               😐 It's fine
             </button>
-            <button className="rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 px-3 py-2 text-[12px] font-semibold text-indigo-200 border border-indigo-400/30 transition-all">
+            <button 
+              className="rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 px-3 py-2 text-[12px] font-semibold text-indigo-200 border border-indigo-400/30 transition-all"
+              title="Not great"
+              aria-label="Rate matches: Not great"
+            >
               😕 Not great
             </button>
           </div>
-          <button className="w-full rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 px-3 py-2 text-[12px] font-semibold text-indigo-200 border border-indigo-400/30 transition-all">
+          <button 
+            className="w-full rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 px-3 py-2 text-[12px] font-semibold text-indigo-200 border border-indigo-400/30 transition-all"
+            title="Not relevant"
+            aria-label="Rate matches: Not relevant"
+          >
             😞 Not relevant
           </button>
-          <p className="text-[11px] text-zinc-500 mt-3 text-center">Takes 2 seconds • Helps us send better matches</p>
         </div>
 
         {/* Footer */}

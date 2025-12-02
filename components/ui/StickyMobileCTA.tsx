@@ -53,6 +53,7 @@ export default function StickyMobileCTA() {
         >
           <Link
             href="/signup"
+            aria-label="Get my first 5 matches"
             className="pointer-events-auto w-full block"
           >
             <motion.div
@@ -60,6 +61,7 @@ export default function StickyMobileCTA() {
               whileTap={{ scale: 0.98 }}
               className="w-full bg-brand-500 text-white py-4 px-6 rounded-2xl font-semibold text-lg text-center shadow-[0_8px_24px_rgba(126,97,255,0.5)] hover:bg-brand-600 transition-all flex items-center justify-center gap-2"
             >
+              <BrandIcons.Mail className="w-5 h-5" />
               <span>Get my first 5 matches</span>
               <BrandIcons.ArrowRight className="w-5 h-5" />
             </motion.div>
