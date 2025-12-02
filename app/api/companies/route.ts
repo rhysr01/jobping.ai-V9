@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseClient } from '@/Utils/databasePool';
 import { asyncHandler } from '@/lib/errors';
 import { getCompanyLogo } from '@/lib/companyLogos';
-import { extractCountryFromLocation, getCountryFlag } from '@/lib/countryFlags';
+import { extractCountryFromLocation, getCountryFlag, COUNTRY_FLAGS } from '@/lib/countryFlags';
 
 // Cache for 1 hour
 let cachedCompanies: Array<{ name: string; logoPath: string; locations: string[] }> | null = null;
@@ -46,14 +46,21 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     
     // Extract country from location, city, or country field
     let country = '';
+    
+    // Priority: country field > location field > city field
     if (job.country) {
-      country = job.country;
+      // Normalize country name (handle case variations)
+      const normalizedCountry = job.country.trim();
+      // Check if it's a known country name (case-insensitive)
+      const countryKey = Object.keys(COUNTRY_FLAGS).find(
+        key => key.toLowerCase() === normalizedCountry.toLowerCase()
+      );
+      country = countryKey || normalizedCountry;
     } else if (job.location) {
       country = extractCountryFromLocation(job.location);
     } else if (job.city) {
       // Try to get country from city
-      const cityCountry = extractCountryFromLocation(job.city);
-      if (cityCountry) country = cityCountry;
+      country = extractCountryFromLocation(job.city);
     }
     
     if (!companyData.has(companyName)) {
@@ -62,7 +69,9 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     
     const company = companyData.get(companyName)!;
     company.count++;
-    if (country) {
+    
+    // Only add country if we have a flag for it
+    if (country && getCountryFlag(country)) {
       company.locations.add(country);
     }
   });

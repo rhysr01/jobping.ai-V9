@@ -74,18 +74,39 @@ export function getCountryFromCity(city: string): string {
 export function extractCountryFromLocation(location: string): string {
   if (!location) return '';
   
+  const normalized = location.trim();
+  
   // Try to extract country from location string
-  const parts = location.split(',').map(p => p.trim());
+  const parts = normalized.split(',').map(p => p.trim());
   if (parts.length > 1) {
     const countryPart = parts[parts.length - 1];
-    // Check if it's a known country
+    // Check if it's a known country (exact match)
     if (COUNTRY_FLAGS[countryPart]) {
       return countryPart;
+    }
+    // Try case-insensitive match
+    const countryKey = Object.keys(COUNTRY_FLAGS).find(
+      key => key.toLowerCase() === countryPart.toLowerCase()
+    );
+    if (countryKey) {
+      return countryKey;
     }
   }
   
   // Try city-based lookup
   const city = parts[0];
-  return getCountryFromCity(city);
+  const countryFromCity = getCountryFromCity(city);
+  if (countryFromCity) {
+    return countryFromCity;
+  }
+  
+  // Try to match city name directly in location
+  for (const [cityName, country] of Object.entries(CITY_TO_COUNTRY)) {
+    if (normalized.toLowerCase().includes(cityName.toLowerCase())) {
+      return country;
+    }
+  }
+  
+  return '';
 }
 
