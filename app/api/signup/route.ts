@@ -352,12 +352,13 @@ export async function POST(req: NextRequest) {
           // CRITICAL: Don't proceed if no jobs to send
           if (distributedJobs.length === 0) {
             console.error(`[SIGNUP] ❌ No jobs to send after distribution! Raw matches: ${matchedJobsRaw.length}`);
-            apiLogger.error('No jobs after distribution', { 
+            const noJobsError = new Error('No jobs available to send after distribution');
+            apiLogger.error('No jobs after distribution', noJobsError, { 
               email: data.email,
               rawMatchesCount: matchedJobsRaw.length,
               distributedCount: distributedJobs.length
             });
-            throw new Error('No jobs available to send after distribution');
+            throw noJobsError;
           }
 
           // Save matches
