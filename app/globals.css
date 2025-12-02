@@ -520,6 +520,15 @@ body {
   background: transparent;
 }
 
+/* Hide scrollbar for company logos horizontal scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Premium link styling */
 a:not([class*="btn"]):not([class*="underline"]) {
   transition: color 0.2s ease;

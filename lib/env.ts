@@ -19,7 +19,7 @@ const schema = z.object({
     {
       message: `OPENAI_API_KEY must start with 'sk-'`
     }
-  ),
+  ).optional(),
   AI_TIMEOUT_MS: z.coerce.number().min(1000).max(60000).default(20000),
   AI_MAX_RETRIES: z.coerce.number().min(1).max(10).default(3),
   
@@ -28,7 +28,7 @@ const schema = z.object({
   EMAIL_DOMAIN: z.string().default('getjobping.com'),
   
   // Payments (Polar)
-  POLAR_ACCESS_TOKEN: z.string().min(20),
+  POLAR_ACCESS_TOKEN: z.string().min(20).optional(),
   POLAR_WEBHOOK_SECRET: z.string().optional(),
   POLAR_SUCCESS_URL: z.string().url().default('https://getjobping.com/success?checkout_id={CHECKOUT_ID}'),
   POLAR_PRODUCT_ID: z.string().optional(), // Premium subscription product ID

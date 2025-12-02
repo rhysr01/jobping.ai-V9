@@ -213,16 +213,6 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
             </span>
           </Link>
         </motion.div>
-        
-        {/* Social proof for free tier */}
-        {!isPremium && (
-          <p className="text-xs text-zinc-400 italic text-center mt-2 flex items-center justify-center gap-1">
-            <span className="text-base">❝</span>
-            <span>Landed my Monzo internship—thanks JobPing!</span>
-            <span className="text-base">❞</span>
-            <span className="text-zinc-500 ml-1">— Alex, London</span>
-          </p>
-        )}
       </div>
     </motion.article>
   );

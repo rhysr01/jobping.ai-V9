@@ -4,14 +4,32 @@ import { ENV } from "@/lib/env";
 
 // Polar's Checkout component handles GET requests with query parameters
 // Usage: /api/checkout?product_id=prod_xxx&customer_email=user@example.com
-export const GET = Checkout({
-  accessToken: ENV.POLAR_ACCESS_TOKEN,
-  successUrl: ENV.POLAR_SUCCESS_URL,
-}) as any;
+export const GET = (req: NextRequest) => {
+  if (!ENV.POLAR_ACCESS_TOKEN) {
+    return NextResponse.json(
+      { error: 'Polar checkout is not configured. Please contact support.' },
+      { status: 503 }
+    );
+  }
+  
+  const checkoutHandler = Checkout({
+    accessToken: ENV.POLAR_ACCESS_TOKEN,
+    successUrl: ENV.POLAR_SUCCESS_URL,
+  });
+  
+  return checkoutHandler(req);
+} as any;
 
 // POST endpoint to create checkout session programmatically
 export async function POST(req: NextRequest) {
   try {
+    if (!ENV.POLAR_ACCESS_TOKEN) {
+      return NextResponse.json(
+        { error: 'Polar checkout is not configured. Please contact support.' },
+        { status: 503 }
+      );
+    }
+
     const { customerEmail } = await req.json();
 
     // Get product ID from environment (server-side only)
