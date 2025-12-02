@@ -27,7 +27,6 @@ function SignupForm() {
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
-  const [hasRestoredData, setHasRestoredData] = useState(false);
   const [activeJobs, setActiveJobs] = useState('Updating…');
   const [totalUsers, setTotalUsers] = useState('');
   const [isLoadingStats, setIsLoadingStats] = useState(true);
@@ -221,7 +220,6 @@ function SignupForm() {
       const result = await response.json();
 
       if (response.ok) {
-        localStorage.removeItem('jobping_signup_form'); // Clear saved data on success
         showToast.success('Account created successfully! Redirecting...');
         const redirectUrl = result.redirectUrl || `/signup/success?tier=${tier}`;
         setTimeout(() => router.push(redirectUrl), 500);
@@ -336,25 +334,6 @@ function SignupForm() {
     setFormData({...formData, roles: []});
   };
 
-  // Load form data from localStorage on mount (error recovery)
-  useEffect(() => {
-    const saved = localStorage.getItem('jobping_signup_form');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setFormData(prev => ({ ...prev, ...parsed }));
-        setHasRestoredData(true);
-        announce('Previous form data restored. You can continue where you left off.', 'polite');
-      } catch (e) {
-        console.error('Failed to load saved form data:', e);
-      }
-    }
-  }, [announce]);
-
-  // Save form data to localStorage on change (error recovery)
-  useEffect(() => {
-    localStorage.setItem('jobping_signup_form', JSON.stringify(formData));
-  }, [formData]);
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden pb-safe">
@@ -467,21 +446,6 @@ function SignupForm() {
         </div>
 
         {/* Form Abandonment Recovery Message */}
-        <AnimatePresence>
-          {hasRestoredData && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="mb-6 p-4 bg-brand-500/10 border-2 border-brand-500/50 rounded-xl text-brand-200 text-center"
-              role="status"
-              aria-live="polite"
-            >
-              <BrandIcons.CheckCircle className="w-5 h-5 inline mr-2" />
-              Previous form data restored. You can continue where you left off.
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Error Message */}
         <AnimatePresence>
