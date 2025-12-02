@@ -453,7 +453,8 @@ async function main() {
 
   const RESULTS_WANTED = parseInt(process.env.JOBSPY_RESULTS_WANTED || '15', 10);
   const JOBSPY_TIMEOUT_MS = parseInt(process.env.JOBSPY_TIMEOUT_MS || '20000', 10);
-  const MAX_ROLES_PER_CITY = parseInt(process.env.MAX_ROLES_PER_CITY || '10', 10); // Limit roles per city to avoid too many searches
+  // Increased from 10 to 20 to cover more roles from signup form
+  const MAX_ROLES_PER_CITY = parseInt(process.env.MAX_ROLES_PER_CITY || '20', 10); // Limit roles per city to avoid too many searches
 
   // Limit roles to search (can be overridden via env)
   const rolesToSearch = process.env.ROLES_TO_SEARCH 

@@ -196,3 +196,15 @@ Your scrapers are **functionally good** but can be **more efficient**. The main 
 
 These optimizations will reduce costs by ~40-50% while maintaining or improving job quality and freshness.
 
+---
+
+## 🚨 CRITICAL UPDATE
+
+**After analyzing production data, critical issues were discovered:**
+
+1. **Adzuna scraper**: Hasn't run in 23 days (represents 52% of total jobs!)
+2. **Reed scraper**: Hasn't run in 23 days
+3. **Missing cities**: Stockholm, Copenhagen, Prague, Warsaw not being scraped at all
+
+**See `SCRAPING_STRATEGY.md` for comprehensive analysis and fix plan.**
+

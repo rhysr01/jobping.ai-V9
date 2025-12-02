@@ -111,7 +111,32 @@ const TARGET_CAREER_PATHS = parseTargetCareerPaths();
 if (TARGET_CAREER_PATHS.length) {
   console.log('🎯 Reed target career paths:', TARGET_CAREER_PATHS.join(', '));
 }
-const EARLY_TERMS = [ 'graduate','entry level','junior','trainee','intern','internship' ];
+// Import role definitions from signup form
+const { getAllRoles, getEarlyCareerRoles, cleanRoleForSearch } = require('./shared/roles.cjs');
+
+// 🥇 HIGHEST PRIORITY: Exact role names from signup form (early-career roles)
+const earlyCareerRoles = getEarlyCareerRoles();
+const topRoles = getAllRoles().slice(0, 20); // Top 20 roles from signup form (reduced from 30)
+
+// Clean role names and create search variations (remove parentheses, handle special chars)
+const cleanedEarlyCareerRoles = earlyCareerRoles.slice(0, 10).flatMap(role => cleanRoleForSearch(role));
+const cleanedTopRoles = topRoles.slice(0, 10).flatMap(role => cleanRoleForSearch(role));
+
+// Combine exact role names with generic early-career terms
+// Prioritize exact role names first
+const ROLE_BASED_TERMS = [
+  ...cleanedEarlyCareerRoles.slice(0, 10), // Top 10 early-career roles (cleaned)
+  ...cleanedTopRoles.slice(0, 10) // Top 10 general roles (cleaned)
+];
+
+// Remove duplicates
+const uniqueRoleTerms = [...new Set(ROLE_BASED_TERMS)];
+
+// Generic early-career terms as fallback
+const GENERIC_EARLY_TERMS = [ 'graduate','entry level','junior','trainee','intern','internship' ];
+
+// Combined: role names first (limited to top 10-12), then generic terms
+const EARLY_TERMS = [...uniqueRoleTerms.slice(0, 12), ...GENERIC_EARLY_TERMS];
 const MAX_PAGES = parseInt(process.env.REED_MAX_PAGES || '10', 10);
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 

@@ -2,6 +2,7 @@ require('dotenv').config({ path: '.env.local' });
 const axios = require('axios');
 const { classifyEarlyCareer, makeJobHash, CAREER_PATH_KEYWORDS } = require('../scrapers/shared/helpers.cjs');
 const { recordScraperRun } = require('../scrapers/shared/telemetry.cjs');
+const { getAllRoles, getEarlyCareerRoles, getTopRolesByCareerPath } = require('../scrapers/shared/roles.cjs');
 const scriptStart = Date.now();
 let scrapeErrors = 0;
 
@@ -93,9 +94,26 @@ const HIGH_PERFORMING_SECTORS = [
 
 /**
  * Generate multilingual early-career search queries for a specific city
+ * NOW INCLUDES EXACT ROLE NAMES FROM SIGNUP FORM
  */
 function generateCityQueries(countryCode) {
   const queries = [];
+  
+  // 🥇 HIGHEST PRIORITY: Exact role names from signup form (early-career roles)
+  const { cleanRoleForSearch } = require('../scrapers/shared/roles.cjs');
+  const earlyCareerRoles = getEarlyCareerRoles();
+  const topRoles = getTopRolesByCareerPath(3); // Top 3 roles per career path (reduced from 5)
+  const prioritizedRoles = [
+    ...earlyCareerRoles.slice(0, 8), // Top 8 early-career roles (reduced from 10)
+    ...Object.values(topRoles).flat().slice(0, 10) // Top roles from each career path (reduced from 15)
+  ];
+  
+  // Clean role names (remove parentheses, handle special chars) and create variations
+  const cleanedRoles = prioritizedRoles.flatMap(role => cleanRoleForSearch(role));
+  
+  // Add exact role names (remove duplicates)
+  const uniqueRoles = [...new Set(cleanedRoles)];
+  queries.push(...uniqueRoles.slice(0, 12)); // Limit to top 12 to avoid too many queries (reduced from 20)
   
   // Always include core English terms
   queries.push(...CORE_ENGLISH_TERMS);

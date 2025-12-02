@@ -175,6 +175,18 @@ class RealJobRunner {
     return parseInt(process.env.SCRAPER_CYCLE_JOB_TARGET || '0', 10);
   }
 
+  // Smart per-scraper targets based on historical performance
+  getScraperTargets() {
+    return {
+      'jobspy-indeed': parseInt(process.env.JOBSPY_TARGET || '100', 10),
+      'jobspy-internships': parseInt(process.env.JOBSPY_INTERNSHIPS_TARGET || '80', 10),
+      'jobspy-career-roles': parseInt(process.env.JOBSPY_CAREER_TARGET || '50', 10),
+      'adzuna': parseInt(process.env.ADZUNA_TARGET || '150', 10),
+      'reed': parseInt(process.env.REED_TARGET || '50', 10),
+      'greenhouse': parseInt(process.env.GREENHOUSE_TARGET || '20', 10)
+    };
+  }
+
   async collectCycleStats(sinceIso) {
     try {
       const { data, error } = await supabase
@@ -205,15 +217,30 @@ class RealJobRunner {
     }
   }
 
-  async evaluateStopCondition(stage, sinceIso) {
+  async evaluateStopCondition(stage, sinceIso, scraperName = null) {
     const stats = await this.collectCycleStats(sinceIso);
     console.log(`📈 ${stage}: ${stats.total} unique job hashes ingested this cycle`);
-    const target = this.getCycleJobTarget();
-    // If target is 0, run all scrapers (no limit)
-    if (target > 0 && stats.total >= target) {
-      console.log(`🎯 Cycle job target (${target}) reached after ${stage}; skipping remaining scrapers.`);
+    
+    // Check global target first
+    const globalTarget = this.getCycleJobTarget();
+    if (globalTarget > 0 && stats.total >= globalTarget) {
+      console.log(`🎯 Global cycle job target (${globalTarget}) reached after ${stage}; skipping remaining scrapers.`);
       return true;
     }
+    
+    // Check per-scraper target if scraper name provided
+    if (scraperName) {
+      const scraperTargets = this.getScraperTargets();
+      const scraperTarget = scraperTargets[scraperName];
+      const scraperJobs = stats.perSource[scraperName] || 0;
+      
+      if (scraperTarget > 0 && scraperJobs >= scraperTarget) {
+        console.log(`🎯 Scraper ${scraperName} target (${scraperTarget}) reached (${scraperJobs} jobs); moving to next scraper.`);
+        // Don't stop the whole cycle, just this scraper
+        return false;
+      }
+    }
+    
     return false;
   }
 
@@ -221,6 +248,14 @@ class RealJobRunner {
   async runAdzunaScraper(targets) {
     try {
       console.log('🔄 Running Adzuna scraper...');
+      console.log('⚠️  CRITICAL: Adzuna represents 52% of total jobs - monitoring closely');
+      
+      // Check API keys before running
+      if (!process.env.ADZUNA_APP_ID || !process.env.ADZUNA_APP_KEY) {
+        console.error('🚨 CRITICAL: Adzuna API keys missing! Check ADZUNA_APP_ID and ADZUNA_APP_KEY in .env.local');
+        return 0;
+      }
+      
       // Call standardized wrapper for consistent output
       const env = {
         ...process.env,
@@ -239,30 +274,47 @@ class RealJobRunner {
         env.TARGET_ROLES = JSON.stringify(targets.roles);
       }
 
-      const { stdout } = await execAsync('node scrapers/wrappers/adzuna-wrapper.cjs', {
+      const { stdout, stderr } = await execAsync('node scrapers/wrappers/adzuna-wrapper.cjs', {
         cwd: process.cwd(),
         timeout: 600000, // 10 minutes for full scraper suite
         env,
       });
+      
+      // Log stderr if present (might contain important warnings)
+      if (stderr && stderr.trim()) {
+        console.warn('⚠️  Adzuna stderr:', stderr.substring(0, 500));
+      }
+      
       // Parse canonical success line
       let jobsSaved = 0;
       const canonical = stdout.match(/✅ Adzuna: (\d+) jobs saved to database/);
       if (canonical) {
         jobsSaved = parseInt(canonical[1]);
       } else {
-        // Fallback to DB count (last 5 minutes)
+        // Fallback to DB count (last 10 minutes to account for slower scrapes)
         const { count, error } = await supabase
           .from('jobs')
           .select('id', { count: 'exact', head: false })
           .eq('source', 'adzuna')
-          .gte('created_at', new Date(Date.now() - 5*60*1000).toISOString());
+          .gte('created_at', new Date(Date.now() - 10*60*1000).toISOString());
         jobsSaved = error ? 0 : (count || 0);
+        if (jobsSaved > 0) {
+          console.log(`ℹ️  Adzuna: DB fallback count: ${jobsSaved} jobs`);
+        } else {
+          console.warn('⚠️  Adzuna: No jobs found in DB - scraper may have failed silently');
+        }
+      }
+      
+      if (jobsSaved === 0) {
+        console.warn('⚠️  WARNING: Adzuna returned 0 jobs - investigate if this is expected');
       }
       
       console.log(`✅ Adzuna: ${jobsSaved} jobs processed`);
       return jobsSaved;
     } catch (error) {
       console.error('❌ Adzuna scraper failed:', error.message);
+      console.error('❌ Stack:', error.stack);
+      console.error('🚨 CRITICAL: Adzuna failure impacts 52% of job volume - investigate immediately!');
       return 0;
     }
   }
@@ -388,6 +440,13 @@ class RealJobRunner {
   async runReedScraper(targets) {
     try {
       console.log('🔄 Running Reed scraper...');
+      
+      // Check API key before running
+      if (!process.env.REED_API_KEY) {
+        console.error('🚨 CRITICAL: Reed API key missing! Check REED_API_KEY in .env.local');
+        return 0;
+      }
+      
       const env = {
         ...process.env,
         NODE_ENV: 'production',
@@ -405,27 +464,41 @@ class RealJobRunner {
         env.TARGET_ROLES = JSON.stringify(targets.roles);
       }
 
-      const { stdout } = await execAsync('node scrapers/wrappers/reed-wrapper.cjs', {
+      const { stdout, stderr } = await execAsync('node scrapers/wrappers/reed-wrapper.cjs', {
         cwd: process.cwd(),
         timeout: 300000,
         env,
       });
+      
+      // Log stderr if present
+      if (stderr && stderr.trim()) {
+        console.warn('⚠️  Reed stderr:', stderr.substring(0, 500));
+      }
+      
       let reedJobs = 0;
       const match = stdout.match(/✅ Reed: (\d+) jobs saved to database/);
       if (match) {
         reedJobs = parseInt(match[1]);
       } else {
+        // Fallback to DB count (last 10 minutes)
         const { count, error } = await supabase
           .from('jobs')
           .select('id', { count: 'exact', head: false })
           .eq('source', 'reed')
-          .gte('created_at', new Date(Date.now() - 5*60*1000).toISOString());
+          .gte('created_at', new Date(Date.now() - 10*60*1000).toISOString());
         reedJobs = error ? 0 : (count || 0);
+        if (reedJobs > 0) {
+          console.log(`ℹ️  Reed: DB fallback count: ${reedJobs} jobs`);
+        } else {
+          console.warn('⚠️  Reed: No jobs found in DB - scraper may have failed silently');
+        }
       }
+      
       console.log(`✅ Reed: ${reedJobs} jobs processed`);
       return reedJobs;
     } catch (error) {
       console.error('❌ Reed scraper failed:', error.message);
+      console.error('❌ Stack:', error.stack);
       return 0;
     }
   }
@@ -573,14 +646,14 @@ class RealJobRunner {
   }
 
 
-  // Monitor database health
+  // Monitor database health with source-level checks
   async checkDatabaseHealth() {
     try {
       const { data, error } = await supabase
         .from('jobs')
-        .select('created_at')
+        .select('created_at, source')
         .order('created_at', { ascending: false })
-        .limit(1);
+        .limit(100);
       
       if (error) throw error;
       
@@ -588,12 +661,33 @@ class RealJobRunner {
         const lastJobTime = new Date(data[0].created_at);
         const hoursSinceLastJob = (Date.now() - lastJobTime.getTime()) / (1000 * 60 * 60);
         
+        // Check source freshness
+        const sourceLastRun = {};
+        const criticalSources = ['adzuna', 'reed', 'jobspy-indeed', 'jobspy-internships'];
+        
+        criticalSources.forEach(source => {
+          const sourceJobs = data.filter(j => j.source === source);
+          if (sourceJobs.length > 0) {
+            const lastSourceJob = new Date(sourceJobs[0].created_at);
+            const hoursSince = (Date.now() - lastSourceJob.getTime()) / (1000 * 60 * 60);
+            sourceLastRun[source] = hoursSince;
+            
+            // Alert if critical source hasn't run in 7 days
+            if (hoursSince > 168) {
+              console.error(`🚨 ALERT: Source '${source}' hasn't added jobs in ${Math.round(hoursSince)} hours (${Math.round(hoursSince/24)} days)`);
+            }
+          } else {
+            console.error(`🚨 ALERT: Source '${source}' has no recent jobs`);
+          }
+        });
+        
         if (hoursSinceLastJob > 24) {
           console.error(`🚨 ALERT: No jobs ingested in ${Math.round(hoursSinceLastJob)} hours`);
           return false;
         }
         
         console.log(`✅ Database healthy: Last job ${Math.round(hoursSinceLastJob)} hours ago`);
+        console.log(`📊 Source freshness:`, sourceLastRun);
         return true;
       } else {
         console.error('🚨 ALERT: No jobs in database');
@@ -660,25 +754,27 @@ class RealJobRunner {
         return;
       }
       
-      // Run JobSpy first for fast signal
+      // Run JobSpy variants in parallel for faster execution
+      console.log('⚡ Running JobSpy variants in parallel...');
       let jobspyJobs = 0;
-      try {
-        jobspyJobs = await this.runJobSpyScraper();
-        console.log(`✅ JobSpy completed: ${jobspyJobs} jobs`);
-      } catch (error) {
-        console.error('❌ JobSpy scraper failed, continuing with other scrapers:', error.message);
-      }
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Run JobSpy Internships-Only scraper
       let jobspyInternshipsJobs = 0;
       try {
-        jobspyInternshipsJobs = await this.runJobSpyInternshipsScraper();
-        console.log(`✅ JobSpy Internships completed: ${jobspyInternshipsJobs} jobs`);
+        const [jobspyResult, internshipsResult] = await Promise.all([
+          this.runJobSpyScraper().catch(err => {
+            console.error('❌ JobSpy scraper failed:', err.message);
+            return 0;
+          }),
+          this.runJobSpyInternshipsScraper().catch(err => {
+            console.error('❌ JobSpy Internships scraper failed:', err.message);
+            return 0;
+          })
+        ]);
+        jobspyJobs = jobspyResult;
+        jobspyInternshipsJobs = internshipsResult;
+        console.log(`✅ JobSpy parallel execution completed: ${jobspyJobs} general + ${jobspyInternshipsJobs} internships`);
       } catch (error) {
-        console.error('❌ JobSpy Internships scraper failed, continuing with other scrapers:', error.message);
+        console.error('❌ JobSpy parallel execution failed:', error.message);
       }
-      await new Promise(resolve => setTimeout(resolve, 1000));
 
       let stopDueToQuota = await this.evaluateStopCondition('JobSpy pipelines', cycleStartIso);
 
@@ -691,28 +787,42 @@ class RealJobRunner {
         } catch (error) {
           console.error('❌ Career Path Roles scraper failed, continuing with other scrapers:', error.message);
         }
-        await new Promise(resolve => setTimeout(resolve, 1000));
         stopDueToQuota = await this.evaluateStopCondition('Career Path Roles scraper', cycleStartIso);
       } else {
         console.log('⏹️  Skipping Career Path Roles scraper - cycle job target reached.');
       }
 
-      // Run Reed BEFORE Adzuna to increase its usage (currently only 4.43%)
+      // Run Adzuna and Reed in parallel (both are critical sources)
+      // Adzuna is high priority (52% of jobs) but was being skipped - ensure it runs
+      let adzunaJobs = 0;
       let reedJobs = 0;
+      
       if (!stopDueToQuota) {
+        console.log('⚡ Running Adzuna and Reed in parallel...');
         try {
-          reedJobs = await this.runReedScraper(signupTargets);
-          console.log(`✅ Reed completed: ${reedJobs} jobs`);
+          const [adzunaResult, reedResult] = await Promise.all([
+            (!SKIP_ADZUNA ? this.runAdzunaScraper(signupTargets).catch(err => {
+              console.error('❌ Adzuna scraper failed:', err.message);
+              console.error('⚠️  Adzuna represents 52% of total jobs - investigate failure!');
+              return 0;
+            }) : Promise.resolve(0)),
+            this.runReedScraper(signupTargets).catch(err => {
+              console.error('❌ Reed scraper failed:', err.message);
+              return 0;
+            })
+          ]);
+          adzunaJobs = adzunaResult;
+          reedJobs = reedResult;
+          console.log(`✅ Adzuna + Reed parallel execution completed: ${adzunaJobs} Adzuna + ${reedJobs} Reed`);
         } catch (error) {
-          console.error('❌ Reed scraper failed, continuing with other scrapers:', error.message);
+          console.error('❌ Adzuna/Reed parallel execution failed:', error.message);
         }
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        stopDueToQuota = await this.evaluateStopCondition('Reed scraper', cycleStartIso);
+        stopDueToQuota = await this.evaluateStopCondition('Adzuna + Reed scrapers', cycleStartIso);
       } else {
-        console.log('⏹️  Skipping Reed scraper - cycle job target reached.');
+        console.log('⏹️  Skipping Adzuna + Reed scrapers - cycle job target reached.');
       }
 
-      // Run Greenhouse to expand its usage (currently only 7 jobs)
+      // Run Greenhouse (low volume, high quality)
       let greenhouseJobs = 0;
       if (!stopDueToQuota) {
         try {
@@ -721,27 +831,9 @@ class RealJobRunner {
         } catch (error) {
           console.error('❌ Greenhouse scraper failed, continuing with other scrapers:', error.message);
         }
-        await new Promise(resolve => setTimeout(resolve, 1000));
         stopDueToQuota = await this.evaluateStopCondition('Greenhouse scraper', cycleStartIso);
       } else {
         console.log('⏹️  Skipping Greenhouse scraper - cycle job target reached.');
-      }
-
-      // Then Adzuna (reduced priority to decrease dependency from 52.76% to <40%)
-      let adzunaJobs = 0;
-      if (!SKIP_ADZUNA && !stopDueToQuota) {
-        try {
-          adzunaJobs = await this.runAdzunaScraper(signupTargets);
-          console.log(`✅ Adzuna completed: ${adzunaJobs} jobs`);
-        } catch (error) {
-          console.error('❌ Adzuna scraper failed, continuing with other scrapers:', error.message);
-        }
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        stopDueToQuota = await this.evaluateStopCondition('Adzuna scraper', cycleStartIso);
-      } else if (SKIP_ADZUNA) {
-        console.log('⏩ Skipping Adzuna (flag set)');
-      } else if (stopDueToQuota) {
-        console.log('⏹️  Skipping Adzuna scraper - cycle job target reached.');
       }
       
       if (!stopDueToQuota) {
@@ -811,8 +903,9 @@ class RealJobRunner {
     this.runScrapingCycle();
     this.runEmbeddingRefresh('startup');
  
-    // Schedule runs 3 times per day (morning, lunch, evening) to avoid duplicate jobs
-    cron.schedule('0 8,13,18 * * *', () => {
+    // Schedule runs 2 times per day (morning, evening) - optimized from 3x/day
+    // Still exceeds "daily" promise while reducing costs by 33%
+    cron.schedule('0 8,18 * * *', () => {
       console.log('\n⏰ Scheduled scraping cycle starting...');
       this.runScrapingCycle();
     });
@@ -833,7 +926,9 @@ class RealJobRunner {
     });
     
     console.log('✅ Automation started successfully!');
-    console.log('   - 3x daily scraping cycles (8am, 1pm, 6pm)');
+    console.log('   - 2x daily scraping cycles (8am, 6pm UTC) - optimized from 3x/day');
+    console.log('   - Parallel execution enabled for faster cycles');
+    console.log('   - Smart stop conditions per scraper');
     console.log('   - Daily health checks');
     console.log('   - Database monitoring');
     console.log('   - 6 core scrapers: JobSpy, JobSpy Internships, Career Path Roles, Adzuna, Reed, Greenhouse');

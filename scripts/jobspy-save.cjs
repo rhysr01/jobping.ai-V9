@@ -462,40 +462,57 @@ function pickPythonCommand() {
 }
 
 async function main() {
+  // Import role definitions from signup form
+  const { getAllRoles, getEarlyCareerRoles, getTopRolesByCareerPath } = require('../scrapers/shared/roles.cjs');
+  
   // Core and localized multilingual early‑career terms per city (spec)
   const EXTRA_TERMS = (process.env.JOBSPY_EXTRA_TERMS || '')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
+  
+  // Get role-specific queries from signup form (highest priority)
+  const { cleanRoleForSearch } = require('../scrapers/shared/roles.cjs');
+  const earlyCareerRoles = getEarlyCareerRoles();
+  const topRoles = getTopRolesByCareerPath(3); // Top 3 roles per career path
+  
+  // Clean role names (remove parentheses, handle special chars)
+  // This ensures roles like "Sales Development Representative (SDR)" search as both "SDR" and full name
+  const cleanRole = (role) => {
+    const cleaned = cleanRoleForSearch(role);
+    return cleaned[0]; // Use primary cleaned version (without parentheses)
+  };
+  
   // BUSINESS SCHOOL FOCUSED: 6 tight early-career queries per city
   // Rotates 3 sets to maximize diversity over time
+  // NOW INCLUDES EXACT ROLE NAMES FROM SIGNUP FORM (CLEANED)
   const QUERY_SETS = {
     SET_A: [
-      // Top business school programs
+      // Top business school programs + exact role names (cleaned)
       'graduate programme',
-      'investment banking analyst',
-      'management consulting graduate',
-      'finance graduate',
-      'strategy consultant',
-      'business analyst graduate'
+      cleanRole('Investment Banking Analyst'),  // ✅ Exact role from form (cleaned)
+      cleanRole('Financial Analyst'),            // ✅ Exact role from form (cleaned)
+      cleanRole('Business Analyst'),             // ✅ Exact role from form (cleaned)
+      cleanRole('Finance Intern'),               // ✅ Exact role from form (cleaned)
+      cleanRole('Consulting Intern')             // ✅ Exact role from form (cleaned)
     ],
     SET_B: [
-      // Core business roles
-      'finance analyst',
-      'business analyst',
-      'management trainee',
-      'corporate finance graduate',
-      'operations analyst',
-      'commercial analyst'
+      // Core business roles + exact role names (cleaned)
+      cleanRole('Financial Analyst'),            // ✅ Exact role from form (cleaned)
+      cleanRole('Business Analyst'),             // ✅ Exact role from form (cleaned)
+      cleanRole('Marketing Intern'),              // ✅ Exact role from form (cleaned)
+      cleanRole('Data Analyst'),                  // ✅ Exact role from form (cleaned)
+      cleanRole('Operations Analyst'),            // ✅ Exact role from form (cleaned)
+      cleanRole('Sales Development Representative (SDR)') // ✅ Searches as "Sales Development Representative" and "SDR"
     ],
     SET_C: [
-      // Analyst & associate roles
-      'graduate analyst',
-      'junior analyst',
-      'associate programme',
-      'financial analyst',
-      'strategy analyst',
-      'consulting analyst'
+      // Analyst & associate roles + exact role names (cleaned)
+      cleanRole('Data Analyst'),                  // ✅ Exact role from form (cleaned)
+      cleanRole('Junior Data Analyst'),           // ✅ Exact role from form (cleaned)
+      cleanRole('Product Analyst'),               // ✅ Exact role from form (cleaned)
+      cleanRole('Strategy Analyst'),              // ✅ Exact role from form (cleaned)
+      cleanRole('Risk Analyst'),                  // ✅ Exact role from form (cleaned)
+      cleanRole('Analytics Intern')               // ✅ Exact role from form (cleaned)
     ]
   };
 
@@ -521,6 +538,7 @@ async function main() {
   const CORE_EN = QUERY_SETS[currentSet];
   
   console.log(`🔄 Using query set: ${currentSet} (${CORE_EN.length} terms)`);
+  console.log(`📋 Query set includes ${CORE_EN.filter(q => /^[A-Z]/.test(q)).length} exact role names from signup form`);
   const CITY_LOCAL = {
     'London': [], // English only set is CORE_EN
     'Manchester': [], // English only set is CORE_EN

@@ -50,8 +50,8 @@ export const GET = asyncHandler(async (req: NextRequest) => {
   // Debug: Log total companies found
   console.log(`[Companies API] Found ${companyData.size} unique companies in database`);
   
-  // Only include companies we have logos for, sorted by frequency
-  const companiesWithLogos = Array.from(companyData.entries())
+  // Map database companies to logos
+  const dbCompaniesWithLogos = Array.from(companyData.entries())
     .map(([name, count]) => {
       const logo = getCompanyLogo(name);
       if (!logo) {
@@ -69,9 +69,24 @@ export const GET = asyncHandler(async (req: NextRequest) => {
       };
     })
     .filter((c): c is { name: string; logoPath: string; count: number } => c !== null)
-    .sort((a, b) => b.count - a.count) // Sort by frequency
-    .slice(0, 30) // Limit to top 30
-    .map(({ name, logoPath }) => ({ name, logoPath })); // Remove count
+    .sort((a, b) => b.count - a.count); // Sort by frequency
+
+  // If we have companies from DB, use those (up to 30)
+  // Otherwise, show all available logos as fallback
+  let companiesWithLogos: Array<{ name: string; logoPath: string }>;
+  
+  if (dbCompaniesWithLogos.length > 0) {
+    companiesWithLogos = dbCompaniesWithLogos
+      .slice(0, 30)
+      .map(({ name, logoPath }) => ({ name, logoPath }));
+  } else {
+    // Fallback: Show all available logos if no DB matches
+    const { getAllCompanyLogos } = await import('@/lib/companyLogos');
+    companiesWithLogos = getAllCompanyLogos()
+      .slice(0, 30)
+      .map(logo => ({ name: logo.name, logoPath: logo.logoPath }));
+    console.log(`[Companies API] No DB matches found, showing ${companiesWithLogos.length} available logos as fallback`);
+  }
 
   console.log(`[Companies API] Returning ${companiesWithLogos.length} companies with logos`);
 

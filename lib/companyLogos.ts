@@ -70,9 +70,22 @@ export function getCompanyLogo(companyName: string): CompanyLogo | undefined {
   }
   
   // Try partial match (e.g., "Spotify Technology" -> "Spotify")
+  // Check if company name contains logo name or vice versa
   for (const [key, logo] of LOGO_MAP.entries()) {
+    // Skip domain matches for partial matching
+    if (key.includes('.')) continue;
+    
+    // Check if normalized name contains the key or key contains normalized name
     if (normalized.includes(key) || key.includes(normalized)) {
       return logo;
+    }
+    
+    // Also try word boundary matching (e.g., "Spotify AB" -> "Spotify")
+    const words = normalized.split(/\s+/);
+    for (const word of words) {
+      if (word === key || key === word) {
+        return logo;
+      }
     }
   }
   
