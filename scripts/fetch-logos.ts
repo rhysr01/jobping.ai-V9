@@ -64,7 +64,9 @@ const COMPANY_SLUGS: Record<string, string> = {
 const SIMPLE_ICONS_CDN = 'https://cdn.simpleicons.org';
 
 async function fetchLogo(companyName: string, slug: string): Promise<void> {
-  const url = `${SIMPLE_ICONS_CDN}/${slug}/000000`;
+  // Use brand color or no color parameter to get colored logos
+  // Simple Icons format: /{slug}/{hexcolor} or /{slug} for default color
+  const url = `${SIMPLE_ICONS_CDN}/${slug}`;
   const filePath = path.join(LOGOS_DIR, `${slug}.svg`);
   
   try {
@@ -75,7 +77,12 @@ async function fetchLogo(companyName: string, slug: string): Promise<void> {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
     
-    const svgContent = await response.text();
+    let svgContent = await response.text();
+    
+    // Ensure SVG has proper viewBox and preserves colors
+    if (!svgContent.includes('viewBox') && svgContent.includes('<svg')) {
+      svgContent = svgContent.replace('<svg', '<svg viewBox="0 0 24 24"');
+    }
     
     // Ensure directory exists
     if (!fs.existsSync(LOGOS_DIR)) {

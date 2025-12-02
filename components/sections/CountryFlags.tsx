@@ -132,7 +132,7 @@ export default function CountryFlags() {
               </span>
               <span className="text-sm font-medium text-white">
                 {countryData.cities.length > 0 
-                  ? countryData.cities.slice(0, 2).join(', ') + (countryData.cities.length > 2 ? ` +${countryData.cities.length - 2}` : '')
+                  ? countryData.cities.join(', ')
                   : countryData.country
                 }
               </span>
