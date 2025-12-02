@@ -365,8 +365,7 @@ export function createWelcomeEmail(
         <li>Complete your preferences if anything has changed</li>
         <li>Reply to this email if you want us to refine your matches further</li>
       </ul>
-      ${vmlButton(getBaseUrl(), 'View my matches', COLORS.indigo, COLORS.purple)}
-      <p class="text" style="color:${COLORS.gray500}; font-size:13px; margin-top:20px;">Prefer a direct link? <a href="${getBaseUrl()}" style="color:#8B5CF6;">${getBaseUrl()}</a></p>
+      <p class="text" style="color:${COLORS.gray500}; font-size:13px; margin-top:20px;">Need help? <a href="${getBaseUrl()}" style="color:#8B5CF6;">Visit JobPing</a></p>
       <p class="text" style="color:${COLORS.gray500}; font-size:14px; margin-top:28px;">Need to tweak anything? <a href="${buildPreferencesLink(userEmail)}" style="color:#8B5CF6; text-decoration:underline;">Update your preferences</a> any time — or reply to this email and we'll handle it for you.</p>
     </td>
   </tr>`;
