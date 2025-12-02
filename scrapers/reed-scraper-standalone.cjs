@@ -162,7 +162,7 @@ const TARGET_CAREER_PATHS = parseTargetCareerPaths();
 if (TARGET_CAREER_PATHS.length) {
   console.log('🎯 Reed target career paths:', TARGET_CAREER_PATHS.join(', '));
 }
-const MAX_PAGES = parseInt(process.env.REED_MAX_PAGES || '10', 10);
+const MAX_PAGES = parseInt(process.env.REED_MAX_PAGES || '20', 10); // EXPANDED: Increased from 10 to 20
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 function buildAuthHeader() {

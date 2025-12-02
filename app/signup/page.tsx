@@ -373,7 +373,7 @@ function SignupForm() {
         aria-hidden="true"
       />
 
-      <div className="relative container-page max-w-5xl py-8 px-4 sm:py-16 sm:px-6 md:py-24">
+      <div className="relative z-10 container-page max-w-5xl py-8 px-4 sm:py-16 sm:px-6 md:py-24">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

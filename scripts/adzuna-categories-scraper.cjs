@@ -244,12 +244,12 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
   const {
     appId = process.env.ADZUNA_APP_ID,
     appKey = process.env.ADZUNA_APP_KEY,
-    resultsPerPage = parseInt(process.env.ADZUNA_RESULTS_PER_PAGE || '25', 10),
+    resultsPerPage = parseInt(process.env.ADZUNA_RESULTS_PER_PAGE || '50', 10), // EXPANDED: Increased from 25 to 50
     maxDaysOld = parseInt(process.env.ADZUNA_MAX_DAYS_OLD || '28', 10), // Last 28 days for wider coverage
     delay = parseInt(process.env.ADZUNA_PAGE_DELAY_MS || '800', 10),
     timeout = parseInt(process.env.ADZUNA_TIMEOUT_MS || '15000', 10),
     verbose = false,
-    maxPages = parseInt(process.env.ADZUNA_MAX_PAGES || '3', 10),
+    maxPages = parseInt(process.env.ADZUNA_MAX_PAGES || '5', 10), // EXPANDED: Increased from 3 to 5
     pageDelayJitter = parseInt(process.env.ADZUNA_PAGE_DELAY_JITTER_MS || '0', 10),
     targetCareerPaths = [],
   } = options;
@@ -377,7 +377,7 @@ async function scrapeAllCitiesCategories(options = {}) {
   
   const resultsPerPage = typeof overrideResultsPerPage === 'number'
     ? overrideResultsPerPage
-    : parseInt(process.env.ADZUNA_RESULTS_PER_PAGE || '25', 10);
+    : parseInt(process.env.ADZUNA_RESULTS_PER_PAGE || '50', 10); // EXPANDED: Increased from 25 to 50
   const maxDaysOld = typeof overrideMaxDaysOld === 'number'
     ? overrideMaxDaysOld
     : parseInt(process.env.ADZUNA_MAX_DAYS_OLD || '28', 10);
@@ -389,7 +389,7 @@ async function scrapeAllCitiesCategories(options = {}) {
     : parseInt(process.env.ADZUNA_TIMEOUT_MS || '15000', 10);
   const maxPages = typeof overrideMaxPages === 'number'
     ? overrideMaxPages
-    : parseInt(process.env.ADZUNA_MAX_PAGES || '3', 10);
+    : parseInt(process.env.ADZUNA_MAX_PAGES || '5', 10); // EXPANDED: Increased from 3 to 5
   const pageDelayJitter = typeof overridePageDelayJitter === 'number'
     ? overridePageDelayJitter
     : parseInt(process.env.ADZUNA_PAGE_DELAY_JITTER_MS || '0', 10);

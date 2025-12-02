@@ -563,7 +563,7 @@ async function main() {
   };
   const cities = [ 'London','Manchester','Birmingham','Madrid','Barcelona','Berlin','Hamburg','Munich','Amsterdam','Brussels','Paris','Zurich','Milan','Rome','Dublin','Stockholm','Copenhagen','Vienna','Prague','Warsaw' ];
   const MAX_Q_PER_CITY = parseInt(process.env.JOBSPY_MAX_Q_PER_CITY || '6', 10);
-  const RESULTS_WANTED = parseInt(process.env.JOBSPY_RESULTS_WANTED || '15', 10);
+  const RESULTS_WANTED = parseInt(process.env.JOBSPY_RESULTS_WANTED || '50', 10); // EXPANDED: Increased from 15 to 50
   const JOBSPY_TIMEOUT_MS = parseInt(process.env.JOBSPY_TIMEOUT_MS || '20000', 10);
 
   const collected = [];

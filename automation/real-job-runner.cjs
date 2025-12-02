@@ -170,20 +170,21 @@ class RealJobRunner {
   }
 
   getCycleJobTarget() {
-    // Increased target to allow more diversity: Reed, Greenhouse, and reduce Adzuna dependency
-    // Set to 0 to disable quota (run all scrapers) or high number like 2000
-    return parseInt(process.env.SCRAPER_CYCLE_JOB_TARGET || '0', 10);
+    // EXPANDED: Increased global cycle target to allow more jobs
+    // Set to 0 to disable quota (run all scrapers) or high number like 10000
+    return parseInt(process.env.SCRAPER_CYCLE_JOB_TARGET || '0', 10); // 0 = no limit, run all scrapers
   }
 
   // Smart per-scraper targets based on historical performance
+  // EXPANDED: Increased caps to allow more job collection
   getScraperTargets() {
     return {
-      'jobspy-indeed': parseInt(process.env.JOBSPY_TARGET || '100', 10),
-      'jobspy-internships': parseInt(process.env.JOBSPY_INTERNSHIPS_TARGET || '80', 10),
-      'jobspy-career-roles': parseInt(process.env.JOBSPY_CAREER_TARGET || '50', 10),
-      'adzuna': parseInt(process.env.ADZUNA_TARGET || '150', 10),
-      'reed': parseInt(process.env.REED_TARGET || '50', 10),
-      'greenhouse': parseInt(process.env.GREENHOUSE_TARGET || '20', 10)
+      'jobspy-indeed': parseInt(process.env.JOBSPY_TARGET || '500', 10),           // Increased from 100
+      'jobspy-internships': parseInt(process.env.JOBSPY_INTERNSHIPS_TARGET || '2000', 10), // Increased from 80
+      'jobspy-career-roles': parseInt(process.env.JOBSPY_CAREER_TARGET || '3000', 10),    // Increased from 50
+      'adzuna': parseInt(process.env.ADZUNA_TARGET || '500', 10),                 // Increased from 150
+      'reed': parseInt(process.env.REED_TARGET || '200', 10),                      // Increased from 50
+      'greenhouse': parseInt(process.env.GREENHOUSE_TARGET || '100', 10)           // Increased from 20
     };
   }
 
