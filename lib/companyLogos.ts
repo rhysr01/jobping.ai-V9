@@ -32,6 +32,18 @@ export const COMPANY_LOGOS: CompanyLogo[] = [
   { name: 'Shopify', logoPath: '/logos/companies/shopify.svg', domain: 'shopify.com' },
   { name: 'Salesforce', logoPath: '/logos/companies/salesforce.svg', domain: 'salesforce.com' },
   { name: 'Accenture', logoPath: '/logos/companies/accenture.svg', domain: 'accenture.com' },
+  // EU Companies
+  { name: 'Klarna', logoPath: '/logos/companies/klarna.svg', domain: 'klarna.com' },
+  { name: 'Zalando', logoPath: '/logos/companies/zalando.svg', domain: 'zalando.com' },
+  { name: 'Wise', logoPath: '/logos/companies/wise.svg', domain: 'wise.com' },
+  { name: 'SAP', logoPath: '/logos/companies/sap.svg', domain: 'sap.com' },
+  { name: 'Siemens', logoPath: '/logos/companies/siemens.svg', domain: 'siemens.com' },
+  { name: 'BMW', logoPath: '/logos/companies/bmw.svg', domain: 'bmw.com' },
+  { name: 'Volkswagen', logoPath: '/logos/companies/volkswagen.svg', domain: 'volkswagen.com' },
+  { name: 'Volvo', logoPath: '/logos/companies/volvo.svg', domain: 'volvo.com' },
+  { name: 'IKEA', logoPath: '/logos/companies/ikea.svg', domain: 'ikea.com' },
+  { name: 'Just Eat', logoPath: '/logos/companies/justeat.svg', domain: 'justeat.com' },
+  { name: 'Glovo', logoPath: '/logos/companies/glovo.svg', domain: 'glovo.com' },
 ];
 
 // Create a lookup map for fast access

@@ -46,6 +46,18 @@ const COMPANY_SLUGS: Record<string, string> = {
   'EY': 'ernstandyoung',
   'KPMG': 'kpmg',
   'BCG': 'bostonconsultinggroup',
+  // EU Companies
+  'Klarna': 'klarna',
+  'Zalando': 'zalando',
+  'Wise': 'wise',
+  'SAP': 'sap',
+  'Siemens': 'siemens',
+  'BMW': 'bmw',
+  'Volkswagen': 'volkswagen',
+  'Volvo': 'volvo',
+  'IKEA': 'ikea',
+  'Just Eat': 'justeat',
+  'Glovo': 'glovo',
 };
 
 // Simple Icons CDN URL
