@@ -3,27 +3,22 @@
  * Maps country names to their flag emojis for display
  */
 
+// Only countries available in the signup form (based on cities in EuropeMap)
 export const COUNTRY_FLAGS: Record<string, string> = {
-  'United Kingdom': '🇬🇧',
-  'Ireland': '🇮🇪',
-  'France': '🇫🇷',
-  'Germany': '🇩🇪',
-  'Spain': '🇪🇸',
-  'Italy': '🇮🇹',
-  'Netherlands': '🇳🇱',
-  'Belgium': '🇧🇪',
-  'Switzerland': '🇨🇭',
-  'Sweden': '🇸🇪',
-  'Denmark': '🇩🇰',
-  'Austria': '🇦🇹',
-  'Czech Republic': '🇨🇿',
-  'Poland': '🇵🇱',
-  'Portugal': '🇵🇹',
-  'Finland': '🇫🇮',
-  'Norway': '🇳🇴',
-  'Greece': '🇬🇷',
-  'Romania': '🇷🇴',
-  'Hungary': '🇭🇺',
+  'United Kingdom': '🇬🇧',  // London, Manchester, Birmingham
+  'Ireland': '🇮🇪',          // Dublin
+  'France': '🇫🇷',            // Paris
+  'Germany': '🇩🇪',          // Berlin, Hamburg, Munich
+  'Spain': '🇪🇸',             // Madrid, Barcelona
+  'Italy': '🇮🇹',             // Milan, Rome
+  'Netherlands': '🇳🇱',      // Amsterdam
+  'Belgium': '🇧🇪',           // Brussels
+  'Switzerland': '🇨🇭',      // Zurich
+  'Sweden': '🇸🇪',            // Stockholm
+  'Denmark': '🇩🇰',           // Copenhagen
+  'Austria': '🇦🇹',           // Vienna
+  'Czech Republic': '🇨🇿',   // Prague
+  'Poland': '🇵🇱',            // Warsaw
 };
 
 /**
