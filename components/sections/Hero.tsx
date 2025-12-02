@@ -232,7 +232,7 @@ export default function Hero() {
             {/* Smaller wordmark with grad hat */}
             <div className="flex items-center justify-center gap-3">
               <svg
-                className="h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 text-white"
+                className="h-[18.2px] w-[18.2px] sm:h-[20.8px] sm:w-[20.8px] md:h-[26px] md:w-[26px] text-white"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -269,8 +269,6 @@ export default function Hero() {
           transition={{ delay: 0.15, duration: 0.6, ease: "easeOut" }}
           className="relative z-10 w-full max-w-3xl mt-8 md:mt-10 rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-md px-4 py-5 md:px-8 md:py-10 lg:px-12 lg:py-12 shadow-hero"
         >
-          {/* Subtle spotlight behind card */}
-          <div className="pointer-events-none absolute inset-x-0 -top-24 h-64 blur-lg-hero opacity-80 bg-[radial-gradient(circle_at_center,_theme(colors.brand.500/0.28),_transparent_60%)] -z-10" />
           {/* Top highlight line for glass effect */}
           <div className="absolute inset-x-0 top-0 h-px bg-white/20" />
           

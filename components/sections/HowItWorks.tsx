@@ -24,7 +24,7 @@ export default function HowItWorks() {
           className="mx-auto max-w-3xl text-left sm:text-center"
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200">
-            <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
+            <BrandIcons.GraduationCap className="h-[5.2px] w-[5.2px] text-brand-300" />
             {Copy.HOW_IT_WORKS_TITLE}
           </span>
           <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/15 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.24em] text-emerald-200">

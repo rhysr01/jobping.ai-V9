@@ -62,13 +62,13 @@ export default function CompanyLogos() {
           >
             <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1.5 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200 shadow-lg shadow-brand-500/10">
               <BrandIcons.Briefcase className="h-4 w-4 text-brand-300" />
-              Trusted Employers
+              Featured Companies
             </span>
             <h2 className="section-title mt-4 mb-3">
-              Trusted by Europe's best early-career employers
+              Jobs from Europe's best early-career employers
             </h2>
             <p className="text-xl text-zinc-300 md:text-2xl leading-relaxed mb-8">
-              We've sent matches from these companies (and 400+ more)
+              We've matched roles from these companies (and 400+ more)
             </p>
             <div className="text-sm text-zinc-500 mt-8 p-4 bg-white/5 rounded-lg border border-white/10">
               <p>No companies with logos found. Add logo files to <code className="text-zinc-400">/public/logos/companies/</code></p>
@@ -103,13 +103,13 @@ export default function CompanyLogos() {
             className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1.5 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200 shadow-lg shadow-brand-500/10"
           >
             <BrandIcons.Briefcase className="h-4 w-4 text-brand-300" />
-            Trusted Employers
+            Featured Companies
           </motion.span>
           <h2 className="section-title mt-4 mb-3">
-            Trusted by Europe's best early-career employers
+            Jobs from Europe's best early-career employers
           </h2>
           <p className="text-xl text-zinc-300 md:text-2xl leading-relaxed">
-            We've sent matches from these companies (and 400+ more)
+            We've matched roles from these companies (and 400+ more)
           </p>
         </motion.div>
 

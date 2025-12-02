@@ -139,7 +139,7 @@ export default function ExperienceTimeline({ selected, onChange }: ExperienceTim
                     }`}
                     aria-hidden="true"
                   >
-                    <exp.Icon className="w-4 h-4" />
+                    <exp.Icon className="w-[5.2px] h-[5.2px]" />
                   </span>
                   <div
                     className={`text-xs font-semibold uppercase tracking-wide ${
@@ -164,7 +164,7 @@ export default function ExperienceTimeline({ selected, onChange }: ExperienceTim
         >
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 via-purple-500 to-brand-400 text-white shadow-[0_0_20px_rgba(154,106,255,0.35)]">
-              <SelectedIcon className="w-6 h-6" />
+              <SelectedIcon className="w-[7.8px] h-[7.8px]" />
             </div>
             <div>
               <div className="text-sm font-semibold text-white">

@@ -4,7 +4,7 @@ export default function LogoWordmark() {
       <span aria-hidden className="text-white/95">
         {/* White graduation cap before the J */}
         <svg
-          className="h-[42px] w-[42px] md:h-[54px] md:w-[54px] -translate-y-1"
+          className="h-[54.6px] w-[54.6px] md:h-[70.2px] md:w-[70.2px] -translate-y-1"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

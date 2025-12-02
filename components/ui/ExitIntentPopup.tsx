@@ -72,7 +72,7 @@ export default function ExitIntentPopup() {
           </button>
 
           <div className="text-center">
-            <BrandIcons.GraduationCap className="w-16 h-16 mx-auto mb-4 text-brand-400" aria-hidden="true" />
+            <BrandIcons.GraduationCap className="w-[20.8px] h-[20.8px] mx-auto mb-4 text-brand-400" aria-hidden="true" />
             <h3 id="exit-popup-title" className="text-2xl font-black text-white mb-2">Wait! Get EU jobs free</h3>
             <p id="exit-popup-description" className="text-zinc-200 mb-6">
               Join thousands finding early-career roles across Europe. 5 hand-picked matches weekly.

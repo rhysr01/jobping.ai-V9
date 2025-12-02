@@ -64,7 +64,7 @@ export default function Pricing() {
           className="mx-auto max-w-3xl text-left sm:text-center"
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200">
-            <BrandIcons.GraduationCap className="h-4 w-4 text-brand-300" />
+            <BrandIcons.GraduationCap className="h-[5.2px] w-[5.2px] text-brand-300" />
             Pricing
           </span>
           <h2 className="section-title mt-4">

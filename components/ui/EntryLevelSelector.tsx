@@ -110,7 +110,7 @@ export default function EntryLevelSelector({ selected, onChange }: EntryLevelSel
                 whileHover={!isSelected ? { scale: 1.1, rotate: 5 } : {}}
                 transition={{ duration: 0.2 }}
               >
-                <Icon className={`w-6 h-6 ${
+                <Icon className={`w-[7.8px] h-[7.8px] ${
                   isSelected ? 'text-brand-400' : 'text-zinc-400 group-hover:text-zinc-300'
                 }`} />
               </motion.div>
