@@ -18,9 +18,9 @@ export const COMPANY_LOGOS: CompanyLogo[] = [
   { name: 'Monzo', logoPath: '/logos/companies/monzo.svg', domain: 'monzo.com' },
   { name: 'N26', logoPath: '/logos/companies/n26.svg', domain: 'n26.com' },
   { name: 'Deliveroo', logoPath: '/logos/companies/deliveroo.svg', domain: 'deliveroo.co.uk' },
-  { name: 'McKinsey', logoPath: '/logos/companies/mckinsey.svg', domain: 'mckinsey.com' },
+  { name: 'McKinsey', logoPath: '/logos/companies/mckinseyandcompany.svg', domain: 'mckinsey.com' },
   { name: 'Google', logoPath: '/logos/companies/google.svg', domain: 'google.com' },
-  { name: 'Amazon', logoPath: '/logos/companies/amazon.svg', domain: 'amazon.com' },
+  { name: 'Amazon', logoPath: '/logos/companies/amazonaws.svg', domain: 'amazon.com' },
   { name: 'Microsoft', logoPath: '/logos/companies/microsoft.svg', domain: 'microsoft.com' },
   { name: 'Meta', logoPath: '/logos/companies/meta.svg', domain: 'meta.com' },
   { name: 'Apple', logoPath: '/logos/companies/apple.svg', domain: 'apple.com' },
@@ -40,9 +40,9 @@ export const COMPANY_LOGOS: CompanyLogo[] = [
   { name: 'Accenture', logoPath: '/logos/companies/accenture.svg', domain: 'accenture.com' },
   { name: 'Deloitte', logoPath: '/logos/companies/deloitte.svg', domain: 'deloitte.com' },
   { name: 'PwC', logoPath: '/logos/companies/pwc.svg', domain: 'pwc.com' },
-  { name: 'EY', logoPath: '/logos/companies/ey.svg', domain: 'ey.com' },
+  { name: 'EY', logoPath: '/logos/companies/ernstandyoung.svg', domain: 'ey.com' },
   { name: 'KPMG', logoPath: '/logos/companies/kpmg.svg', domain: 'kpmg.com' },
-  { name: 'BCG', logoPath: '/logos/companies/bcg.svg', domain: 'bcg.com' },
+  { name: 'BCG', logoPath: '/logos/companies/bostonconsultinggroup.svg', domain: 'bcg.com' },
 ];
 
 // Create a lookup map for fast access
