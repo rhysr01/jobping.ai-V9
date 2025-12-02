@@ -60,7 +60,7 @@ export const GET = asyncHandler(async (req: NextRequest) => {
   });
 
   // Convert to array and sort by count
-  const countries = Array.from(countryCounts.entries())
+  const dbCountries = Array.from(countryCounts.entries())
     .map(([country, count]) => ({
       country,
       flag: getCountryFlag(country),
@@ -68,6 +68,24 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     }))
     .filter(c => c.flag) // Only include countries with flags
     .sort((a, b) => b.count - a.count); // Sort by frequency
+
+  // If we have countries from DB, use those
+  // Otherwise, show all available countries from signup form as fallback
+  let countries: Array<{ country: string; flag: string; count: number }>;
+  
+  if (dbCountries.length > 0) {
+    countries = dbCountries;
+  } else {
+    // Fallback: Show all available countries from signup form
+    countries = Object.entries(COUNTRY_FLAGS)
+      .map(([country, flag]) => ({
+        country,
+        flag,
+        count: 0 // No count since no jobs yet
+      }))
+      .sort((a, b) => a.country.localeCompare(b.country)); // Alphabetical order
+    console.log(`[Countries API] No DB countries found, showing ${countries.length} available countries as fallback`);
+  }
 
   console.log(`[Countries API] Found ${countries.length} countries with ${data?.length || 0} total jobs`);
 

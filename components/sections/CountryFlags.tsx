@@ -47,7 +47,36 @@ export default function CountryFlags() {
     );
   }
 
-  if (countries.length === 0) return null;
+  // Show section even if no countries (for fallback display)
+  if (countries.length === 0) {
+    return (
+      <section className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 bg-black scroll-snap-section relative">
+        <div className="container-page relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mx-auto max-w-3xl text-left sm:text-center"
+          >
+            <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1.5 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200 shadow-lg shadow-brand-500/10">
+              <BrandIcons.Target className="h-4 w-4 text-brand-300" />
+              Active Countries
+            </span>
+            <h2 className="section-title mt-4 mb-3">
+              Opportunities across Europe
+            </h2>
+            <p className="text-xl text-zinc-300 md:text-2xl leading-relaxed mb-8">
+              We operate in these countries
+            </p>
+            <div className="text-sm text-zinc-500 mt-8 p-4 bg-white/5 rounded-lg border border-white/10">
+              <p>Loading countries...</p>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 bg-black scroll-snap-section relative">
@@ -78,7 +107,7 @@ export default function CountryFlags() {
             Opportunities across Europe
           </h2>
           <p className="text-xl text-zinc-300 md:text-2xl leading-relaxed">
-            We send matches from companies in these countries
+            We operate in these countries
           </p>
         </motion.div>
 
