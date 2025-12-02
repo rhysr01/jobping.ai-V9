@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BrandIcons } from '@/components/ui/BrandIcons';
+import { useReducedMotion } from '@/components/ui/useReducedMotion';
 
 interface CountryFlag {
   country: string;
@@ -14,6 +15,7 @@ interface CountryFlag {
 export default function CountryFlags() {
   const [countries, setCountries] = useState<CountryFlag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const prefersReduced = useReducedMotion();
 
   useEffect(() => {
     async function fetchCountries() {
@@ -112,32 +114,73 @@ export default function CountryFlags() {
           </p>
         </motion.div>
 
-        <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
-          {countries.map((countryData, index) => (
-            <motion.div
-              key={countryData.country}
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              whileInView={{ opacity: 1, scale: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.05, ease: [0.23, 1, 0.32, 1] }}
-              whileHover={{ 
-                y: -4,
-                scale: 1.05,
-                transition: { type: 'spring', stiffness: 400, damping: 25 }
-              }}
-              className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.04] border border-white/10 backdrop-blur-xl shadow-feature transition-all duration-300 hover:border-white/20 hover:shadow-hover group"
-            >
-              <span className="text-2xl leading-none drop-shadow-sm" role="img" aria-label={countryData.country}>
-                {countryData.flag}
-              </span>
-              <span className="text-sm font-medium text-white">
-                {countryData.cities.length > 0 
-                  ? countryData.cities.join(', ')
-                  : countryData.country
-                }
-              </span>
-            </motion.div>
-          ))}
+        <div 
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 max-w-6xl mx-auto"
+          role="list"
+          aria-label="Countries where JobPing operates"
+        >
+          {countries.map((countryData, index) => {
+            const animationDelay = prefersReduced ? 0 : index * 0.05;
+            const cityAnimationDelay = prefersReduced ? 0 : index * 0.05;
+            
+            return (
+              <motion.div
+                key={countryData.country}
+                initial={prefersReduced ? false : { opacity: 0, scale: 0.9, y: 20 }}
+                whileInView={prefersReduced ? false : { opacity: 1, scale: 1, y: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ 
+                  duration: prefersReduced ? 0 : 0.4, 
+                  delay: animationDelay, 
+                  ease: [0.23, 1, 0.32, 1] 
+                }}
+                whileHover={prefersReduced ? {} : { 
+                  y: -6,
+                  scale: 1.02,
+                  transition: { type: 'spring', stiffness: 400, damping: 25 }
+                }}
+                className="group relative flex flex-col items-center gap-3 p-6 rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.04] border border-white/10 backdrop-blur-xl shadow-feature transition-all duration-300 hover:border-white/20 hover:shadow-hover overflow-hidden"
+                role="listitem"
+                aria-label={`${countryData.country}: ${countryData.cities.length > 0 ? countryData.cities.join(', ') : countryData.country}`}
+              >
+                {/* Subtle gradient overlay on hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 via-brand-500/0 to-purple-500/0 group-hover:from-brand-500/10 group-hover:via-brand-500/5 group-hover:to-purple-500/10 transition-all duration-300 rounded-2xl" />
+                
+                {/* Flag - larger and prominent */}
+                <div className="relative z-10">
+                  <span className="text-4xl leading-none drop-shadow-lg" role="img" aria-label={countryData.country}>
+                    {countryData.flag}
+                  </span>
+                </div>
+                
+                {/* Cities as badges */}
+                <div className="relative z-10 flex flex-wrap items-center justify-center gap-2 w-full min-h-[2rem]">
+                  {countryData.cities.length > 0 ? (
+                    countryData.cities.map((city, cityIndex) => (
+                      <motion.span
+                        key={`${countryData.country}-${city}`}
+                        initial={prefersReduced ? false : { opacity: 0, scale: 0.8 }}
+                        whileInView={prefersReduced ? false : { opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ 
+                          delay: cityAnimationDelay + (prefersReduced ? 0 : cityIndex * 0.03), 
+                          duration: prefersReduced ? 0 : 0.3 
+                        }}
+                        className="inline-flex items-center px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs font-medium text-zinc-300 backdrop-blur-sm transition-all duration-200 group-hover:bg-white/8 group-hover:border-white/15"
+                      >
+                        {city}
+                      </motion.span>
+                    ))
+                  ) : (
+                    <span className="text-xs font-medium text-zinc-400">{countryData.country}</span>
+                  )}
+                </div>
+                
+                {/* Subtle shine effect on hover - using CSS classes instead of inline styles */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl shine-effect" />
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
