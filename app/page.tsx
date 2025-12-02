@@ -1,5 +1,6 @@
 import Hero from "@/components/sections/Hero";
 import CompanyLogos from "@/components/sections/CompanyLogos";
+import CountryFlags from "@/components/sections/CountryFlags";
 import HowItWorks from "@/components/sections/HowItWorks";
 import BuiltForStudents from "@/components/sections/BuiltForStudents";
 import Pricing from "@/components/sections/Pricing";
@@ -15,6 +16,7 @@ export default function Page() {
       <main id="main-content" className="scroll-snap-type-y-proximity" style={{ scrollSnapType: 'y proximity' }}>
         <Hero />
         <CompanyLogos />
+        <CountryFlags />
         <SocialProofRow />
         <EmailPhoneShowcase />
         <HowItWorks />

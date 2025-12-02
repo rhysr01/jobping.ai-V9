@@ -8,7 +8,6 @@ import { BrandIcons } from '@/components/ui/BrandIcons';
 interface Company {
   name: string;
   logoPath: string;
-  locations: string[];
 }
 
 export default function CompanyLogos() {
@@ -145,18 +144,18 @@ export default function CompanyLogos() {
                 }}
                 className="flex-shrink-0 snap-start"
               >
-                <div className="relative min-h-[140px] w-[140px] flex flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.04] border border-white/10 backdrop-blur-xl shadow-feature p-5 transition-all duration-300 hover:border-white/20 hover:shadow-hover group overflow-hidden">
+                <div className="relative h-[120px] w-[140px] flex items-center justify-center rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.04] border border-white/10 backdrop-blur-xl shadow-feature p-5 transition-all duration-300 hover:border-white/20 hover:shadow-hover group overflow-hidden">
                   {/* Subtle gradient overlay on hover */}
                   <div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 via-brand-500/0 to-purple-500/0 group-hover:from-brand-500/10 group-hover:via-brand-500/5 group-hover:to-purple-500/10 transition-all duration-300 rounded-2xl" />
                   
                   {/* Logo */}
-                  <div className="relative z-10 flex-1 flex items-center justify-center">
+                  <div className="relative z-10 flex items-center justify-center">
                     <Image
                       src={company.logoPath}
                       alt={company.name}
                       width={100}
-                      height={80}
-                      className="object-contain h-[75px] w-auto opacity-90 transition-all duration-300 group-hover:opacity-100 group-hover:scale-105"
+                      height={100}
+                      className="object-contain h-[90px] w-auto opacity-90 transition-all duration-300 group-hover:opacity-100 group-hover:scale-105"
                       onError={(e) => {
                         // Hide broken logos - no text fallback
                         (e.target as HTMLElement).parentElement?.parentElement?.parentElement?.remove();
@@ -166,31 +165,6 @@ export default function CompanyLogos() {
                     />
                   </div>
                   
-                  {/* Country flags - premium badge style */}
-                  {company.locations && company.locations.length > 0 && (
-                    <div className="relative z-10 flex items-center justify-center gap-1.5 mt-3 flex-wrap min-h-[24px]">
-                      {company.locations.slice(0, 3).map((flag, flagIndex) => (
-                        <motion.span
-                          key={flagIndex}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          whileInView={{ opacity: 1, scale: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: index * 0.03 + flagIndex * 0.05, duration: 0.3 }}
-                          className="text-base leading-none drop-shadow-sm" 
-                          role="img" 
-                          aria-label={`Country flag ${flagIndex + 1}`}
-                          whileHover={{ scale: 1.2, rotate: [0, -5, 5, 0] }}
-                        >
-                          {flag}
-                        </motion.span>
-                      ))}
-                      {company.locations.length > 3 && (
-                        <span className="text-[10px] text-zinc-400 leading-none font-medium px-1.5 py-0.5 rounded-full bg-white/5 border border-white/5">
-                          +{company.locations.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  )}
                   
                   {/* Subtle shine effect on hover */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full" 

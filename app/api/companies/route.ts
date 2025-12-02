@@ -5,7 +5,7 @@ import { getCompanyLogo } from '@/lib/companyLogos';
 import { extractCountryFromLocation, getCountryFlag, COUNTRY_FLAGS } from '@/lib/countryFlags';
 
 // Cache for 1 hour
-let cachedCompanies: Array<{ name: string; logoPath: string; locations: string[] }> | null = null;
+let cachedCompanies: Array<{ name: string; logoPath: string }> | null = null;
 let lastFetch: number = 0;
 const CACHE_DURATION = 60 * 60 * 1000;
 
@@ -37,43 +37,14 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     throw new Error(`Failed to fetch companies: ${error.message}`);
   }
 
-  // Group by company and collect unique locations
-  const companyData = new Map<string, { count: number; locations: Set<string> }>();
+  // Group by company and count frequency
+  const companyData = new Map<string, number>();
   
   data?.forEach((job) => {
     const companyName = (job.company_name || job.company || '').trim();
     if (!companyName) return;
     
-    // Extract country from location, city, or country field
-    let country = '';
-    
-    // Priority: country field > location field > city field
-    if (job.country) {
-      // Normalize country name (handle case variations)
-      const normalizedCountry = job.country.trim();
-      // Check if it's a known country name (case-insensitive)
-      const countryKey = Object.keys(COUNTRY_FLAGS).find(
-        key => key.toLowerCase() === normalizedCountry.toLowerCase()
-      );
-      country = countryKey || normalizedCountry;
-    } else if (job.location) {
-      country = extractCountryFromLocation(job.location);
-    } else if (job.city) {
-      // Try to get country from city
-      country = extractCountryFromLocation(job.city);
-    }
-    
-    if (!companyData.has(companyName)) {
-      companyData.set(companyName, { count: 0, locations: new Set() });
-    }
-    
-    const company = companyData.get(companyName)!;
-    company.count++;
-    
-    // Only add country if we have a flag for it
-    if (country && getCountryFlag(country)) {
-      company.locations.add(country);
-    }
+    companyData.set(companyName, (companyData.get(companyName) || 0) + 1);
   });
 
   // Debug: Log total companies found
@@ -81,7 +52,7 @@ export const GET = asyncHandler(async (req: NextRequest) => {
   
   // Only include companies we have logos for, sorted by frequency
   const companiesWithLogos = Array.from(companyData.entries())
-    .map(([name, data]) => {
+    .map(([name, count]) => {
       const logo = getCompanyLogo(name);
       if (!logo) {
         // Debug: Log companies without logos (first 10)
@@ -91,26 +62,16 @@ export const GET = asyncHandler(async (req: NextRequest) => {
         return null;
       }
       
-      // Convert locations set to array and get flags
-      const locations = Array.from(data.locations)
-        .map(country => ({
-          country,
-          flag: getCountryFlag(country)
-        }))
-        .filter(loc => loc.flag) // Only include countries we have flags for
-        .map(loc => loc.flag);
-      
       return {
         name: logo.name,
         logoPath: logo.logoPath,
-        count: data.count,
-        locations
+        count
       };
     })
-    .filter((c): c is { name: string; logoPath: string; count: number; locations: string[] } => c !== null)
+    .filter((c): c is { name: string; logoPath: string; count: number } => c !== null)
     .sort((a, b) => b.count - a.count) // Sort by frequency
     .slice(0, 30) // Limit to top 30
-    .map(({ name, logoPath, locations }) => ({ name, logoPath, locations })); // Remove count
+    .map(({ name, logoPath }) => ({ name, logoPath })); // Remove count
 
   console.log(`[Companies API] Returning ${companiesWithLogos.length} companies with logos`);
 
