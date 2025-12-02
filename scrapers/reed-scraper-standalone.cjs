@@ -57,7 +57,11 @@ function convertToDatabaseFormat(job) {
 }
 
 const REED_API = 'https://www.reed.co.uk/api/1.0/search';
-const DEFAULT_LOCATIONS = [ 'Belfast','Dublin','London','Manchester','Birmingham' ];
+
+// Reed.co.uk is UK-only (plus Dublin, Ireland)
+const UK_CITIES = ['London', 'Manchester', 'Birmingham', 'Belfast', 'Dublin'];
+const DEFAULT_LOCATIONS = ['London', 'Manchester', 'Birmingham', 'Belfast', 'Dublin'];
+
 function parseTargetCities() {
   const raw = process.env.TARGET_CITIES;
   if (!raw) return [];
@@ -74,8 +78,21 @@ function parseTargetCities() {
     return [];
   }
 }
+
+// Filter TARGET_CITIES to only UK cities (Reed is UK-only)
+function filterUKCities(cities) {
+  return cities.filter(city => UK_CITIES.includes(city));
+}
+
 const TARGET_CITIES = parseTargetCities();
-const LOCATIONS = TARGET_CITIES.length ? TARGET_CITIES : DEFAULT_LOCATIONS;
+const UK_TARGET_CITIES = TARGET_CITIES.length ? filterUKCities(TARGET_CITIES) : [];
+const LOCATIONS = UK_TARGET_CITIES.length ? UK_TARGET_CITIES : DEFAULT_LOCATIONS;
+
+if (TARGET_CITIES.length && UK_TARGET_CITIES.length < TARGET_CITIES.length) {
+  const filtered = TARGET_CITIES.filter(c => !UK_CITIES.includes(c));
+  console.log(`⚠️  Reed: Filtered out ${filtered.length} non-UK cities: ${filtered.join(', ')}`);
+  console.log(`✅ Reed: Using UK cities only: ${UK_TARGET_CITIES.join(', ')}`);
+}
 
 if (TARGET_CITIES.length) {
   console.log('🎯 Reed target cities from signup data:', TARGET_CITIES.join(', '));
@@ -85,6 +102,33 @@ const RESULTS_PER_PAGE = parseInt(process.env.REED_RESULTS_PER_PAGE || '50', 10)
 const PAGE_DELAY_MS = parseInt(process.env.REED_PAGE_DELAY_MS || '400', 10);
 const PAGE_DELAY_JITTER_MS = parseInt(process.env.REED_PAGE_DELAY_JITTER_MS || '0', 10);
 const BACKOFF_DELAY_MS = parseInt(process.env.REED_BACKOFF_DELAY_MS || '6000', 10);
+// Import role definitions from signup form FIRST
+const { getAllRoles, getEarlyCareerRoles, cleanRoleForSearch } = require('./shared/roles.cjs');
+
+// 🥇 HIGHEST PRIORITY: Exact role names from signup form (early-career roles)
+const earlyCareerRoles = getEarlyCareerRoles();
+const topRoles = getAllRoles().slice(0, 20); // Top 20 roles from signup form (reduced from 30)
+
+// Clean role names and create search variations (remove parentheses, handle special chars)
+const cleanedEarlyCareerRoles = earlyCareerRoles.slice(0, 10).flatMap(role => cleanRoleForSearch(role));
+const cleanedTopRoles = topRoles.slice(0, 10).flatMap(role => cleanRoleForSearch(role));
+
+// Combine exact role names with generic early-career terms
+// Prioritize exact role names first
+const ROLE_BASED_TERMS = [
+  ...cleanedEarlyCareerRoles.slice(0, 10), // Top 10 early-career roles (cleaned)
+  ...cleanedTopRoles.slice(0, 10) // Top 10 general roles (cleaned)
+];
+
+// Remove duplicates
+const uniqueRoleTerms = [...new Set(ROLE_BASED_TERMS)];
+
+// Generic early-career terms as fallback
+const GENERIC_EARLY_TERMS = [ 'graduate','entry level','junior','trainee','intern','internship' ];
+
+// Combined: role names first (limited to top 10-12), then generic terms
+const EARLY_TERMS = [...uniqueRoleTerms.slice(0, 12), ...GENERIC_EARLY_TERMS];
+
 const MAX_QUERIES_PER_LOCATION = parseInt(process.env.REED_MAX_QUERIES_PER_LOCATION || `${EARLY_TERMS.length}`, 10);
 const INCLUDE_REMOTE = String(process.env.INCLUDE_REMOTE || '').toLowerCase() === 'true';
 const scriptStart = Date.now();
@@ -111,32 +155,6 @@ const TARGET_CAREER_PATHS = parseTargetCareerPaths();
 if (TARGET_CAREER_PATHS.length) {
   console.log('🎯 Reed target career paths:', TARGET_CAREER_PATHS.join(', '));
 }
-// Import role definitions from signup form
-const { getAllRoles, getEarlyCareerRoles, cleanRoleForSearch } = require('./shared/roles.cjs');
-
-// 🥇 HIGHEST PRIORITY: Exact role names from signup form (early-career roles)
-const earlyCareerRoles = getEarlyCareerRoles();
-const topRoles = getAllRoles().slice(0, 20); // Top 20 roles from signup form (reduced from 30)
-
-// Clean role names and create search variations (remove parentheses, handle special chars)
-const cleanedEarlyCareerRoles = earlyCareerRoles.slice(0, 10).flatMap(role => cleanRoleForSearch(role));
-const cleanedTopRoles = topRoles.slice(0, 10).flatMap(role => cleanRoleForSearch(role));
-
-// Combine exact role names with generic early-career terms
-// Prioritize exact role names first
-const ROLE_BASED_TERMS = [
-  ...cleanedEarlyCareerRoles.slice(0, 10), // Top 10 early-career roles (cleaned)
-  ...cleanedTopRoles.slice(0, 10) // Top 10 general roles (cleaned)
-];
-
-// Remove duplicates
-const uniqueRoleTerms = [...new Set(ROLE_BASED_TERMS)];
-
-// Generic early-career terms as fallback
-const GENERIC_EARLY_TERMS = [ 'graduate','entry level','junior','trainee','intern','internship' ];
-
-// Combined: role names first (limited to top 10-12), then generic terms
-const EARLY_TERMS = [...uniqueRoleTerms.slice(0, 12), ...GENERIC_EARLY_TERMS];
 const MAX_PAGES = parseInt(process.env.REED_MAX_PAGES || '10', 10);
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
