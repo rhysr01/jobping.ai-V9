@@ -10,18 +10,15 @@ export interface CompanyLogo {
   domain?: string;
 }
 
-// Curated list of top 30 companies we've sent matches from
-// Focus on well-known brands that build trust
+// Curated list of companies we've sent matches from
+// Only includes companies with real logos (no placeholders)
 export const COMPANY_LOGOS: CompanyLogo[] = [
   { name: 'Spotify', logoPath: '/logos/companies/spotify.svg', domain: 'spotify.com' },
   { name: 'Revolut', logoPath: '/logos/companies/revolut.svg', domain: 'revolut.com' },
   { name: 'Monzo', logoPath: '/logos/companies/monzo.svg', domain: 'monzo.com' },
   { name: 'N26', logoPath: '/logos/companies/n26.svg', domain: 'n26.com' },
   { name: 'Deliveroo', logoPath: '/logos/companies/deliveroo.svg', domain: 'deliveroo.co.uk' },
-  { name: 'McKinsey', logoPath: '/logos/companies/mckinseyandcompany.svg', domain: 'mckinsey.com' },
   { name: 'Google', logoPath: '/logos/companies/google.svg', domain: 'google.com' },
-  { name: 'Amazon', logoPath: '/logos/companies/amazonaws.svg', domain: 'amazon.com' },
-  { name: 'Microsoft', logoPath: '/logos/companies/microsoft.svg', domain: 'microsoft.com' },
   { name: 'Meta', logoPath: '/logos/companies/meta.svg', domain: 'meta.com' },
   { name: 'Apple', logoPath: '/logos/companies/apple.svg', domain: 'apple.com' },
   { name: 'Stripe', logoPath: '/logos/companies/stripe.svg', domain: 'stripe.com' },
@@ -33,16 +30,8 @@ export const COMPANY_LOGOS: CompanyLogo[] = [
   { name: 'Airbnb', logoPath: '/logos/companies/airbnb.svg', domain: 'airbnb.com' },
   { name: 'Tesla', logoPath: '/logos/companies/tesla.svg', domain: 'tesla.com' },
   { name: 'Shopify', logoPath: '/logos/companies/shopify.svg', domain: 'shopify.com' },
-  { name: 'Adobe', logoPath: '/logos/companies/adobe.svg', domain: 'adobe.com' },
   { name: 'Salesforce', logoPath: '/logos/companies/salesforce.svg', domain: 'salesforce.com' },
-  { name: 'Oracle', logoPath: '/logos/companies/oracle.svg', domain: 'oracle.com' },
-  { name: 'IBM', logoPath: '/logos/companies/ibm.svg', domain: 'ibm.com' },
   { name: 'Accenture', logoPath: '/logos/companies/accenture.svg', domain: 'accenture.com' },
-  { name: 'Deloitte', logoPath: '/logos/companies/deloitte.svg', domain: 'deloitte.com' },
-  { name: 'PwC', logoPath: '/logos/companies/pwc.svg', domain: 'pwc.com' },
-  { name: 'EY', logoPath: '/logos/companies/ernstandyoung.svg', domain: 'ey.com' },
-  { name: 'KPMG', logoPath: '/logos/companies/kpmg.svg', domain: 'kpmg.com' },
-  { name: 'BCG', logoPath: '/logos/companies/bostonconsultinggroup.svg', domain: 'bcg.com' },
 ];
 
 // Create a lookup map for fast access
