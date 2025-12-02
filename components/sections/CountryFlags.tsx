@@ -7,6 +7,7 @@ import { BrandIcons } from '@/components/ui/BrandIcons';
 interface CountryFlag {
   country: string;
   flag: string;
+  cities: string[];
   count: number;
 }
 
@@ -112,9 +113,9 @@ export default function CountryFlags() {
         </motion.div>
 
         <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
-          {countries.map((country, index) => (
+          {countries.map((countryData, index) => (
             <motion.div
-              key={country.country}
+              key={countryData.country}
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               whileInView={{ opacity: 1, scale: 1, y: 0 }}
               viewport={{ once: true }}
@@ -126,10 +127,15 @@ export default function CountryFlags() {
               }}
               className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.04] border border-white/10 backdrop-blur-xl shadow-feature transition-all duration-300 hover:border-white/20 hover:shadow-hover group"
             >
-              <span className="text-2xl leading-none drop-shadow-sm" role="img" aria-label={country.country}>
-                {country.flag}
+              <span className="text-2xl leading-none drop-shadow-sm" role="img" aria-label={countryData.country}>
+                {countryData.flag}
               </span>
-              <span className="text-sm font-medium text-white">{country.country}</span>
+              <span className="text-sm font-medium text-white">
+                {countryData.cities.length > 0 
+                  ? countryData.cities.slice(0, 2).join(', ') + (countryData.cities.length > 2 ? ` +${countryData.cities.length - 2}` : '')
+                  : countryData.country
+                }
+              </span>
             </motion.div>
           ))}
         </div>

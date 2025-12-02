@@ -114,16 +114,30 @@ export default function CompanyLogos() {
         </motion.div>
 
         <div className="relative">
-          {/* Enhanced fade edges with gradient glow */}
-          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-40 bg-gradient-to-r from-black via-black/60 to-transparent z-10" />
-          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-40 bg-gradient-to-l from-black via-black/60 to-transparent z-10" />
+          {/* Enhanced fade edges with gradient glow - more visible */}
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-black via-black/80 to-transparent z-10" />
+          
+          {/* Scroll indicator arrow on the right */}
+          {companies.length > 5 && (
+            <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 z-20 flex items-center gap-2">
+              <motion.div
+                animate={{ x: [0, 4, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                className="text-white/60"
+              >
+                <BrandIcons.ArrowRight className="h-6 w-6" />
+              </motion.div>
+              <span className="text-xs text-white/40 font-medium">Scroll</span>
+            </div>
+          )}
           
           {/* Subtle spotlight effect */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-brand-500/5 to-transparent z-0" />
 
           {/* Horizontal scroll container */}
           <div 
-            className="flex gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-6 px-4"
+            className="flex gap-8 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-8 px-8"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -144,18 +158,18 @@ export default function CompanyLogos() {
                 }}
                 className="flex-shrink-0 snap-start"
               >
-                <div className="relative h-[120px] w-[140px] flex items-center justify-center rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.04] border border-white/10 backdrop-blur-xl shadow-feature p-5 transition-all duration-300 hover:border-white/20 hover:shadow-hover group overflow-hidden">
+                <div className="relative h-[160px] w-[180px] flex items-center justify-center rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.04] border border-white/10 backdrop-blur-xl shadow-feature p-6 transition-all duration-300 hover:border-white/20 hover:shadow-hover group overflow-hidden">
                   {/* Subtle gradient overlay on hover */}
                   <div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 via-brand-500/0 to-purple-500/0 group-hover:from-brand-500/10 group-hover:via-brand-500/5 group-hover:to-purple-500/10 transition-all duration-300 rounded-2xl" />
                   
-                  {/* Logo */}
+                  {/* Logo - bigger and more visible */}
                   <div className="relative z-10 flex items-center justify-center">
                     <Image
                       src={company.logoPath}
                       alt={company.name}
-                      width={100}
-                      height={100}
-                      className="object-contain h-[90px] w-auto opacity-90 transition-all duration-300 group-hover:opacity-100 group-hover:scale-105"
+                      width={140}
+                      height={140}
+                      className="object-contain h-[120px] w-auto opacity-95 transition-all duration-300 group-hover:opacity-100 group-hover:scale-110"
                       onError={(e) => {
                         console.error(`Failed to load logo: ${company.logoPath}`, e);
                         // Hide broken logos - no text fallback

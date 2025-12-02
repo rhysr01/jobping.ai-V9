@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseClient } from '@/Utils/databasePool';
 import { asyncHandler } from '@/lib/errors';
-import { extractCountryFromLocation, getCountryFlag, COUNTRY_FLAGS } from '@/lib/countryFlags';
+import { extractCountryFromLocation, getCountryFlag, COUNTRY_FLAGS, getCountryFromCity } from '@/lib/countryFlags';
 
 // Cache for 1 hour
-let cachedCountries: Array<{ country: string; flag: string; count: number }> | null = null;
+let cachedCountries: Array<{ country: string; flag: string; cities: string[]; count: number }> | null = null;
 let lastFetch: number = 0;
 const CACHE_DURATION = 60 * 60 * 1000;
 
@@ -34,11 +34,12 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     throw new Error(`Failed to fetch jobs: ${error.message}`);
   }
 
-  // Collect unique countries
-  const countryCounts = new Map<string, number>();
+  // Collect unique cities grouped by country
+  const countryToCities = new Map<string, Set<string>>();
   
   data?.forEach((job) => {
     let country = '';
+    let city = '';
     
     // Priority: country field > location field > city field
     if (job.country) {
@@ -51,38 +52,81 @@ export const GET = asyncHandler(async (req: NextRequest) => {
       country = extractCountryFromLocation(job.location);
     } else if (job.city) {
       country = extractCountryFromLocation(job.city);
+      city = job.city.trim();
     }
     
-    // Only count countries we have flags for
+    // Only include countries we have flags for
     if (country && getCountryFlag(country)) {
-      countryCounts.set(country, (countryCounts.get(country) || 0) + 1);
+      if (!countryToCities.has(country)) {
+        countryToCities.set(country, new Set());
+      }
+      
+      // Add city if we have it and it's a known city
+      if (city && getCountryFromCity(city) === country) {
+        countryToCities.get(country)!.add(city);
+      }
     }
   });
 
-  // Convert to array and sort by count
-  const dbCountries = Array.from(countryCounts.entries())
-    .map(([country, count]) => ({
+  // Convert to array with cities
+  const dbCountries = Array.from(countryToCities.entries())
+    .map(([country, cities]) => ({
       country,
       flag: getCountryFlag(country),
-      count
+      cities: Array.from(cities),
+      count: cities.size
     }))
     .filter(c => c.flag) // Only include countries with flags
-    .sort((a, b) => b.count - a.count); // Sort by frequency
+    .sort((a, b) => b.count - a.count); // Sort by city count
 
   // If we have countries from DB, use those
   // Otherwise, show all available countries from signup form as fallback
-  let countries: Array<{ country: string; flag: string; count: number }>;
+  let countries: Array<{ country: string; flag: string; cities: string[]; count: number }>;
   
   if (dbCountries.length > 0) {
     countries = dbCountries;
   } else {
-    // Fallback: Show all available countries from signup form
+    // Fallback: Show all available countries with their cities from signup form
+    const CITY_TO_COUNTRY: Record<string, string> = {
+      'Dublin': 'Ireland',
+      'London': 'United Kingdom',
+      'Manchester': 'United Kingdom',
+      'Birmingham': 'United Kingdom',
+      'Paris': 'France',
+      'Amsterdam': 'Netherlands',
+      'Brussels': 'Belgium',
+      'Berlin': 'Germany',
+      'Hamburg': 'Germany',
+      'Munich': 'Germany',
+      'Zurich': 'Switzerland',
+      'Madrid': 'Spain',
+      'Barcelona': 'Spain',
+      'Milan': 'Italy',
+      'Rome': 'Italy',
+      'Stockholm': 'Sweden',
+      'Copenhagen': 'Denmark',
+      'Vienna': 'Austria',
+      'Prague': 'Czech Republic',
+      'Warsaw': 'Poland',
+    };
+    
+    // Group cities by country
+    const fallbackCountryToCities = new Map<string, string[]>();
+    Object.entries(CITY_TO_COUNTRY).forEach(([city, country]) => {
+      if (!fallbackCountryToCities.has(country)) {
+        fallbackCountryToCities.set(country, []);
+      }
+      fallbackCountryToCities.get(country)!.push(city);
+    });
+    
     countries = Object.entries(COUNTRY_FLAGS)
       .map(([country, flag]) => ({
         country,
         flag,
-        count: 0 // No count since no jobs yet
+        cities: fallbackCountryToCities.get(country) || [],
+        count: fallbackCountryToCities.get(country)?.length || 0
       }))
+      .filter(c => c.cities.length > 0) // Only show countries with cities
       .sort((a, b) => a.country.localeCompare(b.country)); // Alphabetical order
     console.log(`[Countries API] No DB countries found, showing ${countries.length} available countries as fallback`);
   }
