@@ -1,5 +1,5 @@
 "use strict";
-// Reed.co.uk Scraper (API v1.0) - UK + Dublin early-career focus
+// Reed.co.uk Scraper (API v1.0) - UK and Ireland early-career focus
 require('dotenv').config({ path: '.env.local' });
 const axios = require('axios');
 const { createClient } = require('@supabase/supabase-js');
@@ -58,8 +58,12 @@ function convertToDatabaseFormat(job) {
 
 const REED_API = 'https://www.reed.co.uk/api/1.0/search';
 
-// Reed.co.uk is UK-only (plus Dublin, Ireland)
-const UK_CITIES = ['London', 'Manchester', 'Birmingham', 'Belfast', 'Dublin'];
+// Reed.co.uk supports UK and Ireland
+// UK cities: London, Manchester, Birmingham, Belfast (Belfast is in Northern Ireland, part of UK)
+// Ireland cities: Dublin (Republic of Ireland, NOT part of UK)
+const UK_CITIES = ['London', 'Manchester', 'Birmingham', 'Belfast'];
+const IRELAND_CITIES = ['Dublin'];
+const SUPPORTED_CITIES = [...UK_CITIES, ...IRELAND_CITIES];
 const DEFAULT_LOCATIONS = ['London', 'Manchester', 'Birmingham', 'Belfast', 'Dublin'];
 
 function parseTargetCities() {
@@ -79,19 +83,22 @@ function parseTargetCities() {
   }
 }
 
-// Filter TARGET_CITIES to only UK cities (Reed is UK-only)
-function filterUKCities(cities) {
-  return cities.filter(city => UK_CITIES.includes(city));
+// Filter TARGET_CITIES to only Reed-supported cities (UK + Ireland)
+function filterReedSupportedCities(cities) {
+  return cities.filter(city => SUPPORTED_CITIES.includes(city));
 }
 
 const TARGET_CITIES = parseTargetCities();
-const UK_TARGET_CITIES = TARGET_CITIES.length ? filterUKCities(TARGET_CITIES) : [];
-const LOCATIONS = UK_TARGET_CITIES.length ? UK_TARGET_CITIES : DEFAULT_LOCATIONS;
+const REED_SUPPORTED_CITIES = TARGET_CITIES.length ? filterReedSupportedCities(TARGET_CITIES) : [];
+const LOCATIONS = REED_SUPPORTED_CITIES.length ? REED_SUPPORTED_CITIES : DEFAULT_LOCATIONS;
 
-if (TARGET_CITIES.length && UK_TARGET_CITIES.length < TARGET_CITIES.length) {
-  const filtered = TARGET_CITIES.filter(c => !UK_CITIES.includes(c));
-  console.log(`⚠️  Reed: Filtered out ${filtered.length} non-UK cities: ${filtered.join(', ')}`);
-  console.log(`✅ Reed: Using UK cities only: ${UK_TARGET_CITIES.join(', ')}`);
+if (TARGET_CITIES.length && REED_SUPPORTED_CITIES.length < TARGET_CITIES.length) {
+  const filtered = TARGET_CITIES.filter(c => !SUPPORTED_CITIES.includes(c));
+  console.log(`⚠️  Reed: Filtered out ${filtered.length} unsupported cities: ${filtered.join(', ')}`);
+  const ukCities = REED_SUPPORTED_CITIES.filter(c => UK_CITIES.includes(c));
+  const irelandCities = REED_SUPPORTED_CITIES.filter(c => IRELAND_CITIES.includes(c));
+  if (ukCities.length) console.log(`🇬🇧 Reed: UK cities: ${ukCities.join(', ')}`);
+  if (irelandCities.length) console.log(`🇮🇪 Reed: Ireland cities: ${irelandCities.join(', ')}`);
 }
 
 if (TARGET_CITIES.length) {
