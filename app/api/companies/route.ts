@@ -67,11 +67,20 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     }
   });
 
+  // Debug: Log total companies found
+  console.log(`[Companies API] Found ${companyData.size} unique companies in database`);
+  
   // Only include companies we have logos for, sorted by frequency
   const companiesWithLogos = Array.from(companyData.entries())
     .map(([name, data]) => {
       const logo = getCompanyLogo(name);
-      if (!logo) return null;
+      if (!logo) {
+        // Debug: Log companies without logos (first 10)
+        if (Array.from(companyData.keys()).indexOf(name) < 10) {
+          console.log(`[Companies API] No logo found for: "${name}"`);
+        }
+        return null;
+      }
       
       // Convert locations set to array and get flags
       const locations = Array.from(data.locations)
@@ -94,12 +103,15 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     .slice(0, 30) // Limit to top 30
     .map(({ name, logoPath, locations }) => ({ name, logoPath, locations })); // Remove count
 
+  console.log(`[Companies API] Returning ${companiesWithLogos.length} companies with logos`);
+
   cachedCompanies = companiesWithLogos;
   lastFetch = now;
 
   return NextResponse.json({ 
     companies: companiesWithLogos,
     count: companiesWithLogos.length,
+    totalCompaniesInDb: companyData.size,
     cached: false 
   });
 });

@@ -19,7 +19,13 @@ export default function CompanyLogos() {
     async function fetchCompanies() {
       try {
         const response = await fetch('/api/companies');
+        if (!response.ok) {
+          console.error('API error:', response.status, response.statusText);
+          setIsLoading(false);
+          return;
+        }
         const data = await response.json();
+        console.log('Companies API response:', data);
         setCompanies(data.companies || []);
       } catch (error) {
         console.error('Failed to fetch companies:', error);
@@ -42,7 +48,38 @@ export default function CompanyLogos() {
     );
   }
 
-  if (companies.length === 0) return null;
+  // Show section even if no companies (for debugging)
+  // In production, you might want to return null here
+  if (companies.length === 0) {
+    return (
+      <section className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 bg-black scroll-snap-section relative">
+        <div className="container-page relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mx-auto max-w-3xl text-left sm:text-center"
+          >
+            <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1.5 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200 shadow-lg shadow-brand-500/10">
+              <BrandIcons.Briefcase className="h-4 w-4 text-brand-300" />
+              Trusted Employers
+            </span>
+            <h2 className="section-title mt-4 mb-3">
+              Trusted by Europe's best early-career employers
+            </h2>
+            <p className="text-xl text-zinc-300 md:text-2xl leading-relaxed mb-8">
+              We've sent matches from these companies (and 400+ more)
+            </p>
+            <div className="text-sm text-zinc-500 mt-8 p-4 bg-white/5 rounded-lg border border-white/10">
+              <p>No companies with logos found. Add logo files to <code className="text-zinc-400">/public/logos/companies/</code></p>
+              <p className="text-xs mt-2 text-zinc-600">Check browser console for API response details.</p>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 bg-black scroll-snap-section relative">
