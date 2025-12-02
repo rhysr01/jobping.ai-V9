@@ -18,7 +18,7 @@ export const GET = (req: NextRequest) => {
   });
   
   return checkoutHandler(req);
-} as any;
+};
 
 // POST endpoint to create checkout session programmatically
 export async function POST(req: NextRequest) {
