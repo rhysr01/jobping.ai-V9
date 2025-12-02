@@ -19,8 +19,8 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 
 // Hero section
 export const HERO_TITLE = "JobPing";
-export const HERO_HEADLINE ="Early-career roles across Europe, curated for you—no BS.";
-export const HERO_SUBLINE = 'Stop Searching. Start Applying.Created for the 2026 Job Market.';
+export const HERO_HEADLINE = "Early-career roles across Europe, curated for you—no BS.";
+export const HERO_SUBLINE = 'Stop Searching. Start Applying. Created for the 2026 Job Market.';
 export const HERO_SUBLINE_MICRO = "No dashboards. No job boards. Just roles you can actually apply for.";
 export const HERO_SUBTITLE = "";
 export const HERO_CTA = "Get my first 5 personalized matches";
@@ -37,7 +37,7 @@ export const HOW_IT_WORKS_STEPS = [
 ];
 
 // Built for students
-export const BUILT_FOR_STUDENTS_TITLE = "Built for early-career after University job hunters,";
+export const BUILT_FOR_STUDENTS_TITLE = "Built for early-career job hunters after university,";
 export const BUILT_FOR_STUDENTS_SUBTITLE = "We help first-time applicants land early-career roles they can actually get.";
 export const BUILT_FOR_STUDENTS_KICKER = "For early-career jobseekers";
 export const BUILT_FOR_STUDENTS_FEATURES = [
