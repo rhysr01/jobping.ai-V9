@@ -219,6 +219,82 @@ export default function EuropeMap({
     });
   }, []);
 
+  // Calculate label positions with collision detection
+  const labelPositions = useMemo(() => {
+    const positions: Map<string, { x: number; y: number }> = new Map();
+    const LABEL_HEIGHT = 20; // Approximate height of label text
+    const LABEL_PADDING = 4; // Padding between labels
+    const MIN_DISTANCE = LABEL_HEIGHT + LABEL_PADDING;
+    
+    // Get all cities that should show labels (selected, hovered, or focused)
+    const citiesToLabel = cityEntries
+      .filter(([city]) => {
+        const selected = selectedCities.includes(city);
+        const hovered = hoveredCity === city;
+        const focused = focusedCity === city;
+        const touched = touchedCity === city;
+        return selected || hovered || focused || touched;
+      })
+      .sort(([a], [b]) => {
+        // Sort by selection status (selected first), then by y position
+        const aSelected = selectedCities.includes(a);
+        const bSelected = selectedCities.includes(b);
+        if (aSelected !== bSelected) return aSelected ? -1 : 1;
+        return cityEntries.find(([name]) => name === a)?.[1].y ?? 0 - 
+               cityEntries.find(([name]) => name === b)?.[1].y ?? 0;
+      });
+
+    citiesToLabel.forEach(([city, coords]) => {
+      const isSelected = selectedCities.includes(city);
+      const baseY = coords.y - (isSelected ? 32 : 26);
+      let labelY = baseY;
+      let labelX = coords.x;
+      
+      // Check for collisions with already positioned labels
+      let attempts = 0;
+      const maxAttempts = 10;
+      let hasCollision = true;
+      
+      while (hasCollision && attempts < maxAttempts) {
+        hasCollision = false;
+        
+        // Check against all existing labels
+        for (const [otherCity, otherPos] of positions.entries()) {
+          if (otherCity === city) continue;
+          
+          const distance = Math.sqrt(
+            Math.pow(labelX - otherPos.x, 2) + Math.pow(labelY - otherPos.y, 2)
+          );
+          
+          if (distance < MIN_DISTANCE) {
+            hasCollision = true;
+            // Try moving this label up or down
+            if (labelY === baseY) {
+              // First try: move up
+              labelY = baseY - MIN_DISTANCE;
+            } else if (labelY < baseY) {
+              // Already moved up, try moving down
+              labelY = baseY + MIN_DISTANCE;
+            } else {
+              // Already moved down, try moving further up
+              labelY = baseY - (MIN_DISTANCE * 2);
+            }
+            attempts++;
+            break;
+          }
+        }
+        
+        if (!hasCollision) {
+          break;
+        }
+      }
+      
+      positions.set(city, { x: labelX, y: labelY });
+    });
+    
+    return positions;
+  }, [cityEntries, selectedCities, hoveredCity, focusedCity, touchedCity]);
+
   return (
     <div 
       className={`relative w-full h-full min-h-[420px] sm:min-h-[480px] md:min-h-[540px] lg:min-h-[600px] rounded-2xl border-2 border-brand-500/30 overflow-hidden shadow-[0_0_60px_rgba(99,102,241,0.15),inset_0_0_100px_rgba(99,102,241,0.05)] touch-manipulation ${className}`}
@@ -297,8 +373,12 @@ export default function EuropeMap({
             const disabled = isCityDisabled(city);
             const hovered = hoveredCity === city;
             const focused = focusedCity === city;
-            const showLabel = selected || hovered || focused;
-            const labelY = coords.y - (selected ? 32 : 26);
+            const touched = touchedCity === city;
+            const showLabel = selected || hovered || focused || touched;
+            // Use calculated label position if available, otherwise use default
+            const labelPos = labelPositions.get(city);
+            const labelY = labelPos?.y ?? (coords.y - (selected ? 32 : 26));
+            const labelX = labelPos?.x ?? coords.x;
 
             return (
               <g key={city} aria-label={`${city}, ${coords.country}`}>
@@ -469,9 +549,9 @@ export default function EuropeMap({
                 />
                 
                 {/* Enhanced city label with premium styling */}
-                {(showLabel || touchedCity === city) && (
+                {(showLabel || touched) && (
                   <motion.text
-                    x={coords.x}
+                    x={labelX}
                     y={labelY}
                     textAnchor="middle"
                     fill={selected ? '#D4C5FF' : '#F3E8FF'} // Lighter, more vibrant colors
