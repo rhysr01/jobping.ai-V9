@@ -240,8 +240,11 @@ export default function EuropeMap({
         const aSelected = selectedCities.includes(a);
         const bSelected = selectedCities.includes(b);
         if (aSelected !== bSelected) return aSelected ? -1 : 1;
-        return cityEntries.find(([name]) => name === a)?.[1].y ?? 0 - 
-               cityEntries.find(([name]) => name === b)?.[1].y ?? 0;
+        const aCoords = cityEntries.find(([name]) => name === a)?.[1];
+        const bCoords = cityEntries.find(([name]) => name === b)?.[1];
+        const aY = aCoords?.y ?? 0;
+        const bY = bCoords?.y ?? 0;
+        return aY - bY;
       });
 
     citiesToLabel.forEach(([city, coords]) => {
