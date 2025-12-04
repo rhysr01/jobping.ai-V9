@@ -89,6 +89,7 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     // Fallback: Show all available countries with their cities from signup form
     const CITY_TO_COUNTRY: Record<string, string> = {
       'Dublin': 'Ireland',
+      'Belfast': 'Ireland',
       'London': 'United Kingdom',
       'Manchester': 'United Kingdom',
       'Birmingham': 'United Kingdom',

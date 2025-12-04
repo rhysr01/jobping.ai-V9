@@ -6,7 +6,7 @@
 // Only countries available in the signup form (based on cities in EuropeMap)
 export const COUNTRY_FLAGS: Record<string, string> = {
   'United Kingdom': '🇬🇧',  // London, Manchester, Birmingham
-  'Ireland': '🇮🇪',          // Dublin
+  'Ireland': '🇮🇪',          // Dublin, Belfast
   'France': '🇫🇷',            // Paris
   'Germany': '🇩🇪',          // Berlin, Hamburg, Munich
   'Spain': '🇪🇸',             // Madrid, Barcelona
@@ -34,6 +34,7 @@ export function getCountryFlag(country: string): string {
  */
 const CITY_TO_COUNTRY: Record<string, string> = {
   'Dublin': 'Ireland',
+  'Belfast': 'Ireland',
   'London': 'United Kingdom',
   'Manchester': 'United Kingdom',
   'Birmingham': 'United Kingdom',
