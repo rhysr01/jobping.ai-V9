@@ -49,11 +49,15 @@ async function fixReedCities() {
     COMMIT;
   `;
 
-  const { error: fixError } = await supabase.rpc('exec_sql', { sql: fixSQL }).catch(async () => {
+  let fixError = null;
+  try {
+    const result = await supabase.rpc('exec_sql', { sql: fixSQL });
+    fixError = result.error;
+  } catch (error) {
     // If RPC doesn't exist, try direct query (Supabase doesn't support multi-statement by default)
     // So we'll do it step by step
-    return { error: null };
-  });
+    fixError = null;
+  }
 
   if (fixError) {
     console.error('❌ Error executing fix:', fixError);
