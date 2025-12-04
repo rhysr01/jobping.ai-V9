@@ -229,10 +229,10 @@ export default function Hero() {
             className="flex flex-col items-center gap-3 mb-6 md:mb-8"
             aria-hidden="true"
           >
-            {/* Smaller wordmark with grad hat */}
-            <div className="flex items-center justify-center gap-3">
+            {/* Larger wordmark with grad hat */}
+            <div className="flex items-center justify-center gap-4">
               <svg
-                className="h-[48px] w-[48px] sm:h-[56px] sm:w-[56px] md:h-[70px] md:w-[70px] text-white"
+                className="h-[64px] w-[64px] sm:h-[80px] sm:w-[80px] md:h-[96px] md:w-[96px] text-white"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -245,9 +245,8 @@ export default function Hero() {
                 <path d="M22 10v4" />
                 <path d="M6 12v4c0 1.6 3 3.2 6 3.2s6-1.6 6-3.2v-4" />
               </svg>
-              <span className="relative text-[4rem] sm:text-[4.5rem] md:text-[5rem] font-semibold tracking-tight text-white">
+              <span className="relative text-[5rem] sm:text-[6rem] md:text-[7rem] font-semibold tracking-tight bg-gradient-to-r from-white via-white to-zinc-200 bg-clip-text text-transparent">
                 JobPing
-                <span className="absolute inset-0 blur-sm mix-blend-screen opacity-30 pointer-events-none bg-[linear-gradient(90deg,_theme(colors.brand.500/0.4),_rgba(255,255,255,0),_theme(colors.brand.300/0.4))]" />
               </span>
             </div>
           </motion.div>
