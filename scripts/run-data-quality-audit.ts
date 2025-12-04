@@ -185,7 +185,14 @@ async function runDataQualityAudit() {
   // 4. CHECK DATABASE INDEXES FOR MATCHING OPTIMIZATION
   // ============================================================================
 
-  const { data: indexes } = await supabase.rpc('get_table_indexes', { table_name: 'jobs' }).catch(() => ({ data: null }));
+  let indexes = null;
+  try {
+    const { data } = await supabase.rpc('get_table_indexes', { table_name: 'jobs' });
+    indexes = data;
+  } catch (error) {
+    // RPC function may not exist, ignore error
+    indexes = null;
+  }
 
   // Check for critical indexes
   const criticalIndexes = [
