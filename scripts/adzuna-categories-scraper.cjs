@@ -94,147 +94,83 @@ const HIGH_PERFORMING_SECTORS = [
 
 /**
  * Generate multilingual early-career search queries for a specific city
- * NOW INCLUDES EXACT ROLE NAMES FROM SIGNUP FORM
+ * OPTIMIZED: Uses fewer, more targeted queries (8-10 per city) like JobSpy
+ * Prioritizes exact role names from signup form (highest performing)
  */
 function generateCityQueries(countryCode) {
   const queries = [];
   
-  // 🥇 HIGHEST PRIORITY: Exact role names from signup form (early-career roles)
+  // 🥇 TIER 1: Exact role names from signup form (HIGHEST PRIORITY - proven performers)
   const { cleanRoleForSearch } = require('../scrapers/shared/roles.cjs');
   const earlyCareerRoles = getEarlyCareerRoles();
-  const topRoles = getTopRolesByCareerPath(3); // Top 3 roles per career path (reduced from 5)
+  const topRoles = getTopRolesByCareerPath(3); // Top 3 roles per career path
+  
+  // Prioritize: early-career roles first, then top roles by career path
   const prioritizedRoles = [
-    ...earlyCareerRoles.slice(0, 8), // Top 8 early-career roles (reduced from 10)
-    ...Object.values(topRoles).flat().slice(0, 10) // Top roles from each career path (reduced from 15)
+    ...earlyCareerRoles.slice(0, 6), // Top 6 early-career roles (intern/graduate/junior)
+    ...Object.values(topRoles).flat().slice(0, 6) // Top 6 roles from each career path
   ];
   
-  // Clean role names (remove parentheses, handle special chars) and create variations
-  const cleanedRoles = prioritizedRoles.flatMap(role => cleanRoleForSearch(role));
+  // Clean role names and get primary version (without parentheses)
+  const cleanedRoles = prioritizedRoles.map(role => {
+    const cleaned = cleanRoleForSearch(role);
+    return cleaned[0]; // Use primary cleaned version
+  });
   
-  // Add exact role names (remove duplicates)
+  // Add exact role names (remove duplicates, limit to top 6)
   const uniqueRoles = [...new Set(cleanedRoles)];
-  queries.push(...uniqueRoles.slice(0, 12)); // Limit to top 12 to avoid too many queries (reduced from 20)
+  queries.push(...uniqueRoles.slice(0, 6)); // Top 6 exact role names
   
-  // Always include core English terms
-  queries.push(...CORE_ENGLISH_TERMS);
+  // 🥈 TIER 2: Core English terms from rotation (2-3 terms)
+  queries.push(...CORE_ENGLISH_TERMS.slice(0, 2)); // Top 2 from rotation set
   
-  // Add local language terms for this country
+  // 🥉 TIER 3: Local language terms (2-3 terms, highest performing)
   const localTerms = LOCAL_EARLY_CAREER_TERMS[countryCode] || [];
-  queries.push(...localTerms);
+  // Prioritize internship/graduate terms in local language
+  const prioritizedLocal = [
+    ...localTerms.filter(t => /(prácticas|becario|stagiaire|stage|praktik|tirocinio|staż)/i.test(t)),
+    ...localTerms.filter(t => !/(prácticas|becario|stagiaire|stage|praktik|tirocinio|staż)/i.test(t))
+  ];
+  queries.push(...prioritizedLocal.slice(0, 2)); // Top 2 local terms
   
-  // PRIORITY: Internship terms (GOLD STANDARD - inherently early-career)
-  for (const sector of HIGH_PERFORMING_SECTORS) {
-    // 🥇 HIGHEST PRIORITY: Internship combinations (100% early-career)
-    queries.push(`${sector} internship`);     // e.g., "finance internship"
-    queries.push(`${sector} intern`);         // e.g., "marketing intern"
-    queries.push(`internship ${sector}`);     // e.g., "internship finance"
-    
-    // 🥈 HIGH PRIORITY: Junior combinations
-    queries.push(`junior ${sector}`);         // ✅ Proven pattern
-    
-    // 🥉 LOCAL LANGUAGE INTERNSHIPS (by country)
+  // 🎯 TIER 4: High-performing sector internships (only if we have room)
+  // Only add 1-2 sector combinations if we're under 10 queries
+  if (queries.length < 8) {
+    const topSector = HIGH_PERFORMING_SECTORS[0]; // Finance (highest performer)
     if (countryCode === 'es') {
-      queries.push(`prácticas ${sector}`);    // ✅ GOLDMINE: 8-24 jobs per search!
-      queries.push(`becario ${sector}`);      // Spanish internship term
+      queries.push(`prácticas ${topSector}`); // Spanish goldmine
     } else if (countryCode === 'fr') {
-      queries.push(`stagiaire ${sector}`);    // ✅ Good in Paris  
-      queries.push(`stage ${sector}`);        // French internship term
-    } else if (countryCode === 'it') {
-      queries.push(`stage ${sector}`);        // ✅ Some success
-      queries.push(`tirocinio ${sector}`);    // Italian internship term
-    } else if (countryCode === 'de' || countryCode === 'at') {
-      queries.push(`praktikum ${sector}`);    // German/Austrian internship term
-    } else if (countryCode === 'nl') {
-      queries.push(`stage ${sector}`);        // Dutch internship term
-    } else if (countryCode === 'be') {
-      queries.push(`stagiaire ${sector}`);    // Belgian French internship term
-      queries.push(`stage ${sector}`);        // Belgian Dutch/French internship term
-    } else if (countryCode === 'se') {
-      queries.push(`praktikant ${sector}`);   // Swedish internship term
-    } else if (countryCode === 'dk') {
-      queries.push(`praktikant ${sector}`);   // Danish internship term
-    } else if (countryCode === 'cz') {
-      queries.push(`praktikant ${sector}`);   // Czech internship term
-    } else if (countryCode === 'pl') {
-      queries.push(`staż ${sector}`);         // Polish internship term
+      queries.push(`stagiaire ${topSector}`); // French
+    } else {
+      queries.push(`${topSector} internship`); // English fallback
     }
   }
   
-  // ULTRA-SPECIFIC business school graduate terms (NO AMBIGUITY)
-  queries.push(
-    // Core Finance & Banking (clearly junior/analyst level)
-    'investment banking analyst',      // ✅ Gold standard
-    'junior investment banker',        // More specific
-    'graduate investment banking',     // Graduate-specific
-    'junior financial analyst',       
-    'graduate financial analyst',     // Graduate-specific
-    'equity research associate',       // Junior in finance
-    'junior equity research',         // More specific
-    'junior portfolio analyst',       // More specific
-    'graduate portfolio management',   // Graduate-specific
-    'junior credit analyst',          
-    'graduate credit analyst',        // Graduate-specific
-    
-    // Strategy & Consulting (junior/analyst/associate only)
-    'junior strategy consultant',     // More specific than 'strategy consultant'
-    'graduate strategy consultant',   // Graduate-specific
-    'strategy analyst',               // Analyst = junior
-    'junior consultant',              // Clear junior level
-    'graduate consultant',            // Graduate-specific
-    'associate consultant',           // Junior consulting level
-    'consultant graduate program',    // Graduate program specific
-    'junior business analyst',        // Clear junior level
-    'graduate business analyst',      // Graduate-specific
-    
-    // Corporate Development & M&A (analyst/associate level)
-    'corporate development analyst',   // Analyst = junior
-    'junior corporate development',    // More specific
-    'graduate corporate development',  // Graduate-specific
-    'business development analyst',    // Analyst = junior
-    'junior business development',     
-    'graduate business development',   // Graduate-specific
-    'M&A analyst',                    // Analyst = junior
-    'mergers acquisitions analyst',   // Analyst = junior
-    
-    // Marketing & Commercial (analyst/junior/graduate only)
-    'marketing analyst',              // Analyst = junior
-    'junior marketing analyst',       // More specific
-    'graduate marketing',             // Graduate-specific
-    'digital marketing analyst',      // Analyst = junior
-    'commercial analyst',             // Analyst = junior
-    'junior commercial analyst',      // More specific
-    'brand analyst',                  // Analyst = junior
-    'product marketing analyst',      // Analyst = junior
-    
-    // Data & Analytics (analyst/junior only)
-    'data analyst',                   // Analyst = junior
-    'junior data analyst',            // More specific
-    'business intelligence analyst',  // Analyst = junior
-    'junior data scientist',          // Explicitly junior
-    'pricing analyst',                // Analyst = junior
-    'research analyst',               // Analyst = junior
-    
-    // Operations (analyst/junior only)
-    'operations analyst',             // Analyst = junior
-    'junior operations analyst',      // More specific
-    'supply chain analyst',           // Analyst = junior
-    'logistics analyst',              // Analyst = junior
-    'business process analyst',       // Analyst = junior
-    
-    // Graduate Programs (100% early-career)
-    'management trainee',             // ✅ Always junior
-    'graduate trainee',               // ✅ Graduate-specific
-    'business graduate',              // ✅ Graduate-specific
-    'commercial graduate',            // ✅ Graduate-specific
-    'finance graduate',               // ✅ Graduate-specific
-    'graduate program',               // ✅ Formal programs
-    'leadership development program', // ✅ Graduate programs
-    'associate program'               // ✅ Entry-level programs
-  );
-  
-  // Limit to 15 queries per city (optimized for 250 daily API limit)
-  const limitedQueries = [...new Set(queries)].slice(0, 15);
+  // Remove duplicates and limit to 8-10 queries per city (optimized like JobSpy)
+  const limitedQueries = [...new Set(queries)].slice(0, 10);
   return limitedQueries;
+}
+
+/**
+ * Determine max pages based on query type (smart pagination)
+ * Role-based queries get more pages (more targeted, better results)
+ * Generic queries get fewer pages (broader, less targeted)
+ */
+function getMaxPagesForQuery(query) {
+  // Role-based queries (exact role names) - use more pages
+  const roleBasedPattern = /(analyst|consultant|intern|associate|manager|engineer|specialist|coordinator|representative|executive)/i;
+  const isRoleBased = roleBasedPattern.test(query) && query.length > 10; // Longer queries are usually role names
+  
+  // Generic queries (internship, graduate, junior) - use fewer pages
+  const genericPattern = /^(internship|graduate|junior|entry level|trainee|intern)$/i;
+  const isGeneric = genericPattern.test(query.trim());
+  
+  if (isRoleBased) {
+    return parseInt(process.env.ADZUNA_MAX_PAGES_ROLE || '5', 10); // More pages for roles
+  } else if (isGeneric) {
+    return parseInt(process.env.ADZUNA_MAX_PAGES_GENERIC || '3', 10); // Fewer pages for generic
+  }
+  return parseInt(process.env.ADZUNA_MAX_PAGES || '4', 10); // Default
 }
 
 /**
@@ -249,7 +185,7 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
     delay = parseInt(process.env.ADZUNA_PAGE_DELAY_MS || '800', 10),
     timeout = parseInt(process.env.ADZUNA_TIMEOUT_MS || '15000', 10),
     verbose = false,
-    maxPages = parseInt(process.env.ADZUNA_MAX_PAGES || '5', 10), // EXPANDED: Increased from 3 to 5
+    maxPages = null, // Will be determined per query using smart pagination
     pageDelayJitter = parseInt(process.env.ADZUNA_PAGE_DELAY_JITTER_MS || '0', 10),
     targetCareerPaths = [],
   } = options;
@@ -259,26 +195,53 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
   }
 
   const allJobs = [];
+  let consecutive404s = 0;
+  const MAX_CONSECUTIVE_404S = 3; // If 3 queries in a row return 404, country likely not supported
   
   for (const query of queries) {
     try {
-      if (verbose) console.log(`📍 Searching ${cityName} for: "${query}" (max ${maxDaysOld} days)`);
+      // Smart pagination: more pages for role-based queries, fewer for generic
+      const queryMaxPages = maxPages !== null ? maxPages : getMaxPagesForQuery(query);
+      
+      if (verbose) console.log(`📍 Searching ${cityName} for: "${query}" (max ${maxDaysOld} days, ${queryMaxPages} pages)`);
       
       // Search multiple pages for more results
       let page = 1;
       let hasMorePages = true;
       
-      while (hasMorePages && page <= maxPages) {
+      while (hasMorePages && page <= queryMaxPages) {
         const url = `https://api.adzuna.com/v1/api/jobs/${countryCode}/search/${page}?app_id=${appId}&app_key=${appKey}&what=${encodeURIComponent(query)}&where=${encodeURIComponent(cityName)}&results_per_page=${resultsPerPage}&sort_by=date&max_days_old=${maxDaysOld}`;
       
         const response = await axios.get(url, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
           },
-          timeout
+          timeout,
+          validateStatus: (status) => status < 500 // Don't throw on 4xx errors
         });
 
-        const jobs = response.data.results || [];
+        // Check for 404 - country code likely not supported
+        if (response.status === 404) {
+          consecutive404s++;
+          if (consecutive404s >= MAX_CONSECUTIVE_404S) {
+            console.warn(`⚠️  ${cityName} (${countryCode.toUpperCase()}): Country code not supported by Adzuna API (${consecutive404s} consecutive 404s). Skipping remaining queries.`);
+            return allJobs; // Early return - skip remaining queries for this city
+          }
+          // Single 404 might be query-specific, continue
+          break; // Skip to next query
+        }
+
+        // Check for other HTTP errors
+        if (response.status !== 200) {
+          scrapeErrors += 1;
+          console.error(`❌ Error searching ${cityName} for "${query}": HTTP ${response.status}`);
+          break; // Skip to next query
+        }
+
+        const jobs = response.data?.results || [];
+        
+        // Reset 404 counter on successful response
+        consecutive404s = 0;
         
         if (jobs.length > 0) {
           if (verbose) console.log(`   ✅ Found ${jobs.length} jobs for "${query}" (page ${page})`);
@@ -343,6 +306,14 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
       
     } catch (error) {
       scrapeErrors += 1;
+      // Check if it's a 404 error
+      if (error.response?.status === 404) {
+        consecutive404s++;
+        if (consecutive404s >= MAX_CONSECUTIVE_404S) {
+          console.warn(`⚠️  ${cityName} (${countryCode.toUpperCase()}): Country code not supported by Adzuna API (${consecutive404s} consecutive 404s). Skipping remaining queries.`);
+          return allJobs; // Early return - skip remaining queries for this city
+        }
+      }
       console.error(`❌ Error searching ${cityName} for "${query}":`, error.message);
       // Continue with next query
     }
@@ -395,13 +366,14 @@ async function scrapeAllCitiesCategories(options = {}) {
     : parseInt(process.env.ADZUNA_PAGE_DELAY_JITTER_MS || '0', 10);
   const maxQueriesPerCity = typeof overrideMaxQueriesPerCity === 'number'
     ? overrideMaxQueriesPerCity
-    : parseInt(process.env.ADZUNA_MAX_QUERIES_PER_CITY || '15', 10);
+    : parseInt(process.env.ADZUNA_MAX_QUERIES_PER_CITY || '10', 10); // Reduced from 15 to 10 (optimized like JobSpy)
   
   console.log(`🎓 Starting multilingual early-career job search across ${EU_CITIES_CATEGORIES.length} EU cities...`);
   console.log(`📅 Time range: Last 28 days for wider coverage`);
   console.log(`🌍 Languages: English + local terms per country`);
   console.log(`🏢 Target sectors: ${HIGH_PERFORMING_SECTORS.join(', ')}`);
-  console.log(`📊 API Usage: ~${EU_CITIES_CATEGORIES.length * 15} calls (optimized for 250 daily limit)`);
+  console.log(`📊 API Usage: ~${EU_CITIES_CATEGORIES.length * maxQueriesPerCity} queries × avg 3 pages = ~${EU_CITIES_CATEGORIES.length * maxQueriesPerCity * 3} calls (optimized for 250 daily limit)`);
+  console.log(`⚡ Strategy: Prioritizing exact role names (highest performing), smart pagination (more pages for roles)`);
   console.log(`⚙️  Adzuna config: ${JSON.stringify({
     resultsPerPage,
     maxDaysOld,

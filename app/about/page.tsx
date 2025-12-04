@@ -38,7 +38,7 @@ export default function AboutPage() {
                 href="/signup"
                 className="inline-flex items-center gap-2 h-11 rounded-full bg-violet-500 px-6 text-sm font-medium text-white shadow-md shadow-purple-900/40 transition-all duration-200 hover:bg-violet-400 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
               >
-                Get started
+                Get my first 5 matches
               </Link>
             </div>
           </div>

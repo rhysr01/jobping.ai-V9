@@ -22,6 +22,7 @@ export const targetCities = [
   "Birmingham",
   // Ireland
   "Dublin",
+  "Belfast",
   // France
   "Paris",
   // Netherlands

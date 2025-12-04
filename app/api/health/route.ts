@@ -33,14 +33,15 @@ export async function GET(req: NextRequest) {
   const requestId = getRequestId(req);
   
   try {
-    const [database, redis, openai] = await Promise.all([
+    const [database, redis, openai, scraper] = await Promise.all([
       checkDatabase(),
       checkRedis(),
-      checkOpenAI()
+      checkOpenAI(),
+      checkScraperHealth()
     ]);
 
     const environment = checkEnvironment();
-    const services = { database, redis, openai };
+    const services = { database, redis, openai, scraper };
 
     const duration = Date.now() - start;
 
@@ -122,19 +123,32 @@ function checkEnvironment(): { status: HealthStatus; message: string; missing: s
   const requiredVars = [
     'NEXT_PUBLIC_SUPABASE_URL',
     'SUPABASE_SERVICE_ROLE_KEY',
-    'REDIS_URL',
     'OPENAI_API_KEY',
-    'RESEND_API_KEY',
+    'RESEND_API_KEY'
+  ];
+  
+  // Optional but recommended vars (will show as degraded if missing)
+  const optionalVars = [
+    'REDIS_URL',
     'POLAR_ACCESS_TOKEN'
   ];
 
   const missing = requiredVars.filter((varName) => !process.env[varName]);
+  const missingOptional = optionalVars.filter((varName) => !process.env[varName]);
 
   if (missing.length > 0) {
     return { 
       status: missing.length === requiredVars.length ? 'unhealthy' : 'degraded',
-      message: `Missing environment variables: ${missing.join(', ')}`,
-      missing
+      message: `Missing required environment variables: ${missing.join(', ')}${missingOptional.length > 0 ? ` (optional: ${missingOptional.join(', ')})` : ''}`,
+      missing: [...missing, ...missingOptional]
+    };
+  }
+
+  if (missingOptional.length > 0) {
+    return {
+      status: 'degraded',
+      message: `All required variables present. Missing optional: ${missingOptional.join(', ')}`,
+      missing: missingOptional
     };
   }
 
@@ -224,6 +238,102 @@ async function checkOpenAI(): Promise<ServiceCheck> {
     };
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+async function checkScraperHealth(): Promise<ServiceCheck> {
+  const started = Date.now();
+  try {
+    const supabase = getDatabaseClient();
+    
+    // Check last job from each critical source
+    const criticalSources = ['jobspy-indeed', 'jobspy-internships', 'adzuna', 'reed'];
+    const sourceStatus: Record<string, { lastRun: string; hoursAgo: number; status: HealthStatus }> = {};
+    
+    let hasHealthySource = false;
+    let hasStaleSource = false;
+    let hasCriticalSource = false;
+    
+    for (const source of criticalSources) {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('created_at')
+        .eq('source', source)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (error) {
+        sourceStatus[source] = {
+          lastRun: 'unknown',
+          hoursAgo: Infinity,
+          status: 'unhealthy'
+        };
+        continue;
+      }
+      
+      if (data && data.length > 0) {
+        const lastJobTime = new Date(data[0].created_at);
+        const hoursAgo = (Date.now() - lastJobTime.getTime()) / (1000 * 60 * 60);
+        const daysAgo = hoursAgo / 24;
+        
+        let status: HealthStatus = 'healthy';
+        if (daysAgo > 7) {
+          status = 'unhealthy'; // Critical: source stale >7 days
+          hasCriticalSource = true;
+        } else if (daysAgo > 3) {
+          status = 'degraded'; // Warning: source stale >3 days
+          hasStaleSource = true;
+        } else {
+          hasHealthySource = true;
+        }
+        
+        sourceStatus[source] = {
+          lastRun: lastJobTime.toISOString(),
+          hoursAgo: Math.round(hoursAgo * 10) / 10,
+          status
+        };
+      } else {
+        sourceStatus[source] = {
+          lastRun: 'never',
+          hoursAgo: Infinity,
+          status: 'unhealthy'
+        };
+        hasCriticalSource = true;
+      }
+    }
+    
+    // Determine overall scraper health
+    let overallStatus: HealthStatus = 'healthy';
+    let message = 'All scrapers healthy';
+    
+    if (hasCriticalSource) {
+      overallStatus = 'unhealthy';
+      message = 'Critical scraper(s) stale >7 days';
+    } else if (hasStaleSource) {
+      overallStatus = 'degraded';
+      message = 'Some scrapers stale >3 days';
+    } else if (!hasHealthySource) {
+      overallStatus = 'unhealthy';
+      message = 'No healthy scrapers found';
+    }
+    
+    return {
+      status: overallStatus,
+      message,
+      latencyMs: Date.now() - started,
+      details: {
+        sources: sourceStatus,
+        criticalSources: criticalSources.filter(s => sourceStatus[s]?.status === 'unhealthy'),
+        staleSources: criticalSources.filter(s => sourceStatus[s]?.status === 'degraded')
+      }
+    };
+  } catch (error) {
+    return {
+      status: 'degraded',
+      message: error instanceof Error ? error.message : 'Scraper health check failed',
+      latencyMs: Date.now() - started,
+      details: { error }
+    };
   }
 }
 

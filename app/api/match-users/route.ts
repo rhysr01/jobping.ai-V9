@@ -758,6 +758,33 @@ addBreadcrumb({
         // Pre-filter jobs to reduce AI processing load (with feedback learning)
         const preFilteredJobs = await preFilterJobsByUserPreferencesEnhanced(unseenJobs as any[], user as unknown as UserPreferences);
         
+        // EARLY DETECTION: Log and handle zero-match scenarios
+        if (preFilteredJobs.length === 0) {
+          const zeroJobsError = new Error('Zero matches after pre-filtering');
+          apiLogger.error('CRITICAL: Pre-filtering returned zero jobs', zeroJobsError, {
+            email: user.email,
+            targetCities: user.preferences.target_cities,
+            totalJobs: unseenJobs.length,
+            workEnvironment: user.preferences.work_environment,
+            careerPath: user.preferences.career_path,
+            rolesSelected: user.preferences.roles_selected
+          });
+          
+          // Send to Sentry for monitoring
+          captureException(zeroJobsError, {
+            tags: { component: 'matching', issue: 'zero_matches' },
+            extra: {
+              email: user.email,
+              targetCities: user.preferences.target_cities,
+              totalJobs: unseenJobs.length
+            }
+          });
+          
+          // Skip this user - emergency fallback should have been applied in preFilterJobs
+          // If we still have zero, there's a deeper issue that needs investigation
+          return { user: user.email, success: false, error: 'No jobs found after pre-filtering' };
+        }
+        
         // OPTIMIZED: Send top 50 pre-filtered jobs to AI (was 100/200)
         // This reduces token cost by 50% while maintaining match quality
         // Top 50 contains all perfect/great matches from pre-filtering

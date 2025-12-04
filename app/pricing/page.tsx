@@ -45,7 +45,7 @@ export default function PricingPage() {
                 href="/signup?tier=free"
                 className="block w-full text-center h-11 rounded-full border border-white/15 bg-white/5 text-white font-medium transition-all duration-200 hover:border-brand-500/40 hover:bg-brand-500/10"
               >
-                Get started
+                Get my first 5 matches
               </Link>
             </div>
             

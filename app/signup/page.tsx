@@ -27,6 +27,7 @@ function SignupForm() {
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
+  const [successState, setSuccessState] = useState<{ show: boolean; matchesCount?: number }>({ show: false });
   const [activeJobs, setActiveJobs] = useState('Updating…');
   const [totalUsers, setTotalUsers] = useState('');
   const [isLoadingStats, setIsLoadingStats] = useState(true);
@@ -100,7 +101,7 @@ function SignupForm() {
       .finally(() => setIsLoadingStats(false));
   }, []);
 
-  const CITIES = ['Dublin', 'London', 'Paris', 'Amsterdam', 'Manchester', 'Birmingham', 'Madrid', 'Barcelona', 'Berlin', 'Hamburg', 'Munich', 'Zurich', 'Milan', 'Rome', 'Brussels', 'Stockholm', 'Copenhagen', 'Vienna', 'Prague', 'Warsaw'];
+  const CITIES = ['Dublin', 'London', 'Paris', 'Amsterdam', 'Manchester', 'Birmingham', 'Belfast', 'Madrid', 'Barcelona', 'Berlin', 'Hamburg', 'Munich', 'Zurich', 'Milan', 'Rome', 'Brussels', 'Stockholm', 'Copenhagen', 'Vienna', 'Prague', 'Warsaw'];
   
   const LANGUAGES = [
     // Most common EU languages
@@ -220,9 +221,11 @@ function SignupForm() {
       const result = await response.json();
 
       if (response.ok) {
+        // Show success state before redirect
+        setSuccessState({ show: true, matchesCount: result.matchesCount || 0 });
         showToast.success('Account created successfully! Redirecting...');
         const redirectUrl = result.redirectUrl || `/signup/success?tier=${tier}`;
-        setTimeout(() => router.push(redirectUrl), 500);
+        setTimeout(() => router.push(redirectUrl), 2000); // Increased delay to show success state
       } else {
         // Handle field-specific errors
         if (result.field && result.error) {
@@ -447,6 +450,33 @@ function SignupForm() {
 
         {/* Form Abandonment Recovery Message */}
 
+        {/* Success Message */}
+        <AnimatePresence>
+          {successState.show && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-6 p-6 bg-gradient-to-r from-green-500/20 via-emerald-500/20 to-green-500/20 border-2 border-green-500/50 rounded-xl text-center"
+              role="alert"
+              aria-live="assertive"
+            >
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <BrandIcons.Check className="h-6 w-6 text-green-400" />
+                <h3 className="text-xl font-bold text-green-400">Account Created Successfully!</h3>
+              </div>
+              <p className="text-green-300 text-base mb-2">
+                {successState.matchesCount && successState.matchesCount > 0
+                  ? `🎯 We found ${successState.matchesCount} perfect matches for you!`
+                  : '🎯 We\'re finding your perfect matches now...'}
+              </p>
+              <p className="text-green-200 text-sm">
+                Check your email in the next few minutes for your first job matches.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Error Message */}
         <AnimatePresence>
           {error && (
@@ -630,7 +660,8 @@ function SignupForm() {
                   <label id="cities-label" htmlFor="cities-field" className="block text-base font-bold text-white mb-3">
                     Preferred Cities * <span className="text-zinc-400 font-normal">(Select up to 3)</span>
                   </label>
-                  <p className="text-sm text-zinc-400 mb-4">Choose up to 3 cities where you'd like to work. You can click on the map or use the buttons below.</p>
+                  <p className="text-sm text-zinc-400 mb-2">Choose up to 3 cities where you'd like to work. You can click on the map or use the buttons below.</p>
+                  <p className="text-xs text-zinc-500 mb-4">💡 We'll only show jobs in these cities. You can add more later in your preferences.</p>
                   
                   {/* Interactive Europe Map - Hidden on mobile */}
                   <motion.div
@@ -729,7 +760,8 @@ function SignupForm() {
 
                 <div>
                   <label id="languages-label" htmlFor="languages-field" className="block text-base font-bold text-white mb-3">Languages (Professional Level) *</label>
-                  <p className="text-sm text-zinc-400 mb-4">Select languages you can use professionally</p>
+                  <p className="text-sm text-zinc-400 mb-2">Select languages you can use professionally</p>
+                  <p className="text-xs text-zinc-500 mb-4">💡 We'll prioritize jobs that match your language skills.</p>
                   <div
                     id="languages-field"
                     aria-labelledby="languages-label"

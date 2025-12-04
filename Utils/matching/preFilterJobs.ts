@@ -6,9 +6,10 @@
 import { Job as ScrapersJob } from '@/scrapers/types';
 import type { UserPreferences } from '@/Utils/matching/types';
 import { getDatabaseClient } from '@/Utils/databasePool';
-import { addBreadcrumb } from '@/lib/sentry-utils';
+import { addBreadcrumb, captureException } from '@/lib/sentry-utils';
 import { MATCH_RULES } from '@/Utils/sendConfiguration';
 import { getDatabaseCategoriesForForm } from './categoryMapper';
+import { apiLogger } from '@/lib/api-logger';
 
 /**
  * Enhanced pre-filter jobs by user preferences with scoring AND feedback learning
@@ -77,20 +78,83 @@ export async function preFilterJobsByUserPreferencesEnhanced(
       : [];
   
   /**
-   * Strict location matching function
+   * Comprehensive city-to-country mapping for intelligent fallback
+   */
+  const CITY_COUNTRY_MAP: Record<string, string[]> = {
+    'london': ['uk', 'united kingdom', 'england', 'britain', 'great britain'],
+    'berlin': ['germany', 'deutschland', 'de'],
+    'munich': ['germany', 'deutschland', 'de'],
+    'hamburg': ['germany', 'deutschland', 'de'],
+    'frankfurt': ['germany', 'deutschland', 'de'],
+    'cologne': ['germany', 'deutschland', 'de'],
+    'paris': ['france', 'fr'],
+    'lyon': ['france', 'fr'],
+    'marseille': ['france', 'fr'],
+    'toulouse': ['france', 'fr'],
+    'madrid': ['spain', 'españa', 'es'],
+    'barcelona': ['spain', 'españa', 'es'],
+    'valencia': ['spain', 'españa', 'es'],
+    'seville': ['spain', 'españa', 'es'],
+    'amsterdam': ['netherlands', 'holland', 'nl', 'the netherlands'],
+    'rotterdam': ['netherlands', 'holland', 'nl'],
+    'the hague': ['netherlands', 'holland', 'nl'],
+    'dublin': ['ireland', 'ie', 'republic of ireland'],
+    'vienna': ['austria', 'at', 'österreich'],
+    'zurich': ['switzerland', 'ch', 'schweiz'],
+    'geneva': ['switzerland', 'ch', 'schweiz'],
+    'basel': ['switzerland', 'ch', 'schweiz'],
+    'stockholm': ['sweden', 'se', 'sverige'],
+    'gothenburg': ['sweden', 'se'],
+    'copenhagen': ['denmark', 'dk', 'danmark'],
+    'oslo': ['norway', 'no', 'norge'],
+    'helsinki': ['finland', 'fi', 'suomi'],
+    'brussels': ['belgium', 'be', 'belgië', 'belgique'],
+    'antwerp': ['belgium', 'be'],
+    'lisbon': ['portugal', 'pt', 'portuguesa'],
+    'porto': ['portugal', 'pt'],
+    'milan': ['italy', 'it', 'italia'],
+    'rome': ['italy', 'it', 'italia'],
+    'turin': ['italy', 'it'],
+    'warsaw': ['poland', 'pl', 'polska'],
+    'krakow': ['poland', 'pl'],
+    'prague': ['czech republic', 'czech', 'cz', 'česká republika'],
+    'budapest': ['hungary', 'hu', 'magyarország'],
+    'bucharest': ['romania', 'ro', 'românia'],
+    'athens': ['greece', 'gr', 'ελλάδα'],
+  };
+
+  /**
+   * Enhanced location matching with multiple fallback levels
    * Matches city names with word boundaries to avoid false positives
    * e.g., "London" matches "London, UK" but NOT "New London"
+   * OPTIMIZED: Early exits for performance
    */
   const matchesLocationStrict = (job: ScrapersJob & { freshnessTier: string }, targetCity: string): boolean => {
-    const jobLocation = (job.location || '').toLowerCase();
-    const jobLoc = jobLocation.toLowerCase().trim();
     const city = targetCity.toLowerCase().trim();
     
-    // Check structured city field first (most accurate)
+    // OPTIMIZED: Check structured city field first (most accurate, fastest)
     if ((job as any).city) {
       const jobCity = String((job as any).city).toLowerCase().trim();
       if (jobCity === city || jobCity.includes(city) || city.includes(jobCity)) {
-        return true;
+        return true; // Early exit - exact match found
+      }
+    }
+    
+    // OPTIMIZED: Check for remote/hybrid early (common case, fast check)
+    const jobLocation = (job.location || '').toLowerCase();
+    if (jobLocation.includes('remote') || jobLocation.includes('hybrid') || 
+        jobLocation.includes('work from home') || jobLocation.includes('flexible location')) {
+      return true; // Early exit - remote/hybrid always acceptable
+    }
+    
+    const jobLoc = jobLocation.trim();
+    
+    // OPTIMIZED: Check structured country field for country-level matches
+    if ((job as any).country) {
+      const jobCountry = String((job as any).country).toLowerCase();
+      const countries = CITY_COUNTRY_MAP[city];
+      if (countries && countries.some(c => jobCountry.includes(c))) {
+        return true; // Early exit - country-level match found
       }
     }
     
@@ -110,13 +174,24 @@ export async function preFilterJobsByUserPreferencesEnhanced(
       return true;
     }
     
+    // Check for country-level matches in location string
+    const countries = CITY_COUNTRY_MAP[city];
+    if (countries) {
+      if (countries.some(country => jobLoc.includes(country))) {
+        return true; // Country-level match in location string
+      }
+    }
+    
     // Handle special cases (Greater London, etc.)
     const specialCases: Record<string, string[]> = {
-      'london': ['greater london', 'central london', 'north london', 'south london', 'east london', 'west london'],
-      'paris': ['greater paris', 'paris region'],
-      'berlin': ['greater berlin'],
-      'madrid': ['greater madrid'],
-      'barcelona': ['greater barcelona'],
+      'london': ['greater london', 'central london', 'north london', 'south london', 'east london', 'west london', 'london area', 'greater london area'],
+      'paris': ['greater paris', 'paris region', 'île-de-france', 'ile-de-france'],
+      'berlin': ['greater berlin', 'brandenburg'],
+      'madrid': ['greater madrid', 'comunidad de madrid', 'madrid region'],
+      'barcelona': ['greater barcelona', 'catalonia', 'catalunya', 'barcelona area'],
+      'amsterdam': ['greater amsterdam', 'amsterdam area', 'noord-holland'],
+      'milan': ['greater milan', 'milan area', 'lombardy', 'lombardia'],
+      'rome': ['greater rome', 'rome area', 'lazio'],
     };
     
     if (specialCases[city]) {
@@ -124,19 +199,114 @@ export async function preFilterJobsByUserPreferencesEnhanced(
     }
     
     // Allow remote/hybrid if user hasn't explicitly excluded it
-    if (jobLoc.includes('remote') || jobLoc.includes('hybrid') || jobLoc.includes('work from home')) {
+    if (jobLoc.includes('remote') || jobLoc.includes('hybrid') || jobLoc.includes('work from home') || jobLoc.includes('flexible location')) {
       return true; // Remote/hybrid is always acceptable
     }
     
     return false;
   };
+
+  /**
+   * Progressive location matching with intelligent fallback
+   * Returns jobs that match at any level: exact city > country > remote/hybrid > all
+   */
+  const getLocationMatchedJobs = (jobs: (ScrapersJob & { freshnessTier: string })[], cities: string[]): {
+    jobs: (ScrapersJob & { freshnessTier: string })[];
+    matchLevel: 'exact' | 'country' | 'remote' | 'all';
+  } => {
+    if (cities.length === 0) {
+      return { jobs, matchLevel: 'all' };
+    }
+
+    // Level 1: Exact city matches (strict)
+    const exactMatches = jobs.filter(job => 
+      cities.some(city => matchesLocationStrict(job, city))
+    );
+
+    // OPTIMIZED: Require more jobs for exact match to ensure quality
+    // This ensures we have enough high-quality matches before stopping
+    if (exactMatches.length >= 20) {
+      return { jobs: exactMatches, matchLevel: 'exact' };
+    }
+
+    // Level 2: Country-level matches (relaxed)
+    const targetCountries = new Set<string>();
+    cities.forEach(city => {
+      const cityLower = city.toLowerCase();
+      Object.entries(CITY_COUNTRY_MAP).forEach(([key, countries]) => {
+        if (cityLower.includes(key) || key.includes(cityLower)) {
+          countries.forEach(c => targetCountries.add(c));
+        }
+      });
+    });
+
+    const countryMatches = jobs.filter(job => {
+      const jobLocation = (job.location || '').toLowerCase();
+      const jobCountry = ((job as any).country || '').toLowerCase();
+      
+      // Check if job is in target country
+      return Array.from(targetCountries).some(country => 
+        jobLocation.includes(country) || jobCountry.includes(country) ||
+        jobLocation.includes(country.replace(' ', '-')) // Handle "united-kingdom" format
+      );
+    });
+
+    // Combine exact + country matches
+    const combinedMatches = [...new Set([...exactMatches, ...countryMatches])];
+    
+    // OPTIMIZED: Require sufficient matches for quality
+    if (combinedMatches.length >= 15) {
+      return { jobs: combinedMatches, matchLevel: 'country' };
+    }
+
+    // Level 3: Remote/hybrid jobs (always acceptable)
+    const remoteMatches = jobs.filter(job => {
+      const jobLocation = (job.location || '').toLowerCase();
+      return jobLocation.includes('remote') || 
+             jobLocation.includes('hybrid') || 
+             jobLocation.includes('work from home') ||
+             jobLocation.includes('flexible location');
+    });
+
+    const allMatches = [...new Set([...combinedMatches, ...remoteMatches])];
+    
+    // OPTIMIZED: Require minimum matches for quality
+    if (allMatches.length >= 10) {
+      return { jobs: allMatches, matchLevel: 'remote' };
+    }
+
+    // Level 4: Last resort - use all jobs (better than zero matches)
+    apiLogger.warn('Using all jobs as last resort fallback', {
+      email: user.email,
+      targetCities: cities,
+      exactMatches: exactMatches.length,
+      countryMatches: countryMatches.length,
+      remoteMatches: remoteMatches.length,
+      totalJobs: jobs.length
+    });
+
+    return { jobs, matchLevel: 'all' };
+  };
   
-  const filteredJobs = targetCities.length > 0
-    ? jobs.filter(job => {
-        // Use strict matching
-        return targetCities.some(city => matchesLocationStrict(job, city));
-      })
-    : jobs;
+  // Use progressive location matching with intelligent fallback
+  const locationMatchResult = getLocationMatchedJobs(jobs, targetCities);
+  let filteredJobs = locationMatchResult.jobs;
+  const matchLevel = locationMatchResult.matchLevel;
+
+  // Log match level for monitoring
+  if (matchLevel !== 'exact' && targetCities.length > 0) {
+    addBreadcrumb({
+      message: 'Location matching fallback applied',
+      level: 'info',
+      data: {
+        email: user.email,
+        matchLevel,
+        targetCities,
+        matchedJobs: filteredJobs.length,
+        totalJobs: jobs.length
+      }
+    });
+  }
   
   // Track source distribution
   const sourceCount: Record<string, number> = {};
@@ -163,8 +333,19 @@ export async function preFilterJobsByUserPreferencesEnhanced(
     // IMPORTANT: Roles are ALWAYS within the career path (from signup form)
     // ============================================
     
-    // 1. Location match (REQUIRED - already filtered, but give points)
-    score += 40; // Base score for location match (reduced from 50 to make room for other factors)
+    // 1. Location match scoring (OPTIMIZED - varies by match quality)
+    // Exact city match > Country match > Remote/Hybrid > Fallback
+    let locationScore = 0;
+    if (matchLevel === 'exact') {
+      locationScore = 45; // Highest score for exact city match
+    } else if (matchLevel === 'country') {
+      locationScore = 35; // Good score for country-level match
+    } else if (matchLevel === 'remote') {
+      locationScore = 30; // Acceptable score for remote/hybrid
+    } else {
+      locationScore = 25; // Lower score for fallback (but still acceptable)
+    }
+    score += locationScore;
     
     // 2. Career path scoring (HIGHEST PRIORITY - most important factor)
     // Career path is MORE IMPORTANT than role - it defines the user's direction
@@ -192,11 +373,18 @@ export async function preFilterJobsByUserPreferencesEnhanced(
         return titleMatch || categoryMatch;
       });
       if (hasCareerMatch) {
-        score += 35; // HIGHEST priority - career path match
+        // OPTIMIZED: Boost career path matches more when combined with location quality
+        // Perfect career + exact location = amazing match
+        const careerBoost = matchLevel === 'exact' ? 40 : 35;
+        score += careerBoost; // HIGHEST priority - career path match
       } else {
-        // QUALITY FOCUS: Moderate penalty - ensures quality matches rank higher
-        // But don't exclude completely - allow close matches through
-        score -= 15; // Moderate penalty - ensures quality ranking
+        // OPTIMIZED: Penalty varies by location match quality
+        // If location is exact, be stricter on career path
+        // If location is fallback, be more lenient
+        const careerPenalty = matchLevel === 'exact' ? 20 : 
+                              matchLevel === 'country' ? 15 : 
+                              10; // Less penalty for remote/fallback
+        score -= careerPenalty; // Ensures quality matches rank higher
       }
     }
     
@@ -218,20 +406,27 @@ export async function preFilterJobsByUserPreferencesEnhanced(
                );
       });
       if (hasRoleMatch) {
-        // If career path already matches, role match is more valuable (refinement)
-        // If career path doesn't match, role match is less valuable (might be wrong career)
+        // OPTIMIZED: Role match scoring varies by context
+        // Perfect match: Career + Role + Exact Location = maximum score
         if (hasCareerMatch) {
-          score += 20; // Role match WITHIN correct career path (refinement bonus)
+          // Role match WITHIN correct career path - refinement bonus
+          // Boost more if location is exact (perfect match scenario)
+          const roleBoost = matchLevel === 'exact' ? 25 : 20;
+          score += roleBoost;
         } else {
-          score += 10; // Role match but wrong career path (less valuable)
+          // Role match but wrong career path - less valuable
+          score += 10;
         }
       } else {
-        // QUALITY FOCUS: Penalties ensure quality matches rank higher
-        // But still allow through if career path matches (shows flexibility)
+        // OPTIMIZED: Penalties vary by match quality context
         if (hasCareerMatch) {
-          score -= 3; // Small penalty - career path matches but role doesn't (still quality match)
+          // Career matches but role doesn't - small penalty (still quality match)
+          // Penalty is smaller if location is exact (career + location is strong)
+          const rolePenalty = matchLevel === 'exact' ? 2 : 3;
+          score -= rolePenalty;
         } else {
-          score -= 10; // Moderate penalty - ensures quality ranking
+          // No career or role match - moderate penalty
+          score -= 10;
         }
       }
     }
@@ -253,8 +448,12 @@ export async function preFilterJobsByUserPreferencesEnhanced(
     }
     
     // 5. Entry level preference matching (improved with flags)
+    // Normalize form values: "Internship, Graduate Programmes" -> handles both formats
     if (user.entry_level_preference) {
-      const entryLevel = user.entry_level_preference.toLowerCase();
+      // Normalize: handle comma-separated values and various capitalizations
+      const entryLevel = Array.isArray(user.entry_level_preference)
+        ? user.entry_level_preference.join(', ').toLowerCase()
+        : user.entry_level_preference.toLowerCase();
       const jobIsInternship = (job as any).is_internship === true;
       const jobIsGraduate = (job as any).is_graduate === true;
       const jobIsEarlyCareer = (job as any).is_early_career === true || 
@@ -268,14 +467,15 @@ export async function preFilterJobsByUserPreferencesEnhanced(
       );
       
       // Use flags first (most accurate)
-      if (entryLevel.includes('intern') && jobIsInternship) {
+      // Handle form values: "Internship", "Graduate Programmes", "Entry Level" (capitalized)
+      if ((entryLevel.includes('intern') || entryLevel.includes('internship')) && jobIsInternship) {
         score += 15; // Perfect match for internship
-      } else if (entryLevel.includes('intern') && !jobIsInternship) {
+      } else if ((entryLevel.includes('intern') || entryLevel.includes('internship')) && !jobIsInternship) {
         score -= 5; // Penalty if user wants internship but job isn't
       }
       
       // Working Student preference: boost internships, especially those with working student terms
-      if (entryLevel.includes('working student')) {
+      if (entryLevel.includes('working student') || entryLevel.includes('werkstudent')) {
         if (jobIsInternship && isWorkingStudentJob) {
           score += 15; // Perfect match for working student role
         } else if (jobIsInternship) {
@@ -285,13 +485,16 @@ export async function preFilterJobsByUserPreferencesEnhanced(
         }
       }
       
-      if (entryLevel.includes('graduate') && jobIsGraduate) {
+      // Handle "Graduate Programmes" (capitalized) and "graduate" (lowercase)
+      if ((entryLevel.includes('graduate') || entryLevel.includes('graduate programme')) && jobIsGraduate) {
         score += 15; // Perfect match for graduate programme
-      } else if (entryLevel.includes('graduate') && !jobIsGraduate && !jobIsInternship) {
+      } else if ((entryLevel.includes('graduate') || entryLevel.includes('graduate programme')) && !jobIsGraduate && !jobIsInternship) {
         score -= 5; // Penalty if user wants graduate but job isn't
       }
       
-      if (entryLevel.includes('entry level') && jobIsEarlyCareer && !jobIsInternship && !jobIsGraduate) {
+      // Handle "Entry Level" (capitalized) and "entry-level" (hyphenated)
+      if ((entryLevel.includes('entry level') || entryLevel.includes('entry-level') || entryLevel.includes('early career')) && 
+          jobIsEarlyCareer && !jobIsInternship && !jobIsGraduate) {
         score += 10; // Match for entry-level roles
       }
       
@@ -327,7 +530,45 @@ export async function preFilterJobsByUserPreferencesEnhanced(
       }
     }
     
-    // 7. Language scoring (improved - uses extracted language_requirements)
+    // 7. Visa status matching (CRITICAL for non-EU users)
+    if (user.visa_status) {
+      const visaStatus = user.visa_status.toLowerCase();
+      const jobDescLower = jobDesc.toLowerCase();
+      const jobTitleLower = jobTitle.toLowerCase();
+      
+      // Check if user needs visa sponsorship
+      const needsVisaSponsorship = !visaStatus.includes('eu-citizen') && 
+                                   !visaStatus.includes('citizen') && 
+                                   !visaStatus.includes('permanent');
+      
+      if (needsVisaSponsorship) {
+        // User needs visa sponsorship - check if job offers it
+        const visaKeywords = [
+          'visa sponsorship', 'sponsor visa', 'work permit', 'relocation support',
+          'visa support', 'immigration support', 'work authorization', 'sponsorship available',
+          'will sponsor', 'can sponsor', 'visa assistance', 'relocation package'
+        ];
+        
+        const offersVisaSponsorship = visaKeywords.some(keyword => 
+          jobDescLower.includes(keyword) || jobTitleLower.includes(keyword)
+        );
+        
+        // Also check structured field if available
+        const jobVisaFriendly = (job as any).visa_friendly === true || 
+                                (job as any).visa_sponsorship === true;
+        
+        if (offersVisaSponsorship || jobVisaFriendly) {
+          score += 15; // Strong bonus for visa sponsorship (critical for user)
+        } else {
+          score -= 20; // Strong penalty - user can't apply without visa sponsorship
+        }
+      } else {
+        // EU citizen or permanent resident - no visa needed, small bonus for clarity
+        score += 2; // Small bonus for jobs that explicitly mention EU eligibility
+      }
+    }
+    
+    // 8. Language scoring (improved - uses extracted language_requirements)
     if (user.languages_spoken && Array.isArray(user.languages_spoken) && user.languages_spoken.length > 0) {
       const jobLanguages = (job as any).language_requirements;
       
@@ -361,7 +602,85 @@ export async function preFilterJobsByUserPreferencesEnhanced(
       }
     }
     
-    // 8. Early career indicators (bonus points)
+    // 9. Industries matching (if user specified)
+    if (user.industries && Array.isArray(user.industries) && user.industries.length > 0) {
+      const industries = user.industries.map(i => i.toLowerCase());
+      const hasIndustryMatch = industries.some(industry => {
+        const industryLower = industry.toLowerCase();
+        return jobDesc.includes(industryLower) || 
+               jobTitle.includes(industryLower) ||
+               // Handle common industry variations
+               (industryLower.includes('tech') && (jobDesc.includes('technology') || jobDesc.includes('software') || jobDesc.includes('digital'))) ||
+               (industryLower.includes('finance') && (jobDesc.includes('financial') || jobDesc.includes('banking') || jobDesc.includes('investment'))) ||
+               (industryLower.includes('consulting') && (jobDesc.includes('consulting') || jobDesc.includes('advisory') || jobDesc.includes('strategy')));
+      });
+      if (hasIndustryMatch) {
+        score += 5; // Industry match bonus
+      }
+    }
+    
+    // 10. Company size preference (if user specified)
+    if (user.company_size_preference && user.company_size_preference !== 'any') {
+      const sizePreference = user.company_size_preference.toLowerCase();
+      const sizeKeywords: Record<string, string[]> = {
+        'startup': ['startup', 'early-stage', 'seed', 'series a', 'series b', 'founded', 'new company'],
+        'small': ['small company', 'small team', '10-50', '50-200', 'boutique', 'small business'],
+        'medium': ['medium', '200-500', '500-1000', 'mid-size', 'mid-sized'],
+        'large': ['large', 'multinational', 'fortune', 'ftse', 'dax', 'cac', '1000+', 'global', 'enterprise', 'established']
+      };
+      
+      const keywords = sizeKeywords[sizePreference] || [];
+      if (keywords.length > 0) {
+        const hasSizeMatch = keywords.some(kw => 
+          jobDesc.includes(kw) || 
+          (job as any).company?.toLowerCase().includes(kw) ||
+          jobTitle.includes(kw)
+        );
+        if (hasSizeMatch) {
+          score += 3; // Company size match bonus
+        }
+      }
+    }
+    
+    // 11. Skills matching (if user specified)
+    if (user.skills && Array.isArray(user.skills) && user.skills.length > 0) {
+      const skills = user.skills.map(s => s.toLowerCase().trim());
+      const matchingSkills = skills.filter(skill => {
+        if (!skill) return false;
+        // Check for skill in title, description, or as a keyword
+        return jobTitle.includes(skill) || 
+               jobDesc.includes(skill) ||
+               jobDesc.includes(`${skill} `) ||
+               jobDesc.includes(` ${skill}`) ||
+               // Handle common skill variations
+               (skill.includes('python') && jobDesc.includes('python')) ||
+               (skill.includes('javascript') && (jobDesc.includes('javascript') || jobDesc.includes('js'))) ||
+               (skill.includes('sql') && (jobDesc.includes('sql') || jobDesc.includes('database')));
+      });
+      
+      if (matchingSkills.length > 0) {
+        // Score based on number of matching skills (up to 8 points)
+        score += Math.min(8, matchingSkills.length * 2);
+      }
+    }
+    
+    // 12. Career keywords matching (if user specified - free-form text)
+    if (user.career_keywords && user.career_keywords.trim().length > 0) {
+      const keywords = user.career_keywords.toLowerCase()
+        .split(/\s+/)
+        .filter(kw => kw.length > 2); // Filter out very short words
+      
+      const matchingKeywords = keywords.filter(kw => 
+        jobTitle.includes(kw) || jobDesc.includes(kw)
+      );
+      
+      if (matchingKeywords.length > 0) {
+        // Score based on number of matching keywords (up to 5 points)
+        score += Math.min(5, matchingKeywords.length);
+      }
+    }
+    
+    // 13. Early career indicators (bonus points)
     const earlyCareerKeywords = ['graduate', 'intern', 'internship', 'entry', 'junior', 'trainee', 'associate'];
     const hasEarlyCareerIndicator = earlyCareerKeywords.some(kw => 
       jobTitle.includes(kw) || 
@@ -375,7 +694,7 @@ export async function preFilterJobsByUserPreferencesEnhanced(
       score += 5; // Bonus for early career jobs
     }
     
-    // 9. Apply feedback boosts (learned preferences)
+    // 14. Apply feedback boosts (learned preferences)
     feedbackBoosts.forEach((boost, key) => {
       const [type, value] = key.split(':');
       
@@ -399,38 +718,97 @@ export async function preFilterJobsByUserPreferencesEnhanced(
   const userHasCareerPreference = user.career_path && 
     (Array.isArray(user.career_path) ? user.career_path.length > 0 : !!user.career_path);
   
-  // QUALITY THRESHOLD: Higher minimum ensures quality matches
-  // Location match (40) + early career bonus (5) = 45 minimum for quality jobs
-  // This ensures graduates get quality matches, not just any job
-  const MINIMUM_SCORE = 45;
+  // OPTIMIZED QUALITY THRESHOLD: Dynamic minimum based on match level
+  // Lowered by 10-15 points to prevent zero matches while maintaining quality
+  // Let AI make final decisions on match quality
+  const getMinimumScore = () => {
+    if (matchLevel === 'exact') return 40; // Reduced from 50 - let AI decide quality
+    if (matchLevel === 'country') return 35; // Reduced from 45
+    if (matchLevel === 'remote') return 30; // Reduced from 40
+    return 25; // Reduced from 35 - ensures matches exist for AI to evaluate
+  };
+  const MINIMUM_SCORE = getMinimumScore();
   
   // QUALITY FILTER: If user specified preferences, jobs must show SOME relevance
   // This ensures quality over quantity - graduates get relevant matches
   const QUALITY_RELEVANCE_THRESHOLD = 0.3; // At least 30% relevance to preferences
   
+  // OPTIMIZED SMART QUALITY RELAXATION: Adjust thresholds based on available jobs AND match level
+  // If we have few jobs after filtering, relax quality requirements to ensure matches
+  // But maintain higher standards for exact location matches
+  const availableJobsCount = scoredJobs.length;
+  const isScarceJobs = availableJobsCount < 20; // Few jobs available
+  const isVeryScarceJobs = availableJobsCount < 10; // Very few jobs available
+  
+  // OPTIMIZED: Adjust thresholds based on scarcity AND match level
+  // Exact matches maintain higher standards even when scarce
+  const baseAdjustment = matchLevel === 'exact' ? 0 : // No adjustment for exact matches
+                         matchLevel === 'country' ? 2 : // Small adjustment for country
+                         matchLevel === 'remote' ? 5 : // Moderate adjustment for remote
+                         10; // Larger adjustment for fallback
+  
+  const adjustedMinimumScore = isVeryScarceJobs ? Math.max(30, MINIMUM_SCORE - baseAdjustment - 5) : 
+                                isScarceJobs ? Math.max(35, MINIMUM_SCORE - baseAdjustment) : 
+                                MINIMUM_SCORE;
+  
+  // OPTIMIZED: Relevance threshold also varies by match level
+  const baseRelevanceThreshold = matchLevel === 'exact' ? QUALITY_RELEVANCE_THRESHOLD :
+                                 matchLevel === 'country' ? QUALITY_RELEVANCE_THRESHOLD - 0.05 :
+                                 matchLevel === 'remote' ? QUALITY_RELEVANCE_THRESHOLD - 0.1 :
+                                 QUALITY_RELEVANCE_THRESHOLD - 0.15;
+  
+  const adjustedRelevanceThreshold = isVeryScarceJobs ? Math.max(0.1, baseRelevanceThreshold - 0.05) : 
+                                      isScarceJobs ? Math.max(0.15, baseRelevanceThreshold - 0.05) : 
+                                      baseRelevanceThreshold;
+  
   // Sort by score, then ensure source diversity in top results
   const sortedJobs = scoredJobs
     .filter(item => {
-      // Quality threshold - ensure matches are actually good
-      if (item.score < MINIMUM_SCORE) return false;
+      // Quality threshold - ensure matches are actually good (adjusted for scarcity)
+      if (item.score < adjustedMinimumScore) return false;
       
       // CRITICAL: Career path matching is REQUIRED when user specifies it
-      // This ensures graduates only see jobs in their chosen career path
+      // BUT: Relax in scarce job scenarios to ensure matches
       if (userHasCareerPreference && !item.hasCareerMatch) {
-        return false; // Hard requirement - must match career path
+        if (isVeryScarceJobs) {
+          // In very scarce scenarios, allow non-career matches but with penalty
+          apiLogger.info('Relaxing career path requirement due to very scarce jobs', {
+            email: user.email,
+            availableJobs: availableJobsCount,
+            reason: 'Ensuring user gets matches rather than zero results',
+            penaltyApplied: 20
+          });
+          item.score = Math.max(item.score - 20, adjustedMinimumScore);
+        } else if (isScarceJobs) {
+          // In scarce scenarios, allow non-career matches with moderate penalty
+          apiLogger.info('Relaxing career path requirement due to scarce jobs', {
+            email: user.email,
+            availableJobs: availableJobsCount,
+            reason: 'Ensuring user gets quality matches despite limited options',
+            penaltyApplied: 15
+          });
+          item.score = Math.max(item.score - 15, adjustedMinimumScore);
+        } else {
+          return false; // Hard requirement - must match career path
+        }
       }
       
-      // QUALITY CHECK: If user has role preferences, ensure job has some relevance
+      // OPTIMIZED QUALITY CHECK: If user has role preferences, ensure job has some relevance
       // This prevents showing completely irrelevant jobs just to fill quota
       if (userHasRolePreference) {
         // Calculate relevance: how well does job match user's stated preferences?
-        const baseScore = 40; // Location match
+        // OPTIMIZED: Base score varies by match level (exact location = higher base)
+        const baseScore = matchLevel === 'exact' ? 45 :
+                         matchLevel === 'country' ? 35 :
+                         matchLevel === 'remote' ? 30 :
+                         25; // Varies by location match quality
         const relevanceScore = item.score - baseScore; // Score beyond location
-        const maxPossibleRelevance = 35 + 20 + 10 + 8 + 7 + 5; // Career + Role + WorkEnv + EntryLevel + Language + EarlyCareer
+        const maxPossibleRelevance = 40 + 25 + 10 + 8 + 7 + 5; // Career + Role + WorkEnv + EntryLevel + Language + EarlyCareer
         const relevanceRatio = relevanceScore / maxPossibleRelevance;
         
-        // If relevance is too low, exclude it (quality over quantity)
-        if (relevanceRatio < QUALITY_RELEVANCE_THRESHOLD) {
+        // OPTIMIZED: If relevance is too low, exclude it (quality over quantity)
+        // But relax threshold in scarce scenarios and for lower match levels
+        if (relevanceRatio < adjustedRelevanceThreshold) {
           return false;
         }
       }
@@ -438,6 +816,21 @@ export async function preFilterJobsByUserPreferencesEnhanced(
       return true;
     })
     .sort((a, b) => b.score - a.score);
+  
+  // Log quality relaxation if applied
+  if (isScarceJobs) {
+    addBreadcrumb({
+      message: 'Quality thresholds relaxed due to scarce jobs',
+      level: 'info',
+      data: {
+        email: user.email,
+        availableJobs: availableJobsCount,
+        adjustedMinimumScore,
+        adjustedRelevanceThreshold,
+        finalMatches: sortedJobs.length
+      }
+    });
+  }
   
   // Ensure source diversity in top 100 jobs sent to AI
   const diverseJobs: typeof sortedJobs[0][] = [];
@@ -463,6 +856,54 @@ export async function preFilterJobsByUserPreferencesEnhanced(
   const topJobs = diverseJobs.map(item => item.job);
   const sourceCounts = Object.entries(sourceCount).map(([s, c]) => `${s}:${c}`).join(', ');
   
+  // CRITICAL: Ensure we never return zero matches
+  // If filtering resulted in zero matches, apply emergency fallback
+  if (topJobs.length === 0) {
+    const zeroMatchesError = new Error('Zero matches after pre-filtering - emergency fallback applied');
+    apiLogger.error('CRITICAL: Pre-filtering returned zero matches, applying emergency fallback', zeroMatchesError, {
+      email: user.email,
+      targetCities: user.target_cities,
+      originalJobs: jobs.length,
+      filteredJobs: filteredJobs.length,
+      scoredJobs: scoredJobs.length,
+      sortedJobs: sortedJobs.length
+    });
+    
+    captureException(zeroMatchesError, {
+      tags: { component: 'matching', issue: 'zero_matches_emergency' },
+      extra: {
+        email: user.email,
+        targetCities: user.target_cities,
+        originalJobs: jobs.length,
+        matchLevel
+      }
+    });
+    
+    // Emergency fallback: Return top-scored jobs regardless of strict filters
+    // Better to show some matches than zero matches
+    const emergencyJobs = scoredJobs
+      .filter(item => item.score >= 35) // Lower threshold for emergency
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 50)
+      .map(item => item.job);
+    
+    if (emergencyJobs.length > 0) {
+      apiLogger.warn('Emergency fallback successful', {
+        email: user.email,
+        emergencyMatches: emergencyJobs.length
+      });
+      return emergencyJobs;
+    }
+    
+    // Last resort: Return any jobs (better than zero)
+    const lastResortError = new Error('Last resort: Returning all jobs');
+    apiLogger.error('Last resort: Returning all jobs', lastResortError, {
+      email: user.email,
+      totalJobs: jobs.length
+    });
+    return jobs.slice(0, 100);
+  }
+  
   // Log job filtering results to Sentry breadcrumb instead of console
   addBreadcrumb({
     message: 'Job filtering completed',
@@ -472,7 +913,8 @@ export async function preFilterJobsByUserPreferencesEnhanced(
       originalCount: jobs.length,
       filteredCount: topJobs.length,
       sourceDistribution: sourceCounts,
-      feedbackBoosted: feedbackBoosts.size > 0
+      feedbackBoosted: feedbackBoosts.size > 0,
+      matchLevel
     }
   });
   

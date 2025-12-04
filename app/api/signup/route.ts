@@ -57,6 +57,15 @@ export async function POST(req: NextRequest) {
     
     // Validate required fields
     if (!data.email || !data.fullName || !data.cities || data.cities.length === 0) {
+      // Track validation failure
+      apiLogger.info('signup_failed_validation', {
+        event: 'signup_failed_validation',
+        reason: 'missing_required_fields',
+        hasEmail: !!data.email,
+        hasFullName: !!data.fullName,
+        hasCities: !!(data.cities && data.cities.length > 0),
+        timestamp: new Date().toISOString()
+      });
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -196,6 +205,14 @@ export async function POST(req: NextRequest) {
 
     apiLogger.info(`User created`, { email: data.email });
     console.log(`[SIGNUP] User created: ${data.email}`);
+    
+    // Track signup success event
+    apiLogger.info('signup_success', {
+      event: 'signup_success',
+      email: data.email,
+      tier: subscriptionTier,
+      timestamp: new Date().toISOString()
+    });
 
     try {
       await sendVerificationEmail(normalizedEmail);
@@ -358,6 +375,17 @@ export async function POST(req: NextRequest) {
               rawMatchesCount: matchedJobsRaw.length,
               distributedCount: distributedJobs.length
             });
+            
+            // Track zero matches event
+            apiLogger.info('no_initial_matches', {
+              event: 'no_initial_matches',
+              email: data.email,
+              reason: 'distribution_returned_empty',
+              rawMatchesCount: matchedJobsRaw.length,
+              cities: userData.target_cities,
+              timestamp: new Date().toISOString()
+            });
+            
             throw noJobsError;
           }
 
@@ -437,6 +465,17 @@ export async function POST(req: NextRequest) {
           // No matches found, send welcome email anyway
           apiLogger.info('No matches found, sending welcome email', { email: data.email });
           console.log(`[SIGNUP] No matches found, sending welcome email to ${data.email}`);
+          
+          // Track zero matches event
+          apiLogger.info('no_initial_matches', {
+            event: 'no_initial_matches',
+            email: data.email,
+            reason: 'ai_matching_returned_zero',
+            cities: userData.target_cities,
+            careerPath: userData.career_path,
+            timestamp: new Date().toISOString()
+          });
+          
           emailSent = await sendWelcomeEmailAndTrack(
             userData.email,
             userData.full_name,
@@ -450,6 +489,16 @@ export async function POST(req: NextRequest) {
         // No jobs found in database, send welcome email anyway
         apiLogger.info(`No jobs found for user cities, sending welcome email`, { email: data.email, cities: userData.target_cities });
         console.log(`[SIGNUP] No jobs found for cities ${JSON.stringify(userData.target_cities)}, sending welcome email to ${data.email}`);
+        
+        // Track zero matches event
+        apiLogger.info('no_initial_matches', {
+          event: 'no_initial_matches',
+          email: data.email,
+          reason: 'no_jobs_in_database',
+          cities: userData.target_cities,
+          timestamp: new Date().toISOString()
+        });
+        
         emailSent = await sendWelcomeEmailAndTrack(
           userData.email,
           userData.full_name,
@@ -502,13 +551,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Track final signup completion with match count
+    apiLogger.info('signup_completed', {
+      event: 'signup_completed',
+      email: data.email,
+      matchesCount,
+      emailSent,
+      tier: subscriptionTier,
+      timestamp: new Date().toISOString()
+    });
+    
     return NextResponse.json({ 
       success: true, 
-      message: 'Signup successful! Check your email for your first matches.',
+      message: matchesCount > 0 
+        ? `Signup successful! We found ${matchesCount} perfect matches. Check your email!`
+        : 'Signup successful! We\'re finding your matches now. Check your email soon!',
       matchesCount,
       emailSent,
       email: userData.email,
-      redirectUrl: `/signup/success?tier=${subscriptionTier}&email=${encodeURIComponent(userData.email)}`
+      redirectUrl: `/signup/success?tier=${subscriptionTier}&email=${encodeURIComponent(userData.email)}&matches=${matchesCount}`
     });
 
   } catch (error) {

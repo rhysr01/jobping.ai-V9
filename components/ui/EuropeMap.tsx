@@ -17,6 +17,7 @@ const OFFSET: Record<string, { dx: number; dy: number }> = {
   London: { dx: 6, dy: 4 },
   Manchester: { dx: -8, dy: -6 },
   Birmingham: { dx: 2, dy: -6 },
+  Belfast: { dx: -8, dy: 2 },
   Brussels: { dx: -6, dy: 4 },
   Amsterdam: { dx: 6, dy: -2 },
   Paris: { dx: -3, dy: 3 },
@@ -34,6 +35,7 @@ type ProjectedCity = CityCoordinate & { x: number; y: number };
 
 const CITY_COORDINATES: Record<string, CityCoordinate> = {
   'Dublin': { lat: 53.3498, lon: -6.2603, country: 'Ireland' },
+  'Belfast': { lat: 54.5973, lon: -5.9301, country: 'Ireland' },
   'London': { lat: 51.5074, lon: -0.1278, country: 'United Kingdom' },
   'Manchester': { lat: 53.4808, lon: -2.2426, country: 'United Kingdom' },
   'Birmingham': { lat: 52.4862, lon: -1.8904, country: 'United Kingdom' },

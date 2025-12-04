@@ -8,6 +8,7 @@ import OpenAI from 'openai';
 import type { Job } from '../scrapers/types';
 import { UserPreferences, JobMatch } from './matching/types';
 import type { ParsedMatch } from '@/lib/types';
+import { apiLogger } from '@/lib/api-logger';
 // Simple configuration - no complex config module needed
 const JOBS_TO_ANALYZE = 50;
 const CACHE_TTL_HOURS = 48;
@@ -316,6 +317,12 @@ export class ConsolidatedMatchingEngine {
         if (validatedMatches.length === 0) {
           // If all AI matches were filtered out, fall back to rules
           console.warn('All AI matches failed validation, falling back to rules');
+          // Log why validation failed
+          apiLogger.warn('AI matches failed validation', {
+            reason: 'all_matches_filtered_out',
+            originalMatchCount: aiMatches.length,
+            validatedMatchCount: 0
+          });
         } else {
           // Cache successful AI matches
           await this.matchCache.set(cacheKey, validatedMatches);
@@ -323,6 +330,18 @@ export class ConsolidatedMatchingEngine {
           
           // Update cost tracking
           this.updateCostTracking('gpt4omini', 1, 0.01); // Estimate cost
+          
+          // Log match quality metrics
+          const matchQuality = this.calculateMatchQualityMetrics(validatedMatches, jobs, userPrefs);
+          apiLogger.info('Match quality metrics', {
+            email: userPrefs.email || 'unknown',
+            averageScore: matchQuality.averageScore,
+            scoreDistribution: matchQuality.scoreDistribution,
+            cityCoverage: matchQuality.cityCoverage,
+            sourceDiversity: matchQuality.sourceDiversity,
+            method: 'ai_success',
+            matchCount: validatedMatches.length
+          });
           
           return {
             matches: validatedMatches,
@@ -1344,6 +1363,77 @@ Requirements:
     if (score >= 75) return 'good';
     if (score >= 65) return 'fair';
     return 'poor';
+  }
+
+  /**
+   * Calculate match quality metrics for logging and analytics
+   */
+  private calculateMatchQualityMetrics(
+    matches: JobMatch[],
+    jobs: Job[],
+    userPrefs: UserPreferences
+  ): {
+    averageScore: number;
+    scoreDistribution: { excellent: number; good: number; fair: number; poor: number };
+    cityCoverage: number;
+    sourceDiversity: number;
+  } {
+    if (matches.length === 0) {
+      return {
+        averageScore: 0,
+        scoreDistribution: { excellent: 0, good: 0, fair: 0, poor: 0 },
+        cityCoverage: 0,
+        sourceDiversity: 0
+      };
+    }
+
+    const scores = matches.map(m => m.match_score);
+    const averageScore = scores.reduce((sum, s) => sum + s, 0) / scores.length;
+
+    const scoreDistribution = {
+      excellent: matches.filter(m => m.match_score >= 90).length,
+      good: matches.filter(m => m.match_score >= 75 && m.match_score < 90).length,
+      fair: matches.filter(m => m.match_score >= 65 && m.match_score < 75).length,
+      poor: matches.filter(m => m.match_score < 65).length
+    };
+
+    // Calculate city coverage
+    const targetCities = Array.isArray(userPrefs.target_cities) 
+      ? userPrefs.target_cities 
+      : userPrefs.target_cities 
+        ? [userPrefs.target_cities] 
+        : [];
+    
+    const matchedCities = new Set<string>();
+    matches.forEach(match => {
+      const job = jobs.find(j => j.job_hash === match.job_hash);
+      if (job) {
+        const jobLocation = (job.location || '').toLowerCase();
+        targetCities.forEach(city => {
+          if (jobLocation.includes(city.toLowerCase())) {
+            matchedCities.add(city);
+          }
+        });
+      }
+    });
+    const cityCoverage = targetCities.length > 0 ? matchedCities.size / targetCities.length : 0;
+
+    // Calculate source diversity
+    const sources = new Set<string>();
+    matches.forEach(match => {
+      const job = jobs.find(j => j.job_hash === match.job_hash);
+      if (job && (job as any).source) {
+        sources.add((job as any).source);
+      }
+    });
+    const sourceDiversity = sources.size;
+
+    return {
+      averageScore: Math.round(averageScore * 10) / 10,
+      scoreDistribution,
+      cityCoverage: Math.round(cityCoverage * 100) / 100,
+      sourceDiversity
+    };
   }
 
   /**

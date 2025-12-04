@@ -96,7 +96,7 @@ export const MATCHING_CONFIG = {
   },
   
   production: {
-    userCap: 50,
+    userCap: 400,  // Updated for 350+ users this month (buffer for growth)
     jobCap: 1200,
     perUserCap: 100,
     maxJobsPerUserFree: parseInt(process.env.SEND_DAILY_FREE || '50'),

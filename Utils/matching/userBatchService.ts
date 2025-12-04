@@ -32,6 +32,7 @@ export async function fetchActiveUsers(
     .from('users')
     .select('*')
     .eq('active', true)
+    .eq('email_verified', true) // Consistent with send-scheduled-emails - only match verified users
     .limit(limit);
 
   if (error) {
@@ -65,22 +66,28 @@ export function transformUsers(users: UserRow[]): TransformedUser[] {
         ? [user.languages_spoken]
         : [],
       career_path: user.career_path ? [user.career_path] : [],
-      work_environment: user.work_environment as
-        | 'remote'
-        | 'hybrid'
-        | 'on-site'
-        | 'unclear'
-        | undefined,
+      work_environment: user.work_environment 
+        ? (user.work_environment.toLowerCase().includes('remote') ? 'remote' :
+           user.work_environment.toLowerCase().includes('hybrid') ? 'hybrid' :
+           user.work_environment.toLowerCase().includes('office') || user.work_environment.toLowerCase().includes('on-site') ? 'on-site' :
+           'unclear')
+        : undefined,
       entry_level_preference: user.entry_level_preference || 'entry',
       company_types: user.company_types || [],
       professional_expertise: user.professional_expertise || user.career_path || undefined,
+      visa_status: user.visa_status || undefined,
+      // Extended preferences from signup form
+      industries: (user as any).industries || [],
+      company_size_preference: (user as any).company_size_preference || 'any',
+      skills: (user as any).skills || [],
+      career_keywords: (user as any).career_keywords || undefined,
       location_preference: 'any',
       salary_expectations: 'any',
       remote_preference: 'any',
-      visa_sponsorship: false,
+      visa_sponsorship: user.visa_status && !user.visa_status.toLowerCase().includes('eu-citizen') && !user.visa_status.toLowerCase().includes('citizen'),
       graduate_scheme: false,
       internship: false,
-      work_authorization: 'any'
+      work_authorization: user.visa_status || 'any'
     } as UserPreferences,
     subscription_tier: (user.subscription_active ? 'premium' : 'free') as 'free' | 'premium',
     created_at: user.created_at,
