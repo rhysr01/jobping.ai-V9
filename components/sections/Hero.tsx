@@ -325,6 +325,9 @@ export default function Hero() {
                   <BrandIcons.ArrowRight className="h-5 w-5" />
                 </span>
               </Button>
+              <p className="text-xs text-zinc-400 text-center sm:text-left">
+                Takes &lt;2 minutes · No spam · Cancel anytime
+              </p>
             </motion.div>
           </div>
         </motion.div>

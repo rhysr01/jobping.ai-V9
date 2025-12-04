@@ -422,7 +422,37 @@ async function saveJobs(jobs, source) {
       created_at: nowIso
     };
   });
-  const unique = Array.from(new Map(rows.map(r=>[r.job_hash,r])).values());
+  // Validate jobs before saving
+  const validatedRows = rows.filter(row => {
+    // CRITICAL: Ensure all required fields are present
+    if (!row.title || !row.company || !row.location || !row.job_hash) {
+      console.warn(`⚠️ Skipping invalid job: missing required fields`, {
+        hasTitle: !!row.title,
+        hasCompany: !!row.company,
+        hasLocation: !!row.location,
+        hasHash: !!row.job_hash
+      });
+      return false;
+    }
+    
+    // Ensure categories array is never null/empty
+    if (!row.categories || !Array.isArray(row.categories) || row.categories.length === 0) {
+      console.warn(`⚠️ Job missing categories, adding default`, { job_hash: row.job_hash });
+      row.categories = ['early-career'];
+    }
+    
+    // Ensure work_environment is never null
+    if (!row.work_environment) {
+      console.warn(`⚠️ Job missing work_environment, defaulting to on-site`, { job_hash: row.job_hash });
+      row.work_environment = 'on-site';
+    }
+    
+    return true;
+  });
+  
+  const unique = Array.from(new Map(validatedRows.map(r=>[r.job_hash,r])).values());
+  console.log(`📊 Validated: ${rows.length} → ${validatedRows.length} → ${unique.length} unique jobs`);
+  
   for (let i=0;i<unique.length;i+=150){
     const slice = unique.slice(i,i+150);
     const { data, error } = await supabase
@@ -430,6 +460,10 @@ async function saveJobs(jobs, source) {
       .upsert(slice, { onConflict: 'job_hash', ignoreDuplicates: false });
     if (error) {
       console.error('Upsert error:', error.message);
+      // Log first few failed rows for debugging
+      if (i === 0 && slice.length > 0) {
+        console.error('Sample failed row:', JSON.stringify(slice[0], null, 2));
+      }
     } else {
       console.log(`✅ Saved ${slice.length} jobs (upserted)`);
     }

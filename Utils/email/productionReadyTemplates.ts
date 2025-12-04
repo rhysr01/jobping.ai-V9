@@ -319,7 +319,7 @@ function wrapEmail(title: string, body: string, footerEmail?: string): string {
                 JobPing Ltd · 77 Camden Street Lower · Dublin D02 XE80 · Ireland
               </div>
               <div class="footer-text">
-                <a class="footer-link" href="${baseUrl}/legal/unsubscribe">Unsubscribe</a> · 
+                <a class="footer-link" href="${baseUrl}/legal/unsubscribe?utm_source=email&utm_medium=footer&utm_campaign=${footerEmail ? 'user_email' : 'anonymous'}">Unsubscribe</a> · 
                 <a class="footer-link" href="${preferencesLink}" style="color:#8B5CF6;">Update Preferences</a>
               </div>
               <div class="footer-text" style="color:${COLORS.gray500}; font-size:12px;">
@@ -412,6 +412,16 @@ export function createJobMatchesEmail(
       ? `<p class="text" style="color:${COLORS.gray500}; font-size:13px; margin-top:18px;">Button not working? Paste this link: <a href="${applyHref}" style="color:#8B5CF6; word-break:break-all;">${jobUrl}</a></p>`
       : '';
     const tagsMarkup = formatTagsMarkup(c.job);
+    
+    // Extract match reason from matchResult
+    const matchReason = c.matchResult?.reasoning || c.matchResult?.match_reason || '';
+    const matchReasonMarkup = matchReason ? `
+        <div style="background:rgba(99,102,241,0.1); border-left:3px solid ${COLORS.purple}; padding:16px; border-radius:8px; margin:16px 0;">
+          <strong style="color:#8B5CF6; font-size:14px; font-weight:600; display:block; margin-bottom:8px;">💡 Why this matches:</strong>
+          <p style="color:${COLORS.gray300}; font-size:14px; line-height:1.6; margin:0;">${matchReason}</p>
+        </div>
+    ` : '';
+    
     return `
     <tr><td class="content">
       <div class="card${hot ? ' hot' : ''}">
@@ -419,6 +429,7 @@ export function createJobMatchesEmail(
         <div class="job">${c.job.title || 'Job Title'}</div>
         <div class="company">${c.job.company || 'Company'}</div>
         <div class="loc">📍 ${c.job.location || 'Location'}</div>
+        ${matchReasonMarkup}
         ${desc ? '<div class="desc">' + desc + '</div>' : ''}
         ${tagsMarkup}
         ${apply}
@@ -495,4 +506,59 @@ export function createJobMatchesEmail(
   </tr>`;
 
   return wrapEmail('Your Job Matches', header + items + upgradeCta + feedback, userEmail);
+}
+
+export function createVerificationEmail(verificationLink: string, userEmail?: string): string {
+  const body = `
+  <tr>
+    <td class="content" align="center">
+      <h1 class="title">Verify your email address <span role="img" aria-label="email">✉️</span></h1>
+      <p class="text">Thanks for signing up! We need to verify your email address to activate your JobPing account.</p>
+      <p class="text">Click the button below to confirm your email and start receiving personalized job matches.</p>
+      ${vmlButton(verificationLink, 'Verify Email Address', COLORS.indigo, COLORS.purple)}
+      <p class="text" style="color:${COLORS.gray500}; font-size:13px; margin-top:24px;">
+        Button not working? Copy and paste this link into your browser:<br>
+        <a href="${verificationLink}" style="color:#8B5CF6; word-break:break-all; font-size:12px;">${verificationLink}</a>
+      </p>
+      <p class="text" style="color:${COLORS.gray500}; font-size:13px; margin-top:20px;">
+        This link expires in 24 hours. If you did not create a JobPing account, you can safely ignore this email.
+      </p>
+      <p class="text" style="color:${COLORS.gray400}; font-size:14px; margin-top:28px;">
+        Need help? <a href="${getBaseUrl()}" style="color:#8B5CF6;">Visit JobPing</a> or reply to this email.
+      </p>
+    </td>
+  </tr>`;
+  return wrapEmail('Verify Your Email', body, userEmail);
+}
+
+export function createReEngagementEmailTemplate(userName: string, unsubscribeUrl: string, userEmail?: string): string {
+  const name = userName || 'there';
+  const friendName = name.charAt(0).toUpperCase() + name.slice(1);
+  const baseUrl = getBaseUrl();
+  
+  const body = `
+  <tr>
+    <td class="content" align="center">
+      <h1 class="title">Hey ${friendName}! <span role="img" aria-label="wave">👋</span></h1>
+      <p class="text">We've been thinking about you...</p>
+      <p class="text">It's been a while since we last connected, and honestly, <span style="color:#8B5CF6; font-weight:600;">we miss having you around!</span> We've been working on something exciting and we're <span style="color:#8B5CF6; font-weight:600;">thrilled to share it with you</span>.</p>
+      
+      <p class="text">Since you last visited, we've:</p>
+      <ul style="color:${COLORS.gray300}; font-size:15px; line-height:1.7; text-align:left; margin:0 auto 28px auto; max-width:420px; padding:0 0 0 20px;">
+        <li style="margin-bottom:10px;">🎯 <span style="color:#8B5CF6; font-weight:600;">Improved our AI matching</span> — even better job recommendations</li>
+        <li style="margin-bottom:10px;">🚀 <span style="color:#8B5CF6; font-weight:600;">Added 2,000+ new opportunities</span> across Europe</li>
+        <li style="margin-bottom:10px;">⚡ <span style="color:#8B5CF6; font-weight:600;">Made the experience faster</span> — 60-second job reviews</li>
+        <li style="margin-bottom:10px;">💎 <span style="color:#8B5CF6; font-weight:600;">Launched premium features</span> for serious job seekers</li>
+      </ul>
+      
+      <p class="text">We're <span style="color:#8B5CF6; font-weight:600;">excited to show you</span> what's new and help you find your next amazing role!</p>
+      
+      ${vmlButton(`${baseUrl}?utm_source=email&utm_medium=reengagement&utm_campaign=comeback`, 'Show Me What\'s New! 🚀', COLORS.indigo, COLORS.purple)}
+      
+      <p class="text" style="color:${COLORS.gray500}; font-size:13px; margin-top:24px;">
+        Or if you'd prefer, you can <a href="${unsubscribeUrl}" style="color:#8B5CF6; text-decoration:underline;">unsubscribe here</a> — no hard feelings! 💙
+      </p>
+    </td>
+  </tr>`;
+  return wrapEmail('We Miss You - JobPing', body, userEmail);
 }

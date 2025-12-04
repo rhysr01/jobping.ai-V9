@@ -29,7 +29,7 @@ export function applyHardGates(job: Job, userPrefs: UserPreferences): { passed: 
     return { passed: false, reason: 'Not eligible for early career' };
   }
 
-  // Check location compatibility
+  // Check location compatibility with intelligent fallback
   if (userPrefs.target_cities && userPrefs.target_cities.length > 0) {
     // Enhanced location matching using structured data
     const locationValidation = validateLocationCompatibility(
@@ -39,18 +39,68 @@ export function applyHardGates(job: Job, userPrefs: UserPreferences): { passed: 
       job.country || undefined
     );
 
-    if (!locationValidation.compatible) {
+    // Allow remote/hybrid jobs even if they don't match exact cities
+    const isRemoteOrHybrid = (job.location || '').toLowerCase().includes('remote') || 
+                            (job.location || '').toLowerCase().includes('hybrid') ||
+                            (job.location || '').toLowerCase().includes('work from home');
+
+    if (!locationValidation.compatible && !isRemoteOrHybrid) {
       return { passed: false, reason: `Location mismatch: ${locationValidation.reasons[0]}` };
     }
   }
 
-  // Check work environment preference
+  // Check work environment preference (more flexible)
   if (userPrefs.work_environment && userPrefs.work_environment !== 'unclear') {
-    const jobWorkEnv = job.work_environment?.toLowerCase();
+    const jobWorkEnv = job.work_environment?.toLowerCase() || (job.location || '').toLowerCase();
     const userWorkEnv = userPrefs.work_environment.toLowerCase();
     
-    if (jobWorkEnv && jobWorkEnv !== userWorkEnv && jobWorkEnv !== 'hybrid') {
-      return { passed: false, reason: 'Work environment mismatch' };
+    // More flexible matching:
+    // - Remote jobs are acceptable for hybrid preference
+    // - Hybrid jobs are acceptable for remote preference
+    // - Only reject if user wants remote/hybrid but job is strictly on-site
+    if (jobWorkEnv) {
+      const isJobRemote = jobWorkEnv.includes('remote') || jobWorkEnv.includes('work from home');
+      const isJobHybrid = jobWorkEnv.includes('hybrid');
+      const isJobOnSite = !isJobRemote && !isJobHybrid;
+      
+      if (userWorkEnv === 'remote' && isJobOnSite) {
+        return { passed: false, reason: 'Work environment mismatch: user wants remote but job is on-site' };
+      }
+      // Hybrid and remote are compatible with each other
+      // On-site is acceptable if user didn't specify remote preference
+    }
+  }
+
+  // Check visa sponsorship requirement (CRITICAL HARD GATE)
+  if (userPrefs.visa_status) {
+    const visaStatus = userPrefs.visa_status.toLowerCase();
+    const needsVisaSponsorship = !visaStatus.includes('eu-citizen') && 
+                                 !visaStatus.includes('citizen') && 
+                                 !visaStatus.includes('permanent');
+    
+    if (needsVisaSponsorship) {
+      // User needs visa sponsorship - check if job offers it
+      const jobLocation = (job.location || '').toLowerCase();
+      const jobDesc = (job.description || '').toLowerCase();
+      const jobTitle = (job.title || '').toLowerCase();
+      const jobText = `${jobDesc} ${jobTitle} ${jobLocation}`.toLowerCase();
+      
+      const visaKeywords = [
+        'visa sponsorship', 'sponsor visa', 'work permit', 'relocation support',
+        'visa support', 'immigration support', 'work authorization', 'sponsorship available',
+        'will sponsor', 'can sponsor', 'visa assistance', 'relocation package',
+        'international candidates', 'global talent'
+      ];
+      
+      const offersVisaSponsorship = visaKeywords.some(keyword => jobText.includes(keyword));
+      
+      // Also check structured field if available
+      const jobVisaFriendly = (job as any).visa_friendly === true || 
+                              (job as any).visa_sponsorship === true;
+      
+      if (!offersVisaSponsorship && !jobVisaFriendly) {
+        return { passed: false, reason: 'Job does not offer visa sponsorship (required for user)' };
+      }
     }
   }
 

@@ -3,6 +3,7 @@ import { getDatabaseClient } from './databasePool';
 import { issueSecureToken, verifySecureToken } from './auth/secureTokens';
 import { getResendClient, EMAIL_CONFIG, assertValidFrom } from './email/clients';
 import { getBaseUrl } from './url-helpers';
+import { createVerificationEmail } from './email/productionReadyTemplates';
 
 interface VerificationResult {
   valid: boolean;
@@ -106,21 +107,16 @@ export async function sendVerificationEmail(email: string): Promise<void> {
   const resend = getResendClient();
   assertValidFrom(EMAIL_CONFIG.from);
 
-  const subject = 'Verify your JobPing email';
-  const html = `
-    <p>Hi there,</p>
-    <p>Confirm your email address to activate your JobPing account.</p>
-    <p><a href="${link}">Click here to verify your email</a></p>
-    <p>This link expires in 24 hours.</p>
-    <p>If you did not create an account, you can ignore this message.</p>
-  `;
+  // Use production template for consistent styling
+  const html = createVerificationEmail(link, normalizedEmail);
+  const subject = 'Verify your JobPing email address';
 
   const result = await resend.emails.send({
     from: EMAIL_CONFIG.from,
     to: [normalizedEmail],
     subject,
     html,
-    text: `Verify your JobPing email: ${link}`,
+    text: `Verify your JobPing email address: ${link}\n\nThis link expires in 24 hours.\n\nIf you did not create a JobPing account, you can safely ignore this email.`,
   });
 
   if (result?.error) {

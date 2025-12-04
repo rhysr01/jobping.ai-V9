@@ -19,15 +19,26 @@ function SignupSuccessContent() {
   const [showSuccess, setShowSuccess] = useState(true);
   const [emailSentAt, setEmailSentAt] = useState<string>('');
   const [resending, setResending] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verified' | 'error'>('pending');
   const searchParams = useSearchParams();
   const tier = searchParams?.get('tier') === 'premium' ? 'premium' : 'free';
   const email = searchParams?.get('email') || '';
+  const verified = searchParams?.get('verified');
+  const verificationError = searchParams?.get('error');
 
   useEffect(() => {
     setEmailSentAt(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
     const timer = setTimeout(() => setShowSuccess(false), 2000);
+    
+    // Check verification status from URL params
+    if (verified === 'true') {
+      setVerificationStatus('verified');
+    } else if (verified === 'false' || verificationError) {
+      setVerificationStatus('error');
+    }
+    
     return () => clearTimeout(timer);
-  }, []);
+  }, [verified, verificationError]);
 
   const handleResendEmail = async () => {
     if (!email) {
@@ -56,6 +67,34 @@ function SignupSuccessContent() {
     }
   };
 
+  const handleResendVerification = async () => {
+    if (!email) {
+      alert('Email address not found. Please contact support.');
+      return;
+    }
+
+    setResending(true);
+    try {
+      const response = await fetch('/api/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        alert('Verification email sent! Check your inbox.');
+        setVerificationStatus('pending');
+      } else {
+        alert(result.error || 'Failed to resend verification email. Please try again later.');
+      }
+    } catch (error) {
+      alert('Failed to resend verification email. Please try again later.');
+    } finally {
+      setResending(false);
+    }
+  };
+
   return (
     <>
       <AnimatePresence>
@@ -79,7 +118,13 @@ function SignupSuccessContent() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
-            className="mx-auto w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-emerald-500 via-green-500 to-emerald-600 flex items-center justify-center shadow-[0_0_80px_rgba(16,185,129,0.6)] border-4 border-emerald-500/30"
+            className={`mx-auto w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center border-4 ${
+              verificationStatus === 'verified' 
+                ? 'bg-gradient-to-br from-emerald-500 via-green-500 to-emerald-600 shadow-[0_0_80px_rgba(16,185,129,0.6)] border-emerald-500/30'
+                : verificationStatus === 'error'
+                ? 'bg-gradient-to-br from-red-500 via-red-600 to-red-700 shadow-[0_0_80px_rgba(239,68,68,0.6)] border-red-500/30'
+                : 'bg-gradient-to-br from-emerald-500 via-green-500 to-emerald-600 shadow-[0_0_80px_rgba(16,185,129,0.6)] border-emerald-500/30'
+            }`}
           >
             <motion.svg
               initial={{ pathLength: 0, opacity: 0 }}
@@ -91,19 +136,46 @@ function SignupSuccessContent() {
               stroke="currentColor"
               strokeWidth="3"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              {verificationStatus === 'error' ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              )}
             </motion.svg>
           </motion.div>
 
           {/* Main Message */}
           <div className="space-y-4">
             <h1 className="text-4xl font-black text-white sm:text-5xl md:text-6xl leading-tight">
-              You're in.
+              {verificationStatus === 'verified' ? 'Email Verified!' : verificationStatus === 'error' ? 'Verification Issue' : "You're in."}
             </h1>
 
             <p className="mx-auto max-w-2xl text-lg font-medium leading-relaxed text-zinc-100 sm:text-xl">
-              We've queued your welcome email and job matches. They usually arrive within a few minutes (or within 48 hours at the latest).
+              {verificationStatus === 'verified' 
+                ? 'Your email has been verified successfully! Your job matches are on the way.'
+                : verificationStatus === 'error'
+                ? verificationError 
+                  ? `Verification failed: ${decodeURIComponent(verificationError)}. Please check your email for a new verification link.`
+                  : 'There was an issue verifying your email. Please check your email for a verification link.'
+                : "We've queued your welcome email and job matches. They usually arrive within a few minutes (or within 48 hours at the latest)."
+              }
             </p>
+            
+            {verificationStatus === 'error' && (
+              <div className="mx-auto max-w-md rounded-lg border-2 border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+                <p className="font-semibold mb-2">Need help?</p>
+                <p className="mb-3">Check your email for a verification link, or click the button below to resend it.</p>
+                <motion.button
+                  onClick={handleResendVerification}
+                  disabled={resending || !email}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full px-4 py-2 bg-red-500/20 border-2 border-red-500/50 hover:border-red-400/70 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-all"
+                >
+                  {resending ? 'Sending...' : 'Resend Verification Email'}
+                </motion.button>
+              </div>
+            )}
           </div>
 
           <div className="mx-auto inline-flex items-center gap-2 rounded-full border-2 border-white/20 bg-white/8 px-5 py-2.5 text-sm font-medium text-zinc-100 backdrop-blur-sm">

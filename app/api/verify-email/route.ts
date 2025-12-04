@@ -3,6 +3,7 @@ import { asyncHandler, ValidationError, AppError } from '@/lib/errors';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { ENV } from '@/lib/constants';
 import { markUserVerified, verifyVerificationToken } from '@/Utils/emailVerification';
+import { getBaseUrl } from '@/Utils/url-helpers';
 
 // Test mode helper - using professional pattern
 const isTestMode = () => ENV.isTest();
@@ -53,18 +54,19 @@ export const GET = asyncHandler(async (req: NextRequest) => {
   }
 
   const verification = await verifyVerificationToken(email, token);
+  const baseUrl = getBaseUrl();
+  
   if (!verification.valid) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Invalid or expired token',
-        reason: verification.reason,
-      },
-      { status: 400 }
+    // Redirect to signup success page with error message
+    return NextResponse.redirect(
+      `${baseUrl}/signup/success?verified=false&error=${encodeURIComponent(verification.reason || 'Invalid or expired token')}&email=${encodeURIComponent(email)}`
     );
   }
 
   await markUserVerified(email);
 
-  return NextResponse.json({ success: true }, { status: 200 });
+  // Redirect to signup success page with success message
+  return NextResponse.redirect(
+    `${baseUrl}/signup/success?verified=true&email=${encodeURIComponent(email)}`
+  );
 });

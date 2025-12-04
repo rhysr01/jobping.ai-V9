@@ -79,6 +79,16 @@ export async function POST(req: NextRequest) {
     // Add to suppression list
     await suppressEmailForUnsubscribe(email);
     
+    // Track unsubscribe event for analytics
+    const { apiLogger } = await import('@/lib/api-logger');
+    apiLogger.info('user_unsubscribed', {
+      event: 'user_unsubscribed',
+      email,
+      method: 'one_click',
+      source: 'email_footer',
+      timestamp: new Date().toISOString()
+    });
+    
     // Return success (no body required for one-click unsubscribe)
     return new NextResponse(null, { status: 200 });
     
@@ -133,6 +143,18 @@ export async function GET(req: NextRequest) {
     
     // Add to suppression list
     await suppressEmailForUnsubscribe(email);
+    
+    // Track unsubscribe event for analytics
+    const { apiLogger } = await import('@/lib/api-logger');
+    const reason = searchParams.get('reason') || 'user_requested';
+    apiLogger.info('user_unsubscribed', {
+      event: 'user_unsubscribed',
+      email,
+      method: 'manual_link',
+      source: 'email_footer',
+      reason,
+      timestamp: new Date().toISOString()
+    });
     
     // Return success page
     return new NextResponse(`

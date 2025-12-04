@@ -84,6 +84,11 @@ export interface UserPreferences {
   languages_spoken?: string[];
   company_types?: string[];
   roles_selected?: string[];
+  // Extended preferences from signup form
+  industries?: string[];
+  company_size_preference?: string;
+  skills?: string[];
+  career_keywords?: string;
 }
 
 // ================================
