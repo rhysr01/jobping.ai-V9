@@ -7,23 +7,31 @@ import { BrandIcons } from "@/components/ui/BrandIcons";
 const faqs = [
   {
     question: "Is this just another job board or newsletter?",
-    answer: "No. JobPing is a matching service—we filter thousands of EU roles daily and send only roles that fit your cities, visa status, and experience level. No scrolling, no dashboards, just curated matches."
+    answer: "No—JobPing saves you hours every week. While job boards make you scroll through hundreds of irrelevant posts, we do the heavy lifting: we scan thousands of EU roles daily, filter by your exact preferences (cities, visa status, experience level, career path), and send only roles you can actually land. Think of us as your personal job scout—no more wasted time on applications you're not qualified for."
+  },
+  {
+    question: "What makes JobPing different from other services?",
+    answer: "Three things: precision, time-saving, and early-career focus. We match roles to your specific visa status (so you only see jobs you're eligible for), your preferred cities (no relocation surprises), and your experience level (internships vs. graduate schemes). Plus, we specialize in early-career roles—internships, graduate programs, and entry-level positions—so you're not competing with senior candidates. Most importantly: everything comes to your inbox. No logging in, no dashboards, no daily checking—just quality matches delivered weekly."
   },
   {
     question: "Do you apply for me?",
-    answer: "No, we don't apply for you. We send you matched roles with direct apply links. You review each role and apply when it's a good fit—you're in control."
+    answer: "No, we don't apply for you—and that's by design. You stay in control. We send you pre-matched roles with direct apply links, so you can review each opportunity and apply when it's a perfect fit. This means you spend time on applications that matter, not on mass-applying to jobs you're not qualified for. Quality over quantity."
   },
   {
-    question: "What countries do you cover?",
-    answer: "We cover all EU countries plus the UK, Switzerland, and Norway. You can select up to 3 cities where you want to work, and we'll match roles in those locations."
-  },
-  {
-    question: "Can I cancel immediately?",
-    answer: "Yes. Cancel anytime from your email preferences link or by replying to any email. No questions asked, no hidden fees. Free users can pause or cancel in one click."
+    question: "What countries and cities do you cover?",
+    answer: "We cover all EU countries plus the UK, Switzerland, and Norway—21 major cities including London, Dublin, Amsterdam, Berlin, Paris, Madrid, and more. You select up to 3 cities where you want to work, and we'll only send roles in those exact locations. No more sifting through jobs in cities you don't want to move to."
   },
   {
     question: "How often will you email me?",
-    answer: `Free users get 5 matches every Thursday. Premium users get 15 matches per week (Monday, Wednesday, Friday). You can pause or adjust frequency anytime.`
+    answer: `Free users get 5 hand-picked matches every Thursday. Premium users get 15 matches per week across 3 drops (Monday, Wednesday, Friday)—that's 60+ quality opportunities per month. You can pause or adjust frequency anytime with one click. No spam, just relevant roles when you need them.`
+  },
+  {
+    question: "Can I cancel immediately?",
+    answer: "Yes—cancel anytime, instantly. Click the unsubscribe link in any email or reply 'STOP'. No questions asked, no hidden fees, no retention tactics. Free users can pause or cancel in one click. We believe in earning your trust, not trapping you."
+  },
+  {
+    question: "What types of jobs will I receive?",
+    answer: "Early-career opportunities only: internships, graduate schemes, trainee programs, and entry-level roles (0-2 years experience). We focus on roles you can actually land—no senior positions, no unrealistic requirements. Every match is tailored to your career path (Strategy, Finance, Marketing, Tech, etc.) and your experience level, so you're always seeing opportunities that fit where you are in your career journey."
   }
 ];
 
