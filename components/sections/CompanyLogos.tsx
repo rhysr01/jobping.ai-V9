@@ -197,15 +197,20 @@ export default function CompanyLogos() {
         </div>
 
         {/* Counter */}
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.3 }}
-          className="text-center text-xs md:text-sm text-zinc-500 mt-8"
+          className="text-center mt-8"
         >
-          {companies.length}+ companies this month • Updated daily
-        </motion.p>
+          <p className="text-xs md:text-sm text-zinc-500">
+            {companies.length}+ companies this month • Updated daily
+          </p>
+          <p className="text-xs text-zinc-600 mt-2">
+            JobPing is not affiliated to these companies, we match you with their public job listings
+          </p>
+        </motion.div>
       </div>
     </section>
   );
