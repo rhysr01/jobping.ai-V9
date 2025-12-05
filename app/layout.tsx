@@ -1,6 +1,7 @@
 import "./globals.css";
 import "@/lib/web-vitals";
 import type { Metadata } from "next";
+import Script from "next/script";
 import StructuredData from "@/components/StructuredData";
 import FAQSchema from "@/components/FAQSchema";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -152,6 +153,19 @@ export default function RootLayout({
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>
         <Toaster />
+        {/* Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-G40ZHDYNL6"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-G40ZHDYNL6');
+          `}
+        </Script>
       </body>
     </html>
   );
