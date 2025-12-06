@@ -475,76 +475,77 @@ export async function POST(req: NextRequest) {
             matchesCount = 0;
           } else {
             const { data: savedMatches, error: saveError } = await supabase.from('matches').upsert(matchEntries, {
-            onConflict: 'user_email,job_hash',
-          }).select();
+              onConflict: 'user_email,job_hash',
+            }).select();
 
-          if (saveError) {
-            console.error(`[SIGNUP] ❌ Failed to save matches:`, saveError);
-            apiLogger.error('Failed to save matches', saveError as Error, { 
-              email: data.email, 
-              matchEntriesCount: matchEntries.length,
-              errorCode: saveError.code,
-              errorMessage: saveError.message,
-              errorDetails: saveError.details,
-              errorHint: saveError.hint
-            });
-            // Don't throw - continue with email send even if match save fails
-            matchesCount = 0;
-          } else {
-            matchesCount = matchEntries.length;
-            const actualSavedCount = savedMatches?.length || 0;
-            apiLogger.info(`Saved ${matchesCount} matches for user`, { 
-              email: data.email, 
-              matchCount: matchesCount,
-              savedMatchesCount: actualSavedCount
-            });
-            console.log(`[SIGNUP] ✅ Successfully saved ${matchesCount} matches for ${data.email} (DB returned ${actualSavedCount})`);
-            
-            // CRITICAL DEBUG: Verify matches can be queried back immediately
-            if (actualSavedCount > 0) {
-              // Wait a tiny bit for DB consistency
-              await new Promise(resolve => setTimeout(resolve, 100));
+            if (saveError) {
+              console.error(`[SIGNUP] ❌ Failed to save matches:`, saveError);
+              apiLogger.error('Failed to save matches', saveError as Error, { 
+                email: data.email, 
+                matchEntriesCount: matchEntries.length,
+                errorCode: saveError.code,
+                errorMessage: saveError.message,
+                errorDetails: saveError.details,
+                errorHint: saveError.hint
+              });
+              // Don't throw - continue with email send even if match save fails
+              matchesCount = 0;
+            } else {
+              matchesCount = matchEntries.length;
+              const actualSavedCount = savedMatches?.length || 0;
+              apiLogger.info(`Saved ${matchesCount} matches for user`, { 
+                email: data.email, 
+                matchCount: matchesCount,
+                savedMatchesCount: actualSavedCount
+              });
+              console.log(`[SIGNUP] ✅ Successfully saved ${matchesCount} matches for ${data.email} (DB returned ${actualSavedCount})`);
               
-              const { data: verifyMatches, error: verifyError } = await supabase
-                .from('matches')
-                .select('*')
-                .eq('user_email', data.email)
-                .limit(10);
-              
-              if (verifyError) {
-                console.error(`[SIGNUP] ❌ Failed to verify matches:`, verifyError);
-              } else {
-                console.log(`[SIGNUP] 🔍 Verification query returned ${verifyMatches?.length || 0} matches`);
-                if (verifyMatches && verifyMatches.length > 0) {
-                  console.log(`[SIGNUP] 🔍 Sample verified match:`, {
-                    id: verifyMatches[0].id,
-                    user_email: verifyMatches[0].user_email,
-                    job_hash: verifyMatches[0].job_hash,
-                    match_score: verifyMatches[0].match_score,
-                    match_algorithm: verifyMatches[0].match_algorithm
-                  });
-                  
-                  // Also check if the job exists in jobs table
-                  const { data: jobCheck, error: jobCheckError } = await supabase
-                    .from('jobs')
-                    .select('job_hash, title, company')
-                    .eq('job_hash', verifyMatches[0].job_hash)
-                    .single();
-                  
-                  if (jobCheckError) {
-                    console.warn(`[SIGNUP] ⚠️ Job ${verifyMatches[0].job_hash} not found in jobs table:`, jobCheckError.message);
-                  } else {
-                    console.log(`[SIGNUP] ✅ Job exists:`, {
-                      job_hash: jobCheck.job_hash,
-                      title: jobCheck.title,
-                      company: jobCheck.company
+              // CRITICAL DEBUG: Verify matches can be queried back immediately
+              if (actualSavedCount > 0) {
+                // Wait a tiny bit for DB consistency
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                const { data: verifyMatches, error: verifyError } = await supabase
+                  .from('matches')
+                  .select('*')
+                  .eq('user_email', data.email)
+                  .limit(10);
+                
+                if (verifyError) {
+                  console.error(`[SIGNUP] ❌ Failed to verify matches:`, verifyError);
+                } else {
+                  console.log(`[SIGNUP] �� Verification query returned ${verifyMatches?.length || 0} matches`);
+                  if (verifyMatches && verifyMatches.length > 0) {
+                    console.log(`[SIGNUP] 🔍 Sample verified match:`, {
+                      id: verifyMatches[0].id,
+                      user_email: verifyMatches[0].user_email,
+                      job_hash: verifyMatches[0].job_hash,
+                      match_score: verifyMatches[0].match_score,
+                      match_algorithm: verifyMatches[0].match_algorithm
                     });
+                    
+                    // Also check if the job exists in jobs table
+                    const { data: jobCheck, error: jobCheckError } = await supabase
+                      .from('jobs')
+                      .select('job_hash, title, company')
+                      .eq('job_hash', verifyMatches[0].job_hash)
+                      .single();
+                    
+                    if (jobCheckError) {
+                      console.warn(`[SIGNUP] ⚠️ Job ${verifyMatches[0].job_hash} not found in jobs table:`, jobCheckError.message);
+                    } else {
+                      console.log(`[SIGNUP] ✅ Job exists:`, {
+                        job_hash: jobCheck.job_hash,
+                        title: jobCheck.title,
+                        company: jobCheck.company
+                      });
+                    }
                   }
                 }
+              } else {
+                console.warn(`[SIGNUP] ⚠️ No matches returned from DB after save (expected ${matchesCount})`);
               }
-            } else {
-              console.warn(`[SIGNUP] ⚠️ No matches returned from DB after save (expected ${matchesCount})`);
-            }
+            } // end else for saveError
           } // end else for matchEntries.length > 0
 
           // Send welcome email with matched jobs
@@ -639,8 +640,7 @@ export async function POST(req: NextRequest) {
           'no jobs'
         );
         }
-      }
-    } catch (matchError) {
+      } catch (matchError) {
       console.error(`[SIGNUP] ❌ Matching process failed:`, matchError);
       apiLogger.warn('Matching failed (non-fatal)', matchError as Error, { email: data.email });
       // Send welcome email even if matching fails
