@@ -657,9 +657,10 @@ Requirements:
 
   /**
    * Robust response parsing - handles common failure cases
+   * CRITICAL: Uses imperative loops instead of filter/map to avoid TDZ errors during bundling
    */
   private parseAIResponse(response: string, jobs: Job[]): JobMatch[] {
-    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    // CRITICAL: Capture immediately and NEVER reference 'jobs' parameter again
     const jobsArray = Array.isArray(jobs) ? jobs : [];
     const maxJobIndex = jobsArray.length;
     
@@ -678,34 +679,37 @@ Requirements:
 
       const matches = JSON.parse(cleaned);
       
-      if (!Array.isArray(matches)) {
-        throw new Error('Response is not an array');
-      }
-      
-      if (maxJobIndex === 0) {
-        console.warn('parseAIResponse: jobs array is empty or invalid');
+      if (!Array.isArray(matches) || maxJobIndex === 0) {
+        if (maxJobIndex === 0) {
+          console.warn('parseAIResponse: jobs array is empty or invalid');
+        }
         return [];
       }
 
-      // Validate and clean matches
-      return matches
-        .filter(match => this.isValidMatch(match, maxJobIndex))
-        .slice(0, 5) // Max 5 matches
-        .map(match => {
-          // Defensive check: ensure match properties exist
-          if (!match || typeof match.job_index !== 'number' || !match.job_hash) {
-            return null;
-          }
-          
-          return {
-            job_index: match.job_index,
-            job_hash: match.job_hash,
-            match_score: Math.min(100, Math.max(50, match.match_score || 50)),
-            match_reason: match.match_reason || 'AI match',
-            confidence_score: 0.8
-          };
-        })
-        .filter((match): match is JobMatch => match !== null); // Remove any null entries
+      // Use imperative loop instead of filter/map to avoid closures
+      const validMatches: JobMatch[] = [];
+      
+      for (let i = 0; i < matches.length && validMatches.length < 5; i++) {
+        const match = matches[i];
+        
+        if (!this.isValidMatch(match, maxJobIndex)) {
+          continue;
+        }
+        
+        if (!match || typeof match.job_index !== 'number' || !match.job_hash) {
+          continue;
+        }
+        
+        validMatches.push({
+          job_index: match.job_index,
+          job_hash: match.job_hash,
+          match_score: Math.min(100, Math.max(50, match.match_score || 50)),
+          match_reason: match.match_reason || 'AI match',
+          confidence_score: 0.8
+        });
+      }
+      
+      return validMatches;
 
     } catch (error) {
       console.error('Failed to parse AI response:', response.slice(0, 200));
@@ -715,41 +719,45 @@ Requirements:
 
   /**
    * Parse function call response - much more reliable than text parsing
+   * CRITICAL: Uses imperative loops instead of filter/map to avoid TDZ errors during bundling
    */
   private parseFunctionCallResponse(matches: ParsedMatch[], jobs: Job[]): JobMatch[] {
-    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    // CRITICAL: Capture immediately and NEVER reference 'jobs' parameter again
     const jobsArray = Array.isArray(jobs) ? jobs : [];
     const maxJobIndex = jobsArray.length;
     
     try {
-      if (!Array.isArray(matches)) {
-        throw new Error('Response is not an array');
-      }
-      
-      if (maxJobIndex === 0) {
-        console.warn('parseFunctionCallResponse: jobs array is empty or invalid');
+      if (!Array.isArray(matches) || maxJobIndex === 0) {
+        if (maxJobIndex === 0) {
+          console.warn('parseFunctionCallResponse: jobs array is empty or invalid');
+        }
         return [];
       }
 
-      // Validate and clean matches
-      return matches
-        .filter(match => this.isValidMatch(match, maxJobIndex))
-        .slice(0, 5) // Max 5 matches
-        .map(match => {
-          // Defensive check: ensure match properties exist
-          if (!match || typeof match.job_index !== 'number' || !match.job_hash) {
-            return null;
-          }
-          
-          return {
-            job_index: match.job_index,
-            job_hash: match.job_hash,
-            match_score: Math.min(100, Math.max(50, match.match_score || 50)),
-            match_reason: match.match_reason || 'AI match',
-            confidence_score: 0.8
-          };
-        })
-        .filter((match): match is JobMatch => match !== null); // Remove any null entries
+      // Use imperative loop instead of filter/map to avoid closures
+      const validMatches: JobMatch[] = [];
+      
+      for (let i = 0; i < matches.length && validMatches.length < 5; i++) {
+        const match = matches[i];
+        
+        if (!this.isValidMatch(match, maxJobIndex)) {
+          continue;
+        }
+        
+        if (!match || typeof match.job_index !== 'number' || !match.job_hash) {
+          continue;
+        }
+        
+        validMatches.push({
+          job_index: match.job_index,
+          job_hash: match.job_hash,
+          match_score: Math.min(100, Math.max(50, match.match_score || 50)),
+          match_reason: match.match_reason || 'AI match',
+          confidence_score: 0.8
+        });
+      }
+      
+      return validMatches;
 
     } catch (error) {
       console.error('Failed to parse function call response:', error);
@@ -777,13 +785,14 @@ Requirements:
   /**
    * Post-filter AI matches to ensure they meet location and career path requirements
    * This is a safety net to catch any AI mistakes
+   * CRITICAL: Uses imperative loops instead of filter/some to avoid TDZ errors during bundling
    */
   private validateAIMatches(
     aiMatches: JobMatch[],
     jobs: Job[],
     userPrefs: UserPreferences
   ): JobMatch[] {
-    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    // CRITICAL: Capture immediately and NEVER reference 'jobs' parameter again
     const jobsArray = Array.isArray(jobs) ? jobs : [];
     
     const targetCities = Array.isArray(userPrefs.target_cities) 
@@ -796,12 +805,24 @@ Requirements:
     const userHasCareerPreference = userPrefs.career_path && 
       (Array.isArray(userPrefs.career_path) ? userPrefs.career_path.length > 0 : !!userPrefs.career_path);
     
-    return aiMatches.filter(match => {
-      // Find the job by hash
-      const job = jobsArray.find(j => j.job_hash === match.job_hash);
+    // Use imperative loop instead of filter to avoid closures
+    const validatedMatches: JobMatch[] = [];
+    
+    for (let i = 0; i < aiMatches.length; i++) {
+      const match = aiMatches[i];
+      
+      // Find the job by hash using imperative loop
+      let job: Job | undefined;
+      for (let j = 0; j < jobsArray.length; j++) {
+        if (jobsArray[j].job_hash === match.job_hash) {
+          job = jobsArray[j];
+          break;
+        }
+      }
+      
       if (!job) {
         console.warn(`Job not found for hash: ${match.job_hash}`);
-        return false;
+        continue;
       }
       
       // Validate location match
@@ -809,12 +830,15 @@ Requirements:
         const jobLocation = (job.location || '').toLowerCase();
         const jobCity = (job as any).city ? String((job as any).city).toLowerCase() : '';
         
-        const locationMatches = targetCities.some(city => {
+        let locationMatches = false;
+        for (let k = 0; k < targetCities.length; k++) {
+          const city = targetCities[k];
           const cityLower = city.toLowerCase();
           
           // Check structured city field first
           if (jobCity && (jobCity === cityLower || jobCity.includes(cityLower) || cityLower.includes(jobCity))) {
-            return true;
+            locationMatches = true;
+            break;
           }
           
           // Use word boundary matching
@@ -826,21 +850,25 @@ Requirements:
             new RegExp(`[,\\s]${escapedCity}$`, 'i'),
           ];
           
-          if (patterns.some(pattern => pattern.test(jobLocation))) {
-            return true;
+          for (let p = 0; p < patterns.length; p++) {
+            if (patterns[p].test(jobLocation)) {
+              locationMatches = true;
+              break;
+            }
           }
+          
+          if (locationMatches) break;
           
           // Allow remote/hybrid
           if (jobLocation.includes('remote') || jobLocation.includes('hybrid')) {
-            return true;
+            locationMatches = true;
+            break;
           }
-          
-          return false;
-        });
+        }
         
         if (!locationMatches) {
           console.warn(`Location mismatch: job location "${job.location}" doesn't match user cities: ${targetCities.join(', ')}`);
-          return false;
+          continue;
         }
       }
       
@@ -850,13 +878,18 @@ Requirements:
         const jobDesc = (job.description || '').toLowerCase();
         const roles = userPrefs.roles_selected || [];
         
-        const hasRoleMatch = roles.some(role => 
-          role && (jobTitle.includes(role.toLowerCase()) || jobDesc.includes(role.toLowerCase()))
-        );
+        let hasRoleMatch = false;
+        for (let r = 0; r < roles.length; r++) {
+          const role = roles[r];
+          if (role && (jobTitle.includes(role.toLowerCase()) || jobDesc.includes(role.toLowerCase()))) {
+            hasRoleMatch = true;
+            break;
+          }
+        }
         
         if (!hasRoleMatch) {
           console.warn(`Role mismatch: job "${job.title}" doesn't match user roles: ${roles.join(', ')}`);
-          return false;
+          continue;
         }
       }
       
@@ -866,25 +899,40 @@ Requirements:
         const jobDesc = (job.description || '').toLowerCase();
         const careerPaths = Array.isArray(userPrefs.career_path) ? userPrefs.career_path : [userPrefs.career_path];
         
-        const hasCareerMatch = careerPaths.some(path => {
-          if (!path) return false;
+        let hasCareerMatch = false;
+        for (let c = 0; c < careerPaths.length; c++) {
+          const path = careerPaths[c];
+          if (!path) continue;
           const pathLower = path.toLowerCase();
-          return jobTitle.includes(pathLower) || 
-                 jobDesc.includes(pathLower) ||
-                 ((job.categories && Array.isArray(job.categories) && 
-                   job.categories.some((cat: string) => 
-                     cat.toLowerCase().includes(pathLower) || pathLower.includes(cat.toLowerCase())
-                   )));
-        });
+          
+          if (jobTitle.includes(pathLower) || jobDesc.includes(pathLower)) {
+            hasCareerMatch = true;
+            break;
+          }
+          
+          if (job.categories && Array.isArray(job.categories)) {
+            for (let cat = 0; cat < job.categories.length; cat++) {
+              const catLower = String(job.categories[cat]).toLowerCase();
+              if (catLower.includes(pathLower) || pathLower.includes(catLower)) {
+                hasCareerMatch = true;
+                break;
+              }
+            }
+          }
+          if (hasCareerMatch) break;
+        }
         
         if (!hasCareerMatch) {
           console.warn(`Career path mismatch: job "${job.title}" doesn't match user career paths: ${careerPaths.join(', ')}`);
-          return false;
+          continue;
         }
       }
       
-      return true;
-    });
+      // All validations passed
+      validatedMatches.push(match);
+    }
+    
+    return validatedMatches;
   }
 
   /**
@@ -1543,3 +1591,4 @@ Requirements:
 export function createConsolidatedMatcher(openaiApiKey?: string): ConsolidatedMatchingEngine {
   return new ConsolidatedMatchingEngine(openaiApiKey);
 }
+
