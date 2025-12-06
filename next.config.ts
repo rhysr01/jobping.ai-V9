@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Disable Turbopack, use webpack instead
+  turbopack: {},
   experimental: {
     optimizePackageImports: ['framer-motion'],
   },
