@@ -378,12 +378,15 @@ export class ConsolidatedMatchingEngine {
     jobs: Job[],
     userPrefs: UserPreferences
   ): Promise<JobMatch[]> {
+    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    const jobsArray = Array.isArray(jobs) ? jobs : [];
+    
     const maxRetries = AI_MAX_RETRIES;
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        return await this.performAIMatchingWithTimeout(jobs, userPrefs);
+        return await this.performAIMatchingWithTimeout(jobsArray, userPrefs);
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         
@@ -405,6 +408,9 @@ export class ConsolidatedMatchingEngine {
     jobs: Job[],
     userPrefs: UserPreferences
   ): Promise<JobMatch[]> {
+    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    const jobsArray = Array.isArray(jobs) ? jobs : [];
+    
     if (!this.openai || !this.openai35) throw new Error('OpenAI client not initialized');
 
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -416,7 +422,7 @@ export class ConsolidatedMatchingEngine {
     });
 
     // Use GPT-4o-mini for all requests (better quality, 70% cheaper than 3.5-turbo!)
-    const aiPromise = this.callOpenAIAPI(jobs, userPrefs, 'gpt-4o-mini');
+    const aiPromise = this.callOpenAIAPI(jobsArray, userPrefs, 'gpt-4o-mini');
 
     try {
       return process.env.NODE_ENV === 'test'
@@ -475,11 +481,14 @@ export class ConsolidatedMatchingEngine {
    * Now using GPT-4o-mini exclusively (better + cheaper than 3.5-turbo!)
    */
   private async callOpenAIAPI(jobs: Job[], userPrefs: UserPreferences, model: 'gpt-4o-mini' | 'gpt-4' | 'gpt-3.5-turbo' = 'gpt-4o-mini'): Promise<JobMatch[]> {
+    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    const jobsArray = Array.isArray(jobs) ? jobs : [];
+    
     const client = this.openai;
     if (!client) throw new Error('OpenAI client not initialized');
 
     // Build optimized prompt based on model
-    const prompt = this.buildStablePrompt(jobs, userPrefs);
+    const prompt = this.buildStablePrompt(jobsArray, userPrefs);
 
     const completion = await client.chat.completions.create({
       model: model,
@@ -550,7 +559,7 @@ Keep match reasons 2-3 sentences max. Make every word count.`
 
     try {
       const functionArgs = JSON.parse(functionCall.arguments);
-      return this.parseFunctionCallResponse(functionArgs.matches, jobs);
+      return this.parseFunctionCallResponse(functionArgs.matches, jobsArray);
     } catch (error) {
       throw new Error(`Failed to parse function call: ${error}`);
     }
