@@ -968,9 +968,19 @@ Requirements:
     }
 
     // Sort by match score and return top matches
-    return matches
-      .sort((a, b) => b.match_score - a.match_score)
-      .slice(0, 8); // Increased from 6 to 8 for better coverage
+    // CRITICAL: Use imperative sort instead of .sort() to avoid closure/TDZ issues
+    const sortedMatches = [...matches]; // Create copy to avoid mutating original
+    for (let i = 0; i < sortedMatches.length - 1; i++) {
+      for (let j = i + 1; j < sortedMatches.length; j++) {
+        if (sortedMatches[i].match_score < sortedMatches[j].match_score) {
+          const temp = sortedMatches[i];
+          sortedMatches[i] = sortedMatches[j];
+          sortedMatches[j] = temp;
+        }
+      }
+    }
+    
+    return sortedMatches.slice(0, 8); // Increased from 6 to 8 for better coverage
   }
 
   /**
@@ -1107,9 +1117,15 @@ Requirements:
     const userPreference = userPrefs?.entry_level_preference?.toLowerCase() || '';
     
     // Check for working student terms in job
-    const isWorkingStudentJob = workingStudentTerms.some(term => 
-      jobText.includes(term) || title.includes(term)
-    );
+    // CRITICAL: Use imperative loop instead of .some() to avoid closure/TDZ issues
+    let isWorkingStudentJob = false;
+    for (let termIdx = 0; termIdx < workingStudentTerms.length; termIdx++) {
+      const term = workingStudentTerms[termIdx];
+      if (jobText.includes(term) || title.includes(term)) {
+        isWorkingStudentJob = true;
+        break;
+      }
+    }
     
     // Check job flags first (most accurate)
     // BALANCED: Role type match is important but not overwhelming
@@ -1290,7 +1306,13 @@ Requirements:
     for (const [career, keywords] of Object.entries(careerMappings)) {
       const careerLower = userCareer.toLowerCase();
       if (careerLower.includes(career)) {
-        const matchCount = keywords.filter(kw => jobText.includes(kw)).length;
+        // CRITICAL: Use imperative loop instead of filter to avoid closure/TDZ issues
+        let matchCount = 0;
+        for (let kwIdx = 0; kwIdx < keywords.length; kwIdx++) {
+          if (jobText.includes(keywords[kwIdx])) {
+            matchCount++;
+          }
+        }
         if (matchCount > 0) {
           const score = Math.min(15, 5 + (matchCount * 3));
           if (score > maxScore) {
@@ -1336,16 +1358,20 @@ Requirements:
 
       for (const [career, relatedSkills] of Object.entries(careerToSkills)) {
         if (careerLower.includes(career)) {
-          relatedSkills.forEach(skill => skills.add(skill));
+          // CRITICAL: Use imperative loop instead of forEach to avoid closure/TDZ issues
+          for (let skillIdx = 0; skillIdx < relatedSkills.length; skillIdx++) {
+            skills.add(relatedSkills[skillIdx]);
+          }
         }
       }
     }
 
     // Add career paths as industries
-    userCareerPaths.forEach(path => {
-      const pathLower = path.toLowerCase();
+    // CRITICAL: Use imperative loop instead of forEach to avoid closure/TDZ issues
+    for (let pathIdx = 0; pathIdx < userCareerPaths.length; pathIdx++) {
+      const pathLower = userCareerPaths[pathIdx].toLowerCase();
       industries.add(pathLower);
-    });
+    }
 
     return { skills, industries, locations };
   }
@@ -1375,11 +1401,13 @@ Requirements:
       'process improvement', 'project management', 'supply chain', 'logistics'
     ];
 
-    skillKeywords.forEach(skill => {
+    // CRITICAL: Use imperative loop instead of forEach to avoid closure/TDZ issues
+    for (let skillIdx = 0; skillIdx < skillKeywords.length; skillIdx++) {
+      const skill = skillKeywords[skillIdx];
       if (jobText.includes(skill)) {
         skills.add(skill);
       }
-    });
+    }
 
     // Extract industries from job text
     const industryKeywords = [
@@ -1388,11 +1416,13 @@ Requirements:
       'automotive', 'aerospace', 'energy', 'real estate', 'education', 'government'
     ];
 
-    industryKeywords.forEach(industry => {
+    // CRITICAL: Use imperative loop instead of forEach to avoid closure/TDZ issues
+    for (let industryIdx = 0; industryIdx < industryKeywords.length; industryIdx++) {
+      const industry = industryKeywords[industryIdx];
       if (jobText.includes(industry)) {
         industries.add(industry);
       }
-    });
+    }
 
     return { skills, industries, locations };
   }
