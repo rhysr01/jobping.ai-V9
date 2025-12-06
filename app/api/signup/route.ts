@@ -95,8 +95,8 @@ export async function POST(req: NextRequest) {
       full_name: data.fullName.trim(),
       target_cities: data.cities,
       languages_spoken: data.languages || [],
-      start_date: data.startDate || null,
-      professional_experience: data.experience || null,
+      start_date: null, // Removed from form - not used in matching
+      professional_experience: null, // Removed from form - not used in matching (entry_level_preference is used instead)
       professional_expertise: data.careerPath || 'entry', // For matching system
       work_environment: Array.isArray(data.workEnvironment) && data.workEnvironment.length > 0 
         ? data.workEnvironment.join(', ') 

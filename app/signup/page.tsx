@@ -13,10 +13,8 @@ import { useEmailValidation, useRequiredValidation } from '@/hooks/useFormValida
 import EuropeMap from '@/components/ui/EuropeMap';
 import { showToast } from '@/lib/toast';
 import WorkEnvironmentSelector from '@/components/ui/WorkEnvironmentSelector';
-import ExperienceTimeline from '@/components/ui/ExperienceTimeline';
 import EntryLevelSelector from '@/components/ui/EntryLevelSelector';
 import LanguageSelector from '@/components/ui/LanguageSelector';
-import CalendarPicker from '@/components/ui/CalendarPicker';
 
 function SignupForm() {
   const router = useRouter();
@@ -44,8 +42,6 @@ function SignupForm() {
     email: '',
     cities: [] as string[],
     languages: [] as string[],
-    startDate: '',
-    experience: '',
     workEnvironment: [] as string[],
     visaStatus: '',
     entryLevelPreferences: [] as string[], // Changed to array for multiple selections
@@ -311,7 +307,6 @@ function SignupForm() {
       return `Complete: ${missing.join(', ')}`;
     } else if (stepNumber === 2) {
       const missing = [];
-      if (!formData.experience) missing.push('Professional Experience');
       if (!formData.visaStatus) missing.push('Work Authorization');
       if (formData.entryLevelPreferences.length === 0) missing.push('Entry Level Preferences');
       if (missing.length === 0) return 'Continue to Career Path →';
@@ -824,10 +819,6 @@ function SignupForm() {
                       <div className="mt-4 rounded-2xl border border-brand-500/30 bg-gradient-to-r from-brand-500/10 via-purple-600/10 to-brand-500/10 p-4 shadow-glow-subtle">
                         <h3 className="text-sm font-bold text-white/80 mb-2">Required for next step:</h3>
                         <div className="space-y-1 text-sm">
-                          <div className={`flex items-center gap-2 ${formData.experience ? 'text-brand-200' : 'text-zinc-300'}`}>
-                            <span className={`w-2 h-2 rounded-full ${formData.experience ? 'bg-brand-400' : 'bg-zinc-500'}`}></span>
-                            Professional Experience
-                          </div>
                           <div className={`flex items-center gap-2 ${formData.visaStatus ? 'text-brand-200' : 'text-zinc-300'}`}>
                             <span className={`w-2 h-2 rounded-full ${formData.visaStatus ? 'bg-brand-400' : 'bg-zinc-500'}`}></span>
                             Visa Status
@@ -839,39 +830,6 @@ function SignupForm() {
                         </div>
                       </div>
                     </div>
-
-                    <div>
-                      <label className="block text-base font-bold text-white mb-3">Target Start Date *</label>
-                      <p className="text-sm text-zinc-200 mb-4">When are you available to start?</p>
-                  <CalendarPicker
-                    value={formData.startDate}
-                    onChange={(date) => setFormData({...formData, startDate: date})}
-                    minDate={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-
-                    <div>
-                      <label id="experience-label" htmlFor="experience-field" className="block text-base font-bold text-white mb-3">Professional Experience *</label>
-                      <p className="text-sm text-zinc-200 mb-4">How much professional experience do you have?</p>
-                  <div
-                    id="experience-field"
-                    aria-labelledby="experience-label"
-                    aria-describedby={shouldShowError('experience', !!formData.experience, !!formData.experience) ? 'experience-error' : undefined}
-                    className="mt-10 md:mt-12"
-                    onBlur={() => setTouchedFields(prev => new Set(prev).add('experience'))}
-                  >
-                    <ExperienceTimeline
-                      selected={formData.experience}
-                      onChange={(exp) => {
-                        setFormData({...formData, experience: exp});
-                        setTouchedFields(prev => new Set(prev).add('experience'));
-                      }}
-                    />
-                  </div>
-                  {shouldShowError('experience', !formData.experience, !!formData.experience) && (
-                    <FormFieldError error="Please select your professional experience level" id="experience-error" />
-                  )}
-                </div>
 
                     <div>
                       <label className="block text-base font-bold text-white mb-3">Work Environment</label>
@@ -991,10 +949,10 @@ function SignupForm() {
                       </motion.button>
                       <motion.button
                         onClick={() => setStep(3)}
-                        disabled={!formData.experience || !formData.visaStatus || formData.entryLevelPreferences.length === 0}
+                        disabled={!formData.visaStatus || formData.entryLevelPreferences.length === 0}
                         whileHover={{ scale: 1.02 }}
                         className={`relative flex-1 py-4 sm:py-6 md:py-7 text-base sm:text-xl md:text-2xl font-black uppercase tracking-wide rounded-xl sm:rounded-2xl overflow-hidden transition-all touch-manipulation min-h-[48px] sm:min-h-[56px] md:min-h-[64px] ${
-                          !formData.experience || !formData.visaStatus || formData.entryLevelPreferences.length === 0
+                          !formData.visaStatus || formData.entryLevelPreferences.length === 0
                             ? 'opacity-40 cursor-not-allowed bg-zinc-700 text-zinc-400'
                             : 'bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] hover:scale-105'
                         }`}

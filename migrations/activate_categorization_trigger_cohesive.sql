@@ -542,7 +542,7 @@ BEGIN
   END IF;
 
   -- ============================================================================
-  -- STEP 11: Set is_internship flag (matches form entry_level_preference)
+  -- STEP 11: Set is_internship flag and add 'internship' category (matches form entry_level_preference)
   -- ============================================================================
   IF NEW.is_internship IS NULL OR NEW.is_internship = false THEN
     IF job_title LIKE '%intern%' OR
@@ -561,9 +561,14 @@ BEGIN
       NEW.is_internship := true;
     END IF;
   END IF;
+  
+  -- Add 'internship' category if job is an internship
+  IF NEW.is_internship = true AND NOT ('internship' = ANY(job_categories)) THEN
+    job_categories := array_append(job_categories, 'internship');
+  END IF;
 
   -- ============================================================================
-  -- STEP 12: Set is_graduate flag (matches form entry_level_preference)
+  -- STEP 12: Set is_graduate flag and add 'graduate-programme' category (matches form entry_level_preference)
   -- ============================================================================
   IF NEW.is_graduate IS NULL OR NEW.is_graduate = false THEN
     IF job_title LIKE '%graduate%' OR
@@ -578,6 +583,45 @@ BEGIN
        job_description LIKE '%graduate scheme%' OR
        NEW.experience_required = 'graduate' THEN
       NEW.is_graduate := true;
+    END IF;
+  END IF;
+  
+  -- Add 'graduate-programme' category if job is a graduate programme
+  IF NEW.is_graduate = true AND NOT ('graduate-programme' = ANY(job_categories)) THEN
+    job_categories := array_append(job_categories, 'graduate-programme');
+  END IF;
+
+  -- ============================================================================
+  -- STEP 12.5: Add 'working-student' category (matches form entry_level_preference)
+  -- ============================================================================
+  IF NOT ('working-student' = ANY(job_categories)) THEN
+    IF job_title LIKE '%werkstudent%' OR
+       job_title LIKE '%working student%' OR
+       job_title LIKE '%part-time student%' OR
+       job_title LIKE '%student worker%' OR
+       job_title LIKE '%student job%' OR
+       job_description LIKE '%werkstudent%' OR
+       job_description LIKE '%working student%' OR
+       job_description LIKE '%part-time student%' OR
+       job_description LIKE '%student worker%' OR
+       job_description LIKE '%student job%' THEN
+      job_categories := array_append(job_categories, 'working-student');
+    END IF;
+  END IF;
+  
+  -- ============================================================================
+  -- STEP 12.6: Add 'entry-level' category for entry-level roles (matches form entry_level_preference)
+  -- Note: This is distinct from 'early-career' which is a broader category
+  -- ============================================================================
+  IF NOT ('entry-level' = ANY(job_categories)) THEN
+    IF (NEW.is_early_career = true OR 
+        (job_title LIKE '%entry level%' OR job_title LIKE '%entry-level%' OR
+         job_title LIKE '%junior%' OR job_title LIKE '%associate%' OR
+         job_title LIKE '%assistant%' OR job_title LIKE '%first full-time%' OR
+         job_description LIKE '%entry level%' OR job_description LIKE '%entry-level%' OR
+         job_description LIKE '%first full-time role%' OR job_description LIKE '%first full time role%')) AND
+       NEW.is_internship != true AND NEW.is_graduate != true THEN
+      job_categories := array_append(job_categories, 'entry-level');
     END IF;
   END IF;
 
