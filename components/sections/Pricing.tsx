@@ -185,6 +185,15 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
             </li>
           ))}
         </ul>
+
+        {/* Time-to-apply callout for Premium */}
+        {isPremium && (
+          <div className="mt-6 p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+            <p className="text-xs text-zinc-300 leading-relaxed">
+              💡 <strong className="text-white">More matches = more shots at landing your role.</strong> Premium users get 3x the opportunities and apply faster.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="mt-8 flex flex-col gap-3">

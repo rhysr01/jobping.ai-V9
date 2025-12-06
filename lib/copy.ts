@@ -20,7 +20,7 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 // Hero section
 export const HERO_TITLE = "JobPing";
 export const HERO_HEADLINE = "Early-career roles across Europe, curated for you.";
-export const HERO_SUBLINE = 'Stop scrolling job boards. Get 5 tailored matches in your inbox.';
+export const HERO_SUBLINE = 'Your 5 best-fit roles every week—no senior jobs, no visa mismatches, no time wasted. New roles added daily. Fresh matches every Thursday.';
 export const HERO_SUBLINE_MICRO = "No dashboards. No job boards. Just roles you can actually apply for.";
 export const HERO_SUBTITLE = "";
 export const HERO_CTA = "Get my first 5 matches";
@@ -77,18 +77,23 @@ export const FREE_PLAN_FEATURES = [
 export const FREE_PLAN_DESCRIPTION = `${FREE_ROLES_PER_SEND} curated roles per email.`;
 
 // Premium plan
+// Time-to-apply stats (estimated until real data available)
+export const PREMIUM_TIME_TO_APPLY_HOURS = 12;
+export const FREE_TIME_TO_APPLY_HOURS = 72;
+
 export const PREMIUM_PLAN_TITLE = "Premium";
 export const PREMIUM_PLAN_SUBTITLE = `${PREMIUM_SENDS_PER_WEEK}× weekly`;
 export const PREMIUM_PLAN_PRICE = "€5";
 export const PREMIUM_PLAN_PRICE_UNIT = "/mo";
 export const PREMIUM_PLAN_ANNUAL = "€20 for 3 months (save €1)";
+export const PREMIUM_PLAN_DESCRIPTION = `15 roles per week (Mon/Wed/Fri) instead of 5 weekly. Get matches 24hrs before free users.`;
 export const PREMIUM_PLAN_FEATURES = [
   `${PREMIUM_ROLES_PER_WEEK} curated roles per week (${PREMIUM_SENDS_PER_WEEK} emails: ${PREMIUM_SEND_DAYS_LABEL})`,
   "24-hour early access to fresh postings",
-  "Hot-match alerts for urgent openings",
+  `Avg Premium user applies within ${PREMIUM_TIME_TO_APPLY_HOURS}hrs vs ${FREE_TIME_TO_APPLY_HOURS}hrs for free`,
+  "More matches = more shots at your dream role",
   "Priority tweaks and intro support"
 ];
-export const PREMIUM_PLAN_DESCRIPTION = `${PREMIUM_ROLES_PER_WEEK} curated roles per week.`;
 
 // Reassurance
 export const REASSURANCE_ITEMS = [
@@ -102,7 +107,30 @@ export const EMAIL_SHOWCASE_KICKER = "What your emails look like";
 export const EMAIL_SHOWCASE_TITLE = "Emails built to help you apply faster";
 export const EMAIL_SHOWCASE_SUBTITLE = "Each email includes salary hints, visa notes, and a short 'why you' summary.";
 export const EMAIL_SHOWCASE_POINTS = [
-  `${FREE_ROLES_PER_SEND} curated roles per email`,
+  `Your ${FREE_ROLES_PER_SEND} best-fit roles (no time-wasters)`,
   "Fast summaries with salary hints and visa notes",
   "Direct apply buttons plus one-click feedback if we miss the mark"
+];
+
+// Weekly stats prefix for dynamic display
+export const WEEKLY_STATS_PREFIX = 'new early-career roles added this week';
+export const ACTIVE_JOBS_PREFIX = 'active opportunities right now';
+
+// FAQ for inline display
+export const INLINE_FAQ_ITEMS = [
+  {
+    icon: '❓',
+    question: 'Do you apply for me?',
+    answer: 'No. We send matches, you apply directly to companies via their portals.'
+  },
+  {
+    icon: '🔍',
+    question: 'How do you find these jobs?',
+    answer: 'We scan LinkedIn, company career pages, and 50+ EU job boards daily.'
+  },
+  {
+    icon: '✖️',
+    question: 'Can I cancel anytime?',
+    answer: 'Yes. One click, no questions asked. Cancel from any email.'
+  }
 ];

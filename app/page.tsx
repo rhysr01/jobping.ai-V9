@@ -15,10 +15,10 @@ export default function Page() {
     <>
       <main id="main-content" className="scroll-snap-type-y-proximity" style={{ scrollSnapType: 'y proximity' }}>
         <Hero />
+        <EmailPhoneShowcase />
         <CompanyLogos />
         <CountryFlags />
         <SocialProofRow />
-        <EmailPhoneShowcase />
         <HowItWorks />
         <BuiltForStudents />
         <Pricing />

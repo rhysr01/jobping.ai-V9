@@ -86,16 +86,44 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     return response;
   }
 
+  // CRITICAL FIX: Normalize minScore from 0-100 range to 0-1 range
+  // match_score is stored in 0-1 range in database (see signup route line 405)
+  const normalizedMinScore = minScore > 1 ? minScore / 100 : minScore;
+
   // Add Sentry breadcrumb for user context
   addBreadcrumb({
     message: 'User matches request',
     level: 'info',
-    data: { email, limit, minScore }
+    data: { email, limit, minScore, normalizedMinScore }
   });
 
   const supabase = getDatabaseClient();
 
+  // CRITICAL DEBUG: First check if matches exist at all (without join)
+  const { data: rawMatches, error: rawError } = await supabase
+    .from('matches')
+    .select('*')
+    .eq('user_email', email)
+    .gte('match_score', normalizedMinScore)
+    .limit(limit);
+
+  console.log(`[USER-MATCHES] 🔍 Raw matches query (no join):`, {
+    email,
+    normalizedMinScore,
+    rawMatchesCount: rawMatches?.length || 0,
+    rawError: rawError ? rawError.message : null
+  });
+
+  if (rawMatches && rawMatches.length > 0) {
+    console.log(`[USER-MATCHES] 🔍 Sample raw match:`, {
+      user_email: rawMatches[0].user_email,
+      job_hash: rawMatches[0].job_hash,
+      match_score: rawMatches[0].match_score
+    });
+  }
+
   // Get user matches with job details - with timeout
+  // CRITICAL: Use normalized minScore for comparison
   const queryPromise = supabase
     .from('matches')
     .select(`
@@ -116,7 +144,7 @@ export const GET = asyncHandler(async (req: NextRequest) => {
       )
     `)
     .eq('user_email', email)
-    .gte('match_score', minScore)
+    .gte('match_score', normalizedMinScore)
     .order('match_score', { ascending: false })
     .limit(limit);
 
@@ -130,28 +158,81 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     timeoutPromise
   ]) as any;
 
+  console.log(`[USER-MATCHES] 🔍 Query with join result:`, {
+    email,
+    matchesCount: matches?.length || 0,
+    matchesError: matchesError ? matchesError.message : null,
+    sampleMatch: matches && matches.length > 0 ? {
+      hasJob: !!matches[0].jobs,
+      jobHash: matches[0].job_hash,
+      matchScore: matches[0].match_score
+    } : null
+  });
+
   if (matchesError) {
     console.error('Failed to fetch user matches:', matchesError);
     
     // Capture error in Sentry
     captureException(matchesError, {
       tags: { component: 'user-matches-api' },
-      extra: { email, limit, minScore }
+      extra: { email, limit, minScore, normalizedMinScore }
     });
     
     throw new AppError('Failed to fetch matches', 500, 'DATABASE_ERROR', matchesError);
   }
 
   // Transform the data to a cleaner format
-  const transformedMatches = matches?.map((match: any) => ({
-    id: match.id,
-    match_score: match.match_score,
-    match_reason: match.match_reason,
-    match_quality: match.match_quality,
-    match_tags: match.match_tags,
-    matched_at: match.matched_at,
-    job: match.jobs
-  })) || [];
+  // CRITICAL FIX: Filter out matches with null jobs (job_hash doesn't exist in jobs table)
+  // This can happen if a job was deleted or filtered out after the match was created
+  const transformedMatches = (matches || [])
+    .filter((match: any) => {
+      const hasJob = match.jobs !== null && match.jobs !== undefined;
+      if (!hasJob && match.job_hash) {
+        console.warn(`[USER-MATCHES] ⚠️ Match has job_hash but no job data:`, {
+          email,
+          job_hash: match.job_hash,
+          match_score: match.match_score
+        });
+      }
+      return hasJob;
+    })
+    .map((match: any) => ({
+      id: match.id,
+      match_score: match.match_score,
+      match_reason: match.match_reason,
+      match_quality: match.match_quality,
+      match_tags: match.match_tags,
+      matched_at: match.matched_at,
+      job: match.jobs
+    }));
+
+  // Log if we filtered out any matches with null jobs
+  const nullJobCount = (matches || []).length - transformedMatches.length;
+  if (nullJobCount > 0) {
+    console.warn(`[USER-MATCHES] ⚠️ Filtered out ${nullJobCount} matches with null jobs out of ${(matches || []).length} total`);
+    addBreadcrumb({
+      message: 'Filtered out matches with null jobs',
+      level: 'warning',
+      data: { email, nullJobCount, totalMatches: (matches || []).length, validMatches: transformedMatches.length }
+    });
+
+    // CRITICAL DEBUG: Check if job_hashes exist in jobs table
+    if (rawMatches && rawMatches.length > 0) {
+      const jobHashes = rawMatches.map((m: any) => m.job_hash).filter(Boolean);
+      if (jobHashes.length > 0) {
+        const { data: jobsCheck, error: jobsCheckError } = await supabase
+          .from('jobs')
+          .select('job_hash')
+          .in('job_hash', jobHashes.slice(0, 10)); // Check first 10
+        
+        console.log(`[USER-MATCHES] 🔍 Jobs existence check:`, {
+          jobHashesChecked: jobHashes.slice(0, 10).length,
+          jobsFound: jobsCheck?.length || 0,
+          jobsCheckError: jobsCheckError ? jobsCheckError.message : null
+        });
+      }
+    }
+  }
 
   const successResponse = createSuccessResponse(
     {

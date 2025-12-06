@@ -85,6 +85,20 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     .eq('is_internship', false)
     .eq('is_graduate', false);
 
+  // Get weekly new jobs (jobs created in last 7 days, early-career only)
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  const oneWeekAgoISO = oneWeekAgo.toISOString();
+  
+  // Count early-career jobs created in last week
+  // This includes internships, graduate programs, and early-career categorized jobs
+  const { count: weeklyNewJobs } = await supabase
+    .from('jobs')
+    .select('*', { count: 'exact', head: true })
+    .eq('is_active', true)
+    .gte('created_at', oneWeekAgoISO)
+    .or('is_internship.eq.true,is_graduate.eq.true');
+
   // Get user count for social proof
   const { count: totalUsers } = await supabase
     .from('users')
@@ -103,6 +117,8 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     internships: internships || 0,
     graduates: graduates || 0,
     earlyCareer: earlyCareer || 0,
+    weeklyNewJobs: weeklyNewJobs || 0,
+    weeklyNewJobsFormatted: formatNumber(weeklyNewJobs || 0),
     totalUsers: totalUsers || 0,
     totalUsersFormatted: formatNumber(totalUsers || 0),
     lastUpdated: new Date().toISOString(),

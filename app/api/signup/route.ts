@@ -323,6 +323,11 @@ export async function POST(req: NextRequest) {
         console.log(`[SIGNUP] Matching complete: ${matchResult.matches?.length || 0} matches found`);
         
         if (matchResult.matches && matchResult.matches.length > 0) {
+          // CRITICAL: Extract all variables we need BEFORE any closures
+          const userEmailForMatches = userData.email;
+          const userCitiesForMatches = userData.target_cities || [];
+          const matchAlgorithmForMatches = matchResult.method;
+          
           // Get matched jobs with full data - ensure we have valid preFilteredJobs array
           const matchedJobsRaw: any[] = [];
           for (const m of matchResult.matches) {
@@ -340,7 +345,7 @@ export async function POST(req: NextRequest) {
           const targetCount = Math.min(10, matchedJobsRaw.length);
           let distributedJobs = distributeJobsWithDiversity(matchedJobsRaw as any[], {
             targetCount,
-            targetCities: userData.target_cities || [],
+            targetCities: userCitiesForMatches,
             maxPerSource: Math.ceil(targetCount / 3), // Max 1/3 from any source
             ensureCityBalance: true
           });
@@ -351,7 +356,7 @@ export async function POST(req: NextRequest) {
             apiLogger.warn('Distribution returned empty, using raw matches', { 
               email: data.email,
               rawMatchesCount: matchedJobsRaw.length,
-              targetCities: userData.target_cities
+              targetCities: userCitiesForMatches
             });
             distributedJobs = matchedJobsRaw.slice(0, Math.min(5, matchedJobsRaw.length)) as any[];
           }
@@ -382,7 +387,7 @@ export async function POST(req: NextRequest) {
               email: data.email,
               reason: 'distribution_returned_empty',
               rawMatchesCount: matchedJobsRaw.length,
-              cities: userData.target_cities,
+              cities: userCitiesForMatches,
               timestamp: new Date().toISOString()
             });
             
@@ -390,31 +395,157 @@ export async function POST(req: NextRequest) {
           }
 
           // Save matches
-          const matchesToSave = distributedJobs
-            .filter(job => job.job_hash) // Filter out jobs without job_hash
-            .map(job => ({
-              user_email: userData.email,
-              job_hash: job.job_hash!,
-              match_score: job.match_score || 85,
-              match_reason: job.match_reason || 'AI match',
-            }));
+          // CRITICAL FIX: Ensure distributedJobs is defined and is an array before processing
+          if (!Array.isArray(distributedJobs)) {
+            console.error(`[SIGNUP] ❌ distributedJobs is not an array:`, typeof distributedJobs, distributedJobs);
+            throw new Error('distributedJobs is not an array');
+          }
 
-          const matchEntries = matchesToSave.map(match => ({
-            user_email: match.user_email,
-            job_hash: match.job_hash,
-            match_score: (match.match_score || 85) / 100,
-            match_reason: match.match_reason,
-            matched_at: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            match_algorithm: matchResult.method,
-          }));
+          // CRITICAL: Process matches in a way that avoids closure issues
+          // Create a helper function to process each job
+          const processJobForMatch = (job: any) => {
+            if (!job || !job.job_hash) {
+              return null;
+            }
+            return {
+              user_email: userEmailForMatches,
+              job_hash: String(job.job_hash),
+              match_score: Number(job.match_score) || 85,
+              match_reason: String(job.match_reason || 'AI match'),
+            };
+          };
 
-          await supabase.from('matches').upsert(matchEntries, {
-            onConflict: 'user_email,job_hash',
+          const matchesToSave: Array<{user_email: string; job_hash: string; match_score: number; match_reason: string}> = [];
+          for (const job of distributedJobs) {
+            const processed = processJobForMatch(job);
+            if (processed) {
+              matchesToSave.push(processed);
+            }
+          }
+
+          const processMatchForEntry = (match: {user_email: string; job_hash: string; match_score: number; match_reason: string}) => {
+            return {
+              user_email: String(match.user_email),
+              job_hash: String(match.job_hash),
+              match_score: Number((match.match_score || 85) / 100),
+              match_reason: String(match.match_reason || 'AI match'),
+              matched_at: new Date().toISOString(),
+              created_at: new Date().toISOString(),
+              match_algorithm: String(matchAlgorithmForMatches),
+            };
+          };
+
+          const matchEntries: Array<{
+            user_email: string;
+            job_hash: string;
+            match_score: number;
+            match_reason: string;
+            matched_at: string;
+            created_at: string;
+            match_algorithm: string;
+          }> = [];
+          for (const match of matchesToSave) {
+            matchEntries.push(processMatchForEntry(match));
+          }
+
+          // CRITICAL DEBUG: Log what we're trying to save (without using map to avoid closure issues)
+          const debugEntries: Array<{user_email: string; job_hash: string; match_score: number; hasJobHash: boolean}> = [];
+          for (const m of matchEntries) {
+            debugEntries.push({
+              user_email: m.user_email,
+              job_hash: m.job_hash,
+              match_score: m.match_score,
+              hasJobHash: !!m.job_hash
+            });
+          }
+          console.log(`[SIGNUP] 🔍 Attempting to save ${matchEntries.length} matches:`, {
+            email: data.email,
+            matchEntriesCount: matchEntries.length,
+            sampleEntry: debugEntries[0] || null
           });
 
-          matchesCount = matchEntries.length;
-          apiLogger.info(`Saved ${matchesCount} matches for user`, { email: data.email, matchCount: matchesCount });
+          // CRITICAL: Verify we have valid match entries before attempting save
+          if (matchEntries.length === 0) {
+            console.error(`[SIGNUP] ❌ No match entries to save! distributedJobs.length: ${distributedJobs.length}, matchesToSave.length: ${matchesToSave.length}`);
+            apiLogger.error('No match entries to save', new Error('No match entries'), { 
+              email: data.email,
+              distributedJobsLength: distributedJobs.length,
+              matchesToSaveLength: matchesToSave.length
+            });
+            matchesCount = 0;
+          } else {
+            const { data: savedMatches, error: saveError } = await supabase.from('matches').upsert(matchEntries, {
+            onConflict: 'user_email,job_hash',
+          }).select();
+
+          if (saveError) {
+            console.error(`[SIGNUP] ❌ Failed to save matches:`, saveError);
+            apiLogger.error('Failed to save matches', saveError as Error, { 
+              email: data.email, 
+              matchEntriesCount: matchEntries.length,
+              errorCode: saveError.code,
+              errorMessage: saveError.message,
+              errorDetails: saveError.details,
+              errorHint: saveError.hint
+            });
+            // Don't throw - continue with email send even if match save fails
+            matchesCount = 0;
+          } else {
+            matchesCount = matchEntries.length;
+            const actualSavedCount = savedMatches?.length || 0;
+            apiLogger.info(`Saved ${matchesCount} matches for user`, { 
+              email: data.email, 
+              matchCount: matchesCount,
+              savedMatchesCount: actualSavedCount
+            });
+            console.log(`[SIGNUP] ✅ Successfully saved ${matchesCount} matches for ${data.email} (DB returned ${actualSavedCount})`);
+            
+            // CRITICAL DEBUG: Verify matches can be queried back immediately
+            if (actualSavedCount > 0) {
+              // Wait a tiny bit for DB consistency
+              await new Promise(resolve => setTimeout(resolve, 100));
+              
+              const { data: verifyMatches, error: verifyError } = await supabase
+                .from('matches')
+                .select('*')
+                .eq('user_email', data.email)
+                .limit(10);
+              
+              if (verifyError) {
+                console.error(`[SIGNUP] ❌ Failed to verify matches:`, verifyError);
+              } else {
+                console.log(`[SIGNUP] 🔍 Verification query returned ${verifyMatches?.length || 0} matches`);
+                if (verifyMatches && verifyMatches.length > 0) {
+                  console.log(`[SIGNUP] 🔍 Sample verified match:`, {
+                    id: verifyMatches[0].id,
+                    user_email: verifyMatches[0].user_email,
+                    job_hash: verifyMatches[0].job_hash,
+                    match_score: verifyMatches[0].match_score,
+                    match_algorithm: verifyMatches[0].match_algorithm
+                  });
+                  
+                  // Also check if the job exists in jobs table
+                  const { data: jobCheck, error: jobCheckError } = await supabase
+                    .from('jobs')
+                    .select('job_hash, title, company')
+                    .eq('job_hash', verifyMatches[0].job_hash)
+                    .single();
+                  
+                  if (jobCheckError) {
+                    console.warn(`[SIGNUP] ⚠️ Job ${verifyMatches[0].job_hash} not found in jobs table:`, jobCheckError.message);
+                  } else {
+                    console.log(`[SIGNUP] ✅ Job exists:`, {
+                      job_hash: jobCheck.job_hash,
+                      title: jobCheck.title,
+                      company: jobCheck.company
+                    });
+                  }
+                }
+              }
+            } else {
+              console.warn(`[SIGNUP] ⚠️ No matches returned from DB after save (expected ${matchesCount})`);
+            }
+          } // end else for matchEntries.length > 0
 
           // Send welcome email with matched jobs
           try {

@@ -13,14 +13,14 @@ import {
 
 export default function SocialProofRow() {
   const { stats, isLoading } = useStats();
-  const [activeJobs, setActiveJobs] = useState('12,000');
+  const [weeklyNewJobs, setWeeklyNewJobs] = useState('287');
   const [totalUsers, setTotalUsers] = useState('3,400');
   const [statsStale, setStatsStale] = useState(true);
 
   useEffect(() => {
     if (stats) {
-      const hasFreshStats = stats.activeJobs > 0 && stats.totalUsers > 0;
-      setActiveJobs(stats.activeJobs.toLocaleString('en-US'));
+      const hasFreshStats = stats.weeklyNewJobs > 0 && stats.totalUsers > 0;
+      setWeeklyNewJobs(stats.weeklyNewJobs.toLocaleString('en-US'));
       setTotalUsers(stats.totalUsers.toLocaleString('en-US'));
       setStatsStale(!hasFreshStats);
     }
@@ -36,23 +36,14 @@ export default function SocialProofRow() {
     {
       icon: <BrandIcons.Mail className="h-5 w-5" />,
       eyebrow: 'Every email',
-      title: `${FREE_ROLES_PER_SEND} curated roles per email`,
-      description: (
-        <>
-          <span className="inline-block bg-white/5 border border-white/10 rounded-md px-2 py-1 text-white/90 text-xs mr-1">
-            {PREMIUM_ROLES_PER_WEEK} premium roles weekly
-          </span>
-          <span className="inline-block bg-white/5 border border-white/10 rounded-md px-2 py-1 text-white/90 text-xs">
-            ~{PREMIUM_ROLES_PER_MONTH} every month
-          </span>
-        </>
-      ),
+      title: `Your ${FREE_ROLES_PER_SEND} best-fit roles (no time-wasters)`,
+      description: 'Filtered by city, visa status, and experience to fit real applicants.',
     },
     {
       icon: <BrandIcons.Target className="h-5 w-5" />,
-      eyebrow: 'Opportunities live now',
-      title: `${activeJobs} active opportunities`,
-      description: 'Filtered by city, visa status, and experience to fit real applicants.',
+      eyebrow: 'New roles this week',
+      title: isLoading ? '...' : `${weeklyNewJobs} new early-career roles added this week`,
+      description: 'Fresh opportunities added daily. Fresh matches every Thursday.',
     },
   ];
 
@@ -99,9 +90,9 @@ export default function SocialProofRow() {
               </motion.span>
               <div className="space-y-2">
                 <p className="text-xs uppercase tracking-[0.16em] text-zinc-300 mb-2">
-                  {isLoading && index === 0 ? 'Loading…' : item.eyebrow}
+                  {isLoading && (index === 0 || index === 2) ? 'Loading…' : item.eyebrow}
                 </p>
-                {isLoading && index === 0 ? (
+                {isLoading && (index === 0 || index === 2) ? (
                   <div className="space-y-2 mb-2">
                     <div className="h-6 w-32 bg-white/10 rounded animate-pulse" />
                     <div className="h-4 w-24 bg-white/5 rounded animate-pulse" />

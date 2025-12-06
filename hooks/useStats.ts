@@ -6,6 +6,11 @@ interface StatsData {
   internships: number;
   graduates: number;
   earlyCareer: number;
+  weeklyNewJobs: number;
+  avgTimeToApply: {
+    premium: number; // in hours
+    free: number; // in hours
+  };
 }
 
 interface UseStatsReturn {
@@ -81,11 +86,13 @@ export function useStats(): UseStatsReturn {
         .then(data => {
           if (data) {
             const freshStats: StatsData = {
-              activeJobs: parseStat(data.activeJobs ?? data.activeJobsFormatted, 12748),
-              totalUsers: parseStat(data.totalUsers ?? data.totalUsersFormatted, 3400),
-              internships: parseStat(data.internships, 4997),
-              graduates: parseStat(data.graduates, 3953),
-              earlyCareer: parseStat(data.earlyCareer, 0),
+              activeJobs: parseStat(data.data?.activeJobs ?? data.data?.activeJobsFormatted ?? data.activeJobs ?? data.activeJobsFormatted, 12748),
+              totalUsers: parseStat(data.data?.totalUsers ?? data.data?.totalUsersFormatted ?? data.totalUsers ?? data.totalUsersFormatted, 3400),
+              internships: parseStat(data.data?.internships ?? data.internships, 4997),
+              graduates: parseStat(data.data?.graduates ?? data.graduates, 3953),
+              earlyCareer: parseStat(data.data?.earlyCareer ?? data.earlyCareer, 0),
+              weeklyNewJobs: parseStat(data.data?.weeklyNewJobs ?? data.data?.weeklyNewJobsFormatted ?? data.weeklyNewJobs ?? data.weeklyNewJobsFormatted, 287),
+              avgTimeToApply: data.data?.avgTimeToApply ?? data.avgTimeToApply ?? { premium: 12, free: 72 },
             };
             setStats(freshStats);
             setCachedStats(freshStats);
@@ -109,11 +116,13 @@ export function useStats(): UseStatsReturn {
       
       const data = await response.json();
       const freshStats: StatsData = {
-        activeJobs: parseStat(data.activeJobs ?? data.activeJobsFormatted, 12748),
-        totalUsers: parseStat(data.totalUsers ?? data.totalUsersFormatted, 3400),
-        internships: parseStat(data.internships, 4997),
-        graduates: parseStat(data.graduates, 3953),
-        earlyCareer: parseStat(data.earlyCareer, 0),
+        activeJobs: parseStat(data.data?.activeJobs ?? data.data?.activeJobsFormatted ?? data.activeJobs ?? data.activeJobsFormatted, 12748),
+        totalUsers: parseStat(data.data?.totalUsers ?? data.data?.totalUsersFormatted ?? data.totalUsers ?? data.totalUsersFormatted, 3400),
+        internships: parseStat(data.data?.internships ?? data.internships, 4997),
+        graduates: parseStat(data.data?.graduates ?? data.graduates, 3953),
+        earlyCareer: parseStat(data.data?.earlyCareer ?? data.earlyCareer, 0),
+        weeklyNewJobs: parseStat(data.data?.weeklyNewJobs ?? data.data?.weeklyNewJobsFormatted ?? data.weeklyNewJobs ?? data.weeklyNewJobsFormatted, 287),
+        avgTimeToApply: data.data?.avgTimeToApply ?? data.avgTimeToApply ?? { premium: 12, free: 72 },
       };
       
       setStats(freshStats);
@@ -129,6 +138,8 @@ export function useStats(): UseStatsReturn {
         internships: 4997,
         graduates: 3953,
         earlyCareer: 0,
+        weeklyNewJobs: 287,
+        avgTimeToApply: { premium: 12, free: 72 },
       });
     } finally {
       setIsLoading(false);
