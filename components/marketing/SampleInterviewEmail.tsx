@@ -93,6 +93,13 @@ function isHotMatch(score: number): boolean {
   return score >= 90;
 }
 
+function getFeedbackUrl(action: string, score: number, email: string = 'sample@example.com'): string {
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://getjobping.com';
+  const feedbackBase = `${baseUrl}/api/feedback/email`;
+  const feedbackParams = `utm_source=jobping&utm_medium=email&utm_campaign=sample&utm_content=feedback`;
+  return `${feedbackBase}?action=${action}&score=${score}&email=${encodeURIComponent(email)}&${feedbackParams}`;
+}
+
 export default function SampleInterviewEmail() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -252,7 +259,9 @@ export default function SampleInterviewEmail() {
           </p>
           <div className="grid grid-cols-2 gap-3 mb-3">
             <a 
-              href="#"
+              href={getFeedbackUrl('positive', 5)}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_3px_12px_rgba(99,102,241,0.3)] hover:opacity-90 transition-opacity"
               title="Loved it"
               aria-label="Rate matches: Loved it"
@@ -260,7 +269,9 @@ export default function SampleInterviewEmail() {
               😍 Loved it
             </a>
             <a 
-              href="#"
+              href={getFeedbackUrl('positive', 4)}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_3px_12px_rgba(99,102,241,0.3)] hover:opacity-90 transition-opacity"
               title="Good"
               aria-label="Rate matches: Good"
@@ -268,7 +279,9 @@ export default function SampleInterviewEmail() {
               😊 Good
             </a>
             <a 
-              href="#"
+              href={getFeedbackUrl('neutral', 3)}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_3px_12px_rgba(99,102,241,0.3)] hover:opacity-90 transition-opacity"
               title="It's fine"
               aria-label="Rate matches: It's fine"
@@ -276,7 +289,9 @@ export default function SampleInterviewEmail() {
               😐 It's fine
             </a>
             <a 
-              href="#"
+              href={getFeedbackUrl('negative', 2)}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_3px_12px_rgba(99,102,241,0.3)] hover:opacity-90 transition-opacity"
               title="Not great"
               aria-label="Rate matches: Not great"
@@ -285,7 +300,9 @@ export default function SampleInterviewEmail() {
             </a>
           </div>
           <a 
-            href="#"
+            href={getFeedbackUrl('negative', 1)}
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_3px_12px_rgba(99,102,241,0.3)] hover:opacity-90 transition-opacity"
             title="Not relevant"
             aria-label="Rate matches: Not relevant"
@@ -300,13 +317,6 @@ export default function SampleInterviewEmail() {
         {/* Footer - matches production */}
         <div className="mt-6 pt-5 border-t border-indigo-500/12 text-center">
           <div className="text-purple-400 font-semibold text-[14px] mb-2">JobPing</div>
-          <div className="text-[11px] text-zinc-400 mb-2">
-            JobPing Ltd · 77 Camden Street Lower · Dublin D02 XE80 · Ireland
-          </div>
-          <div className="text-[12px] text-zinc-500 mb-2">
-            <a href="#" className="text-indigo-400 hover:text-purple-400 transition-colors font-semibold">Unsubscribe</a> · 
-            <a href="#" className="text-purple-400 hover:text-indigo-400 transition-colors font-semibold ml-1">Update Preferences</a>
-          </div>
           <div className="text-[11px] text-zinc-500">
             You're receiving this because you created a JobPing account.
           </div>
