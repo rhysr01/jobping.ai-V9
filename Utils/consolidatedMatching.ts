@@ -602,9 +602,13 @@ Keep match reasons 2-3 sentences max. Make every word count.`
     
     // Ultra-compact format (no descriptions) to save ~31% tokens
     // Title + Company + Location is enough for good matching
-    const jobList = jobsToAnalyze.map((job, i) => {
-      return `${i+1}. [${job.job_hash}] ${job.title} @ ${job.company} | ${job.location}`;
-    }).join('\n');
+    // CRITICAL: Use imperative loop instead of map to avoid TDZ errors
+    const jobListParts: string[] = [];
+    for (let i = 0; i < jobsToAnalyze.length; i++) {
+      const job = jobsToAnalyze[i];
+      jobListParts.push(`${i+1}. [${job.job_hash}] ${job.title} @ ${job.company} | ${job.location}`);
+    }
+    const jobList = jobListParts.join('\n');
     
 
     return `You are a career matching expert. Analyze these jobs and match them to the user's profile.
@@ -1477,6 +1481,7 @@ Requirements:
 
   /**
    * Calculate match quality metrics for logging and analytics
+   * CRITICAL: Uses imperative loops instead of map/filter/forEach to avoid TDZ errors during bundling
    */
   private calculateMatchQualityMetrics(
     matches: JobMatch[],
@@ -1488,7 +1493,7 @@ Requirements:
     cityCoverage: number;
     sourceDiversity: number;
   } {
-    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    // CRITICAL: Capture immediately and NEVER reference 'jobs' parameter again
     const jobsArray = Array.isArray(jobs) ? jobs : [];
     
     if (matches.length === 0) {
@@ -1500,17 +1505,35 @@ Requirements:
       };
     }
 
-    const scores = matches.map(m => m.match_score);
-    const averageScore = scores.reduce((sum, s) => sum + s, 0) / scores.length;
+    // Calculate average score using imperative loop
+    let scoreSum = 0;
+    for (let i = 0; i < matches.length; i++) {
+      scoreSum += matches[i].match_score;
+    }
+    const averageScore = scoreSum / matches.length;
 
-    const scoreDistribution = {
-      excellent: matches.filter(m => m.match_score >= 90).length,
-      good: matches.filter(m => m.match_score >= 75 && m.match_score < 90).length,
-      fair: matches.filter(m => m.match_score >= 65 && m.match_score < 75).length,
-      poor: matches.filter(m => m.match_score < 65).length
-    };
+    // Calculate score distribution using imperative loops
+    let excellent = 0;
+    let good = 0;
+    let fair = 0;
+    let poor = 0;
+    
+    for (let i = 0; i < matches.length; i++) {
+      const score = matches[i].match_score;
+      if (score >= 90) {
+        excellent++;
+      } else if (score >= 75) {
+        good++;
+      } else if (score >= 65) {
+        fair++;
+      } else {
+        poor++;
+      }
+    }
+    
+    const scoreDistribution = { excellent, good, fair, poor };
 
-    // Calculate city coverage
+    // Calculate city coverage using imperative loops
     const targetCities = Array.isArray(userPrefs.target_cities) 
       ? userPrefs.target_cities 
       : userPrefs.target_cities 
@@ -1518,27 +1541,49 @@ Requirements:
         : [];
     
     const matchedCities = new Set<string>();
-    matches.forEach(match => {
-      const job = jobsArray.find(j => j.job_hash === match.job_hash);
+    for (let i = 0; i < matches.length; i++) {
+      const match = matches[i];
+      
+      // Find job using imperative loop
+      let job: Job | undefined;
+      for (let j = 0; j < jobsArray.length; j++) {
+        if (jobsArray[j].job_hash === match.job_hash) {
+          job = jobsArray[j];
+          break;
+        }
+      }
+      
       if (job) {
         const jobLocation = (job.location || '').toLowerCase();
-        targetCities.forEach(city => {
+        for (let k = 0; k < targetCities.length; k++) {
+          const city = targetCities[k];
           if (jobLocation.includes(city.toLowerCase())) {
             matchedCities.add(city);
+            break;
           }
-        });
+        }
       }
-    });
+    }
     const cityCoverage = targetCities.length > 0 ? matchedCities.size / targetCities.length : 0;
 
-    // Calculate source diversity
+    // Calculate source diversity using imperative loops
     const sources = new Set<string>();
-    matches.forEach(match => {
-      const job = jobsArray.find(j => j.job_hash === match.job_hash);
+    for (let i = 0; i < matches.length; i++) {
+      const match = matches[i];
+      
+      // Find job using imperative loop
+      let job: Job | undefined;
+      for (let j = 0; j < jobsArray.length; j++) {
+        if (jobsArray[j].job_hash === match.job_hash) {
+          job = jobsArray[j];
+          break;
+        }
+      }
+      
       if (job && (job as any).source) {
         sources.add((job as any).source);
       }
-    });
+    }
     const sourceDiversity = sources.size;
 
     return {
