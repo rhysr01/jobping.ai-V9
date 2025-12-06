@@ -236,6 +236,9 @@ export class ConsolidatedMatchingEngine {
    * Generate cache key from user preferences and top job hashes
    */
   private generateCacheKey(jobs: Job[], userPrefs: UserPreferences): string {
+    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    const jobsArray = Array.isArray(jobs) ? jobs : [];
+    
     // User clustering: Similar profiles share cache (massive savings at scale!)
     const careerPath = Array.isArray(userPrefs.career_path) ? userPrefs.career_path[0] : userPrefs.career_path || 'general';
     
@@ -255,7 +258,7 @@ export class ConsolidatedMatchingEngine {
     // This means ALL users with same profile on same day share cache! 60% hit rate!
     const today = new Date().toISOString().split('T')[0]; // "2025-10-09"
     // FIXED: Use job count ranges to improve cache hit rate
-    const jobCountRange = Math.floor(jobs.length / 1000) * 1000; // Round to nearest 1000
+    const jobCountRange = Math.floor(jobsArray.length / 1000) * 1000; // Round to nearest 1000
     const jobPoolVersion = `v${today}_${jobCountRange}+`;
     
     // Cache key format: "finance_london+paris_entry_v2025-10-09_9000+"
@@ -272,10 +275,12 @@ export class ConsolidatedMatchingEngine {
     userPrefs: UserPreferences,
     forceRulesBased: boolean = false
   ): Promise<ConsolidatedMatchResult> {
+    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    const jobsArray = Array.isArray(jobs) ? jobs : [];
     const startTime = Date.now();
 
     // Handle empty job array
-    if (!jobs || jobs.length === 0) {
+    if (!jobsArray || jobsArray.length === 0) {
       return {
         matches: [],
         method: 'rule_based',
@@ -285,7 +290,7 @@ export class ConsolidatedMatchingEngine {
     }
 
     // Check cache first (saves $$$ on repeat matches)
-    const cacheKey = this.generateCacheKey(jobs, userPrefs);
+    const cacheKey = this.generateCacheKey(jobsArray, userPrefs);
     const cached = await this.matchCache.get(cacheKey);
     if (cached) {
       return {
@@ -298,7 +303,7 @@ export class ConsolidatedMatchingEngine {
 
     // Skip AI if explicitly disabled, no client, or circuit breaker open
     if (forceRulesBased || !this.openai || !this.circuitBreaker.canExecute()) {
-      const ruleMatches = this.performRuleBasedMatching(jobs, userPrefs);
+      const ruleMatches = this.performRuleBasedMatching(jobsArray, userPrefs);
       return {
         matches: ruleMatches,
         method: 'rule_based',
@@ -309,10 +314,10 @@ export class ConsolidatedMatchingEngine {
 
     // Try AI matching with timeout and retry
     try {
-      const aiMatches = await this.performAIMatchingWithRetry(jobs, userPrefs);
+      const aiMatches = await this.performAIMatchingWithRetry(jobsArray, userPrefs);
       if (aiMatches && aiMatches.length > 0) {
         // CRITICAL: Post-filter AI matches to ensure they meet location/career requirements
-        const validatedMatches = this.validateAIMatches(aiMatches, jobs, userPrefs);
+        const validatedMatches = this.validateAIMatches(aiMatches, jobsArray, userPrefs);
         
         if (validatedMatches.length === 0) {
           // If all AI matches were filtered out, fall back to rules
@@ -332,7 +337,7 @@ export class ConsolidatedMatchingEngine {
           this.updateCostTracking('gpt4omini', 1, 0.01); // Estimate cost
           
           // Log match quality metrics
-          const matchQuality = this.calculateMatchQualityMetrics(validatedMatches, jobs, userPrefs);
+          const matchQuality = this.calculateMatchQualityMetrics(validatedMatches, jobsArray, userPrefs);
           apiLogger.info('Match quality metrics', {
             email: userPrefs.email || 'unknown',
             averageScore: matchQuality.averageScore,
@@ -357,7 +362,7 @@ export class ConsolidatedMatchingEngine {
     }
 
     // Fallback to rule-based matching
-    const ruleMatches = this.performRuleBasedMatching(jobs, userPrefs);
+    const ruleMatches = this.performRuleBasedMatching(jobsArray, userPrefs);
     return {
       matches: ruleMatches,
       method: 'ai_failed',
@@ -439,11 +444,14 @@ export class ConsolidatedMatchingEngine {
    * Calculate complexity score (0-1) to determine model choice
    */
   private calculateComplexityScore(jobs: Job[], userPrefs: UserPreferences): number {
+    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    const jobsArray = Array.isArray(jobs) ? jobs : [];
+    
     let score = 0;
     
     // Job count complexity (more jobs = more complex)
-    if (jobs.length > 100) score += 0.3;
-    else if (jobs.length > 50) score += 0.2;
+    if (jobsArray.length > 100) score += 0.3;
+    else if (jobsArray.length > 50) score += 0.2;
     
     // User preference complexity
     const prefCount = Object.values(userPrefs).filter(v => v && v.length > 0).length;
@@ -552,6 +560,9 @@ Keep match reasons 2-3 sentences max. Make every word count.`
    * Enhanced prompt that uses full user profile for world-class matching
    */
   private buildStablePrompt(jobs: Job[], userPrefs: UserPreferences): string {
+    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    const jobsArray = Array.isArray(jobs) ? jobs : [];
+    
     // Extract all user preferences
     const userCities = Array.isArray(userPrefs.target_cities) 
       ? userPrefs.target_cities.join(', ') 
@@ -576,7 +587,7 @@ Keep match reasons 2-3 sentences max. Make every word count.`
 
     // SMART APPROACH: Send top N jobs to AI for accurate matching
     // Pre-filtering already ranked these by relevance score
-    const jobsToAnalyze = jobs.slice(0, JOBS_TO_ANALYZE);
+    const jobsToAnalyze = jobsArray.slice(0, JOBS_TO_ANALYZE);
     
     // Ultra-compact format (no descriptions) to save ~31% tokens
     // Title + Company + Location is enough for good matching
@@ -637,6 +648,10 @@ Requirements:
    * Robust response parsing - handles common failure cases
    */
   private parseAIResponse(response: string, jobs: Job[]): JobMatch[] {
+    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    const jobsArray = Array.isArray(jobs) ? jobs : [];
+    const maxJobIndex = jobsArray.length;
+    
     try {
       // Clean common formatting issues
       let cleaned = response
@@ -655,18 +670,31 @@ Requirements:
       if (!Array.isArray(matches)) {
         throw new Error('Response is not an array');
       }
+      
+      if (maxJobIndex === 0) {
+        console.warn('parseAIResponse: jobs array is empty or invalid');
+        return [];
+      }
 
       // Validate and clean matches
       return matches
-        .filter(match => this.isValidMatch(match, jobs.length))
+        .filter(match => this.isValidMatch(match, maxJobIndex))
         .slice(0, 5) // Max 5 matches
-        .map(match => ({
-          job_index: match.job_index,
-          job_hash: match.job_hash,
-          match_score: Math.min(100, Math.max(50, match.match_score)),
-          match_reason: match.match_reason || 'AI match',
-          confidence_score: 0.8
-        }));
+        .map(match => {
+          // Defensive check: ensure match properties exist
+          if (!match || typeof match.job_index !== 'number' || !match.job_hash) {
+            return null;
+          }
+          
+          return {
+            job_index: match.job_index,
+            job_hash: match.job_hash,
+            match_score: Math.min(100, Math.max(50, match.match_score || 50)),
+            match_reason: match.match_reason || 'AI match',
+            confidence_score: 0.8
+          };
+        })
+        .filter((match): match is JobMatch => match !== null); // Remove any null entries
 
     } catch (error) {
       console.error('Failed to parse AI response:', response.slice(0, 200));
@@ -678,22 +706,39 @@ Requirements:
    * Parse function call response - much more reliable than text parsing
    */
   private parseFunctionCallResponse(matches: ParsedMatch[], jobs: Job[]): JobMatch[] {
+    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    const jobsArray = Array.isArray(jobs) ? jobs : [];
+    const maxJobIndex = jobsArray.length;
+    
     try {
       if (!Array.isArray(matches)) {
         throw new Error('Response is not an array');
       }
+      
+      if (maxJobIndex === 0) {
+        console.warn('parseFunctionCallResponse: jobs array is empty or invalid');
+        return [];
+      }
 
       // Validate and clean matches
       return matches
-        .filter(match => this.isValidMatch(match, jobs.length))
+        .filter(match => this.isValidMatch(match, maxJobIndex))
         .slice(0, 5) // Max 5 matches
-        .map(match => ({
-          job_index: match.job_index,
-          job_hash: match.job_hash,
-          match_score: Math.min(100, Math.max(50, match.match_score)),
-          match_reason: match.match_reason || 'AI match',
-          confidence_score: 0.8
-        }));
+        .map(match => {
+          // Defensive check: ensure match properties exist
+          if (!match || typeof match.job_index !== 'number' || !match.job_hash) {
+            return null;
+          }
+          
+          return {
+            job_index: match.job_index,
+            job_hash: match.job_hash,
+            match_score: Math.min(100, Math.max(50, match.match_score || 50)),
+            match_reason: match.match_reason || 'AI match',
+            confidence_score: 0.8
+          };
+        })
+        .filter((match): match is JobMatch => match !== null); // Remove any null entries
 
     } catch (error) {
       console.error('Failed to parse function call response:', error);
@@ -727,6 +772,9 @@ Requirements:
     jobs: Job[],
     userPrefs: UserPreferences
   ): JobMatch[] {
+    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    const jobsArray = Array.isArray(jobs) ? jobs : [];
+    
     const targetCities = Array.isArray(userPrefs.target_cities) 
       ? userPrefs.target_cities 
       : userPrefs.target_cities 
@@ -739,7 +787,7 @@ Requirements:
     
     return aiMatches.filter(match => {
       // Find the job by hash
-      const job = jobs.find(j => j.job_hash === match.job_hash);
+      const job = jobsArray.find(j => j.job_hash === match.job_hash);
       if (!job) {
         console.warn(`Job not found for hash: ${match.job_hash}`);
         return false;
@@ -832,13 +880,16 @@ Requirements:
    * Enhanced rule-based matching with weighted linear scoring model
    */
   private performRuleBasedMatching(jobs: Job[], userPrefs: UserPreferences): JobMatch[] {
+    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    const jobsArray = Array.isArray(jobs) ? jobs : [];
+    
     const matches: JobMatch[] = [];
     const userCities = Array.isArray(userPrefs.target_cities) ? userPrefs.target_cities : [];
     const userCareer = userPrefs.professional_expertise || '';
     const userCareerPaths = Array.isArray(userPrefs.career_path) ? userPrefs.career_path : [];
 
-    for (let i = 0; i < Math.min(jobs.length, 20); i++) {
-      const job = jobs[i];
+    for (let i = 0; i < Math.min(jobsArray.length, 20); i++) {
+      const job = jobsArray[i];
       const scoreResult = this.calculateWeightedScore(job, userPrefs, userCities, userCareer, userCareerPaths);
       
       // Include matches above threshold (balanced for good coverage)
@@ -1378,6 +1429,9 @@ Requirements:
     cityCoverage: number;
     sourceDiversity: number;
   } {
+    // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
+    const jobsArray = Array.isArray(jobs) ? jobs : [];
+    
     if (matches.length === 0) {
       return {
         averageScore: 0,
@@ -1406,7 +1460,7 @@ Requirements:
     
     const matchedCities = new Set<string>();
     matches.forEach(match => {
-      const job = jobs.find(j => j.job_hash === match.job_hash);
+      const job = jobsArray.find(j => j.job_hash === match.job_hash);
       if (job) {
         const jobLocation = (job.location || '').toLowerCase();
         targetCities.forEach(city => {
@@ -1421,7 +1475,7 @@ Requirements:
     // Calculate source diversity
     const sources = new Set<string>();
     matches.forEach(match => {
-      const job = jobs.find(j => j.job_hash === match.job_hash);
+      const job = jobsArray.find(j => j.job_hash === match.job_hash);
       if (job && (job as any).source) {
         sources.add((job as any).source);
       }

@@ -15,9 +15,10 @@ const project = (lat: number, lon: number) => {
 
 const OFFSET: Record<string, { dx: number; dy: number }> = {
   London: { dx: 6, dy: 4 },
-  Manchester: { dx: -8, dy: -6 },
-  Birmingham: { dx: 2, dy: -6 },
-  Belfast: { dx: -8, dy: 2 },
+  Manchester: { dx: -12, dy: -10 },
+  Birmingham: { dx: 8, dy: -10 },
+  Belfast: { dx: -12, dy: 6 },
+  Dublin: { dx: 8, dy: -4 },
   Brussels: { dx: -6, dy: 4 },
   Amsterdam: { dx: 6, dy: -2 },
   Paris: { dx: -3, dy: 3 },
@@ -223,7 +224,7 @@ export default function EuropeMap({
   const labelPositions = useMemo(() => {
     const positions: Map<string, { x: number; y: number }> = new Map();
     const LABEL_HEIGHT = 20; // Approximate height of label text
-    const LABEL_PADDING = 4; // Padding between labels
+    const LABEL_PADDING = 12; // Padding between labels (increased for better spacing with 3 cities)
     const MIN_DISTANCE = LABEL_HEIGHT + LABEL_PADDING;
     
     // Get all cities that should show labels (selected, hovered, or focused)
@@ -271,16 +272,39 @@ export default function EuropeMap({
           
           if (distance < MIN_DISTANCE) {
             hasCollision = true;
-            // Try moving this label up or down
-            if (labelY === baseY) {
-              // First try: move up
-              labelY = baseY - MIN_DISTANCE;
-            } else if (labelY < baseY) {
-              // Already moved up, try moving down
-              labelY = baseY + MIN_DISTANCE;
+            // Calculate relative position to determine best adjustment
+            const dx = labelX - otherPos.x;
+            const dy = labelY - otherPos.y;
+            const absDx = Math.abs(dx);
+            const absDy = Math.abs(dy);
+            
+            // If cities are close horizontally, prefer horizontal adjustment
+            if (absDx < MIN_DISTANCE * 1.5 && absDy < MIN_DISTANCE) {
+              // Move horizontally to create more space
+              labelX = coords.x + (dx > 0 ? MIN_DISTANCE * 1.5 : -MIN_DISTANCE * 1.5);
+              // Also adjust vertically slightly to avoid perfect alignment
+              if (labelY === baseY) {
+                labelY = baseY - (MIN_DISTANCE * 0.5);
+              }
             } else {
-              // Already moved down, try moving further up
-              labelY = baseY - (MIN_DISTANCE * 2);
+              // Prefer vertical adjustment
+              if (labelY === baseY) {
+                // First try: move up
+                labelY = baseY - MIN_DISTANCE;
+              } else if (labelY < baseY) {
+                // Already moved up, try moving down
+                labelY = baseY + MIN_DISTANCE;
+              } else if (labelY > baseY) {
+                // Already moved down, try moving further up or to the side
+                if (absDx < MIN_DISTANCE * 2) {
+                  // Also adjust horizontally
+                  labelX = coords.x + (dx > 0 ? MIN_DISTANCE : -MIN_DISTANCE);
+                }
+                labelY = baseY - (MIN_DISTANCE * 2);
+              } else {
+                // Move further vertically
+                labelY = baseY - (MIN_DISTANCE * 2.5);
+              }
             }
             attempts++;
             break;

@@ -10,7 +10,6 @@ import { BrandIcons } from "@/components/ui/BrandIcons";
 import { SIGNUP_INITIAL_ROLES, FREE_ROLES_PER_SEND, PREMIUM_ROLES_PER_WEEK } from "@/lib/productMetrics";
 import { useStats } from "@/hooks/useStats";
 import HeroBackgroundAura from "@/components/ui/HeroBackgroundAura";
-import InlineFAQ from "@/components/sections/InlineFAQ";
 import { EarlyAccessBanner } from "@/components/ui/EarlyAccessBanner";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
@@ -335,9 +334,6 @@ export default function Hero() {
           </div>
         </motion.div>
       </div>
-
-      {/* Inline FAQ */}
-      <InlineFAQ />
 
       {/* Simplified background - removed excessive gradients */}
     </section>

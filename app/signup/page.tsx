@@ -744,7 +744,7 @@ function SignupForm() {
                   <div className="mt-2 flex items-center justify-between">
                     <p className="text-xs text-zinc-400">{formData.cities.length}/3 selected</p>
                     {formData.cities.length > 0 && citiesValidation.isValid && (
-                      <FormFieldSuccess message={`${formData.cities.length} city${formData.cities.length > 1 ? 'ies' : ''} selected`} id="cities-success" />
+                      <FormFieldSuccess message={`${formData.cities.length} ${formData.cities.length === 1 ? 'city' : 'cities'} selected`} id="cities-success" />
                     )}
                   </div>
                   {formData.cities.length > 0 && (
