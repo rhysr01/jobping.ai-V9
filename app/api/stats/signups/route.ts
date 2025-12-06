@@ -49,7 +49,6 @@ export const GET = asyncHandler(async () => {
   const { count, error } = await supabase
     .from('users')
     .select('*', { count: 'exact', head: true })
-    .eq('email_verified', true)
     .eq('active', true);
 
   if (error) {

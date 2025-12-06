@@ -21,7 +21,6 @@ export async function GET(req: NextRequest) {
       .from('users')
       .select('email, created_at, last_email_sent, target_cities, career_path')
       .eq('active', true)
-      .eq('email_verified', true)
       .is('last_email_sent', null)
       .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Last 7 days
       .limit(50);

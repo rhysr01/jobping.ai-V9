@@ -104,7 +104,6 @@ export const GET = asyncHandler(async (req: NextRequest) => {
     .from('users')
     .select('*', { count: 'exact', head: true })
     .eq('active', true)
-    .eq('email_verified', true);
 
   // Format numbers with commas
   const formatNumber = (num: number) => {
