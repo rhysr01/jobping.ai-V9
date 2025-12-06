@@ -2,6 +2,8 @@
  * CONSOLIDATED MATCHING SYSTEM
  * Replacing all AI emergency fixes with a single, stable implementation
  * Built on existing Jobping codebase - no hallucinations
+ * 
+ * TDZ FIX: All methods now capture jobs parameter immediately to prevent bundling issues
  */
 
 import OpenAI from 'openai';
