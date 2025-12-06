@@ -313,7 +313,8 @@ export async function POST(req: NextRequest) {
       });
       console.log(`[SIGNUP] Jobs filtered: ${allJobs?.length || 0} total, ${preFilteredJobs.length} after strict pre-filtering`);
 
-      if (preFilteredJobs && preFilteredJobs.length > 0) {
+      try {
+        if (preFilteredJobs && preFilteredJobs.length > 0) {
         console.log(`[SIGNUP] Found ${preFilteredJobs.length} pre-filtered jobs, attempting AI matching...`);
         
         // Send top 50 pre-filtered jobs to AI (same as match-users route)
@@ -592,7 +593,10 @@ export async function POST(req: NextRequest) {
               rawError: String(emailError)
             });
           }
-        } else {
+        }
+        
+        // Handle case when no matches found
+        if (!matchResult.matches || matchResult.matches.length === 0) {
           // No matches found, send welcome email anyway
           apiLogger.info('No matches found, sending welcome email', { email: data.email });
           console.log(`[SIGNUP] No matches found, sending welcome email to ${data.email}`);
