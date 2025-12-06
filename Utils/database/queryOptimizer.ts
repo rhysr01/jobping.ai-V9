@@ -167,8 +167,7 @@ export class DatabaseQueryOptimizer {
         created_at,
         last_matched_at,
         email_verified
-      `)
-      .eq('email_verified', true);
+      `);
 
     // Apply filters
     if (config.isActive !== undefined) {

@@ -64,7 +64,6 @@ async function handleSendScheduledEmails(req: NextRequest) {
       .from('users')
       .select('*')
       .eq('active', true)
-      .eq('email_verified', true)
       .is('delivery_paused', false)
       .order('created_at', { ascending: false });
 

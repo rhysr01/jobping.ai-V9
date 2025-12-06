@@ -126,8 +126,7 @@ export async function getEngagementStats(): Promise<EngagementStats> {
   const { data: totalUsers, error: totalError } = await supabase
     .from('users')
     .select('email', { count: 'exact' })
-    .eq('active', true)
-    .eq('email_verified', true);
+    .eq('active', true);
 
   if (totalError) {
     console.error('Error getting total users:', totalError);
@@ -145,7 +144,6 @@ export async function getEngagementStats(): Promise<EngagementStats> {
     .from('users')
     .select('email', { count: 'exact' })
     .eq('active', true)
-    .eq('email_verified', true)
     .gte('email_engagement_score', 30)
     .eq('delivery_paused', false);
 
@@ -154,7 +152,6 @@ export async function getEngagementStats(): Promise<EngagementStats> {
     .from('users')
     .select('email', { count: 'exact' })
     .eq('active', true)
-    .eq('email_verified', true)
     .eq('delivery_paused', true);
 
   // Get re-engagement candidates
@@ -180,7 +177,6 @@ export async function shouldSendEmailToUser(email: string): Promise<boolean> {
     .select('delivery_paused, email_engagement_score, last_engagement_date')
     .eq('email', email)
     .eq('active', true)
-    .eq('email_verified', true)
     .single();
 
   if (error || !user) {
@@ -207,7 +203,6 @@ export async function getEngagedUsersForDelivery(): Promise<string[]> {
     .from('users')
     .select('email')
     .eq('active', true)
-    .eq('email_verified', true)
     .eq('delivery_paused', false)
     .gte('email_engagement_score', 30);
 

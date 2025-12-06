@@ -32,7 +32,6 @@ export async function fetchActiveUsers(
     .from('users')
     .select('*')
     .eq('active', true)
-    .eq('email_verified', true) // Consistent with send-scheduled-emails - only match verified users
     .limit(limit);
 
   if (error) {

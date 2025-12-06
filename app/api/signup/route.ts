@@ -6,7 +6,6 @@ import { apiLogger } from '@/lib/api-logger';
 import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilterJobs';
 import { getDatabaseCategoriesForForm } from '@/Utils/matching/categoryMapper';
 import { distributeJobsWithDiversity, getDistributionStats } from '@/Utils/matching/jobDistribution';
-import { sendVerificationEmail } from '@/Utils/emailVerification';
 
 // Helper function to safely send welcome email and update tracking
 async function sendWelcomeEmailAndTrack(
@@ -120,7 +119,7 @@ export async function POST(req: NextRequest) {
       skills: data.skills || [],
       career_keywords: data.careerKeywords || null,
       subscription_tier: subscriptionTier,
-      email_verified: true, // Optimistically verify; formal verification email dispatched separately
+      email_verified: true, // All users are automatically verified on signup - no verification email needed
       subscription_active: true,
       email_phase: 'welcome', // Start in welcome phase
       onboarding_complete: false, // Will be set to true after first email
@@ -213,18 +212,6 @@ export async function POST(req: NextRequest) {
       tier: subscriptionTier,
       timestamp: new Date().toISOString()
     });
-
-    try {
-      await sendVerificationEmail(normalizedEmail);
-      apiLogger.info('Verification email dispatched', { email: normalizedEmail });
-    } catch (verificationError) {
-      const message = verificationError instanceof Error ? verificationError.message : String(verificationError);
-      apiLogger.error('Failed to send verification email', verificationError as Error, {
-        email: normalizedEmail,
-        errorMessage: message,
-      });
-      console.error(`[SIGNUP] ⚠️ Verification email failed for ${normalizedEmail}: ${message}`);
-    }
 
     // Trigger instant matching and email
     let matchesCount = 0;
