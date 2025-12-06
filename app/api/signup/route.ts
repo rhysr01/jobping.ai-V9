@@ -233,10 +233,9 @@ export async function POST(req: NextRequest) {
     apiLogger.info('Starting email sending process', { email: data.email });
     console.log(`[SIGNUP] Starting email sending process for: ${data.email}`);
     
-    try {
-      console.log(`[SIGNUP] Creating matcher...`);
-      const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
-      console.log(`[SIGNUP] Matcher created successfully`);
+    console.log(`[SIGNUP] Creating matcher...`);
+    const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
+    console.log(`[SIGNUP] Matcher created successfully`);
       
       // OPTIMIZED: Fetch jobs using database-level filtering for better performance
       // Use the same optimized approach as match-users route
@@ -315,7 +314,7 @@ export async function POST(req: NextRequest) {
 
       try {
         if (preFilteredJobs && preFilteredJobs.length > 0) {
-        console.log(`[SIGNUP] Found ${preFilteredJobs.length} pre-filtered jobs, attempting AI matching...`);
+          console.log(`[SIGNUP] Found ${preFilteredJobs.length} pre-filtered jobs, attempting AI matching...`);
         
         // Send top 50 pre-filtered jobs to AI (same as match-users route)
         const jobsForAI = preFilteredJobs.slice(0, 50);
@@ -593,10 +592,7 @@ export async function POST(req: NextRequest) {
               rawError: String(emailError)
             });
           }
-        }
-        
-        // Handle case when no matches found
-        if (!matchResult.matches || matchResult.matches.length === 0) {
+        } else {
           // No matches found, send welcome email anyway
           apiLogger.info('No matches found, sending welcome email', { email: data.email });
           console.log(`[SIGNUP] No matches found, sending welcome email to ${data.email}`);
@@ -642,6 +638,7 @@ export async function POST(req: NextRequest) {
           supabase,
           'no jobs'
         );
+        }
       }
     } catch (matchError) {
       console.error(`[SIGNUP] ❌ Matching process failed:`, matchError);
