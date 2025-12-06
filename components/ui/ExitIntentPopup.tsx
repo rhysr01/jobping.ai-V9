@@ -59,7 +59,7 @@ export default function ExitIntentPopup() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-gradient-to-br from-zinc-900 to-black border-2 border-brand-500/30 rounded-2xl p-8 max-w-md w-full shadow-glow-strong"
+            className="bg-white/[0.06] border border-white/10 backdrop-blur-xl rounded-2xl p-8 max-w-md w-full shadow-feature elevation-3"
           >
           <button
             onClick={() => setShowPopup(false)}
@@ -80,7 +80,7 @@ export default function ExitIntentPopup() {
             <Link
               href="/signup"
               onClick={() => setShowPopup(false)}
-              className="block w-full bg-brand-500 text-white py-4 px-6 rounded-2xl font-semibold text-lg text-center hover:bg-brand-600 hover:-translate-y-0.5 transition-all min-h-[48px] flex items-center justify-center"
+              className="btn-primary w-full"
             >
               Get my first 5 matches →
             </Link>

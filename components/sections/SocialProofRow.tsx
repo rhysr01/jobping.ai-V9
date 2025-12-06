@@ -55,9 +55,7 @@ export default function SocialProofRow() {
       <div className="pointer-events-none absolute inset-x-0 -top-10 h-40 bg-gradient-to-b from-zinc-900/40 to-transparent" />
       <div className="container-page relative z-10">
         <div className="mt-8 md:mt-10">
-            <div className="mx-auto max-w-6xl rounded-3xl border border-white/5 bg-white/[0.02] p-6 backdrop-blur-md relative">
-              <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-white/5" />
-              <div className="pointer-events-none absolute inset-0 rounded-3xl shadow-[inset_0_1px_12px_rgba(255,255,255,0.04)]" />
+            <div className="mx-auto max-w-6xl rounded-2xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl relative shadow-feature">
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -76,13 +74,13 @@ export default function SocialProofRow() {
                 y: -4,
                 transition: { type: 'spring', stiffness: 300, damping: 20 }
               }}
-              className="group relative flex flex-col gap-2 overflow-hidden rounded-2xl bg-zinc-950/80 px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7"
+              className="group relative flex flex-col gap-2 overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7"
             >
               {index < items.length - 1 && (
                 <span className="hidden md:inline absolute right-0 top-1/2 h-4 w-px bg-white/10 -translate-y-1/2" />
               )}
               <motion.span 
-                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-brand-200 transition-all duration-300 group-hover:bg-brand-500/25 group-hover:scale-105"
+                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/12 text-brand-200 transition-all duration-300 group-hover:bg-brand-500/20 group-hover:scale-110"
                 whileHover={{ rotate: [0, -10, 10, 0] }}
                 transition={{ duration: 0.5 }}
               >
