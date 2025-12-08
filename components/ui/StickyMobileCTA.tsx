@@ -52,8 +52,8 @@ export default function StickyMobileCTA() {
           className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-t from-black via-black to-transparent pointer-events-none lg:hidden"
         >
           <Link
-            href="/signup"
-            aria-label="Get my first 5 matches"
+            href="/signup/free"
+            aria-label="Get my 5 free matches"
             className="pointer-events-auto w-full block"
           >
             <motion.div
@@ -62,7 +62,7 @@ export default function StickyMobileCTA() {
               className="btn-primary w-full flex items-center justify-center gap-2"
             >
               <BrandIcons.Mail className="w-5 h-5" />
-              <span>Get my first 5 matches</span>
+              <span>Get my 5 free matches</span>
               <BrandIcons.ArrowRight className="w-5 h-5" />
             </motion.div>
           </Link>

@@ -1,12 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseClient } from '@/Utils/databasePool';
+import { apiLogger } from '@/lib/api-logger';
+import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 
 export async function GET(request: NextRequest) {
+  // Rate limiting - prevent abuse
+  const rateLimitResult = await getProductionRateLimiter().middleware(request, 'matches-free', {
+    windowMs: 60 * 1000, // 1 minute
+    maxRequests: 10, // 10 requests per minute per IP
+  });
+  
+  if (rateLimitResult) {
+    return rateLimitResult;
+  }
+
   try {
     // Get user email from cookie (simple approach)
     const email = request.cookies.get('free_user_email')?.value;
 
     if (!email) {
+      apiLogger.warn('Matches API: No cookie found', new Error('Unauthorized'), {});
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -48,7 +61,7 @@ export async function GET(request: NextRequest) {
       .limit(5);
 
     if (matchesError) {
-      console.error('[MATCHES API ERROR]', matchesError);
+      apiLogger.error('Failed to fetch matches', matchesError as Error, { email });
       throw matchesError;
     }
 
@@ -75,7 +88,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ jobs });
 
   } catch (error) {
-    console.error('[MATCHES API ERROR]', error);
+    apiLogger.error('Matches API failed', error as Error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
