@@ -11,6 +11,7 @@ import { EarlyAccessBanner } from "@/components/ui/EarlyAccessBanner";
 import DeviceFrame from "@/components/marketing/DeviceFrame";
 import SampleJobMatches from "@/components/marketing/SampleJobMatches";
 import ExampleMatchesModal from "@/components/ui/ExampleMatchesModal";
+import LogoWordmark from "@/components/LogoWordmark";
 
 export default function Hero() {
   const [offset, setOffset] = useState(0);
@@ -68,22 +69,32 @@ export default function Hero() {
         {/* Early Access Banner */}
         <EarlyAccessBanner />
         
+        {/* JobPing Logo with Gradient Hat */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.5 }}
+          className="flex justify-center mt-6 mb-8"
+        >
+          <LogoWordmark />
+        </motion.div>
+        
         {/* Split Grid Layout: Content Left, Mockup Right */}
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center mt-8 md:mt-12">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center mt-4 md:mt-8">
           
           {/* LEFT SIDE - Content */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-left space-y-6"
+            className="text-left space-y-5"
           >
             {/* Badge */}
             <motion.p
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.45 }}
-              className="inline-flex items-center gap-2 rounded-full border border-brand-500/50 bg-gradient-to-r from-brand-500/15 to-purple-600/10 px-4 py-1.5 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200 shadow-[0_0_20px_rgba(126,97,255,0.2)]"
+              className="inline-flex items-center gap-2 rounded-full border border-brand-500/50 bg-gradient-to-r from-brand-500/15 to-purple-600/10 px-4 py-1.5 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200 shadow-[0_0_20px_rgba(126,97,255,0.2)] mb-2"
             >
               <BrandIcons.Mail className="h-3.5 w-3.5 text-brand-300" />
               {Copy.HERO_PILL}
@@ -94,7 +105,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
-              className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-[1.1] text-white mb-4"
+              className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-[1.1] text-white mb-3"
             >
               {Copy.HERO_HEADLINE}
             </motion.h1>
@@ -104,7 +115,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25, duration: 0.6 }}
-              className="text-lg md:text-xl text-zinc-300 leading-relaxed max-w-xl mb-2"
+              className="text-lg md:text-xl text-zinc-300 leading-relaxed max-w-xl mb-4"
             >
               {Copy.HERO_SUBLINE}
             </motion.p>
@@ -114,7 +125,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
-              className="flex flex-wrap items-center gap-4"
+              className="flex flex-wrap items-center gap-4 pt-1"
             >
               <div className="flex items-center gap-2 text-sm text-zinc-300">
                 <BrandIcons.Zap className="h-4 w-4 text-brand-400" />
@@ -135,17 +146,17 @@ export default function Hero() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35, duration: 0.6 }}
-              className="flex flex-col sm:flex-row gap-3 pt-1"
+              className="flex flex-col sm:flex-row gap-3 pt-2"
             >
               <Button
                 href="/signup/free"
                 variant="gradient"
                 size="lg"
                 className="w-full sm:w-auto sm:min-w-[240px] px-8 py-4 md:py-5 text-base md:text-lg shadow-[0_4px_20px_rgba(126,97,255,0.4)] hover:shadow-[0_6px_30px_rgba(126,97,255,0.5)] transition-shadow"
-                aria-label="Start Free - See Your First 5 Matches"
+                aria-label="Try for free now"
               >
                 <span className="flex items-center justify-center gap-2">
-                  {Copy.HERO_PRIMARY_CTA}
+                  Try for free now
                   <BrandIcons.ArrowRight className="h-5 w-5" />
                 </span>
               </Button>
@@ -165,7 +176,7 @@ export default function Hero() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4, duration: 0.6 }}
-              className="text-sm text-zinc-400 pt-2"
+              className="text-sm text-zinc-400 pt-1"
             >
               {Copy.HERO_SOCIAL_PROOF}
             </motion.p>

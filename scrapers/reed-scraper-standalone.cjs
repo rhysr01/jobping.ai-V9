@@ -269,49 +269,101 @@ const BACKOFF_DELAY_MS = parseInt(process.env.REED_BACKOFF_DELAY_MS || '6000', 1
 const { getAllRoles, getEarlyCareerRoles, getTopRolesByCareerPath, cleanRoleForSearch } = require('./shared/roles.cjs');
 
 /**
+ * Query rotation system - 3 sets that rotate every 8 hours
+ * Ensures different queries for morning/evening runs (8am/6pm UTC)
+ * ALL QUERIES ARE EARLY-CAREER FOCUSED
+ */
+const QUERY_SETS = {
+  SET_A: [
+    // Focus: Internships and graduate programs
+    'graduate programme', 'graduate scheme', 'internship', 'intern', 
+    'graduate trainee', 'management trainee', 'trainee program',
+    'entry level', 'junior', 'graduate'
+  ],
+  SET_B: [
+    // Focus: Analyst and associate roles
+    'business analyst', 'financial analyst', 'data analyst', 'operations analyst',
+    'junior analyst', 'associate consultant', 'graduate analyst',
+    'marketing intern', 'finance intern', 'consulting intern'
+  ],
+  SET_C: [
+    // Focus: Entry-level and trainee programs
+    'entry level', 'junior', 'graduate', 'recent graduate',
+    'early careers program', 'campus hire', 'new grad',
+    'trainee', 'graduate associate', 'rotational graduate program'
+  ]
+};
+
+/**
+ * Determine which query set to use based on time of day
+ * Rotates every 8 hours: SET_A (0-7h), SET_B (8-15h), SET_C (16-23h)
+ */
+function getCurrentQuerySet() {
+  const manualSet = process.env.REED_QUERY_SET;
+  if (manualSet && QUERY_SETS[manualSet]) {
+    return manualSet;
+  }
+  
+  const hour = new Date().getHours();
+  if (hour >= 0 && hour < 8) return 'SET_A';
+  if (hour >= 8 && hour < 16) return 'SET_B';
+  return 'SET_C';
+}
+
+/**
  * Generate comprehensive query list covering ALL roles from signup form
+ * NOW WITH QUERY ROTATION for variety across runs
  * Since Reed has no API limit, we can be generous with queries
+ * ALL QUERIES ARE EARLY-CAREER FOCUSED
  */
 function generateReedQueries() {
+  const currentSet = getCurrentQuerySet();
+  const baseQueries = QUERY_SETS[currentSet];
+  console.log(`🔄 Reed using query set: ${currentSet} (${baseQueries.length} base terms)`);
+  
   const queries = [];
   
-  // 🥇 TIER 1: ALL exact role names from signup form (HIGHEST PRIORITY)
-  // Get ALL roles, not just top 10-20
+  // Add base rotation queries (early-career focused)
+  queries.push(...baseQueries);
+  
+  // 🥇 TIER 1: Exact role names from signup form (ROTATED SUBSET)
+  // Rotate which roles we prioritize based on query set
   const allRoles = getAllRoles(); // All roles across all career paths
   const earlyCareerRoles = getEarlyCareerRoles(); // Roles with intern/graduate/junior keywords
   const topRolesByPath = getTopRolesByCareerPath(5); // Top 5 roles per career path
   
-  // Combine: early-career roles first, then all roles, then top roles by path
-  const prioritizedRoles = [
-    ...earlyCareerRoles, // All early-career roles (intern/graduate/junior)
-    ...allRoles, // All roles from signup form
+  // Rotate role subsets for variety
+  const roleSubset = currentSet === 'SET_A' ? [
+    ...earlyCareerRoles.slice(0, 15), // First 15 early-career roles
+    ...allRoles.slice(0, 20) // First 20 all roles
+  ] : currentSet === 'SET_B' ? [
+    ...earlyCareerRoles.slice(15, 30), // Next 15 early-career roles
+    ...allRoles.slice(20, 40) // Next 20 all roles
+  ] : [
+    ...earlyCareerRoles.slice(30), // Remaining early-career roles
+    ...allRoles.slice(40), // Remaining all roles
     ...Object.values(topRolesByPath).flat() // Top roles per career path
   ];
   
   // Clean role names and get primary version (without parentheses)
-  // e.g., "Sales Development Representative (SDR)" -> "Sales Development Representative"
-  const cleanedRoles = prioritizedRoles.map(role => {
+  const cleanedRoles = roleSubset.map(role => {
     const cleaned = cleanRoleForSearch(role);
     return cleaned[0]; // Use primary cleaned version
   });
   
-  // Remove duplicates and add ALL unique role names
+  // Remove duplicates and add unique role names
   const uniqueRoleTerms = [...new Set(cleanedRoles)];
-  queries.push(...uniqueRoleTerms); // Add ALL roles (no limit since no API limit)
+  queries.push(...uniqueRoleTerms);
   
-  // 🥈 TIER 2: Generic early-career terms (fallback for broader coverage)
-  const GENERIC_EARLY_TERMS = [
-    'graduate',
-    'graduate programme',
-    'graduate scheme',
-    'entry level',
-    'junior',
-    'trainee',
-    'intern',
-    'internship',
-    'graduate trainee',
-    'management trainee'
+  // 🥈 TIER 2: Generic early-career terms (rotated)
+  const GENERIC_EARLY_TERMS = currentSet === 'SET_A' ? [
+    'graduate', 'graduate programme', 'graduate scheme', 'entry level', 'junior'
+  ] : currentSet === 'SET_B' ? [
+    'trainee', 'intern', 'internship', 'graduate trainee', 'management trainee'
+  ] : [
+    'graduate trainee', 'trainee program', 'entry level program', 'campus hire', 'new grad'
   ];
+  
   queries.push(...GENERIC_EARLY_TERMS);
   
   // Remove duplicates and return

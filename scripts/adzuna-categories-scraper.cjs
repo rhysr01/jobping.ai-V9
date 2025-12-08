@@ -45,7 +45,7 @@ const EU_CITIES_CATEGORIES = [
   { name: 'Zurich', country: 'ch' },    // ✅ Moderate performer
   { name: 'Milan', country: 'it' },     // ✅ High performer (470 jobs)
   { name: 'Rome', country: 'it' },      // 🆕 Italy's capital
-  { name: 'Dublin', country: 'ie' },     // ✅ English only (tech/finance hub)
+  // { name: 'Dublin', country: 'ie' },     // ❌ REMOVED: Not supported by Adzuna API (404 errors)
   { name: 'Stockholm', country: 'se' },  // 🆕 Nordic tech/finance hub
   { name: 'Copenhagen', country: 'dk' }, // 🆕 Nordic business hub
   { name: 'Vienna', country: 'at' },     // 🆕 Central European business hub
@@ -53,22 +53,25 @@ const EU_CITIES_CATEGORIES = [
   { name: 'Warsaw', country: 'pl' }      // 🆕 Eastern European business hub
 ];
 
-// Query rotation system for Adzuna - 3 different sets
+// Query rotation system for Adzuna - 3 different sets that rotate throughout the day
+// This ensures different queries are used if running twice a day
 const QUERY_SETS = {
   SET_A: [
-    'internship', 'graduate programme', 'junior', 'entry level', 'trainee'
+    'internship', 'graduate programme', 'junior', 'entry level', 'trainee', 'graduate scheme'
   ],
   SET_B: [
     'finance graduate', 'marketing graduate', 'strategy graduate', 
-    'business analyst', 'data analyst', 'operations analyst'
+    'business analyst', 'data analyst', 'operations analyst', 'financial analyst'
   ],
   SET_C: [
-    'graduate scheme', 'graduate program', 'trainee program',
-    'entry level', 'junior', 'associate', 'analyst'
+    'graduate program', 'trainee program', 'entry level analyst',
+    'junior associate', 'associate consultant', 'analyst', 'graduate trainee'
   ]
 };
 
-// Determine which query set to use
+// Determine which query set to use based on time of day
+// Rotates every 8 hours: SET_A (0-7h), SET_B (8-15h), SET_C (16-23h)
+// This ensures different queries if running twice a day
 const getCurrentQuerySet = () => {
   const manualSet = process.env.ADZUNA_QUERY_SET;
   if (manualSet && QUERY_SETS[manualSet]) {
@@ -84,7 +87,7 @@ const getCurrentQuerySet = () => {
 
 const currentSet = getCurrentQuerySet();
 const CORE_ENGLISH_TERMS = QUERY_SETS[currentSet];
-console.log(`🔄 Adzuna using query set: ${currentSet} (${CORE_ENGLISH_TERMS.length} terms)`);
+console.log(`🔄 Adzuna using query set: ${currentSet} (${CORE_ENGLISH_TERMS.length} terms) - rotates every 8 hours for variety`);
 
 // Local language terms by country (SAME AS JOBSPY - max 6 per city)
 const LOCAL_EARLY_CAREER_TERMS = {
@@ -272,10 +275,11 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
         if (response.status === 404) {
           consecutive404s++;
           if (consecutive404s >= MAX_CONSECUTIVE_404S) {
-            console.warn(`⚠️  ${cityName} (${countryCode.toUpperCase()}): Country code not supported by Adzuna API (${consecutive404s} consecutive 404s). Skipping remaining queries.`);
-            return allJobs; // Early return - skip remaining queries for this city
+            console.warn(`⚠️  ${cityName} (${countryCode.toUpperCase()}): Country code not supported by Adzuna API (${consecutive404s} consecutive 404s). Skipping remaining queries for this city.`);
+            // Don't return - continue with next city instead of stopping entirely
+            return allJobs; // Return jobs collected so far, but continue to next city in outer loop
           }
-          // Single 404 might be query-specific, continue
+          // Single 404 might be query-specific, continue to next query
           break; // Skip to next query
         }
 
@@ -377,8 +381,8 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
       if (error.response?.status === 404) {
         consecutive404s++;
         if (consecutive404s >= MAX_CONSECUTIVE_404S) {
-          console.warn(`⚠️  ${cityName} (${countryCode.toUpperCase()}): Country code not supported by Adzuna API (${consecutive404s} consecutive 404s). Skipping remaining queries.`);
-          return allJobs; // Early return - skip remaining queries for this city
+          console.warn(`⚠️  ${cityName} (${countryCode.toUpperCase()}): Country code not supported by Adzuna API (${consecutive404s} consecutive 404s). Skipping remaining queries for this city.`);
+          return allJobs; // Return jobs collected so far, but continue to next city in outer loop
         }
       }
       console.error(`❌ Error searching ${cityName} for "${query}":`, error.message);
@@ -427,13 +431,13 @@ async function scrapeAllCitiesCategories(options = {}) {
     : parseInt(process.env.ADZUNA_TIMEOUT_MS || '15000', 10);
   const maxPages = typeof overrideMaxPages === 'number'
     ? overrideMaxPages
-    : parseInt(process.env.ADZUNA_MAX_PAGES || '5', 10); // EXPANDED: Increased from 3 to 5
+    : parseInt(process.env.ADZUNA_MAX_PAGES || '8', 10); // EXPANDED: Increased from 5 to 8 for more jobs per query
   const pageDelayJitter = typeof overridePageDelayJitter === 'number'
     ? overridePageDelayJitter
     : parseInt(process.env.ADZUNA_PAGE_DELAY_JITTER_MS || '0', 10);
   const maxQueriesPerCity = typeof overrideMaxQueriesPerCity === 'number'
     ? overrideMaxQueriesPerCity
-    : parseInt(process.env.ADZUNA_MAX_QUERIES_PER_CITY || '10', 10); // Reduced from 15 to 10 (optimized like JobSpy)
+    : parseInt(process.env.ADZUNA_MAX_QUERIES_PER_CITY || '15', 10); // Increased from 10 to 15 for more coverage
   
   console.log(`🎓 Starting multilingual early-career job search across ${EU_CITIES_CATEGORIES.length} EU cities...`);
   console.log(`📅 Time range: Last 28 days for wider coverage`);
@@ -506,9 +510,9 @@ async function scrapeAllCitiesCategories(options = {}) {
       
       if (cityJobs.length > 0) {
         allJobs.push(...cityJobs);
-        console.log(`✅ ${city.name}: Found ${cityJobs.length} jobs`);
+        console.log(`✅ ${city.name}: Found ${cityJobs.length} jobs (total so far: ${allJobs.length})`);
       } else {
-        console.log(`⚠️  ${city.name}: No jobs found`);
+        console.log(`⚠️  ${city.name}: No jobs found (continuing with next city...)`);
       }
       
       totalCityCount++;
@@ -516,6 +520,8 @@ async function scrapeAllCitiesCategories(options = {}) {
     } catch (error) {
       scrapeErrors += 1;
       console.error(`❌ Failed to process ${city.name}:`, error.message);
+      console.log(`   ↻ Continuing with next city...`);
+      // Continue to next city - don't stop the entire scraper
     }
   }
   
