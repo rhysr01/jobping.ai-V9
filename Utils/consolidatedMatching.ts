@@ -1,10 +1,8 @@
 /**
- * CONSOLIDATED MATCHING SYSTEM
- * Replacing all AI emergency fixes with a single, stable implementation
- * Built on existing Jobping codebase - no hallucinations
- * 
+ * CONSOLIDATED MATCHING SYSTEM v2.1
+ * Cache-busting rebuild - December 8, 2025
  * TDZ FIX: All methods now capture jobs parameter immediately to prevent bundling issues
- * BUILD_ID: 2025-12-08-fix-v2
+ * BUILD_HASH: cb4f9a2e
  */
 
 import OpenAI from 'openai';
@@ -1667,4 +1665,9 @@ Requirements:
 export function createConsolidatedMatcher(openaiApiKey?: string): ConsolidatedMatchingEngine {
   return new ConsolidatedMatchingEngine(openaiApiKey);
 }
+
+// Cache-busting export - forces webpack to regenerate bundle
+export const BUILD_TIMESTAMP = '2025-12-08T12:00:00Z';
+
+export const BUILD_VERSION = '2.1.0';
 
