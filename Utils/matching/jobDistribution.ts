@@ -72,6 +72,55 @@ export function distributeJobsWithDiversity(
     ? targetCount // Allow all jobs from single source
     : maxPerSource;
 
+  // Helper: Consistent city matching (same logic as preFilterJobs.ts)
+  // CRITICAL: Define before use to avoid "used before declaration" errors
+  const matchesCity = (jobCity: string, jobLocation: string, targetCity: string): boolean => {
+    const cityLower = targetCity.toLowerCase().trim();
+    const jobCityLower = jobCity.toLowerCase().trim();
+    const jobLocLower = jobLocation.toLowerCase().trim();
+    
+    // Exact match
+    if (jobCityLower === cityLower || jobLocLower === cityLower) return true;
+    
+    // Word boundary matching (prevents false matches like "New London" matching "London")
+    const escapedCity = cityLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const patterns = [
+      new RegExp(`\\b${escapedCity}\\b`, 'i'), // Exact word match
+      new RegExp(`^${escapedCity}[,\\s]`, 'i'), // Starts with city name
+      new RegExp(`[,\\s]${escapedCity}[,\\s]`, 'i'), // City in middle
+      new RegExp(`[,\\s]${escapedCity}$`, 'i'), // City at end
+    ];
+    
+    // Check if any pattern matches
+    // CRITICAL: Use imperative loop instead of some to avoid TDZ errors
+    for (let p = 0; p < patterns.length; p++) {
+      if (patterns[p].test(jobCityLower) || patterns[p].test(jobLocLower)) {
+        return true;
+      }
+    }
+    
+    // Handle special cases (Greater London, etc.)
+    const specialCases: Record<string, string[]> = {
+      'london': ['greater london', 'central london', 'north london', 'south london', 'east london', 'west london'],
+      'paris': ['greater paris', 'paris region'],
+      'berlin': ['greater berlin'],
+      'madrid': ['greater madrid'],
+      'barcelona': ['greater barcelona'],
+    };
+    
+    if (specialCases[cityLower]) {
+      // CRITICAL: Use imperative loop instead of some to avoid TDZ errors
+      const variants = specialCases[cityLower];
+      for (let v = 0; v < variants.length; v++) {
+        if (jobCityLower.includes(variants[v]) || jobLocLower.includes(variants[v])) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  };
+
   // Step 1: Group jobs by source and city
   // CRITICAL: Use imperative loop instead of forEach to avoid TDZ errors
   const jobsBySource: Record<string, JobWithSource[]> = {};
@@ -198,54 +247,6 @@ export function distributeJobsWithDiversity(
     const location = ((job as any).location || '').substring(0, 50); // Limit length
     const url = ((job as any).job_url || '').substring(0, 100); // Limit length
     return `${title}_${company}_${city}_${location}_${url}` || Math.random().toString();
-  };
-
-  // Helper: Consistent city matching (same logic as preFilterJobs.ts)
-  const matchesCity = (jobCity: string, jobLocation: string, targetCity: string): boolean => {
-    const cityLower = targetCity.toLowerCase().trim();
-    const jobCityLower = jobCity.toLowerCase().trim();
-    const jobLocLower = jobLocation.toLowerCase().trim();
-    
-    // Exact match
-    if (jobCityLower === cityLower || jobLocLower === cityLower) return true;
-    
-    // Word boundary matching (prevents false matches like "New London" matching "London")
-    const escapedCity = cityLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const patterns = [
-      new RegExp(`\\b${escapedCity}\\b`, 'i'), // Exact word match
-      new RegExp(`^${escapedCity}[,\\s]`, 'i'), // Starts with city name
-      new RegExp(`[,\\s]${escapedCity}[,\\s]`, 'i'), // City in middle
-      new RegExp(`[,\\s]${escapedCity}$`, 'i'), // City at end
-    ];
-    
-    // Check if any pattern matches
-    // CRITICAL: Use imperative loop instead of some to avoid TDZ errors
-    for (let p = 0; p < patterns.length; p++) {
-      if (patterns[p].test(jobCityLower) || patterns[p].test(jobLocLower)) {
-        return true;
-      }
-    }
-    
-    // Handle special cases (Greater London, etc.)
-    const specialCases: Record<string, string[]> = {
-      'london': ['greater london', 'central london', 'north london', 'south london', 'east london', 'west london'],
-      'paris': ['greater paris', 'paris region'],
-      'berlin': ['greater berlin'],
-      'madrid': ['greater madrid'],
-      'barcelona': ['greater barcelona'],
-    };
-    
-    if (specialCases[cityLower]) {
-      // CRITICAL: Use imperative loop instead of some to avoid TDZ errors
-      const variants = specialCases[cityLower];
-      for (let v = 0; v < variants.length; v++) {
-        if (jobCityLower.includes(variants[v]) || jobLocLower.includes(variants[v])) {
-          return true;
-        }
-      }
-    }
-    
-    return false;
   };
 
   // Step 4: Round-robin selection prioritizing diversity
