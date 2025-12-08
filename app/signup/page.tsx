@@ -598,7 +598,7 @@ function SignupForm() {
 
                 <div>
                   <label htmlFor="email" className="block text-base sm:text-lg font-bold text-white mb-2 sm:mb-3">Email *</label>
-                  <p className="text-xs sm:text-sm font-medium text-zinc-300 mb-3 sm:mb-4">Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops weekly.</p>
+                  <p className="text-xs sm:text-sm font-medium text-zinc-300 mb-3 sm:mb-4">Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated drops 3x per week (Mon/Wed/Fri).</p>
                   <input
                     ref={formRefs.email}
                     id="email"

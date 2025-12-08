@@ -43,7 +43,7 @@ export default function SocialProofRow() {
       icon: <BrandIcons.Target className="h-5 w-5" />,
       eyebrow: 'New roles this week',
       title: isLoading ? '...' : `${weeklyNewJobs} new early-career roles added this week`,
-      description: 'Fresh opportunities added daily. Premium: 15 matches per week (3x more).',
+      description: 'Fresh opportunities added daily. Premium: 15 matches per week via email (3x per week: Mon/Wed/Fri).',
     },
   ];
 

@@ -11,7 +11,7 @@ const faqs = [
   },
   {
     question: "What makes JobPing different from other services?",
-    answer: "Three things: precision, time-saving, and early-career focus. We match roles to your specific visa status (so you only see jobs you're eligible for), your preferred cities (no relocation surprises), and your experience level (internships vs. graduate schemes). Plus, we specialize in early-career roles—internships, graduate programs, and entry-level positions—so you're not competing with senior candidates. Most importantly: everything comes to your inbox. No logging in, no dashboards, no daily checking—just quality matches delivered weekly."
+    answer: "Three things: precision, time-saving, and early-career focus. We match roles to your specific visa status (so you only see jobs you're eligible for), your preferred cities (no relocation surprises), and your experience level (internships vs. graduate schemes). Plus, we specialize in early-career roles—internships, graduate programs, and entry-level positions—so you're not competing with senior candidates. Most importantly: Free users get 5 matches instantly (one-time). Premium users get quality matches delivered 3x per week via email (Mon/Wed/Fri). No logging in, no dashboards, no daily checking."
   },
   {
     question: "Do you apply for me?",
@@ -36,7 +36,8 @@ const faqs = [
 ];
 
 export default function FAQ() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  // Open first question by default to show answers exist
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
     <section className="pt-12 pb-8 border-t border-white/10 bg-black/40">
@@ -48,7 +49,8 @@ export default function FAQ() {
           transition={{ duration: 0.6 }}
           className="max-w-3xl mx-auto"
         >
-          <h2 className="text-2xl font-semibold text-white mb-6 text-center">Frequently Asked Questions</h2>
+          <h2 className="text-2xl font-semibold text-white mb-2 text-center">Frequently Asked Questions</h2>
+          <p className="text-sm text-zinc-400 text-center mb-6">Click any question to see the answer</p>
           
           <div className="space-y-3">
             {faqs.map((faq, index) => {

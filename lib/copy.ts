@@ -33,7 +33,7 @@ export const HOW_IT_WORKS_SUMMARY = "JobPing searches the EU market and sends yo
 export const HOW_IT_WORKS_STEPS = [
   { title: "Tell us your targets", description: "Pick your cities, skills, and visa reality. We only show roles you can actually apply for." },
   { title: "We search daily", description: "JobPing scans European boards and company pages. No dashboards, no spam—just matches." },
-  { title: "Matches arrive weekly", description: `Free: ${FREE_ROLES_PER_SEND} jobs (one-time). Premium: ${PREMIUM_ROLES_PER_WEEK} jobs per week (3x more).` },
+  { title: "Matches arrive", description: `Free: ${FREE_ROLES_PER_SEND} jobs (one-time, instant). Premium: ${PREMIUM_ROLES_PER_WEEK} jobs per week via email (3x per week: Mon/Wed/Fri).` },
 ];
 
 // Built for students
@@ -68,13 +68,14 @@ export const PRICING_BADGE = "Simple pricing • Cancel anytime";
 
 // Free plan
 export const FREE_PLAN_TITLE = "Free";
-export const FREE_PLAN_SUBTITLE = "weekly digest";
+export const FREE_PLAN_SUBTITLE = "one-time";
 export const FREE_PLAN_FEATURES = [
-  `${FREE_ROLES_PER_SEND} curated roles every ${FREE_SEND_DAY_LABEL}`,
-  "Salary hints and visa context in every email",
-  "Pause or cancel in one click"
+  `${FREE_ROLES_PER_SEND} instant matches (one-time only)`,
+  "Zero emails sent",
+  "No credit card required",
+  "See matches in under 2 minutes"
 ];
-export const FREE_PLAN_DESCRIPTION = `${FREE_ROLES_PER_SEND} curated roles per email.`;
+export const FREE_PLAN_DESCRIPTION = `${FREE_ROLES_PER_SEND} hand-picked matches right now. No emails, no commitment. Perfect for testing the waters.`;
 
 // Premium plan
 // Time-to-apply stats (estimated until real data available)
@@ -86,7 +87,7 @@ export const PREMIUM_PLAN_SUBTITLE = `${PREMIUM_SENDS_PER_WEEK}× weekly`;
 export const PREMIUM_PLAN_PRICE = "€5";
 export const PREMIUM_PLAN_PRICE_UNIT = "/mo";
 export const PREMIUM_PLAN_ANNUAL = "€20 for 3 months (save €1)";
-export const PREMIUM_PLAN_DESCRIPTION = `${PREMIUM_ROLES_PER_WEEK} roles per week (Mon/Wed/Fri) - that's ${PREMIUM_ROLES_PER_WEEK - FREE_ROLES_PER_SEND} more than free (3x more). Get matches 24hrs before free users.`;
+export const PREMIUM_PLAN_DESCRIPTION = `${PREMIUM_ROLES_PER_WEEK} roles per week via email (3x per week: Mon/Wed/Fri) - that's ${PREMIUM_ROLES_PER_WEEK - FREE_ROLES_PER_SEND} more than free (3x more). Get matches 24hrs before free users.`;
 export const PREMIUM_PLAN_FEATURES = [
   `${PREMIUM_ROLES_PER_WEEK} curated roles per week (${PREMIUM_SENDS_PER_WEEK} emails: ${PREMIUM_SEND_DAYS_LABEL})`,
   "24-hour early access to fresh postings",

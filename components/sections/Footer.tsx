@@ -27,7 +27,7 @@ export default function Footer() {
           >
             <div className="flex flex-col gap-2">
               <p className="text-lg font-semibold text-white">JobPing</p>
-              <p className="text-sm text-zinc-300">EU early-career roles in your inbox. weekly.</p>
+              <p className="text-sm text-zinc-300">EU early-career roles. Free: instant matches. Premium: 3x per week.</p>
             </div>
             
             <nav className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">

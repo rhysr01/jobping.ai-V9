@@ -79,7 +79,7 @@ export function SignupFormFree() {
           transition={{ duration: 0.5 }}
           className="mb-8 text-center sm:mb-12"
         >
-          <div className="inline-flex items-center gap-2 rounded-full border-2 border-green-500/40 bg-green-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-green-300 mb-4">
+          <div className="inline-flex items-center gap-2 rounded-full border-2 border-brand-500/40 bg-brand-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand-200 mb-4">
             <BrandIcons.Zap className="h-3 w-3" />
             Quick Signup - 60 Seconds
           </div>
@@ -93,22 +93,22 @@ export function SignupFormFree() {
           {/* Quick Stats - Simplified */}
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm font-medium text-zinc-400">
             <span className="inline-flex items-center gap-2">
-              <BrandIcons.Zap className="h-4 w-4 text-green-400" />
+              <BrandIcons.Zap className="h-4 w-4 text-brand-400" />
               Instant results
             </span>
             <span className="inline-flex items-center gap-2">
-              <BrandIcons.Check className="h-4 w-4 text-green-400" />
+              <BrandIcons.Check className="h-4 w-4 text-brand-400" />
               Zero emails
             </span>
             <span className="inline-flex items-center gap-2">
-              <BrandIcons.Clock className="h-4 w-4 text-green-400" />
+              <BrandIcons.Clock className="h-4 w-4 text-brand-400" />
               Under 60 seconds
             </span>
           </div>
         </motion.div>
 
         {/* Single-Step Form Container - Simplified Design */}
-        <div className="rounded-2xl sm:rounded-3xl border-2 border-green-500/30 bg-gradient-to-br from-green-500/5 via-black/50 to-green-500/5 p-6 sm:p-8 md:p-10 shadow-[0_20px_60px_rgba(34,197,94,0.2)] backdrop-blur-xl">
+        <div className="rounded-2xl sm:rounded-3xl border-2 border-brand-500/30 bg-gradient-to-br from-brand-500/5 via-black/50 to-brand-500/5 p-6 sm:p-8 md:p-10 shadow-[0_20px_60px_rgba(126,97,255,0.2)] backdrop-blur-xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -223,7 +223,7 @@ export function SignupFormFree() {
                         whileTap={{ scale: 0.97 }}
                         className={`flex items-center justify-between rounded-xl border px-3 py-3 text-left text-sm font-medium transition-colors touch-manipulation min-h-[44px] ${
                           isSelected
-                            ? 'border-green-500 bg-green-500/15 text-white'
+                            ? 'border-brand-500 bg-brand-500/15 text-white'
                             : isDisabled
                               ? 'border-zinc-800 bg-zinc-900/40 text-zinc-500 cursor-not-allowed'
                               : 'border-zinc-700 bg-zinc-900/40 text-zinc-200 hover:border-zinc-600'
@@ -231,7 +231,7 @@ export function SignupFormFree() {
                         disabled={isDisabled}
                       >
                         <span>{city}</span>
-                        <span className={`text-xs font-semibold ${isSelected ? 'text-green-200' : 'text-zinc-500'}`}>
+                        <span className={`text-xs font-semibold ${isSelected ? 'text-brand-200' : 'text-zinc-500'}`}>
                           {isSelected ? 'Selected' : 'Tap'}
                         </span>
                       </motion.button>
@@ -267,7 +267,7 @@ export function SignupFormFree() {
                       whileTap={{ scale: 0.97 }}
                       className={`p-3 rounded-xl border-2 transition-all text-left ${
                         formData.careerPath === path.value
-                          ? 'border-green-500 bg-green-500/15 shadow-[0_0_20px_rgba(34,197,94,0.3)]'
+                          ? 'border-brand-500 bg-brand-500/15 shadow-[0_0_20px_rgba(126,97,255,0.3)]'
                           : 'border-zinc-700 bg-zinc-900/40 hover:border-zinc-600'
                       }`}
                     >
@@ -297,7 +297,7 @@ export function SignupFormFree() {
                       setTouchedFields(prev => new Set(prev).add('email'));
                     }}
                     placeholder="you@example.com"
-                    className="w-full px-4 py-4 bg-black/50 border-2 rounded-xl text-white placeholder-zinc-400 focus:border-green-500 focus:outline-none focus:ring-4 focus:ring-green-500/30 transition-all text-base font-medium backdrop-blur-sm border-zinc-700"
+                    className="w-full px-4 py-4 bg-black/50 border-2 rounded-xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-base font-medium backdrop-blur-sm border-zinc-700"
                   />
                   <p className="text-xs text-zinc-500 mt-2">
                     We won't email you. Ever.
@@ -321,7 +321,7 @@ export function SignupFormFree() {
                       setTouchedFields(prev => new Set(prev).add('fullName'));
                     }}
                     placeholder="Jane Doe"
-                    className="w-full px-4 py-4 bg-black/50 border-2 rounded-xl text-white placeholder-zinc-400 focus:border-green-500 focus:outline-none focus:ring-4 focus:ring-green-500/30 transition-all text-base font-medium backdrop-blur-sm border-zinc-700"
+                    className="w-full px-4 py-4 bg-black/50 border-2 rounded-xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-base font-medium backdrop-blur-sm border-zinc-700"
                   />
                   {shouldShowError('fullName', !!formData.fullName, nameValidation.isValid) && (
                     <FormFieldError error={nameValidation.error || 'Name is required'} id="fullName-error" />
@@ -335,7 +335,7 @@ export function SignupFormFree() {
                   type="submit"
                   variant="primary"
                   size="lg"
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 shadow-lg shadow-green-500/30"
+                  className="w-full"
                   disabled={isSubmitting || !isFormValid}
                   isLoading={isSubmitting}
                 >
@@ -343,7 +343,7 @@ export function SignupFormFree() {
                 </Button>
                 
                 <p className="text-xs text-center text-zinc-500 mt-4">
-                  <span className="text-green-400 font-semibold">Quick & Free</span> · No credit card required · Instant results
+                  <span className="text-brand-400 font-semibold">Quick & Free</span> · No credit card required · Instant results
                 </p>
               </div>
             </form>
@@ -363,7 +363,7 @@ export function SignupFormFree() {
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
-                className="rounded-2xl border-2 border-green-500/40 bg-gradient-to-br from-green-500/10 via-black/80 to-green-500/10 p-12 max-w-md text-center backdrop-blur-xl"
+                className="rounded-2xl border-2 border-brand-500/40 bg-gradient-to-br from-brand-500/10 via-black/80 to-brand-500/10 p-12 max-w-md text-center backdrop-blur-xl"
               >
                 <motion.div
                   initial={{ scale: 0 }}
@@ -371,7 +371,7 @@ export function SignupFormFree() {
                   transition={{ type: 'spring', stiffness: 200, damping: 15 }}
                   className="mb-6"
                 >
-                  <BrandIcons.CheckCircle className="h-20 w-20 text-green-500 mx-auto" />
+                  <BrandIcons.CheckCircle className="h-20 w-20 text-brand-500 mx-auto" />
                 </motion.div>
                 <motion.h2
                   initial={{ y: 20, opacity: 0 }}
@@ -396,7 +396,7 @@ export function SignupFormFree() {
                   className="h-2 bg-zinc-800 rounded-full overflow-hidden"
                 >
                   <motion.div
-                    className="h-full bg-gradient-to-r from-green-500 to-emerald-600"
+                    className="h-full bg-gradient-to-r from-brand-500 to-brand-600"
                     initial={{ width: 0 }}
                     animate={{ width: '100%' }}
                     transition={{ delay: 0.4, duration: 1.5 }}
