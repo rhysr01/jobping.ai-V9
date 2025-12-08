@@ -386,10 +386,10 @@ export function HeroGeometric() {
               variant="primary"
               size="lg"
               className="min-w-[220px]"
-              aria-label={Copy.HERO_CTA}
+              aria-label={Copy.HERO_PRIMARY_CTA}
             >
               <span className="flex items-center gap-2">
-                {Copy.HERO_CTA}
+                {Copy.HERO_PRIMARY_CTA}
                 <BrandIcons.ArrowRight className="h-5 w-5" />
               </span>
             </Button>
