@@ -26,6 +26,9 @@ export function distributeJobsWithDiversity(
   jobs: JobWithSource[],
   options: DistributionOptions
 ): JobWithSource[] {
+  // CRITICAL FIX: Capture jobs parameter immediately to prevent TDZ errors during bundling
+  const jobsArray = Array.isArray(jobs) ? jobs : [];
+  
   const {
     targetCount,
     targetCities,
@@ -33,7 +36,7 @@ export function distributeJobsWithDiversity(
     ensureCityBalance: initialCityBalance = true
   } = options;
 
-  if (jobs.length === 0) return [];
+  if (jobsArray.length === 0) return [];
   if (targetCount <= 0) return [];
 
   // Handle empty targetCities - disable city balance if no cities selected
@@ -43,14 +46,21 @@ export function distributeJobsWithDiversity(
   }
 
   // Step 1: Validate source diversity exists
-  const uniqueSources = new Set(jobs.map(j => j.source || 'unknown').filter(s => s !== 'unknown'));
+  // CRITICAL: Use imperative loop instead of map/filter to avoid TDZ errors
+  const uniqueSources = new Set<string>();
+  for (let i = 0; i < jobsArray.length; i++) {
+    const source = jobsArray[i].source || 'unknown';
+    if (source !== 'unknown') {
+      uniqueSources.add(source);
+    }
+  }
   const hasMultipleSources = uniqueSources.size >= 2;
   
   if (!hasMultipleSources && ensureCityBalance && targetCities.length > 0) {
     // Not enough diverse sources - log warning but continue
     console.warn('[JobDistribution] Insufficient source diversity', {
       uniqueSources: Array.from(uniqueSources),
-      totalJobs: jobs.length,
+      totalJobs: jobsArray.length,
       targetCities,
       recommendation: 'Consider relaxing source diversity constraints or expanding job pool'
     });
@@ -63,10 +73,12 @@ export function distributeJobsWithDiversity(
     : maxPerSource;
 
   // Step 1: Group jobs by source and city
+  // CRITICAL: Use imperative loop instead of forEach to avoid TDZ errors
   const jobsBySource: Record<string, JobWithSource[]> = {};
   const jobsByCity: Record<string, JobWithSource[]> = {};
   
-  jobs.forEach(job => {
+  for (let i = 0; i < jobsArray.length; i++) {
+    const job = jobsArray[i];
     const source = job.source || 'unknown';
     const city = job.city || 'unknown';
     
@@ -75,21 +87,37 @@ export function distributeJobsWithDiversity(
     
     if (!jobsByCity[city]) jobsByCity[city] = [];
     jobsByCity[city].push(job);
-  });
+  }
 
   // Step 2: Check feasibility - can we balance cities?
   let canBalanceCities = ensureCityBalance && targetCities.length > 0;
   if (canBalanceCities) {
-    const jobsByCityCount = targetCities.map(city => {
-      return jobs.filter(job => {
+    // CRITICAL: Use imperative loops instead of map/filter/reduce to avoid TDZ errors
+    const jobsByCityCount: number[] = [];
+    for (let cityIdx = 0; cityIdx < targetCities.length; cityIdx++) {
+      const city = targetCities[cityIdx];
+      let count = 0;
+      for (let jobIdx = 0; jobIdx < jobsArray.length; jobIdx++) {
+        const job = jobsArray[jobIdx];
         const jobCity = (job.city || '').toLowerCase();
         const jobLocation = ((job as any).location || '').toLowerCase();
-        return matchesCity(jobCity, jobLocation, city);
-      }).length;
-    });
+        if (matchesCity(jobCity, jobLocation, city)) {
+          count++;
+        }
+      }
+      jobsByCityCount.push(count);
+    }
     
-    const minCityJobs = Math.min(...jobsByCityCount);
-    const totalCityJobs = jobsByCityCount.reduce((sum, count) => sum + count, 0);
+    let minCityJobs = jobsByCityCount.length > 0 ? jobsByCityCount[0] : 0;
+    for (let i = 1; i < jobsByCityCount.length; i++) {
+      if (jobsByCityCount[i] < minCityJobs) {
+        minCityJobs = jobsByCityCount[i];
+      }
+    }
+    let totalCityJobs = 0;
+    for (let i = 0; i < jobsByCityCount.length; i++) {
+      totalCityJobs += jobsByCityCount[i];
+    }
     
     // Can't balance if:
     // 1. Any city has zero jobs (impossible to balance)
@@ -123,12 +151,14 @@ export function distributeJobsWithDiversity(
   const cityCounts: Record<string, number> = {};
   
   // Initialize counters
-  Object.keys(jobsBySource).forEach(source => {
-    sourceCounts[source] = 0;
-  });
-  targetCities.forEach(city => {
-    cityCounts[city.toLowerCase()] = 0;
-  });
+  // CRITICAL: Use imperative loops instead of forEach to avoid TDZ errors
+  const sourceKeys = Object.keys(jobsBySource);
+  for (let i = 0; i < sourceKeys.length; i++) {
+    sourceCounts[sourceKeys[i]] = 0;
+  }
+  for (let i = 0; i < targetCities.length; i++) {
+    cityCounts[targetCities[i].toLowerCase()] = 0;
+  }
 
   // Helper: Check if we can add a job from this source
   const canAddFromSource = (source: string): boolean => {
@@ -140,9 +170,16 @@ export function distributeJobsWithDiversity(
     if (!ensureCityBalance || targetCities.length === 0) return true;
     
     // Use consistent city matching function
+    // CRITICAL: Use imperative loop instead of find to avoid TDZ errors
     const jobCity = city.toLowerCase();
     const jobLocation = (location || '').toLowerCase();
-    const matchedTargetCity = targetCities.find(tc => matchesCity(jobCity, jobLocation, tc));
+    let matchedTargetCity: string | undefined;
+    for (let i = 0; i < targetCities.length; i++) {
+      if (matchesCity(jobCity, jobLocation, targetCities[i])) {
+        matchedTargetCity = targetCities[i];
+        break;
+      }
+    }
     
     if (!matchedTargetCity) return true; // City not in target list, can still add
     
@@ -182,8 +219,11 @@ export function distributeJobsWithDiversity(
     ];
     
     // Check if any pattern matches
-    if (patterns.some(pattern => pattern.test(jobCityLower) || pattern.test(jobLocLower))) {
-      return true;
+    // CRITICAL: Use imperative loop instead of some to avoid TDZ errors
+    for (let p = 0; p < patterns.length; p++) {
+      if (patterns[p].test(jobCityLower) || patterns[p].test(jobLocLower)) {
+        return true;
+      }
     }
     
     // Handle special cases (Greater London, etc.)
@@ -196,9 +236,13 @@ export function distributeJobsWithDiversity(
     };
     
     if (specialCases[cityLower]) {
-      return specialCases[cityLower].some(variant => 
-        jobCityLower.includes(variant) || jobLocLower.includes(variant)
-      );
+      // CRITICAL: Use imperative loop instead of some to avoid TDZ errors
+      const variants = specialCases[cityLower];
+      for (let v = 0; v < variants.length; v++) {
+        if (jobCityLower.includes(variants[v]) || jobLocLower.includes(variants[v])) {
+          return true;
+        }
+      }
     }
     
     return false;
@@ -220,18 +264,29 @@ export function distributeJobsWithDiversity(
       if (selectedJobs.length >= targetCount) break;
       
       // Find jobs from this city that we haven't selected yet
-      const selectedIds = new Set(selectedJobs.map(getJobId));
-      const availableJobs = jobs.filter(job => {
-        if (selectedIds.has(getJobId(job))) return false;
+      // CRITICAL: Use imperative loops instead of map/filter to avoid TDZ errors
+      const selectedIds = new Set<string>();
+      for (let i = 0; i < selectedJobs.length; i++) {
+        selectedIds.add(getJobId(selectedJobs[i]));
+      }
+      const availableJobs: JobWithSource[] = [];
+      for (let i = 0; i < jobsArray.length; i++) {
+        const job = jobsArray[i];
+        if (selectedIds.has(getJobId(job))) continue;
         
         // If no city balance, include all jobs
-        if (!canBalanceCities || targetCity === 'any') return true;
+        if (!canBalanceCities || targetCity === 'any') {
+          availableJobs.push(job);
+          continue;
+        }
         
         // Use consistent city matching
         const jobCity = (job.city || '').toLowerCase();
         const jobLocation = ((job as any).location || '').toLowerCase();
-        return matchesCity(jobCity, jobLocation, targetCity);
-      });
+        if (matchesCity(jobCity, jobLocation, targetCity)) {
+          availableJobs.push(job);
+        }
+      }
 
       // Sort by source diversity (prefer sources we haven't used much)
       availableJobs.sort((a, b) => {
@@ -262,10 +317,17 @@ export function distributeJobsWithDiversity(
           sourceCounts[source] = (sourceCounts[source] || 0) + 1;
           
           // Update city count (use consistent matching)
+          // CRITICAL: Use imperative loop instead of find to avoid TDZ errors
           if (canBalanceCities && targetCities.length > 0) {
             const jobCity = city.toLowerCase();
             const jobLocation = location.toLowerCase();
-            const matchedCity = targetCities.find(tc => matchesCity(jobCity, jobLocation, tc));
+            let matchedCity: string | undefined;
+            for (let i = 0; i < targetCities.length; i++) {
+              if (matchesCity(jobCity, jobLocation, targetCities[i])) {
+                matchedCity = targetCities[i];
+                break;
+              }
+            }
             if (matchedCity) {
               cityCounts[matchedCity.toLowerCase()] = (cityCounts[matchedCity.toLowerCase()] || 0) + 1;
             }
@@ -291,9 +353,14 @@ export function distributeJobsWithDiversity(
       const excess = sourceCounts[dominantSource] - effectiveMaxPerSource;
       
       // Remove excess jobs from dominant source (keep highest scoring ones)
-      const jobsFromDominantSource = selectedJobs
-        .map((job, idx) => ({ job, index: idx }))
-        .filter(({ job }) => (job.source || 'unknown') === dominantSource);
+      // CRITICAL: Use imperative loops instead of map/filter to avoid TDZ errors
+      const jobsFromDominantSource: Array<{ job: JobWithSource; index: number }> = [];
+      for (let i = 0; i < selectedJobs.length; i++) {
+        const job = selectedJobs[i];
+        if ((job.source || 'unknown') === dominantSource) {
+          jobsFromDominantSource.push({ job, index: i });
+        }
+      }
       
       // Sort by a quality metric (if available) or keep first ones
       // Prioritize jobs with match_score if available, otherwise keep first ones
@@ -306,19 +373,36 @@ export function distributeJobsWithDiversity(
       const toRemove = jobsFromDominantSource.slice(effectiveMaxPerSource);
       
       // Remove excess jobs
-      const indicesToRemove = new Set(toRemove.map(({ index }) => index));
-      const rebalancedJobs = selectedJobs.filter((_, idx) => !indicesToRemove.has(idx));
+      // CRITICAL: Use imperative loops instead of map/filter to avoid TDZ errors
+      const indicesToRemove = new Set<number>();
+      for (let i = 0; i < toRemove.length; i++) {
+        indicesToRemove.add(toRemove[i].index);
+      }
+      const rebalancedJobs: JobWithSource[] = [];
+      for (let i = 0; i < selectedJobs.length; i++) {
+        if (!indicesToRemove.has(i)) {
+          rebalancedJobs.push(selectedJobs[i]);
+        }
+      }
       
       // Update source counts
       sourceCounts[dominantSource] = effectiveMaxPerSource;
       
       // Fill with diverse sources
-      const selectedIds = new Set(rebalancedJobs.map(getJobId));
-      const diverseJobs = jobs.filter(j => {
-        if (selectedIds.has(getJobId(j))) return false;
+      // CRITICAL: Use imperative loops instead of map/filter to avoid TDZ errors
+      const selectedIds = new Set<string>();
+      for (let i = 0; i < rebalancedJobs.length; i++) {
+        selectedIds.add(getJobId(rebalancedJobs[i]));
+      }
+      const diverseJobs: JobWithSource[] = [];
+      for (let i = 0; i < jobsArray.length; i++) {
+        const j = jobsArray[i];
+        if (selectedIds.has(getJobId(j))) continue;
         const jobSource = j.source || 'unknown';
-        return jobSource !== dominantSource && canAddFromSource(jobSource);
-      });
+        if (jobSource !== dominantSource && canAddFromSource(jobSource)) {
+          diverseJobs.push(j);
+        }
+      }
       
       // Sort diverse jobs by source diversity
       diverseJobs.sort((a, b) => {
@@ -341,9 +425,19 @@ export function distributeJobsWithDiversity(
       selectedJobs.push(...rebalancedJobs);
       
       // If rebalancing reduced job count, try to fill remaining slots
-      if (selectedJobs.length < targetCount && jobs.length >= targetCount) {
-        const selectedIds = new Set(selectedJobs.map(getJobId));
-        const remaining = jobs.filter(j => !selectedIds.has(getJobId(j)));
+      // CRITICAL: Use imperative loops instead of map/filter to avoid TDZ errors
+      if (selectedJobs.length < targetCount && jobsArray.length >= targetCount) {
+        const selectedIds = new Set<string>();
+        for (let i = 0; i < selectedJobs.length; i++) {
+          selectedIds.add(getJobId(selectedJobs[i]));
+        }
+        const remaining: JobWithSource[] = [];
+        for (let i = 0; i < jobsArray.length; i++) {
+          const j = jobsArray[i];
+          if (!selectedIds.has(getJobId(j))) {
+            remaining.push(j);
+          }
+        }
         
         // Sort by source diversity first
         remaining.sort((a, b) => {
@@ -370,9 +464,19 @@ export function distributeJobsWithDiversity(
   }
 
   // Step 6: Fill remaining slots (if any) without strict city balance
+  // CRITICAL: Use imperative loops instead of map/filter to avoid TDZ errors
   if (selectedJobs.length < targetCount) {
-    const selectedIds = new Set(selectedJobs.map(getJobId));
-    const remaining = jobs.filter(job => !selectedIds.has(getJobId(job)));
+    const selectedIds = new Set<string>();
+    for (let i = 0; i < selectedJobs.length; i++) {
+      selectedIds.add(getJobId(selectedJobs[i]));
+    }
+    const remaining: JobWithSource[] = [];
+    for (let i = 0; i < jobsArray.length; i++) {
+      const job = jobsArray[i];
+      if (!selectedIds.has(getJobId(job))) {
+        remaining.push(job);
+      }
+    }
 
     // Sort by source diversity and city balance
     remaining.sort((a, b) => {
@@ -411,10 +515,17 @@ export function distributeJobsWithDiversity(
         sourceCounts[source] = (sourceCounts[source] || 0) + 1;
         
         // Update city count if tracking (use consistent matching)
+        // CRITICAL: Use imperative loop instead of find to avoid TDZ errors
         if (canBalanceCities && targetCities.length > 0) {
           const jobCity = (job.city || '').toLowerCase();
           const jobLocation = ((job as any).location || '').toLowerCase();
-          const matchedCity = targetCities.find(tc => matchesCity(jobCity, jobLocation, tc));
+          let matchedCity: string | undefined;
+          for (let i = 0; i < targetCities.length; i++) {
+            if (matchesCity(jobCity, jobLocation, targetCities[i])) {
+              matchedCity = targetCities[i];
+              break;
+            }
+          }
           if (matchedCity) {
             cityCounts[matchedCity.toLowerCase()] = (cityCounts[matchedCity.toLowerCase()] || 0) + 1;
           }
@@ -424,9 +535,19 @@ export function distributeJobsWithDiversity(
   }
 
   // Step 7: Final fill (if still not enough, relax source constraint)
+  // CRITICAL: Use imperative loops instead of map/filter to avoid TDZ errors
   if (selectedJobs.length < targetCount) {
-    const selectedIds = new Set(selectedJobs.map(getJobId));
-    const remaining = jobs.filter(job => !selectedIds.has(getJobId(job)));
+    const selectedIds = new Set<string>();
+    for (let i = 0; i < selectedJobs.length; i++) {
+      selectedIds.add(getJobId(selectedJobs[i]));
+    }
+    const remaining: JobWithSource[] = [];
+    for (let i = 0; i < jobsArray.length; i++) {
+      const job = jobsArray[i];
+      if (!selectedIds.has(getJobId(job))) {
+        remaining.push(job);
+      }
+    }
 
     for (const job of remaining) {
       if (selectedJobs.length >= targetCount) break;
@@ -445,21 +566,26 @@ export function getDistributionStats(jobs: JobWithSource[]): {
   cityDistribution: Record<string, number>;
   totalJobs: number;
 } {
+  // CRITICAL FIX: Capture jobs parameter immediately to prevent TDZ errors during bundling
+  const jobsArray = Array.isArray(jobs) ? jobs : [];
+  
   const sourceDistribution: Record<string, number> = {};
   const cityDistribution: Record<string, number> = {};
 
-  jobs.forEach(job => {
+  // CRITICAL: Use imperative loop instead of forEach to avoid TDZ errors
+  for (let i = 0; i < jobsArray.length; i++) {
+    const job = jobsArray[i];
     const source = job.source || 'unknown';
     const city = job.city || 'unknown';
     
     sourceDistribution[source] = (sourceDistribution[source] || 0) + 1;
     cityDistribution[city] = (cityDistribution[city] || 0) + 1;
-  });
+  }
 
   return {
     sourceDistribution,
     cityDistribution,
-    totalJobs: jobs.length
+    totalJobs: jobsArray.length
   };
 }
 
