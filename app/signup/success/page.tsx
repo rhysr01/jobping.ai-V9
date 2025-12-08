@@ -250,7 +250,7 @@ function SignupSuccessContent() {
                 <div className="flex-1">
                   <div className="font-bold text-white text-lg sm:text-xl mb-2">Stay in sync</div>
                   <div className="text-zinc-100 text-sm sm:text-base font-medium leading-relaxed">
-                    {`Free: ${FREE_ROLES_PER_SEND} jobs every ${FREE_SEND_DAY_LABEL} · Premium: ${PREMIUM_ROLES_PER_WEEK} jobs each week (${PREMIUM_SENDS_PER_WEEK} drops: ${PREMIUM_SEND_DAYS_LABEL}).`}
+                    {`You'll receive ${PREMIUM_ROLES_PER_WEEK} jobs each week (${PREMIUM_SENDS_PER_WEEK} drops: ${PREMIUM_SEND_DAYS_LABEL}). Fresh matches delivered to your inbox every Monday, Wednesday, and Friday.`}
                   </div>
                 </div>
               </motion.div>

@@ -323,7 +323,8 @@ export default function Hero() {
                   aria-label="Go Premium - Get Emailed 3x/Week"
                 >
                   <span className="flex items-center justify-center gap-2">
-                    Go Premium - Get Emailed 3x/Week
+                    <span className="hidden sm:inline">Go Premium - Get Emailed 3x/Week</span>
+                    <span className="sm:hidden">Go Premium</span>
                     <BrandIcons.ArrowRight className="h-5 w-5" />
                   </span>
                 </Button>
@@ -335,12 +336,13 @@ export default function Hero() {
                   aria-label="Try Free - See 5 Matches"
                 >
                   <span className="flex items-center justify-center gap-2">
-                    Try Free - See 5 Matches
+                    <span className="hidden sm:inline">Try Free - See 5 Matches</span>
+                    <span className="sm:hidden">Try Free</span>
                   </span>
                 </Button>
               </div>
               <p className="text-xs text-zinc-400 text-center sm:text-left">
-                Free: 5 instant matches, zero emails · Premium: 15 jobs/week (3x more) via email
+                Free: 5 matches (one-time, zero emails) · Premium: 15 jobs/week (3x more) via email
               </p>
             </motion.div>
           </div>

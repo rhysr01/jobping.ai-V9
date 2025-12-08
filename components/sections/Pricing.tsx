@@ -22,23 +22,28 @@ const plans: PlanConfig[] = [
   {
     id: 'free',
     name: Copy.FREE_PLAN_TITLE,
-    headline: 'Kickstart in under 2 minutes',
-    description: Copy.FREE_PLAN_DESCRIPTION,
+    headline: 'Try now - See 5 matches instantly',
+    description: 'Get 5 hand-picked matches right now. No emails, no commitment. Perfect for testing the waters.',
     price: '€0',
     suffix: 'forever',
-    cta: { label: 'Get my first 5 matches', href: '/signup/free' },
-    features: Copy.FREE_PLAN_FEATURES,
+    cta: { label: 'Try Free Now →', href: '/signup/free' },
+    features: [
+      '5 instant matches (one-time)',
+      'Zero emails sent',
+      'No credit card required',
+      'See matches in under 2 minutes'
+    ],
     footnote: Copy.PRICING_BADGE,
   },
   {
     id: 'premium',
     name: Copy.PREMIUM_PLAN_TITLE,
-    headline: 'Stay ahead of every opening',
+    headline: 'Weekly emails - 15 jobs per week',
     description: Copy.PREMIUM_PLAN_DESCRIPTION,
     price: Copy.PREMIUM_PLAN_PRICE,
     suffix: Copy.PREMIUM_PLAN_PRICE_UNIT,
     badge: 'Most popular',
-    cta: { label: 'Upgrade for €5/mo', href: '/billing' },
+    cta: { label: 'Start Premium →', href: '/signup' },
     features: Copy.PREMIUM_PLAN_FEATURES,
     footnote: Copy.PREMIUM_PLAN_ANNUAL,
   },
@@ -96,19 +101,18 @@ export default function Pricing() {
               🚀 Over 12,000 jobs matched this month
             </span>
             <h3 className="text-5xl font-semibold tracking-[-0.02em] text-white md:text-6xl mb-2">
-              See your first 5 matches before the weekend
+              Try Free Now - See 5 Matches Instantly
             </h3>
             <p className="max-w-2xl text-xl text-zinc-300 md:text-2xl mb-6">
-              Sign up in under two minutes—your first 5 matches arrive within 48 hours.
+              No emails, no commitment. Get 5 hand-picked matches in under 2 minutes. Perfect for testing the waters.
             </p>
             <Link
-              href="/signup"
-              aria-label="Get my first 5 matches"
+              href="/signup/free"
+              aria-label="Try Free Now"
               className="inline-flex items-center justify-center gap-2 h-11 rounded-full bg-brand-500 px-6 text-sm font-medium text-white shadow-md shadow-brand-500/40 transition-all duration-200 hover:bg-brand-500/90 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-base"
             >
-              <BrandIcons.Mail className="h-4 w-4" />
-              Get my first 5 matches
-              <BrandIcons.ArrowRight className="h-4 w-4" />
+              <BrandIcons.Zap className="h-4 w-4" />
+              Try Free Now →
             </Link>
           </div>
           </motion.div>
@@ -155,6 +159,22 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
         <p className="text-xs uppercase tracking-wider text-zinc-300">{plan.name}</p>
         <h3 className="text-xl font-semibold text-white sm:text-2xl mb-2">{plan.headline}</h3>
         <p className="text-base text-zinc-300/90 leading-relaxed">{plan.description}</p>
+        
+        {/* Free plan badge */}
+        {!isPremium && (
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
+            <BrandIcons.Zap className="h-3 w-3" />
+            Instant - No emails
+          </div>
+        )}
+        
+        {/* Premium plan badge */}
+        {isPremium && (
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-200">
+            <BrandIcons.Mail className="h-3 w-3" />
+            Weekly emails - 3x per week
+          </div>
+        )}
         
         {/* Progress indicator for Premium */}
         {isPremium && (
@@ -203,7 +223,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
         >
           <Link
             href={plan.cta.href}
-            aria-label={isPremium ? "Upgrade to Premium plan" : "Sign up for free matches"}
+            aria-label={isPremium ? "Start Premium - Weekly emails" : "Try Free Now - Instant matches"}
             className={`group relative inline-flex items-center justify-center overflow-hidden h-11 rounded-full px-6 text-sm font-medium transition-all duration-300 sm:text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
               isPremium
                 ? 'bg-brand-500 text-white shadow-md shadow-brand-500/40 hover:bg-brand-500/90 hover:-translate-y-0.5 hover:shadow-feature'
@@ -211,7 +231,8 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
             }`}
           >
             <span className="relative flex items-center gap-2">
-              {!isPremium && <BrandIcons.Mail className="h-4 w-4" />}
+              {!isPremium && <BrandIcons.Zap className="h-4 w-4" />}
+              {isPremium && <BrandIcons.Mail className="h-4 w-4" />}
               {plan.cta.label}
               <motion.span
                 animate={{ x: [0, 4, 0] }}

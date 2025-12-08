@@ -5,19 +5,45 @@ import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilt
 import { getDatabaseCategoriesForForm } from '@/Utils/matching/categoryMapper';
 import { distributeJobsWithDiversity } from '@/Utils/matching/jobDistribution';
 import { apiLogger } from '@/lib/api-logger';
+import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
+import { z } from 'zod';
+
+// Input validation schema
+const freeSignupSchema = z.object({
+  email: z.string().email('Invalid email address').max(255, 'Email too long'),
+  full_name: z.string().min(1, 'Name is required').max(100, 'Name too long').regex(/^[a-zA-Z\s'-]+$/, 'Name contains invalid characters'),
+  preferred_cities: z.array(z.string().max(50)).min(1, 'Select at least one city').max(3, 'Maximum 3 cities allowed'),
+  career_paths: z.array(z.string()).min(1, 'Select at least one career path'),
+  entry_level_preferences: z.array(z.string()).optional().default(['graduate', 'intern', 'junior']),
+});
 
 export async function POST(request: NextRequest) {
+  // Rate limiting - prevent abuse
+  const rateLimitResult = await getProductionRateLimiter().middleware(request, 'signup-free', {
+    windowMs: 60 * 60 * 1000, // 1 hour
+    maxRequests: 3, // 3 signup attempts per hour per IP
+  });
+  
+  if (rateLimitResult) {
+    return rateLimitResult;
+  }
+
   try {
     const body = await request.json();
-    const { email, full_name, preferred_cities, career_paths, entry_level_preferences } = body;
-
-    // Validation
-    if (!email || !full_name || !preferred_cities || !career_paths) {
+    
+    // Validate input with zod
+    const validationResult = freeSignupSchema.safeParse(body);
+    
+    if (!validationResult.success) {
+      const errors = validationResult.error.issues.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ');
+      apiLogger.warn('Free signup validation failed', new Error(errors), { email: body.email });
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Invalid input', details: validationResult.error.issues },
         { status: 400 }
       );
     }
+
+    const { email, full_name, preferred_cities, career_paths, entry_level_preferences } = validationResult.data;
 
     const supabase = getDatabaseClient();
     const normalizedEmail = email.toLowerCase().trim();
@@ -63,7 +89,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (userError) {
-      console.error('[FREE SIGNUP ERROR]', userError);
       apiLogger.error('Failed to create free user', userError as Error, { email: normalizedEmail });
       throw userError;
     }
@@ -180,7 +205,6 @@ export async function POST(request: NextRequest) {
       .upsert(matchRecords, { onConflict: 'user_email,job_hash' }); // Update if exists
 
     if (matchesError) {
-      console.error('[MATCHES INSERT ERROR]', matchesError);
       apiLogger.error('Failed to store matches', matchesError as Error, { email: normalizedEmail });
     }
 
@@ -199,20 +223,19 @@ export async function POST(request: NextRequest) {
     });
 
     // Set a session cookie (simple approach - you may want JWT instead)
+    // Cookie expiration matches user expiration (30 days)
     response.cookies.set('free_user_email', normalizedEmail, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24, // 24 hours
+      maxAge: 60 * 60 * 24 * 30, // 30 days to match free_expires_at
     });
 
-    console.log(`[FREE SIGNUP] ✅ User ${normalizedEmail} signed up, got ${finalJobs.length} matches`);
     apiLogger.info('Free signup successful', { email: normalizedEmail, matchCount: finalJobs.length });
 
     return response;
 
   } catch (error) {
-    console.error('[FREE SIGNUP ERROR]', error);
     apiLogger.error('Free signup failed', error as Error);
     return NextResponse.json(
       { error: 'Internal server error' },

@@ -20,7 +20,7 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 // Hero section
 export const HERO_TITLE = "JobPing";
 export const HERO_HEADLINE = "Early-career roles across Europe, curated for you.";
-export const HERO_SUBLINE = 'Your 5 best-fit roles every week—no senior jobs, no visa mismatches, no time wasted. New roles added daily. Fresh matches every Thursday.';
+export const HERO_SUBLINE = 'Start free with 5 instant matches (one-time). Upgrade to Premium for 15 jobs per week (3x more) via email—no senior jobs, no visa mismatches, no time wasted.';
 export const HERO_SUBLINE_MICRO = "No dashboards. No job boards. Just roles you can actually apply for.";
 export const HERO_SUBTITLE = "";
 export const HERO_CTA = "Get my first 5 matches";

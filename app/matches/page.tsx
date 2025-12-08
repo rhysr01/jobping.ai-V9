@@ -35,21 +35,49 @@ export default function MatchesPage() {
       try {
         const response = await fetch('/api/matches/free');
         
+        // Handle 401 - Cookie expired or invalid
         if (response.status === 401) {
-          setError('Please sign up to see your matches.');
+          setError('Your session has expired. Please sign up again to see your matches.');
+          setLoading(false);
+          // Optionally redirect after a delay
+          setTimeout(() => {
+            window.location.href = '/signup/free?expired=true';
+          }, 3000);
+          return;
+        }
+
+        // Handle 429 - Rate limited
+        if (response.status === 429) {
+          const data = await response.json().catch(() => ({}));
+          setError('Too many requests. Please wait a moment and try again.');
           setLoading(false);
           return;
         }
 
+        // Handle 500 - Server error
+        if (response.status === 500) {
+          setError('Server error. Please try again in a moment.');
+          setLoading(false);
+          return;
+        }
+
+        // Handle other errors
         if (!response.ok) {
-          throw new Error('Failed to load matches');
+          const data = await response.json().catch(() => ({ error: 'Failed to load matches' }));
+          setError(data.error || 'Failed to load matches. Please try again.');
+          setLoading(false);
+          return;
         }
 
         const data = await response.json();
         setJobs(data.jobs || []);
       } catch (err) {
-        setError('Failed to load matches. Please try signing up again.');
-      } finally {
+        // Network error or other exception
+        if (err instanceof TypeError && err.message.includes('fetch')) {
+          setError('Network error. Please check your connection and try again.');
+        } else {
+          setError('Failed to load matches. Please try signing up again.');
+        }
         setLoading(false);
       }
     }
@@ -291,7 +319,7 @@ export default function MatchesPage() {
                     return newCount;
                   });
                   
-                  // Track click
+                  // Track click (fire-and-forget, don't block UI)
                   fetch('/api/analytics/track', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -299,6 +327,9 @@ export default function MatchesPage() {
                       event: 'free_job_clicked',
                       properties: { job_id: job.id, company: job.company, position: index + 1 },
                     }),
+                  }).catch((err) => {
+                    // Silent fail - analytics shouldn't block user flow
+                    console.error('[Analytics] Tracking failed:', err);
                   });
                 }}
               >

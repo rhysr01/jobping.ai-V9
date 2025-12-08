@@ -73,16 +73,16 @@ export default function ExitIntentPopup() {
 
           <div className="text-center">
             <BrandIcons.GraduationCap className="w-[20.8px] h-[20.8px] mx-auto mb-4 text-brand-400" aria-hidden="true" />
-            <h3 id="exit-popup-title" className="text-2xl font-black text-white mb-2">Wait! Get EU jobs free</h3>
+            <h3 id="exit-popup-title" className="text-2xl font-black text-white mb-2">Wait! Try Free Now</h3>
             <p id="exit-popup-description" className="text-zinc-200 mb-6">
-              Join thousands finding early-career roles across Europe. 5 hand-picked matches weekly.
+              Get 5 instant matches right now. No emails, no commitment. Perfect for testing the waters.
             </p>
             <Link
-              href="/signup"
+              href="/signup/free"
               onClick={() => setShowPopup(false)}
               className="btn-primary w-full"
             >
-              Get my first 5 matches →
+              Try Free Now →
             </Link>
             <button
               onClick={() => setShowPopup(false)}
