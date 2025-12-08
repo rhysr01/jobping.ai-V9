@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     // Fetch real Strategy & Business Design jobs in London
     let query = supabase
       .from('jobs')
-      .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city')
+      .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
       .eq('is_active', true)
       .eq('city', 'London') // Filter by London
       .overlaps('categories', strategyCategories) // Strategy & Business Design
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     if (!error && (!jobs || jobs.length < 3)) {
       query = supabase
         .from('jobs')
-        .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city')
+        .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
         .eq('is_active', true)
         .eq('city', 'London')
         .order('created_at', { ascending: false })
@@ -51,6 +51,7 @@ export async function GET(req: NextRequest) {
       location: job.location || 'London, UK',
       description: job.description || '',
       jobUrl: job.job_url || '',
+      jobHash: job.job_hash || '', // Add this
       categories: job.categories || [],
       workEnvironment: job.work_environment || 'Hybrid',
       isInternship: job.is_internship || false,

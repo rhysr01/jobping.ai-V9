@@ -8,7 +8,7 @@ import { POST, GET } from '@/app/api/match-users/route';
 import { hmacSign } from '@/Utils/auth/hmac';
 
 // Mock the consolidated matcher
-jest.mock('@/Utils/consolidatedMatching', () => ({
+jest.mock('@/Utils/consolidatedMatchingV2', () => ({
   createConsolidatedMatcher: jest.fn(() => ({
     performMatching: jest.fn().mockResolvedValue({
       method: 'ai_success',
@@ -416,7 +416,7 @@ describe('/api/match-users Integration Tests', () => {
 
     it('should handle AI circuit breaker activation', async () => {
       // Mock ConsolidatedMatchingEngine to return rule-based matches when AI fails
-      const { createConsolidatedMatcher } = require('@/Utils/consolidatedMatching');
+      const { createConsolidatedMatcher } = require('@/Utils/consolidatedMatchingV2');
       createConsolidatedMatcher.mockReturnValue({
         performMatching: jest.fn().mockResolvedValue({
           matches: [

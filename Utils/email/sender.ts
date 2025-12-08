@@ -158,6 +158,7 @@ export async function sendMatchedJobsEmail(args: {
         location: job.location || 'Location',
         description: job.description || '',
         job_url: job.job_url || job.jobUrl || '',
+        job_hash: job.job_hash || job.jobHash || '', // Explicitly include job_hash for feedback
         user_email: args.to,
         // Fields needed for formatJobTags
         career_path: job.career_path,

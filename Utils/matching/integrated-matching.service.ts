@@ -63,7 +63,7 @@ export class IntegratedMatchingService {
       // Fall back to individual processing for small groups
       console.log(`Using individual processing for ${users.length} users`);
       
-      const { createConsolidatedMatcher } = await import('@/Utils/consolidatedMatching');
+      const { createConsolidatedMatcher } = await import('@/Utils/consolidatedMatchingV2');
       const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
 
       await Promise.all(

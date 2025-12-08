@@ -9,7 +9,7 @@ import { NextRequest } from 'next/server';
 jest.mock('@/Utils/productionRateLimiter');
 jest.mock('@/Utils/databasePool');
 jest.mock('@/Utils/auth/hmac');
-jest.mock('@/Utils/consolidatedMatching');
+jest.mock('@/Utils/consolidatedMatchingV2');
 jest.mock('@/Utils/matching/semanticRetrieval');
 jest.mock('@/Utils/matching/integrated-matching.service');
 jest.mock('@/Utils/matching/batch-processor.service');
@@ -95,7 +95,7 @@ describe('Match Users API Route - Comprehensive', () => {
         error: null
       });
 
-      const { createConsolidatedMatcher } = require('@/Utils/consolidatedMatching');
+      const { createConsolidatedMatcher } = require('@/Utils/consolidatedMatchingV2');
       createConsolidatedMatcher.mockReturnValue({
         match: jest.fn().mockResolvedValue({
           matches: [],
@@ -293,7 +293,7 @@ describe('Match Users API Route - Comprehensive', () => {
         error: null
       });
 
-      const { createConsolidatedMatcher } = require('@/Utils/consolidatedMatching');
+      const { createConsolidatedMatcher } = require('@/Utils/consolidatedMatchingV2');
       createConsolidatedMatcher.mockReturnValue({
         match: jest.fn().mockRejectedValue(new Error('Matching failed'))
       });

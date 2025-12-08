@@ -11,7 +11,7 @@ import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { apiLogger } from '@/lib/api-logger';
 import { sendMatchedJobsEmail } from '@/Utils/email/sender';
 import { SEND_PLAN, isSendDay, getCurrentWeekStart } from '@/Utils/sendConfiguration';
-import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
+import { createConsolidatedMatcher } from '@/Utils/consolidatedMatchingV2';
 import { fetchCandidateJobs } from '@/Utils/matching/jobSearchService';
 import { fetchActiveUsers, transformUsers } from '@/Utils/matching/userBatchService';
 import { distributeJobsWithDiversity } from '@/Utils/matching/jobDistribution';

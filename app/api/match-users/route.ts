@@ -11,7 +11,7 @@ import {
 } from '@/Utils/matching/logging.service';
 import type { UserPreferences, JobMatch } from '@/Utils/matching/types';
 import { apiLogger } from '@/lib/api-logger';
-import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
+import { createConsolidatedMatcher } from '@/Utils/consolidatedMatchingV2';
 import { 
   SEND_PLAN
 } from '@/Utils/sendConfiguration';

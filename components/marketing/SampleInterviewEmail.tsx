@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import React, { useEffect, useState } from "react";
 
 interface Job {
@@ -9,6 +8,7 @@ interface Job {
   location: string;
   description: string;
   jobUrl: string;
+  jobHash?: string; // Add this
   categories: string[];
   workEnvironment: string;
   isInternship: boolean;
@@ -23,6 +23,7 @@ const FALLBACK_JOBS: Job[] = [
     location: "London, UK",
     description: "Join Deloitte's consulting practice as a Business Analyst. You'll work on strategic projects for leading clients, analyzing business problems, developing solutions, and presenting recommendations to senior stakeholders. Perfect for graduates interested in consulting and strategy.",
     jobUrl: "",
+    jobHash: "", // Add jobHash
     categories: ["strategy-business-design"],
     workEnvironment: "Hybrid",
     isInternship: false,
@@ -34,6 +35,7 @@ const FALLBACK_JOBS: Job[] = [
     location: "London, UK",
     description: "Accenture's Consulting Graduate Programme offers hands-on experience in digital transformation and strategy. You'll work with Fortune 500 clients, solve complex business challenges, and develop skills in consulting methodologies. Comprehensive training and mentorship included.",
     jobUrl: "",
+    jobHash: "",
     categories: ["strategy-business-design"],
     workEnvironment: "Hybrid",
     isInternship: false,
@@ -45,6 +47,7 @@ const FALLBACK_JOBS: Job[] = [
     location: "London, UK",
     description: "EY's Strategy team is looking for a Strategy Analyst to support strategic initiatives for clients across industries. You'll conduct market research, develop business cases, and work on transformation projects. Ideal for analytical thinkers interested in consulting.",
     jobUrl: "",
+    jobHash: "",
     categories: ["strategy-business-design"],
     workEnvironment: "Office",
     isInternship: false,
@@ -56,6 +59,7 @@ const FALLBACK_JOBS: Job[] = [
     location: "London, UK",
     description: "KPMG's Consulting practice seeks an Associate Consultant for their Strategy team. You'll work on client engagements, support business transformation projects, and develop strategic recommendations. Great opportunity for recent graduates to start a consulting career.",
     jobUrl: "",
+    jobHash: "",
     categories: ["strategy-business-design"],
     workEnvironment: "Hybrid",
     isInternship: false,
@@ -67,6 +71,7 @@ const FALLBACK_JOBS: Job[] = [
     location: "London, UK",
     description: "PwC's Consulting practice is hiring a Junior Business Analyst to join their Strategy team. You'll analyze business processes, support client engagements, and help deliver transformation projects. Excellent training programme and clear progression path for ambitious graduates.",
     jobUrl: "",
+    jobHash: "",
     categories: ["strategy-business-design"],
     workEnvironment: "Hybrid",
     isInternship: false,
@@ -93,16 +98,39 @@ function isHotMatch(score: number): boolean {
   return score >= 90;
 }
 
-function getFeedbackUrl(action: string, score: number, email: string = 'sample@example.com'): string {
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://getjobping.com';
-  const feedbackBase = `${baseUrl}/api/feedback/email`;
-  const feedbackParams = `utm_source=jobping&utm_medium=email&utm_campaign=sample&utm_content=feedback`;
-  return `${feedbackBase}?action=${action}&score=${score}&email=${encodeURIComponent(email)}&${feedbackParams}`;
+async function submitFeedback(jobHash: string, feedbackType: 'thumbs_up' | 'thumbs_down', email: string = 'sample@example.com'): Promise<void> {
+  if (!jobHash) {
+    console.warn('Cannot submit feedback: missing job_hash');
+    return;
+  }
+
+  try {
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://getjobping.com';
+    const response = await fetch(`${baseUrl}/api/feedback/enhanced`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        jobHash,
+        email,
+        feedbackType,
+        source: 'email',
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Failed to submit feedback:', await response.text());
+    }
+  } catch (error) {
+    console.error('Error submitting feedback:', error);
+  }
 }
 
 export default function SampleInterviewEmail() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function fetchJobs() {
@@ -130,6 +158,13 @@ export default function SampleInterviewEmail() {
 
   // Use jobs or fallback
   const displayJobs = jobs.length > 0 ? jobs : FALLBACK_JOBS;
+
+  const handleFeedback = async (jobHash: string, feedbackType: 'thumbs_up' | 'thumbs_down') => {
+    if (!jobHash || feedbackSubmitted.has(jobHash)) return;
+    
+    setFeedbackSubmitted(prev => new Set(prev).add(jobHash));
+    await submitFeedback(jobHash, feedbackType);
+  };
 
   return (
     <div className="mx-auto w-full max-w-[360px] px-2 text-[14px] leading-[1.5] text-zinc-100 font-sans">
@@ -163,6 +198,8 @@ export default function SampleInterviewEmail() {
               : job.isInternship 
               ? "Internship (fits your profile)"
               : "Entry-level (fits your profile)";
+            const hasJobHash = !!job.jobHash;
+            const isFeedbackSubmitted = job.jobHash ? feedbackSubmitted.has(job.jobHash) : false;
             
             return (
               <div
@@ -222,6 +259,39 @@ export default function SampleInterviewEmail() {
                     <span className="inline-block rounded-full bg-indigo-500/15 px-3 py-1.5 text-[12px] font-semibold text-zinc-300">Graduate Programme</span>
                   )}
                 </div>
+                
+                {/* Thumbs up/down feedback buttons */}
+                {hasJobHash && (
+                  <div className="mb-4 flex items-center gap-3">
+                    <button
+                      onClick={() => handleFeedback(job.jobHash!, 'thumbs_up')}
+                      disabled={isFeedbackSubmitted}
+                      className={`flex-1 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold transition-opacity ${
+                        isFeedbackSubmitted
+                          ? 'bg-emerald-500/20 text-emerald-400 cursor-not-allowed'
+                          : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      }`}
+                      title="This looks good!"
+                      aria-label="Thumbs up: This job looks good"
+                    >
+                      👍 Good match
+                    </button>
+                    <button
+                      onClick={() => handleFeedback(job.jobHash!, 'thumbs_down')}
+                      disabled={isFeedbackSubmitted}
+                      className={`flex-1 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold transition-opacity ${
+                        isFeedbackSubmitted
+                          ? 'bg-red-500/20 text-red-400 cursor-not-allowed'
+                          : 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30'
+                      }`}
+                      title="Not for me"
+                      aria-label="Thumbs down: Not interested"
+                    >
+                      👎 Not for me
+                    </button>
+                  </div>
+                )}
+                
                 <a
                   href={job.jobUrl || "#"}
                   target={job.jobUrl ? "_blank" : undefined}
@@ -249,69 +319,6 @@ export default function SampleInterviewEmail() {
           >
             Upgrade to Premium - €5/month
           </a>
-        </div>
-
-        {/* Feedback section - matches production */}
-        <div className="mt-6 rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 to-purple-500/6 p-6">
-          <h3 className="text-[18px] font-semibold text-white mb-3 leading-tight">💬 How were these matches?</h3>
-          <p className="text-[15px] text-zinc-300 mb-5 leading-relaxed">
-            Help us improve! Rate these roles to get better matches next time.
-          </p>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <a 
-              href={getFeedbackUrl('positive', 5)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_3px_12px_rgba(99,102,241,0.3)] hover:opacity-90 transition-opacity"
-              title="Loved it"
-              aria-label="Rate matches: Loved it"
-            >
-              😍 Loved it
-            </a>
-            <a 
-              href={getFeedbackUrl('positive', 4)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_3px_12px_rgba(99,102,241,0.3)] hover:opacity-90 transition-opacity"
-              title="Good"
-              aria-label="Rate matches: Good"
-            >
-              😊 Good
-            </a>
-            <a 
-              href={getFeedbackUrl('neutral', 3)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_3px_12px_rgba(99,102,241,0.3)] hover:opacity-90 transition-opacity"
-              title="It's fine"
-              aria-label="Rate matches: It's fine"
-            >
-              😐 It's fine
-            </a>
-            <a 
-              href={getFeedbackUrl('negative', 2)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_3px_12px_rgba(99,102,241,0.3)] hover:opacity-90 transition-opacity"
-              title="Not great"
-              aria-label="Rate matches: Not great"
-            >
-              😕 Not great
-            </a>
-          </div>
-          <a 
-            href={getFeedbackUrl('negative', 1)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_3px_12px_rgba(99,102,241,0.3)] hover:opacity-90 transition-opacity"
-            title="Not relevant"
-            aria-label="Rate matches: Not relevant"
-          >
-            😞 Not relevant
-          </a>
-          <p className="text-[12px] text-zinc-500 mt-5 text-center">
-            Takes 2 seconds • Helps us send better matches
-          </p>
         </div>
 
         {/* Footer - matches production */}

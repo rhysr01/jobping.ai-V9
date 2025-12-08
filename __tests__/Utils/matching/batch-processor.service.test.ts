@@ -5,12 +5,12 @@
 
 import { BatchMatchingProcessor, batchMatchingProcessor } from '@/Utils/matching/batch-processor.service';
 import { embeddingService } from '@/Utils/matching/embedding.service';
-import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
+import { createConsolidatedMatcher } from '@/Utils/consolidatedMatchingV2';
 import { buildMockUser, buildMockJob } from '@/__tests__/_helpers/testBuilders';
 
 jest.mock('@/Utils/databasePool');
 jest.mock('@/Utils/matching/embedding.service');
-jest.mock('@/Utils/consolidatedMatching');
+jest.mock('@/Utils/consolidatedMatchingV2');
 jest.mock('@/Utils/matching/preFilterJobs');
 
 describe('BatchMatchingProcessor', () => {

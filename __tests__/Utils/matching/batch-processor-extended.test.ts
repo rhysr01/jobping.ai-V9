@@ -7,7 +7,7 @@ import { BatchMatchingProcessor } from '@/Utils/matching/batch-processor.service
 
 jest.mock('@/Utils/databasePool');
 jest.mock('@/Utils/matching/embedding.service');
-jest.mock('@/Utils/consolidatedMatching');
+jest.mock('@/Utils/consolidatedMatchingV2');
 
 describe('Batch Matching Processor', () => {
   let processor: BatchMatchingProcessor;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseClient } from '@/Utils/databasePool';
-import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
+import { createConsolidatedMatcher } from '@/Utils/consolidatedMatchingV2';
 import { sendWelcomeEmail, sendMatchedJobsEmail } from '@/Utils/email/sender';
 import { apiLogger } from '@/lib/api-logger';
 import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilterJobs';
