@@ -8,6 +8,7 @@ export default function HowItWorks() {
 
   return (
     <section
+      id="how-it-works"
       data-testid="how-it-works"
       className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 bg-black scroll-snap-section relative"
     >

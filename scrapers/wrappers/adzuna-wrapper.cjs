@@ -32,7 +32,7 @@ async function main() {
     const adzunaModule = require('../../scripts/adzuna-categories-scraper.cjs');
     const includeRemote = String(process.env.INCLUDE_REMOTE).toLowerCase() === 'true';
     const result = await adzunaModule.scrapeAllCitiesCategories({
-      verbose: false,
+      verbose: true, // Enable verbose to see filtering details
       targetCities,
       targetCareerPaths,
       targetIndustries,

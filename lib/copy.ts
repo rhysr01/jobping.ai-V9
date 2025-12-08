@@ -19,13 +19,15 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 
 // Hero section
 export const HERO_TITLE = "JobPing";
-export const HERO_HEADLINE = "Early-career roles across Europe, curated for you.";
-export const HERO_SUBLINE = 'Start free with 5 instant matches (one-time). Upgrade to Premium for 15 jobs per week (3x more) via email—no senior jobs, no visa mismatches, no time wasted.';
+export const HERO_HEADLINE = "Stop scrolling job boards. JobPing finds the best roles for you — automatically.";
+export const HERO_SUBLINE = "Get personalised matches and job insights sent 3× per week. Built for students and recent grads across Europe.";
 export const HERO_SUBLINE_MICRO = "No dashboards. No job boards. Just roles you can actually apply for.";
 export const HERO_SUBTITLE = "";
 export const HERO_CTA = "Get my first 5 matches";
+export const HERO_PRIMARY_CTA = "Start Free — See Your First 5 Matches";
+export const HERO_SECONDARY_CTA = "View Example Matches";
 export const HERO_PILL = "For EU students & recent grads";
-export const HERO_SOCIAL_PROOF = "Join thousands of early-career jobseekers across Europe.";
+export const HERO_SOCIAL_PROOF = "Trusted by students in 7 countries";
 
 // How it works
 export const HOW_IT_WORKS_TITLE = "How it works";

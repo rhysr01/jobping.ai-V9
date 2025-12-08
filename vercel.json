@@ -3,6 +3,9 @@
     "app/api/**/*.ts": {
       "maxDuration": 60
     },
+    "app/api/signup/free/route.ts": {
+      "maxDuration": 90
+    },
     "app/api/match-users/route.ts": {
       "maxDuration": 300
     },
