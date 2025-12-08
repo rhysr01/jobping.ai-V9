@@ -18,6 +18,8 @@ export default function CookieBanner() {
       }, 500);
       return () => clearTimeout(timer);
     }
+    // Return undefined cleanup function if consent exists
+    return undefined;
   }, []);
 
   const handleAccept = () => {
