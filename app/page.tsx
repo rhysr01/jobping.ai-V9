@@ -15,9 +15,9 @@ export default function Page() {
     <>
       <main id="main-content" className="scroll-snap-type-y-proximity" style={{ scrollSnapType: 'y proximity' }}>
         <Hero />
+        <CompanyLogos />
         <EmailPhoneShowcase />
         <Pricing />
-        <CompanyLogos />
         <CountryFlags />
         <SocialProofRow />
         <HowItWorks />

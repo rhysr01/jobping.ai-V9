@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '@/components/ui/useReducedMotion';
@@ -41,10 +41,50 @@ export function SignupFormFree() {
     fullName: '',
   });
 
+  const [jobCount, setJobCount] = useState<number | null>(null);
+  const [isLoadingJobCount, setIsLoadingJobCount] = useState(false);
+
   // Form validation hooks
   const emailValidation = useEmailValidation(formData.email);
   const nameValidation = useRequiredValidation(formData.fullName, 'Full name');
   const citiesValidation = useRequiredValidation(formData.cities, 'Preferred cities');
+
+  // Fetch job count when both cities and career path are selected
+  useEffect(() => {
+    const fetchJobCount = async () => {
+      if (formData.cities.length > 0 && formData.careerPath) {
+        setIsLoadingJobCount(true);
+        try {
+          const response = await fetch('/api/preview-matches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              cities: formData.cities,
+              careerPath: formData.careerPath,
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setJobCount(data.count || 0);
+          } else {
+            setJobCount(null);
+          }
+        } catch (error) {
+          console.error('Failed to fetch job count:', error);
+          setJobCount(null);
+        } finally {
+          setIsLoadingJobCount(false);
+        }
+      } else {
+        setJobCount(null);
+      }
+    };
+
+    // Debounce the API call slightly to avoid too many requests
+    const timeoutId = setTimeout(fetchJobCount, 300);
+    return () => clearTimeout(timeoutId);
+  }, [formData.cities, formData.careerPath]);
 
   const toggleArray = (arr: string[], value: string) => {
     return arr.includes(value) ? arr.filter(v => v !== value) : [...arr, value];
@@ -280,6 +320,29 @@ export function SignupFormFree() {
                   <FormFieldError error="Please select a career interest." id="careerPath-error" />
                 )}
               </div>
+
+              {/* Job Count Preview */}
+              {formData.cities.length > 0 && formData.careerPath && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="rounded-xl bg-brand-500/10 border border-brand-500/30 p-4"
+                >
+                  {isLoadingJobCount ? (
+                    <p className="text-sm text-zinc-400">
+                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-brand-400 border-t-transparent mr-2" />
+                      Checking available jobs...
+                    </p>
+                  ) : jobCount !== null ? (
+                    <p className="text-sm text-zinc-400">
+                      ✨ Based on your selections, we found{' '}
+                      <span className="text-brand-400 font-semibold">{jobCount.toLocaleString()}</span>{' '}
+                      {jobCount === 1 ? 'job' : 'jobs'} in {formData.cities.join(' and ')}
+                    </p>
+                  ) : null}
+                </motion.div>
+              )}
 
               {/* Email and Name - Combined Section */}
               <div className="grid gap-6 sm:grid-cols-2">

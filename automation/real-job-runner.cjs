@@ -288,23 +288,34 @@ class RealJobRunner {
         console.warn('⚠️  Adzuna stderr:', stderr.substring(0, 500));
       }
       
-      // Parse canonical success line
+      // Parse canonical success line - try multiple patterns
       let jobsSaved = 0;
       const canonical = stdout.match(/✅ Adzuna: (\d+) jobs saved to database/);
       if (canonical) {
         jobsSaved = parseInt(canonical[1]);
       } else {
-        // Fallback to DB count (last 10 minutes to account for slower scrapes)
-        const { count, error } = await supabase
-          .from('jobs')
-          .select('id', { count: 'exact', head: false })
-          .eq('source', 'adzuna')
-          .gte('created_at', new Date(Date.now() - 10*60*1000).toISOString());
-        jobsSaved = error ? 0 : (count || 0);
-        if (jobsSaved > 0) {
-          console.log(`ℹ️  Adzuna: DB fallback count: ${jobsSaved} jobs`);
+        // Try alternative patterns
+        const altMatch = stdout.match(/Adzuna.*?(\d+).*?jobs.*?saved/i);
+        if (altMatch) {
+          jobsSaved = parseInt(altMatch[1]);
         } else {
-          console.warn('⚠️  Adzuna: No jobs found in DB - scraper may have failed silently');
+          // Fallback to DB count (last 10 minutes to account for slower scrapes)
+          const { count, error } = await supabase
+            .from('jobs')
+            .select('id', { count: 'exact', head: false })
+            .eq('source', 'adzuna')
+            .gte('created_at', new Date(Date.now() - 10*60*1000).toISOString());
+          jobsSaved = error ? 0 : (count || 0);
+          if (jobsSaved > 0) {
+            console.log(`ℹ️  Adzuna: DB fallback count: ${jobsSaved} jobs`);
+          } else {
+            console.warn('⚠️  Adzuna: No jobs found in DB - scraper may have failed silently or filtered all jobs');
+            // Show last 20 lines of output for debugging
+            const lines = stdout.split('\n').filter(l => l.trim());
+            if (lines.length > 0) {
+              console.log('📋 Last output lines:', lines.slice(-20).join('\n'));
+            }
+          }
         }
       }
       
@@ -327,27 +338,45 @@ class RealJobRunner {
     try {
       console.log('🔄 Running JobSpy scraper...');
       // Call standardized wrapper
-      const { stdout } = await execAsync('NODE_ENV=production node scrapers/wrappers/jobspy-wrapper.cjs', {
+      const { stdout, stderr } = await execAsync('NODE_ENV=production node scrapers/wrappers/jobspy-wrapper.cjs', {
         cwd: process.cwd(),
         timeout: 600000, // 10 minutes timeout
         env: { ...process.env }
       });
       
-      // Parse job count from the result
+      // Log stderr if present (might contain important info)
+      if (stderr && stderr.trim()) {
+        console.warn('⚠️  JobSpy stderr:', stderr.substring(0, 500));
+      }
+      
+      // Parse job count from the result - try multiple patterns
       let jobsSaved = 0;
       const savedMatch = stdout.match(/✅ JobSpy: total_saved=(\d+)/);
       if (savedMatch) {
         jobsSaved = parseInt(savedMatch[1]);
       } else {
-        // Fallback to DB count (last 10 minutes)
-        const { count, error } = await supabase
-          .from('jobs')
-          .select('id', { count: 'exact', head: false })
-          .eq('source', 'jobspy-indeed')
-          .gte('created_at', new Date(Date.now() - 10*60*1000).toISOString());
-        jobsSaved = error ? 0 : (count || 0);
-        if (jobsSaved) {
-          console.log(`ℹ️  JobSpy: DB fallback count: ${jobsSaved} jobs`);
+        // Try alternative patterns
+        const altMatch = stdout.match(/total_saved[=:](\d+)/i);
+        if (altMatch) {
+          jobsSaved = parseInt(altMatch[1]);
+        } else {
+          // Fallback to DB count (last 10 minutes)
+          const { count, error } = await supabase
+            .from('jobs')
+            .select('id', { count: 'exact', head: false })
+            .eq('source', 'jobspy-indeed')
+            .gte('created_at', new Date(Date.now() - 10*60*1000).toISOString());
+          jobsSaved = error ? 0 : (count || 0);
+          if (jobsSaved > 0) {
+            console.log(`ℹ️  JobSpy: DB fallback count: ${jobsSaved} jobs`);
+          } else {
+            console.warn('⚠️  JobSpy: No jobs found in DB - scraper may have filtered all jobs or found none');
+            // Show last 20 lines of output for debugging
+            const lines = stdout.split('\n').filter(l => l.trim());
+            if (lines.length > 0) {
+              console.log('📋 Last output lines:', lines.slice(-20).join('\n'));
+            }
+          }
         }
       }
       
@@ -355,6 +384,7 @@ class RealJobRunner {
       return jobsSaved;
     } catch (error) {
       console.error('❌ JobSpy scraper failed:', error.message);
+      console.error('❌ Stack:', error.stack);
       return 0;
     }
   }

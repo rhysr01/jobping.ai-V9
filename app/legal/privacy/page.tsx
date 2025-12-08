@@ -39,6 +39,30 @@ export default function PrivacyPolicy() {
             </section>
 
             <section>
+              <h2 className="text-xl md:text-2xl font-semibold text-white mt-8 mb-4 tracking-tight">2.1. Email Communications</h2>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Free Tier Users:</h3>
+                  <ul className="list-disc pl-6 mb-4 text-zinc-300 space-y-1">
+                    <li>You will receive ZERO emails from JobPing</li>
+                    <li>We do not send welcome emails, newsletters, or job alerts to free tier users</li>
+                    <li>Your email is only used for account identification</li>
+                    <li>Your data is automatically deleted after 30 days of inactivity</li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Premium Tier Users:</h3>
+                  <ul className="list-disc pl-6 mb-4 text-zinc-300 space-y-1">
+                    <li>You will receive job match emails 3 times per week (Monday, Wednesday, Friday at 9 AM GMT)</li>
+                    <li>Welcome email with 10 job matches immediately upon signup</li>
+                    <li>You can unsubscribe or pause emails anytime from email footer or account settings</li>
+                    <li>Your data is retained as long as your subscription is active</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            <section>
               <h2 className="text-xl md:text-2xl font-semibold text-white mt-8 mb-4 tracking-tight">3. Information Sharing</h2>
               <p className="text-zinc-300 mb-6">
                 We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, except as described in this policy.
@@ -65,9 +89,21 @@ export default function PrivacyPolicy() {
 
             <section>
               <h2 className="text-xl md:text-2xl font-semibold text-white mt-8 mb-4 tracking-tight">6. Data Retention</h2>
-              <p className="text-zinc-300 mb-6">
-                We retain your personal information for as long as necessary to provide our services and comply with legal obligations.
-              </p>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-zinc-300 mb-2">
+                    <strong className="text-white">Free Tier:</strong> Your account data (email, preferences, matches) is automatically deleted 30 days after signup if you don't upgrade to Premium.
+                  </p>
+                </div>
+                <div>
+                  <p className="text-zinc-300 mb-2">
+                    <strong className="text-white">Premium Tier:</strong> Your data is retained for as long as your subscription is active, plus 30 days after cancellation for billing purposes.
+                  </p>
+                </div>
+                <p className="text-zinc-300">
+                  We retain your personal information for as long as necessary to provide our services and comply with legal obligations.
+                </p>
+              </div>
             </section>
 
             <section>

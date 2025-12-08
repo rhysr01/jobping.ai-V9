@@ -345,14 +345,19 @@ function wrapEmail(title: string, body: string, footerEmail?: string): string {
           <tr>
             <td class="footer">
               <div class="footer-logo">JobPing</div>
-              <div class="footer-text" style="color:${COLORS.gray400}; font-size:12px;">
-                JobPing Ltd · 77 Camden Street Lower · Dublin D02 XE80 · Ireland
+              <div class="footer-text" style="color:${COLORS.gray400}; font-size:12px; margin-bottom:8px;">
+                JobPing Ltd<br />
+                77 Camden Street Lower, Dublin D02 XE80, Ireland
+              </div>
+              <div class="footer-text" style="color:${COLORS.gray400}; font-size:12px; margin-bottom:12px;">
+                Questions? Email: <a class="footer-link" href="mailto:contact@getjobping.com" style="color:#8B5CF6;">contact@getjobping.com</a>
               </div>
               <div class="footer-text">
                 <a class="footer-link" href="${baseUrl}/legal/unsubscribe?utm_source=email&utm_medium=footer&utm_campaign=${footerEmail ? 'user_email' : 'anonymous'}">Unsubscribe</a> · 
-                <a class="footer-link" href="${preferencesLink}" style="color:#8B5CF6;">Update Preferences</a>
+                <a class="footer-link" href="${preferencesLink}" style="color:#8B5CF6;">Update Preferences</a> · 
+                <a class="footer-link" href="${baseUrl}/legal/privacy" style="color:#8B5CF6;">Privacy Policy</a>
               </div>
-              <div class="footer-text" style="color:${COLORS.gray500}; font-size:12px;">
+              <div class="footer-text" style="color:${COLORS.gray500}; font-size:12px; margin-top:12px;">
                 You're receiving this because you created a JobPing account. Prefer the browser? Copy &amp; paste <a class="footer-link" href="${baseUrl}">${baseUrl}</a>
               </div>
             </td>

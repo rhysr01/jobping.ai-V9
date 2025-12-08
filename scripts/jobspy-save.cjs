@@ -762,6 +762,10 @@ print(df[cols].to_csv(index=False))
   ];
   // Additional exclusion: overly generic consultant roles
   const consultantExclusion = [' consultant '];
+  // Get all role names from signup form for matching
+  const { getAllRoles } = require('../scrapers/shared/roles.cjs');
+  const allFormRoles = getAllRoles().map(r => r.toLowerCase());
+  
   const qualityFiltered = collected.filter(j => {
     if (!hasFields(j)) return false;
     const t = titleStr(j.title);
@@ -772,16 +776,25 @@ print(df[cols].to_csv(index=False))
     const hasEarly = includesAny(t, earlyTerms) || includesAny(d, earlyTerms);
     const titleHasExplicitEarly = includesAny(t, earlyTerms);
     
-    // RELAXED: If searching with early-career terms, assume all results are relevant
-    // The search queries already filter for early-career roles
-    const searchTermIsEarly = true; // We're using graduate/intern/analyst search terms
+    // Check if title matches any role from signup form (these are all early-career roles)
+    const matchesFormRole = allFormRoles.some(role => {
+      // Check if title contains the role name (flexible matching)
+      const roleWords = role.split(' ').filter(w => w.length > 3); // Skip short words like "sdr"
+      return roleWords.length > 0 && roleWords.every(word => t.includes(word));
+    });
     
-    // If title has early terms OR we're searching early terms, bypass strict business check
-    const bizOk = (titleHasExplicitEarly || searchTermIsEarly) ? true : includesAny(full, bizAxesLoose);
+    // RELAXED: Trust search results more - we're searching with early-career terms and form roles
+    // If it matches a form role OR has early terms, it's likely valid
+    const isLikelyEarlyCareer = matchesFormRole || hasEarly || titleHasExplicitEarly;
+    
+    // Business axis check - more lenient if it's a form role or has early terms
+    const bizOk = isLikelyEarlyCareer 
+      ? true  // Trust form roles and early-career terms
+      : includesAny(full, bizAxesLoose); // Otherwise check business keywords
     if (!bizOk) return false;
     
-    // Only reject if DEFINITELY senior (and no early terms in title)
-    if (!titleHasExplicitEarly && includesAny(t, seniorTerms)) return false;
+    // Only reject if DEFINITELY senior (and no early terms/form role match in title)
+    if (!titleHasExplicitEarly && !matchesFormRole && includesAny(t, seniorTerms)) return false;
     
     // Always reject noise
     if (!excludesAll(full, noisyExclusions)) return false;
@@ -797,21 +810,29 @@ print(df[cols].to_csv(index=False))
   // Debug: show sample titles that failed
   if (collected.length > 0 && qualityFiltered.length === 0) {
     console.log('\n🔍 Sample titles that failed quality gate:');
-    collected.slice(0, 3).forEach((j, i) => {
+    collected.slice(0, 5).forEach((j, i) => {
       const t = (j.title||'').toLowerCase();
       const d = (j.company_description || j.skills || '').toLowerCase();
+      const full = `${t} ${d}`;
       const hasEarly = earlyTerms.some(term => t.includes(term) || d.includes(term));
       const titleHasExplicitEarly = earlyTerms.some(term => t.includes(term));
-      const descLen = (j.company_description || j.skills || '').trim().length;
+      const matchesFormRole = allFormRoles.some(role => {
+        const roleWords = role.split(' ').filter(w => w.length > 3);
+        return roleWords.length > 0 && roleWords.every(word => t.includes(word));
+      });
+      const hasBizKeywords = includesAny(full, bizAxesLoose);
+      const hasSeniorTerms = includesAny(t, seniorTerms);
+      const hasNoise = !excludesAll(full, noisyExclusions);
       const hasFields = (
         (j.title||'').trim().length > 3 &&
         (j.company||'').trim().length > 1 &&
         (j.location||'').trim().length > 3 &&
-        (j.job_url||j.url||'').trim().startsWith('http') &&
-        true
+        (j.job_url||j.url||'').trim().startsWith('http')
       );
-      console.log(`${i+1}. "${j.title}" (${j.company}) - hasEarly: ${hasEarly}, titleHasExplicitEarly: ${titleHasExplicitEarly}, hasFields: ${hasFields}, descLen: ${descLen}`);
-      console.log(`   Raw job object:`, JSON.stringify(j, null, 2));
+      console.log(`${i+1}. "${j.title}" (${j.company})`);
+      console.log(`   - hasFields: ${hasFields}, hasEarly: ${hasEarly}, matchesFormRole: ${matchesFormRole}`);
+      console.log(`   - hasBizKeywords: ${hasBizKeywords}, hasSeniorTerms: ${hasSeniorTerms}, hasNoise: ${hasNoise}`);
+      console.log(`   - REJECTED: ${!hasFields ? 'missing fields' : !hasBizKeywords && !matchesFormRole && !hasEarly ? 'no biz/role/early match' : hasSeniorTerms && !matchesFormRole && !titleHasExplicitEarly ? 'senior term' : hasNoise ? 'noise' : 'unknown'}`);
     });
   }
   await saveJobs(capped, 'jobspy-indeed');

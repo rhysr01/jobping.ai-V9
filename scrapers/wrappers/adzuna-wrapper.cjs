@@ -54,13 +54,33 @@ async function main() {
       return { isRemote };
     }
     
+    // Get all role names from signup form for matching
+    const { getAllRoles } = require('../shared/roles.cjs');
+    const allFormRoles = getAllRoles().map(r => r.toLowerCase());
+    
     function convertToDatabaseFormat(job) {
       const { isRemote } = localParseLocation(job.location);
-      const isEarly = classifyEarlyCareer(job);
       const job_hash = makeJobHash(job);
       const nowIso = new Date().toISOString();
       
-      // Only save jobs that pass strict early-career filter
+      const titleLower = (job.title || '').toLowerCase();
+      const descLower = (job.description || '').toLowerCase();
+      const fullText = `${titleLower} ${descLower}`;
+      
+      // Check multiple criteria for early-career classification
+      const hasEarlyTerms = classifyEarlyCareer(job);
+      
+      // Check if title matches any role from signup form (all form roles are early-career)
+      const matchesFormRole = allFormRoles.some(role => {
+        const roleWords = role.split(' ').filter(w => w.length > 3); // Skip short words
+        return roleWords.length > 0 && roleWords.every(word => titleLower.includes(word));
+      });
+      
+      // More lenient: accept if it matches form role OR has early-career terms
+      // We're searching with early-career queries, so trust the results more
+      const isEarly = hasEarlyTerms || matchesFormRole;
+      
+      // Only save jobs that pass early-career filter
       if (!isEarly) {
         return null;
       }

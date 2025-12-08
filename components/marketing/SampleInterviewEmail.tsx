@@ -128,36 +128,31 @@ async function submitFeedback(jobHash: string, feedbackType: 'thumbs_up' | 'thum
 }
 
 export default function SampleInterviewEmail() {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [jobs, setJobs] = useState<Job[]>(FALLBACK_JOBS); // Start with fallback - no loading state
   const [feedbackSubmitted, setFeedbackSubmitted] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    // Silently fetch real jobs in background, but show fallback immediately
     async function fetchJobs() {
       try {
         const response = await fetch('/api/sample-jobs');
         const data = await response.json();
         
         if (data.jobs && data.jobs.length > 0) {
-          setJobs(data.jobs.slice(0, 5)); // Take first 5
-        } else {
-          // Fallback to fictional jobs
-          setJobs(FALLBACK_JOBS);
+          // Update with real jobs if available (smooth transition)
+          setJobs(data.jobs.slice(0, 5));
         }
       } catch (error) {
+        // Silently fail - fallback jobs already showing
         console.error('Failed to fetch sample jobs:', error);
-        // Fallback to fictional jobs on error
-        setJobs(FALLBACK_JOBS);
-      } finally {
-        setLoading(false);
       }
     }
 
     fetchJobs();
   }, []);
 
-  // Use jobs or fallback
-  const displayJobs = jobs.length > 0 ? jobs : FALLBACK_JOBS;
+  // Always show jobs (no loading state in preview)
+  const displayJobs = jobs;
 
   const handleFeedback = async (jobHash: string, feedbackType: 'thumbs_up' | 'thumbs_down') => {
     if (!jobHash || feedbackSubmitted.has(jobHash)) return;
@@ -187,10 +182,7 @@ export default function SampleInterviewEmail() {
           Review the highlights, tap through to apply, and let us know if anything feels off — your feedback powers the next batch.
         </p>
 
-        {loading ? (
-          <div className="text-center py-8 text-zinc-400">Loading jobs...</div>
-        ) : (
-          displayJobs.map((job, index) => {
+        {displayJobs.map((job, index) => {
             const score = getMatchScore(index);
             const hot = isHotMatch(score);
             const experienceText = job.isGraduate 
@@ -303,8 +295,7 @@ export default function SampleInterviewEmail() {
                 </a>
               </div>
             );
-          })
-        )}
+          })}
 
         {/* Upgrade CTA for free users - matches production */}
         <div className="mt-6 rounded-2xl border-2 border-indigo-500/30 bg-gradient-to-br from-indigo-500/15 to-purple-500/10 p-6">

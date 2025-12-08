@@ -3,6 +3,29 @@ const axios = require('axios');
 const { classifyEarlyCareer, makeJobHash, CAREER_PATH_KEYWORDS } = require('../scrapers/shared/helpers.cjs');
 const { recordScraperRun } = require('../scrapers/shared/telemetry.cjs');
 const { getAllRoles, getEarlyCareerRoles, getTopRolesByCareerPath } = require('../scrapers/shared/roles.cjs');
+
+// Get all role names from signup form for matching (used in filtering)
+const allFormRoles = getAllRoles().map(r => r.toLowerCase());
+
+/**
+ * Check if job is early-career (lenient version that recognizes form roles)
+ */
+function isEarlyCareerJob(job) {
+  const titleLower = (job.title || '').toLowerCase();
+  const descLower = (job.description || '').toLowerCase();
+  
+  // Check if it matches explicit early-career terms
+  const hasEarlyTerms = classifyEarlyCareer(job);
+  
+  // Check if title matches any role from signup form (all form roles are early-career)
+  const matchesFormRole = allFormRoles.some(role => {
+    const roleWords = role.split(' ').filter(w => w.length > 3); // Skip short words like "sdr"
+    return roleWords.length > 0 && roleWords.every(word => titleLower.includes(word));
+  });
+  
+  // Accept if it has early terms OR matches a form role
+  return hasEarlyTerms || matchesFormRole;
+}
 const scriptStart = Date.now();
 let scrapeErrors = 0;
 
@@ -264,7 +287,8 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
           }));
           
           const filteredJobs = transformedJobs.filter((job) => {
-            if (!classifyEarlyCareer(job)) {
+            // Use lenient early-career check (recognizes form roles)
+            if (!isEarlyCareerJob(job)) {
               return false;
             }
 
@@ -507,11 +531,12 @@ if (require.main === module) {
       }
       function convertToDatabaseFormat(job) {
         const { isRemote } = localParseLocation(job.location);
-        const isEarly = classifyEarlyCareer(job);
+        // Use lenient early-career check (recognizes form roles)
+        const isEarly = isEarlyCareerJob(job);
         const job_hash = makeJobHash(job);
         const nowIso = new Date().toISOString();
         
-        // Only save jobs that pass strict early-career filter (matching JobSpy quality)
+        // Only save jobs that pass early-career filter (lenient - recognizes form roles)
         // If not early-career, skip this job entirely
         if (!isEarly) {
           return null; // Signal to filter out

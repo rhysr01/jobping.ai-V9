@@ -7,6 +7,7 @@ import FAQSchema from "@/components/FAQSchema";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Toaster from "@/components/ui/Toaster";
 import ScrollHeader from "@/components/ui/ScrollHeader";
+import CookieBanner from "@/components/ui/CookieBanner";
 
 export const metadata: Metadata = {
   title: "JobPing → EU early-career roles. Free: instant matches. Premium: 3x per week.",
@@ -153,6 +154,7 @@ export default function RootLayout({
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>
         <Toaster />
+        <CookieBanner />
         {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-G40ZHDYNL6"
