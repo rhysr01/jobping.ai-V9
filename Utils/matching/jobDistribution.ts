@@ -255,14 +255,23 @@ export function distributeJobsWithDiversity(
     ? Math.ceil(targetCount / Math.max(1, targetCities.length))
     : Math.ceil(targetCount / 2);
   
-  for (let round = 0; round < maxRounds && selectedJobs.length < targetCount; round++) {
+  // CRITICAL FIX: Add maximum iteration limit to prevent timeouts
+  const MAX_ITERATIONS = 1000; // Prevent infinite loops when diversity isn't possible
+  let iterationCount = 0;
+  let consecutiveNoProgressRounds = 0;
+  const MAX_NO_PROGRESS_ROUNDS = 3; // If no progress for 3 rounds, relax constraints
+  
+  for (let round = 0; round < maxRounds && selectedJobs.length < targetCount && iterationCount < MAX_ITERATIONS; round++) {
+    const jobsBeforeRound = selectedJobs.length;
+    
     // Rotate through cities (or all jobs if no city balance)
     const citiesToProcess = canBalanceCities && targetCities.length > 0 
       ? targetCities 
       : ['any']; // Process all jobs if no city balance
     
     for (const targetCity of citiesToProcess) {
-      if (selectedJobs.length >= targetCount) break;
+      if (selectedJobs.length >= targetCount || iterationCount >= MAX_ITERATIONS) break;
+      iterationCount++;
       
       // Find jobs from this city that we haven't selected yet
       // CRITICAL: Use imperative loops instead of map/filter to avoid TDZ errors
@@ -289,6 +298,23 @@ export function distributeJobsWithDiversity(
         }
       }
 
+      // CRITICAL FIX: Early exit if no available jobs for this city
+      if (availableJobs.length === 0) {
+        // If we can't find any jobs for this city and we're trying to balance,
+        // disable city balance and continue
+        if (canBalanceCities && targetCity !== 'any') {
+          console.warn('[JobDistribution] No jobs found for city, disabling city balance', {
+            targetCity,
+            selectedCount: selectedJobs.length,
+            targetCount
+          });
+          canBalanceCities = false;
+          ensureCityBalance = false;
+          break; // Break out of city loop, will continue with relaxed constraints
+        }
+        continue;
+      }
+
       // Sort by source diversity (prefer sources we haven't used much)
       availableJobs.sort((a, b) => {
         const sourceA = a.source || 'unknown';
@@ -308,6 +334,7 @@ export function distributeJobsWithDiversity(
       });
 
       // Select first job that fits constraints
+      let foundJob = false;
       for (const job of availableJobs) {
         const source = job.source || 'unknown';
         const city = job.city || '';
@@ -334,9 +361,58 @@ export function distributeJobsWithDiversity(
             }
           }
           
+          foundJob = true;
           break;
         }
       }
+      
+      // If no job was found that fits constraints, relax them
+      if (!foundJob && availableJobs.length > 0) {
+        // Try to add any job from available jobs, prioritizing source diversity
+        const bestJob = availableJobs[0];
+        selectedJobs.push(bestJob);
+        const source = bestJob.source || 'unknown';
+        sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+      }
+    }
+    
+    // Check if we made progress this round
+    if (selectedJobs.length === jobsBeforeRound) {
+      consecutiveNoProgressRounds++;
+      if (consecutiveNoProgressRounds >= MAX_NO_PROGRESS_ROUNDS) {
+        console.warn('[JobDistribution] No progress for multiple rounds, relaxing constraints', {
+          consecutiveNoProgressRounds,
+          selectedCount: selectedJobs.length,
+          targetCount,
+          canBalanceCities,
+          hasMultipleSources
+        });
+        // Disable city balance if it's preventing progress
+        if (canBalanceCities) {
+          canBalanceCities = false;
+          ensureCityBalance = false;
+        }
+        consecutiveNoProgressRounds = 0; // Reset counter
+      }
+    } else {
+      consecutiveNoProgressRounds = 0; // Reset on progress
+    }
+  }
+  
+  // CRITICAL FIX: If we hit iteration limit and still don't have enough jobs, relax constraints
+  if (selectedJobs.length < targetCount && iterationCount >= MAX_ITERATIONS) {
+    console.warn('[JobDistribution] Hit iteration limit, relaxing constraints', {
+      selectedCount: selectedJobs.length,
+      targetCount,
+      hasMultipleSources,
+      canBalanceCities,
+      iterationCount
+    });
+    
+    // Disable city balance if it's preventing us from getting jobs
+    if (canBalanceCities && selectedJobs.length < targetCount * 0.5) {
+      canBalanceCities = false;
+      ensureCityBalance = false;
     }
   }
 
@@ -466,7 +542,8 @@ export function distributeJobsWithDiversity(
 
   // Step 6: Fill remaining slots (if any) without strict city balance
   // CRITICAL: Use imperative loops instead of map/filter to avoid TDZ errors
-  if (selectedJobs.length < targetCount) {
+  // CRITICAL FIX: Add iteration limit check here too
+  if (selectedJobs.length < targetCount && iterationCount < MAX_ITERATIONS) {
     const selectedIds = new Set<string>();
     for (let i = 0; i < selectedJobs.length; i++) {
       selectedIds.add(getJobId(selectedJobs[i]));
@@ -507,11 +584,16 @@ export function distributeJobsWithDiversity(
       return 0;
     });
 
-    for (const job of remaining) {
-      if (selectedJobs.length >= targetCount) break;
+    // CRITICAL FIX: Limit iterations in this loop too
+    const maxFillIterations = Math.min(remaining.length, MAX_ITERATIONS - iterationCount, targetCount - selectedJobs.length);
+    for (let i = 0; i < maxFillIterations && selectedJobs.length < targetCount && iterationCount < MAX_ITERATIONS; i++) {
+      iterationCount++;
+      const job = remaining[i];
+      if (!job) break;
       
       const source = job.source || 'unknown';
-      if (canAddFromSource(source)) {
+      // CRITICAL FIX: Relax source constraint if we're running out of iterations
+      if (canAddFromSource(source) || iterationCount > MAX_ITERATIONS * 0.8) {
         selectedJobs.push(job);
         sourceCounts[source] = (sourceCounts[source] || 0) + 1;
         
@@ -521,9 +603,9 @@ export function distributeJobsWithDiversity(
           const jobCity = (job.city || '').toLowerCase();
           const jobLocation = ((job as any).location || '').toLowerCase();
           let matchedCity: string | undefined;
-          for (let i = 0; i < targetCities.length; i++) {
-            if (matchesCity(jobCity, jobLocation, targetCities[i])) {
-              matchedCity = targetCities[i];
+          for (let j = 0; j < targetCities.length; j++) {
+            if (matchesCity(jobCity, jobLocation, targetCities[j])) {
+              matchedCity = targetCities[j];
               break;
             }
           }
@@ -535,8 +617,9 @@ export function distributeJobsWithDiversity(
     }
   }
 
-  // Step 7: Final fill (if still not enough, relax source constraint)
+  // Step 7: Final fill (if still not enough, relax ALL constraints)
   // CRITICAL: Use imperative loops instead of map/filter to avoid TDZ errors
+  // CRITICAL FIX: This is the last resort - just fill with any remaining jobs
   if (selectedJobs.length < targetCount) {
     const selectedIds = new Set<string>();
     for (let i = 0; i < selectedJobs.length; i++) {
@@ -550,9 +633,19 @@ export function distributeJobsWithDiversity(
       }
     }
 
-    for (const job of remaining) {
+    // CRITICAL FIX: Limit final fill to prevent timeout
+    const maxFinalFill = Math.min(remaining.length, targetCount - selectedJobs.length);
+    for (let i = 0; i < maxFinalFill; i++) {
       if (selectedJobs.length >= targetCount) break;
-      selectedJobs.push(job);
+      selectedJobs.push(remaining[i]);
+    }
+    
+    if (selectedJobs.length < targetCount) {
+      console.warn('[JobDistribution] Could not fill all slots', {
+        selectedCount: selectedJobs.length,
+        targetCount,
+        availableJobs: remaining.length
+      });
     }
   }
 

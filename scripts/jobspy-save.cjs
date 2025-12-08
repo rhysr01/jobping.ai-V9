@@ -762,8 +762,7 @@ print(df[cols].to_csv(index=False))
   ];
   // Additional exclusion: overly generic consultant roles
   const consultantExclusion = [' consultant '];
-  // Get all role names from signup form for matching
-  const { getAllRoles } = require('../scrapers/shared/roles.cjs');
+  // Get all role names from signup form for matching (already imported above)
   const allFormRoles = getAllRoles().map(r => r.toLowerCase());
   
   const qualityFiltered = collected.filter(j => {

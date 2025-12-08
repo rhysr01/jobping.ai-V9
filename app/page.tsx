@@ -16,11 +16,11 @@ export default function Page() {
       <main id="main-content" className="scroll-snap-type-y-proximity" style={{ scrollSnapType: 'y proximity' }}>
         <Hero />
         <CompanyLogos />
+        <HowItWorks />
         <EmailPhoneShowcase />
+        <SocialProofRow />
         <Pricing />
         <CountryFlags />
-        <SocialProofRow />
-        <HowItWorks />
         <BuiltForStudents />
       </main>
       <div className="h-16 w-full bg-gradient-to-b from-transparent to-black/40" />

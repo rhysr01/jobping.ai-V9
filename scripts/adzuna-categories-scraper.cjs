@@ -235,13 +235,38 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
       while (hasMorePages && page <= queryMaxPages) {
         const url = `https://api.adzuna.com/v1/api/jobs/${countryCode}/search/${page}?app_id=${appId}&app_key=${appKey}&what=${encodeURIComponent(query)}&where=${encodeURIComponent(cityName)}&results_per_page=${resultsPerPage}&sort_by=date&max_days_old=${maxDaysOld}`;
       
-        const response = await axios.get(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-          },
-          timeout,
-          validateStatus: (status) => status < 500 // Don't throw on 4xx errors
-        });
+        let response;
+        let retries = 0;
+        const maxRetries = 3;
+        
+        // Retry logic for 502/503 errors (API gateway issues)
+        while (retries <= maxRetries) {
+          try {
+            response = await axios.get(url, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+              },
+              timeout,
+              validateStatus: (status) => status < 500 // Don't throw on 4xx errors
+            });
+            
+            // If we got a response (even if error), break retry loop
+            break;
+          } catch (error) {
+            // Network errors or 5xx errors - retry
+            if (error.response?.status >= 500 || error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+              retries++;
+              if (retries <= maxRetries) {
+                const backoffDelay = Math.min(1000 * Math.pow(2, retries), 5000); // Exponential backoff, max 5s
+                if (verbose) console.log(`   ↻ Retrying (${retries}/${maxRetries}) after ${backoffDelay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, backoffDelay));
+                continue;
+              }
+            }
+            // Re-throw if not retryable
+            throw error;
+          }
+        }
 
         // Check for 404 - country code likely not supported
         if (response.status === 404) {
@@ -251,6 +276,17 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
             return allJobs; // Early return - skip remaining queries for this city
           }
           // Single 404 might be query-specific, continue
+          break; // Skip to next query
+        }
+
+        // Check for 502/503 - API gateway errors (retry handled above, but log if still failing)
+        if (response.status === 502 || response.status === 503) {
+          scrapeErrors += 1;
+          if (retries >= maxRetries) {
+            console.error(`❌ Error searching ${cityName} for "${query}": HTTP ${response.status} (after ${maxRetries} retries)`);
+          } else {
+            console.warn(`⚠️  ${cityName} for "${query}": HTTP ${response.status}, retrying...`);
+          }
           break; // Skip to next query
         }
 
@@ -304,8 +340,15 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
             });
           });
           
-          if (filteredJobs.length === 0 && verbose) {
-            console.log(`   ⚠️  Filtered out ${transformedJobs.length} non-early-career jobs for "${query}"`);
+          // Log filtering stats
+          const filteredCount = transformedJobs.length - filteredJobs.length;
+          if (filteredCount > 0) {
+            if (verbose) {
+              console.log(`   ⚠️  Filtered out ${filteredCount}/${transformedJobs.length} jobs for "${query}" (early-career check)`);
+            }
+          }
+          if (filteredJobs.length === 0 && transformedJobs.length > 0 && !verbose) {
+            console.log(`   ⚠️  All ${transformedJobs.length} jobs filtered out for "${query}" (likely not early-career or form role match)`);
           }
           
           allJobs.push(...filteredJobs);
