@@ -589,20 +589,32 @@ async function main() {
     'Milan': [ 'neolaureato','stage','tirocinio','junior','primo lavoro','laureato' ],
     'Rome': [ 'neolaureato','stage','tirocinio','junior','primo lavoro','laureato' ],
     'Dublin': [], // English only set is CORE_EN
+    'Belfast': [], // English only set is CORE_EN
     'Stockholm': [ 'nyexaminerad','trainee','praktikant','junior','nybörjare','graduate' ],
     'Copenhagen': [ 'nyuddannet','trainee','praktikant','junior','begynder','graduate' ],
     'Vienna': [ 'absolvent','trainee','praktikant','junior','einsteiger','nachwuchskraft' ],
     'Prague': [ 'absolvent','trainee','praktikant','junior','začátečník','graduate' ],
     'Warsaw': [ 'absolwent','stażysta','praktykant','junior','początkujący','graduate' ]
   };
-  const cities = [ 'London','Manchester','Birmingham','Madrid','Barcelona','Berlin','Hamburg','Munich','Amsterdam','Brussels','Paris','Zurich','Milan','Rome','Dublin','Stockholm','Copenhagen','Vienna','Prague','Warsaw' ];
+  // Priority cities: Adzuna doesn't cover these, so JobSpy must prioritize them
+  const PRIORITY_CITIES = ['Stockholm', 'Copenhagen', 'Vienna', 'Prague', 'Warsaw', 'Belfast'];
+  const OTHER_CITIES = ['London','Manchester','Birmingham','Madrid','Barcelona','Berlin','Hamburg','Munich','Amsterdam','Brussels','Paris','Zurich','Milan','Rome','Dublin'];
+  // Process priority cities first, then others
+  const cities = [...PRIORITY_CITIES, ...OTHER_CITIES];
+  
   const MAX_Q_PER_CITY = parseInt(process.env.JOBSPY_MAX_Q_PER_CITY || '6', 10);
+  // Priority cities get more queries and results
+  const PRIORITY_MAX_Q = parseInt(process.env.JOBSPY_PRIORITY_MAX_Q || '10', 10); // More queries for priority cities
   const RESULTS_WANTED = parseInt(process.env.JOBSPY_RESULTS_WANTED || '50', 10); // EXPANDED: Increased from 15 to 50
+  const PRIORITY_RESULTS_WANTED = parseInt(process.env.JOBSPY_PRIORITY_RESULTS || '75', 10); // More results for priority cities
   const JOBSPY_TIMEOUT_MS = parseInt(process.env.JOBSPY_TIMEOUT_MS || '20000', 10);
 
   const collected = [];
   const pythonCmd = pickPythonCommand();
   for (const city of cities) {
+    const isPriority = PRIORITY_CITIES.includes(city);
+    const maxQueries = isPriority ? PRIORITY_MAX_Q : MAX_Q_PER_CITY;
+    const resultsWanted = isPriority ? PRIORITY_RESULTS_WANTED : RESULTS_WANTED;
     const localized = CITY_LOCAL[city] || [];
     // Combine core + extras + localized, internship/graduate-first prioritization
     const combined = [...CORE_EN, ...EXTRA_TERMS, ...localized];
@@ -610,10 +622,11 @@ async function main() {
       ...combined.filter(q => /(intern|internship|placement|stagiaire|prácticas|stage|praktik|graduate(\s+(scheme|program(me)?))?)/i.test(q)),
       ...combined.filter(q => !/(intern|internship|placement|stagiaire|prácticas|stage|praktik|graduate(\s+(scheme|program(me)?))?)/i.test(q))
     ];
-    const toRun = prioritized.slice(0, MAX_Q_PER_CITY);
+    const toRun = prioritized.slice(0, maxQueries);
     const country = city === 'London' ? 'united kingdom'
                   : city === 'Manchester' ? 'united kingdom'
                   : city === 'Birmingham' ? 'united kingdom'
+                  : city === 'Belfast' ? 'united kingdom'
                   : city === 'Paris' ? 'france'
                   : city === 'Madrid' ? 'spain'
                   : city === 'Barcelona' ? 'spain'
@@ -633,7 +646,8 @@ async function main() {
                   : city === 'Warsaw' ? 'poland'
                   : 'europe';
     for (const term of toRun) {
-      console.log(`\n🔎 Fetching: ${term} in ${city}, ${country}`);
+      const priorityLabel = isPriority ? '🎯 [PRIORITY] ' : '';
+      console.log(`\n${priorityLabel}🔎 Fetching: ${term} in ${city}, ${country}`);
       let py;
       let tries = 0;
       const maxTries = 3;
@@ -647,7 +661,7 @@ df = scrape_jobs(
   search_term='''${term.replace(/'/g, "''")}''',
   location='''${city}''',
   country_indeed='''${country}''',
-  results_wanted=${RESULTS_WANTED},
+  results_wanted=${resultsWanted},
   hours_old=720,
   distance=20
 )

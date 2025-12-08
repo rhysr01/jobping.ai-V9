@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+node scrapers/careerjet.cjs#!/usr/bin/env node
 
 // REAL JobPing Automation - This Actually Works
 const cron = require('node-cron');
@@ -184,7 +184,9 @@ class RealJobRunner {
       'jobspy-career-roles': parseInt(process.env.JOBSPY_CAREER_TARGET || '3000', 10),    // Increased from 50
       'adzuna': parseInt(process.env.ADZUNA_TARGET || '500', 10),                 // Increased from 150
       'reed': parseInt(process.env.REED_TARGET || '200', 10),                      // Increased from 50
-      'greenhouse': parseInt(process.env.GREENHOUSE_TARGET || '100', 10)           // Increased from 20
+      'greenhouse': parseInt(process.env.GREENHOUSE_TARGET || '100', 10),           // Increased from 20
+      'careerjet': parseInt(process.env.CAREERJET_TARGET || '450', 10),            // New EU scraper
+      'arbeitnow': parseInt(process.env.ARBEITNOW_TARGET || '80', 10)              // New DACH scraper
     };
   }
 
@@ -505,6 +507,100 @@ class RealJobRunner {
   }
 
 
+  // Run CareerJet scraper
+  async runCareerJetScraper() {
+    try {
+      console.log('🔄 Running CareerJet scraper...');
+      
+      // Check API key before running
+      if (!process.env.CAREERJET_API_KEY) {
+        console.error('🚨 CRITICAL: CareerJet API key missing! Check CAREERJET_API_KEY in .env.local');
+        return 0;
+      }
+      
+      const { scrapeCareerJet } = require('../scrapers/careerjet.cjs');
+      const { stdout, stderr } = await execAsync('node scrapers/careerjet.cjs', {
+        cwd: process.cwd(),
+        timeout: 600000, // 10 minutes timeout
+        env: { ...process.env }
+      });
+      
+      // Log stderr if present
+      if (stderr && stderr.trim()) {
+        console.warn('⚠️  CareerJet stderr:', stderr.substring(0, 500));
+      }
+      
+      let jobsSaved = 0;
+      const match = stdout.match(/\[CareerJet\] ✅ Complete: (\d+) jobs saved in/);
+      if (match) {
+        jobsSaved = parseInt(match[1]);
+      } else {
+        // Fallback to DB count (last 10 minutes)
+        const { count, error } = await supabase
+          .from('jobs')
+          .select('id', { count: 'exact', head: false })
+          .eq('source', 'careerjet')
+          .gte('created_at', new Date(Date.now() - 10*60*1000).toISOString());
+        jobsSaved = error ? 0 : (count || 0);
+        if (jobsSaved > 0) {
+          console.log(`ℹ️  CareerJet: DB fallback count: ${jobsSaved} jobs`);
+        } else {
+          console.warn('⚠️  CareerJet: No jobs found in DB - scraper may have failed silently');
+        }
+      }
+      
+      console.log(`✅ CareerJet: ${jobsSaved} jobs processed`);
+      return jobsSaved;
+    } catch (error) {
+      console.error('❌ CareerJet scraper failed:', error.message);
+      return 0;
+    }
+  }
+
+  // Run Arbeitnow scraper
+  async runArbeitnowScraper() {
+    try {
+      console.log('🔄 Running Arbeitnow scraper...');
+      
+      const { scrapeArbeitnow } = require('../scrapers/arbeitnow.cjs');
+      const { stdout, stderr } = await execAsync('node scrapers/arbeitnow.cjs', {
+        cwd: process.cwd(),
+        timeout: 600000, // 10 minutes timeout
+        env: { ...process.env }
+      });
+      
+      // Log stderr if present
+      if (stderr && stderr.trim()) {
+        console.warn('⚠️  Arbeitnow stderr:', stderr.substring(0, 500));
+      }
+      
+      let jobsSaved = 0;
+      const match = stdout.match(/\[Arbeitnow\] ✅ Complete: (\d+) jobs saved in/);
+      if (match) {
+        jobsSaved = parseInt(match[1]);
+      } else {
+        // Fallback to DB count (last 10 minutes)
+        const { count, error } = await supabase
+          .from('jobs')
+          .select('id', { count: 'exact', head: false })
+          .eq('source', 'arbeitnow')
+          .gte('created_at', new Date(Date.now() - 10*60*1000).toISOString());
+        jobsSaved = error ? 0 : (count || 0);
+        if (jobsSaved > 0) {
+          console.log(`ℹ️  Arbeitnow: DB fallback count: ${jobsSaved} jobs`);
+        } else {
+          console.warn('⚠️  Arbeitnow: No jobs found in DB - scraper may have failed silently');
+        }
+      }
+      
+      console.log(`✅ Arbeitnow: ${jobsSaved} jobs processed`);
+      return jobsSaved;
+    } catch (error) {
+      console.error('❌ Arbeitnow scraper failed:', error.message);
+      return 0;
+    }
+  }
+
   // Run standardized Greenhouse scraper
   async runGreenhouseScraper() {
     try {
@@ -664,7 +760,7 @@ class RealJobRunner {
         
         // Check source freshness
         const sourceLastRun = {};
-        const criticalSources = ['adzuna', 'reed', 'jobspy-indeed', 'jobspy-internships'];
+        const criticalSources = ['adzuna', 'reed', 'jobspy-indeed', 'jobspy-internships', 'careerjet', 'arbeitnow'];
         
         criticalSources.forEach(source => {
           const sourceJobs = data.filter(j => j.source === source);
@@ -744,7 +840,7 @@ class RealJobRunner {
     try {
       console.log('\n🚀 STARTING AUTOMATED SCRAPING CYCLE');
       console.log('=====================================');
-      console.log('🎯 Running streamlined scrapers: JobSpy, JobSpy Internships, Career Path Roles, Adzuna, Reed');
+      console.log('🎯 Running streamlined scrapers: JobSpy, JobSpy Internships, Career Path Roles, Adzuna, Reed, Greenhouse, CareerJet, Arbeitnow');
       
       const cycleStartIso = new Date().toISOString();
       const signupTargets = await this.getSignupTargets();
@@ -836,13 +932,41 @@ class RealJobRunner {
       } else {
         console.log('⏹️  Skipping Greenhouse scraper - cycle job target reached.');
       }
+
+      // Run CareerJet (EU coverage)
+      let careerjetJobs = 0;
+      if (!stopDueToQuota) {
+        try {
+          careerjetJobs = await this.runCareerJetScraper();
+          console.log(`✅ CareerJet completed: ${careerjetJobs} jobs`);
+        } catch (error) {
+          console.error('❌ CareerJet scraper failed, continuing with other scrapers:', error.message);
+        }
+        stopDueToQuota = await this.evaluateStopCondition('CareerJet scraper', cycleStartIso);
+      } else {
+        console.log('⏹️  Skipping CareerJet scraper - cycle job target reached.');
+      }
+
+      // Run Arbeitnow (DACH region)
+      let arbeitnowJobs = 0;
+      if (!stopDueToQuota) {
+        try {
+          arbeitnowJobs = await this.runArbeitnowScraper();
+          console.log(`✅ Arbeitnow completed: ${arbeitnowJobs} jobs`);
+        } catch (error) {
+          console.error('❌ Arbeitnow scraper failed, continuing with other scrapers:', error.message);
+        }
+        stopDueToQuota = await this.evaluateStopCondition('Arbeitnow scraper', cycleStartIso);
+      } else {
+        console.log('⏹️  Skipping Arbeitnow scraper - cycle job target reached.');
+      }
       
       if (!stopDueToQuota) {
         await this.evaluateStopCondition('Full cycle', cycleStartIso);
       }
       
       // Update stats with all scrapers
-      this.totalJobsSaved += (adzunaJobs + jobspyJobs + jobspyInternshipsJobs + careerPathRolesJobs + reedJobs + greenhouseJobs);
+      this.totalJobsSaved += (adzunaJobs + jobspyJobs + jobspyInternshipsJobs + careerPathRolesJobs + reedJobs + greenhouseJobs + careerjetJobs + arbeitnowJobs);
       this.runCount++;
       this.lastRun = new Date();
       
@@ -856,7 +980,7 @@ class RealJobRunner {
       console.log('\n✅ SCRAPING CYCLE COMPLETE');
       console.log('============================');
       console.log(`⏱️  Duration: ${duration.toFixed(1)} seconds`);
-      console.log(`📊 Jobs processed this cycle: ${adzunaJobs + jobspyJobs + jobspyInternshipsJobs + careerPathRolesJobs + reedJobs + greenhouseJobs}`);
+      console.log(`📊 Jobs processed this cycle: ${adzunaJobs + jobspyJobs + jobspyInternshipsJobs + careerPathRolesJobs + reedJobs + greenhouseJobs + careerjetJobs + arbeitnowJobs}`);
       console.log(`📈 Total jobs processed: ${this.totalJobsSaved}`);
       console.log(`🔄 Total cycles run: ${this.runCount}`);
       console.log(`📅 Last run: ${this.lastRun.toISOString()}`);
@@ -870,6 +994,8 @@ class RealJobRunner {
       console.log(`   - Reed: ${reedJobs} jobs (increased priority)`);
       console.log(`   - Greenhouse: ${greenhouseJobs} jobs (expanded)`);
       console.log(`   - Adzuna: ${adzunaJobs} jobs (reduced priority)`);
+      console.log(`   - CareerJet: ${careerjetJobs} jobs (EU coverage)`);
+      console.log(`   - Arbeitnow: ${arbeitnowJobs} jobs (DACH region)`);
       console.log(`🧮 Unique job hashes this cycle: ${this.currentCycleStats.total}`);
       console.log(`📦 Per-source breakdown this cycle: ${JSON.stringify(this.currentCycleStats.perSource)}`);
       
@@ -932,7 +1058,7 @@ class RealJobRunner {
     console.log('   - Smart stop conditions per scraper');
     console.log('   - Daily health checks');
     console.log('   - Database monitoring');
-    console.log('   - 6 core scrapers: JobSpy, JobSpy Internships, Career Path Roles, Adzuna, Reed, Greenhouse');
+      console.log('   - 8 core scrapers: JobSpy, JobSpy Internships, Career Path Roles, Adzuna, Reed, Greenhouse, CareerJet, Arbeitnow');
   }
 
   // Get status

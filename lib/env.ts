@@ -33,6 +33,13 @@ const schema = z.object({
   POLAR_SUCCESS_URL: z.string().url().default('https://getjobping.com/success?checkout_id={CHECKOUT_ID}'),
   POLAR_PRODUCT_ID: z.string().optional(), // Premium subscription product ID
   
+  // Stripe Connect
+  STRIPE_SECRET_KEY: z.string().startsWith('sk_').optional(),
+  STRIPE_PUBLISHABLE_KEY: z.string().startsWith('pk_').optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_CONNECT_WEBHOOK_SECRET: z.string().optional(),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().startsWith('pk_').optional(),
+  
   // Caching (Redis)
   REDIS_URL: z.string().url().optional(),
   CACHE_TTL_MS: z.coerce.number().min(60000).default(1800000),

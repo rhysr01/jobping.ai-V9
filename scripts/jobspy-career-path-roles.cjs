@@ -444,17 +444,21 @@ async function main() {
   };
 
   const targetCities = parseJsonEnv(process.env.TARGET_CITIES);
-  const cities = targetCities.length > 0 ? targetCities : [
-    'London', 'Manchester', 'Birmingham', 'Madrid', 'Barcelona', 
+  // Priority cities: Adzuna doesn't cover these, so JobSpy must prioritize them
+  const PRIORITY_CITIES = ['Stockholm', 'Copenhagen', 'Vienna', 'Prague', 'Warsaw', 'Belfast'];
+  const OTHER_CITIES = ['London', 'Manchester', 'Birmingham', 'Madrid', 'Barcelona', 
     'Berlin', 'Hamburg', 'Munich', 'Amsterdam', 'Brussels', 'Paris', 
-    'Zurich', 'Milan', 'Rome', 'Dublin', 'Stockholm', 'Copenhagen', 
-    'Vienna', 'Prague', 'Warsaw'
-  ];
+    'Zurich', 'Milan', 'Rome', 'Dublin'];
+  // Process priority cities first, then others
+  const defaultCities = [...PRIORITY_CITIES, ...OTHER_CITIES];
+  const cities = targetCities.length > 0 ? targetCities : defaultCities;
 
   const RESULTS_WANTED = parseInt(process.env.JOBSPY_RESULTS_WANTED || '15', 10);
+  const PRIORITY_RESULTS_WANTED = parseInt(process.env.JOBSPY_PRIORITY_RESULTS || '25', 10); // More results for priority cities
   const JOBSPY_TIMEOUT_MS = parseInt(process.env.JOBSPY_TIMEOUT_MS || '20000', 10);
   // Increased from 10 to 20 to cover more roles from signup form
   const MAX_ROLES_PER_CITY = parseInt(process.env.MAX_ROLES_PER_CITY || '20', 10); // Limit roles per city to avoid too many searches
+  const PRIORITY_MAX_ROLES = parseInt(process.env.PRIORITY_MAX_ROLES || '30', 10); // More roles for priority cities
 
   // Limit roles to search (can be overridden via env)
   const rolesToSearch = process.env.ROLES_TO_SEARCH 
@@ -469,9 +473,14 @@ async function main() {
   let totalSearches = 0;
 
   for (const city of cities) {
+    const isPriority = PRIORITY_CITIES.includes(city);
+    const maxRoles = isPriority ? PRIORITY_MAX_ROLES : MAX_ROLES_PER_CITY;
+    const resultsWanted = isPriority ? PRIORITY_RESULTS_WANTED : RESULTS_WANTED;
+    
     const country = city === 'London' ? 'united kingdom'
                   : city === 'Manchester' ? 'united kingdom'
                   : city === 'Birmingham' ? 'united kingdom'
+                  : city === 'Belfast' ? 'united kingdom'
                   : city === 'Paris' ? 'france'
                   : city === 'Madrid' ? 'spain'
                   : city === 'Barcelona' ? 'spain'
@@ -492,10 +501,11 @@ async function main() {
                   : 'europe';
 
     // Search for each role in this city
-    const rolesForCity = rolesToSearch.slice(0, MAX_ROLES_PER_CITY);
+    const rolesForCity = rolesToSearch.slice(0, maxRoles);
     for (const role of rolesForCity) {
       totalSearches++;
-      console.log(`\n🔎 [${totalSearches}] ${city}: "${role}"`);
+      const priorityLabel = isPriority ? '🎯 [PRIORITY] ' : '';
+      console.log(`\n${priorityLabel}🔎 [${totalSearches}] ${city}: "${role}"`);
       
       let py;
       let tries = 0;
@@ -510,7 +520,7 @@ df = scrape_jobs(
   search_term='''${role.replace(/'/g, "''")}''',
   location='''${city}''',
   country_indeed='''${country}''',
-  results_wanted=${RESULTS_WANTED},
+  results_wanted=${resultsWanted},
   hours_old=720,
   distance=20
 )

@@ -221,11 +221,14 @@ function pickPythonCommand() {
 
 async function main() {
   // INTERNSHIP-ONLY SEARCH TERMS (Multi-language)
+  // Priority cities: Adzuna doesn't cover these, so JobSpy must prioritize them
+  const PRIORITY_CITIES = ['Stockholm', 'Copenhagen', 'Vienna', 'Prague', 'Warsaw', 'Belfast'];
   const INTERNSHIP_TERMS = {
     // English internships
     'London': ['internship', 'placement year', 'summer internship', 'intern', 'industrial placement'],
     'Manchester': ['internship', 'placement year', 'summer internship', 'intern', 'industrial placement'],
     'Birmingham': ['internship', 'placement year', 'summer internship', 'intern', 'industrial placement'],
+    'Belfast': ['internship', 'placement year', 'summer internship', 'intern', 'industrial placement'],
     'Dublin': ['internship', 'placement year', 'summer internship', 'intern', 'industrial placement'],
     
     // Spanish internships
@@ -237,6 +240,7 @@ async function main() {
     'Munich': ['praktikum', 'praktikant', 'werkstudent', 'internship', 'pflichtpraktikum'],
     'Hamburg': ['praktikum', 'praktikant', 'werkstudent', 'internship', 'pflichtpraktikum'],
     'Zurich': ['praktikum', 'stage', 'internship', 'stagiaire', 'werkstudent'],
+    'Vienna': ['praktikum', 'praktikant', 'werkstudent', 'internship', 'pflichtpraktikum'],
     
     // French internships
     'Paris': ['stage', 'stagiaire', 'alternance', 'internship', 'stage professionnel'],
@@ -247,13 +251,22 @@ async function main() {
     
     // Italian internships
     'Milan': ['stage', 'tirocinio', 'internship', 'stagista', 'tirocinio curriculare'],
-    'Rome': ['stage', 'tirocinio', 'internship', 'stagista', 'tirocinio curriculare']
+    'Rome': ['stage', 'tirocinio', 'internship', 'stagista', 'tirocinio curriculare'],
+    
+    // Nordic internships (Priority cities)
+    'Stockholm': ['praktikant', 'praktik', 'internship', 'praktikplats', 'sommarjobb'],
+    'Copenhagen': ['praktikant', 'praktik', 'internship', 'praktikplads', 'sommerjob'],
+    
+    // Eastern European internships (Priority cities)
+    'Prague': ['stáž', 'praktikant', 'internship', 'praktika', 'absolvent'],
+    'Warsaw': ['staż', 'praktykant', 'internship', 'praktyki', 'absolwent']
   };
 
   const COUNTRY_MAP = {
     'London': 'united kingdom',
     'Manchester': 'united kingdom',
     'Birmingham': 'united kingdom',
+    'Belfast': 'united kingdom',
     'Dublin': 'ireland',
     'Paris': 'france',
     'Madrid': 'spain',
@@ -265,11 +278,20 @@ async function main() {
     'Brussels': 'belgium',
     'Zurich': 'switzerland',
     'Milan': 'italy',
-    'Rome': 'italy'
+    'Rome': 'italy',
+    'Stockholm': 'sweden',
+    'Copenhagen': 'denmark',
+    'Vienna': 'austria',
+    'Prague': 'czech republic',
+    'Warsaw': 'poland'
   };
 
-  const cities = Object.keys(INTERNSHIP_TERMS);
+  // Process priority cities first, then others
+  const OTHER_CITIES = Object.keys(INTERNSHIP_TERMS).filter(c => !PRIORITY_CITIES.includes(c));
+  const cities = [...PRIORITY_CITIES, ...OTHER_CITIES];
+  
   const RESULTS_WANTED = parseInt(process.env.JOBSPY_INTERNSHIP_RESULTS || '20', 10); // More results for internships
+  const PRIORITY_RESULTS_WANTED = parseInt(process.env.JOBSPY_PRIORITY_INTERNSHIP_RESULTS || '35', 10); // Even more for priority cities
   const JOBSPY_TIMEOUT_MS = parseInt(process.env.JOBSPY_TIMEOUT_MS || '20000', 10);
 
   const collected = [];
@@ -280,11 +302,19 @@ async function main() {
   console.log(`🔍 ${RESULTS_WANTED} results wanted per search`);
   
   for (const city of cities) {
-    const terms = INTERNSHIP_TERMS[city];
+    const isPriority = PRIORITY_CITIES.includes(city);
+    const resultsWanted = isPriority ? PRIORITY_RESULTS_WANTED : RESULTS_WANTED;
+    const terms = INTERNSHIP_TERMS[city] || [];
     const country = COUNTRY_MAP[city];
     
+    if (terms.length === 0) {
+      console.warn(`⚠️  No internship terms configured for ${city}, skipping`);
+      continue;
+    }
+    
     for (const term of terms) {
-      console.log(`\n🔎 Fetching: "${term}" internships in ${city}, ${country}`);
+      const priorityLabel = isPriority ? '🎯 [PRIORITY] ' : '';
+      console.log(`\n${priorityLabel}🔎 Fetching: "${term}" internships in ${city}, ${country}`);
       
       const py = spawnSync(pythonCmd, ['-c', `
 from jobspy import scrape_jobs
@@ -294,7 +324,7 @@ df = scrape_jobs(
   search_term='''${term.replace(/'/g, "''")}''',
   location='''${city}''',
   country_indeed='''${country}''',
-  results_wanted=${RESULTS_WANTED},
+  results_wanted=${resultsWanted},
   hours_old=720,
   distance=20
 )

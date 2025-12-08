@@ -13,8 +13,9 @@ export default {
           100: "#EDE9FE",
           200: "#C4B5FD",
           300: "#C4B5FD",
-          500: "#8B5CF6",
-          700: "#6D28D9",
+          500: "#7E61FF",
+          600: "#6E57F5",
+          700: "#5E47E5",
         },
         // Semantic color system
         success: {

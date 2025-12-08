@@ -2,7 +2,7 @@ import { ReactNode, ButtonHTMLAttributes } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'gradient';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   className?: string;
@@ -22,17 +22,19 @@ export default function Button({
   ...props 
 }: ButtonProps) {
   const baseClasses =
-    'inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-50';
+    'inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-50';
   
   const variants = {
     primary:
-      'h-11 bg-violet-500 text-white font-medium shadow-md shadow-purple-900/40 hover:bg-violet-400 hover:-translate-y-0.5 active:translate-y-0',
+      'h-11 bg-[#7E61FF] text-white font-medium shadow-md shadow-[#7E61FF]/40 hover:bg-[#6E57F5] hover:-translate-y-0.5 active:translate-y-0',
     secondary:
       'border-2 border-white/25 bg-white/[0.08] text-white font-medium hover:border-brand-500/50 hover:bg-white/12',
     ghost:
       'text-zinc-300 hover:text-white hover:bg-white/8 font-medium',
     danger:
-      'border-2 border-red-500/30 bg-red-500/15 text-red-200 hover:bg-red-500/25 font-medium'
+      'border-2 border-red-500/30 bg-red-500/15 text-red-200 hover:bg-red-500/25 font-medium',
+    gradient:
+      'h-11 bg-gradient-to-r from-[#7E61FF] to-[#A78BFA] text-white font-medium shadow-md shadow-[#7E61FF]/40 hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0'
   };
 
   const sizes = {

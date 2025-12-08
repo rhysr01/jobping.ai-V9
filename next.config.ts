@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['framer-motion'],
   },
+  // Mark Stripe as server-side external package (required for API routes)
+  serverExternalPackages: ['stripe'],
   images: {
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
@@ -83,7 +85,11 @@ const nextConfig: NextConfig = {
     // Always exclude problematic modules
     config.externals = config.externals || [];
     
-    if (!isServer) {
+    if (isServer) {
+      // Server-side: Keep Stripe as external (it's a Node.js module)
+      // This ensures it's not bundled and works correctly in serverless environments
+      config.externals.push('stripe');
+    } else {
       // Client-side exclusions
       config.externals.push({
         'puppeteer': 'commonjs puppeteer',
