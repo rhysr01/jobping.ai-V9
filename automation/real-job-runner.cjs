@@ -1,4 +1,4 @@
-node scrapers/careerjet.cjs#!/usr/bin/env node
+#!/usr/bin/env node
 
 // REAL JobPing Automation - This Actually Works
 const cron = require('node-cron');
