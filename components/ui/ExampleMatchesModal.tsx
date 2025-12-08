@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 import DeviceFrame from "@/components/marketing/DeviceFrame";
