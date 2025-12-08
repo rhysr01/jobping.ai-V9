@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Force unique build ID to prevent cache issues during TDZ fix
+  generateBuildId: async () => {
+    return `build-${Date.now()}`;
+  },
   // Disable Turbopack, use webpack instead
   turbopack: {},
   experimental: {

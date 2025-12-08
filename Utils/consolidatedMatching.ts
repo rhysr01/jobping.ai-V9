@@ -4,6 +4,7 @@
  * Built on existing Jobping codebase - no hallucinations
  * 
  * TDZ FIX: All methods now capture jobs parameter immediately to prevent bundling issues
+ * BUILD_ID: 2025-12-08-fix-v2
  */
 
 import OpenAI from 'openai';
