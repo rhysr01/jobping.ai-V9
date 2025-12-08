@@ -3,7 +3,7 @@
  * Tests the core job matching logic
  */
 
-import { ConsolidatedMatchingEngine } from '@/Utils/consolidatedMatching';
+import { ConsolidatedMatchingEngine } from '@/Utils/consolidatedMatchingV2';
 import { UserPreferences, JobMatch } from '@/Utils/matching/types';
 
 // Mock OpenAI

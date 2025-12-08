@@ -7,7 +7,7 @@ import { IntegratedMatchingService } from '@/Utils/matching/integrated-matching.
 
 jest.mock('@/Utils/matching/batch-processor.service');
 jest.mock('@/Utils/matching/semanticRetrieval');
-jest.mock('@/Utils/consolidatedMatching');
+jest.mock('@/Utils/consolidatedMatchingV2');
 
 describe('Integrated Matching Service', () => {
   let service: IntegratedMatchingService;
@@ -42,7 +42,7 @@ describe('Integrated Matching Service', () => {
     });
 
     it('should use individual processing for small groups', async () => {
-      const { createConsolidatedMatcher } = require('@/Utils/consolidatedMatching');
+      const { createConsolidatedMatcher } = require('@/Utils/consolidatedMatchingV2');
       const mockMatcher = {
         performMatching: jest.fn().mockResolvedValue({
           matches: [],

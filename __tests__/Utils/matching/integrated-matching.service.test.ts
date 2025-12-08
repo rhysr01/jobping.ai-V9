@@ -11,7 +11,7 @@ import { buildMockUser, buildMockJob } from '@/__tests__/_helpers/testBuilders';
 // Mock dependencies
 jest.mock('@/Utils/matching/batch-processor.service');
 jest.mock('@/Utils/matching/semanticRetrieval');
-jest.mock('@/Utils/consolidatedMatching');
+jest.mock('@/Utils/consolidatedMatchingV2');
 
 describe('IntegratedMatchingService', () => {
   let service: IntegratedMatchingService;
@@ -54,7 +54,7 @@ describe('IntegratedMatchingService', () => {
       ];
       const jobs = [buildMockJob()];
 
-      const { createConsolidatedMatcher } = require('@/Utils/consolidatedMatching');
+      const { createConsolidatedMatcher } = require('@/Utils/consolidatedMatchingV2');
       const mockMatcher = {
         performMatching: jest.fn().mockResolvedValue({
           matches: [],
@@ -81,7 +81,7 @@ describe('IntegratedMatchingService', () => {
       }));
       const jobs = [buildMockJob()];
 
-      const { createConsolidatedMatcher } = require('@/Utils/consolidatedMatching');
+      const { createConsolidatedMatcher } = require('@/Utils/consolidatedMatchingV2');
       const mockMatcher = {
         performMatching: jest.fn().mockResolvedValue({
           matches: [],

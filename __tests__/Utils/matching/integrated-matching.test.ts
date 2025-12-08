@@ -8,7 +8,7 @@ jest.mock('@/Utils/matching/batch-processor.service', () => ({
   },
 }));
 
-jest.mock('@/Utils/consolidatedMatching', () => ({
+jest.mock('@/Utils/consolidatedMatchingV2', () => ({
   createConsolidatedMatcher: jest.fn(() => ({
     performMatching: jest.fn().mockResolvedValue({
       matches: [],

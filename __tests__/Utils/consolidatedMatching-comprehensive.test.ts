@@ -3,7 +3,7 @@
  * Tests all methods including edge cases and error handling
  */
 
-import { ConsolidatedMatchingEngine, createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
+import { ConsolidatedMatchingEngine, createConsolidatedMatcher } from '@/Utils/consolidatedMatchingV2';
 import { buildMockJob, buildMockUser } from '@/__tests__/_helpers/testBuilders';
 
 // Mock OpenAI

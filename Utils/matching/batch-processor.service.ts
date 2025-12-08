@@ -5,7 +5,7 @@
 
 import { getDatabaseClient } from '@/Utils/databasePool';
 import type { UserPreferences, JobMatch } from './types';
-import { createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
+import { createConsolidatedMatcher } from '@/Utils/consolidatedMatchingV2';
 import type { Job } from '@/scrapers/types';
 import { embeddingService } from './embedding.service';
 

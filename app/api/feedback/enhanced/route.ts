@@ -103,13 +103,158 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET endpoint for retrieving user feedback history
+// GET endpoint - handles both feedback submission (from email links) and retrieval
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const jobHash = searchParams.get('jobHash');
     const email = searchParams.get('email');
+    const feedbackType = searchParams.get('feedbackType') as 'thumbs_up' | 'thumbs_down' | 'save' | 'hide' | 'not_relevant' | null;
+    const source = (searchParams.get('source') as 'email' | 'web' | 'mobile') || 'email';
     const limit = parseInt(searchParams.get('limit') || '50');
 
+    // If jobHash and feedbackType are provided, this is a feedback submission (from email)
+    if (jobHash && feedbackType && email) {
+      // Validate feedback type
+      const validFeedbackTypes = ['save', 'hide', 'thumbs_up', 'thumbs_down', 'not_relevant', 'click', 'open', 'dwell'];
+      if (!validFeedbackTypes.includes(feedbackType)) {
+        return new NextResponse(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Invalid Feedback</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                background: #0a0a0a; 
+                color: #ffffff; 
+                text-align: center; 
+                padding: 40px 20px;
+                margin: 0;
+              }
+              .container { 
+                max-width: 400px; 
+                margin: 0 auto; 
+                background: #111111; 
+                padding: 40px; 
+                border-radius: 12px; 
+                border: 1px solid rgba(99,102,241,0.2);
+              }
+              .error { color: #ef4444; font-size: 18px; margin-bottom: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="error">Invalid feedback type</div>
+              <p>Please try again.</p>
+            </div>
+          </body>
+          </html>
+        `, {
+          status: 400,
+          headers: { 'Content-Type': 'text/html' },
+        });
+      }
+
+      // Process feedback submission
+      const supabase = getDatabaseClient();
+      
+      const { data: job } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('job_hash', jobHash)
+        .single();
+
+      const { data: user } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      const feedbackData: EnhancedFeedbackData = {
+        user_email: email,
+        job_hash: jobHash,
+        feedback_type: feedbackType,
+        verdict: feedbackType === 'save' || feedbackType === 'thumbs_up' ? 'positive' : 
+                 feedbackType === 'hide' || feedbackType === 'thumbs_down' || feedbackType === 'not_relevant' ? 'negative' : 'neutral',
+        relevance_score: feedbackType === 'thumbs_up' ? 5 : feedbackType === 'thumbs_down' ? 1 : undefined,
+        match_quality_score: feedbackType === 'thumbs_up' ? 5 : feedbackType === 'thumbs_down' ? 1 : undefined,
+        user_preferences_snapshot: user || {},
+        job_context: job || {},
+        match_context: {
+          feedback_source: source,
+          timestamp: new Date().toISOString()
+        },
+        timestamp: new Date().toISOString(),
+        source,
+      };
+
+      // Record feedback
+      await recordFeedbackToMatchLogs(feedbackData);
+      await recordFeedbackToDatabase(feedbackData);
+
+      // Return success page
+      return new NextResponse(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Thank You!</title>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              background: #0a0a0a; 
+              color: #ffffff; 
+              text-align: center; 
+              padding: 40px 20px;
+              margin: 0;
+            }
+            .container { 
+              max-width: 400px; 
+              margin: 0 auto; 
+              background: #111111; 
+              padding: 40px; 
+              border-radius: 12px; 
+              border: 1px solid rgba(99,102,241,0.2);
+            }
+            .success { 
+              color: #10b981; 
+              font-size: 24px; 
+              font-weight: bold; 
+              margin-bottom: 20px;
+            }
+            .message { 
+              color: #a1a1aa; 
+              font-size: 16px; 
+              line-height: 1.5;
+            }
+            .emoji { 
+              font-size: 48px; 
+              margin-bottom: 20px; 
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="emoji">${feedbackType === 'thumbs_up' ? '👍' : '👎'}</div>
+            <div class="success">Thank You!</div>
+            <div class="message">
+              Your feedback has been recorded and will help us improve your job matches.
+              ${feedbackType === 'thumbs_up' ? 'We\'re glad this job looks good to you!' : 'We\'ll work on finding better matches for you.'}
+            </div>
+          </div>
+        </body>
+        </html>
+      `, {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      });
+    }
+
+    // Otherwise, retrieve feedback history
     if (!email) {
       return NextResponse.json({ error: 'Email parameter required' }, { status: 400 });
     }
@@ -144,8 +289,8 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error fetching feedback:', error);
-    return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 });
+    console.error('Error processing GET request:', error);
+    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
   }
 }
 

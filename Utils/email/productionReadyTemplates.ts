@@ -59,6 +59,36 @@ ${label}
   `;
 }
 
+// Per-job feedback buttons (thumbs up/down)
+function vmlJobFeedbackButtons(jobHash: string, email: string, baseUrl: string, campaign: string) {
+  if (!jobHash) return '';
+  
+  const feedbackBase = `${baseUrl}/api/feedback/enhanced`;
+  const feedbackParams = `utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=job_feedback`;
+  
+  // Create POST request URLs - these will need to be handled via a redirect page or API
+  // For email compatibility, we'll use GET with a redirect handler
+  const thumbsUpUrl = `${feedbackBase}?jobHash=${encodeURIComponent(jobHash)}&email=${encodeURIComponent(email)}&feedbackType=thumbs_up&source=email&${feedbackParams}`;
+  const thumbsDownUrl = `${feedbackBase}?jobHash=${encodeURIComponent(jobHash)}&email=${encodeURIComponent(email)}&feedbackType=thumbs_down&source=email&${feedbackParams}`;
+  
+  return `
+  <table role="presentation" cellpadding="0" cellspacing="8" style="margin:16px 0 0 0; width:100%;">
+    <tr>
+      <td align="center" style="padding:0;">
+        <a href="${thumbsUpUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block !important;background:rgba(16,185,129,0.1) !important;border:1px solid rgba(16,185,129,0.3) !important;color:#10b981 !important;padding:10px 20px !important;border-radius:8px !important;text-decoration:none !important;font-weight:600 !important;font-size:13px !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif !important;margin-right:8px !important;-webkit-text-size-adjust:none !important;mso-hide:all;">
+          👍 Good match
+        </a>
+      </td>
+      <td align="center" style="padding:0;">
+        <a href="${thumbsDownUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block !important;background:rgba(239,68,68,0.1) !important;border:1px solid rgba(239,68,68,0.3) !important;color:#ef4444 !important;padding:10px 20px !important;border-radius:8px !important;text-decoration:none !important;font-weight:600 !important;font-size:13px !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif !important;-webkit-text-size-adjust:none !important;mso-hide:all;">
+          👎 Not for me
+        </a>
+      </td>
+    </tr>
+  </table>
+  `;
+}
+
 // Premium wrapper with enhanced styling
 function formatSource(source?: string): string | undefined {
   if (!source) return undefined;
@@ -422,6 +452,11 @@ export function createJobMatchesEmail(
         </div>
     ` : '';
     
+    // Get job_hash and email for feedback buttons
+    const jobHash = c.job.job_hash || c.job.jobHash || '';
+    const emailForFeedback = userEmail || c.job.user_email || '';
+    const feedbackButtons = jobHash ? vmlJobFeedbackButtons(jobHash, emailForFeedback, baseUrl, campaign) : '';
+    
     return `
     <tr><td class="content">
       <div class="card${hot ? ' hot' : ''}">
@@ -432,15 +467,14 @@ export function createJobMatchesEmail(
         ${matchReasonMarkup}
         ${desc ? '<div class="desc">' + desc + '</div>' : ''}
         ${tagsMarkup}
+        ${feedbackButtons}
         ${apply}
         ${plainLink}
       </div>
     </td></tr>`;
   }).join('');
 
-  // Premium feedback section - ONLY at the end, after all jobs
-  const firstCard = jobCards[0] as any;
-  const emailForLinks = userEmail || firstCard?.job?.user_email || '';
+  // Premium upgrade CTA
   const upgradeUrl = `${baseUrl}/billing?utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=upgrade_cta`;
   const upgradeCta = subscriptionTier === 'free' ? `
   <tr>
@@ -459,53 +493,8 @@ export function createJobMatchesEmail(
       </div>
     </td>
   </tr>` : '';
-  
-  const feedbackBase = `${baseUrl}/api/feedback/email`;
-  const feedbackParams = `utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=feedback`;
-  const encodeFeedback = (action: string, score: number) =>
-    `${feedbackBase}?action=${action}&score=${score}&email=${encodeURIComponent(emailForLinks)}&${feedbackParams}`;
 
-  const feedback = `
-  <tr>
-    <td class="content" align="center" style="padding-top:40px;">
-      <div style="background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.06)); border:1px solid rgba(99,102,241,0.2); border-radius:16px; padding:40px 32px; margin-top:12px;">
-        <h3 style="color:${COLORS.white}; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; font-size:22px; font-weight:600; margin:0 0 14px 0; letter-spacing:-0.3px;">
-          💬 How were these matches?
-        </h3>
-        <p class="text" style="margin-bottom:28px; color:${COLORS.gray300}; font-size:15px; line-height:1.6;">
-          Help us improve! Rate these roles to get better matches next time.
-        </p>
-        <table role="presentation" cellpadding="0" cellspacing="12" style="margin:0 auto; width:100%; max-width:420px;">
-          <tr>
-            <td align="center" style="padding:8px;">
-              ${vmlFeedbackButton(encodeFeedback('positive', 5), '😍 Loved it', COLORS.purple, COLORS.indigo)}
-            </td>
-            <td align="center" style="padding:8px;">
-              ${vmlFeedbackButton(encodeFeedback('positive', 4), '😊 Good', COLORS.purple, COLORS.indigo)}
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding:8px;">
-              ${vmlFeedbackButton(encodeFeedback('neutral', 3), '😐 It\'s fine', COLORS.indigo, COLORS.purple)}
-            </td>
-            <td align="center" style="padding:8px;">
-              ${vmlFeedbackButton(encodeFeedback('negative', 2), '😕 Not great', COLORS.indigo, COLORS.purple)}
-            </td>
-          </tr>
-          <tr>
-            <td colspan="2" align="center" style="padding:8px;">
-              ${vmlFeedbackButton(encodeFeedback('negative', 1), '😞 Not relevant', COLORS.indigo, COLORS.purple)}
-            </td>
-          </tr>
-        </table>
-        <p style="color:${COLORS.gray500}; font-size:13px; margin:24px 0 0 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; line-height:1.5;">
-          Takes 2 seconds • Helps us send better matches
-        </p>
-      </div>
-    </td>
-  </tr>`;
-
-  return wrapEmail('Your Job Matches', header + items + upgradeCta + feedback, userEmail);
+  return wrapEmail('Your Job Matches', header + items + upgradeCta, userEmail);
 }
 
 export function createVerificationEmail(verificationLink: string, userEmail?: string): string {

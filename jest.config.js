@@ -30,7 +30,7 @@ const customJestConfig = {
       statements: 10,
     },
     // Realistic thresholds for critical modules (will increase over time)
-    'Utils/consolidatedMatching.ts': {
+    'Utils/consolidatedMatchingV2.ts': {
       branches: 25,
       functions: 30,
       lines: 25,

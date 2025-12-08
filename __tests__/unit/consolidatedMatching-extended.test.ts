@@ -3,7 +3,7 @@
  * Tests critical business logic: AI matching, fallback, caching
  */
 
-import { ConsolidatedMatchingEngine, createConsolidatedMatcher } from '@/Utils/consolidatedMatching';
+import { ConsolidatedMatchingEngine, createConsolidatedMatcher } from '@/Utils/consolidatedMatchingV2';
 import { buildMockJob, buildMockUser } from '@/__tests__/_helpers/testBuilders';
 
 // Mock OpenAI
