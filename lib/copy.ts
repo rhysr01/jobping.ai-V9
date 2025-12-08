@@ -33,7 +33,7 @@ export const HOW_IT_WORKS_SUMMARY = "JobPing searches the EU market and sends yo
 export const HOW_IT_WORKS_STEPS = [
   { title: "Tell us your targets", description: "Pick your cities, skills, and visa reality. We only show roles you can actually apply for." },
   { title: "We search daily", description: "JobPing scans European boards and company pages. No dashboards, no spam—just matches." },
-  { title: "Matches arrive weekly", description: `${FREE_ROLES_PER_SEND} curated roles each week. Premium unlocks ${PREMIUM_ROLES_PER_WEEK} roles per week.` },
+  { title: "Matches arrive weekly", description: `Free: ${FREE_ROLES_PER_SEND} jobs (one-time). Premium: ${PREMIUM_ROLES_PER_WEEK} jobs per week (3x more).` },
 ];
 
 // Built for students
@@ -62,7 +62,7 @@ export const BUILT_FOR_STUDENTS_FEATURES = [
 ];
 
 // Pricing
-export const PRICING_TITLE = "Start free. Unlock 15 curated roles per week with Premium.";
+export const PRICING_TITLE = "Start free. Unlock 10 more jobs per week with Premium (3x more).";
 export const PRICING_SUBTITLE = `Graduate roles and internships across Europe. Cancel anytime.`;
 export const PRICING_BADGE = "Simple pricing • Cancel anytime";
 
@@ -86,7 +86,7 @@ export const PREMIUM_PLAN_SUBTITLE = `${PREMIUM_SENDS_PER_WEEK}× weekly`;
 export const PREMIUM_PLAN_PRICE = "€5";
 export const PREMIUM_PLAN_PRICE_UNIT = "/mo";
 export const PREMIUM_PLAN_ANNUAL = "€20 for 3 months (save €1)";
-export const PREMIUM_PLAN_DESCRIPTION = `15 roles per week (Mon/Wed/Fri) instead of 5 weekly. Get matches 24hrs before free users.`;
+export const PREMIUM_PLAN_DESCRIPTION = `${PREMIUM_ROLES_PER_WEEK} roles per week (Mon/Wed/Fri) - that's ${PREMIUM_ROLES_PER_WEEK - FREE_ROLES_PER_SEND} more than free (3x more). Get matches 24hrs before free users.`;
 export const PREMIUM_PLAN_FEATURES = [
   `${PREMIUM_ROLES_PER_WEEK} curated roles per week (${PREMIUM_SENDS_PER_WEEK} emails: ${PREMIUM_SEND_DAYS_LABEL})`,
   "24-hour early access to fresh postings",

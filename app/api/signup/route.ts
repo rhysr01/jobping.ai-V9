@@ -11,7 +11,7 @@ import { distributeJobsWithDiversity, getDistributionStats } from '@/Utils/match
 async function sendWelcomeEmailAndTrack(
   email: string,
   userName: string,
-  tier: 'free' | 'premium',
+  tier: 'premium', // This API is premium-only - free users use /api/signup/free
   matchCount: number,
   supabase: any,
   context: string
@@ -86,8 +86,8 @@ export async function POST(req: NextRequest) {
       }, { status: 409 });
     }
     
-    // Determine subscription tier from request (defaults to 'free')
-    const subscriptionTier = (data.tier === 'premium' ? 'premium' : 'free') as 'free' | 'premium';
+    // This is the premium signup API - free users use /api/signup/free
+    const subscriptionTier: 'premium' = 'premium';
     
     // Create user in database
     const userData = {
@@ -209,20 +209,22 @@ export async function POST(req: NextRequest) {
     apiLogger.info('signup_success', {
       event: 'signup_success',
       email: data.email,
-      tier: subscriptionTier,
+      tier: 'premium',
       timestamp: new Date().toISOString()
     });
 
-    // Trigger instant matching and email
+    // Trigger instant matching and email (only for premium users)
     let matchesCount = 0;
     let emailSent = false;
     
-    apiLogger.info('Starting email sending process', { email: data.email });
-    console.log(`[SIGNUP] Starting email sending process for: ${data.email}`);
-    
-    console.log(`[SIGNUP] Creating matcher...`);
-    const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
-    console.log(`[SIGNUP] Matcher created successfully`);
+    // This is the premium signup API - always send emails
+    try {
+      apiLogger.info('Starting email sending process for premium user', { email: data.email });
+      console.log(`[SIGNUP] Starting email sending process for premium user: ${data.email}`);
+      
+      console.log(`[SIGNUP] Creating matcher...`);
+      const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
+      console.log(`[SIGNUP] Matcher created successfully`);
       
       // OPTIMIZED: Fetch jobs using database-level filtering for better performance
       // Use the same optimized approach as match-users route
@@ -551,7 +553,7 @@ export async function POST(req: NextRequest) {
               to: userData.email,
               jobs: matchedJobs,
               userName: userData.full_name,
-              subscriptionTier: 'free',
+              subscriptionTier: 'premium',
               isSignupEmail: true,
               subjectOverride: ` Welcome to JobPing - Your First ${matchesCount} Matches!`,
             });
@@ -598,7 +600,7 @@ export async function POST(req: NextRequest) {
           emailSent = await sendWelcomeEmailAndTrack(
             userData.email,
             userData.full_name,
-            userData.subscription_tier as 'free' | 'premium',
+            'premium',
             0,
             supabase,
             'no matches'
@@ -621,22 +623,39 @@ export async function POST(req: NextRequest) {
         emailSent = await sendWelcomeEmailAndTrack(
           userData.email,
           userData.full_name,
-          userData.subscription_tier as 'free' | 'premium',
+          'premium',
           0,
           supabase,
           'no jobs'
         );
         }
       } catch (matchError) {
-      console.error(`[SIGNUP] ❌ Matching process failed:`, matchError);
-      apiLogger.warn('Matching failed (non-fatal)', matchError as Error, { email: data.email });
+        console.error(`[SIGNUP] ❌ Matching process failed:`, matchError);
+        apiLogger.warn('Matching failed (non-fatal)', matchError as Error, { email: data.email });
+        // Send welcome email even if matching fails
+        {
+          apiLogger.info('Matching failed, attempting to send welcome email anyway', { email: data.email });
+          console.log(`[SIGNUP] Matching failed, attempting to send welcome email anyway to ${data.email}`);
+          emailSent = await sendWelcomeEmailAndTrack(
+            userData.email,
+            userData.full_name,
+            'premium',
+            0,
+            supabase,
+            'matching failed'
+          );
+        }
+      }
+    } catch (matchingError) {
+      console.error(`[SIGNUP] ❌ Matching process failed:`, matchingError);
+      apiLogger.warn('Matching failed (non-fatal)', matchingError as Error, { email: data.email });
       // Send welcome email even if matching fails
       apiLogger.info('Matching failed, attempting to send welcome email anyway', { email: data.email });
       console.log(`[SIGNUP] Matching failed, attempting to send welcome email anyway to ${data.email}`);
       emailSent = await sendWelcomeEmailAndTrack(
         userData.email,
         userData.full_name,
-        userData.subscription_tier as 'free' | 'premium',
+        'premium',
         0,
         supabase,
         'matching failed'
@@ -663,7 +682,7 @@ export async function POST(req: NextRequest) {
       emailSent = await sendWelcomeEmailAndTrack(
         userData.email,
         userData.full_name,
-        userData.subscription_tier as 'free' | 'premium',
+        'premium',
         matchesCount,
         supabase,
         'safety net'
@@ -676,7 +695,7 @@ export async function POST(req: NextRequest) {
       email: data.email,
       matchesCount,
       emailSent,
-      tier: subscriptionTier,
+      tier: 'premium',
       timestamp: new Date().toISOString()
     });
     
@@ -688,7 +707,7 @@ export async function POST(req: NextRequest) {
       matchesCount,
       emailSent,
       email: userData.email,
-      redirectUrl: `/signup/success?tier=${subscriptionTier}&email=${encodeURIComponent(userData.email)}&matches=${matchesCount}`
+      redirectUrl: `/signup/success?tier=premium&email=${encodeURIComponent(userData.email)}&matches=${matchesCount}`
     });
 
   } catch (error) {

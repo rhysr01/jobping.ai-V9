@@ -21,7 +21,8 @@ function SignupSuccessContent() {
   const [resending, setResending] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verified' | 'error'>('pending');
   const searchParams = useSearchParams();
-  const tier = searchParams?.get('tier') === 'premium' ? 'premium' : 'free';
+  // This is the premium success page - free users go directly to /matches
+  const tier: 'premium' = 'premium';
   const email = searchParams?.get('email') || '';
   const verified = searchParams?.get('verified');
   const verificationError = searchParams?.get('error');
@@ -199,7 +200,7 @@ function SignupSuccessContent() {
                 <div className="flex-1 space-y-3">
                   <div className="font-bold text-white text-lg sm:text-xl">Check your inbox</div>
                   <div className="text-zinc-100 text-sm sm:text-base font-medium leading-relaxed">
-                    Your first drop includes {tier === 'premium' ? '10 jobs plus your premium welcome email.' : 'up to 10 jobs and your welcome email.'}
+                    Your first drop includes 10 jobs plus your premium welcome email.
                     {' '}If you don't see it after a few minutes, peek at spam.
                   </div>
                   <div className="mt-3 text-xs sm:text-sm text-zinc-300 font-medium">
@@ -256,32 +257,6 @@ function SignupSuccessContent() {
             </div>
           </div>
 
-          {tier === 'free' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="rounded-3xl border-2 border-brand-500/40 p-8 sm:p-10 md:p-12 bg-gradient-to-br from-brand-500/15 via-purple-600/10 to-brand-500/15 backdrop-blur-md shadow-[0_24px_80px_rgba(99,102,241,0.3)]"
-            >
-              <div className="text-center space-y-6">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
-                  Need more roles each week?
-                </h3>
-                <p className="text-zinc-100 text-lg sm:text-xl font-medium leading-relaxed max-w-2xl mx-auto">
-                  Premium sends <span className="text-brand-200 font-bold">{`${PREMIUM_ROLES_PER_WEEK} jobs per week (~${PREMIUM_ROLES_PER_MONTH} per month)`}</span> with early access and hot match alerts.
-                </p>
-                <Link 
-                  href="/billing" 
-                  className="inline-block bg-gradient-to-r from-brand-500 via-purple-500 to-brand-500 text-white font-bold text-lg px-8 py-4 rounded-2xl shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] transition-all hover:-translate-y-0.5"
-                >
-                  Upgrade for €5/month
-                </Link>
-                <p className="text-zinc-300 text-sm font-medium">
-                  Cancel anytime · No commitment
-                </p>
-              </div>
-            </motion.div>
-          )}
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
             <Link 

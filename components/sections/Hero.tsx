@@ -314,21 +314,33 @@ export default function Hero() {
               transition={{ delay: 0.35, duration: 0.6 }}
               className="flex flex-col gap-3"
             >
-              <Button
-                href="/signup"
-                variant="primary"
-                size="lg"
-                className="w-full sm:w-auto sm:min-w-[280px] px-8 py-4 md:py-5 text-base md:text-lg shadow-hero"
-                aria-label="Get my first 5 matches"
-              >
-                <span className="flex items-center justify-center gap-2">
-                  <BrandIcons.Mail className="h-5 w-5" />
-                  {Copy.HERO_CTA}
-                  <BrandIcons.ArrowRight className="h-5 w-5" />
-                </span>
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  href="/signup"
+                  variant="gradient"
+                  size="lg"
+                  className="w-full sm:w-auto sm:min-w-[220px] px-8 py-4 md:py-5 text-base md:text-lg shadow-hero"
+                  aria-label="Go Premium - Get Emailed 3x/Week"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    Go Premium - Get Emailed 3x/Week
+                    <BrandIcons.ArrowRight className="h-5 w-5" />
+                  </span>
+                </Button>
+                <Button
+                  href="/signup/free"
+                  variant="secondary"
+                  size="lg"
+                  className="w-full sm:w-auto sm:min-w-[220px] px-8 py-4 md:py-5 text-base md:text-lg"
+                  aria-label="Try Free - See 5 Matches"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    Try Free - See 5 Matches
+                  </span>
+                </Button>
+              </div>
               <p className="text-xs text-zinc-400 text-center sm:text-left">
-                Takes &lt;2 minutes · No spam · Cancel anytime
+                Free: 5 instant matches, zero emails · Premium: 15 jobs/week (3x more) via email
               </p>
             </motion.div>
           </div>

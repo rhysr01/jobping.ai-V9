@@ -17,7 +17,7 @@ export default function FAQSchema() {
         "name": "How does JobPing work?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": `JobPing sends you ${FREE_ROLES_PER_SEND} hand-picked early-career job opportunities every ${FREE_SEND_DAY_LABEL}. Premium members receive ${PREMIUM_ROLES_PER_WEEK} roles across ${PREMIUM_SENDS_PER_WEEK} drops (${PREMIUM_SEND_DAYS_LABEL}).`
+          "text": `Free users get ${FREE_ROLES_PER_SEND} hand-picked early-career job opportunities (one-time, no emails). Premium members receive ${PREMIUM_ROLES_PER_WEEK} roles per week across ${PREMIUM_SENDS_PER_WEEK} drops (${PREMIUM_SEND_DAYS_LABEL})—that's ${PREMIUM_ROLES_PER_WEEK - FREE_ROLES_PER_SEND} more than free.`
         }
       },
       {
@@ -25,7 +25,7 @@ export default function FAQSchema() {
         "name": "Is JobPing free?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": `Yes! JobPing offers a free tier with ${SIGNUP_INITIAL_ROLES} jobs on signup and ${FREE_ROLES_PER_SEND} jobs every ${FREE_SEND_DAY_LABEL}. Our Premium plan adds ${PREMIUM_ROLES_PER_WEEK} jobs each week (${PREMIUM_SENDS_PER_WEEK} drops on ${PREMIUM_SEND_DAYS_LABEL}) plus extra perks.`
+          "text": `Yes! JobPing offers a free tier with ${FREE_ROLES_PER_SEND} jobs on signup (one-time, no emails). Our Premium plan provides ${PREMIUM_ROLES_PER_WEEK} jobs each week (${PREMIUM_SENDS_PER_WEEK} drops on ${PREMIUM_SEND_DAYS_LABEL})—that's ${PREMIUM_ROLES_PER_WEEK - FREE_ROLES_PER_SEND} more than free—plus extra perks.`
         }
       },
       {

@@ -161,8 +161,12 @@ async function handleSendScheduledEmails(req: NextRequest) {
       try {
         const userTier = (user.subscription_tier || 'free') as 'free' | 'premium';
         
+        // Skip free users entirely - they don't get emails
+        if (userTier === 'free') {
+          continue;
+        }
+        
         // Skip if not a send day for this user's tier
-        if (userTier === 'free' && !isFreeSendDay) continue;
         if (userTier === 'premium' && !isPremiumSendDay) continue;
         
         // Additional check: for premium users, verify they haven't received email today
@@ -174,19 +178,6 @@ async function handleSendScheduledEmails(req: NextRequest) {
             apiLogger.debug('Premium user already received email today', {
               email: user.email,
               lastSent: user.last_email_sent
-            });
-            continue;
-          }
-        }
-        
-        // Additional check: for free users, verify they haven't received email this week
-        if (userTier === 'free' && user.last_email_sent) {
-          const lastSent = new Date(user.last_email_sent);
-          if (lastSent >= weekStartDate) {
-            apiLogger.debug('Free user already received email this week', {
-              email: user.email,
-              lastSent: user.last_email_sent,
-              weekStart: currentWeek
             });
             continue;
           }

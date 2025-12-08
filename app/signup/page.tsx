@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useReducedMotion } from '@/components/ui/useReducedMotion';
 import { BrandIcons } from '@/components/ui/BrandIcons';
 import * as Copy from '@/lib/copy';
@@ -18,8 +18,6 @@ import LanguageSelector from '@/components/ui/LanguageSelector';
 
 function SignupForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const tierParam = searchParams?.get('tier') as 'free' | 'premium' | null;
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -30,7 +28,8 @@ function SignupForm() {
   const [totalUsers, setTotalUsers] = useState('');
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [statsStale, setStatsStale] = useState(true);
-  const [tier] = useState<'free' | 'premium'>(tierParam === 'premium' ? 'premium' : 'free');
+  // This is the premium signup flow - free users go to /signup/free
+  const tier: 'premium' = 'premium';
   const prefersReduced = useReducedMotion();
   const { announce, Announcement } = useAriaAnnounce();
   const formRefs = {
@@ -211,7 +210,7 @@ function SignupForm() {
       const response = await fetch('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, tier }),
+        body: JSON.stringify({ ...formData, tier: 'premium' }),
       });
 
       const result = await response.json();
@@ -220,7 +219,7 @@ function SignupForm() {
         // Show success state before redirect
         setSuccessState({ show: true, matchesCount: result.matchesCount || 0 });
         showToast.success('Account created successfully! Redirecting...');
-        const redirectUrl = result.redirectUrl || `/signup/success?tier=${tier}`;
+        const redirectUrl = result.redirectUrl || `/signup/success?tier=premium`;
         setTimeout(() => router.push(redirectUrl), 2000); // Increased delay to show success state
       } else {
         // Handle field-specific errors
@@ -358,12 +357,10 @@ function SignupForm() {
           transition={{ duration: 0.5 }}
           className="mb-10 text-center sm:mb-16 md:mb-20"
         >
-          {tier === 'premium' && (
-            <span className="mb-6 inline-flex items-center gap-2 rounded-full border-2 border-brand-500/50 bg-brand-500/15 px-5 py-2 text-sm font-bold text-brand-100 shadow-[0_0_20px_rgba(99,102,241,0.3)]">
-              <BrandIcons.Star className="h-4 w-4" />
-              Premium selected · €5/mo
-            </span>
-          )}
+          <span className="mb-6 inline-flex items-center gap-2 rounded-full border-2 border-brand-500/50 bg-brand-500/15 px-5 py-2 text-sm font-bold text-brand-100 shadow-[0_0_20px_rgba(99,102,241,0.3)]">
+            <BrandIcons.Star className="h-4 w-4" />
+            Premium · €5/mo
+          </span>
 
           <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.28em] text-brand-200">
             Onboarding
