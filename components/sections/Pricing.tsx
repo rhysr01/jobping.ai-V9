@@ -26,7 +26,7 @@ const plans: PlanConfig[] = [
     description: Copy.FREE_PLAN_DESCRIPTION,
     price: '€0',
     suffix: 'forever',
-    cta: { label: 'Get my first 5 matches', href: '/signup?tier=free' },
+    cta: { label: 'Get my first 5 matches', href: '/signup/free' },
     features: Copy.FREE_PLAN_FEATURES,
     footnote: Copy.PRICING_BADGE,
   },
@@ -171,7 +171,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
                 <span className="text-lg">●●●</span>
               </span>
             </div>
-            <p className="text-xs text-center text-zinc-400 mt-1">5 matches → 15 matches per week</p>
+            <p className="text-xs text-center text-zinc-400 mt-1">Free: 5 (one-time) → Premium: 15 per week (3x more)</p>
           </div>
         )}
 

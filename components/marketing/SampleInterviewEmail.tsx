@@ -310,7 +310,7 @@ export default function SampleInterviewEmail() {
         <div className="mt-6 rounded-2xl border-2 border-indigo-500/30 bg-gradient-to-br from-indigo-500/15 to-purple-500/10 p-6">
           <h3 className="text-[20px] font-bold text-white mb-3 leading-tight">Get More Matches for €5 Now</h3>
           <p className="text-[15px] text-zinc-300 mb-5 leading-relaxed">
-            Upgrade to Premium and get <span className="font-semibold text-purple-300">15 jobs per week (~60 per month)</span> instead of 5. Cancel anytime.
+            Upgrade to Premium and get <span className="font-semibold text-purple-300">15 jobs per week (~60 per month)</span> - that's 10 more than free (3x more). Cancel anytime.
           </p>
           <a
             href="#"

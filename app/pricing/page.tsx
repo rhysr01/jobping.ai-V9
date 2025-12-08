@@ -5,7 +5,7 @@ import * as Copy from '@/lib/copy';
 
 export const metadata: Metadata = {
   title: 'Pricing | JobPing',
-  description: 'Start free. Unlock 15 curated roles per week with Premium.',
+  description: 'Start free. Unlock 10 more jobs per week with Premium (3x more).',
 };
 
 export default function PricingPage() {
@@ -33,19 +33,33 @@ export default function PricingPage() {
               </div>
               
               <ul className="space-y-3 mb-8">
-                {Copy.FREE_PLAN_FEATURES.map((feature) => (
-                  <li key={feature} className="flex items-start gap-3 text-sm text-zinc-300">
-                    <BrandIcons.Check className="h-5 w-5 text-brand-200 flex-shrink-0 mt-0.5" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
+                <li className="flex items-start gap-3 text-sm text-zinc-300">
+                  <BrandIcons.Check className="h-5 w-5 text-brand-200 flex-shrink-0 mt-0.5" />
+                  <span>See 5 instant job matches</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-zinc-300">
+                  <BrandIcons.Check className="h-5 w-5 text-brand-200 flex-shrink-0 mt-0.5" />
+                  <span>Test our AI matching quality</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-zinc-300">
+                  <BrandIcons.Check className="h-5 w-5 text-brand-200 flex-shrink-0 mt-0.5" />
+                  <span>Zero emails sent (spam-free)</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-zinc-500 opacity-50">
+                  <span className="h-5 w-5 flex-shrink-0 mt-0.5">✗</span>
+                  <span>No email delivery</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-zinc-500 opacity-50">
+                  <span className="h-5 w-5 flex-shrink-0 mt-0.5">✗</span>
+                  <span>Limited to 5 jobs</span>
+                </li>
               </ul>
               
               <Link
-                href="/signup?tier=free"
+                href="/signup/free"
                 className="block w-full text-center h-11 rounded-full border border-white/15 bg-white/5 text-white font-medium transition-all duration-200 hover:border-brand-500/40 hover:bg-brand-500/10"
               >
-                Get my first 5 matches
+                Try Free
               </Link>
             </div>
             
@@ -76,10 +90,10 @@ export default function PricingPage() {
               </ul>
               
               <Link
-                href="/billing"
-                className="block w-full text-center h-11 rounded-full bg-violet-500 text-white font-medium shadow-md shadow-purple-900/40 transition-all duration-200 hover:bg-violet-400 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                href="/signup"
+                className="block w-full text-center h-11 rounded-full bg-gradient-to-r from-brand-500 to-purple-600 text-white font-medium shadow-md shadow-purple-900/40 transition-all duration-200 hover:opacity-90 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
               >
-                Upgrade for €5/mo
+                Start Premium - €5/month
               </Link>
               
               <p className="text-xs text-zinc-400 text-center mt-4">{Copy.PREMIUM_PLAN_ANNUAL}</p>

@@ -23,7 +23,7 @@ const faqs = [
   },
   {
     question: "How often will you email me?",
-    answer: `Free users get 5 hand-picked matches every Thursday. Premium users get 15 matches per week across 3 drops (Monday, Wednesday, Friday)—that's 60+ quality opportunities per month. You can pause or adjust frequency anytime with one click. No spam, just relevant roles when you need them.`
+    answer: `Free users get 5 hand-picked matches (one-time, no emails). Premium users get 15 matches per week across 3 drops (Monday, Wednesday, Friday)—that's 10 more than free (3x more) and 60+ quality opportunities per month. You can pause or adjust frequency anytime with one click. No spam, just relevant roles when you need them.`
   },
   {
     question: "Can I cancel immediately?",

@@ -18,13 +18,13 @@ export interface MatchRules {
   maxPerSource: number;     // Max jobs from any single source in top results
 }
 
-// Core send configuration - Weekly for free, 3x weekly for premium
-export const SEND_PLAN = {
+// Core send configuration - NO emails for free, 3x weekly for premium
+export const SEND_PLAN: { free: SendPlan; premium: SendPlan } = {
   free: {
-    days: ["Thu"],      // Weekly on Thursday
-    perSend: 5,         // Exactly 5 jobs per email
-    pullsPerWeek: 1,
-    signupBonus: 10,    // 10 jobs on signup (2x first email!)
+    days: [] as string[],           // NO send days - zero emails for free users
+    perSend: 5,         // Exactly 5 jobs per email (not used since no emails)
+    pullsPerWeek: 0,    // No weekly emails
+    signupBonus: 0,     // No signup email
   },
   premium: {
     days: ["Mon", "Wed", "Fri"], // 3x per week
@@ -110,6 +110,10 @@ export function getCurrentWeekStart(): string {
 export function isSendDay(tier: 'free' | 'premium'): boolean {
   const today = new Date().toLocaleDateString('en-US', { weekday: 'short' }) as string;
   const plan = SEND_PLAN[tier];
+  // Free tier has no send days (empty array)
+  if (plan.days.length === 0) {
+    return false;
+  }
   return plan.days.includes(today);
 }
 
