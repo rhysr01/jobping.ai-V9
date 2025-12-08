@@ -16,12 +16,12 @@ export default function Page() {
       <main id="main-content" className="scroll-snap-type-y-proximity" style={{ scrollSnapType: 'y proximity' }}>
         <Hero />
         <EmailPhoneShowcase />
+        <Pricing />
         <CompanyLogos />
         <CountryFlags />
         <SocialProofRow />
         <HowItWorks />
         <BuiltForStudents />
-        <Pricing />
       </main>
       <div className="h-16 w-full bg-gradient-to-b from-transparent to-black/40" />
       <Footer />

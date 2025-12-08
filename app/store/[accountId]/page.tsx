@@ -93,11 +93,11 @@ export default function StorePage() {
 
   return (
     <div className="min-h-screen bg-black">
-      <div className="container-page py-16">
+      <div className="container-page py-16 md:py-24">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-semibold text-white mb-4">Store</h1>
-            <p className="text-zinc-300">Browse and purchase products</p>
+            <h1 className="text-4xl md:text-5xl font-semibold text-white mb-4">Store</h1>
+            <p className="text-xl text-zinc-300">Browse and purchase products</p>
           </div>
 
           {error && (
@@ -116,7 +116,7 @@ export default function StorePage() {
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl p-6"
+                  className="rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl px-6 py-8"
                 >
                   <h3 className="text-xl font-semibold text-white mb-2">{product.name}</h3>
                   {product.description && (

@@ -54,24 +54,24 @@ function OnboardContent() {
 
   return (
     <div className="min-h-screen bg-black">
-      <div className="container-page py-16">
+      <div className="container-page py-16 md:py-24">
         <div className="max-w-2xl mx-auto text-center">
           {error ? (
             <>
-              <h1 className="text-3xl font-semibold text-white mb-4">Onboarding Incomplete</h1>
-              <p className="text-zinc-300 mb-6">{error}</p>
+              <h1 className="text-4xl md:text-5xl font-semibold text-white mb-4">Onboarding Incomplete</h1>
+              <p className="text-xl text-zinc-300 mb-6">{error}</p>
               <Button onClick={() => router.push('/dashboard')}>Go to Dashboard</Button>
             </>
           ) : refresh ? (
             <>
               <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h1 className="text-3xl font-semibold text-white mb-4">Redirecting...</h1>
-              <p className="text-zinc-300">Checking your onboarding status...</p>
+              <h1 className="text-4xl md:text-5xl font-semibold text-white mb-4">Redirecting...</h1>
+              <p className="text-xl text-zinc-300">Checking your onboarding status...</p>
             </>
           ) : (
             <>
-              <h1 className="text-3xl font-semibold text-white mb-4">Start Onboarding</h1>
-              <p className="text-zinc-300 mb-6">
+              <h1 className="text-4xl md:text-5xl font-semibold text-white mb-4">Start Onboarding</h1>
+              <p className="text-xl text-zinc-300 mb-6">
                 You need to complete Stripe Connect onboarding to accept payments.
               </p>
               <Button href="/dashboard">Go to Dashboard</Button>

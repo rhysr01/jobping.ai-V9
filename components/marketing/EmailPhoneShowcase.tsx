@@ -95,8 +95,8 @@ export default function EmailPhoneShowcase() {
             className="flex flex-col items-center gap-4 relative z-10"
           >
             <div className="text-center mb-2">
-              <h3 className="text-lg font-semibold text-white mb-1">What you get weekly</h3>
-              <p className="text-sm text-zinc-400">5 curated matches in your inbox</p>
+              <h3 className="text-lg font-semibold text-white mb-1">What you get (Premium)</h3>
+              <p className="text-sm text-zinc-400">15 jobs per week via email (Mon/Wed/Fri)</p>
             </div>
             <motion.div
               animate={

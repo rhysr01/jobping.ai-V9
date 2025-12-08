@@ -72,17 +72,21 @@ export default function ExitIntentPopup() {
           </button>
 
           <div className="text-center">
-            <BrandIcons.GraduationCap className="w-[20.8px] h-[20.8px] mx-auto mb-4 text-brand-400" aria-hidden="true" />
-            <h3 id="exit-popup-title" className="text-2xl font-black text-white mb-2">Wait! Try Free Now</h3>
-            <p id="exit-popup-description" className="text-zinc-200 mb-6">
-              Get 5 instant matches right now. No emails, no commitment. Perfect for testing the waters.
+            <BrandIcons.Zap className="w-[20.8px] h-[20.8px] mx-auto mb-4 text-emerald-400" aria-hidden="true" />
+            <h3 id="exit-popup-title" className="text-2xl font-black text-white mb-2">Wait! Try Free Now - Instantly</h3>
+            <p id="exit-popup-description" className="text-zinc-200 mb-4">
+              Get <strong className="text-white">5 instant matches right now</strong>. See them immediately—no emails, no waiting, no commitment.
             </p>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
+              <BrandIcons.Zap className="h-3 w-3" />
+              Instant • Zero emails • Free forever
+            </div>
             <Link
               href="/signup/free"
               onClick={() => setShowPopup(false)}
               className="btn-primary w-full"
             >
-              Try Free Now →
+              Try Free Now - See 5 Matches Instantly →
             </Link>
             <button
               onClick={() => setShowPopup(false)}

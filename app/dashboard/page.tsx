@@ -118,14 +118,14 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-black">
-      <div className="container-page py-16">
+      <div className="container-page py-16 md:py-24">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-semibold text-white mb-8">Connect Dashboard</h1>
+          <h1 className="text-4xl md:text-5xl font-semibold text-white mb-8">Connect Dashboard</h1>
 
           {accountStatus && (
             <div className="space-y-6">
               {/* Account Status Card */}
-              <div className="rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl p-6">
+              <div className="rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl px-6 py-8">
                 <h2 className="text-xl font-semibold text-white mb-4">Account Status</h2>
                 
                 <div className="space-y-3">
@@ -189,7 +189,7 @@ function DashboardContent() {
 
               {/* Quick Actions */}
               {accountStatus.onboardingComplete && (
-                <div className="rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl p-6">
+                <div className="rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl px-6 py-8">
                   <h2 className="text-xl font-semibold text-white mb-4">Quick Actions</h2>
                   
                   <div className="grid gap-4 md:grid-cols-2">
