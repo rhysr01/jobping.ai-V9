@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import DeviceFrame from "./DeviceFrame";
 import SampleInterviewEmail from "./SampleInterviewEmail";
-import SampleSignupForm from "./SampleSignupForm";
 import { useReducedMotion } from "@/components/ui/useReducedMotion";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 import * as Copy from "@/lib/copy";
@@ -49,7 +48,7 @@ export default function EmailPhoneShowcase() {
           {/* Left spotlight */}
           <div className="pointer-events-none absolute left-[10%] top-[30%] h-[400px] w-[400px] bg-[radial-gradient(circle_at_center,_theme(colors.brand.500/0.22),_transparent_70%)] blur-md-hero opacity-70" />
           
-          {/* Left phone - Signup Form */}
+          {/* Left phone - Premium Email (Monday) */}
           <motion.div
             initial={{ opacity: 0, x: -32 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -58,8 +57,8 @@ export default function EmailPhoneShowcase() {
             className="flex flex-col items-center gap-4 relative z-10"
           >
             <div className="text-center mb-2">
-              <h3 className="text-lg font-semibold text-white mb-1">What we ask you once</h3>
-              <p className="text-sm text-zinc-400">Quick setup in under 2 minutes</p>
+              <h3 className="text-lg font-semibold text-white mb-1">Premium: Monday Email</h3>
+              <p className="text-sm text-zinc-400">5 fresh matches delivered</p>
             </div>
             <motion.div
               animate={
@@ -81,12 +80,12 @@ export default function EmailPhoneShowcase() {
                 <div className="h-full w-full scale-110 rounded-full bg-black/40 blur-lg-hero" />
               </div>
               <DeviceFrame>
-                <SampleSignupForm />
+                <SampleInterviewEmail />
               </DeviceFrame>
             </motion.div>
           </motion.div>
 
-          {/* Right phone - Email Output */}
+          {/* Right phone - Premium Email (Wednesday) */}
           <motion.div
             initial={{ opacity: 0, x: 32 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -95,8 +94,8 @@ export default function EmailPhoneShowcase() {
             className="flex flex-col items-center gap-4 relative z-10"
           >
             <div className="text-center mb-2">
-              <h3 className="text-lg font-semibold text-white mb-1">What you get (Premium)</h3>
-              <p className="text-sm text-zinc-400">15 jobs per week via email (Mon/Wed/Fri)</p>
+              <h3 className="text-lg font-semibold text-white mb-1">Premium: Wednesday Email</h3>
+              <p className="text-sm text-zinc-400">5 more matches, 3x per week</p>
             </div>
             <motion.div
               animate={

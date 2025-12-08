@@ -7,70 +7,111 @@ export default function SampleJobMatches() {
       company: "Spotify",
       location: "Stockholm, Sweden",
       match: 92,
+      isHot: true,
+      description: "Work with the Web Player team shipping React features used by millions. 12-month graduate track with buddy support from day one.",
       tags: ["Tech", "Remote-friendly"],
+      matchReason: "Based on your preference for frontend roles in Stockholm",
     },
     {
       title: "Junior Marketing Associate",
       company: "Shopify",
       location: "Dublin, Ireland",
       match: 88,
+      isHot: false,
+      description: "Help shape marketing campaigns for merchants across Europe. Perfect for recent grads passionate about e-commerce.",
       tags: ["Marketing", "English"],
+      matchReason: "Matches your interest in marketing roles in Dublin",
     },
     {
       title: "Data Analyst Intern",
       company: "Stripe",
       location: "London, UK",
       match: 85,
+      isHot: false,
+      description: "Analyze payment data to help businesses understand their customers. 6-month internship with potential for full-time conversion.",
       tags: ["Data", "Internship"],
+      matchReason: "Aligned with your data analysis career path",
     },
   ];
 
   return (
-    <div className="bg-black text-white p-4 space-y-3 h-full">
-      {/* Header */}
-      <div className="mb-4 pb-3 border-b border-zinc-800">
-        <h2 className="text-lg font-bold text-white mb-1">Your Matches</h2>
-        <p className="text-xs text-zinc-400">5 new matches today</p>
+    <div className="bg-black text-white h-full overflow-y-auto">
+      {/* Email Header - Purple Gradient */}
+      <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-purple-700 px-6 py-8 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-50" />
+        <div className="relative z-10">
+          <div className="text-3xl font-bold text-white mb-2 tracking-tight">JobPing</div>
+          <div className="text-xs text-white/90 font-medium tracking-widest uppercase">AI-Powered Job Matching</div>
+        </div>
       </div>
 
-      {/* Job Cards */}
-      {sampleJobs.map((job, i) => (
-        <div
-          key={i}
-          className="bg-zinc-900 rounded-lg p-3 border border-zinc-800 hover:border-brand-500/30 transition-colors"
-        >
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex-1 pr-2">
-              <h3 className="text-sm font-semibold text-white mb-1 leading-tight">
-                {job.title}
-              </h3>
-              <p className="text-xs text-zinc-400">
-                {job.company} · {job.location}
-              </p>
-            </div>
-            <div className="bg-brand-500/20 text-brand-300 text-xs font-bold px-2 py-1 rounded flex-shrink-0">
-              {job.match}%
-            </div>
-          </div>
-          <div className="flex gap-1 flex-wrap mt-2">
-            {job.tags.map((tag, j) => (
-              <span
-                key={j}
-                className="text-xs text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
+      {/* Email Content */}
+      <div className="px-6 py-6 space-y-4">
+        {/* Greeting - Free Tier */}
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-white mb-2">Your first 5 matches ✨</h2>
+          <p className="text-sm text-zinc-400">Free tier - instant matches, no email delivery</p>
         </div>
-      ))}
 
-      {/* Footer hint */}
-      <div className="pt-2 text-center">
-        <p className="text-xs text-zinc-500">Scroll for more matches</p>
+        {/* Job Cards */}
+        {sampleJobs.map((job, i) => (
+          <div
+            key={i}
+            className={`rounded-2xl p-5 border ${
+              job.isHot
+                ? 'bg-gradient-to-br from-indigo-500/10 to-purple-500/5 border-purple-500/50 shadow-lg shadow-purple-500/20'
+                : 'bg-zinc-900/50 border-zinc-800'
+            }`}
+          >
+            {/* Match Badge - Simpler for Free */}
+            <div className="inline-block px-3 py-1.5 rounded-lg text-xs font-bold mb-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+              {job.match}% Match
+            </div>
+
+            {/* Job Title */}
+            <h3 className="text-lg font-semibold text-white mb-1.5 leading-tight">
+              {job.title}
+            </h3>
+
+            {/* Company */}
+            <div className="text-base text-zinc-300 font-medium mb-1">
+              {job.company}
+            </div>
+
+            {/* Location */}
+            <div className="text-sm text-zinc-500 mb-3">
+              📍 {job.location}
+            </div>
+
+            {/* Match Reason */}
+            <p className="text-xs text-zinc-400 mb-3 italic">
+              {job.matchReason}
+            </p>
+
+            {/* Description */}
+            <p className="text-sm text-zinc-400 leading-relaxed mb-3">
+              {job.description}
+            </p>
+
+            {/* Tags */}
+            <div className="flex gap-2 flex-wrap">
+              {job.tags.map((tag, j) => (
+                <span
+                  key={j}
+                  className="text-xs text-zinc-400 bg-zinc-800/50 px-2.5 py-1 rounded-full border border-zinc-700/50"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* Footer hint - Free Tier */}
+        <div className="pt-4 text-center">
+          <p className="text-xs text-zinc-600">Free: View on website only • No emails sent</p>
+        </div>
       </div>
     </div>
   );
 }
-
-// Build fix

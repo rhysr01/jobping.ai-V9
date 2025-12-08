@@ -27,28 +27,78 @@ const CITIES = [
   { name: 'Brussels', country: 'be', locale: 'en_BE' },
 ];
 
+// Local language early-career terms by country (for non-English cities)
+const LOCAL_EARLY_CAREER_TERMS = {
+  'fr': ['jeune diplômé', 'stagiaire', 'alternance', 'junior', 'débutant', 'programme graduate'],
+  'de': ['absolvent', 'trainee', 'praktikant', 'junior', 'berufseinsteiger', 'nachwuchskraft', 'praktikum', 'werkstudent'],
+  'es': ['programa de graduados', 'becario', 'prácticas', 'junior', 'recién graduado', 'nivel inicial'],
+  'it': ['neolaureato', 'stage', 'tirocinio', 'junior', 'primo lavoro', 'laureato'],
+  'nl': ['afgestudeerde', 'traineeship', 'starter', 'junior', 'beginnend', 'werkstudent'],
+  'be': ['stagiaire', 'junior', 'débutant', 'afgestudeerde', 'starter'],
+  'pt': ['recém-formado', 'estagiário', 'júnior', 'trainee', 'programa de graduados']
+};
+
+/**
+ * Query rotation system - 3 sets that rotate every 8 hours
+ * Ensures different queries for morning/evening runs (8am/6pm UTC)
+ */
+const QUERY_SETS = {
+  SET_A: [
+    // Focus: Internships and graduate programs
+    'graduate programme', 'graduate scheme', 'internship', 'intern', 
+    'graduate trainee', 'management trainee', 'trainee program'
+  ],
+  SET_B: [
+    // Focus: Analyst and associate roles
+    'business analyst', 'financial analyst', 'data analyst', 'operations analyst',
+    'junior analyst', 'associate consultant', 'graduate analyst'
+  ],
+  SET_C: [
+    // Focus: Entry-level and junior roles
+    'entry level', 'junior', 'graduate', 'recent graduate',
+    'early careers program', 'campus hire', 'new grad'
+  ]
+};
+
+/**
+ * Determine which query set to use based on time of day
+ * Rotates every 8 hours: SET_A (0-7h), SET_B (8-15h), SET_C (16-23h)
+ */
+function getCurrentQuerySet() {
+  const manualSet = process.env.CAREERJET_QUERY_SET;
+  if (manualSet && QUERY_SETS[manualSet]) {
+    return manualSet;
+  }
+  
+  const hour = new Date().getHours();
+  if (hour >= 0 && hour < 8) return 'SET_A';
+  if (hour >= 8 && hour < 16) return 'SET_B';
+  return 'SET_C';
+}
+
 /**
  * Generate search queries from specific roles (not generic terms)
  * Uses actual roles from signup form for targeted searches
+ * NOW WITH QUERY ROTATION for variety across runs
  */
 function generateSearchQueries() {
+  const currentSet = getCurrentQuerySet();
+  const baseQueries = QUERY_SETS[currentSet];
+  console.log(`🔄 CareerJet using query set: ${currentSet} (${baseQueries.length} base terms)`);
+  
   const queries = new Set();
   
-  // Priority 1: Early-career roles (intern, graduate, junior, trainee)
-  // These are highest priority as they're most likely to match early-career jobs
-  const earlyCareerRoles = getEarlyCareerRoles();
-  earlyCareerRoles.forEach(role => {
-    const cleaned = cleanRoleForSearch(role);
-    cleaned.forEach(cleanRole => {
-      if (cleanRole.length > 5) { // Skip very short variations
-        queries.add(cleanRole.toLowerCase());
-      }
-    });
-  });
+  // Add base rotation queries (early-career focused)
+  baseQueries.forEach(term => queries.add(term.toLowerCase()));
   
-  // Priority 2: All roles from signup form (comprehensive coverage)
-  const allRoles = getAllRoles();
-  allRoles.forEach(role => {
+  // Priority 1: Early-career roles (intern, graduate, junior, trainee)
+  // Rotate which roles we prioritize based on query set
+  const earlyCareerRoles = getEarlyCareerRoles();
+  const roleSlice = currentSet === 'SET_A' ? earlyCareerRoles.slice(0, 8) :
+                     currentSet === 'SET_B' ? earlyCareerRoles.slice(8, 16) :
+                     earlyCareerRoles.slice(16, 24);
+  
+  roleSlice.forEach(role => {
     const cleaned = cleanRoleForSearch(role);
     cleaned.forEach(cleanRole => {
       if (cleanRole.length > 5) {
@@ -57,30 +107,42 @@ function generateSearchQueries() {
     });
   });
   
-  // Priority 3: Specific early-career program terms (not generic single words)
-  const specificProgramTerms = [
-    'graduate programme',
-    'graduate scheme',
-    'graduate program',
-    'graduate trainee',
-    'management trainee',
-    'rotational graduate program',
-    'rotational programme',
-    'graduate analyst',
-    'graduate associate',
-    'early careers program',
-    'early careers programme',
-    'corporate graduate programme',
-    'future leaders programme',
-    'campus hire',
-    'new grad',
-    'recent graduate',
+  // Priority 2: All roles from signup form (rotated subset)
+  const allRoles = getAllRoles();
+  const allRolesSlice = currentSet === 'SET_A' ? allRoles.slice(0, 10) :
+                        currentSet === 'SET_B' ? allRoles.slice(10, 20) :
+                        allRoles.slice(20, 30);
+  
+  allRolesSlice.forEach(role => {
+    const cleaned = cleanRoleForSearch(role);
+    cleaned.forEach(cleanRole => {
+      if (cleanRole.length > 5) {
+        queries.add(cleanRole.toLowerCase());
+      }
+    });
+  });
+  
+  // Priority 3: Specific early-career program terms (rotated)
+  const specificProgramTerms = currentSet === 'SET_A' ? [
+    'graduate programme', 'graduate scheme', 'graduate program',
+    'graduate trainee', 'management trainee', 'rotational graduate program'
+  ] : currentSet === 'SET_B' ? [
+    'graduate analyst', 'graduate associate', 'early careers program',
+    'corporate graduate programme', 'future leaders programme'
+  ] : [
+    'campus hire', 'new grad', 'recent graduate', 'entry level program',
+    'graduate scheme', 'trainee program'
   ];
   
   specificProgramTerms.forEach(term => queries.add(term.toLowerCase()));
   
-  // Add career path keywords for broader matching
-  Object.keys(CAREER_PATH_KEYWORDS).forEach(path => {
+  // Add career path keywords for broader matching (rotated subset)
+  const paths = Object.keys(CAREER_PATH_KEYWORDS);
+  const pathSlice = currentSet === 'SET_A' ? paths.slice(0, 4) :
+                    currentSet === 'SET_B' ? paths.slice(4, 8) :
+                    paths.slice(8, 12);
+  
+  pathSlice.forEach(path => {
     CAREER_PATH_KEYWORDS[path].forEach(keyword => {
       if (keyword.length > 3) {
         queries.add(keyword.toLowerCase());
@@ -89,6 +151,14 @@ function generateSearchQueries() {
   });
   
   return Array.from(queries);
+}
+
+/**
+ * Get local language early-career terms for a city
+ */
+function getLocalTermsForCity(city) {
+  const countryCode = city.country.toLowerCase();
+  return LOCAL_EARLY_CAREER_TERMS[countryCode] || [];
 }
 
 /**
