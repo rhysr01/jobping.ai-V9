@@ -18,10 +18,10 @@ const freeSignupSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  // Rate limiting - prevent abuse
+  // Rate limiting - prevent abuse (more lenient for legitimate users)
   const rateLimitResult = await getProductionRateLimiter().middleware(request, 'signup-free', {
     windowMs: 60 * 60 * 1000, // 1 hour
-    maxRequests: 3, // 3 signup attempts per hour per IP
+    maxRequests: 10, // 10 signup attempts per hour per IP (allows testing different preferences)
   });
   
   if (rateLimitResult) {
