@@ -54,7 +54,7 @@ export default function ScrollCTA() {
           >
             <div className="flex items-center gap-4">
               <div className="flex-1">
-                <p className="text-sm font-semibold text-white mb-1">Try it free — get 5 matches now</p>
+                <p className="text-sm font-semibold text-white mb-1">Get My 5 Free Matches</p>
                 <p className="text-xs text-zinc-400">No credit card • 2-minute setup</p>
               </div>
               <Link
@@ -65,7 +65,7 @@ export default function ScrollCTA() {
                 }}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-500 text-white rounded-full text-sm font-semibold hover:bg-brand-500/90 transition-colors min-h-[44px]"
               >
-                Get Started
+                Get My 5 Free Matches
                 <BrandIcons.ArrowRight className="h-4 w-4" />
               </Link>
               <button

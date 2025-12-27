@@ -106,7 +106,7 @@ export default function Header() {
                 size="sm"
                 className="ml-4"
               >
-                Get Started
+                Get My 5 Free Matches
               </Button>
             </nav>
 
@@ -179,7 +179,7 @@ export default function Header() {
                     size="lg"
                     className="mt-4 w-full"
                   >
-                    Get Started
+                    Get My 5 Free Matches
                   </Button>
                 </nav>
               </div>

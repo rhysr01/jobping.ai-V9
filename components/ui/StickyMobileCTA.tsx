@@ -66,7 +66,7 @@ export default function StickyMobileCTA() {
               className="btn-primary w-full flex items-center justify-center gap-2 min-h-[56px] text-base font-semibold"
             >
               <BrandIcons.Mail className="w-5 h-5" />
-              <span>Try it free — get 5 matches now</span>
+              <span>Get My 5 Free Matches</span>
               <BrandIcons.ArrowRight className="w-5 h-5" />
             </motion.div>
           </Link>
