@@ -19,8 +19,8 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 
 // Hero section
 export const HERO_TITLE = "JobPing";
-export const HERO_HEADLINE = "Stop Scrolling Job Boards. Get Matched to Roles You Qualify For.";
-export const HERO_SUBLINE = "We scan 1,000+ EU companies daily and send you only roles you're qualified for—filtered by location, visa status, and experience.";
+export const HERO_HEADLINE = "Get hand-picked early-career jobs across Europe — without wasting hours searching";
+export const HERO_SUBLINE = "We filter jobs by visa, location, and experience so you only apply where you actually qualify.";
 export const HERO_SUBLINE_MICRO = "No dashboards. No job boards. Just roles you can actually apply for.";
 export const HERO_SUBTITLE = "";
 export const HERO_CTA = "Get my first 5 matches";
