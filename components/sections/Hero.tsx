@@ -76,25 +76,35 @@ export default function Hero() {
             transition={{ duration: 0.6 }}
             className="text-left space-y-6"
           >
-            {/* Headline - STRONGER TYPOGRAPHY */}
+            {/* Headline - FREE-FIRST APPROACH */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
               className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold leading-[1.1] mb-3"
             >
-              <span className="text-white">Get hand-picked early-career jobs across Europe</span>{' '}
-              <span className="text-zinc-400">— without wasting hours searching</span>
+              <span className="text-white">Try it free</span>{' '}
+              <span className="text-zinc-400">— get 5 matches now</span>
             </motion.h1>
 
-            {/* Subheadline */}
+            {/* Subheadline - FREE-FIRST */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25, duration: 0.6 }}
               className="text-lg md:text-xl text-zinc-300 leading-relaxed max-w-xl mb-4"
             >
-              {Copy.HERO_SUBLINE}
+              See 5 hand-picked jobs matched to your profile. No credit card needed. Takes 2 minutes.
+            </motion.p>
+            
+            {/* Upgrade teaser */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.27, duration: 0.6 }}
+              className="text-base md:text-lg text-zinc-400 leading-relaxed max-w-xl mb-4"
+            >
+              Like it? <span className="text-brand-300 font-semibold">Upgrade to get 15 matches/week</span> delivered Mon/Wed/Fri for €5/month.
             </motion.p>
 
             {/* CTAs */}
@@ -112,10 +122,10 @@ export default function Hero() {
                 variant="gradient"
                 size="lg"
                 className="w-full sm:w-auto sm:min-w-[240px] px-8 py-4 md:py-5 text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)] transition-all duration-200"
-                aria-label="Get My 5 Free Matches"
+                aria-label="Try it free - get 5 matches now"
               >
                 <span className="flex items-center justify-center gap-2">
-                  Get My 5 Free Matches →
+                  Try it free — get 5 matches now →
                   <BrandIcons.ArrowRight className="h-5 w-5" />
                 </span>
               </Button>
@@ -128,8 +138,8 @@ export default function Hero() {
                 <p className="text-sm text-zinc-400">
                   ⚡ Instant matches • No credit card • 2-minute setup
                 </p>
-                <p className="text-xs text-zinc-500">
-                  Free: 5 matches (one-time) • Premium: 15 matches/week for €5/month
+                <p className="text-xs text-zinc-500 italic">
+                  Like it? Upgrade to get 15 matches/week delivered Mon/Wed/Fri for €5/month
                 </p>
               </motion.div>
               <TrustBadges />

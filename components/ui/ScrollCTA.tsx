@@ -54,8 +54,8 @@ export default function ScrollCTA() {
           >
             <div className="flex items-center gap-4">
               <div className="flex-1">
-                <p className="text-sm font-semibold text-white mb-1">Ready to see your matches?</p>
-                <p className="text-xs text-zinc-400">Get 5 free matches in 2 minutes</p>
+                <p className="text-sm font-semibold text-white mb-1">Try it free — get 5 matches now</p>
+                <p className="text-xs text-zinc-400">No credit card • 2-minute setup</p>
               </div>
               <Link
                 href="/signup/free"

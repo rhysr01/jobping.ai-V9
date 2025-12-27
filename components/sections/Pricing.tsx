@@ -83,7 +83,7 @@ export default function Pricing() {
           ))}
         </div>
 
-        {/* Pricing note */}
+        {/* Pricing note - Free-first */}
         <motion.p
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -91,7 +91,7 @@ export default function Pricing() {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="text-center mt-6 text-zinc-400"
         >
-          💡 Premium users get 15 roles per week. Free users get 5 (one-time). More matches = more opportunities.
+          💡 <span className="text-white font-semibold">Try it free first</span> — get 5 matches instantly. Like it? Upgrade to get 15 matches/week (3x more opportunities).
         </motion.p>
 
         {/* Social Proof */}

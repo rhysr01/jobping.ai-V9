@@ -79,7 +79,7 @@ export default function EmailPhoneShowcase({ day = 'monday', careerPath = 'finan
         transition={{ duration: 0.6, delay: 0.3 }}
         className="text-center mt-4 text-sm text-zinc-400"
       >
-        Example matches - Free: 5 matches (one-time) • Premium: 15 matches/week
+        Try it free: Get 5 matches now • <span className="text-brand-300">Like it? Upgrade to 15 matches/week</span>
       </motion.p>
     </div>
   );

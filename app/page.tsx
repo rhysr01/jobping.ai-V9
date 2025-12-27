@@ -53,7 +53,7 @@ export default function Page() {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="text-center mt-6 text-zinc-400"
             >
-              Free users: See 5 matches instantly (one-time). Premium: Get emails like this every Monday, Wednesday, and Friday (15 matches/week) for €5/month.
+              Try it free: Get 5 matches instantly (one-time). <span className="text-brand-300 font-semibold">Like it? Upgrade to get 15 matches/week</span> delivered Mon/Wed/Fri for €5/month.
             </motion.p>
           </div>
         </section>
