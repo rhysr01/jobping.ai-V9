@@ -13,7 +13,7 @@ interface ExperienceOption {
 }
 
 const EXPERIENCE_LEVELS: ExperienceOption[] = [
-  { value: '0', label: '0', months: 0, Icon: BrandIcons.GraduationCap, description: 'New to the field — learning fast.' },
+  { value: '0', label: '0', months: 0, Icon: BrandIcons.GraduationCap, description: 'New to the field - learning fast.' },
   { value: '6 months', label: '6 months', months: 6, Icon: BrandIcons.Sparkles, description: 'Early hands-on experience.' },
   { value: '1 year', label: '1 year', months: 12, Icon: BrandIcons.Star, description: 'Solid foundation in place.' },
   { value: '1-2 years', label: '1-2 years', months: 18, Icon: BrandIcons.TrendingUp, description: 'Growing and ready for more.' },

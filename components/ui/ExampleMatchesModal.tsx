@@ -80,7 +80,7 @@ export default function ExampleMatchesModal({ isOpen, onClose }: ExampleMatchesM
                 See What You'll Get
               </h2>
               <p className="text-sm md:text-base text-zinc-400">
-                Here's what your job matches look like — personalized to your preferences
+                Here's what your job matches look like - personalized to your preferences
               </p>
             </div>
 
@@ -103,7 +103,7 @@ export default function ExampleMatchesModal({ isOpen, onClose }: ExampleMatchesM
                 onClick={onClose}
               >
                 <span className="flex items-center justify-center gap-2">
-                  Start Free — See Your 5 Matches
+                  Start Free - See Your 5 Matches
                   <BrandIcons.ArrowRight className="h-5 w-5" />
                 </span>
               </Button>

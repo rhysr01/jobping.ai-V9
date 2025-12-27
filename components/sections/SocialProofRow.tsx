@@ -36,7 +36,7 @@ export default function SocialProofRow() {
     {
       icon: <BrandIcons.CheckCircle className="h-5 w-5" />,
       eyebrow: '',
-      title: `Salary range and visa status upfront—no surprises`,
+      title: `Salary range and visa status upfront - no surprises`,
       description: '',
     },
     {

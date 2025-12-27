@@ -7,11 +7,11 @@ import { BrandIcons } from "@/components/ui/BrandIcons";
 const faqs = [
   {
     question: "Is this just another job board or newsletter?",
-    answer: "No. Job boards make you scroll. JobPing sends you only roles you qualify for—filtered by location, visa status, and experience level. Think of it as a personal job scout."
+    answer: "No. Job boards make you scroll. JobPing sends you only roles you qualify for - filtered by location, visa status, and experience level. Think of it as a personal job scout."
   },
   {
     question: "What makes JobPing different from other services?",
-    answer: "We match roles to your visa status, preferred cities, and experience level. We specialize in early-career roles—internships, graduate programs, and entry-level positions."
+    answer: "We match roles to your visa status, preferred cities, and experience level. We specialize in early-career roles - internships, graduate programs, and entry-level positions."
   },
   {
     question: "Do you apply for me?",
@@ -19,11 +19,11 @@ const faqs = [
   },
   {
     question: "What countries and cities do you cover?",
-    answer: "We cover all EU countries plus the UK, Switzerland, and Norway—21 major cities including London, Dublin, Amsterdam, Berlin, Paris, and Madrid. You select up to 3 cities and we'll only send roles in those locations."
+    answer: "We cover all EU countries plus the UK, Switzerland, and Norway - 21 major cities including London, Dublin, Amsterdam, Berlin, Paris, and Madrid. You select up to 3 cities and we'll only send roles in those locations."
   },
   {
     question: "How often will you email me?",
-    answer: `Free users get 5 matches (one-time, no emails). Premium users get 15 matches per week across 3 drops (Monday, Wednesday, Friday).`
+    answer: `Free users get 5 example matches to try it out (one-time preview, no emails). Premium users get 15 matches per week across 3 drops (Monday, Wednesday, Friday).`
   },
   {
     question: "Can I cancel immediately?",

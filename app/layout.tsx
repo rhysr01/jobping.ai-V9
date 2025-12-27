@@ -13,7 +13,7 @@ import CookieBanner from "@/components/ui/CookieBanner";
 export const metadata: Metadata = {
   title: "JobPing → EU early-career roles. Free: instant matches. Premium: 3x per week.",
   description:
-    "EU early-career roles. Free: 5 instant matches (one-time). Premium: 15 jobs per week via email (3x per week: Mon/Wed/Fri). We monitor 1,000+ companies across Europe and send you hand-picked internships, graduate schemes, and entry-level roles—matched to your city, skills, and goals.",
+    "EU early-career roles. Free: See 5 example matches to try it out. Premium: 15 jobs per week via email (3x per week: Mon/Wed/Fri). We monitor 1,000+ companies across Europe and send you hand-picked internships, graduate schemes, and entry-level roles - matched to your city, skills, and goals.",
   keywords: [
     "graduate jobs",
     "internships Europe",
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "JobPing → EU early-career roles. Free: instant matches. Premium: 3x per week.",
     description:
-      "EU early-career roles. Free: 5 instant matches (one-time). Premium: 15 jobs per week via email (3x per week: Mon/Wed/Fri). Hand-picked internships, graduate schemes, and entry-level roles matched to your profile.",
+      "EU early-career roles. Free: See 5 example matches to try it out. Premium: 15 jobs per week via email (3x per week: Mon/Wed/Fri). Hand-picked internships, graduate schemes, and entry-level roles matched to your profile.",
     url: "https://getjobping.com",
     siteName: "JobPing",
     locale: "en_US",
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "JobPing → EU early-career roles. Free: instant matches. Premium: 3x per week.",
     description:
-      "EU early-career roles. Free: 5 instant matches (one-time). Premium: 15 jobs per week via email (3x per week: Mon/Wed/Fri).",
+      "EU early-career roles. Free: See 5 example matches to try it out. Premium: 15 jobs per week via email (3x per week: Mon/Wed/Fri).",
     creator: "@jobping",
     images: ["https://getjobping.com/og-image.png"],
   },

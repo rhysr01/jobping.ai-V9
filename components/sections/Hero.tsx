@@ -128,6 +128,34 @@ export default function Hero() {
               </motion.p>
               <TrustBadges />
               
+              {/* Onboarding Preview - What we'll ask */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.42, duration: 0.6 }}
+                className="mt-3 p-3 rounded-lg bg-white/[0.03] border border-white/10 backdrop-blur-sm"
+              >
+                <p className="text-xs font-semibold text-zinc-300 mb-2.5">Here's what we'll ask:</p>
+                <div className="flex flex-wrap gap-1.5 text-xs">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">
+                    <BrandIcons.Target className="h-3 w-3" />
+                    Cities
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">
+                    <BrandIcons.Briefcase className="h-3 w-3" />
+                    Career path
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">
+                    <BrandIcons.Shield className="h-3 w-3" />
+                    Visa status
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">
+                    <BrandIcons.Star className="h-3 w-3" />
+                    Experience
+                  </span>
+                </div>
+              </motion.div>
+              
               {/* Social Proof Stats */}
               {stats && stats.totalUsers > 0 && (
                 <motion.p

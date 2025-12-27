@@ -155,7 +155,7 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, onConfirmWith
       >
         <div className="flex items-center justify-between mb-6">
           <h2 id="payment-modal-title" className="text-heading text-white">
-            Got it — we'll find your next role
+            Got it - we'll find your next role
           </h2>
           <button
             onClick={handleClose}
