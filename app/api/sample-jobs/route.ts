@@ -11,24 +11,35 @@ export async function GET(req: NextRequest) {
     const day = searchParams.get('day') || 'monday'; // 'monday' or 'wednesday'
     
     // Fetch a real user who has matches in the database
-    // Get a user with recent matches (preferably premium for better examples)
+    // Use day parameter to rotate between different users for variety
+    const userOffset = day === 'wednesday' ? 1 : 0; // Different user for Wednesday vs Monday
+    
     const { data: usersWithMatches, error: userError } = await supabase
       .from('users')
       .select('email, full_name, target_cities, career_path, professional_expertise')
       .eq('active', true)
       .not('target_cities', 'is', null)
-      .limit(10);
+      .order('created_at', { ascending: false })
+      .limit(20); // Get more users to find one with matches
 
     if (userError || !usersWithMatches || usersWithMatches.length === 0) {
       console.error('Error fetching users:', userError);
       return NextResponse.json({ jobs: [], error: 'No users found' }, { status: 500 });
     }
 
-    // Find a user who has matches
+    // Find users who have matches - try multiple users
     let selectedUser = null;
     let userMatches = null;
+    let usersChecked = 0;
+    const maxUsersToCheck = Math.min(10, usersWithMatches.length);
 
-    for (const user of usersWithMatches) {
+    // Start from offset to get different user based on day
+    const startIndex = userOffset % maxUsersToCheck;
+    
+    for (let i = 0; i < maxUsersToCheck; i++) {
+      const userIndex = (startIndex + i) % maxUsersToCheck;
+      const user = usersWithMatches[userIndex];
+      
       // Check if this user has matches
       const { data: matches, error: matchesError } = await supabase
         .from('matches')
@@ -43,6 +54,8 @@ export async function GET(req: NextRequest) {
         userMatches = matches;
         break;
       }
+      
+      usersChecked++;
     }
 
     if (!selectedUser || !userMatches || userMatches.length < 5) {

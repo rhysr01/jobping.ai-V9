@@ -533,11 +533,11 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
           })}
 
 
-        {/* Footer - matches production */}
+        {/* Footer - Sample Preview */}
         <div className="mt-6 pt-5 border-t border-indigo-500/12 text-center">
           <div className="text-purple-400 font-semibold text-[14px] mb-2">JobPing</div>
           <div className="text-[11px] text-zinc-500">
-            You're receiving this because you created a JobPing account.
+            This is a sample email preview showing real matches from a real user. Sign up to get your own personalized matches.
           </div>
         </div>
       </div>
