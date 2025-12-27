@@ -119,6 +119,12 @@ export async function GET(req: NextRequest) {
     // Try to filter by cities, but if that returns too few results, we'll filter in memory
     const { data: allJobs, error: jobsError } = await query;
 
+    // Log query result for debugging
+    if (jobsError) {
+      console.warn('Sample jobs query error:', jobsError);
+      // Don't return early - fall through to fallback logic
+    }
+
     if (!jobsError && allJobs && allJobs.length > 0) {
       // Filter to preferred cities and ensure valid jobs with URLs
       const validJobs = allJobs.filter(job => {
@@ -234,8 +240,10 @@ export async function GET(req: NextRequest) {
       }
     }
     
-    // If we still don't have 5 jobs, try without city filter (fallback)
-    if (resultJobs.length < 5) {
+    // If we still don't have 5 jobs OR initial query failed, try without city filter (fallback)
+    if (resultJobs.length < 5 || jobsError || !allJobs || allJobs.length === 0) {
+      console.log(`Fallback: Only found ${resultJobs.length} jobs, trying fallback query...`);
+      
       const { data: fallbackJobs, error: fallbackError } = await supabase
         .from('jobs')
         .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
@@ -246,7 +254,12 @@ export async function GET(req: NextRequest) {
         .order('created_at', { ascending: false })
         .limit(50);
 
+      if (fallbackError) {
+        console.warn('Fallback query error:', fallbackError);
+      }
+
       if (!fallbackError && fallbackJobs && fallbackJobs.length > 0) {
+        console.log(`Fallback: Found ${fallbackJobs.length} jobs`);
         // Ensure diversity in fallback too
         const fallbackCitiesUsed = new Set<string>();
         const fallbackJobsByCity: { [city: string]: any[] } = {};
@@ -299,19 +312,34 @@ export async function GET(req: NextRequest) {
     const validJobs = resultJobs.filter(job => job.job_url && job.job_url.trim() !== '');
     
     if (validJobs.length === 0) {
-      console.error('CRITICAL: No jobs with URLs found in database');
-      // Last resort: try to get ANY job, even without URL check
-      const { data: emergencyJobs } = await supabase
+      console.error('CRITICAL: No jobs with URLs found after all filters');
+      console.error(`  - Initial query: ${allJobs?.length || 0} jobs, error: ${jobsError?.message || 'none'}`);
+      console.error(`  - Result jobs before filtering: ${resultJobs.length}`);
+      console.error(`  - Used job hashes: ${usedJobHashes.size}`);
+      
+      // Last resort: try to get ANY job with URL, no filters
+      const { data: emergencyJobs, error: emergencyError } = await supabase
         .from('jobs')
         .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
         .eq('is_active', true)
-        .limit(5);
+        .not('job_url', 'is', null)
+        .neq('job_url', '')
+        .limit(10);
+      
+      if (emergencyError) {
+        console.error('Emergency query error:', emergencyError);
+        // Check for Supabase blocking
+        const errorStr = JSON.stringify(emergencyError).toLowerCase();
+        if (errorStr.includes('rate limit') || errorStr.includes('429') || errorStr.includes('memory')) {
+          console.error('⚠️  Supabase appears to be blocking queries (rate limit or memory issue)');
+        }
+      }
       
       if (emergencyJobs && emergencyJobs.length > 0) {
+        console.log(`Emergency fallback: Found ${emergencyJobs.length} jobs`);
         emergencyJobs.forEach((job, index) => {
-          // Only add if job has a URL (even if it's '#')
-          if (job.job_url) {
-            // Use realistic scoring for emergency fallback too
+          // Only add if job has a URL
+          if (job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
             const hotMatches = validJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
             const matchScore = calculateMatchScore(index, hotMatches);
             
@@ -321,12 +349,23 @@ export async function GET(req: NextRequest) {
               matchScore,
               matchReason: getMatchReason(job, index, selectedUserProfile),
             });
+            usedJobHashes.add(job.job_hash);
           }
         });
       }
       
       if (validJobs.length === 0) {
-        return NextResponse.json({ jobs: [], error: 'No jobs found in database' }, { status: 500 });
+        console.error('❌ All fallback queries failed - returning empty result');
+        // Return empty array instead of 500 error to prevent breaking the UI
+        return NextResponse.json({ 
+          jobs: [], 
+          error: 'No jobs available. Please try again later.',
+          debug: {
+            initialQueryError: jobsError?.message,
+            emergencyQueryError: emergencyError?.message,
+            supabaseBlocking: emergencyError ? JSON.stringify(emergencyError).toLowerCase().includes('rate limit') : false
+          }
+        }, { status: 200 }); // Return 200 to prevent UI errors
       }
     }
     
