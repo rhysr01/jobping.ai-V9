@@ -9,7 +9,6 @@ import { BrandIcons } from "@/components/ui/BrandIcons";
 import HeroBackgroundAura from "@/components/ui/HeroBackgroundAura";
 import DeviceFrame from "@/components/marketing/DeviceFrame";
 import SampleJobMatches from "@/components/marketing/SampleJobMatches";
-import LogoWordmark from "@/components/LogoWordmark";
 import { trackEvent } from "@/lib/analytics";
 import TrustBadges from "@/components/sections/TrustBadges";
 import { useStats } from "@/hooks/useStats";
@@ -67,16 +66,6 @@ export default function Hero() {
       
       {/* Main container - Split Layout */}
       <div className="container-page relative z-10 mx-auto max-w-7xl">
-        {/* JobPing Logo with Gradient Hat */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.5 }}
-          className="flex justify-center mt-6 mb-8"
-        >
-          <LogoWordmark />
-        </motion.div>
-        
         {/* Split Grid Layout: Content Left, Mockup Right */}
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center mt-4 md:mt-8">
           
@@ -87,17 +76,6 @@ export default function Hero() {
             transition={{ duration: 0.6 }}
             className="text-left space-y-6"
           >
-            {/* Badge */}
-            <motion.p
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.45 }}
-              className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-gradient-to-r from-brand-500/10 to-brand-600/8 px-4 py-1.5 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200 shadow-[0_0_20px_rgba(109,40,217,0.15)] mb-2"
-            >
-              <BrandIcons.Mail className="h-3.5 w-3.5 text-brand-300" />
-              {Copy.HERO_PILL}
-            </motion.p>
-
             {/* Headline - STRONGER TYPOGRAPHY */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
@@ -144,7 +122,7 @@ export default function Hero() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.35, duration: 0.6 }}
-                className="text-sm text-gray-600 mt-3"
+                className="text-sm text-zinc-400 mt-3"
               >
                 Free • No credit card • 2-minute setup
               </motion.p>

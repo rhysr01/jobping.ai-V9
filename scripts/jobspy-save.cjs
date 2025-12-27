@@ -409,10 +409,43 @@ async function saveJobs(jobs, source) {
       description = `${j.title || ''} at ${j.company || ''}. ${description}`.trim();
     }
     
-    // Build categories array
+    // ENHANCED: Build categories array using CAREER_PATH_KEYWORDS
+    const { CAREER_PATH_KEYWORDS } = require('../scrapers/shared/helpers.cjs');
     const categories = ['early-career'];
     if (isInternship) {
       categories.push('internship');
+    }
+    
+    // Infer career path categories from title and description
+    const fullText = `${(j.title || '').toLowerCase()} ${description.toLowerCase()}`;
+    Object.entries(CAREER_PATH_KEYWORDS).forEach(([path, keywords]) => {
+      const keywordLower = keywords.map(k => k.toLowerCase());
+      if (keywordLower.some(kw => fullText.includes(kw))) {
+        // Map to your category naming convention
+        const categoryMap = {
+          'strategy': 'strategy-business-design',
+          'finance': 'finance-accounting',
+          'sales': 'sales-business-development',
+          'marketing': 'marketing-advertising',
+          'product': 'product-management',
+          'operations': 'operations-supply-chain',
+          'general-management': 'general-management',
+          'data': 'data-analytics',
+          'people-hr': 'people-hr',
+          'legal': 'legal-compliance',
+          'sustainability': 'sustainability-esg',
+          'creative': 'creative-design'
+        };
+        const mappedCategory = categoryMap[path] || path;
+        if (!categories.includes(mappedCategory)) {
+          categories.push(mappedCategory);
+        }
+      }
+    });
+    
+    // If no specific category found, keep 'early-career' only
+    if (categories.length === 1) {
+      categories.push('general');
     }
     
     // Clean company name - remove extra whitespace, trim
@@ -450,13 +483,15 @@ async function saveJobs(jobs, source) {
       job_url: (j.job_url || j.url || '').trim(),
       source,
       posted_at: j.posted_at || nowIso,
-      categories: categories,
+      categories: categories, // ENHANCED: Now includes career path categories
       work_environment: workEnv, // Detect from location/description
       experience_required: isInternship ? 'internship' : (isGraduate ? 'graduate' : 'entry-level'),
       is_internship: isInternship, // Maps to form: "Internship"
       is_graduate: isGraduate, // Maps to form: "Graduate Programmes"
       is_early_career: isEarlyCareer, // Maps to form: "Entry Level" (mutually exclusive)
       language_requirements: languages.length > 0 ? languages : null, // Extract languages
+      // ENHANCED: Add salary if extracted
+      ...(salary ? { salary_range: salary } : {}),
       original_posted_date: j.posted_at || nowIso,
       last_seen_at: nowIso,
       is_active: true,

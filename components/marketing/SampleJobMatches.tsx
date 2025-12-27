@@ -51,8 +51,8 @@ export default function SampleJobMatches() {
           <h2 className="text-2xl font-bold text-white mb-2">Here's what you'll see in 2 minutes</h2>
         </div>
 
-        {/* Job Cards */}
-        {sampleJobs.map((job, i) => (
+        {/* Job Cards - Show only first card to avoid cut-off */}
+        {sampleJobs.slice(0, 1).map((job, i) => (
           <div
             key={i}
             className={`rounded-2xl p-5 border ${

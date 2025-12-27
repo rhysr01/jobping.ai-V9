@@ -27,7 +27,7 @@ const plans: PlanConfig[] = [
     headline: 'Try JobPing Free',
     description: Copy.FREE_PLAN_DESCRIPTION,
     price: '€0',
-    suffix: 'forever',
+    suffix: 'one-time',
     cta: { label: 'See My Matches →', href: '/signup/free' },
     features: Copy.FREE_PLAN_FEATURES,
     footnote: Copy.PRICING_BADGE,

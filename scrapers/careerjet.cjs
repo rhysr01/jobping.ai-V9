@@ -238,20 +238,45 @@ function parseRelativeDate(relativeDate) {
 }
 
 /**
- * Infer categories from job text (same logic as helpers.cjs)
+ * ENHANCED: Infer categories from job text using CAREER_PATH_KEYWORDS
+ * Maps to your category naming convention
  */
 function inferCategories(title, description) {
   const text = normalizeString(`${title} ${description}`);
-  const categories = [];
+  const categories = ['early-career'];
+  
+  // Map career paths to your category naming
+  const categoryMap = {
+    'strategy': 'strategy-business-design',
+    'finance': 'finance-accounting',
+    'sales': 'sales-business-development',
+    'marketing': 'marketing-advertising',
+    'product': 'product-management',
+    'operations': 'operations-supply-chain',
+    'general-management': 'general-management',
+    'data': 'data-analytics',
+    'people-hr': 'people-hr',
+    'legal': 'legal-compliance',
+    'sustainability': 'sustainability-esg',
+    'creative': 'creative-design'
+  };
   
   Object.entries(CAREER_PATH_KEYWORDS).forEach(([path, keywords]) => {
     const keywordLower = keywords.map(k => k.toLowerCase());
     if (keywordLower.some(kw => text.includes(kw))) {
-      categories.push(path);
+      const mappedCategory = categoryMap[path] || path;
+      if (!categories.includes(mappedCategory)) {
+        categories.push(mappedCategory);
+      }
     }
   });
   
-  return categories.length > 0 ? categories : ['general'];
+  // If no specific category found, add 'general'
+  if (categories.length === 1) {
+    categories.push('general');
+  }
+  
+  return categories;
 }
 
 /**
@@ -286,17 +311,17 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
       // Log error but don't fail completely - might be rate limit
       if (response.status === 429) {
         console.warn(`[CareerJet] Rate limit hit for ${keyword} in ${city.name} - will slow down`);
-        return { saved: 0, shouldSlowDown: true };
+        return { saved: 0, shouldSlowDown: true, responseTime };
       }
       console.error(`[CareerJet] API error ${response.status} for ${keyword} in ${city.name}`);
-      return { saved: 0, shouldSlowDown: false };
+      return { saved: 0, shouldSlowDown: false, responseTime };
     }
 
     const data = await response.json();
     const jobs = data.jobs || [];
     
     if (jobs.length === 0) {
-      return { saved: 0, shouldSlowDown: false };
+      return { saved: 0, shouldSlowDown: false, responseTime };
     }
 
     console.log(`[CareerJet] Found ${jobs.length} jobs for "${keyword}" in ${city.name} (${responseTime}ms)`);
@@ -331,7 +356,26 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
         // Parse posted date
         const posted_at = parseRelativeDate(job.date || 'today');
 
-        // Infer categories
+        // ENHANCED: Extract salary from description
+        function extractSalary(desc) {
+          if (!desc) return null;
+          const patterns = [
+            /(?:€|EUR|euro)\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(?:€|EUR|euro)?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i,
+            /(?:£|GBP|pound)\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(?:£|GBP|pound)?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i,
+            /(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*(?:€|EUR|£|GBP|euro|pound)/i,
+            /salary[:\s]+(?:€|£|EUR|GBP)?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i,
+            /(?:€|EUR|euro)\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i,
+            /(?:£|GBP|pound)\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i
+          ];
+          for (const pattern of patterns) {
+            const match = desc.match(pattern);
+            if (match) return match[0].trim().replace(/\s+/g, ' ');
+          }
+          return null;
+        }
+        const salary = extractSalary(job.description || '');
+
+        // ENHANCED: Infer categories using CAREER_PATH_KEYWORDS
         const categories = inferCategories(job.title, job.description);
 
         // Normalize location data
@@ -342,6 +386,12 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
           location: job.location,
         });
 
+        // ENHANCED: Enrich description if too short
+        let enrichedDescription = job.description || '';
+        if (enrichedDescription.length < 50 && job.site) {
+          enrichedDescription = `${job.title || ''} at ${job.company || ''}. ${enrichedDescription}`.trim();
+        }
+        
         // Prepare database record
         const nowIso = new Date().toISOString();
         const jobRecord = {
@@ -351,7 +401,7 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
           location: normalized.location, // Use normalized location
           city: normalized.city, // Use normalized city
           country: normalized.country, // Use normalized country
-          description: job.description,
+          description: enrichedDescription, // ENHANCED: Use enriched description
           job_url: job.url,
           posted_at: posted_at,
           original_posted_date: job.date || posted_at,
@@ -360,9 +410,11 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
           status: 'active',
           is_internship,
           is_graduate,
-          categories,
+          categories, // ENHANCED: Better category inference
           work_environment: 'on-site', // Default, can be enhanced with remote detection
           experience_required: is_internship ? 'internship' : (is_graduate ? 'graduate' : 'entry-level'),
+          // ENHANCED: Add salary if extracted
+          ...(salary ? { salary_range: salary } : {}),
           last_seen_at: nowIso,
           created_at: nowIso,
         };
@@ -384,7 +436,7 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
     }
 
     // Return both count and whether to slow down (based on response time)
-    return { saved: savedCount, shouldSlowDown: responseTime > 2000 };
+    return { saved: savedCount, shouldSlowDown: responseTime > 2000, responseTime };
   } catch (error) {
     console.error(`[CareerJet] Error scraping ${keyword} in ${city.name}:`, error.message);
     return 0;
@@ -442,11 +494,14 @@ async function scrapeCareerJet() {
     for (const keyword of cityQueries) {
       try {
         const result = await scrapeCareerJetQuery(city, keyword, supabase);
-        const saved = result.saved || 0;
+        // Handle both old format (number) and new format (object)
+        const saved = typeof result === 'object' ? (result.saved || 0) : (result || 0);
+        const shouldSlowDown = typeof result === 'object' ? (result.shouldSlowDown || false) : false;
+        
         totalSaved += saved;
         
         // Adaptive delay: slow down if API is slow or rate limited
-        if (result.shouldSlowDown) {
+        if (shouldSlowDown) {
           consecutiveSlowResponses++;
           currentDelay = Math.min(currentDelay * 1.5, 3000); // Max 3 seconds
           console.log(`[CareerJet] Slowing down to ${currentDelay}ms (slow response detected)`);

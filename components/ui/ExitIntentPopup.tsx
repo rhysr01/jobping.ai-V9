@@ -95,9 +95,9 @@ export default function ExitIntentPopup() {
 
           <div className="text-center">
             <BrandIcons.Zap className="w-[20.8px] h-[20.8px] mx-auto mb-4 text-emerald-400" aria-hidden="true" />
-            <h3 id="exit-popup-title" className="text-2xl font-black text-white mb-2">Wait! Try Free Now - Instantly</h3>
+            <h3 id="exit-popup-title" className="text-2xl font-black text-white mb-2">Before You Go—Get 5 Free Matches</h3>
             <p id="exit-popup-description" className="text-zinc-200 mb-4">
-              Get <strong className="text-white">5 instant matches right now</strong>. See them immediately—no emails, no waiting, no commitment.
+              Get <strong className="text-white">5 job matches in under 2 minutes</strong>. No signup required.
             </p>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
               <BrandIcons.Zap className="h-3 w-3" />
@@ -108,11 +108,11 @@ export default function ExitIntentPopup() {
               onClick={() => setShowPopup(false)}
               className="btn-primary w-full"
             >
-              Try Free Now - See 5 Matches Instantly →
+              Show Me 5 Matches →
             </Link>
             <button
               onClick={() => setShowPopup(false)}
-              className="mt-4 text-sm text-zinc-200 hover:text-white min-h-[44px] min-w-[44px] px-4"
+              className="mt-4 text-xs text-gray-500 opacity-50 hover:opacity-75 min-h-[44px] min-w-[44px] px-4"
             >
               No thanks
             </button>

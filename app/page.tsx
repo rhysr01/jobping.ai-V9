@@ -11,6 +11,7 @@ import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import ExitIntentPopup from "@/components/ui/ExitIntentPopup";
 import ScrollCTA from "@/components/ui/ScrollCTA";
 import SocialProofRow from "@/components/sections/SocialProofRow";
+import FAQ from "@/components/sections/FAQ";
 import Footer from "@/components/sections/Footer";
 import { trackScrollDepth } from "@/lib/scroll-tracking";
 import * as Copy from "@/lib/copy";
@@ -49,7 +50,7 @@ export default function Page() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="text-center mt-6 text-gray-600"
+              className="text-center mt-6 text-zinc-400"
             >
               You'll get emails like this every Monday, Wednesday, and Friday—each with 5 fresh roles that match your profile.
             </motion.p>
@@ -57,6 +58,7 @@ export default function Page() {
         </section>
         <Pricing />
         <SocialProofRow />
+        <FAQ />
       </main>
       <div className="h-16 w-full bg-gradient-to-b from-transparent to-black/40" />
       <Footer />
