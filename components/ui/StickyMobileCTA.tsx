@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { BrandIcons } from '@/components/ui/BrandIcons';
+import { trackEvent } from '@/lib/analytics';
 
 export default function StickyMobileCTA() {
   const [isVisible, setIsVisible] = useState(false);
@@ -53,13 +54,16 @@ export default function StickyMobileCTA() {
         >
           <Link
             href="/signup/free"
+            onClick={() => {
+              trackEvent('cta_clicked', { type: 'free', location: 'sticky_mobile' });
+            }}
             aria-label="Get my 5 free matches"
             className="pointer-events-auto w-full block"
           >
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="btn-primary w-full flex items-center justify-center gap-2"
+              className="btn-primary w-full flex items-center justify-center gap-2 min-h-[56px] text-base font-semibold"
             >
               <BrandIcons.Mail className="w-5 h-5" />
               <span>Get my 5 free matches</span>

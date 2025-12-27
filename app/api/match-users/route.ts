@@ -884,16 +884,29 @@ addBreadcrumb({
             } : null;
           }).filter(j => j !== null);
 
-          // Get user's target cities
+          // Get user's target cities and work environment preferences
           const targetCities = user.preferences.target_cities || [];
           const targetCount = Math.min(5, matchedJobsRaw.length); // Standard is 5 jobs per email
+          
+          // Extract work environment preferences (may be comma-separated string or array)
+          let targetWorkEnvironments: string[] = [];
+          if (user.preferences.work_environment) {
+            if (Array.isArray(user.preferences.work_environment)) {
+              targetWorkEnvironments = user.preferences.work_environment;
+            } else if (typeof user.preferences.work_environment === 'string') {
+              // Parse comma-separated string: "Office, Hybrid" -> ["Office", "Hybrid"]
+              targetWorkEnvironments = user.preferences.work_environment.split(',').map(env => env.trim()).filter(Boolean);
+            }
+          }
 
           // Apply distribution
           const distributedMatchedJobs = distributeJobsWithDiversity(matchedJobsRaw as any[], {
             targetCount,
             targetCities,
             maxPerSource: Math.ceil(targetCount / 3), // Max 1/3 from any source
-            ensureCityBalance: true
+            ensureCityBalance: true,
+            targetWorkEnvironments: targetWorkEnvironments,
+            ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0
           });
 
           // Log distribution stats
@@ -902,7 +915,9 @@ addBreadcrumb({
             email: user.email,
             sourceDistribution: stats.sourceDistribution,
             cityDistribution: stats.cityDistribution,
-            totalJobs: stats.totalJobs
+            workEnvironmentDistribution: stats.workEnvironmentDistribution,
+            totalJobs: stats.totalJobs,
+            targetWorkEnvironments: targetWorkEnvironments
           });
 
           // Rebuild matches array with distributed jobs

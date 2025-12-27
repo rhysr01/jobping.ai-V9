@@ -7,7 +7,11 @@ import {
   PREMIUM_SEND_DAYS_LABEL,
 } from "@/lib/productMetrics";
 
-export default function FAQSchema() {
+interface FAQSchemaProps {
+  nonce?: string;
+}
+
+export default function FAQSchema({ nonce }: FAQSchemaProps) {
   const faqData = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -50,6 +54,7 @@ export default function FAQSchema() {
   return (
     <script
       type="application/ld+json"
+      nonce={nonce}
       dangerouslySetInnerHTML={{ __html: JSON.stringify(faqData) }}
     />
   );

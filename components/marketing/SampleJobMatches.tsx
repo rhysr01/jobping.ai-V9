@@ -37,7 +37,7 @@ export default function SampleJobMatches() {
   return (
     <div className="bg-black text-white h-full overflow-y-auto">
       {/* Email Header - Purple Gradient */}
-      <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-purple-700 px-6 py-8 text-center relative overflow-hidden">
+      <div className="bg-gradient-to-br from-brand-600 via-brand-500 to-brand-700 px-6 py-8 text-center relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-50" />
         <div className="relative z-10">
           <div className="text-3xl font-bold text-white mb-2 tracking-tight">JobPing</div>
@@ -49,8 +49,7 @@ export default function SampleJobMatches() {
       <div className="px-6 py-6 space-y-4">
         {/* Greeting - Free Tier */}
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-white mb-2">Your first 5 matches ✨</h2>
-          <p className="text-sm text-zinc-400">Free tier - instant matches, no email delivery</p>
+          <h2 className="text-2xl font-bold text-white mb-2">Here's what you'll see in 2 minutes</h2>
         </div>
 
         {/* Job Cards */}
@@ -64,7 +63,7 @@ export default function SampleJobMatches() {
             }`}
           >
             {/* Match Badge - Simpler for Free */}
-            <div className="inline-block px-3 py-1.5 rounded-lg text-xs font-bold mb-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+            <div className="inline-block px-3 py-1.5 rounded-lg text-xs font-bold mb-3 bg-gradient-to-r from-brand-500 to-brand-600 text-white">
               {job.match}% Match
             </div>
 
@@ -107,10 +106,6 @@ export default function SampleJobMatches() {
           </div>
         ))}
 
-        {/* Footer hint - Free Tier */}
-        <div className="pt-4 text-center">
-          <p className="text-xs text-zinc-600">Free: View on website only • No emails sent</p>
-        </div>
       </div>
     </div>
   );

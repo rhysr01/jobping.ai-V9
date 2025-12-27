@@ -9,6 +9,7 @@ import { useFocusTrap } from '@/hooks/useFocusTrap';
 export default function ExitIntentPopup() {
   const [showPopup, setShowPopup] = useState(false);
   const [hasShown, setHasShown] = useState(false);
+  const [timeOnPage, setTimeOnPage] = useState(0);
   const containerRef = useFocusTrap(showPopup);
 
   useEffect(() => {
@@ -19,6 +20,26 @@ export default function ExitIntentPopup() {
         setHasShown(true);
         return;
       }
+
+      // Track time on page
+      const startTime = Date.now();
+      const interval = setInterval(() => {
+        setTimeOnPage(Math.floor((Date.now() - startTime) / 1000));
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Don't show on mobile - let sticky mobile CTA handle it
+    if (typeof window !== 'undefined' && window.innerWidth <= 1024) {
+      return;
+    }
+
+    // Only show after 30+ seconds on page
+    if (timeOnPage < 30) {
+      return;
     }
 
     const handleMouseLeave = (e: MouseEvent) => {
@@ -34,7 +55,7 @@ export default function ExitIntentPopup() {
 
     document.addEventListener('mouseleave', handleMouseLeave);
     return () => document.removeEventListener('mouseleave', handleMouseLeave);
-  }, [hasShown]);
+  }, [hasShown, timeOnPage]);
 
   if (!showPopup) return null;
 
@@ -46,7 +67,7 @@ export default function ExitIntentPopup() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
           onClick={() => setShowPopup(false)}
           role="dialog"
           aria-modal="true"

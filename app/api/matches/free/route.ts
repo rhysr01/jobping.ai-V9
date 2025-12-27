@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseClient } from '@/Utils/databasePool';
 import { apiLogger } from '@/lib/api-logger';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
+import { normalizeJobLocation } from '@/lib/locationNormalizer';
 
 export async function GET(request: NextRequest) {
   // Rate limiting - prevent abuse
@@ -65,18 +66,26 @@ export async function GET(request: NextRequest) {
       throw matchesError;
     }
 
-    // Format response
+    // Format response with normalized location data
     const jobs = (matchesData || [])
       .filter((m: any) => m.jobs && !Array.isArray(m.jobs)) // Filter out any null jobs and ensure it's an object
       .map((m: any) => {
         const job = Array.isArray(m.jobs) ? m.jobs[0] : m.jobs;
+        
+        // Normalize location data for consistent display
+        const normalized = normalizeJobLocation({
+          city: job.city,
+          country: job.country,
+          location: job.location,
+        });
+        
         return {
           id: job.id,
           title: job.title,
           company: job.company,
-          location: job.location,
-          city: job.city,
-          country: job.country,
+          location: normalized.location, // Use normalized location
+          city: normalized.city, // Use normalized city
+          country: normalized.country, // Use normalized country
           description: job.description,
           url: job.job_url, // Use job_url, not url
           work_environment: job.work_environment,

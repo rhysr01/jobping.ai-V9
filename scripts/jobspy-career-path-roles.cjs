@@ -304,13 +304,21 @@ async function saveJobs(jobs, source) {
     // Maps to form options: "Internship", "Graduate Programmes", "Entry Level"
     const isEarlyCareer = !isInternship && !isGraduate; // Entry-level roles
     
+    // Normalize location data
+    const { normalizeJobLocation } = require('../scrapers/shared/locationNormalizer.cjs');
+    const normalized = normalizeJobLocation({
+      city,
+      country,
+      location: j.location,
+    });
+    
     return {
       job_hash: hashJob(j.title, companyName, j.location),
       title: (j.title||'').trim(),
       company: companyName, // Clean company name
-      location: (j.location||'').trim(),
-      city: city, // Extract city from location
-      country: country, // Extract country from location
+      location: normalized.location, // Use normalized location
+      city: normalized.city, // Use normalized city
+      country: normalized.country, // Use normalized country
       description: description,
       job_url: (j.job_url || j.url || '').trim(),
       source,

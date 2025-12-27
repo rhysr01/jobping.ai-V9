@@ -1,6 +1,10 @@
 import { getBaseUrl } from '@/Utils/url-helpers';
 
-export default function StructuredData() {
+interface StructuredDataProps {
+  nonce?: string;
+}
+
+export default function StructuredData({ nonce }: StructuredDataProps) {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -32,6 +36,7 @@ export default function StructuredData() {
   return (
     <script
       type="application/ld+json"
+      nonce={nonce}
       dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
     />
   );

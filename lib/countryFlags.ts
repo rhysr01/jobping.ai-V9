@@ -32,7 +32,7 @@ export function getCountryFlag(country: string): string {
 /**
  * Extract country from city name using EuropeMap coordinates
  */
-const CITY_TO_COUNTRY: Record<string, string> = {
+export const CITY_TO_COUNTRY: Record<string, string> = {
   'Dublin': 'Ireland',
   'Belfast': 'Ireland',
   'London': 'United Kingdom',

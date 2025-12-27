@@ -27,36 +27,75 @@ const CITIES = [
   { name: 'Brussels', country: 'be', locale: 'en_BE' },
 ];
 
-// Local language early-career terms by country (for non-English cities)
+// Local language early-career terms by country (expanded for better coverage)
 const LOCAL_EARLY_CAREER_TERMS = {
-  'fr': ['jeune diplômé', 'stagiaire', 'alternance', 'junior', 'débutant', 'programme graduate'],
-  'de': ['absolvent', 'trainee', 'praktikant', 'junior', 'berufseinsteiger', 'nachwuchskraft', 'praktikum', 'werkstudent'],
-  'es': ['programa de graduados', 'becario', 'prácticas', 'junior', 'recién graduado', 'nivel inicial'],
-  'it': ['neolaureato', 'stage', 'tirocinio', 'junior', 'primo lavoro', 'laureato'],
-  'nl': ['afgestudeerde', 'traineeship', 'starter', 'junior', 'beginnend', 'werkstudent'],
-  'be': ['stagiaire', 'junior', 'débutant', 'afgestudeerde', 'starter'],
-  'pt': ['recém-formado', 'estagiário', 'júnior', 'trainee', 'programa de graduados']
+  'fr': [
+    'jeune diplômé', 'stagiaire', 'alternance', 'junior', 'débutant', 'programme graduate',
+    'coordinateur', 'assistant', 'représentant', 'spécialiste', 'ingénieur', 'stagiaire marketing',
+    'stagiaire finance', 'stagiaire tech', 'stagiaire hr', 'stagiaire esg'
+  ],
+  'de': [
+    'absolvent', 'trainee', 'praktikant', 'junior', 'berufseinsteiger', 'nachwuchskraft', 
+    'praktikum', 'werkstudent', 'koordinator', 'assistent', 'vertreter', 'spezialist',
+    'ingenieur', 'praktikum marketing', 'praktikum finance', 'praktikum tech', 'praktikum hr'
+  ],
+  'es': [
+    'programa de graduados', 'becario', 'prácticas', 'junior', 'recién graduado', 'nivel inicial',
+    'coordinador', 'asistente', 'representante', 'especialista', 'ingeniero', 'prácticas marketing',
+    'prácticas finance', 'prácticas tech', 'prácticas hr', 'prácticas sostenibilidad'
+  ],
+  'it': [
+    'neolaureato', 'stage', 'tirocinio', 'junior', 'primo lavoro', 'laureato',
+    'coordinatore', 'assistente', 'rappresentante', 'specialista', 'ingegnere', 'stage marketing',
+    'stage finance', 'stage tech', 'stage hr', 'stage sostenibilità'
+  ],
+  'nl': [
+    'afgestudeerde', 'traineeship', 'starter', 'junior', 'beginnend', 'werkstudent',
+    'coördinator', 'assistent', 'vertegenwoordiger', 'specialist', 'ingenieur', 'stage marketing',
+    'stage finance', 'stage tech', 'stage hr', 'stage duurzaamheid'
+  ],
+  'be': [
+    'stagiaire', 'junior', 'débutant', 'afgestudeerde', 'starter', 'coordinateur',
+    'assistant', 'représentant', 'spécialiste', 'ingénieur', 'stagiaire marketing'
+  ],
+  'pt': [
+    'recém-formado', 'estagiário', 'júnior', 'trainee', 'programa de graduados',
+    'coordenador', 'assistente', 'representante', 'especialista', 'engenheiro', 'estágio marketing',
+    'estágio finance', 'estágio tech', 'estágio rh'
+  ],
+  'ie': [], // English only
+  'gb': []  // English only
 };
 
 /**
  * Query rotation system - 3 sets that rotate every 8 hours
- * Ensures different queries for morning/evening runs (8am/6pm UTC)
+ * EXPANDED to cover all role types: coordinator, assistant, representative, engineer, specialist, manager, designer, HR, legal, sustainability
  */
 const QUERY_SETS = {
   SET_A: [
-    // Focus: Internships and graduate programs
-    'graduate programme', 'graduate scheme', 'internship', 'intern', 
-    'graduate trainee', 'management trainee', 'trainee program'
+    // Focus: Internships, graduate programs, and coordinator roles
+    'internship', 'graduate programme', 'graduate scheme', 'intern',
+    'graduate trainee', 'management trainee', 'trainee program',
+    'marketing coordinator', 'operations coordinator', 'product coordinator',
+    'hr coordinator', 'project coordinator', 'sales coordinator'
   ],
   SET_B: [
-    // Focus: Analyst and associate roles
+    // Focus: Analyst, associate, assistant, and representative roles
     'business analyst', 'financial analyst', 'data analyst', 'operations analyst',
-    'junior analyst', 'associate consultant', 'graduate analyst'
+    'associate consultant', 'graduate analyst', 'junior analyst',
+    'marketing assistant', 'brand assistant', 'product assistant',
+    'sales development representative', 'sdr', 'bdr', 'account executive',
+    'customer success associate', 'hr assistant'
   ],
   SET_C: [
-    // Focus: Entry-level and junior roles
+    // Focus: Entry-level, junior, engineer, specialist, manager, designer, and program roles
     'entry level', 'junior', 'graduate', 'recent graduate',
-    'early careers program', 'campus hire', 'new grad'
+    'early careers program', 'rotational graduate program',
+    'software engineer intern', 'data engineer intern', 'cloud engineer intern',
+    'associate product manager', 'apm', 'product analyst',
+    'fulfilment specialist', 'technical specialist', 'hr specialist',
+    'ux intern', 'product designer', 'design intern',
+    'esg intern', 'sustainability analyst', 'climate analyst'
   ]
 };
 
@@ -275,15 +314,23 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
         // Infer categories
         const categories = inferCategories(job.title, job.description);
 
+        // Normalize location data
+        const { normalizeJobLocation } = require('./shared/locationNormalizer.cjs');
+        const normalized = normalizeJobLocation({
+          city: city.name,
+          country: city.country,
+          location: job.location,
+        });
+
         // Prepare database record
         const nowIso = new Date().toISOString();
         const jobRecord = {
           job_hash,
           title: job.title,
           company: job.company,
-          location: job.location,
-          city: city.name,
-          country: city.country,
+          location: normalized.location, // Use normalized location
+          city: normalized.city, // Use normalized city
+          country: normalized.country, // Use normalized country
           description: job.description,
           job_url: job.url,
           posted_at: posted_at,
@@ -346,17 +393,28 @@ async function scrapeCareerJet() {
   // Create Supabase client (matching existing scraper pattern)
   const supabase = createClient(supabaseUrl, supabaseKey);
   
-  const queries = generateSearchQueries();
+  const baseQueries = generateSearchQueries();
   
   // Limit to top queries to respect free tier (adjust as needed)
-  const limitedQueries = queries.slice(0, 20);
+  const limitedBaseQueries = baseQueries.slice(0, 20);
   
   let totalSaved = 0;
   let errors = 0;
 
   // Scrape each city + keyword combo
   for (const city of CITIES) {
-    for (const keyword of limitedQueries) {
+    // Get local language terms for this city (if not English)
+    const localTerms = getLocalTermsForCity(city);
+    
+    // Combine base queries with local terms for this city
+    const cityQueries = [...limitedBaseQueries];
+    if (localTerms.length > 0) {
+      // Add top 3 local terms for this city
+      cityQueries.push(...localTerms.slice(0, 3));
+      console.log(`[CareerJet] ${city.name}: Using ${cityQueries.length} queries (${localTerms.slice(0, 3).length} local language terms)`);
+    }
+    
+    for (const keyword of cityQueries) {
       try {
         const saved = await scrapeCareerJetQuery(city, keyword, supabase);
         totalSaved += saved;

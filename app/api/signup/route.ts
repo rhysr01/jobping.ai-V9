@@ -330,13 +330,21 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          // DISTRIBUTION: Ensure source diversity and city balance
+          // DISTRIBUTION: Ensure source diversity, city balance, and work environment balance
           const targetCount = Math.min(10, matchedJobsRaw.length);
+          
+          // Extract work environment preferences from form data
+          const targetWorkEnvironments: string[] = Array.isArray(data.workEnvironment) && data.workEnvironment.length > 0
+            ? data.workEnvironment // Form values: ['Office', 'Hybrid', 'Remote']
+            : [];
+          
           let distributedJobs = distributeJobsWithDiversity(matchedJobsRaw as any[], {
             targetCount,
             targetCities: userCitiesForMatches,
             maxPerSource: Math.ceil(targetCount / 3), // Max 1/3 from any source
-            ensureCityBalance: true
+            ensureCityBalance: true,
+            targetWorkEnvironments: targetWorkEnvironments,
+            ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0
           });
 
           // FALLBACK: If distribution returns empty (due to strict constraints), use raw matches

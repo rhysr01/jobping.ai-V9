@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BrandIcons } from '@/components/ui/BrandIcons';
 import { useReducedMotion } from '@/components/ui/useReducedMotion';
+import { apiCallJson } from '@/lib/api-client';
 
 interface CountryFlag {
   country: string;
@@ -20,17 +21,12 @@ export default function CountryFlags() {
   useEffect(() => {
     async function fetchCountries() {
       try {
-        const response = await fetch('/api/countries');
-        if (!response.ok) {
-          console.error('API error:', response.status, response.statusText);
-          setIsLoading(false);
-          return;
-        }
-        const data = await response.json();
+        const data = await apiCallJson<{ countries?: CountryFlag[] }>('/api/countries');
         console.log('Countries API response:', data);
         setCountries(data.countries || []);
       } catch (error) {
         console.error('Failed to fetch countries:', error);
+        // Silently fail - this is not critical for page functionality
       } finally {
         setIsLoading(false);
       }

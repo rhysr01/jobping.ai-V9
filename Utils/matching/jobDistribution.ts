@@ -15,6 +15,9 @@ export interface DistributionOptions {
   targetCities: string[];
   maxPerSource?: number;
   ensureCityBalance?: boolean;
+  // Work environment balancing
+  targetWorkEnvironments?: string[]; // Form values: ['Office', 'Hybrid', 'Remote']
+  ensureWorkEnvironmentBalance?: boolean;
 }
 
 /**
@@ -33,7 +36,9 @@ export function distributeJobsWithDiversity(
     targetCount,
     targetCities,
     maxPerSource = Math.ceil(targetCount / 3), // Default: max 1/3 from any source
-    ensureCityBalance: initialCityBalance = true
+    ensureCityBalance: initialCityBalance = true,
+    targetWorkEnvironments = [],
+    ensureWorkEnvironmentBalance: initialWorkEnvBalance = true
   } = options;
 
   if (jobsArray.length === 0) return [];
@@ -44,6 +49,70 @@ export function distributeJobsWithDiversity(
   if (targetCities.length === 0) {
     ensureCityBalance = false;
   }
+
+  // Handle empty targetWorkEnvironments - disable work env balance if none selected
+  let ensureWorkEnvironmentBalance = initialWorkEnvBalance;
+  if (targetWorkEnvironments.length === 0) {
+    ensureWorkEnvironmentBalance = false;
+  }
+
+  // Helper: Normalize work environment values
+  // Form values: 'Office', 'Hybrid', 'Remote'
+  // Job values: 'on-site', 'hybrid', 'remote' (or in location field)
+  const normalizeWorkEnv = (env: string): string | null => {
+    if (!env) return null;
+    const envLower = env.toLowerCase().trim();
+    // Handle form values
+    if (envLower === 'office' || envLower === 'on-site' || envLower === 'onsite') return 'on-site';
+    if (envLower === 'hybrid') return 'hybrid';
+    if (envLower === 'remote') return 'remote';
+    return null;
+  };
+
+  // Helper: Get work environment from job
+  const getJobWorkEnv = (job: JobWithSource): string | null => {
+    // Check structured work_environment field first
+    if ((job as any).work_environment) {
+      const normalized = normalizeWorkEnv((job as any).work_environment);
+      if (normalized) return normalized;
+    }
+    // Check location field for remote/hybrid indicators
+    const location = ((job as any).location || '').toLowerCase();
+    if (location.includes('remote') || location.includes('work from home') || location.includes('wfh')) {
+      return 'remote';
+    }
+    if (location.includes('hybrid')) {
+      return 'hybrid';
+    }
+    // Default to on-site if location doesn't indicate otherwise
+    return 'on-site';
+  };
+
+  // Helper: Check if job matches target work environment
+  const matchesWorkEnvironment = (job: JobWithSource, targetEnv: string): boolean => {
+    const jobEnv = getJobWorkEnv(job);
+    const normalizedTarget = normalizeWorkEnv(targetEnv);
+    if (!jobEnv || !normalizedTarget) return true; // If unclear, allow it
+    
+    // Exact match
+    if (jobEnv === normalizedTarget) return true;
+    
+    // Compatibility rules (similar to scoring logic):
+    // - Remote users accept: remote (exact), hybrid (compatible)
+    // - Hybrid users accept: hybrid (exact), remote (compatible), on-site (compatible)
+    // - Office/on-site users accept: on-site (exact), hybrid (compatible)
+    if (normalizedTarget === 'remote') {
+      return jobEnv === 'remote' || jobEnv === 'hybrid';
+    }
+    if (normalizedTarget === 'hybrid') {
+      return jobEnv === 'hybrid' || jobEnv === 'remote' || jobEnv === 'on-site';
+    }
+    if (normalizedTarget === 'on-site') {
+      return jobEnv === 'on-site' || jobEnv === 'hybrid';
+    }
+    
+    return false;
+  };
 
   // Step 1: Validate source diversity exists
   // CRITICAL: Use imperative loop instead of map/filter to avoid TDZ errors
@@ -99,13 +168,67 @@ export function distributeJobsWithDiversity(
       }
     }
     
-    // Handle special cases (Greater London, etc.)
+    // Handle special cases (Greater London, etc.) - matches preFilterJobs.ts logic
+    // Comprehensive list of all signup form cities with their variations
     const specialCases: Record<string, string[]> = {
-      'london': ['greater london', 'central london', 'north london', 'south london', 'east london', 'west london'],
-      'paris': ['greater paris', 'paris region'],
-      'berlin': ['greater berlin'],
-      'madrid': ['greater madrid'],
-      'barcelona': ['greater barcelona'],
+      // UK Cities
+      'london': ['greater london', 'central london', 'north london', 'south london', 'east london', 'west london', 'london area', 'greater london area', 'city of london'],
+      'manchester': ['greater manchester', 'manchester area'],
+      'birmingham': ['greater birmingham', 'birmingham area', 'west midlands'],
+      
+      // Ireland
+      'dublin': ['county dublin', 'baile átha cliath', 'dublin area', 'greater dublin'],
+      'belfast': ['greater belfast', 'belfast area', 'northern ireland', 'belfast city'],
+      
+      // France
+      'paris': ['greater paris', 'paris region', 'île-de-france', 'ile-de-france', 'arrondissement'],
+      
+      // Netherlands
+      'amsterdam': ['greater amsterdam', 'amsterdam area', 'noord-holland', 'north holland'],
+      
+      // Belgium
+      'brussels': ['bruxelles', 'brussel', 'brussels-capital', 'greater brussels', 'brussels area'],
+      
+      // Germany
+      'berlin': ['greater berlin', 'brandenburg', 'berlin area'],
+      'hamburg': ['greater hamburg', 'hamburg area', 'hansestadt hamburg'],
+      'munich': ['münchen', 'greater munich', 'munich area', 'bavaria', 'bayern'],
+      'frankfurt': ['frankfurt am main', 'greater frankfurt', 'frankfurt area', 'hesse', 'hessen'],
+      
+      // Spain
+      'madrid': ['greater madrid', 'comunidad de madrid', 'madrid region', 'madrid area'],
+      'barcelona': ['greater barcelona', 'catalonia', 'catalunya', 'barcelona area', 'barcelona region'],
+      
+      // Italy
+      'milan': ['greater milan', 'milan area', 'lombardy', 'lombardia', 'milano'],
+      'rome': ['greater rome', 'rome area', 'lazio', 'roma'],
+      
+      // Portugal
+      'lisbon': ['lisboa', 'greater lisbon', 'lisbon area', 'lisboa area'],
+      
+      // Switzerland
+      'zurich': ['zürich', 'greater zurich', 'zurich area', 'zürich area'],
+      
+      // Sweden
+      'stockholm': ['stockholms län', 'greater stockholm', 'stockholm area', 'stockholm county'],
+      
+      // Denmark
+      'copenhagen': ['københavn', 'greater copenhagen', 'copenhagen area', 'capital region', 'hovedstaden'],
+      
+      // Norway
+      'oslo': ['greater oslo', 'oslo area', 'oslo county'],
+      
+      // Finland
+      'helsinki': ['greater helsinki', 'helsinki area', 'uusimaa', 'helsingfors'],
+      
+      // Austria
+      'vienna': ['wien', 'greater vienna', 'vienna area', 'wien area'],
+      
+      // Czech Republic
+      'prague': ['praha', 'greater prague', 'prague area', 'praha area'],
+      
+      // Poland
+      'warsaw': ['warszawa', 'greater warsaw', 'warsaw area', 'warszawa area', 'mazowieckie'],
     };
     
     if (specialCases[cityLower]) {
@@ -113,6 +236,45 @@ export function distributeJobsWithDiversity(
       const variants = specialCases[cityLower];
       for (let v = 0; v < variants.length; v++) {
         if (jobCityLower.includes(variants[v]) || jobLocLower.includes(variants[v])) {
+          return true;
+        }
+      }
+    }
+    
+    // Handle reverse matching for cities with multiple name variations
+    // This ensures jobs with native language names match English city names (and vice versa)
+    const reverseMatches: Record<string, string[]> = {
+      'rome': ['roma'],
+      'roma': ['rome'],
+      'milan': ['milano'],
+      'milano': ['milan'],
+      'lisbon': ['lisboa'],
+      'lisboa': ['lisbon'],
+      'zurich': ['zürich'],
+      'zürich': ['zurich'],
+      'copenhagen': ['københavn'],
+      'københavn': ['copenhagen'],
+      'vienna': ['wien'],
+      'wien': ['vienna'],
+      'prague': ['praha'],
+      'praha': ['prague'],
+      'warsaw': ['warszawa'],
+      'warszawa': ['warsaw'],
+      'brussels': ['bruxelles', 'brussel'],
+      'bruxelles': ['brussels'],
+      'brussel': ['brussels'],
+      'munich': ['münchen'],
+      'münchen': ['munich'],
+      'stockholm': ['stockholms län'],
+      'helsinki': ['helsingfors'],
+      'helsingfors': ['helsinki'],
+      'dublin': ['baile átha cliath'],
+    };
+    
+    if (reverseMatches[cityLower]) {
+      const variants = reverseMatches[cityLower];
+      for (let v = 0; v < variants.length; v++) {
+        if (jobCityLower === variants[v] || jobLocLower.includes(variants[v])) {
           return true;
         }
       }
@@ -172,16 +334,101 @@ export function distributeJobsWithDiversity(
     // 1. Any city has zero jobs (impossible to balance)
     // 2. Total jobs from all cities is less than targetCount (can't fill quota)
     if (minCityJobs === 0 || totalCityJobs < targetCount) {
+      // Create detailed city breakdown for debugging
+      const cityBreakdown: Record<string, number> = {};
+      for (let i = 0; i < targetCities.length; i++) {
+        cityBreakdown[targetCities[i]] = jobsByCityCount[i];
+      }
+      
+      // Find cities with zero jobs
+      const citiesWithNoJobs: string[] = [];
+      for (let i = 0; i < targetCities.length; i++) {
+        if (jobsByCityCount[i] === 0) {
+          citiesWithNoJobs.push(targetCities[i]);
+        }
+      }
+      
       console.warn('[JobDistribution] Cannot balance cities', {
         targetCities,
         jobsPerCity: jobsByCityCount,
+        cityBreakdown,
+        citiesWithNoJobs,
         minCityJobs,
         totalCityJobs,
         targetCount,
-        reason: minCityJobs === 0 ? 'Some cities have no jobs' : 'Insufficient jobs to fill quota'
+        totalJobsAvailable: jobsArray.length,
+        reason: minCityJobs === 0 ? 'Some cities have no jobs' : 'Insufficient jobs to fill quota',
+        recommendation: minCityJobs === 0 
+          ? 'Jobs may have been filtered out by scoring/career path requirements, or city name variations (e.g., Roma vs Rome) not matching'
+          : 'Consider relaxing scoring thresholds or expanding job pool'
       });
       canBalanceCities = false;
       ensureCityBalance = false; // Update local variable
+    }
+  }
+
+  // Step 2.5: Check feasibility - can we balance work environments?
+  let canBalanceWorkEnvironments = ensureWorkEnvironmentBalance && targetWorkEnvironments.length > 0;
+  if (canBalanceWorkEnvironments) {
+    // CRITICAL: Use imperative loops instead of map/filter/reduce to avoid TDZ errors
+    const jobsByWorkEnvCount: number[] = [];
+    for (let envIdx = 0; envIdx < targetWorkEnvironments.length; envIdx++) {
+      const targetEnv = targetWorkEnvironments[envIdx];
+      let count = 0;
+      for (let jobIdx = 0; jobIdx < jobsArray.length; jobIdx++) {
+        const job = jobsArray[jobIdx];
+        if (matchesWorkEnvironment(job, targetEnv)) {
+          count++;
+        }
+      }
+      jobsByWorkEnvCount.push(count);
+    }
+    
+    let minWorkEnvJobs = jobsByWorkEnvCount.length > 0 ? jobsByWorkEnvCount[0] : 0;
+    for (let i = 1; i < jobsByWorkEnvCount.length; i++) {
+      if (jobsByWorkEnvCount[i] < minWorkEnvJobs) {
+        minWorkEnvJobs = jobsByWorkEnvCount[i];
+      }
+    }
+    let totalWorkEnvJobs = 0;
+    for (let i = 0; i < jobsByWorkEnvCount.length; i++) {
+      totalWorkEnvJobs += jobsByWorkEnvCount[i];
+    }
+    
+    // Can't balance if:
+    // 1. Any work environment has zero jobs (impossible to balance)
+    // 2. Total jobs from all work environments is less than targetCount (can't fill quota)
+    if (minWorkEnvJobs === 0 || totalWorkEnvJobs < targetCount) {
+      // Create detailed work environment breakdown for debugging
+      const workEnvBreakdown: Record<string, number> = {};
+      for (let i = 0; i < targetWorkEnvironments.length; i++) {
+        workEnvBreakdown[targetWorkEnvironments[i]] = jobsByWorkEnvCount[i];
+      }
+      
+      // Find work environments with zero jobs
+      const workEnvsWithNoJobs: string[] = [];
+      for (let i = 0; i < targetWorkEnvironments.length; i++) {
+        if (jobsByWorkEnvCount[i] === 0) {
+          workEnvsWithNoJobs.push(targetWorkEnvironments[i]);
+        }
+      }
+      
+      console.warn('[JobDistribution] Cannot balance work environments', {
+        targetWorkEnvironments,
+        jobsPerWorkEnv: jobsByWorkEnvCount,
+        workEnvBreakdown,
+        workEnvsWithNoJobs,
+        minWorkEnvJobs,
+        totalWorkEnvJobs,
+        targetCount,
+        totalJobsAvailable: jobsArray.length,
+        reason: minWorkEnvJobs === 0 ? 'Some work environments have no jobs' : 'Insufficient jobs to fill quota',
+        recommendation: minWorkEnvJobs === 0 
+          ? 'Jobs may have been filtered out by scoring/career path requirements, or work environment detection needs improvement'
+          : 'Consider relaxing scoring thresholds or expanding job pool'
+      });
+      canBalanceWorkEnvironments = false;
+      ensureWorkEnvironmentBalance = false; // Update local variable
     }
   }
 
@@ -190,14 +437,24 @@ export function distributeJobsWithDiversity(
     ? Math.floor(targetCount / targetCities.length)
     : targetCount;
   
-  const remainder = canBalanceCities && targetCities.length > 0
+  const cityRemainder = canBalanceCities && targetCities.length > 0
     ? targetCount % targetCities.length
+    : 0;
+
+  // Step 2.6: Calculate jobs per work environment (balanced distribution)
+  const jobsPerWorkEnv = canBalanceWorkEnvironments && targetWorkEnvironments.length > 0
+    ? Math.floor(targetCount / targetWorkEnvironments.length)
+    : targetCount;
+  
+  const workEnvRemainder = canBalanceWorkEnvironments && targetWorkEnvironments.length > 0
+    ? targetCount % targetWorkEnvironments.length
     : 0;
 
   // Step 3: Select jobs ensuring diversity
   const selectedJobs: JobWithSource[] = [];
   const sourceCounts: Record<string, number> = {};
   const cityCounts: Record<string, number> = {};
+  const workEnvCounts: Record<string, number> = {};
   
   // Initialize counters
   // CRITICAL: Use imperative loops instead of forEach to avoid TDZ errors
@@ -207,6 +464,12 @@ export function distributeJobsWithDiversity(
   }
   for (let i = 0; i < targetCities.length; i++) {
     cityCounts[targetCities[i].toLowerCase()] = 0;
+  }
+  for (let i = 0; i < targetWorkEnvironments.length; i++) {
+    const normalizedEnv = normalizeWorkEnv(targetWorkEnvironments[i]);
+    if (normalizedEnv) {
+      workEnvCounts[normalizedEnv] = 0;
+    }
   }
 
   // Helper: Check if we can add a job from this source
@@ -233,7 +496,33 @@ export function distributeJobsWithDiversity(
     if (!matchedTargetCity) return true; // City not in target list, can still add
     
     const currentCount = cityCounts[matchedTargetCity.toLowerCase()] || 0;
-    const targetCount = jobsPerCity + (targetCities.indexOf(matchedTargetCity) < remainder ? 1 : 0);
+    const targetCount = jobsPerCity + (targetCities.indexOf(matchedTargetCity) < cityRemainder ? 1 : 0);
+    return currentCount < targetCount;
+  };
+
+  // Helper: Check if we need more jobs from this work environment
+  const needsMoreFromWorkEnv = (job: JobWithSource): boolean => {
+    if (!ensureWorkEnvironmentBalance || targetWorkEnvironments.length === 0) return true;
+    
+    const jobEnv = getJobWorkEnv(job);
+    if (!jobEnv) return true; // If unclear, allow it
+    
+    // Find which target work environment this job matches
+    let matchedTargetEnv: string | undefined;
+    for (let i = 0; i < targetWorkEnvironments.length; i++) {
+      if (matchesWorkEnvironment(job, targetWorkEnvironments[i])) {
+        matchedTargetEnv = targetWorkEnvironments[i];
+        break;
+      }
+    }
+    
+    if (!matchedTargetEnv) return true; // Work env not in target list, can still add
+    
+    const normalizedTarget = normalizeWorkEnv(matchedTargetEnv);
+    if (!normalizedTarget) return true;
+    
+    const currentCount = workEnvCounts[normalizedTarget] || 0;
+    const targetCount = jobsPerWorkEnv + (targetWorkEnvironments.indexOf(matchedTargetEnv) < workEnvRemainder ? 1 : 0);
     return currentCount < targetCount;
   };
 
@@ -333,14 +622,15 @@ export function distributeJobsWithDiversity(
         return 0;
       });
 
-      // Select first job that fits constraints
+      // Select first job that fits constraints (source, city, AND work environment)
       let foundJob = false;
       for (const job of availableJobs) {
         const source = job.source || 'unknown';
         const city = job.city || '';
         const location = ((job as any).location || '') || '';
         
-        if (canAddFromSource(source) && needsMoreFromCity(city, location)) {
+        // Check all constraints: source diversity, city balance, AND work environment balance
+        if (canAddFromSource(source) && needsMoreFromCity(city, location) && needsMoreFromWorkEnv(job)) {
           selectedJobs.push(job);
           sourceCounts[source] = (sourceCounts[source] || 0) + 1;
           
@@ -358,6 +648,14 @@ export function distributeJobsWithDiversity(
             }
             if (matchedCity) {
               cityCounts[matchedCity.toLowerCase()] = (cityCounts[matchedCity.toLowerCase()] || 0) + 1;
+            }
+          }
+          
+          // Update work environment count
+          if (canBalanceWorkEnvironments && targetWorkEnvironments.length > 0) {
+            const jobEnv = getJobWorkEnv(job);
+            if (jobEnv) {
+              workEnvCounts[jobEnv] = (workEnvCounts[jobEnv] || 0) + 1;
             }
           }
           
@@ -556,7 +854,7 @@ export function distributeJobsWithDiversity(
       }
     }
 
-    // Sort by source diversity and city balance
+    // Sort by source diversity, city balance, AND work environment balance
     remaining.sort((a, b) => {
       const sourceA = a.source || 'unknown';
       const sourceB = b.source || 'unknown';
@@ -578,6 +876,13 @@ export function distributeJobsWithDiversity(
         const locationB = ((b as any).location || '').toLowerCase();
         const needsA = needsMoreFromCity(cityA, locationA);
         const needsB = needsMoreFromCity(cityB, locationB);
+        if (needsA !== needsB) return needsB ? 1 : -1;
+      }
+      
+      // If city balance is equal, prefer work environments we need more from
+      if (ensureWorkEnvironmentBalance && targetWorkEnvironments.length > 0) {
+        const needsA = needsMoreFromWorkEnv(a);
+        const needsB = needsMoreFromWorkEnv(b);
         if (needsA !== needsB) return needsB ? 1 : -1;
       }
       
@@ -611,6 +916,14 @@ export function distributeJobsWithDiversity(
           }
           if (matchedCity) {
             cityCounts[matchedCity.toLowerCase()] = (cityCounts[matchedCity.toLowerCase()] || 0) + 1;
+          }
+        }
+        
+        // Update work environment count if tracking
+        if (canBalanceWorkEnvironments && targetWorkEnvironments.length > 0) {
+          const jobEnv = getJobWorkEnv(job);
+          if (jobEnv) {
+            workEnvCounts[jobEnv] = (workEnvCounts[jobEnv] || 0) + 1;
           }
         }
       }
@@ -658,6 +971,7 @@ export function distributeJobsWithDiversity(
 export function getDistributionStats(jobs: JobWithSource[]): {
   sourceDistribution: Record<string, number>;
   cityDistribution: Record<string, number>;
+  workEnvironmentDistribution: Record<string, number>;
   totalJobs: number;
 } {
   // CRITICAL FIX: Capture jobs parameter immediately to prevent TDZ errors during bundling
@@ -665,20 +979,42 @@ export function getDistributionStats(jobs: JobWithSource[]): {
   
   const sourceDistribution: Record<string, number> = {};
   const cityDistribution: Record<string, number> = {};
+  const workEnvironmentDistribution: Record<string, number> = {};
+
+  // Helper to get work environment from job (same logic as main function)
+  const getJobWorkEnv = (job: JobWithSource): string => {
+    if ((job as any).work_environment) {
+      const env = String((job as any).work_environment).toLowerCase().trim();
+      if (env === 'office' || env === 'on-site' || env === 'onsite') return 'on-site';
+      if (env === 'hybrid') return 'hybrid';
+      if (env === 'remote') return 'remote';
+    }
+    const location = ((job as any).location || '').toLowerCase();
+    if (location.includes('remote') || location.includes('work from home') || location.includes('wfh')) {
+      return 'remote';
+    }
+    if (location.includes('hybrid')) {
+      return 'hybrid';
+    }
+    return 'on-site';
+  };
 
   // CRITICAL: Use imperative loop instead of forEach to avoid TDZ errors
   for (let i = 0; i < jobsArray.length; i++) {
     const job = jobsArray[i];
     const source = job.source || 'unknown';
     const city = job.city || 'unknown';
+    const workEnv = getJobWorkEnv(job);
     
     sourceDistribution[source] = (sourceDistribution[source] || 0) + 1;
     cityDistribution[city] = (cityDistribution[city] || 0) + 1;
+    workEnvironmentDistribution[workEnv] = (workEnvironmentDistribution[workEnv] || 0) + 1;
   }
 
   return {
     sourceDistribution,
     cityDistribution,
+    workEnvironmentDistribution,
     totalJobs: jobsArray.length
   };
 }

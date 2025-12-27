@@ -26,7 +26,7 @@ export default function Button({
   
   const variants = {
     primary:
-      'h-11 bg-[#7E61FF] text-white font-medium shadow-md shadow-[#7E61FF]/40 hover:bg-[#6E57F5] hover:-translate-y-0.5 active:translate-y-0',
+      'h-11 bg-[#6B5A85] text-white font-medium shadow-md shadow-[#6B5A85]/30 hover:bg-[#584A6F] hover:-translate-y-0.5 active:translate-y-0',
     secondary:
       'border-2 border-white/25 bg-white/[0.08] text-white font-medium hover:border-brand-500/50 hover:bg-white/12',
     ghost:
@@ -34,7 +34,7 @@ export default function Button({
     danger:
       'border-2 border-red-500/30 bg-red-500/15 text-red-200 hover:bg-red-500/25 font-medium',
     gradient:
-      'h-11 bg-gradient-to-r from-[#7E61FF] to-[#A78BFA] text-white font-medium shadow-md shadow-[#7E61FF]/40 hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0'
+      'h-11 bg-gradient-to-r from-[#6B5A85] to-[#85799C] text-white font-medium shadow-md shadow-[#6B5A85]/30 hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0'
   };
 
   const sizes = {

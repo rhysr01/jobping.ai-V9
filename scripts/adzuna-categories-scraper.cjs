@@ -54,18 +54,32 @@ const EU_CITIES_CATEGORIES = [
 ];
 
 // Query rotation system for Adzuna - 3 different sets that rotate throughout the day
-// This ensures different queries are used if running twice a day
+// EXPANDED to cover all role types: coordinator, assistant, representative, engineer, specialist, manager, designer, HR, legal, sustainability
 const QUERY_SETS = {
   SET_A: [
-    'internship', 'graduate programme', 'junior', 'entry level', 'trainee', 'graduate scheme'
+    // Focus: Internships, graduate programs, and coordinator roles
+    'internship', 'graduate programme', 'graduate scheme', 'intern',
+    'graduate trainee', 'management trainee', 'trainee program',
+    'marketing coordinator', 'operations coordinator', 'product coordinator',
+    'hr coordinator', 'project coordinator', 'sales coordinator'
   ],
   SET_B: [
-    'finance graduate', 'marketing graduate', 'strategy graduate', 
-    'business analyst', 'data analyst', 'operations analyst', 'financial analyst'
+    // Focus: Analyst, associate, assistant, and representative roles
+    'business analyst', 'financial analyst', 'data analyst', 'operations analyst',
+    'associate consultant', 'graduate analyst', 'junior analyst',
+    'marketing assistant', 'brand assistant', 'product assistant',
+    'sales development representative', 'sdr', 'bdr', 'account executive',
+    'customer success associate', 'hr assistant'
   ],
   SET_C: [
-    'graduate program', 'trainee program', 'entry level analyst',
-    'junior associate', 'associate consultant', 'analyst', 'graduate trainee'
+    // Focus: Entry-level, junior, engineer, specialist, manager, designer, and program roles
+    'entry level', 'junior', 'graduate', 'recent graduate',
+    'early careers program', 'rotational graduate program',
+    'software engineer intern', 'data engineer intern', 'cloud engineer intern',
+    'associate product manager', 'apm', 'product analyst',
+    'fulfilment specialist', 'technical specialist', 'hr specialist',
+    'ux intern', 'product designer', 'design intern',
+    'esg intern', 'sustainability analyst', 'climate analyst'
   ]
 };
 
@@ -89,22 +103,63 @@ const currentSet = getCurrentQuerySet();
 const CORE_ENGLISH_TERMS = QUERY_SETS[currentSet];
 console.log(`🔄 Adzuna using query set: ${currentSet} (${CORE_ENGLISH_TERMS.length} terms) - rotates every 8 hours for variety`);
 
-// Local language terms by country (SAME AS JOBSPY - max 6 per city)
+// Local language terms by country (EXPANDED for better coverage - includes coordinator, assistant, representative, engineer, specialist roles)
 const LOCAL_EARLY_CAREER_TERMS = {
   'gb': [], // English only set is CORE_ENGLISH_TERMS
-  'es': ['programa de graduados', 'becario', 'prácticas', 'junior', 'recién graduado', 'nivel inicial'],
-  'de': ['absolvent', 'trainee', 'praktikant', 'junior', 'berufseinsteiger', 'nachwuchskraft'],
-  'nl': ['afgestudeerde', 'traineeship', 'starter', 'junior', 'beginnend', 'werkstudent'],
-  'fr': ['jeune diplômé', 'stagiaire', 'alternance', 'junior', 'débutant', 'programme graduate'],
-  'ch': ['absolvent', 'trainee', 'praktikant', 'junior', 'jeune diplômé', 'stagiaire'],
-  'it': ['neolaureato', 'stage', 'tirocinio', 'junior', 'primo lavoro', 'laureato'],
+  'es': [
+    'programa de graduados', 'becario', 'prácticas', 'junior', 'recién graduado', 'nivel inicial',
+    'coordinador', 'asistente', 'representante', 'especialista', 'ingeniero', 'prácticas marketing',
+    'prácticas finance', 'prácticas tech', 'prácticas hr', 'prácticas sostenibilidad'
+  ],
+  'de': [
+    'absolvent', 'trainee', 'praktikant', 'junior', 'berufseinsteiger', 'nachwuchskraft',
+    'koordinator', 'assistent', 'vertreter', 'spezialist', 'ingenieur', 'praktikum marketing',
+    'praktikum finance', 'praktikum tech', 'praktikum hr', 'praktikum nachhaltigkeit'
+  ],
+  'nl': [
+    'afgestudeerde', 'traineeship', 'starter', 'junior', 'beginnend', 'werkstudent',
+    'coördinator', 'assistent', 'vertegenwoordiger', 'specialist', 'ingenieur', 'stage marketing',
+    'stage finance', 'stage tech', 'stage hr', 'stage duurzaamheid'
+  ],
+  'fr': [
+    'jeune diplômé', 'stagiaire', 'alternance', 'junior', 'débutant', 'programme graduate',
+    'coordinateur', 'assistant', 'représentant', 'spécialiste', 'ingénieur', 'stagiaire marketing',
+    'stagiaire finance', 'stagiaire tech', 'stagiaire hr', 'stagiaire esg'
+  ],
+  'ch': [
+    'absolvent', 'trainee', 'praktikant', 'junior', 'jeune diplômé', 'stagiaire',
+    'koordinator', 'assistent', 'vertreter', 'spezialist', 'ingenieur'
+  ],
+  'it': [
+    'neolaureato', 'stage', 'tirocinio', 'junior', 'primo lavoro', 'laureato',
+    'coordinatore', 'assistente', 'rappresentante', 'specialista', 'ingegnere', 'stage marketing',
+    'stage finance', 'stage tech', 'stage hr', 'stage sostenibilità'
+  ],
   'ie': [], // English only set is CORE_ENGLISH_TERMS
-  'be': ['stagiaire', 'junior', 'débutant', 'afgestudeerde', 'starter'], // Belgium: French + Dutch
-  'se': ['nyexaminerad', 'trainee', 'praktikant', 'junior', 'nybörjare', 'graduate'], // Swedish
-  'dk': ['nyuddannet', 'trainee', 'praktikant', 'junior', 'begynder', 'graduate'], // Danish
-  'at': ['absolvent', 'trainee', 'praktikant', 'junior', 'einsteiger', 'nachwuchskraft'], // Austrian German
-  'cz': ['absolvent', 'trainee', 'praktikant', 'junior', 'začátečník', 'graduate'], // Czech
-  'pl': ['absolwent', 'stażysta', 'praktykant', 'junior', 'początkujący', 'graduate'] // Polish
+  'be': [
+    'stagiaire', 'junior', 'débutant', 'afgestudeerde', 'starter', 'coordinateur',
+    'assistant', 'représentant', 'spécialiste', 'ingénieur', 'stagiaire marketing'
+  ], // Belgium: French + Dutch
+  'se': [
+    'nyexaminerad', 'trainee', 'praktikant', 'junior', 'nybörjare', 'graduate',
+    'koordinator', 'assistent', 'representant', 'specialist', 'ingenjör'
+  ], // Swedish
+  'dk': [
+    'nyuddannet', 'trainee', 'praktikant', 'junior', 'begynder', 'graduate',
+    'koordinator', 'assistent', 'repræsentant', 'specialist', 'ingeniør'
+  ], // Danish
+  'at': [
+    'absolvent', 'trainee', 'praktikant', 'junior', 'einsteiger', 'nachwuchskraft',
+    'koordinator', 'assistent', 'vertreter', 'spezialist', 'ingenieur'
+  ], // Austrian German
+  'cz': [
+    'absolvent', 'trainee', 'praktikant', 'junior', 'začátečník', 'graduate',
+    'koordinátor', 'asistent', 'zástupce', 'specialista', 'inženýr'
+  ], // Czech
+  'pl': [
+    'absolwent', 'stażysta', 'praktykant', 'junior', 'początkujący', 'graduate',
+    'koordynator', 'asystent', 'przedstawiciel', 'specjalista', 'inżynier'
+  ] // Polish
 };
 
 // Target sectors for IE graduates

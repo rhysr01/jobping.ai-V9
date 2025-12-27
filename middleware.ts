@@ -29,6 +29,40 @@ export function middleware(request: NextRequest) {
     logger.debug('API request started', requestContext);
   }
 
+  // CSRF Protection for state-changing API requests
+  // Only check POST, PUT, DELETE, PATCH methods
+  const stateChangingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
+  if (
+    request.nextUrl.pathname.startsWith('/api/') &&
+    stateChangingMethods.includes(request.method)
+  ) {
+    // Skip CSRF check for webhook endpoints (they use their own authentication)
+    const isWebhook = request.nextUrl.pathname.includes('/webhooks/');
+    
+    // Skip CSRF check for internal/system endpoints that use API keys
+    const isSystemEndpoint = request.nextUrl.pathname.includes('/cleanup-jobs') ||
+                             request.nextUrl.pathname.includes('/send-scheduled-emails');
+    
+    if (!isWebhook && !isSystemEndpoint) {
+      const csrfHeader = request.headers.get('x-csrf-token');
+      
+      if (!csrfHeader || csrfHeader !== 'jobping-request') {
+        logger.warn('CSRF protection failed', {
+          ...requestContext,
+          metadata: {
+            ...requestContext.metadata,
+            csrfHeader: csrfHeader || 'missing',
+          },
+        });
+        
+        return NextResponse.json(
+          { error: 'Invalid request' },
+          { status: 403 }
+        );
+      }
+    }
+  }
+
   // HTTPS enforcement in production
   if (process.env.NODE_ENV === 'production') {
     const proto = request.headers.get('x-forwarded-proto');
@@ -90,15 +124,23 @@ export function middleware(request: NextRequest) {
     : ''
   );
   
-  // Enhanced security headers
+  // Generate nonce for inline scripts (prevents XSS while allowing necessary inline scripts)
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  
+  // Set nonce in response header for Next.js to use
+  response.headers.set('x-nonce', nonce);
+  
+  // Enhanced security headers with strict CSP (no unsafe-inline or unsafe-eval)
+  // Using nonces for dynamic scripts and hashes for static inline scripts
+  // Hash for Google Analytics inline script: kqFzuQJivdoTtSFw6wC6ycybBAlKswA7hJ7PojqXc7Q=
   response.headers.set(
     'Content-Security-Policy',
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://cdn.jsdelivr.net; " +
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    "font-src 'self' https://fonts.gstatic.com; " +
+    `script-src 'self' 'nonce-${nonce}' 'sha256-kqFzuQJivdoTtSFw6wC6ycybBAlKswA7hJ7PojqXc7Q=' https://www.googletagmanager.com https://www.google-analytics.com https://*.supabase.co https://cdn.jsdelivr.net; ` +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com; " +
+    "font-src 'self' https://fonts.gstatic.com https://api.fontshare.com; " +
     "img-src 'self' data: https: blob:; " +
-    "connect-src 'self' https://*.supabase.co https://api.resend.com https://api.openai.com; " +
+    "connect-src 'self' https://*.supabase.co https://api.resend.com https://api.openai.com https://www.google-analytics.com https://www.googletagmanager.com; " +
     "object-src 'none'; " +
     "base-uri 'self'; " +
     "form-action 'self'"

@@ -10,7 +10,7 @@ export default function HowItWorks() {
     <section
       id="how-it-works"
       data-testid="how-it-works"
-      className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 bg-black scroll-snap-section relative"
+      className="pt-20 pb-20 md:pt-24 md:pb-24 lg:pt-28 lg:pb-28 bg-black scroll-snap-section relative"
     >
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
@@ -32,11 +32,51 @@ export default function HowItWorks() {
             Updated daily
           </span>
           <h2 className="section-title mt-4 mb-2">
-            Less typing, more applying
+            How JobPing Works
           </h2>
           <p className="mb-10 text-xl text-zinc-300 md:text-2xl">
             {Copy.HOW_IT_WORKS_SUMMARY}
           </p>
+        </motion.div>
+
+        {/* Student-focused benefits */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mt-12 mb-14 max-w-4xl mx-auto"
+        >
+          <div className="space-y-3">
+            {Copy.BUILT_FOR_STUDENTS_FEATURES.filter(feature => feature && feature.title).map((feature, index) => {
+              const featureIcons = [BrandIcons.Briefcase, BrandIcons.CheckCircle, BrandIcons.Mail];
+              const Icon = featureIcons[index] || BrandIcons.Sparkles;
+              return (
+                <motion.div
+                  key={feature.num}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.45, delay: index * 0.05 }}
+                  className="group relative overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 p-6 backdrop-blur-xl shadow-feature transition-all duration-200 hover:-translate-y-1 hover:shadow-hover"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[radial-gradient(circle_at_center,theme(colors.brand.500/0.4),transparent_70%)]">
+                      <Icon className="h-5 w-5 text-brand-300" />
+                    </div>
+                    <div className="max-w-md">
+                      <h3 className="text-base md:text-lg font-semibold text-white">
+                        {feature.title}
+                      </h3>
+                      <p className="text-sm text-zinc-300 mt-1 max-w-[600px]">
+                        {feature.body}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
         </motion.div>
 
         <div className="relative mt-14 grid gap-4 sm:mt-16 md:grid-cols-3">

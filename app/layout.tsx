@@ -2,11 +2,12 @@ import "./globals.css";
 import "@/lib/web-vitals";
 import type { Metadata } from "next";
 import Script from "next/script";
+import { headers } from "next/headers";
 import StructuredData from "@/components/StructuredData";
 import FAQSchema from "@/components/FAQSchema";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Toaster from "@/components/ui/Toaster";
-import ScrollHeader from "@/components/ui/ScrollHeader";
+import Header from "@/components/sections/Header";
 import CookieBanner from "@/components/ui/CookieBanner";
 
 export const metadata: Metadata = {
@@ -87,11 +88,15 @@ export const viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Get nonce from headers (set by middleware)
+  const headersList = await headers();
+  const nonce = headersList.get('x-nonce') || '';
+
   return (
     <html lang="en">
       <head>
@@ -120,10 +125,11 @@ export default function RootLayout({
             `,
           }}
         />
-        <StructuredData />
-        <FAQSchema />
+        <StructuredData nonce={nonce} />
+        <FAQSchema nonce={nonce} />
         <script
           type="application/ld+json"
+          nonce={nonce}
           // Organization schema to complement SoftwareApplication
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
@@ -139,28 +145,27 @@ export default function RootLayout({
       </head>
       <body className="text-white premium-bg custom-scrollbar">
         <a
-          href="#main"
+          href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3
                      bg-black/80 border border-white/20 rounded-md px-3 py-2"
         >
           Skip to content
         </a>
-        <ScrollHeader />
-        <div
-          className="container-page h-14 flex items-center justify-center"
-          aria-hidden
-        />
-        <main id="main">
-          <ErrorBoundary>{children}</ErrorBoundary>
-        </main>
+        <Header />
+        {/* Spacer for fixed header */}
+        <div className="h-16 md:h-20" aria-hidden />
+        <ErrorBoundary>{children}</ErrorBoundary>
         <Toaster />
         <CookieBanner />
-        {/* Google Analytics */}
+        {/* Google Analytics - inline script will work with CSP nonce via Next.js */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-G40ZHDYNL6"
           strategy="afterInteractive"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
+        <Script 
+          id="google-analytics" 
+          strategy="afterInteractive"
+        >
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}

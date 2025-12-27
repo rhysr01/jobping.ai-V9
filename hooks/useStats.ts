@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { apiCall, apiCallJson, ApiError } from '@/lib/api-client';
 
 interface StatsData {
   activeJobs: number;
@@ -81,8 +82,7 @@ export function useStats(): UseStatsReturn {
       setError(null);
       
       // Fetch fresh data in background
-      fetch('/api/stats')
-        .then(res => res.ok ? res.json() : null)
+      apiCallJson('/api/stats')
         .then(data => {
           if (data) {
             const freshStats: StatsData = {
@@ -109,12 +109,7 @@ export function useStats(): UseStatsReturn {
     setError(null);
     
     try {
-      const response = await fetch('/api/stats');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
+      const data = await apiCallJson('/api/stats');
       const freshStats: StatsData = {
         activeJobs: parseStat(data.data?.activeJobs ?? data.data?.activeJobsFormatted ?? data.activeJobs ?? data.activeJobsFormatted, 12748),
         totalUsers: parseStat(data.data?.totalUsers ?? data.data?.totalUsersFormatted ?? data.totalUsers ?? data.totalUsersFormatted, 3400),
@@ -129,7 +124,11 @@ export function useStats(): UseStatsReturn {
       setCachedStats(freshStats);
       setError(null);
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to fetch stats');
+      const error = err instanceof ApiError 
+        ? err 
+        : err instanceof Error 
+          ? err 
+          : new Error('Failed to fetch stats');
       setError(error);
       // Use defaults on error
       setStats({
