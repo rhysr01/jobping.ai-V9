@@ -38,25 +38,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 401 });
     }
 
-    // Get user's matches from YOUR matches table (uses user_email!)
+    // Get user's matches from matches table (uses user_email!)
     const { data: matchesData, error: matchesError } = await supabase
       .from('matches')
-      .select(`
-        match_score,
-        match_reason,
-        jobs (
-          id,
-          title,
-          company,
-          location,
-          city,
-          country,
-          description,
-          job_url,
-          work_environment,
-          categories
-        )
-      `)
+      .select('match_score, match_reason, job_hash')
       .eq('user_email', email) // CRITICAL: Use user_email, not user_id!
       .order('match_score', { ascending: false })
       .limit(5);
@@ -66,11 +51,47 @@ export async function GET(request: NextRequest) {
       throw matchesError;
     }
 
+    if (!matchesData || matchesData.length === 0) {
+      apiLogger.info('No matches found for user', { email });
+      return NextResponse.json({ jobs: [] });
+    }
+
+    // Extract job_hashes and fetch jobs manually (more reliable than join)
+    const jobHashes = matchesData.map((m: any) => m.job_hash).filter(Boolean);
+    
+    if (jobHashes.length === 0) {
+      apiLogger.warn('Matches found but no job_hashes', { email, matchesCount: matchesData.length });
+      return NextResponse.json({ jobs: [] });
+    }
+
+    // Fetch jobs by job_hash
+    const { data: jobsData, error: jobsError } = await supabase
+      .from('jobs')
+      .select('id, title, company, location, city, country, description, job_url, work_environment, categories, job_hash')
+      .in('job_hash', jobHashes)
+      .eq('is_active', true)
+      .eq('status', 'active');
+
+    if (jobsError) {
+      apiLogger.error('Failed to fetch jobs', jobsError as Error, { email, jobHashesCount: jobHashes.length });
+      throw jobsError;
+    }
+
+    // Create a map of job_hash -> job for quick lookup
+    const jobsMap = new Map((jobsData || []).map((job: any) => [job.job_hash, job]));
+
     // Format response with normalized location data
-    const jobs = (matchesData || [])
-      .filter((m: any) => m.jobs && !Array.isArray(m.jobs)) // Filter out any null jobs and ensure it's an object
+    const jobs = matchesData
       .map((m: any) => {
-        const job = Array.isArray(m.jobs) ? m.jobs[0] : m.jobs;
+        const job = jobsMap.get(m.job_hash);
+        if (!job) {
+          apiLogger.warn('Match has job_hash but job not found', { 
+            email, 
+            job_hash: m.job_hash,
+            availableJobHashes: Array.from(jobsMap.keys()).slice(0, 3)
+          });
+          return null;
+        }
         
         // Normalize location data for consistent display
         const normalized = normalizeJobLocation({
@@ -92,7 +113,15 @@ export async function GET(request: NextRequest) {
           match_score: m.match_score,
           match_reason: m.match_reason,
         };
-      });
+      })
+      .filter(Boolean); // Remove null entries
+
+    apiLogger.info('Matches fetched successfully', { 
+      email, 
+      matchesCount: matchesData.length,
+      jobsFound: jobs.length,
+      jobsRequested: jobHashes.length
+    });
 
     return NextResponse.json({ jobs });
 
