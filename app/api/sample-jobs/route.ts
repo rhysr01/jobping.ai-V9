@@ -138,7 +138,7 @@ export async function GET(req: NextRequest) {
         company: job.company || 'Company',
         location: job.location || 'Location',
         description: job.description || '',
-        jobUrl: job.job_url || '#', // Use '#' if no URL (will disable button)
+        jobUrl: '#', // Always use '#' for sample previews - buttons should be disabled
         jobHash: job.job_hash || '',
         categories: job.categories || [],
         workEnvironment: job.work_environment || 'Hybrid',

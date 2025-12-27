@@ -521,16 +521,12 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
                 )}
                 
                 <button
-                  onClick={() => {
-                    if (job.jobUrl && job.jobUrl !== '#') {
-                      window.open(job.jobUrl, '_blank', 'noopener,noreferrer');
-                    }
-                  }}
-                  disabled={!job.jobUrl || job.jobUrl === '#'}
-                  aria-label={`Apply now: ${job.title} at ${job.company}`}
-                  className="w-full inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 px-8 py-4 text-[16px] font-bold text-white shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(139,92,246,0.5)] hover:shadow-[0_8px_30px_rgba(139,92,246,0.6)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  disabled={true}
+                  aria-label={`Sample preview: ${job.title} at ${job.company}`}
+                  className="w-full inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-brand-500/50 to-brand-600/50 px-8 py-4 text-[16px] font-bold text-white/70 shadow-lg cursor-not-allowed border border-brand-500/30"
+                  title="This is a sample preview. Sign up to get your own matches with working apply buttons."
                 >
-                  {job.jobUrl && job.jobUrl !== '#' ? 'Apply now →' : 'Sample Preview'}
+                  Sample Preview — Sign up to apply →
                 </button>
               </div>
             );
