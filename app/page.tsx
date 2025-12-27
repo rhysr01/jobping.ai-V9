@@ -46,15 +46,6 @@ export default function Page() {
             <div className="flex justify-center">
               <EmailPhoneShowcase day="monday" careerPath="finance" />
             </div>
-            <motion.p
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="text-center mt-6 text-zinc-400"
-            >
-              Try it free: Get 5 matches instantly (one-time). <span className="text-brand-300 font-semibold">Like it? Upgrade to get 15 matches/week</span> delivered Mon/Wed/Fri for €5/month.
-            </motion.p>
           </div>
         </section>
         <WhatHappensNext />
