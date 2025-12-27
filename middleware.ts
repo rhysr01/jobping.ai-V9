@@ -43,7 +43,12 @@ export function middleware(request: NextRequest) {
     const isSystemEndpoint = request.nextUrl.pathname.includes('/cleanup-jobs') ||
                              request.nextUrl.pathname.includes('/send-scheduled-emails');
     
-    if (!isWebhook && !isSystemEndpoint) {
+    // Skip CSRF check for analytics/tracking endpoints (non-state-changing, called from client-side)
+    const isAnalyticsEndpoint = request.nextUrl.pathname.includes('/analytics/') ||
+                                request.nextUrl.pathname.includes('/track-engagement') ||
+                                request.nextUrl.pathname.includes('/tracking/');
+    
+    if (!isWebhook && !isSystemEndpoint && !isAnalyticsEndpoint) {
       const csrfHeader = request.headers.get('x-csrf-token');
       
       if (!csrfHeader || csrfHeader !== 'jobping-request') {
