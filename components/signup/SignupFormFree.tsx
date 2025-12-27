@@ -244,6 +244,16 @@ export default function SignupFormFree() {
 
       if (response.status === 409) {
         trackEvent('signup_failed', { tier: 'free', error: 'already_exists' });
+        
+        // If redirectToMatches flag is set, redirect to matches page
+        if (data.redirectToMatches) {
+          showToast.success('Redirecting to your matches...');
+          setTimeout(() => {
+            router.push('/matches');
+          }, 1000);
+          return;
+        }
+        
         setError('You\'ve already tried Free! Want 10 more jobs this week? Upgrade to Premium for 15 jobs/week (3x more).');
         return;
       }

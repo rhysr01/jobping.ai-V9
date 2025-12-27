@@ -58,13 +58,44 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (existingFreeUser) {
-      return NextResponse.json(
+      // User already exists - set cookie and check if they have matches
+      // This allows them to access /matches even if cookie was lost
+      const response = NextResponse.json(
         { 
           error: 'already_signed_up', 
-          message: 'You already tried Free. Want 10 more jobs this week? Upgrade to Premium for 15 jobs/week (3x more)!' 
+          message: 'You already tried Free. Redirecting to your matches...',
+          redirectToMatches: true
         },
         { status: 409 }
       );
+
+      // Set cookie so they can access matches
+      const isProduction = process.env.NODE_ENV === 'production';
+      const isHttps = request.headers.get('x-forwarded-proto') === 'https' || 
+                       request.url.startsWith('https://');
+      
+      response.cookies.set('free_user_email', normalizedEmail, {
+        httpOnly: true,
+        secure: isProduction && isHttps,
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+        path: '/',
+      });
+
+      // Check if they have matches
+      const { data: existingMatches } = await supabase
+        .from('matches')
+        .select('job_hash')
+        .eq('user_email', normalizedEmail)
+        .limit(1);
+
+      apiLogger.info('Existing free user tried to sign up again', {
+        email: normalizedEmail,
+        hasMatches: (existingMatches?.length || 0) > 0,
+        matchCount: existingMatches?.length || 0
+      });
+
+      return response;
     }
 
     // Create free user record
