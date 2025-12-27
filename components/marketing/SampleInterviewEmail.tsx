@@ -241,29 +241,24 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
                       hot 
                         ? 'from-brand-600 to-brand-500' 
                         : 'from-brand-500 to-brand-600'
-                    } px-4 py-1.5 text-[11px] font-semibold text-white cursor-help group`}
+                    } px-4 py-1.5 text-[11px] font-semibold text-white cursor-help group relative`}
                     aria-label={`${score} percent match score. ${hot ? 'Hot match' : 'Good match'} - based on your location, career path, visa status, and experience level matching this role.`}
-                    title={`${score}% match: Based on how well this role matches your location (${job.location}), career path (Strategy), visa status, and experience level${hot ? '. This is a hot match!' : ''}`}
+                    title={`${score}% Match: This score shows how well this role matches your preferences. ${hot ? 'Hot matches (90%+) are highly aligned with your location, career path, visa status, and experience level.' : 'Good matches (85-89%) align well with most of your preferences.'} Hover for details.`}
                   >
                     {hot ? `🔥 Hot Match ${score}%` : `${score}% Match`}
-                    <span className="opacity-60 group-hover:opacity-100 transition-opacity" aria-hidden="true">ℹ️</span>
+                    <span className="opacity-60 group-hover:opacity-100 transition-opacity" aria-hidden="true" title="Match score explained: Based on location, career path, visa status, and experience level alignment">ℹ️</span>
                   </span>
                 </div>
                 <div className="font-bold text-[18px] text-white mb-2 leading-tight">{job.title}</div>
                 <div className="text-[15px] text-zinc-300 font-medium mb-2">{job.company}</div>
                 <div className="text-[13px] text-zinc-500 mb-4">📍 {job.location}</div>
                 
-                {/* Why you should apply section - Simplified */}
-                <div className="mb-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3">
-                  <div className="flex items-start gap-2">
-                    <span className="text-emerald-400 mt-0.5 flex-shrink-0">✓</span>
-                    <div className="flex-1">
-                      <div className="text-[13px] font-semibold text-emerald-400 mb-0.5">
-                        Matches all your filters
-                      </div>
-                      <div className="text-[12px] text-zinc-300 leading-relaxed">
-                        Location, visa status, experience level, and career path align perfectly.
-                      </div>
+                {/* Why you should apply section - 1 line only */}
+                <div className="mb-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-emerald-400 flex-shrink-0">✓</span>
+                    <div className="text-[13px] font-semibold text-emerald-400">
+                      Matches all your filters: location, visa status, experience level, and career path.
                     </div>
                   </div>
                 </div>
