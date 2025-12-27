@@ -173,7 +173,7 @@ export default function SampleJobMatches({ preloadedJobs }: SampleJobMatchesProp
       {/* Email Content */}
       <div className="px-6 py-6 space-y-4">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-white mb-2">Here's what you'll see in 2 minutes</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">Here's what you'll see in 2 minutes personalised for you</h2>
         </div>
 
         {/* Job Cards - Show all jobs with REAL URLs */}

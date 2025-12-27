@@ -107,7 +107,10 @@ export default function Header() {
                 size="sm"
                 className="ml-4"
               >
-                {CTA_GET_MY_5_FREE_MATCHES}
+                <span className="flex items-center gap-2">
+                  {CTA_GET_MY_5_FREE_MATCHES}
+                  <BrandIcons.ArrowRight className="h-4 w-4" />
+                </span>
               </Button>
             </nav>
 
@@ -180,7 +183,10 @@ export default function Header() {
                     size="lg"
                     className="mt-4 w-full"
                   >
-                    {CTA_GET_MY_5_FREE_MATCHES}
+                    <span className="flex items-center justify-center gap-2">
+                      {CTA_GET_MY_5_FREE_MATCHES}
+                      <BrandIcons.ArrowRight className="h-5 w-5" />
+                    </span>
                   </Button>
                 </nav>
               </div>

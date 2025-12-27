@@ -109,8 +109,9 @@ export default function Hero() {
               transition={{ delay: 0.2, duration: 0.6 }}
               className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold leading-[1.1] mb-3"
             >
-              <span className="text-white">Get 5 early career job matches instantly</span>{' '}
-              <span className="text-zinc-400">free</span>
+              <span className="text-white">Get 5 early-career</span>{' '}
+              <span className="text-white">job matches</span>{' '}
+              <span className="text-white whitespace-nowrap">instantly <span className="text-zinc-400">— free</span></span>
             </motion.h1>
 
             {/* Subheadline - FREE-FIRST - Clear value prop */}
@@ -120,7 +121,7 @@ export default function Hero() {
               transition={{ delay: 0.25, duration: 0.6 }}
               className="text-lg md:text-xl text-zinc-300 leading-relaxed max-w-xl mb-4"
             >
-              Answer 3 questions, see roles matched to your city, visa status, and career path. Takes 2 minutes. No credit card.
+              Matched to your city, visa, and career path. 2 minutes. No credit card.
             </motion.p>
 
             {/* CTAs */}
@@ -152,7 +153,7 @@ export default function Hero() {
                 className="space-y-2 mt-3"
               >
                 <p className="text-sm text-zinc-400">
-                  ⚡ 100% free to start • Real EU jobs • Cancel anytime
+                  ⚡ 100% free to start • Real entry-level roles • No spam
                 </p>
               </motion.div>
               
