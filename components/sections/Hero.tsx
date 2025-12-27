@@ -112,21 +112,26 @@ export default function Hero() {
                 variant="gradient"
                 size="lg"
                 className="w-full sm:w-auto sm:min-w-[240px] px-8 py-4 md:py-5 text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)] transition-all duration-200"
-                aria-label="Show Me My Matches"
+                aria-label="Get My 5 Free Matches"
               >
                 <span className="flex items-center justify-center gap-2">
-                  Show Me My Matches →
+                  Get My 5 Free Matches →
                   <BrandIcons.ArrowRight className="h-5 w-5" />
                 </span>
               </Button>
-              <motion.p
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.35, duration: 0.6 }}
-                className="text-sm text-zinc-400 mt-3"
+                className="space-y-2 mt-3"
               >
-                Free • No credit card • 2-minute setup
-              </motion.p>
+                <p className="text-sm text-zinc-400">
+                  ⚡ Instant matches • No credit card • 2-minute setup
+                </p>
+                <p className="text-xs text-zinc-500">
+                  Free: 5 matches (one-time) • Premium: 15 matches/week for €5/month
+                </p>
+              </motion.div>
               <TrustBadges />
               
               {/* Onboarding Preview - What we'll ask */}
