@@ -95,9 +95,9 @@ export default function ExitIntentPopup() {
 
           <div className="text-center">
             <BrandIcons.Zap className="w-[20.8px] h-[20.8px] mx-auto mb-4 text-emerald-400" aria-hidden="true" />
-            <h3 id="exit-popup-title" className="text-2xl font-black text-white mb-2">Try it free — get 5 matches now</h3>
+            <h3 id="exit-popup-title" className="text-2xl font-black text-white mb-2">Get My 5 Free Matches</h3>
             <p id="exit-popup-description" className="text-zinc-200 mb-4">
-              Get <strong className="text-white">5 hand-picked matches</strong> tailored to your profile. See them instantly - no credit card needed. <span className="text-brand-300">Like it? Upgrade to get 15 matches/week.</span>
+              See <strong className="text-white">5 hand-picked jobs</strong> matched to your city, visa status, and career path. Instant results - no credit card needed.
             </p>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
               <BrandIcons.Zap className="h-3 w-3" />

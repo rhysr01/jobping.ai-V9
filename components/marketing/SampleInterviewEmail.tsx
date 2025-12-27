@@ -405,19 +405,21 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
       {/* Email content container */}
       <div className="rounded-lg border border-zinc-800/50 bg-white/[0.03] p-5 shadow-[0_4px_6px_rgba(0,0,0,0.1)] backdrop-blur-sm">
         {/* Title and intro - matches production exactly */}
+        {/* Premium Feature Badge - BIG and CLEAR */}
+        <div className="mb-6 p-4 rounded-lg bg-gradient-to-r from-brand-500/20 to-purple-600/20 border-2 border-brand-500/40">
+          <p className="text-[14px] text-brand-200 font-bold mb-1 uppercase tracking-wide">💎 Premium Feature Preview</p>
+          <p className="text-[13px] text-zinc-300 leading-relaxed">Example: Your Monday email (Premium only). Free users see matches instantly, no emails.</p>
+        </div>
+
         <h1 className="text-[22px] font-bold text-white mb-4 leading-tight">
-          Your 5 new matches are ready ✨
+          Your 5 matches are ready ✨
         </h1>
         <p className="text-[15px] text-zinc-300 leading-relaxed mb-4">
-          Here are 5 example matches for {day === 'wednesday' ? 'Wednesday' : 'Monday'}. All roles below match filters: {userProfile?.cities?.join(', ') || 'London'}, {userProfile?.careerPath ? `${userProfile.careerPath} roles` : 'entry-level roles'}.
+          Here are 5 example matches for {day === 'wednesday' ? 'Wednesday' : 'Monday'}. All roles below match filters: {userProfile?.cities?.join(', ') || 'Multiple cities'}, {userProfile?.careerPath ? `${userProfile.careerPath} roles` : 'entry-level roles'}.
         </p>
         <p className="text-[15px] text-zinc-400 leading-relaxed mb-4">
           See one you like? Apply now. Not a fit? Let us know and we'll adjust.
         </p>
-        <div className="mb-6 p-3 rounded-lg bg-gradient-to-r from-brand-500/10 to-purple-600/10 border border-brand-500/20">
-          <p className="text-[13px] text-brand-300 font-semibold mb-1">📧 Example Email</p>
-          <p className="text-[12px] text-zinc-400 leading-relaxed">This is what your matches will look like. Sign up to get your own personalized matches.</p>
-        </div>
 
         {displayJobs.map((job, index) => {
             // Use REAL match_score from database (from real user's matches)

@@ -87,24 +87,14 @@ export default function Hero() {
               <span className="text-zinc-400">— get 5 matches now</span>
             </motion.h1>
 
-            {/* Subheadline - FREE-FIRST */}
+            {/* Subheadline - FREE-FIRST - Clear value prop */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25, duration: 0.6 }}
               className="text-lg md:text-xl text-zinc-300 leading-relaxed max-w-xl mb-4"
             >
-              See 5 hand-picked jobs matched to your profile. No credit card needed. Takes 2 minutes.
-            </motion.p>
-            
-            {/* Upgrade teaser */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.27, duration: 0.6 }}
-              className="text-base md:text-lg text-zinc-400 leading-relaxed max-w-xl mb-4"
-            >
-              Like it? <span className="text-brand-300 font-semibold">Upgrade to get 15 matches/week</span> delivered Mon/Wed/Fri for €5/month.
+              See 5 hand-picked roles in 2 minutes. No credit card. Matched to your city, visa status, and career path.
             </motion.p>
 
             {/* CTAs */}
@@ -122,10 +112,10 @@ export default function Hero() {
                 variant="gradient"
                 size="lg"
                 className="w-full sm:w-auto sm:min-w-[240px] px-8 py-4 md:py-5 text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)] transition-all duration-200"
-                aria-label="Try it free - get 5 matches now"
+                aria-label="Get my 5 free matches"
               >
                 <span className="flex items-center justify-center gap-2">
-                  Try it free — get 5 matches now →
+                  Get My 5 Free Matches
                   <BrandIcons.ArrowRight className="h-5 w-5" />
                 </span>
               </Button>
