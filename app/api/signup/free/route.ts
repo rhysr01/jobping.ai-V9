@@ -276,10 +276,38 @@ export async function POST(request: NextRequest) {
       ? distributedJobs.slice(0, 5) 
       : matchedJobsRaw.slice(0, 5);
 
+    // CRITICAL: Filter out jobs without job_hash before saving
+    const validJobs = finalJobs.filter((job: any) => {
+      if (!job || !job.job_hash) {
+        apiLogger.warn('Skipping job without job_hash', { 
+          email: normalizedEmail,
+          hasJob: !!job,
+          jobTitle: job?.title,
+          jobCompany: job?.company
+        });
+        return false;
+      }
+      return true;
+    });
+
+    if (validJobs.length === 0) {
+      const error = new Error('No valid jobs to save (all missing job_hash)');
+      apiLogger.error('No valid jobs to save (all missing job_hash)', error, { 
+        email: normalizedEmail,
+        finalJobsCount: finalJobs.length,
+        distributedJobsCount: distributedJobs.length,
+        matchedJobsRawCount: matchedJobsRaw.length
+      });
+      return NextResponse.json(
+        { error: 'No valid matches found. Please try again.' },
+        { status: 500 }
+      );
+    }
+
     // Store matches in YOUR matches table (uses user_email, not user_id!)
-    const matchRecords = finalJobs.map((job: any) => ({
+    const matchRecords = validJobs.map((job: any) => ({
       user_email: normalizedEmail, // CRITICAL: Use user_email, not user_id!
-      job_hash: job.job_hash,
+      job_hash: String(job.job_hash), // Ensure it's a string
       match_score: (job.match_score || 0.75) / 100, // Normalize to 0-1 if needed
       match_reason: job.match_reason || 'AI matched',
       match_quality: 'high',
@@ -332,11 +360,24 @@ export async function POST(request: NextRequest) {
 
     // Set a session cookie (simple approach - you may want JWT instead)
     // Cookie expiration matches user expiration (30 days)
+    // CRITICAL: Don't use secure flag if site might be accessed over HTTP
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isHttps = request.headers.get('x-forwarded-proto') === 'https' || 
+                     request.url.startsWith('https://');
+    
     response.cookies.set('free_user_email', normalizedEmail, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isProduction && isHttps, // Only secure in production HTTPS
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 30, // 30 days to match free_expires_at
+      path: '/', // Ensure cookie is available site-wide
+    });
+
+    apiLogger.info('Cookie set for free user', { 
+      email: normalizedEmail,
+      secure: isProduction && isHttps,
+      isProduction,
+      isHttps
     });
 
     apiLogger.info('Free signup successful', { email: normalizedEmail, matchCount: savedMatches.length, savedMatchesCount: savedMatches.length });
