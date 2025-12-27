@@ -83,33 +83,6 @@ export default function Pricing() {
           ))}
         </div>
 
-        {/* Pricing note - Free-first - Standout design */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-8 mx-auto max-w-2xl"
-        >
-          <div className="relative rounded-2xl bg-gradient-to-br from-brand-500/20 via-purple-600/15 to-brand-500/20 border-2 border-brand-500/40 p-6 md:p-8 shadow-xl shadow-brand-500/10 backdrop-blur-sm">
-            {/* Decorative elements */}
-            <div className="absolute top-0 left-0 w-32 h-32 bg-brand-500/10 rounded-full blur-3xl -z-10" />
-            <div className="absolute bottom-0 right-0 w-40 h-40 bg-purple-600/10 rounded-full blur-3xl -z-10" />
-            
-            <div className="text-center space-y-3">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-500/20 border border-brand-500/40 mb-2">
-                <span className="text-2xl">💡</span>
-                <span className="text-sm font-bold text-brand-200 uppercase tracking-wide">Free First</span>
-              </div>
-              <p className="text-lg md:text-xl font-semibold text-white leading-relaxed">
-                <span className="text-brand-200">Try it free first</span> — get 5 matches instantly
-              </p>
-              <p className="text-base md:text-lg text-zinc-300 leading-relaxed">
-                Like it? <span className="text-brand-300 font-bold">Upgrade to get 15 matches/week</span> (3x more opportunities) delivered Mon/Wed/Fri for €5/month.
-              </p>
-            </div>
-          </div>
-        </motion.div>
 
         {/* Social Proof */}
         {stats && stats.totalUsers > 0 && (
