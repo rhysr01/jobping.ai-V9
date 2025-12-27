@@ -34,13 +34,14 @@ export default function DeviceFrame({ children, className, hideOnMobile = false 
             {/* Device SVG as background */}
             <Image
               src="/device/iphone-14.svg"
-              alt="iPhone displaying JobPing email preview"
+              alt=""
               priority={false}
               loading="lazy"
               fill
               sizes="(max-width: 768px) 390px, 440px"
               quality={85}
               className="pointer-events-none select-none relative z-10"
+              aria-hidden="true"
             />
             {/* Screen content: align to the inner screen rect (x:12,y:12,w:366,h:820) */}
             <div
@@ -87,13 +88,14 @@ export default function DeviceFrame({ children, className, hideOnMobile = false 
           {/* Device SVG as background */}
           <Image
             src="/device/iphone-14.svg"
-            alt="iPhone displaying JobPing email preview"
+            alt=""
             priority={false}
             loading="lazy"
             fill
             sizes="(max-width: 768px) 390px, 440px"
             quality={85}
             className="pointer-events-none select-none relative z-10"
+            aria-hidden="true"
           />
           {/* Screen content: align to the inner screen rect (x:12,y:12,w:366,h:820) */}
           <div
