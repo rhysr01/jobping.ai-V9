@@ -16,7 +16,7 @@ import WorkEnvironmentSelector from '@/components/ui/WorkEnvironmentSelector';
 import EntryLevelSelector from '@/components/ui/EntryLevelSelector';
 import LanguageSelector from '@/components/ui/LanguageSelector';
 import { apiCall, apiCallJson, ApiError } from '@/lib/api-client';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 function SignupForm() {
   const router = useRouter();
@@ -67,7 +67,7 @@ function SignupForm() {
       return 0;
     };
 
-    apiCallJson('/api/stats')
+    apiCallJson<{ activeJobs?: number; activeJobsFormatted?: string; totalUsers?: number; totalUsersFormatted?: string }>('/api/stats')
       .then(data => {
         if (!data) {
           setActiveJobs('~12,000');

@@ -18,7 +18,7 @@ export default function ExitIntentPopup() {
       const shown = sessionStorage.getItem('exit_intent_shown');
       if (shown === 'true') {
         setHasShown(true);
-        return;
+        return undefined;
       }
 
       // Track time on page
@@ -29,6 +29,7 @@ export default function ExitIntentPopup() {
 
       return () => clearInterval(interval);
     }
+    return undefined;
   }, []);
 
   useEffect(() => {

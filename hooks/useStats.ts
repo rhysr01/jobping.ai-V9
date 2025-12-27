@@ -82,7 +82,7 @@ export function useStats(): UseStatsReturn {
       setError(null);
       
       // Fetch fresh data in background
-      apiCallJson('/api/stats')
+      apiCallJson<{ data?: { activeJobs?: number; activeJobsFormatted?: string; totalUsers?: number; totalUsersFormatted?: string; internships?: number; graduates?: number; earlyCareer?: number; weeklyNewJobs?: number; weeklyNewJobsFormatted?: string; avgTimeToApply?: { premium: number; free: number } }; activeJobs?: number; activeJobsFormatted?: string; totalUsers?: number; totalUsersFormatted?: string; internships?: number; graduates?: number; earlyCareer?: number; weeklyNewJobs?: number; weeklyNewJobsFormatted?: string; avgTimeToApply?: { premium: number; free: number } }>('/api/stats')
         .then(data => {
           if (data) {
             const freshStats: StatsData = {
@@ -109,7 +109,7 @@ export function useStats(): UseStatsReturn {
     setError(null);
     
     try {
-      const data = await apiCallJson('/api/stats');
+      const data = await apiCallJson<{ data?: { activeJobs?: number; activeJobsFormatted?: string; totalUsers?: number; totalUsersFormatted?: string; internships?: number; graduates?: number; earlyCareer?: number; weeklyNewJobs?: number; weeklyNewJobsFormatted?: string; avgTimeToApply?: { premium: number; free: number } }; activeJobs?: number; activeJobsFormatted?: string; totalUsers?: number; totalUsersFormatted?: string; internships?: number; graduates?: number; earlyCareer?: number; weeklyNewJobs?: number; weeklyNewJobsFormatted?: string; avgTimeToApply?: { premium: number; free: number } }>('/api/stats');
       const freshStats: StatsData = {
         activeJobs: parseStat(data.data?.activeJobs ?? data.data?.activeJobsFormatted ?? data.activeJobs ?? data.activeJobsFormatted, 12748),
         totalUsers: parseStat(data.data?.totalUsers ?? data.data?.totalUsersFormatted ?? data.totalUsers ?? data.totalUsersFormatted, 3400),
