@@ -139,6 +139,13 @@ export async function GET(req: NextRequest) {
       // Don't return early - fall through to fallback logic
     }
 
+    console.log(`Sample jobs query result: ${allJobs?.length || 0} jobs found`, {
+      careerPath: selectedUserProfile.careerPath,
+      careerPathCategories,
+      cities: selectedUserProfile.cities,
+      error: jobsError?.message
+    });
+
     if (!jobsError && allJobs && allJobs.length > 0) {
       // Filter to preferred cities and ensure valid jobs with URLs
       const validJobs = allJobs.filter(job => {
@@ -156,6 +163,8 @@ export async function GET(req: NextRequest) {
         
         return matchesPreferredCity;
       });
+
+      console.log(`After city filtering: ${validJobs.length} jobs match preferred cities`);
       
       // Ensure city diversity: try to get at least one job from each preferred city
       const citiesUsed = new Set<string>();
@@ -254,11 +263,11 @@ export async function GET(req: NextRequest) {
       }
     }
     
-    // If we still don't have 5 jobs OR initial query failed, try without city filter (fallback)
+    // If we still don't have 5 jobs OR initial query failed, try progressive fallback
     if (resultJobs.length < 5 || jobsError || !allJobs || allJobs.length === 0) {
-      console.log(`Fallback: Only found ${resultJobs.length} jobs, trying fallback query...`);
+      console.log(`Fallback needed: Only found ${resultJobs.length} jobs from initial query`);
       
-      // Fallback: try without city filter but still filter by career path and early-career
+      // Fallback Level 1: Try without city filter but keep career path + early-career
       let fallbackQuery = supabase
         .from('jobs')
         .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
@@ -282,11 +291,11 @@ export async function GET(req: NextRequest) {
       const { data: fallbackJobs, error: fallbackError } = await fallbackQuery;
 
       if (fallbackError) {
-        console.warn('Fallback query error:', fallbackError);
+        console.warn('Fallback Level 1 query error:', fallbackError);
       }
 
       if (!fallbackError && fallbackJobs && fallbackJobs.length > 0) {
-        console.log(`Fallback: Found ${fallbackJobs.length} jobs`);
+        console.log(`Fallback Level 1: Found ${fallbackJobs.length} jobs (career path + early-career, no city filter)`);
         // Ensure diversity in fallback too
         const fallbackCitiesUsed = new Set<string>();
         const fallbackJobsByCity: { [city: string]: any[] } = {};
@@ -331,6 +340,79 @@ export async function GET(req: NextRequest) {
               usedJobHashes.add(job.job_hash);
             }
           });
+        }
+      }
+
+      // Fallback Level 2: If still not enough, try without career path filter (just early-career)
+      if (resultJobs.length < 5) {
+        console.log(`Fallback Level 2: Only ${resultJobs.length} jobs, trying without career path filter...`);
+        
+        let fallback2Query = supabase
+          .from('jobs')
+          .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
+          .eq('is_active', true)
+          .eq('status', 'active')
+          .is('filtered_reason', null)
+          .not('job_url', 'is', null)
+          .neq('job_url', '')
+          .not('job_hash', 'in', Array.from(usedJobHashes))
+          .or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}')
+          .order('created_at', { ascending: false })
+          .limit(50);
+        
+        const { data: fallback2Jobs, error: fallback2Error } = await fallback2Query;
+        
+        if (fallback2Error) {
+          console.warn('Fallback Level 2 query error:', fallback2Error);
+        }
+        
+        if (!fallback2Error && fallback2Jobs && fallback2Jobs.length > 0) {
+          console.log(`Fallback Level 2: Found ${fallback2Jobs.length} jobs (early-career only, no career path filter)`);
+          
+          // Add jobs from fallback 2
+          const fallback2CitiesUsed = new Set<string>();
+          const fallback2JobsByCity: { [city: string]: any[] } = {};
+          
+          fallback2Jobs.forEach(job => {
+            const jobCity = job.city || job.location?.split(',')[0] || 'Unknown';
+            if (!fallback2JobsByCity[jobCity]) {
+              fallback2JobsByCity[jobCity] = [];
+            }
+            fallback2JobsByCity[jobCity].push(job);
+          });
+          
+          Object.keys(fallback2JobsByCity).forEach(city => {
+            if (resultJobs.length < 5 && fallback2JobsByCity[city].length > 0) {
+              const job = fallback2JobsByCity[city].shift();
+              if (job && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
+                const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
+                const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
+                resultJobs.push({
+                  ...job,
+                  matchScore,
+                  matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
+                });
+                usedJobHashes.add(job.job_hash);
+                fallback2CitiesUsed.add(city);
+              }
+            }
+          });
+          
+          // Fill remaining slots
+          if (resultJobs.length < 5) {
+            fallback2Jobs.forEach((job, index) => {
+              if (resultJobs.length < 5 && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
+                const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
+                const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
+                resultJobs.push({
+                  ...job,
+                  matchScore,
+                  matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
+                });
+                usedJobHashes.add(job.job_hash);
+              }
+            });
+          }
         }
       }
     }
