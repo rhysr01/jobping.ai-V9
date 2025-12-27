@@ -153,7 +153,7 @@ export default async function RootLayout({
         </a>
         <Header />
         {/* Spacer for fixed header */}
-        <div className="h-16 md:h-20" aria-hidden />
+        <div className="h-20 md:h-24" aria-hidden />
         <ErrorBoundary>{children}</ErrorBoundary>
         <Toaster />
         <CookieBanner />

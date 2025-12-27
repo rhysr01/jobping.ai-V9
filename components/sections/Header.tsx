@@ -67,7 +67,7 @@ export default function Header() {
         }`}
       >
         <div className="container-page">
-          <div className="h-16 md:h-20 flex items-center justify-between">
+          <div className="h-20 md:h-24 flex items-center justify-between py-2">
             {/* Logo */}
             <Link
               href="/"
@@ -77,7 +77,7 @@ export default function Header() {
                 }
                 trackEvent('logo_clicked', { location: 'header' });
               }}
-              className="flex items-center gap-2 group"
+              className="flex items-center gap-2 group py-1"
               aria-label="JobPing Home"
             >
               <div className="scale-75 md:scale-100 origin-left">

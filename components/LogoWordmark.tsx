@@ -1,10 +1,10 @@
 export default function LogoWordmark() {
   return (
-    <div data-testid="logo" className="inline-flex items-baseline gap-3 font-semibold tracking-tight leading-none text-7xl md:text-8xl" role="banner">
-      <span aria-hidden className="text-white/95">
+    <div data-testid="logo" className="inline-flex items-center gap-3 font-semibold tracking-tight leading-none text-7xl md:text-8xl" role="banner">
+      <span aria-hidden className="text-white/95 flex items-center">
         {/* White graduation cap before the J */}
         <svg
-          className="h-[71px] w-[71px] md:h-[91px] md:w-[91px] -translate-y-1"
+          className="h-[71px] w-[71px] md:h-[91px] md:w-[91px]"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
