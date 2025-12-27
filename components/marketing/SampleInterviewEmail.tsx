@@ -110,6 +110,7 @@ async function submitFeedback(jobHash: string, feedbackType: 'thumbs_up' | 'thum
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-csrf-token': 'jobping-request',
       },
       body: JSON.stringify({
         jobHash,
@@ -164,7 +165,7 @@ export default function SampleInterviewEmail() {
   return (
     <div className="mx-auto w-full max-w-[360px] px-2 text-[14px] leading-[1.5] text-zinc-100 font-sans">
       {/* Email header - matches production gradient header */}
-      <div className="mb-6 rounded-t-lg bg-gradient-to-br from-indigo-600 via-purple-600 to-purple-700 p-6 text-center">
+      <div className="mb-6 rounded-t-lg bg-gradient-to-br from-brand-600 via-brand-500 to-brand-700 p-6 text-center">
         <div className="text-[32px] font-bold text-white tracking-tight mb-2">JobPing</div>
         <div className="text-[11px] text-white/95 uppercase tracking-wider font-medium">AI Powered Job Matching for Europe</div>
       </div>
@@ -176,10 +177,10 @@ export default function SampleInterviewEmail() {
           Your 5 new matches are ready ✨
         </h1>
         <p className="text-[15px] text-zinc-300 leading-relaxed mb-4">
-          Alex, here's what our matcher surfaced for you today. Every role below cleared the filters you set — Strategy & Business Design roles in London with visa sponsorship and entry-level fit.
+          Alex, here are your 5 new matches. All roles below match your filters: London, visa sponsorship, entry-level Strategy roles.
         </p>
         <p className="text-[15px] text-zinc-400 leading-relaxed mb-6">
-          Review the highlights, tap through to apply, and let us know if anything feels off — your feedback powers the next batch.
+          See one you like? Apply now. Not a fit? Let us know and we'll adjust.
         </p>
 
         {displayJobs.map((job, index) => {
@@ -198,15 +199,15 @@ export default function SampleInterviewEmail() {
                 key={`${job.company}-${job.title}-${index}`}
                 className={`${index === 0 ? 'mt-5' : 'mt-4'} rounded-2xl ${
                   hot 
-                    ? 'border-2 border-purple-500/50 bg-gradient-to-br from-indigo-500/10 to-purple-500/5 shadow-[0_8px_40px_rgba(99,102,241,0.3)]' 
+                    ? 'border-2 border-brand-500/40 bg-gradient-to-br from-brand-500/8 to-brand-600/5 shadow-[0_8px_40px_rgba(109,90,143,0.2)]' 
                     : 'border border-indigo-500/15 bg-[#0f0f0f] shadow-[0_4px_24px_rgba(0,0,0,0.3)]'
                 } p-5`}
               >
                 <div className="mb-4">
                   <span className={`inline-block rounded-lg bg-gradient-to-r ${
                     hot 
-                      ? 'from-purple-600 to-indigo-600' 
-                      : 'from-indigo-600 to-purple-600'
+                      ? 'from-brand-600 to-brand-500' 
+                      : 'from-brand-500 to-brand-600'
                   } px-4 py-1.5 text-[11px] font-semibold text-white`}>
                     {hot ? `🔥 Hot Match ${score}%` : `${score}% Match`}
                   </span>
@@ -215,17 +216,17 @@ export default function SampleInterviewEmail() {
                 <div className="text-[15px] text-zinc-300 font-medium mb-2">{job.company}</div>
                 <div className="text-[13px] text-zinc-500 mb-4">📍 {job.location}</div>
                 
-                {/* Why this matches section */}
+                {/* Why you should apply section */}
                 <div className="mb-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-4">
-                  <div className="text-[13px] font-semibold text-emerald-400 mb-2.5">Why this matches you:</div>
+                  <div className="text-[13px] font-semibold text-emerald-400 mb-2.5">Why you should apply:</div>
                   <div className="space-y-1.5 text-[13px] text-zinc-300">
                     <div className="flex items-start gap-2">
                       <span className="text-emerald-400 mt-0.5">✅</span>
-                      <span>Location: London (matches your preference)</span>
+                      <span>London-based (your preference)</span>
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="text-emerald-400 mt-0.5">✅</span>
-                      <span>Experience: {experienceText}</span>
+                      <span>Entry-level (no experience required)</span>
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="text-emerald-400 mt-0.5">✅</span>
@@ -233,7 +234,7 @@ export default function SampleInterviewEmail() {
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="text-emerald-400 mt-0.5">✅</span>
-                      <span>Career path: Strategy & Business Design</span>
+                      <span>Strategy role (your career path)</span>
                     </div>
                   </div>
                 </div>
@@ -289,7 +290,7 @@ export default function SampleInterviewEmail() {
                   target={job.jobUrl ? "_blank" : undefined}
                   rel={job.jobUrl ? "noopener noreferrer" : undefined}
                   aria-label={`Apply now: ${job.title} at ${job.company}`}
-                  className="inline-block rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3 text-[14px] font-semibold text-white shadow-[0_4px_16px_rgba(99,102,241,0.4)] hover:opacity-90 transition-opacity"
+                  className="inline-block rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-[14px] font-semibold text-white shadow-[0_4px_16px_rgba(109,90,143,0.3)] hover:opacity-90 transition-opacity"
                 >
                   Apply now →
                 </a>
@@ -306,7 +307,7 @@ export default function SampleInterviewEmail() {
           <a
             href="#"
             aria-label="Upgrade to Premium"
-            className="inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-3.5 text-[14px] font-semibold text-white shadow-[0_4px_16px_rgba(99,102,241,0.4)] hover:opacity-90 transition-opacity"
+            className="inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 px-6 py-3.5 text-[14px] font-semibold text-white shadow-[0_4px_16px_rgba(109,90,143,0.3)] hover:opacity-90 transition-opacity"
           >
             Upgrade to Premium - €5/month
           </a>

@@ -15,6 +15,8 @@ import { showToast } from '@/lib/toast';
 import WorkEnvironmentSelector from '@/components/ui/WorkEnvironmentSelector';
 import EntryLevelSelector from '@/components/ui/EntryLevelSelector';
 import LanguageSelector from '@/components/ui/LanguageSelector';
+import { apiCall, apiCallJson, ApiError } from '@/lib/api-client';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 function SignupForm() {
   const router = useRouter();
@@ -65,8 +67,7 @@ function SignupForm() {
       return 0;
     };
 
-    fetch('/api/stats')
-      .then(res => (res.ok ? res.json() : null))
+    apiCallJson('/api/stats')
       .then(data => {
         if (!data) {
           setActiveJobs('~12,000');
@@ -207,7 +208,7 @@ function SignupForm() {
     setFieldErrors({});
     
     try {
-      const response = await fetch('/api/signup', {
+      const response = await apiCall('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, tier: 'premium' }),
@@ -244,7 +245,9 @@ function SignupForm() {
         }
       }
     } catch (error) {
-      const errorMessage = 'Unable to connect. Please check your internet connection and try again.';
+      const errorMessage = error instanceof ApiError 
+        ? error.message 
+        : 'Unable to connect. Please check your internet connection and try again.';
       setError(errorMessage);
       showToast.error(errorMessage, {
         label: 'Retry',
@@ -1498,13 +1501,15 @@ function SignupForm() {
 // Wrap in Suspense to handle useSearchParams
 export default function SignupPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    }>
-      <SignupForm />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <div className="text-white text-xl">Loading...</div>
+        </div>
+      }>
+        <SignupForm />
+      </Suspense>
+    </ErrorBoundary>
   );
 }
 

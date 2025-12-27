@@ -58,7 +58,10 @@ export default function StorePage() {
       
       const res = await fetch('/api/stripe-connect/create-checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-csrf-token': 'jobping-request',
+        },
         body: JSON.stringify({
           accountId,
           priceId,

@@ -28,6 +28,10 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html,
 body {
   min-height: 100vh;
@@ -176,7 +180,7 @@ body {
   .btn-primary {
     @apply inline-flex items-center justify-center rounded-2xl px-6 py-4 text-base sm:text-lg font-semibold tracking-tight
            text-white focus:outline-none focus:ring-4 focus:ring-brand-500 focus:ring-offset-4 focus:ring-offset-black;
-    background-color: #7E61FF;
+    background-color: #6B5A85;
     box-shadow:
       0 20px 60px -18px rgba(126, 97, 255, 0.7),
       0 0 0 1px rgba(255, 255, 255, 0.1);
@@ -195,7 +199,7 @@ body {
     }
   }
   .btn-primary:hover {
-    background-color: #6E57F5;
+    background-color: #584A6F;
     transform: translateY(-2px);
     box-shadow:
       0 32px 100px -16px rgba(110, 87, 245, 0.9),
@@ -256,24 +260,24 @@ body {
   /* Single glow utility for primary CTA only */
   .glow-primary-cta {
     box-shadow:
-      0 0 40px rgba(126, 97, 255, 0.4),
-      0 20px 50px rgba(126, 97, 255, 0.3);
+      0 0 40px rgba(107, 90, 133, 0.3),
+      0 20px 50px rgba(107, 90, 133, 0.2);
   }
 }
 
 /* Design system utilities */
 @layer utilities {
   .shadow-glow-strong {
-    box-shadow: 0 0 24px rgba(126, 97, 255, 0.25);
+    box-shadow: 0 0 24px rgba(107, 90, 133, 0.2);
   }
   
   .shadow-glow-subtle {
-    box-shadow: 0 0 12px rgba(126, 97, 255, 0.2);
+    box-shadow: 0 0 12px rgba(107, 90, 133, 0.15);
   }
   
   /* Card shadow depth variation */
   .shadow-hero {
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 20px 40px rgba(139, 92, 246, 0.25);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 20px 40px rgba(107, 90, 133, 0.2);
   }
   
   .shadow-feature {
@@ -281,7 +285,7 @@ body {
   }
   
   .shadow-pricing {
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3), 0 24px 60px rgba(139, 92, 246, 0.2);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3), 0 24px 60px rgba(107, 90, 133, 0.15);
   }
   
   .shadow-hover {
@@ -478,13 +482,13 @@ body {
     height: 48px;
     font-weight: 900;
     font-size: 1.125rem;
-    border: 2px solid rgba(99, 102, 241, 0.6);
+    border: 2px solid rgba(107, 90, 133, 0.5);
     background: linear-gradient(
       135deg,
-      rgba(99, 102, 241, 0.4),
-      rgba(139, 92, 246, 0.3)
+      rgba(107, 90, 133, 0.3),
+      rgba(88, 74, 111, 0.25)
     );
-    box-shadow: 0 8px 24px -8px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 8px 24px -8px rgba(107, 90, 133, 0.2);
     position: relative;
   }
   

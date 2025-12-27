@@ -12,7 +12,7 @@ export default function EmailPhoneShowcase() {
   const pointIcons = [BrandIcons.Check, BrandIcons.Shield, BrandIcons.Mail];
 
   return (
-    <section className="pt-16 md:pt-20 pb-20 md:pb-24 relative overflow-hidden bg-black scroll-snap-section">
+    <section className="pt-20 pb-20 md:pt-24 md:pb-24 lg:pt-28 lg:pb-28 relative overflow-hidden bg-black scroll-snap-section">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       {/* Soft section band */}
@@ -38,28 +38,21 @@ export default function EmailPhoneShowcase() {
           <p className="text-xl text-zinc-300 md:text-2xl mb-6">
             {Copy.EMAIL_SHOWCASE_SUBTITLE}
           </p>
-          <p className="text-sm text-zinc-400">
-            Each email is designed to help you decide in seconds—not minutes.
-          </p>
         </motion.div>
 
-        {/* Two phones side by side */}
-        <div className="relative grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
-          {/* Left spotlight */}
-          <div className="pointer-events-none absolute left-[10%] top-[30%] h-[400px] w-[400px] bg-[radial-gradient(circle_at_center,_theme(colors.brand.500/0.22),_transparent_70%)] blur-md-hero opacity-70" />
+        {/* Single phone centered */}
+        <div className="relative flex items-center justify-center">
+          {/* Spotlight */}
+          <div className="pointer-events-none absolute left-1/2 top-[30%] -translate-x-1/2 h-[400px] w-[400px] bg-[radial-gradient(circle_at_center,_theme(colors.brand.500/0.22),_transparent_70%)] blur-md-hero opacity-70" />
           
-          {/* Left phone - Premium Email (Monday) */}
+          {/* Single phone - Email Preview */}
           <motion.div
-            initial={{ opacity: 0, x: -32 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 32 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.1 }}
             className="flex flex-col items-center gap-4 relative z-10"
           >
-            <div className="text-center mb-2">
-              <h3 className="text-lg font-semibold text-white mb-1">Premium: Monday Email</h3>
-              <p className="text-sm text-zinc-400">5 fresh matches delivered</p>
-            </div>
             <motion.div
               animate={
                 prefersReduced
@@ -84,44 +77,18 @@ export default function EmailPhoneShowcase() {
               </DeviceFrame>
             </motion.div>
           </motion.div>
-
-          {/* Right phone - Premium Email (Wednesday) */}
-          <motion.div
-            initial={{ opacity: 0, x: 32 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="flex flex-col items-center gap-4 relative z-10"
-          >
-            <div className="text-center mb-2">
-              <h3 className="text-lg font-semibold text-white mb-1">Premium: Wednesday Email</h3>
-              <p className="text-sm text-zinc-400">5 more matches, 3x per week</p>
-            </div>
-            <motion.div
-              animate={
-                prefersReduced
-                  ? {}
-                  : {
-                      y: [-2, 2, -2],
-                      rotate: [1.2, -1.2, 1.2],
-                    }
-              }
-              transition={{
-                duration: 7,
-                repeat: prefersReduced ? 0 : Infinity,
-                ease: "easeInOut",
-              }}
-              className="relative"
-            >
-              <div className="absolute inset-0 -z-10 translate-y-8">
-                <div className="h-full w-full scale-110 rounded-full bg-black/40 blur-lg-hero" />
-              </div>
-              <DeviceFrame>
-                <SampleInterviewEmail />
-              </DeviceFrame>
-            </motion.div>
-          </motion.div>
         </div>
+
+        {/* Schedule text below email */}
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="text-center mt-4 text-zinc-400"
+        >
+          Get 5 fresh roles every Monday, Wednesday, and Friday—straight to your inbox.
+        </motion.p>
 
         {/* Feature points below phones */}
         <motion.div

@@ -11,6 +11,7 @@ import EntryLevelSelector from '@/components/ui/EntryLevelSelector';
 import LanguageSelector from '@/components/ui/LanguageSelector';
 import CalendarPicker from '@/components/ui/CalendarPicker';
 import EuropeMap from '@/components/ui/EuropeMap';
+import { apiCall, apiCallJson, ApiError } from '@/lib/api-client';
 
 function PreferencesContent() {
   const searchParams = useSearchParams();
@@ -46,8 +47,7 @@ function PreferencesContent() {
     }
 
     // Verify token and load user data
-    fetch(`/api/preferences?token=${token}&email=${encodeURIComponent(email)}`)
-      .then(res => res.json())
+    apiCallJson(`/api/preferences?token=${token}&email=${encodeURIComponent(email)}`)
       .then(data => {
         if (data.success && data.user) {
           setUserData(data.user);
@@ -68,7 +68,9 @@ function PreferencesContent() {
         }
       })
       .catch(err => {
-        const errorMessage = 'Unable to load preferences. Please check your connection and try again.';
+        const errorMessage = err instanceof ApiError 
+          ? err.message 
+          : 'Unable to load preferences. Please check your connection and try again.';
         setError(errorMessage);
         console.error(err);
       })
@@ -81,7 +83,7 @@ function PreferencesContent() {
     setSuccess(false);
 
     try {
-      const response = await fetch('/api/preferences', {
+      const response = await apiCall('/api/preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -100,7 +102,9 @@ function PreferencesContent() {
         setError(errorMessage);
       }
     } catch (err) {
-      const errorMessage = 'Unable to connect. Please check your internet connection and try again.';
+      const errorMessage = err instanceof ApiError 
+        ? err.message 
+        : 'Unable to connect. Please check your internet connection and try again.';
       setError(errorMessage);
     } finally {
       setSaving(false);

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { apiCallJson } from '@/lib/api-client';
 
 const EARLY_ACCESS_LIMIT = 300;
 
@@ -10,8 +11,7 @@ export function EarlyAccessBanner() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/stats/signups')
-      .then(res => res.json())
+    apiCallJson('/api/stats/signups')
       .then(data => {
         if (data.success && typeof data.data?.count === 'number') {
           setSignupCount(data.data.count);

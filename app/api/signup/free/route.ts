@@ -93,6 +93,36 @@ export async function POST(request: NextRequest) {
       throw userError;
     }
 
+    // CRITICAL FIX: Ensure target_cities is always an array
+    // Supabase might return it in different formats, so normalize it
+    let targetCities: string[] = [];
+    if (userData.target_cities) {
+      if (Array.isArray(userData.target_cities)) {
+        targetCities = userData.target_cities;
+      } else if (typeof userData.target_cities === 'string') {
+        // Handle case where it might be a JSON string
+        try {
+          targetCities = JSON.parse(userData.target_cities);
+        } catch {
+          // If not JSON, treat as single city
+          targetCities = [userData.target_cities];
+        }
+      }
+    }
+    
+    // Fallback to preferred_cities if target_cities is empty (shouldn't happen, but safety check)
+    if (targetCities.length === 0 && preferred_cities && preferred_cities.length > 0) {
+      targetCities = preferred_cities;
+    }
+
+    apiLogger.info('Free signup - cities normalized', { 
+      email: normalizedEmail, 
+      original: userData.target_cities,
+      normalized: targetCities,
+      type: typeof userData.target_cities,
+      isArray: Array.isArray(userData.target_cities)
+    });
+
     // Fetch jobs (same pattern as existing signup)
     let careerPathCategories: string[] = [];
     if (userData.career_path) {
@@ -106,8 +136,13 @@ export async function POST(request: NextRequest) {
       .eq('status', 'active')
       .is('filtered_reason', null);
 
-    if (userData.target_cities && userData.target_cities.length > 0) {
-      query = query.in('city', userData.target_cities);
+    if (targetCities.length > 0) {
+      query = query.in('city', targetCities);
+      apiLogger.info('Free signup - filtering jobs by cities', { 
+        email: normalizedEmail, 
+        cities: targetCities,
+        cityCount: targetCities.length
+      });
     }
 
     if (careerPathCategories.length > 0) {
@@ -128,7 +163,7 @@ export async function POST(request: NextRequest) {
     // Pre-filter jobs
     const userPrefs = {
       email: userData.email,
-      target_cities: userData.target_cities,
+      target_cities: targetCities, // Use normalized array
       career_path: userData.career_path ? [userData.career_path] : [],
       entry_level_preference: userData.entry_level_preference,
       work_environment: userData.work_environment,
@@ -177,11 +212,64 @@ export async function POST(request: NextRequest) {
     }
 
     // Distribute jobs (max 5 for free)
+    // Extract work environment preferences (may be comma-separated string or array)
+    let targetWorkEnvironments: string[] = [];
+    if (userData.work_environment) {
+      if (Array.isArray(userData.work_environment)) {
+        targetWorkEnvironments = userData.work_environment;
+      } else if (typeof userData.work_environment === 'string') {
+        // Parse comma-separated string: "Office, Hybrid" -> ["Office", "Hybrid"]
+        targetWorkEnvironments = userData.work_environment.split(',').map((env: string) => env.trim()).filter(Boolean);
+      }
+    }
+    
+    // Log city and work environment distribution before distribution
+    const cityDistributionBefore = matchedJobsRaw.reduce((acc: Record<string, number>, job: any) => {
+      const city = job.city || 'unknown';
+      acc[city] = (acc[city] || 0) + 1;
+      return acc;
+    }, {});
+    const workEnvDistributionBefore = matchedJobsRaw.reduce((acc: Record<string, number>, job: any) => {
+      const workEnv = job.work_environment || 'unknown';
+      acc[workEnv] = (acc[workEnv] || 0) + 1;
+      return acc;
+    }, {});
+    apiLogger.info('Free signup - jobs before distribution', { 
+      email: normalizedEmail,
+      totalJobs: matchedJobsRaw.length,
+      cityDistribution: cityDistributionBefore,
+      workEnvDistribution: workEnvDistributionBefore,
+      targetCities: targetCities,
+      targetWorkEnvironments: targetWorkEnvironments
+    });
+
     const distributedJobs = distributeJobsWithDiversity(matchedJobsRaw as any[], {
       targetCount: 5,
-      targetCities: userData.target_cities,
+      targetCities: targetCities, // Use normalized array
       maxPerSource: 2,
-      ensureCityBalance: true
+      ensureCityBalance: true,
+      targetWorkEnvironments: targetWorkEnvironments,
+      ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0
+    });
+
+    // Log city and work environment distribution after distribution
+    const cityDistributionAfter = distributedJobs.reduce((acc: Record<string, number>, job: any) => {
+      const city = job.city || 'unknown';
+      acc[city] = (acc[city] || 0) + 1;
+      return acc;
+    }, {});
+    const workEnvDistributionAfter = distributedJobs.reduce((acc: Record<string, number>, job: any) => {
+      const workEnv = job.work_environment || 'unknown';
+      acc[workEnv] = (acc[workEnv] || 0) + 1;
+      return acc;
+    }, {});
+    apiLogger.info('Free signup - jobs after distribution', { 
+      email: normalizedEmail,
+      totalJobs: distributedJobs.length,
+      cityDistribution: cityDistributionAfter,
+      workEnvDistribution: workEnvDistributionAfter,
+      targetCities: targetCities,
+      targetWorkEnvironments: targetWorkEnvironments
     });
 
     const finalJobs = distributedJobs.length > 0 

@@ -8,7 +8,7 @@ export default function BuiltForStudents() {
   const featureIcons = [BrandIcons.Briefcase, BrandIcons.CheckCircle, BrandIcons.Mail];
 
   return (
-    <section className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 bg-black scroll-snap-section relative">
+    <section className="pt-20 pb-20 md:pt-24 md:pb-24 lg:pt-28 lg:pb-28 bg-black scroll-snap-section relative">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       {/* Soft section band */}
@@ -26,7 +26,7 @@ export default function BuiltForStudents() {
             {Copy.BUILT_FOR_STUDENTS_KICKER}
           </span>
           <h2 className="section-title mb-3 text-center">
-            Built for students. Designed for jobseekers.
+            Why Students Choose JobPing
           </h2>
           <p className="mb-10 text-xl text-zinc-300 md:text-2xl">
             {Copy.BUILT_FOR_STUDENTS_SUBTITLE}

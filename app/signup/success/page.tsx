@@ -14,6 +14,7 @@ import {
   PREMIUM_SEND_DAYS_LABEL,
   PREMIUM_ROLES_PER_MONTH,
 } from '@/lib/productMetrics';
+import { apiCall, ApiError } from '@/lib/api-client';
 
 function SignupSuccessContent() {
   const [showSuccess, setShowSuccess] = useState(true);
@@ -49,7 +50,7 @@ function SignupSuccessContent() {
 
     setResending(true);
     try {
-      const response = await fetch('/api/resend-email', {
+      const response = await apiCall('/api/resend-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -62,7 +63,10 @@ function SignupSuccessContent() {
         alert(result.error || 'Failed to resend email. Please try again later.');
       }
     } catch (error) {
-      alert('Failed to resend email. Please try again later.');
+      const errorMessage = error instanceof ApiError 
+        ? error.message 
+        : 'Failed to resend email. Please try again later.';
+      alert(errorMessage);
     } finally {
       setResending(false);
     }
@@ -76,7 +80,7 @@ function SignupSuccessContent() {
 
     setResending(true);
     try {
-      const response = await fetch('/api/resend-verification', {
+      const response = await apiCall('/api/resend-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -90,7 +94,10 @@ function SignupSuccessContent() {
         alert(result.error || 'Failed to resend verification email. Please try again later.');
       }
     } catch (error) {
-      alert('Failed to resend verification email. Please try again later.');
+      const errorMessage = error instanceof ApiError 
+        ? error.message 
+        : 'Failed to resend verification email. Please try again later.';
+      alert(errorMessage);
     } finally {
       setResending(false);
     }

@@ -17,7 +17,10 @@ export default function DeleteDataPage() {
     try {
       const response = await fetch('/api/user/delete-data', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-csrf-token': 'jobping-request',
+        },
         body: JSON.stringify({ email }),
       });
 

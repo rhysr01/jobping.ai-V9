@@ -20,7 +20,7 @@ export default function SampleSignupForm() {
           ))}
         </div>
         <div className="h-1.5 bg-zinc-800/60 rounded-full overflow-hidden border border-zinc-700/50">
-          <div className="h-full bg-gradient-to-r from-brand-500 via-purple-600 to-purple-500 shadow-[0_0_10px_rgba(99,102,241,0.4)] w-full" />
+          <div className="h-full bg-gradient-to-r from-brand-500 via-brand-600 to-brand-500 shadow-[0_0_10px_rgba(109,90,143,0.3)] w-full" />
         </div>
         <div className="text-[10px] text-zinc-400 text-center mt-1">
           100% complete
@@ -38,7 +38,7 @@ export default function SampleSignupForm() {
             </div>
 
             {/* GDPR Consent */}
-            <div className="bg-gradient-to-r from-brand-500/15 via-purple-600/15 to-brand-500/15 border-2 border-brand-500/40 rounded-xl p-3 shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+            <div className="bg-gradient-to-r from-brand-500/12 via-brand-600/12 to-brand-500/12 border-2 border-brand-500/30 rounded-xl p-3 shadow-[0_0_15px_rgba(109,90,143,0.15)]">
               <label className="flex items-start gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -200,7 +200,7 @@ export default function SampleSignupForm() {
             {/* Career Path */}
             <div>
               <label className="block text-[12px] font-bold text-white mb-1.5">Select Your Career Path *</label>
-              <div className="px-3 py-2.5 bg-gradient-to-br from-brand-500/20 to-purple-600/15 border-2 border-brand-500 rounded-xl text-white text-[13px] font-medium">
+              <div className="px-3 py-2.5 bg-gradient-to-br from-brand-500/15 to-brand-600/12 border-2 border-brand-500 rounded-xl text-white text-[13px] font-medium">
                 Strategy & Business Design
               </div>
             </div>
@@ -262,7 +262,7 @@ export default function SampleSignupForm() {
 
             {/* Submit Button */}
             <button
-              className="w-full bg-gradient-to-r from-brand-500 to-purple-600 text-white font-semibold py-3 rounded-xl text-[13px] shadow-[0_4px_16px_rgba(99,102,241,0.4)] flex items-center justify-center gap-2 mt-2"
+              className="w-full bg-gradient-to-r from-brand-500 to-brand-600 text-white font-semibold py-3 rounded-xl text-[13px] shadow-[0_4px_16px_rgba(109,90,143,0.3)] flex items-center justify-center gap-2 mt-2"
             >
               Complete Signup
               <BrandIcons.Check className="h-4 w-4" />

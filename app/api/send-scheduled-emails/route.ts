@@ -232,12 +232,25 @@ async function handleSendScheduledEmails(req: NextRequest) {
           continue;
         }
 
-        // Apply job distribution for diversity
+        // Extract work environment preferences (may be comma-separated string or array)
+        let targetWorkEnvironments: string[] = [];
+        if (user.preferences.work_environment) {
+          if (Array.isArray(user.preferences.work_environment)) {
+            targetWorkEnvironments = user.preferences.work_environment;
+          } else if (typeof user.preferences.work_environment === 'string') {
+            // Parse comma-separated string: "Office, Hybrid" -> ["Office", "Hybrid"]
+            targetWorkEnvironments = user.preferences.work_environment.split(',').map(env => env.trim()).filter(Boolean);
+          }
+        }
+
+        // Apply job distribution for diversity (cities AND work environments)
         const distributedJobs = distributeJobsWithDiversity(matchedJobs as any[], {
           targetCount: jobsPerSend,
           targetCities: user.preferences.target_cities || [],
           maxPerSource: Math.ceil(jobsPerSend / 3),
-          ensureCityBalance: true
+          ensureCityBalance: true,
+          targetWorkEnvironments: targetWorkEnvironments,
+          ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0
         });
 
         // Send email

@@ -10,12 +10,12 @@ export default {
       // Spacing removed - Tailwind defaults are sufficient
       colors: {
         brand: {
-          100: "#EDE9FE",
-          200: "#C4B5FD",
-          300: "#C4B5FD",
-          500: "#7E61FF",
-          600: "#6E57F5",
-          700: "#5E47E5",
+          100: "#E8E6ED",
+          200: "#CAC4D3",
+          300: "#A59AB3",
+          500: "#6B5A85", // More desaturated, sophisticated matte purple
+          600: "#584A6F",
+          700: "#483D5A",
         },
         // Semantic color system
         success: {
@@ -111,11 +111,11 @@ export default {
           "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
         overlay:
           "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
-        "elev-1": "0 10px 30px -10px rgba(99,102,241,0.25)",
-        "elev-2": "0 20px 60px -18px rgba(99,102,241,0.35)",
+        "elev-1": "0 10px 30px -10px rgba(107,90,133,0.2)",
+        "elev-2": "0 20px 60px -18px rgba(107,90,133,0.25)",
         // Reduced glow utilities - use sparingly
-        "glow-subtle": "0 0 12px rgba(99,102,241,0.2)",
-        "glow-strong": "0 0 24px rgba(99,102,241,0.25)",
+        "glow-subtle": "0 0 12px rgba(107,90,133,0.15)",
+        "glow-strong": "0 0 24px rgba(107,90,133,0.2)",
       },
       // Micro-interaction timing
       transitionDuration: {

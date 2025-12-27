@@ -8,7 +8,10 @@ export function reportWebVitals(metric: any) {
     // Send to analytics endpoint
     fetch('/api/analytics/web-vitals', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-csrf-token': 'jobping-request',
+      },
       body: JSON.stringify(metric),
       keepalive: true,
     }).catch(() => {

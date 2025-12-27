@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { BrandIcons } from '@/components/ui/BrandIcons';
+import { apiCallJson, ApiError } from '@/lib/api-client';
 
 interface Company {
   name: string;
@@ -17,17 +18,12 @@ export default function CompanyLogos() {
   useEffect(() => {
     async function fetchCompanies() {
       try {
-        const response = await fetch('/api/companies');
-        if (!response.ok) {
-          console.error('API error:', response.status, response.statusText);
-          setIsLoading(false);
-          return;
-        }
-        const data = await response.json();
+        const data = await apiCallJson<{ companies?: Company[] }>('/api/companies');
         console.log('Companies API response:', data);
         setCompanies(data.companies || []);
       } catch (error) {
         console.error('Failed to fetch companies:', error);
+        // Silently fail - this is not critical for page functionality
       } finally {
         setIsLoading(false);
       }
@@ -37,7 +33,7 @@ export default function CompanyLogos() {
 
   if (isLoading) {
     return (
-      <section className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 bg-black scroll-snap-section relative">
+      <section className="pt-20 pb-20 md:pt-24 md:pb-24 lg:pt-28 lg:pb-28 bg-black scroll-snap-section relative">
         <div className="container-page">
           <div className="h-[200px] flex items-center justify-center">
             <div className="h-6 w-64 bg-white/10 rounded animate-pulse" />
@@ -51,7 +47,7 @@ export default function CompanyLogos() {
   // In production, you might want to return null here
   if (companies.length === 0) {
     return (
-      <section className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 bg-black scroll-snap-section relative">
+      <section className="pt-20 pb-20 md:pt-24 md:pb-24 lg:pt-28 lg:pb-28 bg-black scroll-snap-section relative">
         <div className="container-page relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -72,7 +68,7 @@ export default function CompanyLogos() {
             </p>
             <div className="text-sm text-zinc-500 mt-8 p-4 bg-white/5 rounded-lg border border-white/10">
               <p>No companies with logos found. Add logo files to <code className="text-zinc-400">/public/logos/companies/</code></p>
-              <p className="text-xs mt-2 text-zinc-600">Check browser console for API response details.</p>
+              <p className="text-xs mt-2 text-zinc-500">Check browser console for API response details.</p>
             </div>
           </motion.div>
         </div>
@@ -106,7 +102,7 @@ export default function CompanyLogos() {
             Featured Companies
           </motion.span>
           <h2 className="section-title mt-4 mb-3">
-            Jobs from Europe's best early-career employers
+            Jobs from companies like:
           </h2>
           <p className="text-xl text-zinc-300 md:text-2xl leading-relaxed">
             We've matched roles from these companies (and 400+ more)
@@ -133,7 +129,7 @@ export default function CompanyLogos() {
           )}
           
           {/* Subtle spotlight effect */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-brand-500/5 to-transparent z-0" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-brand-500/3 to-transparent z-0" />
 
           {/* Horizontal scroll container */}
           <div 
@@ -160,13 +156,13 @@ export default function CompanyLogos() {
               >
                 <div className="relative h-[160px] w-[180px] flex items-center justify-center rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.04] border border-white/10 backdrop-blur-xl shadow-feature p-6 transition-all duration-300 hover:border-white/20 hover:shadow-hover group overflow-hidden">
                   {/* Subtle gradient overlay on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 via-brand-500/0 to-purple-500/0 group-hover:from-brand-500/10 group-hover:via-brand-500/5 group-hover:to-purple-500/10 transition-all duration-300 rounded-2xl" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 via-brand-500/0 to-brand-600/0 group-hover:from-brand-500/8 group-hover:via-brand-500/4 group-hover:to-brand-600/8 transition-all duration-300 rounded-2xl" />
                   
                   {/* Logo - bigger and more visible */}
                   <div className="relative z-10 flex items-center justify-center">
                     <Image
                       src={company.logoPath}
-                      alt={company.name}
+                      alt={`${company.name} company logo`}
                       width={140}
                       height={140}
                       className="object-contain h-[120px] w-auto opacity-95 transition-all duration-300 group-hover:opacity-100 group-hover:scale-110"
@@ -182,7 +178,6 @@ export default function CompanyLogos() {
                         console.log(`Successfully loaded logo: ${company.logoPath}`);
                       }}
                       loading="lazy"
-                      unoptimized={true}
                     />
                   </div>
                   
@@ -207,7 +202,7 @@ export default function CompanyLogos() {
           <p className="text-xs md:text-sm text-zinc-500">
             {companies.length}+ companies this month • Updated daily
           </p>
-          <p className="text-xs text-zinc-600 mt-2">
+          <p className="text-xs text-zinc-500 mt-2">
             JobPing is not affiliated to these companies, we match you with their public job listings
           </p>
         </motion.div>

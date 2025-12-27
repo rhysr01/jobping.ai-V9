@@ -398,13 +398,21 @@ async function saveJobs(jobs, source) {
     // Maps to form options: "Internship", "Graduate Programmes", "Entry Level"
     const isEarlyCareer = !isInternship && !isGraduate; // Entry-level roles
     
+    // Normalize location data
+    const { normalizeJobLocation } = require('../scrapers/shared/locationNormalizer.cjs');
+    const normalized = normalizeJobLocation({
+      city,
+      country,
+      location: j.location,
+    });
+    
     return {
       job_hash: hashJob(j.title, companyName, j.location),
       title: (j.title||'').trim(),
       company: companyName, // Clean company name
-      location: (j.location||'').trim(),
-      city: city, // Extract city from location
-      country: country, // Extract country from location
+      location: normalized.location, // Use normalized location
+      city: normalized.city, // Use normalized city
+      country: normalized.country, // Use normalized country
       description: description,
       job_url: (j.job_url || j.url || '').trim(),
       source,
@@ -517,36 +525,48 @@ async function main() {
     return cleaned[0]; // Use primary cleaned version (without parentheses)
   };
   
-  // BUSINESS SCHOOL FOCUSED: 6 tight early-career queries per city
+  // EXPANDED: Covers all role types - coordinator, assistant, representative, engineer, specialist, manager, designer, HR, legal, sustainability
   // Rotates 3 sets to maximize diversity over time
-  // NOW INCLUDES EXACT ROLE NAMES FROM SIGNUP FORM (CLEANED)
+  // NOW INCLUDES EXACT ROLE NAMES FROM SIGNUP FORM (CLEANED) + expanded role types
   const QUERY_SETS = {
     SET_A: [
-      // Top business school programs + exact role names (cleaned)
-      'graduate programme',
-      cleanRole('Investment Banking Analyst'),  // ✅ Exact role from form (cleaned)
-      cleanRole('Financial Analyst'),            // ✅ Exact role from form (cleaned)
-      cleanRole('Business Analyst'),             // ✅ Exact role from form (cleaned)
+      // Focus: Internships, graduate programs, and coordinator roles
+      'graduate programme', 'graduate scheme', 'internship', 'intern',
+      cleanRole('Marketing Coordinator'),         // ✅ Coordinator role
+      cleanRole('Operations Coordinator'),       // ✅ Coordinator role
+      cleanRole('Product Coordinator'),          // ✅ Coordinator role
+      cleanRole('HR Coordinator'),               // ✅ Coordinator role
+      cleanRole('Project Coordinator'),          // ✅ Coordinator role
+      cleanRole('Sales Coordinator'),            // ✅ Coordinator role
       cleanRole('Finance Intern'),               // ✅ Exact role from form (cleaned)
       cleanRole('Consulting Intern')             // ✅ Exact role from form (cleaned)
     ],
     SET_B: [
-      // Core business roles + exact role names (cleaned)
+      // Focus: Analyst, associate, assistant, and representative roles
       cleanRole('Financial Analyst'),            // ✅ Exact role from form (cleaned)
       cleanRole('Business Analyst'),             // ✅ Exact role from form (cleaned)
-      cleanRole('Marketing Intern'),              // ✅ Exact role from form (cleaned)
       cleanRole('Data Analyst'),                  // ✅ Exact role from form (cleaned)
-      cleanRole('Operations Analyst'),            // ✅ Exact role from form (cleaned)
-      cleanRole('Sales Development Representative (SDR)') // ✅ Searches as "Sales Development Representative" and "SDR"
+      cleanRole('Operations Analyst'),           // ✅ Exact role from form (cleaned)
+      cleanRole('Marketing Assistant'),           // ✅ Assistant role
+      cleanRole('Brand Assistant'),              // ✅ Assistant role
+      cleanRole('Product Assistant'),             // ✅ Assistant role
+      cleanRole('Sales Development Representative (SDR)'), // ✅ Representative role
+      cleanRole('HR Assistant')                 // ✅ Assistant role
     ],
     SET_C: [
-      // Analyst & associate roles + exact role names (cleaned)
-      cleanRole('Data Analyst'),                  // ✅ Exact role from form (cleaned)
-      cleanRole('Junior Data Analyst'),           // ✅ Exact role from form (cleaned)
+      // Focus: Entry-level, junior, engineer, specialist, manager, designer, and program roles
+      'entry level', 'junior', 'graduate', 'recent graduate',
+      'early careers program', 'rotational graduate program',
+      cleanRole('Software Engineer Intern'),      // ✅ Engineer role
+      cleanRole('Data Engineer Intern'),         // ✅ Engineer role
+      cleanRole('Associate Product Manager (APM)'), // ✅ Manager role
       cleanRole('Product Analyst'),               // ✅ Exact role from form (cleaned)
-      cleanRole('Strategy Analyst'),              // ✅ Exact role from form (cleaned)
-      cleanRole('Risk Analyst'),                  // ✅ Exact role from form (cleaned)
-      cleanRole('Analytics Intern')               // ✅ Exact role from form (cleaned)
+      cleanRole('Fulfilment Specialist'),         // ✅ Specialist role
+      cleanRole('Technical Specialist'),         // ✅ Specialist role
+      cleanRole('Product Designer'),              // ✅ Designer role
+      cleanRole('UX Intern'),                    // ✅ Designer role
+      cleanRole('ESG Intern'),                   // ✅ Sustainability role
+      cleanRole('Sustainability Analyst')        // ✅ Sustainability role
     ]
   };
 
@@ -573,28 +593,82 @@ async function main() {
   
   console.log(`🔄 Using query set: ${currentSet} (${CORE_EN.length} terms)`);
   console.log(`📋 Query set includes ${CORE_EN.filter(q => /^[A-Z]/.test(q)).length} exact role names from signup form`);
+  // EXPANDED: Local language terms include coordinator, assistant, representative, engineer, specialist roles
   const CITY_LOCAL = {
     'London': [], // English only set is CORE_EN
     'Manchester': [], // English only set is CORE_EN
     'Birmingham': [], // English only set is CORE_EN
-    'Madrid': [ 'programa de graduados','becario','prácticas','junior','recién graduado','nivel inicial' ],
-    'Barcelona': [ 'programa de graduados','becario','prácticas','junior','recién graduado','nivel inicial' ],
-    'Berlin': [ 'absolvent','trainee','praktikant','junior','berufseinsteiger','nachwuchskraft' ],
-    'Hamburg': [ 'absolvent','trainee','praktikant','junior','berufseinsteiger','nachwuchskraft' ],
-    'Munich': [ 'absolvent','trainee','praktikant','junior','berufseinsteiger','nachwuchskraft' ],
-    'Amsterdam': [ 'afgestudeerde','traineeship','starter','junior','beginnend','werkstudent' ],
-    'Brussels': [ 'stagiaire','junior','débutant','afgestudeerde','starter' ], // Belgium: French + Dutch
-    'Paris': [ 'jeune diplômé','stagiaire','alternance','junior','débutant','programme graduate' ],
-    'Zurich': [ 'absolvent','trainee','praktikant','junior','jeune diplômé','stagiaire' ],
-    'Milan': [ 'neolaureato','stage','tirocinio','junior','primo lavoro','laureato' ],
-    'Rome': [ 'neolaureato','stage','tirocinio','junior','primo lavoro','laureato' ],
+    'Madrid': [
+      'programa de graduados','becario','prácticas','junior','recién graduado','nivel inicial',
+      'coordinador','asistente','representante','especialista','ingeniero','prácticas marketing',
+      'prácticas finance','prácticas tech','prácticas hr','prácticas sostenibilidad'
+    ],
+    'Barcelona': [
+      'programa de graduados','becario','prácticas','junior','recién graduado','nivel inicial',
+      'coordinador','asistente','representante','especialista','ingeniero','prácticas marketing'
+    ],
+    'Berlin': [
+      'absolvent','trainee','praktikant','junior','berufseinsteiger','nachwuchskraft',
+      'koordinator','assistent','vertreter','spezialist','ingenieur','praktikum marketing',
+      'praktikum finance','praktikum tech','praktikum hr','praktikum nachhaltigkeit'
+    ],
+    'Hamburg': [
+      'absolvent','trainee','praktikant','junior','berufseinsteiger','nachwuchskraft',
+      'koordinator','assistent','vertreter','spezialist','ingenieur'
+    ],
+    'Munich': [
+      'absolvent','trainee','praktikant','junior','berufseinsteiger','nachwuchskraft',
+      'koordinator','assistent','vertreter','spezialist','ingenieur'
+    ],
+    'Amsterdam': [
+      'afgestudeerde','traineeship','starter','junior','beginnend','werkstudent',
+      'coördinator','assistent','vertegenwoordiger','specialist','ingenieur','stage marketing',
+      'stage finance','stage tech','stage hr','stage duurzaamheid'
+    ],
+    'Brussels': [
+      'stagiaire','junior','débutant','afgestudeerde','starter','coordinateur',
+      'assistant','représentant','spécialiste','ingénieur','stagiaire marketing'
+    ], // Belgium: French + Dutch
+    'Paris': [
+      'jeune diplômé','stagiaire','alternance','junior','débutant','programme graduate',
+      'coordinateur','assistant','représentant','spécialiste','ingénieur','stagiaire marketing',
+      'stagiaire finance','stagiaire tech','stagiaire hr','stagiaire esg'
+    ],
+    'Zurich': [
+      'absolvent','trainee','praktikant','junior','jeune diplômé','stagiaire',
+      'koordinator','assistent','vertreter','spezialist','ingenieur'
+    ],
+    'Milan': [
+      'neolaureato','stage','tirocinio','junior','primo lavoro','laureato',
+      'coordinatore','assistente','rappresentante','specialista','ingegnere','stage marketing',
+      'stage finance','stage tech','stage hr','stage sostenibilità'
+    ],
+    'Rome': [
+      'neolaureato','stage','tirocinio','junior','primo lavoro','laureato',
+      'coordinatore','assistente','rappresentante','specialista','ingegnere'
+    ],
     'Dublin': [], // English only set is CORE_EN
     'Belfast': [], // English only set is CORE_EN
-    'Stockholm': [ 'nyexaminerad','trainee','praktikant','junior','nybörjare','graduate' ],
-    'Copenhagen': [ 'nyuddannet','trainee','praktikant','junior','begynder','graduate' ],
-    'Vienna': [ 'absolvent','trainee','praktikant','junior','einsteiger','nachwuchskraft' ],
-    'Prague': [ 'absolvent','trainee','praktikant','junior','začátečník','graduate' ],
-    'Warsaw': [ 'absolwent','stażysta','praktykant','junior','początkujący','graduate' ]
+    'Stockholm': [
+      'nyexaminerad','trainee','praktikant','junior','nybörjare','graduate',
+      'koordinator','assistent','representant','specialist','ingenjör'
+    ],
+    'Copenhagen': [
+      'nyuddannet','trainee','praktikant','junior','begynder','graduate',
+      'koordinator','assistent','repræsentant','specialist','ingeniør'
+    ],
+    'Vienna': [
+      'absolvent','trainee','praktikant','junior','einsteiger','nachwuchskraft',
+      'koordinator','assistent','vertreter','spezialist','ingenieur'
+    ],
+    'Prague': [
+      'absolvent','trainee','praktikant','junior','začátečník','graduate',
+      'koordinátor','asistent','zástupce','specialista','inženýr'
+    ],
+    'Warsaw': [
+      'absolwent','stażysta','praktykant','junior','początkujący','graduate',
+      'koordynator','asystent','przedstawiciel','specjalista','inżynier'
+    ]
   };
   // Priority cities: Adzuna doesn't cover these, so JobSpy must prioritize them
   const PRIORITY_CITIES = ['Stockholm', 'Copenhagen', 'Vienna', 'Prague', 'Warsaw', 'Belfast'];

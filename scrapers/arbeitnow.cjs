@@ -15,23 +15,39 @@ const CITIES = [
 
 /**
  * Query rotation system - 3 sets that rotate every 8 hours
- * Ensures different queries for morning/evening runs (8am/6pm UTC)
+ * EXPANDED to cover all role types: coordinator, assistant, representative, engineer, specialist, manager, designer, HR, legal, sustainability
+ * German + English terms for comprehensive coverage
  */
 const QUERY_SETS = {
   SET_A: [
-    // Focus: German internships and praktikum
+    // Focus: Internships, graduate programs, and coordinator roles (German + English)
     'praktikum', 'werkstudent', 'absolventenprogramm', 'traineeprogramm',
-    'internship', 'intern', 'graduate programme', 'graduate scheme'
+    'internship', 'intern', 'graduate programme', 'graduate scheme',
+    'koordinator', 'coordinateur', 'coordinador', 'coordinatore', 'coördinator',
+    'marketing coordinator', 'operations coordinator', 'product coordinator',
+    'hr coordinator', 'project coordinator', 'sales coordinator'
   ],
   SET_B: [
-    // Focus: Analyst and business roles (German + English)
+    // Focus: Analyst, associate, assistant, and representative roles (German + English)
     'business analyst', 'financial analyst', 'data analyst', 'operations analyst',
-    'absolvent', 'berufseinsteiger', 'junior analyst', 'graduate analyst'
+    'absolvent', 'berufseinsteiger', 'junior analyst', 'graduate analyst',
+    'assistent', 'assistant', 'asistente', 'assistente',
+    'marketing assistant', 'brand assistant', 'product assistant', 'hr assistant',
+    'vertreter', 'représentant', 'representante', 'rappresentante',
+    'sales development representative', 'sdr', 'bdr', 'account executive',
+    'customer success associate'
   ],
   SET_C: [
-    // Focus: Entry-level and trainee programs (German + English)
+    // Focus: Entry-level, junior, engineer, specialist, manager, designer, and program roles (German + English)
     'entry level', 'junior', 'trainee', 'ausbildung', 'duales studium',
-    'einstiegsprogramm', 'nachwuchsprogramm', 'graduate trainee'
+    'einstiegsprogramm', 'nachwuchsprogramm', 'graduate trainee',
+    'ingenieur', 'ingénieur', 'ingeniero', 'ingegnere', 'ingenieur',
+    'software engineer intern', 'data engineer intern', 'cloud engineer intern',
+    'spezialist', 'spécialiste', 'especialista', 'specialista',
+    'fulfilment specialist', 'technical specialist', 'hr specialist',
+    'associate product manager', 'apm', 'product analyst',
+    'designer', 'designer intern', 'ux intern', 'product designer',
+    'esg intern', 'sustainability analyst', 'climate analyst', 'nachhaltigkeit'
   ]
 };
 
@@ -266,6 +282,14 @@ async function scrapeArbeitnowQuery(keyword, location, supabase) {
         // Infer categories
         const categories = inferCategoriesFromTags(job.tags || [], job.title);
 
+        // Normalize location data
+        const { normalizeJobLocation } = require('./shared/locationNormalizer.cjs');
+        const normalized = normalizeJobLocation({
+          city,
+          country,
+          location: job.location,
+        });
+
         // Prepare database record
         const nowIso = new Date().toISOString();
         const postedAt = normalizeDate(job.created_at);
@@ -273,9 +297,9 @@ async function scrapeArbeitnowQuery(keyword, location, supabase) {
           job_hash,
           title: job.title,
           company: job.company_name,
-          location: job.location,
-          city,
-          country,
+          location: normalized.location, // Use normalized location
+          city: normalized.city, // Use normalized city
+          country: normalized.country, // Use normalized country
           description: job.description,
           job_url: job.url,
           posted_at: postedAt,

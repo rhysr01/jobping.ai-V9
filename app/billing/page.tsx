@@ -6,6 +6,7 @@ import { CreditCard, Settings, FileText, CheckCircle, XCircle, Calendar, DollarS
 import GlassCard from '@/components/ui/GlassCard';
 import Button from '@/components/ui/Button';
 import Skeleton, { SkeletonText } from '@/components/ui/Skeleton';
+import { apiCall, apiCallJson, ApiError } from '@/lib/api-client';
 
 interface BillingPageProps {
   params?: Promise<{ userId?: string }>;
@@ -99,20 +100,18 @@ export default function BillingPage({ params, searchParams }: BillingPageProps) 
       try {
         setLoading(true);
         setError('');
-        const response = await fetch(`/api/billing?userId=${userId}`);
-        const data = await response.json();
+        const data = await apiCallJson<BillingData>(`/api/billing?userId=${userId}`);
         
-        if (response.ok) {
-          setBillingData(data);
-          // Update email from billing data if available
-          if (data.email && !userEmail) {
-            setUserEmail(data.email);
-          }
-        } else {
-          setError(data.error || 'Failed to load billing information');
+        setBillingData(data);
+        // Update email from billing data if available
+        if (data.email && !userEmail) {
+          setUserEmail(data.email);
         }
       } catch (err) {
-        setError('Failed to load billing information');
+        const errorMessage = err instanceof ApiError 
+          ? err.message 
+          : 'Failed to load billing information';
+        setError(errorMessage);
         console.error('Billing fetch error:', err);
       } finally {
         setLoading(false);
@@ -128,7 +127,7 @@ export default function BillingPage({ params, searchParams }: BillingPageProps) 
     try {
       setProcessing(true);
       setError('');
-      const response = await fetch('/api/billing/portal', {
+      const response = await apiCall('/api/billing/portal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),
@@ -141,7 +140,10 @@ export default function BillingPage({ params, searchParams }: BillingPageProps) 
         setError('Failed to open billing portal');
       }
     } catch (err) {
-      setError('Failed to open billing portal');
+      const errorMessage = err instanceof ApiError 
+        ? err.message 
+        : 'Failed to open billing portal';
+      setError(errorMessage);
       console.error('Portal error:', err);
     } finally {
       setProcessing(false);
@@ -157,7 +159,7 @@ export default function BillingPage({ params, searchParams }: BillingPageProps) 
       const emailForCheckout = billingData?.email || userEmail || null;
       
       // Call API to get checkout URL (product ID is server-side only)
-      const response = await fetch('/api/checkout', {
+      const response = await apiCall('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -176,7 +178,10 @@ export default function BillingPage({ params, searchParams }: BillingPageProps) 
         setError(data.error || 'Failed to start checkout. Please contact support.');
       }
     } catch (err) {
-      setError('Failed to start checkout. Please try again.');
+      const errorMessage = err instanceof ApiError 
+        ? err.message 
+        : 'Failed to start checkout. Please try again.';
+      setError(errorMessage);
       console.error('Checkout error:', err);
     } finally {
       setProcessing(false);
@@ -225,7 +230,7 @@ export default function BillingPage({ params, searchParams }: BillingPageProps) 
 
       setPromoLoading(true);
       try {
-        const response = await fetch('/api/apply-promo', {
+        const response = await apiCall('/api/apply-promo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: promoEmail, promoCode: promoCode.trim() }),
@@ -243,7 +248,10 @@ export default function BillingPage({ params, searchParams }: BillingPageProps) 
           setPromoError(data.error || 'Invalid promo code');
         }
       } catch (err) {
-        setPromoError('Failed to apply promo code. Please try again.');
+        const errorMessage = err instanceof ApiError 
+          ? err.message 
+          : 'Failed to apply promo code. Please try again.';
+        setPromoError(errorMessage);
       } finally {
         setPromoLoading(false);
       }

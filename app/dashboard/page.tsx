@@ -45,7 +45,10 @@ function DashboardContent() {
       // Create or get account
       const createRes = await fetch('/api/stripe-connect/create-account', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-csrf-token': 'jobping-request',
+        },
         body: JSON.stringify({
           userId,
           email: `user-${userId}@example.com`, // Replace with actual user email
@@ -65,7 +68,10 @@ function DashboardContent() {
         // Get onboarding link
         const linkRes = await fetch('/api/stripe-connect/create-account-link', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-csrf-token': 'jobping-request',
+          },
           body: JSON.stringify({ accountId }),
         });
 

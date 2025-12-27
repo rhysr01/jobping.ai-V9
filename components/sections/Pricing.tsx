@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import * as Copy from '@/lib/copy';
 import { BrandIcons } from '@/components/ui/BrandIcons';
+import { trackEvent } from '@/lib/analytics';
 
 type PlanConfig = {
   id: 'free' | 'premium';
@@ -22,23 +23,18 @@ const plans: PlanConfig[] = [
   {
     id: 'free',
     name: Copy.FREE_PLAN_TITLE,
-    headline: 'Try now - See 5 matches instantly',
-    description: 'Get 5 hand-picked matches right now. No emails, no commitment. Perfect for testing the waters.',
+    headline: 'Try JobPing Free',
+    description: Copy.FREE_PLAN_DESCRIPTION,
     price: '€0',
     suffix: 'forever',
-    cta: { label: 'Try Free Now →', href: '/signup/free' },
-    features: [
-      '5 instant matches (one-time)',
-      'Zero emails sent',
-      'No credit card required',
-      'See matches in under 2 minutes'
-    ],
+    cta: { label: 'See My Matches →', href: '/signup/free' },
+    features: Copy.FREE_PLAN_FEATURES,
     footnote: Copy.PRICING_BADGE,
   },
   {
     id: 'premium',
     name: Copy.PREMIUM_PLAN_TITLE,
-    headline: 'Weekly emails - 15 jobs per week',
+    headline: 'Get 15 Curated Matches Per Week',
     description: Copy.PREMIUM_PLAN_DESCRIPTION,
     price: Copy.PREMIUM_PLAN_PRICE,
     suffix: Copy.PREMIUM_PLAN_PRICE_UNIT,
@@ -51,7 +47,7 @@ const plans: PlanConfig[] = [
 
 export default function Pricing() {
   return (
-    <section data-testid="pricing" className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 relative overflow-hidden bg-[#05010f] scroll-snap-section">
+    <section id="pricing" data-testid="pricing" className="pt-20 pb-20 md:pt-24 md:pb-24 lg:pt-28 lg:pb-28 relative overflow-hidden bg-[#05010f] scroll-snap-section">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       {/* Soft section band */}
@@ -84,39 +80,29 @@ export default function Pricing() {
           ))}
         </div>
 
-        <div className="relative">
-          {/* Focus window - top */}
-          <div className="pointer-events-none absolute inset-x-0 -top-20 h-40 bg-gradient-to-b from-white/[0.06] to-transparent blur-md-hero" />
-          {/* Focus window - bottom */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-[-60px] h-40 bg-gradient-to-t from-white/[0.03] to-transparent blur-md-hero" />
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-20 max-w-3xl mx-auto rounded-2xl bg-white/[0.04] border border-white/10 p-10 backdrop-blur-xl shadow-hero ring-1 ring-white/5 text-center hover:-translate-y-1 hover:shadow-feature transition-all duration-200 relative z-10"
-          >
-          <div className="flex flex-col items-center gap-5">
-            <span className="inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-brand-200">
-              🚀 Over 12,000 jobs matched this month
-            </span>
-            <h3 className="text-5xl font-semibold tracking-[-0.02em] text-white md:text-6xl mb-2">
-              Try Free Now - See 5 Matches Instantly
-            </h3>
-            <p className="max-w-2xl text-xl text-zinc-300 md:text-2xl mb-6">
-              No emails, no commitment. Get 5 hand-picked matches in under 2 minutes. Perfect for testing the waters.
-            </p>
-            <Link
-              href="/signup/free"
-              aria-label="Try Free Now"
-              className="inline-flex items-center justify-center gap-2 h-11 rounded-full bg-brand-500 px-6 text-sm font-medium text-white shadow-md shadow-brand-500/40 transition-all duration-200 hover:bg-brand-500/90 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-base"
-            >
-              <BrandIcons.Zap className="h-4 w-4" />
-              Try Free Now →
-            </Link>
-          </div>
-          </motion.div>
-        </div>
+        {/* Pricing note */}
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="text-center mt-6 text-zinc-400"
+        >
+          💡 Premium gives you 15 roles per week. Free gives you 5 (one-time). More matches = more opportunities.
+        </motion.p>
+
+        {/* Social Proof */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="text-center mt-4"
+        >
+          <p className="text-sm text-zinc-400">
+            Join <span className="font-semibold text-white">3,400+</span> students finding jobs
+          </p>
+        </motion.div>
       </div>
     </section>
   );
@@ -138,9 +124,9 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.55, delay: index * 0.1 }}
-        className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-xl backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7 md:scale-[1.02] md:-translate-y-1 ${
+        className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-xl backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7 ${
           isPremium 
-            ? 'bg-zinc-900 border border-brand-500/60 shadow-pricing' 
+            ? 'bg-zinc-900 border border-brand-500/60 shadow-pricing md:scale-[1.05] md:-translate-y-2' 
             : 'bg-white/[0.06] border border-white/10 shadow-pricing md:scale-100 md:translate-y-0'
         }`}
       >
@@ -159,41 +145,6 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
         <p className="text-xs uppercase tracking-wider text-zinc-300">{plan.name}</p>
         <h3 className="text-xl font-semibold text-white sm:text-2xl mb-2">{plan.headline}</h3>
         <p className="text-base text-zinc-300/90 leading-relaxed">{plan.description}</p>
-        
-        {/* Free plan badge */}
-        {!isPremium && (
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
-            <BrandIcons.Zap className="h-3 w-3" />
-            Instant - No emails
-          </div>
-        )}
-        
-        {/* Premium plan badge */}
-        {isPremium && (
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-200">
-            <BrandIcons.Mail className="h-3 w-3" />
-            Weekly emails - 3x per week
-          </div>
-        )}
-        
-        {/* Progress indicator for Premium */}
-        {isPremium && (
-          <div className="mt-4 p-3 rounded-lg bg-brand-500/10 border border-brand-500/30">
-            <div className="flex items-center justify-center gap-2 text-sm">
-              <span className="text-zinc-300">Free:</span>
-              <span className="flex items-center gap-1 text-brand-300">
-                <span className="text-lg">●</span>
-                <span className="text-zinc-400">○○</span>
-              </span>
-              <span className="text-zinc-400 mx-1">→</span>
-              <span className="text-zinc-300">Premium:</span>
-              <span className="flex items-center gap-1 text-brand-300">
-                <span className="text-lg">●●●</span>
-              </span>
-            </div>
-            <p className="text-xs text-center text-zinc-400 mt-1">Free: 5 (one-time) → Premium: 15 per week (3x more)</p>
-          </div>
-        )}
 
         <ul className="mt-6 space-y-4">
           {plan.features.map(feature => (
@@ -205,15 +156,6 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
             </li>
           ))}
         </ul>
-
-        {/* Time-to-apply callout for Premium */}
-        {isPremium && (
-          <div className="mt-6 p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
-            <p className="text-xs text-zinc-300 leading-relaxed">
-              💡 <strong className="text-white">More matches = more shots at landing your role.</strong> Premium users get 3x the opportunities and apply faster.
-            </p>
-          </div>
-        )}
       </div>
 
       <div className="mt-8 flex flex-col gap-3">
@@ -223,6 +165,13 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
         >
           <Link
             href={plan.cta.href}
+            onClick={() => {
+              if (isPremium) {
+                trackEvent('cta_clicked', { type: 'premium', location: 'pricing' });
+              } else {
+                trackEvent('cta_clicked', { type: 'free', location: 'pricing' });
+              }
+            }}
             aria-label={isPremium ? "Start Premium - Weekly emails" : "Try Free Now - Instant matches"}
             className={`group relative inline-flex items-center justify-center overflow-hidden h-11 rounded-full px-6 text-sm font-medium transition-all duration-300 sm:text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
               isPremium

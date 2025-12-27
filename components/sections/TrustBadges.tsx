@@ -1,60 +1,54 @@
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion';
+import { BrandIcons } from '@/components/ui/BrandIcons';
 
-/**
- * Trust Badges Component
- * Shows company names as text labels for consistency
- */
+const badges = [
+  {
+    icon: BrandIcons.Shield,
+    label: 'GDPR Compliant',
+    description: 'Your data is protected',
+  },
+  {
+    icon: BrandIcons.Zap,
+    label: 'No Credit Card Required',
+    description: 'Start free, upgrade anytime',
+  },
+  {
+    icon: BrandIcons.CheckCircle,
+    label: 'Cancel Anytime',
+    description: 'No commitments',
+  },
+];
+
 export default function TrustBadges() {
-  const badges = [
-    {
-      name: "Reed.co.uk",
-      description: "UK's largest job board"
-    },
-    {
-      name: "Adzuna",
-      description: "Global job aggregator"
-    },
-    {
-      name: "Greenhouse",
-      description: "Company career pages"
-    },
-  ];
-
   return (
-    <section className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 border-t border-white/10">
-      <div className="container-page">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mx-auto max-w-4xl"
-        >
-          <p className="mb-3 text-center text-[11px] uppercase tracking-[0.22em] text-zinc-300">
-            Opportunities sourced from trusted platforms
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3" role="list" aria-label="Trusted job board partners">
-            {badges.map((badge, index) => (
-              <motion.div
-                key={badge.name}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.08 }}
-                whileHover={{ scale: 1.05 }}
-                className="group relative flex items-center justify-center transition-all duration-200 hover:-translate-y-1 bg-white/[0.08] border border-white/10 px-4 py-2 rounded-xl hover:border-white/20 hover:bg-white/[0.12] hover:shadow-[0_4px_12px_theme(colors.brand.500/0.15)]"
-                role="listitem"
-              >
-                <span className="text-sm font-semibold text-white">{badge.name}</span>
-                <span className="sr-only">{badge.description}</span>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-    </section>
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+      className="flex flex-wrap items-center justify-center gap-4 md:gap-6 mt-6"
+    >
+      {badges.map((badge, index) => {
+        const Icon = badge.icon;
+        return (
+          <motion.div
+            key={badge.label}
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: index * 0.1 }}
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-sm hover:bg-white/[0.06] transition-all duration-200"
+          >
+            <Icon className="h-4 w-4 text-brand-300" />
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-white leading-tight">{badge.label}</span>
+              <span className="text-[10px] text-zinc-400 leading-tight">{badge.description}</span>
+            </div>
+          </motion.div>
+        );
+      })}
+    </motion.div>
   );
 }
-

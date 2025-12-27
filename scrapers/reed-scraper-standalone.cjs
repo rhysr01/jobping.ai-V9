@@ -187,13 +187,21 @@ function convertToDatabaseFormat(job) {
   // Maps to form options: "Internship", "Graduate Programmes", "Entry Level"
   const isEarlyCareer = !isInternship && !isGraduate; // Entry-level roles
   
+  // Normalize location data
+  const { normalizeJobLocation } = require('./shared/locationNormalizer.cjs');
+  const normalized = normalizeJobLocation({
+    city,
+    country,
+    location: job.location,
+  });
+  
   return {
     job_hash,
     title: (job.title || '').trim(),
     company: companyName,
-    location: (job.location || '').trim(),
-    city: city, // Extract city from location
-    country: country, // Extract country from location
+    location: normalized.location, // Use normalized location
+    city: normalized.city, // Use normalized city
+    country: normalized.country, // Use normalized country
     description: (job.description || '').trim(),
     job_url: (job.url || '').trim(),
     source: (job.source || 'reed').trim(),
@@ -270,27 +278,34 @@ const { getAllRoles, getEarlyCareerRoles, getTopRolesByCareerPath, cleanRoleForS
 
 /**
  * Query rotation system - 3 sets that rotate every 8 hours
- * Ensures different queries for morning/evening runs (8am/6pm UTC)
+ * EXPANDED to cover all role types: coordinator, assistant, representative, engineer, specialist, manager, designer, HR, legal, sustainability
  * ALL QUERIES ARE EARLY-CAREER FOCUSED
  */
 const QUERY_SETS = {
   SET_A: [
-    // Focus: Internships and graduate programs
+    // Focus: Internships, graduate programs, and coordinator roles
     'graduate programme', 'graduate scheme', 'internship', 'intern', 
     'graduate trainee', 'management trainee', 'trainee program',
-    'entry level', 'junior', 'graduate'
+    'marketing coordinator', 'operations coordinator', 'product coordinator',
+    'hr coordinator', 'project coordinator', 'sales coordinator'
   ],
   SET_B: [
-    // Focus: Analyst and associate roles
+    // Focus: Analyst, associate, assistant, and representative roles
     'business analyst', 'financial analyst', 'data analyst', 'operations analyst',
     'junior analyst', 'associate consultant', 'graduate analyst',
-    'marketing intern', 'finance intern', 'consulting intern'
+    'marketing assistant', 'brand assistant', 'product assistant',
+    'sales development representative', 'sdr', 'bdr', 'account executive',
+    'customer success associate', 'hr assistant'
   ],
   SET_C: [
-    // Focus: Entry-level and trainee programs
+    // Focus: Entry-level, junior, engineer, specialist, manager, designer, and program roles
     'entry level', 'junior', 'graduate', 'recent graduate',
-    'early careers program', 'campus hire', 'new grad',
-    'trainee', 'graduate associate', 'rotational graduate program'
+    'early careers program', 'rotational graduate program',
+    'software engineer intern', 'data engineer intern', 'cloud engineer intern',
+    'associate product manager', 'apm', 'product analyst',
+    'fulfilment specialist', 'technical specialist', 'hr specialist',
+    'ux intern', 'product designer', 'design intern',
+    'esg intern', 'sustainability analyst', 'climate analyst'
   ]
 };
 

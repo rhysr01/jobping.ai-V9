@@ -181,15 +181,23 @@ async function scrapeLeverCompany(company, supabase) {
         // Infer work environment
         const work_environment = inferWorkEnvironment(job);
 
+        // Normalize location data
+        const { normalizeJobLocation } = require('./shared/locationNormalizer.cjs');
+        const normalized = normalizeJobLocation({
+          city,
+          country,
+          location: locationStr,
+        });
+
         // Prepare database record
         const nowIso = new Date().toISOString();
         const jobRecord = {
           job_hash,
           title: job.text,
           company: company, // Use company slug, not categories.commitment
-          location: locationStr,
-          city,
-          country,
+          location: normalized.location, // Use normalized location
+          city: normalized.city, // Use normalized city
+          country: normalized.country, // Use normalized country
           description: job.description || '', // Lever returns HTML description
           job_url: job.hostedUrl || job.applyUrl || `${BASE_URL}/${company}/${job.id}`,
           posted_at,

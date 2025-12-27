@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect, memo } from 'react';
 
 // Projection bounds control the visible portion of Europe
 const BOUNDS = { lonMin: -11, lonMax: 31, latMin: 35, latMax: 71 };
@@ -71,7 +71,7 @@ interface TooltipState {
   y: number;
 }
 
-export default function EuropeMap({ 
+const EuropeMap = memo(function EuropeMap({ 
   selectedCities, 
   onCityClick, 
   maxSelections = 3,
@@ -324,7 +324,7 @@ export default function EuropeMap({
 
   return (
     <div 
-      className={`relative w-full h-full min-h-[420px] sm:min-h-[480px] md:min-h-[540px] lg:min-h-[600px] rounded-2xl border-2 border-brand-500/30 overflow-hidden shadow-[0_0_60px_rgba(99,102,241,0.15),inset_0_0_100px_rgba(99,102,241,0.05)] touch-manipulation ${className}`}
+      className={`relative w-full h-full min-h-[420px] sm:min-h-[480px] md:min-h-[540px] lg:min-h-[600px] rounded-2xl border-2 border-brand-500/30 overflow-hidden shadow-[0_0_60px_rgba(109,90,143,0.12),inset_0_0_100px_rgba(109,90,143,0.04)] touch-manipulation ${className}`}
       role="application"
       aria-label="Interactive Europe map for city selection. Use arrow keys to navigate between cities, Enter or Space to select."
     >
@@ -545,7 +545,16 @@ export default function EuropeMap({
                   onTouchStart={(e) => !disabled && handleCityTouch(city, e)}
                   onFocus={() => !disabled && setFocusedCity(city)}
                   onBlur={() => setFocusedCity(null)}
-                  onKeyDown={(e) => !disabled && handleKeyDown(city, e)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      if (!disabled) {
+                        handleCityClick(city);
+                      }
+                    } else if (!disabled) {
+                      handleKeyDown(city, e);
+                    }
+                  }}
                   tabIndex={disabled ? -1 : 0}
                   role="button"
                   aria-label={`${city}, ${coords.country}. ${selected ? 'Selected' : disabled ? 'Maximum selections reached' : 'Click to select'}`}
@@ -569,7 +578,7 @@ export default function EuropeMap({
                         : { duration: 0.25, ease: 'easeOut' }
                   }
                   style={selected ? {
-                    filter: 'drop-shadow(0 0 6px rgba(199,182,255,0.4)) drop-shadow(0 0 12px rgba(139,111,255,0.3))'
+                    filter: 'drop-shadow(0 0 6px rgba(168,155,184,0.3)) drop-shadow(0 0 12px rgba(109,90,143,0.2))'
                   } : hovered || focused || touchedCity === city ? {
                     filter: 'drop-shadow(0 0 4px rgba(194,168,255,0.3))'
                   } : {}}
@@ -589,7 +598,7 @@ export default function EuropeMap({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, ease: 'easeOut' }}
                     style={selected ? {
-                      filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.4)) drop-shadow(0 0 6px rgba(199,182,255,0.3))',
+                      filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.4)) drop-shadow(0 0 6px rgba(168,155,184,0.25))',
                       textShadow: '0 0 8px rgba(212,197,255,0.5), 0 0 4px rgba(139,111,255,0.4)',
                       paintOrder: 'stroke fill',
                       stroke: 'rgba(12,0,40,0.65)',
@@ -619,7 +628,7 @@ export default function EuropeMap({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-            className="absolute z-50 px-4 py-2.5 bg-gradient-to-br from-zinc-900/98 via-zinc-800/95 to-zinc-900/98 backdrop-blur-xl rounded-xl border-2 border-brand-500/40 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_20px_rgba(99,102,241,0.3)] pointer-events-none touch-manipulation"
+            className="absolute z-50 px-4 py-2.5 bg-gradient-to-br from-zinc-900/98 via-zinc-800/95 to-zinc-900/98 backdrop-blur-xl rounded-xl border-2 border-brand-500/40 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_20px_rgba(109,90,143,0.2)] pointer-events-none touch-manipulation"
             style={{
               left: `${tooltip.x}px`,
               top: `${tooltip.y}px`,
@@ -651,14 +660,14 @@ export default function EuropeMap({
 
       {/* Enhanced premium legend */}
       <div 
-        className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-5 sm:right-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-br from-zinc-900/90 via-zinc-800/85 to-zinc-900/90 backdrop-blur-xl rounded-xl px-5 py-3.5 sm:px-6 sm:py-4 border-2 border-brand-500/30 shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_0_40px_rgba(99,102,241,0.1)]"
+        className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-5 sm:right-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-br from-zinc-900/90 via-zinc-800/85 to-zinc-900/90 backdrop-blur-xl rounded-xl px-5 py-3.5 sm:px-6 sm:py-4 border-2 border-brand-500/30 shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_0_40px_rgba(109,90,143,0.08)]"
         role="status"
         aria-live="polite"
         aria-label={`${selectedCities.length} of ${maxSelections} cities selected`}
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
           <div className="flex items-center gap-2.5">
-            <div className="relative w-5 h-5 rounded-full bg-gradient-to-br from-brand-300 to-brand-500 shadow-[0_0_12px_rgba(199,182,255,0.4)]" aria-hidden="true">
+            <div className="relative w-5 h-5 rounded-full bg-gradient-to-br from-brand-300 to-brand-500 shadow-[0_0_12px_rgba(168,155,184,0.3)]" aria-hidden="true">
               <div className="absolute inset-0 rounded-full bg-brand-400/60 animate-pulse" />
               <div className="absolute inset-0 rounded-full bg-brand-300/40 animate-ping" style={{ animationDuration: '2s' }} />
             </div>
@@ -682,4 +691,16 @@ export default function EuropeMap({
       </div>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison function for memo
+  // Only re-render if props actually changed
+  return (
+    prevProps.selectedCities.length === nextProps.selectedCities.length &&
+    prevProps.selectedCities.every((city, index) => city === nextProps.selectedCities[index]) &&
+    prevProps.maxSelections === nextProps.maxSelections &&
+    prevProps.className === nextProps.className &&
+    prevProps.onCityClick === nextProps.onCityClick
+  );
+});
+
+export default EuropeMap;
