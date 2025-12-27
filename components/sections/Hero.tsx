@@ -81,9 +81,10 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
-              className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-extrabold leading-[1.1] text-white mb-3"
+              className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold leading-[1.1] mb-3"
             >
-              {Copy.HERO_HEADLINE}
+              <span className="text-white">Get hand-picked early-career jobs across Europe</span>{' '}
+              <span className="text-zinc-400">without wasting hours searching</span>
             </motion.h1>
 
             {/* Subheadline */}
@@ -110,7 +111,7 @@ export default function Hero() {
                 }}
                 variant="gradient"
                 size="lg"
-                className="w-full sm:w-auto sm:min-w-[240px] px-8 py-4 md:py-5 text-base md:text-lg shadow-[0_4px_20px_rgba(109,40,217,0.3)] hover:shadow-[0_6px_30px_rgba(109,40,217,0.4)] transition-shadow"
+                className="w-full sm:w-auto sm:min-w-[240px] px-8 py-4 md:py-5 text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)] transition-all duration-200"
                 aria-label="Show Me My Matches"
               >
                 <span className="flex items-center justify-center gap-2">

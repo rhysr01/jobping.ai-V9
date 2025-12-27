@@ -39,7 +39,7 @@ export default function TrustBadges() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4, delay: index * 0.1 }}
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-sm hover:bg-white/[0.06] transition-all duration-200"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-sm hover:bg-white/[0.12] hover:border-white/20 transition-all duration-200 shadow-sm"
           >
             <Icon className="h-4 w-4 text-brand-300" />
             <div className="flex flex-col">

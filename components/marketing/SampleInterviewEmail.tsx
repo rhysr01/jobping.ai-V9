@@ -252,22 +252,24 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
             return (
               <div
                 key={`${job.company}-${job.title}-${index}`}
-                className={`${index === 0 ? 'mt-5' : 'mt-4'} rounded-2xl ${
+                className={`${index === 0 ? 'mt-5' : 'mt-4'} rounded-2xl transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
                   hot 
-                    ? 'border-2 border-brand-500/40 bg-gradient-to-br from-brand-500/8 to-brand-600/5 shadow-[0_8px_40px_rgba(109,90,143,0.2)]' 
-                    : 'border border-indigo-500/15 bg-[#0f0f0f] shadow-[0_4px_24px_rgba(0,0,0,0.3)]'
+                    ? 'border-2 border-emerald-500/50 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 shadow-[0_8px_40px_rgba(16,185,129,0.25)] hover:shadow-[0_12px_50px_rgba(16,185,129,0.35)]' 
+                    : 'border border-indigo-500/15 bg-[#0f0f0f] shadow-sm hover:shadow-md'
                 } p-5`}
               >
                 <div className="mb-4">
                   <div className="inline-flex items-center gap-2">
                     <span 
-                      className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r ${
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 font-semibold text-white border ${
                         hot 
-                          ? 'from-brand-600 to-brand-500' 
-                          : 'from-brand-500 to-brand-600'
-                      } px-4 py-1.5 text-[11px] font-semibold text-white`}
+                          ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40 text-[12px] shadow-[0_2px_8px_rgba(16,185,129,0.3)]' 
+                          : score >= 85
+                          ? 'bg-blue-500/20 text-blue-200 border-blue-500/40 text-[11px]'
+                          : 'bg-zinc-500/20 text-zinc-200 border-zinc-500/40 text-[11px]'
+                      }`}
                     >
-                      {hot ? `🔥 Hot Match ${score}%` : `${score}% Match`}
+                      {hot ? `✓ Hot Match ${score}%` : `✓ ${score}% Match`}
                     </span>
                     <button
                       className="text-[10px] text-zinc-400 hover:text-zinc-300 underline decoration-dotted underline-offset-2 transition-colors"
@@ -279,7 +281,7 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
                   </div>
                 </div>
                 <div className="font-bold text-[18px] text-white mb-2 leading-tight">{job.title}</div>
-                <div className="text-[15px] text-zinc-300 font-medium mb-2">{job.company}</div>
+                <div className="text-[16px] text-zinc-200 font-bold mb-2">{job.company}</div>
                 <div className="text-[13px] text-zinc-500 mb-4">📍 {job.location}</div>
                 
                 <div className="text-[14px] text-zinc-400 leading-relaxed mb-4">
@@ -332,7 +334,7 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
                   onClick={() => job.jobUrl && window.open(job.jobUrl, '_blank', 'noopener,noreferrer')}
                   disabled={!job.jobUrl}
                   aria-label={`Apply now: ${job.title} at ${job.company}`}
-                  className="w-full inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 px-8 py-4 text-[16px] font-bold text-white shadow-[0_4px_20px_rgba(139,92,246,0.4)] hover:shadow-[0_6px_24px_rgba(139,92,246,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="w-full inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 px-8 py-4 text-[16px] font-bold text-white shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(139,92,246,0.5)] hover:shadow-[0_8px_30px_rgba(139,92,246,0.6)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   Apply now →
                 </button>
