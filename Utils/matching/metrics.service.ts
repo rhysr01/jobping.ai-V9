@@ -4,7 +4,7 @@
  */
 
 import { getDatabaseClient } from '@/Utils/databasePool';
-import { addBreadcrumb } from '@/lib/sentry-utils';
+import { logger } from '@/lib/monitoring';
 
 export interface MatchMetrics {
   recallAt50: number; // Recall@50: Percentage of relevant jobs in top 50 results

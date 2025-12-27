@@ -18,7 +18,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { getDatabaseClient } from '@/Utils/databasePool';
 import { AppError, ValidationError, UnauthorizedError } from '@/lib/errors';
 import type { CleanupLogEntry } from '@/lib/types';
-import { captureException, setTag, setContext } from '@/lib/sentry-utils';
+import { logger } from '@/lib/monitoring';
 
 // Security configuration
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
@@ -205,8 +205,12 @@ class JobCleanupAPI {
           this.log('error', `Batch ${batchNumber} deletion failed`, { error: error.message });
           this.metrics.errors++;
           
-          // Report batch errors to Sentry
-captureException(new AppError(`Batch deletion failed: ${error.message}`, 500, 'DATABASE_ERROR'));
+          // Log batch errors to Axiom
+          logger.error('Batch deletion failed', {
+            error: new AppError(`Batch deletion failed: ${error.message}`, 500, 'DATABASE_ERROR'),
+            component: 'job-cleanup',
+            metadata: { batchNumber, error: error.message }
+          });
           continue;
         }
 
@@ -221,7 +225,10 @@ captureException(new AppError(`Batch deletion failed: ${error.message}`, 500, 'D
       } catch (error) {
         this.log('error', `Unexpected error in batch ${batchNumber}`, { error });
         this.metrics.errors++;
-captureException(error instanceof Error ? error : new Error('Batch processing error'));
+logger.error('Batch processing error', {
+  error: error instanceof Error ? error : new Error('Batch processing error'),
+  component: 'job-cleanup'
+});
       }
     }
 
@@ -289,8 +296,8 @@ export const POST = async (req: NextRequest) => {
   
   try {
     // Set Sentry context
-setTag('operation', 'job-cleanup');
-setContext('request', { requestId });
+logger.info('Tag set', { metadata: { ['operation']: 'job-cleanup' } });
+logger.info('Context set', { metadata: { ['request']: { requestId });
 
     // Authenticate the request
     authenticateRequest(req);
@@ -323,8 +330,12 @@ setContext('request', { requestId });
   } catch (error) {
     console.error(`[${requestId}] Cleanup API error:`, error);
     
-    // Report errors to Sentry
-captureException(error instanceof Error ? error : new Error('Cleanup API error'));
+    // Log errors to Axiom
+    logger.error('Cleanup API error', {
+      error: error instanceof Error ? error : new Error('Cleanup API error'),
+      component: 'job-cleanup',
+      metadata: { requestId }
+    });
     
     return NextResponse.json({
       success: false,

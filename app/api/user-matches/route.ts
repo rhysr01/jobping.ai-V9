@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { getDatabaseClient } from '@/Utils/databasePool';
 import { z } from 'zod';
-import { captureException, addBreadcrumb } from '@/lib/sentry-utils';
+import { logger } from '@/lib/monitoring';
 import { createSuccessResponse, createErrorResponse } from '@/lib/api-types';
 import { verifyHMAC } from '@/Utils/auth/hmac';
 import { asyncHandler, AppError } from '@/lib/errors';
@@ -90,11 +90,9 @@ export const GET = asyncHandler(async (req: NextRequest) => {
   // match_score is stored in 0-1 range in database (see signup route line 405)
   const normalizedMinScore = minScore > 1 ? minScore / 100 : minScore;
 
-  // Add Sentry breadcrumb for user context
-  addBreadcrumb({
-    message: 'User matches request',
-    level: 'info',
-    data: { email, limit, minScore, normalizedMinScore }
+  // Log user matches request
+  logger.info('User matches request', {
+    metadata: { email, limit, minScore, normalizedMinScore }
   });
 
   const supabase = getDatabaseClient();
@@ -172,10 +170,11 @@ export const GET = asyncHandler(async (req: NextRequest) => {
   if (matchesError) {
     console.error('Failed to fetch user matches:', matchesError);
     
-    // Capture error in Sentry
-    captureException(matchesError, {
-      tags: { component: 'user-matches-api' },
-      extra: { email, limit, minScore, normalizedMinScore }
+    // Log error to Axiom
+    logger.error('Failed to fetch user matches', {
+      error: matchesError,
+      component: 'user-matches-api',
+      metadata: { email, limit, minScore, normalizedMinScore }
     });
     
     throw new AppError('Failed to fetch matches', 500, 'DATABASE_ERROR', matchesError);
@@ -210,10 +209,8 @@ export const GET = asyncHandler(async (req: NextRequest) => {
   const nullJobCount = (matches || []).length - transformedMatches.length;
   if (nullJobCount > 0) {
     console.warn(`[USER-MATCHES] ⚠️ Filtered out ${nullJobCount} matches with null jobs out of ${(matches || []).length} total`);
-    addBreadcrumb({
-      message: 'Filtered out matches with null jobs',
-      level: 'warning',
-      data: { email, nullJobCount, totalMatches: (matches || []).length, validMatches: transformedMatches.length }
+    logger.debug('Filtered out matches with null jobs', {
+      metadata: { email, nullJobCount, totalMatches: (matches || []).length, validMatches: transformedMatches.length }
     });
 
     // CRITICAL DEBUG: Check if job_hashes exist in jobs table

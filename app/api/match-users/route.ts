@@ -5,7 +5,7 @@ import { verifyHMAC, isHMACRequired } from '@/Utils/auth/hmac';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { getDatabaseClient } from '@/Utils/databasePool';
-import { captureException, addBreadcrumb, setContext, captureMessage } from '@/lib/sentry-utils';
+import { logger } from '@/lib/monitoring';
 import {
   logMatchSession
 } from '@/Utils/matching/logging.service';

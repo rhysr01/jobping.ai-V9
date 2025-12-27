@@ -9,7 +9,7 @@
  */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { captureException, addBreadcrumb } from '@/lib/sentry-utils';
+import { logger } from '@/lib/monitoring';
 
 class DatabasePool {
   private static instance: SupabaseClient | null = null;

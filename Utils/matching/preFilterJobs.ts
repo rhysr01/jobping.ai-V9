@@ -6,7 +6,7 @@
 import { Job as ScrapersJob } from '@/scrapers/types';
 import type { UserPreferences } from '@/Utils/matching/types';
 import { getDatabaseClient } from '@/Utils/databasePool';
-import { addBreadcrumb, captureException } from '@/lib/sentry-utils';
+import { logger } from '@/lib/monitoring';
 import { MATCH_RULES } from '@/Utils/sendConfiguration';
 import { getDatabaseCategoriesForForm } from './categoryMapper';
 import { apiLogger } from '@/lib/api-logger';
