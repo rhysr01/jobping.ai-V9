@@ -8,7 +8,7 @@ export default function BuiltForStudents() {
   const featureIcons = [BrandIcons.Briefcase, BrandIcons.CheckCircle, BrandIcons.Mail];
 
   return (
-    <section className="pt-20 pb-20 md:pt-24 md:pb-24 lg:pt-28 lg:pb-28 bg-black scroll-snap-section relative">
+    <section className="pt-24 pb-24 md:pt-28 md:pb-28 lg:pt-32 lg:pb-32 bg-black scroll-snap-section relative">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       {/* Soft section band */}
