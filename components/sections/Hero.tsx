@@ -129,6 +129,34 @@ export default function Hero() {
                   ⚡ Instant matches • No credit card • 2-minute setup
                 </p>
               </motion.div>
+              
+              {/* Upgrade message - Standout design */}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+                className="mt-6"
+              >
+                <div className="relative rounded-xl bg-gradient-to-br from-brand-500/20 via-purple-600/15 to-brand-500/20 border-2 border-brand-500/40 p-5 md:p-6 shadow-lg shadow-brand-500/10 backdrop-blur-sm">
+                  {/* Decorative elements */}
+                  <div className="absolute top-0 left-0 w-24 h-24 bg-brand-500/10 rounded-full blur-2xl -z-10" />
+                  <div className="absolute bottom-0 right-0 w-32 h-32 bg-purple-600/10 rounded-full blur-2xl -z-10" />
+                  
+                  <div className="space-y-2">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/20 border border-brand-500/40">
+                      <span className="text-lg">💡</span>
+                      <span className="text-xs font-bold text-brand-200 uppercase tracking-wide">Free First</span>
+                    </div>
+                    <p className="text-base md:text-lg font-semibold text-white leading-relaxed">
+                      <span className="text-brand-200">Try it free first</span> — get 5 matches instantly
+                    </p>
+                    <p className="text-sm md:text-base text-zinc-300 leading-relaxed">
+                      Like it? <span className="text-brand-300 font-bold">Upgrade to get 15 matches/week</span> (3x more) delivered Mon/Wed/Fri for €5/month.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+              
               <TrustBadges />
               
               {/* Onboarding Preview - What we'll ask */}
