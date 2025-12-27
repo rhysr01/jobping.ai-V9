@@ -72,11 +72,14 @@ class DatabasePool {
         console.error(' Failed to initialize database pool:', error);
         
         // Error tracking for database initialization failures
-        captureException(error as Error, {
+        logger.error('Database pool initialization failed', {
+          error: error as Error,
           component: 'database-pool',
           operation: 'initialization',
-          supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'configured' : 'missing',
-          supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'configured' : 'missing'
+          metadata: {
+            supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'configured' : 'missing',
+            supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'configured' : 'missing'
+          }
         });
         
         throw error;
@@ -99,10 +102,8 @@ class DatabasePool {
         console.warn(' Database health check failed:', error.message);
         
         // Warning for database health check failures
-        addBreadcrumb({
-          message: 'Database health check failed',
-          level: 'warning',
-          data: { error: error.message }
+        logger.warn('Database health check failed', {
+          metadata: { error: error.message }
         });
         
         return false;

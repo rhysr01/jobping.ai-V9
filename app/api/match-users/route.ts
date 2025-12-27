@@ -175,11 +175,9 @@ function distributeJobs(
 ): { jobs: ScrapersJob[], metrics: MatchMetrics } {
   const startTime = Date.now();
   
-  // Log job distribution to Sentry breadcrumb
-addBreadcrumb({
-    message: 'Job distribution started',
-    level: 'debug',
-    data: { userTier, userId, totalJobs: jobs.length }
+  // Log job distribution
+  logger.debug('Job distribution started', {
+    metadata: { userTier, userId, totalJobs: jobs.length }
   });
   
   // Validate and clean job data
@@ -258,11 +256,9 @@ addBreadcrumb({
   
   const processingTime = Date.now() - startTime;
   
-  // Log job selection completion to Sentry breadcrumb
-addBreadcrumb({
-    message: 'Job selection completed',
-    level: 'debug',
-    data: { userId, userTier, selectedCount: selectedJobs.length, processingTime }
+  // Log job selection completion
+  logger.debug('Job selection completed', {
+    metadata: { userId, userTier, selectedCount: selectedJobs.length, processingTime }
   });
   
   return {
@@ -393,7 +389,7 @@ const matchUsersHandler = async (req: NextRequest) => {
   // Performance monitoring now handled by apiLogger
   
   // Context for API monitoring
-setContext('api', {
+logger.info('API request', {
     endpoint: '/api/match-users',
     method: 'POST',
     startTime: new Date().toISOString(),
@@ -425,10 +421,8 @@ setContext('api', {
     const parseResult = matchUsersRequestSchema.safeParse(body);
     
     if (!parseResult.success) {
-addBreadcrumb({
-        message: 'Invalid request parameters',
-        level: 'warning',
-        data: { errors: parseResult.error.issues }
+      logger.warn('Invalid request parameters', {
+        metadata: { errors: parseResult.error.issues }
       });
       
       return NextResponse.json({ 
@@ -530,10 +524,8 @@ addBreadcrumb({
     }
 
     // Log user count to Sentry breadcrumb (no console spam)
-addBreadcrumb({
-      message: 'Active users found',
-      level: 'info',
-      data: { userCount: users.length }
+    logger.info('Active users found', {
+      metadata: { userCount: users.length }
     });
 
     // Transform user data to match expected format
@@ -622,10 +614,8 @@ addBreadcrumb({
     }
 
     // Log job fetch results to Sentry breadcrumb
-addBreadcrumb({
-      message: 'Jobs fetched successfully',
-      level: 'info',
-      data: { jobCount: jobs.length, fetchTime: jobFetchTime }
+    logger.info('Jobs fetched successfully', {
+      metadata: { jobCount: jobs.length, fetchTime: jobFetchTime }
     });
     
     // Log filtering effectiveness
@@ -672,10 +662,8 @@ addBreadcrumb({
 
     // Log overall job distribution
     // Log total jobs to Sentry breadcrumb
-addBreadcrumb({
-      message: 'Total jobs processed',
-      level: 'debug',
-      data: { totalJobs: jobs.length }
+    logger.debug('Total jobs processed', {
+      metadata: { totalJobs: jobs.length }
     });
 
     // 3. Process users with batch optimization when beneficial
@@ -771,9 +759,11 @@ addBreadcrumb({
           });
           
           // Send to Sentry for monitoring
-          captureException(zeroJobsError, {
-            tags: { component: 'matching', issue: 'zero_matches' },
-            extra: {
+          logger.error('Zero matches after pre-filtering', {
+            error: zeroJobsError,
+            component: 'matching',
+            metadata: {
+              issue: 'zero_matches',
               email: user.email,
               targetCities: user.preferences.target_cities,
               totalJobs: unseenJobs.length
@@ -790,34 +780,30 @@ addBreadcrumb({
         // Top 50 contains all perfect/great matches from pre-filtering
         const considered = preFilteredJobs.slice(0, 50);
         // Log pre-filter results to Sentry breadcrumb
-addBreadcrumb({
-          message: 'Pre-filter results',
-          level: 'debug',
-          data: {
-            userEmail: user.email,
-            totalJobs: preFilteredJobs.length,
-            sendingToAI: 50
-          }
-        });
+          logger.debug('Pre-filter results', {
+            metadata: {
+              userEmail: user.email,
+              totalJobs: preFilteredJobs.length,
+              sendingToAI: 50
+            }
+          });
         
         // Log score distribution to Sentry breadcrumb for observability
         if (preFilteredJobs.length >= 50) {
           const top10Scores = preFilteredJobs.slice(0, 10).map((j: any) => (j as any).score || 'N/A');
           const next40Scores = preFilteredJobs.slice(10, 50).map((j: any) => (j as any).score || 'N/A');
           
-addBreadcrumb({
-            message: 'Job score distribution analysis',
-            level: 'debug',
-            data: {
-              userEmail: user.email,
-              totalJobs: preFilteredJobs.length,
-              top10Scores: top10Scores.filter((s: any) => typeof s === 'number'),
-              next40Range: {
-                max: Math.max(...next40Scores.filter((s: any) => typeof s === 'number')),
-                min: Math.min(...next40Scores.filter((s: any) => typeof s === 'number'))
+            logger.debug('Job score distribution analysis', {
+              metadata: {
+                userEmail: user.email,
+                totalJobs: preFilteredJobs.length,
+                top10Scores: top10Scores.filter((s: any) => typeof s === 'number'),
+                next40Range: {
+                  max: Math.max(...next40Scores.filter((s: any) => typeof s === 'number')),
+                  min: Math.min(...next40Scores.filter((s: any) => typeof s === 'number'))
+                }
               }
-            }
-          });
+            });
         }
         
         // Apply simple job distribution
@@ -1152,10 +1138,8 @@ addBreadcrumb({
               }
               
               // Log diversity improvement to Sentry breadcrumb
-              addBreadcrumb({
-                message: 'Enforced source diversity',
-                level: 'debug',
-                data: {
+              logger.debug('Enforced source diversity', {
+                metadata: {
                   userEmail: user.email,
                   dominantSource: primarySource,
                   replacedCount: toReplace.length,
@@ -1184,10 +1168,8 @@ addBreadcrumb({
           const finalUniqueCities = new Set(finalCities);
           
           // Log final diversity to Sentry breadcrumb
-addBreadcrumb({
-            message: 'Final diversity achieved',
-            level: 'debug',
-            data: {
+          logger.debug('Final diversity achieved', {
+            metadata: {
               userEmail: user.email,
               sourceCount: finalUniqueSources.size,
               sources: Array.from(finalUniqueSources),
@@ -1290,10 +1272,8 @@ addBreadcrumb({
         target: MATCH_SLO_MS,
         processed: users.length
       });
-addBreadcrumb({
-        message: 'Match-users SLO violation',
-        level: 'warning',
-        data: {
+      logger.warn('Match-users SLO violation', {
+        metadata: {
           duration: totalProcessingTime,
           target: MATCH_SLO_MS,
           processed: users.length
@@ -1311,7 +1291,7 @@ addBreadcrumb({
     
     if (errorRate > 10) {
       apiLogger.warn(`High error rate detected`, { errorRate: errorRate.toFixed(2) });
-      captureMessage(`High error rate: ${errorRate.toFixed(2)}%`, 'warning');
+      logger.warn(`High error rate: ${errorRate.toFixed(2)}%`);
     }
     
     lap('done');
@@ -1319,10 +1299,8 @@ addBreadcrumb({
     // Summary breadcrumb for the entire request with comprehensive metrics
     const successfulResults = results.filter(r => r.success);
     
-addBreadcrumb({
-      message: 'Match-users request completed',
-      level: 'info',
-      data: {
+    logger.info('Match-users request completed', {
+      metadata: {
         processed: users.length,
         matched: successfulResults.length,
         failed: results.filter(r => !r.success).length,
@@ -1345,31 +1323,29 @@ addBreadcrumb({
     });
   });
 
-  // Handle lock acquisition failure
-  if (result === null) {
-    return NextResponse.json({ 
-      error: 'Processing in progress',
-      code: 'PROCESSING_IN_PROGRESS' 
-    }, { status: 409 });
-  }
+    // Handle lock acquisition failure
+    if (result === null) {
+      return NextResponse.json({ 
+        error: 'Processing in progress',
+        code: 'PROCESSING_IN_PROGRESS' 
+      }, { status: 409 });
+    }
 
-  return result;
-
+    return result;
   } catch (error) {
     const requestDuration = Date.now() - startTime;
     apiLogger.error('Match-users processing error', error as Error, { requestId, requestDuration });
     
     // Sentry error tracking with context
-captureException(error, {
-      tags: {
+    logger.error('Match-users batch processing error', {
+      error: error,
+      component: 'match-users',
+      operation: 'batch-processing',
+      metadata: {
         endpoint: 'match-users',
-        operation: 'batch-processing',
-        requestId
-      },
-      extra: {
+        requestId,
         processingTime: Date.now() - startTime,
-        requestDuration,
-        requestId
+        requestDuration: requestDuration
       }
     });
     
