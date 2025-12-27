@@ -82,42 +82,137 @@ export async function GET(req: NextRequest) {
     const baseOffset = tier === 'premium' ? 10 : 0;
     const jobOffset = (weekNumber - 1) * 5 + baseOffset;
     
-    // Get jobs directly from database - skip user matching, just get real jobs
-    // Use offset to rotate through different jobs each week
-    const { data: allJobs, error: jobsError } = await supabase
+    // Get jobs from preferred cities first to ensure diversity
+    // Filter by cities in the fictional profile to show diverse locations
+    // Normalize city names for matching (handle case-insensitive and variations)
+    const normalizedCities = selectedUserProfile.cities.map(c => c.toLowerCase().trim());
+    
+    let query = supabase
       .from('jobs')
       .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
       .eq('is_active', true)
       .not('job_url', 'is', null)
       .neq('job_url', '')
       .order('created_at', { ascending: false })
-      .range(jobOffset, jobOffset + 19); // Get 20 jobs starting from offset
+      .limit(100); // Get more jobs to filter for diversity
+
+    // Try to filter by cities, but if that returns too few results, we'll filter in memory
+    const { data: allJobs, error: jobsError } = await query;
 
     if (!jobsError && allJobs && allJobs.length > 0) {
-      // Filter to ensure we have valid jobs with URLs
-      const validJobs = allJobs.filter(job => 
-        job.job_url && 
-        job.job_url.trim() !== '' && 
-        !usedJobHashes.has(job.job_hash)
-      );
+      // Filter to preferred cities and ensure valid jobs with URLs
+      const validJobs = allJobs.filter(job => {
+        if (!job.job_url || job.job_url.trim() === '' || usedJobHashes.has(job.job_hash)) {
+          return false;
+        }
+        
+        // Check if job matches preferred cities (case-insensitive, handle variations)
+        const jobCity = (job.city || job.location?.split(',')[0] || '').toLowerCase().trim();
+        const matchesPreferredCity = normalizedCities.some(prefCity => 
+          jobCity.includes(prefCity) || 
+          prefCity.includes(jobCity) ||
+          job.location?.toLowerCase().includes(prefCity)
+        );
+        
+        return matchesPreferredCity;
+      });
       
-      // Take first 5 valid jobs with working URLs
-      validJobs.slice(0, 5).forEach((job, index) => {
-        if (resultJobs.length < 5 && job.job_url && job.job_url.trim() !== '') {
-          // Generate realistic match scores (85-95%)
-          const matchScore = 0.85 + (index * 0.02) + (Math.random() * 0.05);
-          
-          resultJobs.push({
-            ...job,
-            matchScore: Math.min(matchScore, 0.95), // Cap at 95%
-            matchReason: getMatchReason(job, index, selectedUserProfile),
-          });
-          usedJobHashes.add(job.job_hash);
+      // Ensure city diversity: try to get at least one job from each preferred city
+      const citiesUsed = new Set<string>();
+      const jobsByCity: { [city: string]: any[] } = {};
+      
+      // Group jobs by matching preferred city
+      validJobs.forEach(job => {
+        const jobCity = job.city || job.location?.split(',')[0] || 'Unknown';
+        const jobCityLower = jobCity.toLowerCase().trim();
+        
+        // Find which preferred city this job matches
+        const matchedPrefCity = selectedUserProfile.cities.find(prefCity => {
+          const prefCityLower = prefCity.toLowerCase();
+          return jobCityLower.includes(prefCityLower) || 
+                 prefCityLower.includes(jobCityLower) ||
+                 job.location?.toLowerCase().includes(prefCityLower);
+        });
+        
+        const cityKey = matchedPrefCity || jobCity;
+        if (!jobsByCity[cityKey]) {
+          jobsByCity[cityKey] = [];
+        }
+        jobsByCity[cityKey].push(job);
+      });
+      
+      // First pass: Get one job from each preferred city
+      selectedUserProfile.cities.forEach(prefCity => {
+        const matchingCity = Object.keys(jobsByCity).find(city => {
+          const cityLower = city.toLowerCase();
+          const prefCityLower = prefCity.toLowerCase();
+          return cityLower.includes(prefCityLower) || 
+                 prefCityLower.includes(cityLower) ||
+                 city === prefCity;
+        });
+        
+        if (matchingCity && jobsByCity[matchingCity].length > 0 && resultJobs.length < 5) {
+          const job = jobsByCity[matchingCity].shift();
+          if (job && job.job_url && job.job_url.trim() !== '') {
+            const matchScore = 0.85 + (resultJobs.length * 0.02) + (Math.random() * 0.05);
+            resultJobs.push({
+              ...job,
+              matchScore: Math.min(matchScore, 0.95),
+              matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
+            });
+            usedJobHashes.add(job.job_hash);
+            citiesUsed.add(matchingCity);
+          }
         }
       });
+      
+      // Second pass: Fill remaining slots with diverse cities from preferred list
+      const remainingJobs = validJobs.filter(job => 
+        !usedJobHashes.has(job.job_hash) && 
+        job.job_url && 
+        job.job_url.trim() !== ''
+      );
+      
+      // Group remaining by city for diversity
+      const remainingByCity: { [city: string]: any[] } = {};
+      remainingJobs.forEach(job => {
+        const jobCity = job.city || job.location?.split(',')[0] || 'Unknown';
+        if (!remainingByCity[jobCity]) {
+          remainingByCity[jobCity] = [];
+        }
+        remainingByCity[jobCity].push(job);
+      });
+      
+      // Fill slots ensuring diversity
+      while (resultJobs.length < 5 && Object.keys(remainingByCity).length > 0) {
+        // Find a city we haven't used yet
+        const unusedCity = Object.keys(remainingByCity).find(city => !citiesUsed.has(city));
+        const cityToUse = unusedCity || Object.keys(remainingByCity)[0];
+        
+        if (remainingByCity[cityToUse] && remainingByCity[cityToUse].length > 0) {
+          const job = remainingByCity[cityToUse].shift();
+          if (job && job.job_url && job.job_url.trim() !== '') {
+            const matchScore = 0.85 + (resultJobs.length * 0.02) + (Math.random() * 0.05);
+            resultJobs.push({
+              ...job,
+              matchScore: Math.min(matchScore, 0.95),
+              matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
+            });
+            usedJobHashes.add(job.job_hash);
+            citiesUsed.add(cityToUse);
+          }
+          
+          // Remove city if empty
+          if (remainingByCity[cityToUse].length === 0) {
+            delete remainingByCity[cityToUse];
+          }
+        } else {
+          break;
+        }
+      }
     }
     
-    // If we still don't have 5 jobs, try without offset (fallback)
+    // If we still don't have 5 jobs, try without city filter (fallback)
     if (resultJobs.length < 5) {
       const { data: fallbackJobs, error: fallbackError } = await supabase
         .from('jobs')
@@ -127,21 +222,52 @@ export async function GET(req: NextRequest) {
         .neq('job_url', '')
         .not('job_hash', 'in', Array.from(usedJobHashes))
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50);
 
       if (!fallbackError && fallbackJobs && fallbackJobs.length > 0) {
-        fallbackJobs.forEach((job, index) => {
-          if (resultJobs.length < 5 && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
-            const matchScore = 0.85 + (index * 0.02);
-            
-            resultJobs.push({
-              ...job,
-              matchScore: Math.min(matchScore, 0.95),
-              matchReason: getMatchReason(job, index, selectedUserProfile),
-            });
-            usedJobHashes.add(job.job_hash);
+        // Ensure diversity in fallback too
+        const fallbackCitiesUsed = new Set<string>();
+        const fallbackJobsByCity: { [city: string]: any[] } = {};
+        
+        fallbackJobs.forEach(job => {
+          const jobCity = job.city || job.location?.split(',')[0] || 'Unknown';
+          if (!fallbackJobsByCity[jobCity]) {
+            fallbackJobsByCity[jobCity] = [];
+          }
+          fallbackJobsByCity[jobCity].push(job);
+        });
+        
+        // Prefer diverse cities
+        Object.keys(fallbackJobsByCity).forEach(city => {
+          if (resultJobs.length < 5 && fallbackJobsByCity[city].length > 0) {
+            const job = fallbackJobsByCity[city].shift();
+            if (job && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
+              const matchScore = 0.85 + (resultJobs.length * 0.02);
+              resultJobs.push({
+                ...job,
+                matchScore: Math.min(matchScore, 0.95),
+                matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
+              });
+              usedJobHashes.add(job.job_hash);
+              fallbackCitiesUsed.add(city);
+            }
           }
         });
+        
+        // Fill remaining slots if needed
+        if (resultJobs.length < 5) {
+          fallbackJobs.forEach((job, index) => {
+            if (resultJobs.length < 5 && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
+              const matchScore = 0.85 + (resultJobs.length * 0.02);
+              resultJobs.push({
+                ...job,
+                matchScore: Math.min(matchScore, 0.95),
+                matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
+              });
+              usedJobHashes.add(job.job_hash);
+            }
+          });
+        }
       }
     }
 
