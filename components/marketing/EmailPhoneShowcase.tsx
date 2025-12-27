@@ -9,9 +9,10 @@ import * as Copy from "@/lib/copy";
 
 interface EmailPhoneShowcaseProps {
   day?: 'monday' | 'wednesday';
+  careerPath?: string; // e.g., 'finance', 'tech', 'strategy'
 }
 
-export default function EmailPhoneShowcase({ day = 'monday' }: EmailPhoneShowcaseProps) {
+export default function EmailPhoneShowcase({ day = 'monday', careerPath = 'finance' }: EmailPhoneShowcaseProps) {
   const prefersReduced = useReducedMotion();
   const pointIcons = [BrandIcons.Check, BrandIcons.Shield, BrandIcons.Mail];
   const dayLabel = day === 'wednesday' ? 'Wednesday' : 'Monday';
@@ -64,7 +65,7 @@ export default function EmailPhoneShowcase({ day = 'monday' }: EmailPhoneShowcas
               <div className="h-full w-full scale-110 rounded-full bg-black/40 blur-lg-hero" />
             </div>
             <DeviceFrame hideOnMobile={true}>
-              <SampleInterviewEmail day={day} />
+              <SampleInterviewEmail day={day} careerPath={careerPath} />
             </DeviceFrame>
           </motion.div>
         </motion.div>

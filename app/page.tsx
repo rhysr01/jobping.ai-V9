@@ -44,7 +44,7 @@ export default function Page() {
               </p>
             </div>
             <div className="flex justify-center">
-              <EmailPhoneShowcase day="monday" />
+              <EmailPhoneShowcase day="monday" careerPath="finance" />
             </div>
             <motion.p
               initial={{ opacity: 0, y: 16 }}
