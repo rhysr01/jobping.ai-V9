@@ -53,8 +53,6 @@ export async function GET(req: NextRequest) {
         userMatches = matches;
         break;
       }
-      
-      usersChecked++;
     }
 
     if (!selectedUser || !userMatches || userMatches.length < 5) {

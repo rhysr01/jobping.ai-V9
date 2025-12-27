@@ -438,9 +438,9 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
                 key={`${job.company}-${job.title}-${index}`}
                 className={`${index === 0 ? 'mt-5' : 'mt-4'} rounded-2xl transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
                   hot 
-                    ? 'border-2 border-emerald-500/50 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 shadow-[0_8px_40px_rgba(16,185,129,0.25)] hover:shadow-[0_12px_50px_rgba(16,185,129,0.35)]' 
+                    ? 'border-2 border-emerald-500/60 bg-gradient-to-br from-emerald-500/15 to-emerald-600/8 shadow-[0_8px_40px_rgba(16,185,129,0.35)] hover:shadow-[0_12px_50px_rgba(16,185,129,0.45)]' 
                     : score >= 85
-                    ? 'border border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-blue-600/2 shadow-[0_4px_20px_rgba(59,130,246,0.15)] hover:shadow-[0_6px_30px_rgba(59,130,246,0.25)]'
+                    ? 'border-2 border-blue-500/50 bg-gradient-to-br from-blue-500/10 to-blue-600/5 shadow-[0_4px_20px_rgba(59,130,246,0.25)] hover:shadow-[0_6px_30px_rgba(59,130,246,0.35)]'
                     : 'border border-indigo-500/15 bg-[#0f0f0f] shadow-sm hover:shadow-md'
                 } p-5`}
               >
@@ -449,13 +449,13 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
                     <span 
                       className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 font-semibold text-white border ${
                         hot 
-                          ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40 text-[12px] shadow-[0_2px_8px_rgba(16,185,129,0.3)]' 
+                          ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-emerald-400/60 text-[12px] shadow-[0_4px_12px_rgba(16,185,129,0.4)]' 
                           : score >= 85
-                          ? 'bg-blue-500/20 text-blue-200 border-blue-500/40 text-[11px]'
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400/60 text-[11px] shadow-[0_4px_12px_rgba(59,130,246,0.3)]'
                           : 'bg-zinc-500/20 text-zinc-200 border-zinc-500/40 text-[11px]'
                       }`}
                     >
-                      {hot ? `✓ Hot Match ${score}%` : `✓ ${score}% Match`}
+                      {hot ? `🔥 Hot Match ${score}%` : `✓ ${score}% Match`}
                     </span>
                     <button
                       className="text-[10px] text-zinc-400 hover:text-zinc-300 underline decoration-dotted underline-offset-2 transition-colors"
