@@ -19,14 +19,15 @@ export default function SampleJobMatches() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch real jobs from API
+    // Fetch real jobs from API - MUST have URLs
     async function fetchJobs() {
       try {
+        setLoading(true);
         const response = await fetch('/api/sample-jobs?day=monday');
         const data = await response.json();
         
         if (data.jobs && data.jobs.length > 0) {
-          // Only use jobs that have URLs
+          // Only use jobs that have URLs - CRITICAL
           const jobsWithUrls = data.jobs.filter((job: any) => job.jobUrl && job.jobUrl.trim() !== '');
           
           if (jobsWithUrls.length > 0) {
@@ -35,7 +36,7 @@ export default function SampleJobMatches() {
               company: job.company,
               location: job.location,
               description: job.description || '',
-              jobUrl: job.jobUrl,
+              jobUrl: job.jobUrl, // REAL URL from database
               match: job.matchScore ? Math.round(job.matchScore * 100) : 85,
               isHot: (job.matchScore || 0) >= 0.90,
               tags: [
@@ -50,13 +51,13 @@ export default function SampleJobMatches() {
             setJobs([]);
           }
         } else {
-          console.error('No jobs found in API response');
+          console.error('No jobs found in API response:', data.error);
           setJobs([]);
         }
         setLoading(false);
       } catch (error) {
         console.error('Failed to fetch sample jobs:', error);
-        setJobs(fallbackJobs);
+        setJobs([]); // No fallback - must be real jobs
         setLoading(false);
       }
     }
@@ -126,6 +127,42 @@ export default function SampleJobMatches() {
   // Only show jobs with URLs - no fallback to hardcoded jobs without URLs
   const displayJobs = jobs.filter(job => job.jobUrl && job.jobUrl.trim() !== '');
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="bg-black text-white h-full overflow-y-auto">
+        <div className="bg-gradient-to-br from-brand-600 via-brand-500 to-brand-700 px-6 py-8 text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-50" />
+          <div className="relative z-10">
+            <div className="text-3xl font-bold text-white mb-2 tracking-tight">JobPing</div>
+            <div className="text-xs text-white/90 font-medium tracking-widest uppercase">AI-Powered Job Matching</div>
+          </div>
+        </div>
+        <div className="px-6 py-6 text-center">
+          <div className="text-zinc-400 text-sm">Loading real jobs...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state - should not happen if API works correctly
+  if (displayJobs.length === 0) {
+    return (
+      <div className="bg-black text-white h-full overflow-y-auto">
+        <div className="bg-gradient-to-br from-brand-600 via-brand-500 to-brand-700 px-6 py-8 text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-50" />
+          <div className="relative z-10">
+            <div className="text-3xl font-bold text-white mb-2 tracking-tight">JobPing</div>
+            <div className="text-xs text-white/90 font-medium tracking-widest uppercase">AI-Powered Job Matching</div>
+          </div>
+        </div>
+        <div className="px-6 py-6 text-center">
+          <div className="text-zinc-400 text-sm">Loading jobs...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-black text-white h-full overflow-y-auto">
       {/* Email Header - Purple Gradient */}
@@ -143,7 +180,7 @@ export default function SampleJobMatches() {
           <h2 className="text-2xl font-bold text-white mb-2">Here's what you'll see in 2 minutes</h2>
         </div>
 
-        {/* Job Cards - Show all 5 jobs like the real email */}
+        {/* Job Cards - Show all jobs with REAL URLs */}
         {displayJobs.map((job, i) => (
           <div
             key={i}

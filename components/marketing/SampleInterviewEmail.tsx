@@ -531,19 +531,19 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
                 
                 <button
                   onClick={() => {
-                    if (job.jobUrl && job.jobUrl !== '#') {
+                    if (job.jobUrl && job.jobUrl.trim() !== '' && job.jobUrl !== '#') {
                       window.open(job.jobUrl, '_blank', 'noopener,noreferrer');
                     }
                   }}
-                  disabled={!job.jobUrl || job.jobUrl === '#'}
+                  disabled={!job.jobUrl || job.jobUrl.trim() === '' || job.jobUrl === '#'}
                   aria-label={`Apply now: ${job.title} at ${job.company}`}
                   className={`w-full inline-flex items-center justify-center rounded-lg px-8 py-4 text-[16px] font-bold text-white shadow-lg hover:shadow-xl transition-all duration-200 ${
-                    job.jobUrl && job.jobUrl !== '#'
+                    job.jobUrl && job.jobUrl.trim() !== '' && job.jobUrl !== '#'
                       ? 'bg-gradient-to-r from-brand-500 to-brand-600 hover:scale-[1.02] active:scale-[0.98] shadow-[0_4px_20px_rgba(139,92,246,0.5)] hover:shadow-[0_8px_30px_rgba(139,92,246,0.6)]'
                       : 'bg-gradient-to-r from-brand-500/50 to-brand-600/50 text-white/70 cursor-not-allowed border border-brand-500/30'
                   }`}
                 >
-                  {job.jobUrl && job.jobUrl !== '#' ? 'Apply now →' : 'No URL available'}
+                  {job.jobUrl && job.jobUrl.trim() !== '' && job.jobUrl !== '#' ? 'Apply now →' : 'No URL available'}
                 </button>
               </div>
             );
