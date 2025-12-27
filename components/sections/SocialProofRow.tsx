@@ -48,7 +48,7 @@ export default function SocialProofRow() {
   ];
 
   return (
-    <section className="pt-8 pb-12 md:pt-12 md:pb-16 lg:pt-16 lg:pb-20 scroll-snap-section relative">
+    <section className="pt-8 pb-12 md:pt-12 md:pb-16 lg:pt-16 lg:pb-20 scroll-snap-section relative bg-black">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       {/* Soft section band */}
