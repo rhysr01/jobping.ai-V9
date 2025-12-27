@@ -27,7 +27,7 @@ async function checkJobs() {
   console.log('STEP 1: Check total active jobs');
   console.log('='.repeat(60));
   
-  const { data: allJobs, error: allError } = await supabase
+  const { count: allJobsCount, error: allError } = await supabase
     .from('jobs')
     .select('id', { count: 'exact', head: true })
     .eq('is_active', true);
@@ -37,13 +37,13 @@ async function checkJobs() {
     return;
   }
   
-  console.log(`📊 Total active jobs: ${allJobs || 0}\n`);
+  console.log(`📊 Total active jobs: ${allJobsCount || 0}\n`);
   
   console.log('='.repeat(60));
   console.log('STEP 2: Check jobs with URLs');
   console.log('='.repeat(60));
   
-  const { data: jobsWithUrls, error: urlsError } = await supabase
+  const { count: jobsWithUrlsCount, error: urlsError } = await supabase
     .from('jobs')
     .select('id', { count: 'exact', head: true })
     .eq('is_active', true)
@@ -55,9 +55,9 @@ async function checkJobs() {
     return;
   }
   
-  console.log(`📊 Active jobs with URLs: ${jobsWithUrls || 0}\n`);
+  console.log(`📊 Active jobs with URLs: ${jobsWithUrlsCount || 0}\n`);
   
-  if ((jobsWithUrls || 0) === 0) {
+  if ((jobsWithUrlsCount || 0) === 0) {
     console.log('❌ CRITICAL: No jobs with URLs found!');
     console.log('   Free signup will fail because it needs jobs to match.');
     console.log('\n💡 Solutions:');
@@ -132,11 +132,11 @@ async function checkJobs() {
   console.log('\n' + '='.repeat(60));
   console.log('SUMMARY');
   console.log('='.repeat(60));
-  console.log(`Total active jobs: ${allJobs || 0}`);
-  console.log(`Jobs with URLs: ${jobsWithUrls || 0}`);
+  console.log(`Total active jobs: ${allJobsCount || 0}`);
+  console.log(`Jobs with URLs: ${jobsWithUrlsCount || 0}`);
   console.log(`Prague/Warsaw jobs: ${totalCityJobs}`);
   
-  if ((jobsWithUrls || 0) === 0) {
+  if ((jobsWithUrlsCount || 0) === 0) {
     console.log('\n❌ Database is empty - need to run scrapers!');
   } else if (totalCityJobs === 0) {
     console.log('\n⚠️  No jobs for free signup cities - try different cities or run scrapers');
