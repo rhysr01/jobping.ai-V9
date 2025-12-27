@@ -521,12 +521,16 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
                 )}
                 
                 <button
-                  onClick={() => job.jobUrl && window.open(job.jobUrl, '_blank', 'noopener,noreferrer')}
-                  disabled={!job.jobUrl}
+                  onClick={() => {
+                    if (job.jobUrl && job.jobUrl !== '#') {
+                      window.open(job.jobUrl, '_blank', 'noopener,noreferrer');
+                    }
+                  }}
+                  disabled={!job.jobUrl || job.jobUrl === '#'}
                   aria-label={`Apply now: ${job.title} at ${job.company}`}
                   className="w-full inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 px-8 py-4 text-[16px] font-bold text-white shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(139,92,246,0.5)] hover:shadow-[0_8px_30px_rgba(139,92,246,0.6)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
-                  Apply now →
+                  {job.jobUrl && job.jobUrl !== '#' ? 'Apply now →' : 'Sample Preview'}
                 </button>
               </div>
             );
