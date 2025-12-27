@@ -144,8 +144,17 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
         const data = await response.json();
         
         if (data.jobs && data.jobs.length > 0) {
-          // Update with real jobs if available (smooth transition)
-          setJobs(data.jobs.slice(0, 5));
+          // Ensure we always show 5 jobs (use fallback if needed)
+          const realJobs = data.jobs.slice(0, 5);
+          const needed = 5 - realJobs.length;
+          
+          if (needed > 0) {
+            // Fill with fallback jobs if we don't have enough real ones
+            const fallbackToAdd = FALLBACK_JOBS.slice(0, needed);
+            setJobs([...realJobs, ...fallbackToAdd].slice(0, 5));
+          } else {
+            setJobs(realJobs);
+          }
         }
       } catch (error) {
         // Silently fail - fallback jobs already showing
@@ -302,20 +311,6 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
             );
           })}
 
-        {/* Upgrade CTA for free users - matches production */}
-        <div className="mt-6 rounded-2xl border-2 border-indigo-500/30 bg-gradient-to-br from-indigo-500/15 to-purple-500/10 p-6">
-          <h3 className="text-[20px] font-bold text-white mb-3 leading-tight">Get More Matches for €5 Now</h3>
-          <p className="text-[15px] text-zinc-300 mb-5 leading-relaxed">
-            Upgrade to Premium and get <span className="font-semibold text-purple-300">15 jobs per week (~60 per month)</span> - that's 10 more than free (3x more). Cancel anytime.
-          </p>
-          <a
-            href="#"
-            aria-label="Upgrade to Premium"
-            className="inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 px-6 py-3.5 text-[14px] font-semibold text-white shadow-[0_4px_16px_rgba(109,90,143,0.3)] hover:opacity-90 transition-opacity"
-          >
-            Upgrade to Premium - €5/month
-          </a>
-        </div>
 
         {/* Footer - matches production */}
         <div className="mt-6 pt-5 border-t border-indigo-500/12 text-center">
