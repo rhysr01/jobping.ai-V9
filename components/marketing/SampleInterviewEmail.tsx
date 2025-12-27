@@ -99,6 +99,28 @@ function isHotMatch(score: number): boolean {
   return score >= 90;
 }
 
+function getUniqueMatchReason(job: Job, score: number, index: number): string {
+  // Create unique match reasons based on specific job details
+  const reasons = [
+    // Job 0: Business Analyst at Deloitte (87%)
+    `Perfect for your Strategy career path. ${job.company}'s consulting practice focuses on strategic projects that align with your interests. Located in ${job.location.split(',')[0]}, offers visa sponsorship, and requires no prior experience - ideal for entry-level candidates.`,
+    
+    // Job 1: Junior Consultant at Accenture (94% - Hot Match)
+    `Hot match! ${job.company}'s Graduate Programme is specifically designed for recent graduates like you. The ${job.workEnvironment.toLowerCase()} work arrangement fits your preferences, and the role is in ${job.location.split(',')[0]} with visa sponsorship available. Perfect entry point into Strategy consulting.`,
+    
+    // Job 2: Strategy Analyst at EY (89%)
+    `${job.company}'s Strategy team specializes in analytical work that matches your career path. The role is based in ${job.location.split(',')[0]} with visa support, and the ${job.workEnvironment.toLowerCase()} setup aligns with your preferences. Entry-level friendly with comprehensive training.`,
+    
+    // Job 3: Associate Consultant at KPMG (85%)
+    `Great match for Strategy consulting. ${job.company} offers structured training for recent graduates, located in ${job.location.split(',')[0]} with visa sponsorship. The ${job.workEnvironment.toLowerCase()} arrangement provides flexibility, and the role focuses on transformation projects you're interested in.`,
+    
+    // Job 4: Junior Business Analyst at PwC (88%)
+    `Strong alignment with your Strategy goals. ${job.company}'s Strategy team offers clear progression paths for ambitious graduates. Located in ${job.location.split(',')[0]} with visa sponsorship, ${job.workEnvironment.toLowerCase()} work style, and entry-level friendly with excellent training support.`
+  ];
+  
+  return reasons[index] || `Matches your preferences: ${job.location}, Strategy career path, visa sponsorship available, and entry-level friendly.`;
+}
+
 async function submitFeedback(jobHash: string, feedbackType: 'thumbs_up' | 'thumbs_down', email: string = 'sample@example.com'): Promise<void> {
   if (!jobHash) {
     console.warn('Cannot submit feedback: missing job_hash');
@@ -218,6 +240,7 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
         {displayJobs.map((job, index) => {
             const score = getMatchScore(index);
             const hot = isHotMatch(score);
+            const uniqueMatchReason = getUniqueMatchReason(job, score, index);
             const experienceText = job.isGraduate 
               ? "Entry-level graduate role" 
               : job.isInternship 
@@ -248,8 +271,8 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
                     </span>
                     <button
                       className="text-[10px] text-zinc-400 hover:text-zinc-300 underline decoration-dotted underline-offset-2 transition-colors"
-                      title={`${score}% Match: This score shows how well this role matches your preferences. ${hot ? 'Hot matches (90%+) are highly aligned with your location, career path, visa status, and experience level.' : 'Good matches (85-89%) align well with most of your preferences.'} The score is calculated based on: Location match (${job.location}), Career path (Strategy), Visa sponsorship availability, and Experience level (Entry-level).`}
-                      aria-label="Why this score? Click to learn more about match percentage"
+                      title={`${score}% Match: ${uniqueMatchReason}`}
+                      aria-label={`Why this score? ${uniqueMatchReason}`}
                     >
                       Why this score?
                     </button>
