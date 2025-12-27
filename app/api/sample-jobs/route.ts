@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
     ];
 
     // Fetch diverse jobs - one from each city/category combination
+    // CRITICAL: Only include jobs that have URLs
     const diverseJobs: any[] = [];
     const usedJobHashes = new Set<string>();
 
@@ -30,47 +31,58 @@ export async function GET(req: NextRequest) {
       const city = targetCities[i];
       const categories = targetCategories[i];
       
-      // Try to find a job in this city with matching category
+      // Try to find a job in this city with matching category AND a URL
       const { data: cityJobs, error: cityError } = await supabase
         .from('jobs')
         .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
         .eq('city', city)
         .eq('is_active', true)
+        .not('job_url', 'is', null)
+        .neq('job_url', '')
         .overlaps('categories', categories)
         .not('job_hash', 'in', Array.from(usedJobHashes))
-        .limit(1);
+        .limit(5); // Get multiple to find one with URL
 
       if (!cityError && cityJobs && cityJobs.length > 0) {
-        const job = cityJobs[0];
-        diverseJobs.push({
-          ...job,
-          matchScore: 0.90 - (i * 0.01), // Vary match scores: 90%, 89%, 88%, 87%, 86%
-          matchReason: `Perfect match for ${categories[0].replace('-', ' ')} roles in ${city}`,
-        });
-        usedJobHashes.add(job.job_hash);
-      } else {
-        // Fallback: try any job in this city
-        const { data: fallbackJobs, error: fallbackError } = await supabase
-          .from('jobs')
-          .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
-          .eq('city', city)
-          .eq('is_active', true)
-          .not('job_hash', 'in', Array.from(usedJobHashes))
-          .limit(1);
-
-        if (!fallbackError && fallbackJobs && fallbackJobs.length > 0) {
-          const job = fallbackJobs[0];
+        // Find first job with a valid URL
+        const jobWithUrl = cityJobs.find(j => j.job_url && j.job_url.trim() !== '');
+        if (jobWithUrl) {
           diverseJobs.push({
-            ...job,
+            ...jobWithUrl,
+            matchScore: 0.90 - (i * 0.01), // Vary match scores: 90%, 89%, 88%, 87%, 86%
+            matchReason: `Perfect match for ${categories[0].replace('-', ' ')} roles in ${city}`,
+          });
+          usedJobHashes.add(jobWithUrl.job_hash);
+          continue;
+        }
+      }
+      
+      // Fallback: try any job in this city WITH a URL
+      const { data: fallbackJobs, error: fallbackError } = await supabase
+        .from('jobs')
+        .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
+        .eq('city', city)
+        .eq('is_active', true)
+        .not('job_url', 'is', null)
+        .neq('job_url', '')
+        .not('job_hash', 'in', Array.from(usedJobHashes))
+        .limit(5);
+
+      if (!fallbackError && fallbackJobs && fallbackJobs.length > 0) {
+        const jobWithUrl = fallbackJobs.find(j => j.job_url && j.job_url.trim() !== '');
+        if (jobWithUrl) {
+          diverseJobs.push({
+            ...jobWithUrl,
             matchScore: 0.90 - (i * 0.01),
             matchReason: `Great match for roles in ${city}`,
           });
-          usedJobHashes.add(job.job_hash);
+          usedJobHashes.add(jobWithUrl.job_hash);
         }
       }
     }
 
-    // If we don't have 5 diverse jobs, fetch from real user matches as fallback
+    // If we don't have 5 diverse jobs WITH URLs, fetch from real user matches as fallback
+    // CRITICAL: Only include jobs that have URLs
     if (diverseJobs.length < 5) {
       const { data: usersWithMatches, error: userError } = await supabase
         .from('users')
@@ -90,25 +102,30 @@ export async function GET(req: NextRequest) {
             .eq('user_email', user.email)
             .gte('match_score', 0.85)
             .order('match_score', { ascending: false })
-            .limit(10);
+            .limit(20); // Get more to find ones with URLs
 
           if (!matchesError && matches && matches.length > 0) {
             const jobHashes = matches
               .map(m => m.job_hash)
               .filter(Boolean)
               .filter(hash => !usedJobHashes.has(hash))
-              .slice(0, 5 - diverseJobs.length);
+              .slice(0, 20); // Check more jobs to find ones with URLs
 
             if (jobHashes.length > 0) {
               const { data: userJobs, error: jobsError } = await supabase
                 .from('jobs')
                 .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
                 .in('job_hash', jobHashes)
-                .eq('is_active', true);
+                .eq('is_active', true)
+                .not('job_url', 'is', null)
+                .neq('job_url', ''); // Only jobs with URLs
 
-              if (!jobsError && userJobs) {
+              if (!jobsError && userJobs && userJobs.length > 0) {
                 const matchMap = new Map(matches.map(m => [m.job_hash, { score: m.match_score, reason: m.match_reason }]));
-                userJobs.forEach(job => {
+                // Filter to only jobs with valid URLs
+                const jobsWithUrls = userJobs.filter(job => job.job_url && job.job_url.trim() !== '');
+                
+                jobsWithUrls.forEach(job => {
                   if (diverseJobs.length < 5 && !usedJobHashes.has(job.job_hash)) {
                     const matchData = matchMap.get(job.job_hash);
                     diverseJobs.push({
@@ -126,13 +143,46 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    if (diverseJobs.length === 0) {
-      console.error('No diverse jobs found');
-      return NextResponse.json({ jobs: [], error: 'No jobs found' }, { status: 500 });
+    // Ensure we have exactly 5 jobs, all with URLs
+    // If we still don't have 5, try to fill with any jobs that have URLs
+    if (diverseJobs.length < 5) {
+      const { data: anyJobsWithUrls, error: anyError } = await supabase
+        .from('jobs')
+        .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
+        .eq('is_active', true)
+        .not('job_url', 'is', null)
+        .neq('job_url', '')
+        .not('job_hash', 'in', Array.from(usedJobHashes))
+        .limit(10 - diverseJobs.length);
+
+      if (!anyError && anyJobsWithUrls && anyJobsWithUrls.length > 0) {
+        anyJobsWithUrls.forEach(job => {
+          if (diverseJobs.length < 5 && job.job_url && job.job_url.trim() !== '') {
+            diverseJobs.push({
+              ...job,
+              matchScore: 0.85,
+              matchReason: `Great match for roles in ${job.city || job.location}`,
+            });
+            usedJobHashes.add(job.job_hash);
+          }
+        });
+      }
+    }
+
+    // Filter to only jobs with URLs (should already be filtered, but double-check)
+    const validJobs = diverseJobs.filter(job => job.job_url && job.job_url.trim() !== '');
+    
+    if (validJobs.length === 0) {
+      console.error('No jobs with URLs found');
+      return NextResponse.json({ jobs: [], error: 'No jobs with URLs found' }, { status: 500 });
+    }
+    
+    if (validJobs.length < 5) {
+      console.warn(`Only found ${validJobs.length} jobs with URLs, expected 5`);
     }
 
     // Format jobs - use REAL job URLs from database
-    const formattedJobs = diverseJobs.map((job) => {
+    const formattedJobs = validJobs.map((job) => {
       return {
         title: job.title || 'Job Title',
         company: job.company || 'Company',

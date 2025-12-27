@@ -340,13 +340,20 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
         const data = await response.json();
         
         if (data.jobs && data.jobs.length > 0) {
-          // Use REAL jobs from database - these are actual jobs from a real user's matches
-          const realJobs = data.jobs.slice(0, 5).map((job: any) => ({
-            ...job,
-            jobUrl: job.jobUrl || '', // Ensure jobUrl is set
-          }));
+          // Use REAL jobs from database - only include jobs that have URLs
+          const jobsWithUrls = data.jobs.filter((job: any) => job.jobUrl && job.jobUrl.trim() !== '');
           
-          setJobs(realJobs);
+          if (jobsWithUrls.length > 0) {
+            const realJobs = jobsWithUrls.slice(0, 5).map((job: any) => ({
+              ...job,
+              jobUrl: job.jobUrl, // Already verified to have URL
+            }));
+            
+            setJobs(realJobs);
+          } else {
+            console.error('No jobs with URLs found in API response');
+            setJobs([]);
+          }
           
           // Set user profile if available
           if (data.userProfile) {
