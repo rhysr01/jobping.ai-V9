@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseClient } from '@/Utils/databasePool';
-import { getDatabaseCategoriesForForm } from '@/Utils/matching/categoryMapper';
 
 export const dynamic = 'force-dynamic'; // Force dynamic rendering
 export const revalidate = 3600; // Cache for 1 hour
@@ -11,62 +10,108 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const day = searchParams.get('day') || 'monday'; // 'monday' or 'wednesday'
     
-    // Get Strategy & Business Design category
-    const strategyCategories = getDatabaseCategoriesForForm('strategy');
-    
-    // Fetch real Strategy & Business Design jobs in London
-    // Use different offsets for Monday vs Wednesday to show different jobs
-    const offset = day === 'wednesday' ? 5 : 0; // Wednesday shows next 5 jobs
-    
-    let query = supabase
-      .from('jobs')
-      .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
-      .eq('is_active', true)
-      .eq('city', 'London') // Filter by London
-      .overlaps('categories', strategyCategories) // Strategy & Business Design
-      .order('created_at', { ascending: false })
-      .range(offset, offset + 4); // Get 5 jobs starting from offset
+    // Fetch a real user who has matches in the database
+    // Get a user with recent matches (preferably premium for better examples)
+    const { data: usersWithMatches, error: userError } = await supabase
+      .from('users')
+      .select('email, full_name, target_cities, career_path, professional_expertise')
+      .eq('active', true)
+      .not('target_cities', 'is', null)
+      .limit(10);
 
-    let { data: jobs, error } = await query;
+    if (userError || !usersWithMatches || usersWithMatches.length === 0) {
+      console.error('Error fetching users:', userError);
+      return NextResponse.json({ jobs: [], error: 'No users found' }, { status: 500 });
+    }
 
-    // If we don't have enough jobs, try without category filter
-    if (!error && (!jobs || jobs.length < 3)) {
-      query = supabase
-        .from('jobs')
-        .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
-        .eq('is_active', true)
-        .eq('city', 'London')
-        .order('created_at', { ascending: false })
-        .range(offset, offset + 4);
-      
-      const result = await query;
-      if (!result.error && result.data) {
-        jobs = result.data;
+    // Find a user who has matches
+    let selectedUser = null;
+    let userMatches = null;
+
+    for (const user of usersWithMatches) {
+      // Check if this user has matches
+      const { data: matches, error: matchesError } = await supabase
+        .from('matches')
+        .select('job_hash, match_score, match_reason')
+        .eq('user_email', user.email)
+        .gte('match_score', 0.85) // Only high-quality matches
+        .order('match_score', { ascending: false })
+        .limit(10);
+
+      if (!matchesError && matches && matches.length >= 5) {
+        selectedUser = user;
+        userMatches = matches;
+        break;
       }
     }
 
-    if (error) {
-      console.error('Error fetching sample jobs:', error);
+    if (!selectedUser || !userMatches || userMatches.length < 5) {
+      console.error('No user with sufficient matches found');
+      return NextResponse.json({ jobs: [], error: 'No user matches found' }, { status: 500 });
+    }
+
+    // Extract job hashes from matches
+    const jobHashes = userMatches.map(m => m.job_hash).filter(Boolean);
+    
+    // Use different offsets for Monday vs Wednesday to show different jobs
+    const offset = day === 'wednesday' ? 5 : 0;
+    const jobHashesToFetch = jobHashes.slice(offset, offset + 5);
+
+    if (jobHashesToFetch.length === 0) {
+      return NextResponse.json({ jobs: [], error: 'No jobs to fetch' }, { status: 500 });
+    }
+
+    // Fetch the actual jobs from the database
+    const { data: jobs, error: jobsError } = await supabase
+      .from('jobs')
+      .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
+      .in('job_hash', jobHashesToFetch)
+      .eq('is_active', true);
+
+    if (jobsError || !jobs || jobs.length === 0) {
+      console.error('Error fetching jobs:', jobsError);
       return NextResponse.json({ jobs: [], error: 'Failed to fetch jobs' }, { status: 500 });
     }
 
-    // Format jobs for the component
-    const formattedJobs = (jobs || []).map(job => ({
-      title: job.title || 'Job Title',
-      company: job.company || 'Company',
-      location: job.location || 'London, UK',
-      description: job.description || '',
-      jobUrl: job.job_url || '',
-      jobHash: job.job_hash || '', // Add this
-      categories: job.categories || [],
-      workEnvironment: job.work_environment || 'Hybrid',
-      isInternship: job.is_internship || false,
-      isGraduate: job.is_graduate || false,
-    }));
+    // Create a map of job_hash -> match_score and match_reason
+    const matchMap = new Map(
+      userMatches.map(m => [m.job_hash, { score: m.match_score, reason: m.match_reason }])
+    );
+
+    // Format jobs with REAL match scores from the database
+    const formattedJobs = jobs.map((job) => {
+      const matchData = matchMap.get(job.job_hash);
+      const matchScore = matchData?.score || 0.85; // Fallback to 85% if not found
+      
+      return {
+        title: job.title || 'Job Title',
+        company: job.company || 'Company',
+        location: job.location || 'Location',
+        description: job.description || '',
+        jobUrl: job.job_url || '',
+        jobHash: job.job_hash || '',
+        categories: job.categories || [],
+        workEnvironment: job.work_environment || 'Hybrid',
+        isInternship: job.is_internship || false,
+        isGraduate: job.is_graduate || false,
+        matchScore: matchScore, // REAL match score from database
+        matchReason: matchData?.reason || '', // REAL match reason
+        userProfile: {
+          email: selectedUser.email,
+          name: selectedUser.full_name,
+          cities: selectedUser.target_cities || [],
+          careerPath: selectedUser.career_path || selectedUser.professional_expertise || '',
+        },
+      };
+    });
+
+    // Sort by match score (descending) to show best matches first
+    formattedJobs.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
 
     return NextResponse.json({ 
-      jobs: formattedJobs,
-      count: formattedJobs.length 
+      jobs: formattedJobs.slice(0, 5), // Ensure exactly 5 jobs
+      count: formattedJobs.length,
+      userProfile: formattedJobs[0]?.userProfile, // Include user profile for display
     });
 
   } catch (error) {

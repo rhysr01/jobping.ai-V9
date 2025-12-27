@@ -8,26 +8,167 @@ interface Job {
   location: string;
   description: string;
   jobUrl: string;
-  jobHash?: string; // Add this
+  jobHash?: string;
   categories: string[];
   workEnvironment: string;
   isInternship: boolean;
   isGraduate: boolean;
+  matchScore?: number; // Match score from API (0-1, e.g., 0.92 for 92%)
+  matchReason?: string; // Real match reason from database
 }
 
-// Fallback fictional jobs if API fails or no real jobs found
-const FALLBACK_JOBS: Job[] = [
+// Fallback fictional jobs matching a specific user profile: Finance roles in London
+const FALLBACK_FINANCE_JOBS: Job[] = [
+  {
+    title: "Graduate Analyst",
+    company: "Goldman Sachs",
+    location: "London, UK",
+    description: "Join Goldman Sachs' Investment Banking division as a Graduate Analyst. You'll work on M&A transactions, IPOs, and strategic advisory projects for leading clients. Comprehensive 2-year training programme with clear progression path.",
+    jobUrl: "",
+    jobHash: "",
+    categories: ["finance-investment"],
+    workEnvironment: "Hybrid",
+    isInternship: false,
+    isGraduate: true,
+    matchScore: 0.92, // 92% - Hot Match
+  },
+  {
+    title: "Junior Financial Analyst",
+    company: "JPMorgan Chase",
+    location: "London, UK",
+    description: "JPMorgan's Corporate Finance team is looking for a Junior Financial Analyst to support financial modeling, analysis, and strategic planning. Perfect for recent graduates interested in finance and investment banking. Entry-level friendly with mentorship.",
+    jobUrl: "",
+    jobHash: "",
+    categories: ["finance-investment"],
+    workEnvironment: "Hybrid",
+    isInternship: false,
+    isGraduate: false,
+    matchScore: 0.88, // 88%
+  },
+  {
+    title: "Finance Intern",
+    company: "Morgan Stanley",
+    location: "London, UK",
+    description: "Morgan Stanley's Finance division offers a 6-month internship for students interested in investment banking. You'll work on real transactions, learn financial modeling, and gain exposure to capital markets. Potential for full-time conversion.",
+    jobUrl: "",
+    jobHash: "",
+    categories: ["finance-investment"],
+    workEnvironment: "Hybrid",
+    isInternship: true,
+    isGraduate: false,
+    matchScore: 0.85, // 85%
+  },
+  {
+    title: "Investment Banking Analyst",
+    company: "Barclays",
+    location: "London, UK",
+    description: "Barclays Investment Bank seeks an Analyst to join their M&A team. You'll work on strategic transactions, conduct financial analysis, and support client relationships. Excellent training programme and clear progression for ambitious graduates.",
+    jobUrl: "",
+    jobHash: "",
+    categories: ["finance-investment"],
+    workEnvironment: "Hybrid",
+    isInternship: false,
+    isGraduate: false,
+    matchScore: 0.87, // 87%
+  },
+  {
+    title: "Graduate Trainee - Finance",
+    company: "Deutsche Bank",
+    location: "London, UK",
+    description: "Deutsche Bank's Graduate Programme offers a structured 2-year rotation across Finance, Risk, and Treasury functions. You'll work on real projects, receive comprehensive training, and develop skills in financial analysis and risk management.",
+    jobUrl: "",
+    jobHash: "",
+    categories: ["finance-investment"],
+    workEnvironment: "Hybrid",
+    isInternship: false,
+    isGraduate: true,
+    matchScore: 0.89, // 89%
+  },
+];
+
+// Fallback jobs for other career paths (Tech roles in London)
+const FALLBACK_TECH_JOBS: Job[] = [
+  {
+    title: "Graduate Software Engineer",
+    company: "Google",
+    location: "London, UK",
+    description: "Join Google's engineering team building products used by billions. You'll work with modern technologies, learn from world-class engineers, and contribute to impactful projects. Comprehensive training and mentorship included.",
+    jobUrl: "",
+    jobHash: "",
+    categories: ["tech-transformation"],
+    workEnvironment: "Hybrid",
+    isInternship: false,
+    isGraduate: true,
+    matchScore: 0.92, // 92% - Hot Match
+  },
+  {
+    title: "Junior Frontend Developer",
+    company: "Meta",
+    location: "London, UK",
+    description: "Meta's engineering team is looking for a Junior Frontend Developer to work on web applications. You'll build React components, work with design systems, and learn from senior engineers. Entry-level friendly with excellent support.",
+    jobUrl: "",
+    jobHash: "",
+    categories: ["tech-transformation"],
+    workEnvironment: "Hybrid",
+    isInternship: false,
+    isGraduate: false,
+    matchScore: 0.88, // 88%
+  },
+  {
+    title: "Software Engineer Intern",
+    company: "Amazon",
+    location: "London, UK",
+    description: "Amazon's engineering team offers a 6-month internship for students interested in software development. You'll work on real projects, learn AWS technologies, and gain exposure to large-scale systems. Potential for full-time conversion.",
+    jobUrl: "",
+    jobHash: "",
+    categories: ["tech-transformation"],
+    workEnvironment: "Hybrid",
+    isInternship: true,
+    isGraduate: false,
+    matchScore: 0.85, // 85%
+  },
+  {
+    title: "React Developer",
+    company: "Microsoft",
+    location: "London, UK",
+    description: "Microsoft seeks a React Developer to join their web team building cloud-based applications. You'll work with React, TypeScript, and Azure technologies. Perfect for developers who want to work on products used by millions.",
+    jobUrl: "",
+    jobHash: "",
+    categories: ["tech-transformation"],
+    workEnvironment: "Hybrid",
+    isInternship: false,
+    isGraduate: false,
+    matchScore: 0.87, // 87%
+  },
+  {
+    title: "Junior Software Engineer",
+    company: "Apple",
+    location: "London, UK",
+    description: "Apple's engineering team is hiring a Junior Software Engineer to work on web services. You'll build user interfaces, work on performance optimization, and collaborate with designers. Entry-level friendly with comprehensive mentorship.",
+    jobUrl: "",
+    jobHash: "",
+    categories: ["tech-transformation"],
+    workEnvironment: "Hybrid",
+    isInternship: false,
+    isGraduate: false,
+    matchScore: 0.89, // 89%
+  },
+];
+
+// Strategy fallback jobs (London)
+const FALLBACK_STRATEGY_JOBS: Job[] = [
   {
     title: "Business Analyst",
     company: "Deloitte",
     location: "London, UK",
     description: "Join Deloitte's consulting practice as a Business Analyst. You'll work on strategic projects for leading clients, analyzing business problems, developing solutions, and presenting recommendations to senior stakeholders. Perfect for graduates interested in consulting and strategy.",
     jobUrl: "",
-    jobHash: "", // Add jobHash
+    jobHash: "",
     categories: ["strategy-business-design"],
     workEnvironment: "Hybrid",
     isInternship: false,
     isGraduate: false,
+    matchScore: 0.87, // 87%
   },
   {
     title: "Junior Consultant",
@@ -40,6 +181,7 @@ const FALLBACK_JOBS: Job[] = [
     workEnvironment: "Hybrid",
     isInternship: false,
     isGraduate: true,
+    matchScore: 0.94, // 94% - Hot Match
   },
   {
     title: "Strategy Analyst",
@@ -52,6 +194,7 @@ const FALLBACK_JOBS: Job[] = [
     workEnvironment: "Office",
     isInternship: false,
     isGraduate: false,
+    matchScore: 0.89, // 89%
   },
   {
     title: "Associate Consultant",
@@ -64,6 +207,7 @@ const FALLBACK_JOBS: Job[] = [
     workEnvironment: "Hybrid",
     isInternship: false,
     isGraduate: false,
+    matchScore: 0.85, // 85%
   },
   {
     title: "Junior Business Analyst",
@@ -76,8 +220,20 @@ const FALLBACK_JOBS: Job[] = [
     workEnvironment: "Hybrid",
     isInternship: false,
     isGraduate: false,
+    matchScore: 0.88, // 88%
   },
 ];
+
+// Get fallback jobs based on career path
+function getFallbackJobs(careerPath: string): Job[] {
+  if (careerPath === 'finance') {
+    return FALLBACK_FINANCE_JOBS;
+  } else if (careerPath === 'tech') {
+    return FALLBACK_TECH_JOBS;
+  } else {
+    return FALLBACK_STRATEGY_JOBS; // Default to strategy
+  }
+}
 
 function formatDescription(description: string): string {
   if (!description) return "";
@@ -99,26 +255,39 @@ function isHotMatch(score: number): boolean {
   return score >= 90;
 }
 
-function getUniqueMatchReason(job: Job, score: number, index: number): string {
-  // Create unique match reasons based on specific job details
-  const reasons = [
-    // Job 0: Business Analyst at Deloitte (87%)
-    `Perfect for your Strategy career path. ${job.company}'s consulting practice focuses on strategic projects that align with your interests. Located in ${job.location.split(',')[0]}, offers visa sponsorship, and requires no prior experience - ideal for entry-level candidates.`,
-    
-    // Job 1: Junior Consultant at Accenture (94% - Hot Match)
-    `Hot match! ${job.company}'s Graduate Programme is specifically designed for recent graduates like you. The ${job.workEnvironment.toLowerCase()} work arrangement fits your preferences, and the role is in ${job.location.split(',')[0]} with visa sponsorship available. Perfect entry point into Strategy consulting.`,
-    
-    // Job 2: Strategy Analyst at EY (89%)
-    `${job.company}'s Strategy team specializes in analytical work that matches your career path. The role is based in ${job.location.split(',')[0]} with visa support, and the ${job.workEnvironment.toLowerCase()} setup aligns with your preferences. Entry-level friendly with comprehensive training.`,
-    
-    // Job 3: Associate Consultant at KPMG (85%)
-    `Great match for Strategy consulting. ${job.company} offers structured training for recent graduates, located in ${job.location.split(',')[0]} with visa sponsorship. The ${job.workEnvironment.toLowerCase()} arrangement provides flexibility, and the role focuses on transformation projects you're interested in.`,
-    
-    // Job 4: Junior Business Analyst at PwC (88%)
-    `Strong alignment with your Strategy goals. ${job.company}'s Strategy team offers clear progression paths for ambitious graduates. Located in ${job.location.split(',')[0]} with visa sponsorship, ${job.workEnvironment.toLowerCase()} work style, and entry-level friendly with excellent training support.`
-  ];
+function getUniqueMatchReason(job: Job, score: number, index: number, careerPath: string = 'finance'): string {
+  const city = job.location.split(',')[0];
+  const workEnv = job.workEnvironment.toLowerCase();
   
-  return reasons[index] || `Matches your preferences: ${job.location}, Strategy career path, visa sponsorship available, and entry-level friendly.`;
+  if (careerPath === 'finance') {
+    const reasons = [
+      `Hot match! ${job.company}'s Graduate Programme is specifically designed for recent graduates like you. Based on your preference for Finance roles in London, this role offers visa sponsorship and requires no prior experience - perfect entry point into investment banking.`,
+      `Perfect for your Finance career path in London. ${job.company}'s finance team works on strategic transactions that align with your interests. Located in ${city}, offers visa sponsorship, and entry-level friendly with comprehensive training.`,
+      `Great match for Finance development. ${job.company}'s internship program offers hands-on experience with financial modeling and analysis. The role is in ${city} with visa support, and the ${workEnv} setup aligns with your preferences. Perfect for entry-level candidates.`,
+      `Strong alignment with your Finance goals in London. ${job.company} specializes in investment banking that matches your career path. Located in ${city} with visa sponsorship, ${workEnv} work style, and entry-level friendly with excellent mentorship.`,
+      `Excellent match for Finance roles. ${job.company}'s finance team offers clear progression paths for ambitious graduates. Based in ${city} with visa sponsorship, focuses on financial analysis and strategic transactions, and entry-level friendly with comprehensive support.`
+    ];
+    return reasons[index] || `Matches your preferences: ${city}, Finance career path, visa sponsorship available, and entry-level friendly.`;
+  } else if (careerPath === 'tech') {
+    const reasons = [
+      `Hot match! ${job.company}'s Graduate Programme is specifically designed for recent graduates like you. Based on your preference for Tech roles in London, this role offers visa sponsorship and requires no prior experience - perfect entry point into software engineering.`,
+      `Perfect for your Tech career path in London. ${job.company}'s engineering team works with modern technologies that align with your interests. Located in ${city}, offers visa sponsorship, and entry-level friendly with comprehensive training.`,
+      `Great match for Tech development. ${job.company}'s internship program offers hands-on experience with software development. The role is in ${city} with visa support, and the ${workEnv} setup aligns with your preferences. Perfect for entry-level candidates.`,
+      `Strong alignment with your Tech goals in London. ${job.company} specializes in software engineering that matches your career path. Located in ${city} with visa sponsorship, ${workEnv} work style, and entry-level friendly with excellent mentorship.`,
+      `Excellent match for Tech roles. ${job.company}'s engineering team offers clear progression paths for ambitious graduates. Based in ${city} with visa sponsorship, focuses on modern technologies, and entry-level friendly with comprehensive support.`
+    ];
+    return reasons[index] || `Matches your preferences: ${city}, Tech career path, visa sponsorship available, and entry-level friendly.`;
+  } else {
+    // Strategy (default)
+    const reasons = [
+      `Hot match! ${job.company}'s Graduate Programme is specifically designed for recent graduates like you. Based on your preference for Strategy roles in London, this role offers visa sponsorship and requires no prior experience - perfect entry point into consulting.`,
+      `Perfect for your Strategy career path in London. ${job.company}'s consulting practice works on strategic projects that align with your interests. Located in ${city}, offers visa sponsorship, and entry-level friendly with comprehensive training.`,
+      `Great match for Strategy consulting. ${job.company}'s internship program offers hands-on experience with business analysis and strategy. The role is in ${city} with visa support, and the ${workEnv} setup aligns with your preferences. Perfect for entry-level candidates.`,
+      `Strong alignment with your Strategy goals in London. ${job.company} specializes in consulting that matches your career path. Located in ${city} with visa sponsorship, ${workEnv} work style, and entry-level friendly with excellent mentorship.`,
+      `Excellent match for Strategy roles. ${job.company}'s consulting team offers clear progression paths for ambitious graduates. Based in ${city} with visa sponsorship, focuses on strategic analysis, and entry-level friendly with comprehensive support.`
+    ];
+    return reasons[index] || `Matches your preferences: ${city}, Strategy career path, visa sponsorship available, and entry-level friendly.`;
+  }
 }
 
 async function submitFeedback(jobHash: string, feedbackType: 'thumbs_up' | 'thumbs_down', email: string = 'sample@example.com'): Promise<void> {
@@ -153,61 +322,70 @@ async function submitFeedback(jobHash: string, feedbackType: 'thumbs_up' | 'thum
 
 interface SampleInterviewEmailProps {
   day?: 'monday' | 'wednesday';
+  careerPath?: string; // e.g., 'finance', 'tech', 'strategy'
 }
 
-export default function SampleInterviewEmail({ day = 'monday' }: SampleInterviewEmailProps) {
-  const [jobs, setJobs] = useState<Job[]>(FALLBACK_JOBS); // Start with fallback - no loading state
+export default function SampleInterviewEmail({ day = 'monday', careerPath = 'finance' }: SampleInterviewEmailProps) {
+  const [jobs, setJobs] = useState<Job[]>([]); // Start empty - will show loading briefly
   const [feedbackSubmitted, setFeedbackSubmitted] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<{ name?: string; cities?: string[]; careerPath?: string } | null>(null);
 
   useEffect(() => {
-    // Silently fetch real jobs in background, but show fallback immediately
+    // Fetch REAL jobs from database using a real user's profile
     async function fetchJobs() {
       try {
+        setLoading(true);
         const response = await fetch(`/api/sample-jobs?day=${day}`);
         const data = await response.json();
         
-        // Always ensure we have exactly 5 jobs
-        let finalJobs: Job[] = [];
-        
         if (data.jobs && data.jobs.length > 0) {
-          const realJobs = data.jobs.slice(0, 5);
-          const needed = 5 - realJobs.length;
+          // Use REAL jobs from database - these are actual jobs from a real user's matches
+          const realJobs = data.jobs.slice(0, 5).map((job: any) => ({
+            ...job,
+            jobUrl: job.jobUrl || '', // Ensure jobUrl is set
+          }));
           
-          if (needed > 0) {
-            // Fill with fallback jobs if we don't have enough real ones
-            const fallbackToAdd = FALLBACK_JOBS.slice(0, needed);
-            finalJobs = [...realJobs, ...fallbackToAdd].slice(0, 5);
-          } else {
-            finalJobs = realJobs.slice(0, 5);
+          setJobs(realJobs);
+          
+          // Set user profile if available
+          if (data.userProfile) {
+            setUserProfile(data.userProfile);
           }
         } else {
-          // No real jobs, use all fallback
-          finalJobs = FALLBACK_JOBS.slice(0, 5);
+          // No real jobs found - show empty state
+          setJobs([]);
         }
         
-        // Ensure we always have exactly 5 jobs
-        if (finalJobs.length < 5) {
-          const additionalNeeded = 5 - finalJobs.length;
-          const additionalFallback = FALLBACK_JOBS.filter(
-            fb => !finalJobs.some(j => j.company === fb.company && j.title === fb.title)
-          ).slice(0, additionalNeeded);
-          finalJobs = [...finalJobs, ...additionalFallback].slice(0, 5);
-        }
-        
-        setJobs(finalJobs);
+        setLoading(false);
       } catch (error) {
-        // Silently fail - fallback jobs already showing
+        // No fallback - show empty state if API fails
         console.error('Failed to fetch sample jobs:', error);
-        // Ensure fallback jobs are set
-        setJobs(FALLBACK_JOBS.slice(0, 5));
+        setJobs([]);
+        setLoading(false);
       }
     }
 
     fetchJobs();
   }, [day]);
 
-  // Always show exactly 5 jobs (no loading state in preview)
+  // Always show exactly 5 jobs
   const displayJobs = jobs.slice(0, 5);
+  
+  // Show loading state briefly if no jobs yet
+  if (loading && displayJobs.length === 0) {
+    return (
+      <div className="mx-auto w-full max-w-[360px] px-2 text-[14px] leading-[1.5] text-zinc-100 font-sans">
+        <div className="mb-6 rounded-t-lg bg-gradient-to-br from-brand-600 via-brand-500 to-brand-700 p-6 text-center">
+          <div className="text-[32px] font-bold text-white tracking-tight mb-2">JobPing</div>
+          <div className="text-[11px] text-white/95 uppercase tracking-wider font-medium">AI Powered Job Matching for Europe</div>
+        </div>
+        <div className="rounded-lg border border-zinc-800/50 bg-white/[0.03] p-5 text-center">
+          <div className="text-zinc-400 text-sm">Loading real jobs...</div>
+        </div>
+      </div>
+    );
+  }
 
   const handleFeedback = async (jobHash: string, feedbackType: 'thumbs_up' | 'thumbs_down') => {
     if (!jobHash || feedbackSubmitted.has(jobHash)) return;
@@ -228,19 +406,25 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
       <div className="rounded-lg border border-zinc-800/50 bg-white/[0.03] p-5 shadow-[0_4px_6px_rgba(0,0,0,0.1)] backdrop-blur-sm">
         {/* Title and intro - matches production exactly */}
         <h1 className="text-[22px] font-bold text-white mb-4 leading-tight">
-          Your 5 new matches are ready
+          Your 5 new matches are ready ✨
         </h1>
         <p className="text-[15px] text-zinc-300 leading-relaxed mb-4">
-          Alex, here are your 5 new matches for {day === 'wednesday' ? 'Wednesday' : 'Monday'}. All roles below match your filters: London, visa sponsorship, entry-level Strategy roles.
+          {userProfile?.name || 'Alex'}, here are your 5 new matches for {day === 'wednesday' ? 'Wednesday' : 'Monday'}. All roles below match your filters: {userProfile?.cities?.join(', ') || 'London'}, {userProfile?.careerPath ? `${userProfile.careerPath} roles` : 'entry-level roles'}.
         </p>
-        <p className="text-[15px] text-zinc-400 leading-relaxed mb-6">
+        <p className="text-[15px] text-zinc-400 leading-relaxed mb-4">
           See one you like? Apply now. Not a fit? Let us know and we'll adjust.
         </p>
+        <div className="mb-6 p-3 rounded-lg bg-gradient-to-r from-brand-500/10 to-purple-600/10 border border-brand-500/20">
+          <p className="text-[13px] text-brand-300 font-semibold mb-1">💎 Premium Preview</p>
+          <p className="text-[12px] text-zinc-400 leading-relaxed">This is what Premium members get: 5 fresh jobs delivered Mon/Wed/Fri (15 per week). Upgrade for €5/month to get matches like these.</p>
+        </div>
 
         {displayJobs.map((job, index) => {
-            const score = getMatchScore(index);
+            // Use REAL match_score from database (from real user's matches)
+            const score = job.matchScore ? Math.round(job.matchScore * 100) : 85;
             const hot = isHotMatch(score);
-            const uniqueMatchReason = getUniqueMatchReason(job, score, index);
+            // Use REAL match reason from database if available
+            const uniqueMatchReason = job.matchReason || getUniqueMatchReason(job, score, index, userProfile?.careerPath || careerPath);
             const experienceText = job.isGraduate 
               ? "Entry-level graduate role" 
               : job.isInternship 
@@ -255,6 +439,8 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
                 className={`${index === 0 ? 'mt-5' : 'mt-4'} rounded-2xl transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
                   hot 
                     ? 'border-2 border-emerald-500/50 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 shadow-[0_8px_40px_rgba(16,185,129,0.25)] hover:shadow-[0_12px_50px_rgba(16,185,129,0.35)]' 
+                    : score >= 85
+                    ? 'border border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-blue-600/2 shadow-[0_4px_20px_rgba(59,130,246,0.15)] hover:shadow-[0_6px_30px_rgba(59,130,246,0.25)]'
                     : 'border border-indigo-500/15 bg-[#0f0f0f] shadow-sm hover:shadow-md'
                 } p-5`}
               >
@@ -288,7 +474,11 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
                   {formatDescription(job.description)}
                 </div>
                 <div className="mb-4 flex flex-wrap gap-2">
-                  <span className="inline-block rounded-full bg-indigo-500/15 px-3 py-1.5 text-[12px] font-semibold text-zinc-300">Strategy & Business Design</span>
+                  {job.categories && job.categories.length > 0 && (
+                    <span className="inline-block rounded-full bg-indigo-500/15 px-3 py-1.5 text-[12px] font-semibold text-zinc-300">
+                      {job.categories[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
+                  )}
                   <span className="inline-block rounded-full bg-indigo-500/15 px-3 py-1.5 text-[12px] font-semibold text-zinc-300">{job.workEnvironment}</span>
                   {job.isInternship && (
                     <span className="inline-block rounded-full bg-indigo-500/15 px-3 py-1.5 text-[12px] font-semibold text-zinc-300">Internship</span>
