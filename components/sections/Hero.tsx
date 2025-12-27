@@ -5,6 +5,7 @@ import Button from "@/components/ui/Button";
 import { useReducedMotion } from "@/components/ui/useReducedMotion";
 import { shouldThrottleAnimations } from "@/lib/performance";
 import * as Copy from "@/lib/copy";
+import { CTA_GET_MY_5_FREE_MATCHES, CTA_GET_MY_5_FREE_MATCHES_ARIA, TRUST_TEXT_INSTANT_SETUP } from "@/lib/copy";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 import HeroBackgroundAura from "@/components/ui/HeroBackgroundAura";
 import DeviceFrame from "@/components/marketing/DeviceFrame";
@@ -17,9 +18,34 @@ export default function Hero() {
   const [offset, setOffset] = useState(0);
   const [enableMotion, setEnableMotion] = useState(true);
   const [shouldLoadAnimations, setShouldLoadAnimations] = useState(false);
+  const [preloadedJobs, setPreloadedJobs] = useState<any[]>([]);
   const prefersReduced = useReducedMotion();
   const shouldThrottle = shouldThrottleAnimations();
   const { stats } = useStats();
+
+  // Pre-fetch jobs immediately on mount (before component renders)
+  useEffect(() => {
+    async function fetchJobs() {
+      try {
+        // Calculate week number for rotation
+        const now = new Date();
+        const start = new Date(now.getFullYear(), 0, 1);
+        const days = Math.floor((now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+        const weekNumber = Math.ceil((days + start.getDay() + 1) / 7);
+        
+        const response = await fetch(`/api/sample-jobs?day=monday&tier=free&week=${weekNumber}`);
+        const data = await response.json();
+        
+        if (data.jobs && data.jobs.length > 0) {
+          setPreloadedJobs(data.jobs);
+        }
+      } catch (error) {
+        console.error('Failed to pre-fetch jobs:', error);
+      }
+    }
+    
+    fetchJobs();
+  }, []);
 
   // Lazy load animations after initial paint
   useEffect(() => {
@@ -84,7 +110,7 @@ export default function Hero() {
               className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold leading-[1.1] mb-3"
             >
               <span className="text-white">Try it free</span>{' '}
-              <span className="text-zinc-400">— get 5 matches now</span>
+              <span className="text-zinc-400">— see 5 matches instantly</span>
             </motion.h1>
 
             {/* Subheadline - FREE-FIRST - Clear value prop */}
@@ -112,10 +138,10 @@ export default function Hero() {
                 variant="gradient"
                 size="lg"
                 className="w-full sm:w-auto sm:min-w-[240px] px-8 py-4 md:py-5 text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)] transition-all duration-200"
-                aria-label="Get my 5 free matches"
+                aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
               >
                 <span className="flex items-center justify-center gap-2">
-                  Get My 5 Free Matches
+                  {CTA_GET_MY_5_FREE_MATCHES}
                   <BrandIcons.ArrowRight className="h-5 w-5" />
                 </span>
               </Button>
@@ -126,7 +152,7 @@ export default function Hero() {
                 className="space-y-2 mt-3"
               >
                 <p className="text-sm text-zinc-400">
-                  ⚡ Instant matches • No credit card • 2-minute setup
+                  {TRUST_TEXT_INSTANT_SETUP}
                 </p>
               </motion.div>
               
@@ -148,7 +174,7 @@ export default function Hero() {
                       <span className="text-xs font-bold text-brand-200 uppercase tracking-wide">Free First</span>
                     </div>
                     <p className="text-base md:text-lg font-semibold text-white leading-relaxed">
-                      <span className="text-brand-200">Try it free first</span> — get 5 matches instantly
+                      <span className="text-brand-200">Try it free first</span> — see 5 matches instantly
                     </p>
                     <p className="text-sm md:text-base text-zinc-300 leading-relaxed">
                       Like it? <span className="text-brand-300 font-bold">Upgrade to get 15 matches/week</span> (3x more) delivered Mon/Wed/Fri for €5/month.
@@ -217,7 +243,7 @@ export default function Hero() {
             {/* iPhone Mockup - Responsive scaling with shadow */}
             <div className="scale-75 md:scale-90 lg:scale-100 origin-center drop-shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
               <DeviceFrame>
-                <SampleJobMatches />
+                <SampleJobMatches preloadedJobs={preloadedJobs} />
               </DeviceFrame>
             </div>
           </motion.div>

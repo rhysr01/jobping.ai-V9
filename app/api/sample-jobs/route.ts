@@ -9,15 +9,33 @@ export async function GET(req: NextRequest) {
     const supabase = getDatabaseClient();
     const { searchParams } = new URL(req.url);
     const day = searchParams.get('day') || 'monday';
+    const tier = searchParams.get('tier') || 'free'; // 'free' or 'premium'
+    const weekParam = searchParams.get('week');
+    
+    // Calculate week number for rotation (changes weekly)
+    const weekNumber = weekParam ? parseInt(weekParam, 10) : (() => {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), 0, 1);
+      const days = Math.floor((now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+      return Math.ceil((days + start.getDay() + 1) / 7);
+    })();
+    
+    // Use week number to rotate through users (ensures weekly rotation)
+    // Rotate through 20 users: week 1 = user 0, week 2 = user 1, etc.
+    const userOffset = (weekNumber - 1) % 20;
     
     // Strategy: Fetch jobs with URLs from real user matches first (most reliable)
+    // Different user profiles for Free vs Premium showcases
     // Then fallback to diverse city/category combinations
     // Finally fallback to ANY jobs with URLs
+    // User profile can be fictional, but jobs MUST be real
     
     const resultJobs: any[] = [];
     const usedJobHashes = new Set<string>();
+    let selectedUserProfile: any = null;
 
     // STEP 1: Try to get jobs from real user matches (most reliable - these are real matches)
+    // Use different users for Free vs Premium to show different profiles
     const { data: usersWithMatches, error: userError } = await supabase
       .from('users')
       .select('email, full_name, target_cities, career_path, professional_expertise')
@@ -27,8 +45,27 @@ export async function GET(req: NextRequest) {
       .limit(20); // Check more users
 
     if (!userError && usersWithMatches && usersWithMatches.length > 0) {
-      for (const user of usersWithMatches) {
+      // Select user based on tier and week rotation
+      // Ensure free and premium use different users when possible
+      // If only 1 user exists, use offset in job selection instead
+      const baseIndex = tier === 'premium' && usersWithMatches.length > 1 ? 1 : 0;
+      const userIndex = (baseIndex + userOffset) % usersWithMatches.length;
+      const selectedUsers = usersWithMatches.slice(userIndex, userIndex + 1);
+      
+      // Job offset: if using same user for both tiers, offset job selection
+      // Free: jobs 0-4, Premium: jobs 5-9 (ensures no overlap)
+      const jobOffset = (tier === 'premium' && usersWithMatches.length === 1) ? 5 : 0;
+      
+      for (const user of selectedUsers) {
         if (resultJobs.length >= 5) break;
+        
+        // Store user profile for response (can be fictional if no real user)
+        selectedUserProfile = {
+          email: user.email,
+          name: user.full_name || 'Sample User',
+          cities: user.target_cities || ['London', 'Amsterdam', 'Berlin'],
+          careerPath: user.career_path?.[0] || 'Diverse',
+        };
         
         const { data: matches, error: matchesError } = await supabase
           .from('matches')
@@ -39,11 +76,12 @@ export async function GET(req: NextRequest) {
           .limit(30); // Get more matches
 
         if (!matchesError && matches && matches.length > 0) {
+          // Apply job offset to ensure free and premium get different jobs
           const jobHashes = matches
             .map(m => m.job_hash)
             .filter(Boolean)
             .filter(hash => !usedJobHashes.has(hash))
-            .slice(0, 30);
+            .slice(jobOffset, jobOffset + 30); // Offset job selection
 
           if (jobHashes.length > 0) {
             const { data: userJobs, error: jobsError } = await supabase
@@ -186,8 +224,8 @@ export async function GET(req: NextRequest) {
 
     // Format jobs - use REAL job URLs from database
     const formattedJobs = validJobs.map((job) => {
-      // Extract unique cities from jobs
-      const cities = [...new Set(validJobs.map(j => j.city || j.location).filter(Boolean))];
+      // Use selected user profile if available, otherwise extract from jobs
+      const cities = selectedUserProfile?.cities || [...new Set(validJobs.map(j => j.city || j.location).filter(Boolean))];
       
       return {
         title: job.title || 'Job Title',
@@ -202,7 +240,7 @@ export async function GET(req: NextRequest) {
         isGraduate: job.is_graduate || false,
         matchScore: job.matchScore || 0.85,
         matchReason: job.matchReason || '',
-        userProfile: {
+        userProfile: selectedUserProfile || {
           email: 'sample@example.com',
           name: 'Sample User',
           cities: cities.length > 0 ? cities : ['Multiple cities'],

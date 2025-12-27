@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import DeviceFrame from "./DeviceFrame";
 import SampleInterviewEmail from "./SampleInterviewEmail";
 import { useReducedMotion } from "@/components/ui/useReducedMotion";
@@ -14,8 +15,33 @@ interface EmailPhoneShowcaseProps {
 
 export default function EmailPhoneShowcase({ day = 'monday', careerPath = 'finance' }: EmailPhoneShowcaseProps) {
   const prefersReduced = useReducedMotion();
+  const [preloadedJobs, setPreloadedJobs] = useState<any[]>([]);
   const pointIcons = [BrandIcons.Check, BrandIcons.Shield, BrandIcons.Mail];
   const dayLabel = day === 'wednesday' ? 'Wednesday' : 'Monday';
+
+  // Pre-fetch premium jobs immediately on mount
+  useEffect(() => {
+    async function fetchJobs() {
+      try {
+        // Calculate week number for rotation
+        const now = new Date();
+        const start = new Date(now.getFullYear(), 0, 1);
+        const days = Math.floor((now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+        const weekNumber = Math.ceil((days + start.getDay() + 1) / 7);
+        
+        const response = await fetch(`/api/sample-jobs?day=${day}&tier=premium&week=${weekNumber}`);
+        const data = await response.json();
+        
+        if (data.jobs && data.jobs.length > 0) {
+          setPreloadedJobs(data.jobs);
+        }
+      } catch (error) {
+        console.error('Failed to pre-fetch premium jobs:', error);
+      }
+    }
+    
+    fetchJobs();
+  }, [day]);
 
   return (
     <div className="relative">
@@ -65,7 +91,7 @@ export default function EmailPhoneShowcase({ day = 'monday', careerPath = 'finan
               <div className="h-full w-full scale-110 rounded-full bg-black/40 blur-lg-hero" />
             </div>
             <DeviceFrame hideOnMobile={true}>
-              <SampleInterviewEmail day={day} careerPath={careerPath} />
+              <SampleInterviewEmail day={day} careerPath={careerPath} preloadedJobs={preloadedJobs} />
             </DeviceFrame>
           </motion.div>
         </motion.div>

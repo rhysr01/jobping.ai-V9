@@ -17,6 +17,14 @@ export const CTA_FREE = `Get ${FREE_ROLES_PER_SEND} matches Free`;
 export const CTA_PREMIUM = "Upgrade to Premium";
 export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scrolling. Jobs in your inbox.";
 
+// Standardized CTA text (used across multiple components)
+export const CTA_GET_MY_5_FREE_MATCHES = "Get My 5 Free Matches";
+export const CTA_GET_MY_5_FREE_MATCHES_ARIA = "Get my 5 free matches";
+
+// Standardized trust/reassurance text
+export const TRUST_TEXT_INSTANT_SETUP = "⚡ Instant matches • No credit card • 2-minute setup";
+export const TRUST_TEXT_NO_CARD_SETUP = "No credit card • 2-minute setup";
+
 // Hero section
 export const HERO_TITLE = "JobPing";
 export const HERO_HEADLINE = "Get hand-picked early-career jobs across Europe without wasting hours searching";

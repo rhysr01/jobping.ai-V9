@@ -8,6 +8,7 @@ import LogoWordmark from '@/components/LogoWordmark';
 import Button from '@/components/ui/Button';
 import { BrandIcons } from '@/components/ui/BrandIcons';
 import { trackEvent } from '@/lib/analytics';
+import { CTA_GET_MY_5_FREE_MATCHES } from '@/lib/copy';
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -106,7 +107,7 @@ export default function Header() {
                 size="sm"
                 className="ml-4"
               >
-                Get My 5 Free Matches
+                {CTA_GET_MY_5_FREE_MATCHES}
               </Button>
             </nav>
 
@@ -179,7 +180,7 @@ export default function Header() {
                     size="lg"
                     className="mt-4 w-full"
                   >
-                    Get My 5 Free Matches
+                    {CTA_GET_MY_5_FREE_MATCHES}
                   </Button>
                 </nav>
               </div>

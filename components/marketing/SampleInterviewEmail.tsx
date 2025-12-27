@@ -323,64 +323,67 @@ async function submitFeedback(jobHash: string, feedbackType: 'thumbs_up' | 'thum
 interface SampleInterviewEmailProps {
   day?: 'monday' | 'wednesday';
   careerPath?: string; // e.g., 'finance', 'tech', 'strategy'
+  preloadedJobs?: any[]; // Pre-loaded jobs from EmailPhoneShowcase
 }
 
-export default function SampleInterviewEmail({ day = 'monday', careerPath = 'finance' }: SampleInterviewEmailProps) {
-  const [jobs, setJobs] = useState<Job[]>([]); // Start empty - will show loading briefly
+export default function SampleInterviewEmail({ day = 'monday', careerPath = 'finance', preloadedJobs }: SampleInterviewEmailProps) {
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<{ name?: string; cities?: string[]; careerPath?: string } | null>(null);
 
   useEffect(() => {
-    // Fetch REAL jobs from database using a real user's profile
+    // If pre-loaded jobs provided, use them immediately (NO loading state)
+    if (preloadedJobs && preloadedJobs.length > 0) {
+      const realJobs = preloadedJobs
+        .filter((job: any) => job.jobUrl && job.jobUrl.trim() !== '')
+        .slice(0, 5)
+        .map((job: any) => ({
+          ...job,
+          jobUrl: job.jobUrl,
+        }));
+      setJobs(realJobs);
+      
+      // Extract user profile from first job if available
+      if (preloadedJobs[0]?.userProfile) {
+        setUserProfile(preloadedJobs[0].userProfile);
+      }
+      return; // Don't fetch if pre-loaded
+    }
+
+    // Fallback: fetch if no pre-loaded jobs
     async function fetchJobs() {
       try {
-        setLoading(true);
-        const response = await fetch(`/api/sample-jobs?day=${day}`);
+        const response = await fetch(`/api/sample-jobs?day=${day}&tier=premium`);
         const data = await response.json();
         
         if (data.jobs && data.jobs.length > 0) {
-          // Use REAL jobs from database - only include jobs that have URLs
           const jobsWithUrls = data.jobs.filter((job: any) => job.jobUrl && job.jobUrl.trim() !== '');
           
           if (jobsWithUrls.length > 0) {
             const realJobs = jobsWithUrls.slice(0, 5).map((job: any) => ({
               ...job,
-              jobUrl: job.jobUrl, // Already verified to have URL
+              jobUrl: job.jobUrl,
             }));
-            
             setJobs(realJobs);
-          } else {
-            console.error('No jobs with URLs found in API response');
-            setJobs([]);
           }
           
-          // Set user profile if available
           if (data.userProfile) {
             setUserProfile(data.userProfile);
           }
-        } else {
-          // No real jobs found - show empty state
-          setJobs([]);
         }
-        
-        setLoading(false);
       } catch (error) {
-        // No fallback - show empty state if API fails
         console.error('Failed to fetch sample jobs:', error);
-        setJobs([]);
-        setLoading(false);
       }
     }
 
     fetchJobs();
-  }, [day]);
+  }, [day, preloadedJobs]);
 
   // Always show exactly 5 jobs
   const displayJobs = jobs.slice(0, 5);
   
-  // Show loading state briefly if no jobs yet
-  if (loading && displayJobs.length === 0) {
+  // NO loading state - show empty if no jobs (shouldn't happen with pre-loaded)
+  if (displayJobs.length === 0) {
     return (
       <div className="mx-auto w-full max-w-[360px] px-2 text-[14px] leading-[1.5] text-zinc-100 font-sans">
         <div className="mb-6 rounded-t-lg bg-gradient-to-br from-brand-600 via-brand-500 to-brand-700 p-6 text-center">
@@ -388,7 +391,7 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
           <div className="text-[11px] text-white/95 uppercase tracking-wider font-medium">AI Powered Job Matching for Europe</div>
         </div>
         <div className="rounded-lg border border-zinc-800/50 bg-white/[0.03] p-5 text-center">
-          <div className="text-zinc-400 text-sm">Loading real jobs...</div>
+          <div className="text-zinc-400 text-sm">No jobs available</div>
         </div>
       </div>
     );
@@ -450,7 +453,7 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
                     ? 'border-2 border-emerald-500/60 bg-gradient-to-br from-emerald-500/15 to-emerald-600/8 shadow-[0_8px_40px_rgba(16,185,129,0.35)] hover:shadow-[0_12px_50px_rgba(16,185,129,0.45)]' 
                     : score >= 85
                     ? 'border-2 border-blue-500/50 bg-gradient-to-br from-blue-500/10 to-blue-600/5 shadow-[0_4px_20px_rgba(59,130,246,0.25)] hover:shadow-[0_6px_30px_rgba(59,130,246,0.35)]'
-                    : 'border border-indigo-500/15 bg-[#0f0f0f] shadow-sm hover:shadow-md'
+                    : 'border border-indigo-500/15 bg-black shadow-sm hover:shadow-md'
                 } p-5`}
               >
                 <div className="mb-4">
