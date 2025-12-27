@@ -51,6 +51,26 @@ export async function GET(req: NextRequest) {
     
     const selectedUserProfile = fictionalProfiles[tier as 'free' | 'premium'] || fictionalProfiles.free;
     
+    // Helper function to calculate realistic match score with hot match limit
+    const calculateMatchScore = (index: number, existingHotMatches: number): number => {
+      // More realistic score distribution: 80-92% range
+      const baseScore = 0.80; // Lower base (was 0.85)
+      const increment = 0.015; // Smaller increment (was 0.02)
+      const randomRange = 0.03; // Smaller random component (was 0.05)
+      const maxScore = 0.92; // Lower max (was 0.95)
+      
+      let score = baseScore + (index * increment) + (Math.random() * randomRange);
+      score = Math.min(score, maxScore);
+      
+      // Ensure only 1-2 hot matches (92%+) max (raised threshold)
+      if (score >= 0.92 && existingHotMatches >= 2) {
+        // Cap at 91% if we already have 2 hot matches
+        score = Math.min(score, 0.91);
+      }
+      
+      return score;
+    };
+    
     // Helper function to generate personalized match reasons based on profile
     const getMatchReason = (job: any, index: number, profile: typeof selectedUserProfile): string => {
       const city = job.city || job.location?.split(',')[0] || 'Europe';
@@ -154,10 +174,11 @@ export async function GET(req: NextRequest) {
         if (matchingCity && jobsByCity[matchingCity].length > 0 && resultJobs.length < 5) {
           const job = jobsByCity[matchingCity].shift();
           if (job && job.job_url && job.job_url.trim() !== '') {
-            const matchScore = 0.85 + (resultJobs.length * 0.02) + (Math.random() * 0.05);
+            const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
+            const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
             resultJobs.push({
               ...job,
-              matchScore: Math.min(matchScore, 0.95),
+              matchScore,
               matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
             });
             usedJobHashes.add(job.job_hash);
@@ -192,10 +213,11 @@ export async function GET(req: NextRequest) {
         if (remainingByCity[cityToUse] && remainingByCity[cityToUse].length > 0) {
           const job = remainingByCity[cityToUse].shift();
           if (job && job.job_url && job.job_url.trim() !== '') {
-            const matchScore = 0.85 + (resultJobs.length * 0.02) + (Math.random() * 0.05);
+            const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
+            const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
             resultJobs.push({
               ...job,
-              matchScore: Math.min(matchScore, 0.95),
+              matchScore,
               matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
             });
             usedJobHashes.add(job.job_hash);
@@ -237,15 +259,16 @@ export async function GET(req: NextRequest) {
           fallbackJobsByCity[jobCity].push(job);
         });
         
-        // Prefer diverse cities
+        // Prefer diverse cities (reuse calculateMatchScore function)
         Object.keys(fallbackJobsByCity).forEach(city => {
           if (resultJobs.length < 5 && fallbackJobsByCity[city].length > 0) {
             const job = fallbackJobsByCity[city].shift();
             if (job && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
-              const matchScore = 0.85 + (resultJobs.length * 0.02);
+              const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
+              const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
               resultJobs.push({
                 ...job,
-                matchScore: Math.min(matchScore, 0.95),
+                matchScore,
                 matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
               });
               usedJobHashes.add(job.job_hash);
@@ -258,10 +281,11 @@ export async function GET(req: NextRequest) {
         if (resultJobs.length < 5) {
           fallbackJobs.forEach((job, index) => {
             if (resultJobs.length < 5 && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
-              const matchScore = 0.85 + (resultJobs.length * 0.02);
+              const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
+              const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
               resultJobs.push({
                 ...job,
-                matchScore: Math.min(matchScore, 0.95),
+                matchScore,
                 matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
               });
               usedJobHashes.add(job.job_hash);
@@ -287,10 +311,14 @@ export async function GET(req: NextRequest) {
         emergencyJobs.forEach((job, index) => {
           // Only add if job has a URL (even if it's '#')
           if (job.job_url) {
+            // Use realistic scoring for emergency fallback too
+            const hotMatches = validJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
+            const matchScore = calculateMatchScore(index, hotMatches);
+            
             validJobs.push({
               ...job,
               job_url: job.job_url,
-              matchScore: 0.85 + (index * 0.02),
+              matchScore,
               matchReason: getMatchReason(job, index, selectedUserProfile),
             });
           }

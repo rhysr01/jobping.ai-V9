@@ -252,7 +252,7 @@ function getMatchScore(index: number): number {
 }
 
 function isHotMatch(score: number): boolean {
-  return score >= 90;
+  return score >= 92; // Raised from 90 to 92 for rarer hot matches
 }
 
 function getUniqueMatchReason(job: Job, score: number, index: number, careerPath: string = 'finance'): string {
@@ -434,7 +434,7 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
         {displayJobs.map((job, index) => {
             // Use REAL match_score from database (from real user's matches)
             const score = job.matchScore ? Math.round(job.matchScore * 100) : 85;
-            const hot = score >= 90; // Hot match is 90%+ (excellent tier)
+            const hot = score >= 92; // Hot match is 92%+ (excellent tier, raised from 90)
             // Use REAL match reason from database if available
             const uniqueMatchReason = job.matchReason || getUniqueMatchReason(job, score, index, userProfile?.careerPath || careerPath);
             const experienceText = job.isGraduate 
@@ -449,7 +449,7 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
               <div
                 key={`${job.company}-${job.title}-${index}`}
                 className={`${index === 0 ? 'mt-5' : 'mt-4'} rounded-2xl transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
-                  score >= 90
+                  score >= 92
                     ? 'border-2 border-emerald-500/60 bg-gradient-to-br from-emerald-500/15 to-emerald-600/8 shadow-[0_8px_40px_rgba(16,185,129,0.35)] hover:shadow-[0_12px_50px_rgba(16,185,129,0.45)]' 
                     : score >= 85
                     ? 'border-2 border-blue-500/50 bg-gradient-to-br from-blue-500/10 to-blue-600/5 shadow-[0_4px_20px_rgba(59,130,246,0.25)] hover:shadow-[0_6px_30px_rgba(59,130,246,0.35)]'
@@ -461,7 +461,7 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
                     <span 
                       aria-label={`${score} percent job match score${hot ? ', hot match' : ''}`}
                       className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 font-semibold text-white border ${
-                        score >= 90
+                        score >= 92
                           ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-emerald-400/60 text-[12px] shadow-[0_4px_12px_rgba(16,185,129,0.4)]' 
                           : score >= 85
                           ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400/60 text-[11px] shadow-[0_4px_12px_rgba(59,130,246,0.3)]'

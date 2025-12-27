@@ -4,6 +4,37 @@ import { apiLogger } from '@/lib/api-logger';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { normalizeJobLocation } from '@/lib/locationNormalizer';
 
+/**
+ * Wrapper for database queries with timeout protection
+ * Prevents infinite hanging if database is slow or unresponsive
+ */
+async function queryWithTimeout<T>(
+  queryPromise: Promise<{ data: T | null; error: any }>,
+  timeoutMs: number = 10000,
+  operation: string
+): Promise<{ data: T | null; error: any }> {
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`Query timeout after ${timeoutMs}ms`)), timeoutMs)
+  );
+  
+  try {
+    return await Promise.race([queryPromise, timeoutPromise]);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('timeout')) {
+      apiLogger.error(`Database query timeout: ${operation}`, error as Error, { timeoutMs, operation });
+      return { 
+        data: null, 
+        error: { 
+          message: `Database query timed out after ${timeoutMs}ms`, 
+          code: 'TIMEOUT',
+          operation 
+        } 
+      };
+    }
+    throw error;
+  }
+}
+
 export async function GET(request: NextRequest) {
   // Rate limiting - prevent abuse
   const rateLimitResult = await getProductionRateLimiter().middleware(request, 'matches-free', {
@@ -35,30 +66,59 @@ export async function GET(request: NextRequest) {
 
     const supabase = getDatabaseClient();
 
-    // Verify user exists and is free tier
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('id, email, subscription_tier')
-      .eq('email', email)
-      .eq('subscription_tier', 'free')
-      .single();
+    // Verify user exists and is free tier (with timeout)
+    const userResult = await queryWithTimeout(
+      supabase
+        .from('users')
+        .select('id, email, subscription_tier')
+        .eq('email', email)
+        .eq('subscription_tier', 'free')
+        .single(),
+      10000, // 10 second timeout
+      'fetch_user'
+    );
 
-    if (userError || !user) {
+    if (userResult.error) {
+      if (userResult.error.code === 'TIMEOUT') {
+        apiLogger.error('User query timeout', new Error(userResult.error.message), { email });
+        return NextResponse.json(
+          { error: 'Request timed out. Please try again.' },
+          { status: 504 }
+        );
+      }
       return NextResponse.json({ error: 'User not found' }, { status: 401 });
     }
 
-    // Get user's matches from matches table (uses user_email!)
-    const { data: matchesData, error: matchesError } = await supabase
-      .from('matches')
-      .select('match_score, match_reason, job_hash')
-      .eq('user_email', email) // CRITICAL: Use user_email, not user_id!
-      .order('match_score', { ascending: false })
-      .limit(5);
-
-    if (matchesError) {
-      apiLogger.error('Failed to fetch matches', matchesError as Error, { email });
-      throw matchesError;
+    const user = userResult.data;
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 401 });
     }
+
+    // Get user's matches from matches table (uses user_email!) (with timeout)
+    const matchesResult = await queryWithTimeout(
+      supabase
+        .from('matches')
+        .select('match_score, match_reason, job_hash')
+        .eq('user_email', email) // CRITICAL: Use user_email, not user_id!
+        .order('match_score', { ascending: false })
+        .limit(5),
+      10000, // 10 second timeout
+      'fetch_matches'
+    );
+
+    if (matchesResult.error) {
+      if (matchesResult.error.code === 'TIMEOUT') {
+        apiLogger.error('Matches query timeout', new Error(matchesResult.error.message), { email });
+        return NextResponse.json(
+          { error: 'Request timed out. Please try again.' },
+          { status: 504 }
+        );
+      }
+      apiLogger.error('Failed to fetch matches', matchesResult.error as Error, { email });
+      throw matchesResult.error;
+    }
+
+    const matchesData = matchesResult.data;
 
     if (!matchesData || matchesData.length === 0) {
       apiLogger.info('No matches found for user', { email });
@@ -73,18 +133,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ jobs: [] });
     }
 
-    // Fetch jobs by job_hash
-    const { data: jobsData, error: jobsError } = await supabase
-      .from('jobs')
-      .select('id, title, company, location, city, country, description, job_url, work_environment, categories, job_hash')
-      .in('job_hash', jobHashes)
-      .eq('is_active', true)
-      .eq('status', 'active');
+    // Fetch jobs by job_hash (with timeout)
+    const jobsResult = await queryWithTimeout(
+      supabase
+        .from('jobs')
+        .select('id, title, company, location, city, country, description, job_url, work_environment, categories, job_hash')
+        .in('job_hash', jobHashes)
+        .eq('is_active', true)
+        .eq('status', 'active'),
+      10000, // 10 second timeout
+      'fetch_jobs'
+    );
 
-    if (jobsError) {
-      apiLogger.error('Failed to fetch jobs', jobsError as Error, { email, jobHashesCount: jobHashes.length });
-      throw jobsError;
+    if (jobsResult.error) {
+      if (jobsResult.error.code === 'TIMEOUT') {
+        apiLogger.error('Jobs query timeout', new Error(jobsResult.error.message), { email, jobHashesCount: jobHashes.length });
+        return NextResponse.json(
+          { error: 'Request timed out. Please try again.' },
+          { status: 504 }
+        );
+      }
+      apiLogger.error('Failed to fetch jobs', jobsResult.error as Error, { email, jobHashesCount: jobHashes.length });
+      throw jobsResult.error;
     }
+
+    const jobsData = jobsResult.data;
 
     // Create a map of job_hash -> job for quick lookup
     const jobsMap = new Map((jobsData || []).map((job: any) => [job.job_hash, job]));
