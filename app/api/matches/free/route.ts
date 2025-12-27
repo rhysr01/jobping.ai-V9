@@ -9,7 +9,7 @@ import { normalizeJobLocation } from '@/lib/locationNormalizer';
  * Prevents infinite hanging if database is slow or unresponsive
  */
 async function queryWithTimeout<T>(
-  queryPromise: Promise<{ data: T | null; error: any }>,
+  queryBuilder: any, // Supabase PostgrestBuilder (awaitable but not typed as Promise)
   timeoutMs: number = 10000,
   operation: string
 ): Promise<{ data: T | null; error: any }> {
@@ -18,7 +18,9 @@ async function queryWithTimeout<T>(
   );
   
   try {
-    return await Promise.race([queryPromise, timeoutPromise]);
+    // Supabase builders are awaitable, so we can race them directly
+    const result = await Promise.race([queryBuilder, timeoutPromise]);
+    return result;
   } catch (error) {
     if (error instanceof Error && error.message.includes('timeout')) {
       apiLogger.error(`Database query timeout: ${operation}`, error as Error, { timeoutMs, operation });
@@ -67,13 +69,15 @@ export async function GET(request: NextRequest) {
     const supabase = getDatabaseClient();
 
     // Verify user exists and is free tier (with timeout)
+    const userQuery = supabase
+      .from('users')
+      .select('id, email, subscription_tier')
+      .eq('email', email)
+      .eq('subscription_tier', 'free')
+      .single();
+    
     const userResult = await queryWithTimeout(
-      supabase
-        .from('users')
-        .select('id, email, subscription_tier')
-        .eq('email', email)
-        .eq('subscription_tier', 'free')
-        .single(),
+      userQuery,
       10000, // 10 second timeout
       'fetch_user'
     );
@@ -95,13 +99,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's matches from matches table (uses user_email!) (with timeout)
+    const matchesQuery = supabase
+      .from('matches')
+      .select('match_score, match_reason, job_hash')
+      .eq('user_email', email) // CRITICAL: Use user_email, not user_id!
+      .order('match_score', { ascending: false })
+      .limit(5);
+    
     const matchesResult = await queryWithTimeout(
-      supabase
-        .from('matches')
-        .select('match_score, match_reason, job_hash')
-        .eq('user_email', email) // CRITICAL: Use user_email, not user_id!
-        .order('match_score', { ascending: false })
-        .limit(5),
+      matchesQuery,
       10000, // 10 second timeout
       'fetch_matches'
     );
@@ -120,7 +126,7 @@ export async function GET(request: NextRequest) {
 
     const matchesData = matchesResult.data;
 
-    if (!matchesData || matchesData.length === 0) {
+    if (!matchesData || !Array.isArray(matchesData) || matchesData.length === 0) {
       apiLogger.info('No matches found for user', { email });
       return NextResponse.json({ jobs: [] });
     }
@@ -134,13 +140,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch jobs by job_hash (with timeout)
+    const jobsQuery = supabase
+      .from('jobs')
+      .select('id, title, company, location, city, country, description, job_url, work_environment, categories, job_hash')
+      .in('job_hash', jobHashes)
+      .eq('is_active', true)
+      .eq('status', 'active');
+    
     const jobsResult = await queryWithTimeout(
-      supabase
-        .from('jobs')
-        .select('id, title, company, location, city, country, description, job_url, work_environment, categories, job_hash')
-        .in('job_hash', jobHashes)
-        .eq('is_active', true)
-        .eq('status', 'active'),
+      jobsQuery,
       10000, // 10 second timeout
       'fetch_jobs'
     );
@@ -160,7 +168,8 @@ export async function GET(request: NextRequest) {
     const jobsData = jobsResult.data;
 
     // Create a map of job_hash -> job for quick lookup
-    const jobsMap = new Map((jobsData || []).map((job: any) => [job.job_hash, job]));
+    const jobsArray = Array.isArray(jobsData) ? jobsData : [];
+    const jobsMap = new Map(jobsArray.map((job: any) => [job.job_hash, job]));
 
     // Format response with normalized location data
     const jobs = matchesData

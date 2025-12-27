@@ -249,7 +249,20 @@ export default function SignupFormFree() {
       }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Signup failed');
+        // Show user-friendly error messages
+        const errorMsg = data.error || data.message || 'Signup failed';
+        console.error('Signup failed:', { status: response.status, error: errorMsg, data });
+        throw new Error(errorMsg);
+      }
+
+      // Check if matches were actually created
+      const matchCount = data.matchCount || 0;
+      
+      if (matchCount === 0) {
+        console.warn('Signup succeeded but no matches created', data);
+        setError('We couldn\'t find any matches for your preferences. Try selecting different cities or career paths.');
+        trackEvent('signup_failed', { tier: 'free', error: 'no_matches' });
+        return;
       }
 
       // Track successful signup
@@ -257,12 +270,13 @@ export default function SignupFormFree() {
         tier: 'free',
         cities: formData.cities.length,
         career_path: formData.careerPath,
+        matchCount,
       });
 
       // Show success animation
       setShowSuccess(true);
       setCountdown(3);
-      showToast.success('Account created! Finding your matches...');
+      showToast.success(`Account created! Found ${matchCount} perfect matches...`);
 
     } catch (err) {
       const errorMessage = err instanceof ApiError 

@@ -187,16 +187,57 @@ export async function POST(request: NextRequest) {
     }
 
     // Run matching using YOUR matching engine
+    if (!process.env.OPENAI_API_KEY) {
+      apiLogger.error('OPENAI_API_KEY not set', new Error('Missing API key'), { email: normalizedEmail });
+      return NextResponse.json(
+        { error: 'Matching service unavailable. Please try again later.' },
+        { status: 500 }
+      );
+    }
+
     const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
     const jobsForAI = preFilteredJobs.slice(0, 50);
-    const matchResult = await matcher.performMatching(jobsForAI, userPrefs as any);
+    
+    apiLogger.info('Starting AI matching', { 
+      email: normalizedEmail,
+      jobsCount: jobsForAI.length,
+      cities: targetCities,
+      careerPath: userData.career_path
+    });
 
-    if (!matchResult.matches || matchResult.matches.length === 0) {
+    let matchResult;
+    try {
+      matchResult = await matcher.performMatching(jobsForAI, userPrefs as any);
+    } catch (matchingError) {
+      apiLogger.error('AI matching failed', matchingError as Error, { 
+        email: normalizedEmail,
+        jobsCount: jobsForAI.length,
+        errorMessage: matchingError instanceof Error ? matchingError.message : String(matchingError)
+      });
+      return NextResponse.json(
+        { error: 'Matching failed. Please try again.' },
+        { status: 500 }
+      );
+    }
+
+    if (!matchResult || !matchResult.matches || matchResult.matches.length === 0) {
+      apiLogger.warn('No matches returned from AI matching', { 
+        email: normalizedEmail,
+        jobsCount: jobsForAI.length,
+        preFilteredCount: preFilteredJobs.length,
+        cities: targetCities,
+        careerPath: userData.career_path
+      });
       return NextResponse.json(
         { error: 'No matches found. Try different cities or career paths.' },
         { status: 404 }
       );
     }
+
+    apiLogger.info('AI matching completed', { 
+      email: normalizedEmail,
+      matchesCount: matchResult.matches.length
+    });
 
     // Get matched jobs with full data
     const matchedJobsRaw: any[] = [];
@@ -305,16 +346,31 @@ export async function POST(request: NextRequest) {
     }
 
     // Store matches in YOUR matches table (uses user_email, not user_id!)
-    const matchRecords = validJobs.map((job: any) => ({
-      user_email: normalizedEmail, // CRITICAL: Use user_email, not user_id!
-      job_hash: String(job.job_hash), // Ensure it's a string
-      match_score: (job.match_score || 0.75) / 100, // Normalize to 0-1 if needed
-      match_reason: job.match_reason || 'AI matched',
-      match_quality: 'high',
-      match_tags: userData.career_path || '',
-      matched_at: new Date().toISOString(),
-      created_at: new Date().toISOString(),
-    }));
+    // match_score from AI is 0-100, normalize to 0-1 for database
+    const matchRecords = validJobs.map((job: any) => {
+      // match_score is 0-100 from matching engine, normalize to 0-1
+      let normalizedScore = 0.75; // Default fallback
+      if (job.match_score !== undefined && job.match_score !== null) {
+        if (job.match_score > 1) {
+          // Score is 0-100, normalize to 0-1
+          normalizedScore = job.match_score / 100;
+        } else {
+          // Score is already 0-1
+          normalizedScore = job.match_score;
+        }
+      }
+      
+      return {
+        user_email: normalizedEmail, // CRITICAL: Use user_email, not user_id!
+        job_hash: String(job.job_hash), // Ensure it's a string
+        match_score: normalizedScore, // Normalized to 0-1
+        match_reason: job.match_reason || 'AI matched',
+        match_quality: 'high',
+        match_tags: userData.career_path || '',
+        matched_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      };
+    });
 
     // CRITICAL: Save matches - fail if this doesn't work
     const { data: savedMatches, error: matchesError } = await supabase

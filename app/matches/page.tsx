@@ -153,7 +153,7 @@ function MatchesPageContent() {
             transition={{ delay: 0.2 }}
             className="text-zinc-300 text-sm"
           >
-            This usually takes 10-15 seconds
+            This usually takes 5-10 seconds
           </motion.p>
         </div>
       </div>
