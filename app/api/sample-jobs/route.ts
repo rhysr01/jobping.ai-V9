@@ -131,14 +131,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ jobs: [], error: 'No jobs found' }, { status: 500 });
     }
 
-    // Format jobs
+    // Format jobs - use REAL job URLs from database
     const formattedJobs = diverseJobs.map((job) => {
       return {
         title: job.title || 'Job Title',
         company: job.company || 'Company',
         location: job.location || 'Location',
         description: job.description || '',
-        jobUrl: '#', // Always use '#' for sample previews - buttons should be disabled
+        jobUrl: job.job_url || '', // Use REAL job URL from database
         jobHash: job.job_hash || '',
         categories: job.categories || [],
         workEnvironment: job.work_environment || 'Hybrid',

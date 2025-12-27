@@ -1,8 +1,63 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
+interface Job {
+  title: string;
+  company: string;
+  location: string;
+  description: string;
+  jobUrl: string;
+  match: number;
+  isHot: boolean;
+  tags: string[];
+  matchReason: string;
+}
+
 export default function SampleJobMatches() {
-  // Diverse sample jobs: 5 cities, 5 different career paths
-  const sampleJobs = [
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch real jobs from API
+    async function fetchJobs() {
+      try {
+        const response = await fetch('/api/sample-jobs?day=monday');
+        const data = await response.json();
+        
+        if (data.jobs && data.jobs.length > 0) {
+          const formattedJobs = data.jobs.map((job: any) => ({
+            title: job.title,
+            company: job.company,
+            location: job.location,
+            description: job.description || '',
+            jobUrl: job.jobUrl || '',
+            match: job.matchScore ? Math.round(job.matchScore * 100) : 85,
+            isHot: (job.matchScore || 0) >= 0.90,
+            tags: [
+              ...(job.categories || []).slice(0, 1).map((cat: string) => cat.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())),
+              job.workEnvironment || 'Hybrid',
+            ],
+            matchReason: job.matchReason || `Great match for roles in ${job.location}`,
+          }));
+          setJobs(formattedJobs);
+        } else {
+          // Fallback to hardcoded jobs if API fails
+          setJobs(fallbackJobs);
+        }
+        setLoading(false);
+      } catch (error) {
+        console.error('Failed to fetch sample jobs:', error);
+        setJobs(fallbackJobs);
+        setLoading(false);
+      }
+    }
+
+    fetchJobs();
+  }, []);
+
+  // Fallback diverse sample jobs: 5 cities, 5 different career paths
+  const fallbackJobs: Job[] = [
     {
       title: "Software Engineer",
       company: "Spotify",
@@ -12,6 +67,7 @@ export default function SampleJobMatches() {
       description: "Join Spotify's engineering team building products used by millions. You'll work with modern technologies, learn from world-class engineers, and contribute to impactful projects.",
       tags: ["Tech", "Hybrid"],
       matchReason: "Perfect match for Tech roles in Stockholm",
+      jobUrl: '',
     },
     {
       title: "Marketing Coordinator",
@@ -22,6 +78,7 @@ export default function SampleJobMatches() {
       description: "Booking.com's marketing team is looking for a Marketing Coordinator to support campaigns across Europe. Perfect for recent graduates interested in growth marketing.",
       tags: ["Marketing", "Hybrid"],
       matchReason: "Great match for Marketing roles in Amsterdam",
+      jobUrl: '',
     },
     {
       title: "Data Analyst",
@@ -32,6 +89,7 @@ export default function SampleJobMatches() {
       description: "N26's data team is looking for a Data Analyst to analyze user behavior and support product decisions. Entry-level friendly with mentorship.",
       tags: ["Data", "Hybrid"],
       matchReason: "Strong match for Data roles in Berlin",
+      jobUrl: '',
     },
     {
       title: "Product Designer",
@@ -42,6 +100,7 @@ export default function SampleJobMatches() {
       description: "Zalando's design team seeks a Product Designer to work on e-commerce experiences. You'll collaborate with product managers and engineers on real features.",
       tags: ["Design", "Hybrid"],
       matchReason: "Excellent match for Design roles in Dublin",
+      jobUrl: '',
     },
     {
       title: "Business Analyst",
@@ -52,8 +111,11 @@ export default function SampleJobMatches() {
       description: "Deloitte's consulting practice is looking for a Business Analyst to work on strategic projects. Perfect entry point into consulting with comprehensive training.",
       tags: ["Consulting", "Hybrid"],
       matchReason: "Good match for Consulting roles in London",
+      jobUrl: '',
     },
   ];
+
+  const displayJobs = jobs.length > 0 ? jobs : fallbackJobs;
 
   return (
     <div className="bg-black text-white h-full overflow-y-auto">
@@ -73,7 +135,7 @@ export default function SampleJobMatches() {
         </div>
 
         {/* Job Cards - Show all 5 jobs like the real email */}
-        {sampleJobs.map((job, i) => (
+        {displayJobs.map((job, i) => (
           <div
             key={i}
             className={`rounded-2xl p-5 border ${
@@ -113,7 +175,7 @@ export default function SampleJobMatches() {
             </p>
 
             {/* Tags */}
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap mb-4">
               {job.tags.map((tag, j) => (
                 <span
                   key={j}
@@ -123,6 +185,24 @@ export default function SampleJobMatches() {
                 </span>
               ))}
             </div>
+
+            {/* Apply Button */}
+            <button
+              onClick={() => {
+                if (job.jobUrl && job.jobUrl !== '') {
+                  window.open(job.jobUrl, '_blank', 'noopener,noreferrer');
+                }
+              }}
+              disabled={!job.jobUrl || job.jobUrl === ''}
+              aria-label={`Apply now: ${job.title} at ${job.company}`}
+              className={`w-full inline-flex items-center justify-center rounded-lg px-6 py-3 text-sm font-bold text-white shadow-lg transition-all duration-200 ${
+                job.jobUrl && job.jobUrl !== ''
+                  ? 'bg-gradient-to-r from-brand-500 to-brand-600 hover:scale-[1.02] active:scale-[0.98] shadow-[0_4px_20px_rgba(139,92,246,0.5)] hover:shadow-[0_8px_30px_rgba(139,92,246,0.6)]'
+                  : 'bg-gradient-to-r from-brand-500/50 to-brand-600/50 text-white/70 cursor-not-allowed border border-brand-500/30'
+              }`}
+            >
+              {job.jobUrl && job.jobUrl !== '' ? 'Apply now →' : 'Sample Preview'}
+            </button>
           </div>
         ))}
 
