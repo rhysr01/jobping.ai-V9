@@ -20,17 +20,17 @@ export default function AboutPage() {
             
             <h2 className="text-2xl font-semibold text-white mt-8 mb-4">Our Mission</h2>
             <p>
-              We filter the entire EU job market and send you only the roles worth applying for—matched to your city, visa status, and experience level.
+              We filter the entire EU job market and send you only the roles worth applying for - matched to your city, visa status, and experience level.
             </p>
             
             <h2 className="text-2xl font-semibold text-white mt-8 mb-4">How It Works</h2>
             <p>
-              Tell us your preferences once. We search European job boards and company pages daily, then send you curated matches directly to your inbox. No dashboards, no spam—just roles that fit.
+              Tell us your preferences once. We search European job boards and company pages daily, then send you curated matches directly to your inbox. No dashboards, no spam - just roles that fit.
             </p>
             
             <h2 className="text-2xl font-semibold text-white mt-8 mb-4">For Early-Career Jobseekers</h2>
             <p>
-              We focus exclusively on internships, graduate programmes, and entry-level roles. Every email includes salary hints, visa notes, and why the role fits you—everything you need to decide in seconds.
+              We focus exclusively on internships, graduate programmes, and entry-level roles. Every email includes salary hints, visa notes, and why the role fits you - everything you need to decide in seconds.
             </p>
             
             <div className="mt-12 pt-8 border-t border-white/10">

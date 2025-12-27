@@ -81,9 +81,10 @@ const FALLBACK_JOBS: Job[] = [
 
 function formatDescription(description: string): string {
   if (!description) return "";
-  // Truncate to ~200 characters
-  if (description.length > 200) {
-    return description.slice(0, 200) + "...";
+  // Show up to 300 characters (increased from 200) for better context
+  // Still truncate very long descriptions to prevent layout issues
+  if (description.length > 300) {
+    return description.slice(0, 300) + "...";
   }
   return description;
 }
@@ -235,37 +236,34 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
                 } p-5`}
               >
                 <div className="mb-4">
-                  <span className={`inline-block rounded-lg bg-gradient-to-r ${
-                    hot 
-                      ? 'from-brand-600 to-brand-500' 
-                      : 'from-brand-500 to-brand-600'
-                  } px-4 py-1.5 text-[11px] font-semibold text-white`}>
+                  <span 
+                    className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r ${
+                      hot 
+                        ? 'from-brand-600 to-brand-500' 
+                        : 'from-brand-500 to-brand-600'
+                    } px-4 py-1.5 text-[11px] font-semibold text-white cursor-help group`}
+                    aria-label={`${score} percent match score. ${hot ? 'Hot match' : 'Good match'} - based on your location, career path, visa status, and experience level matching this role.`}
+                    title={`${score}% match: Based on how well this role matches your location (${job.location}), career path (Strategy), visa status, and experience level${hot ? '. This is a hot match!' : ''}`}
+                  >
                     {hot ? `🔥 Hot Match ${score}%` : `${score}% Match`}
+                    <span className="opacity-60 group-hover:opacity-100 transition-opacity" aria-hidden="true">ℹ️</span>
                   </span>
                 </div>
                 <div className="font-bold text-[18px] text-white mb-2 leading-tight">{job.title}</div>
                 <div className="text-[15px] text-zinc-300 font-medium mb-2">{job.company}</div>
                 <div className="text-[13px] text-zinc-500 mb-4">📍 {job.location}</div>
                 
-                {/* Why you should apply section */}
-                <div className="mb-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-4">
-                  <div className="text-[13px] font-semibold text-emerald-400 mb-2.5">Why you should apply:</div>
-                  <div className="space-y-1.5 text-[13px] text-zinc-300">
-                    <div className="flex items-start gap-2">
-                      <span className="text-emerald-400 mt-0.5">✅</span>
-                      <span>London-based (your preference)</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-emerald-400 mt-0.5">✅</span>
-                      <span>Entry-level (no experience required)</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-emerald-400 mt-0.5">✅</span>
-                      <span>Visa sponsorship available</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-emerald-400 mt-0.5">✅</span>
-                      <span>Strategy role (your career path)</span>
+                {/* Why you should apply section - Simplified */}
+                <div className="mb-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3">
+                  <div className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5 flex-shrink-0">✓</span>
+                    <div className="flex-1">
+                      <div className="text-[13px] font-semibold text-emerald-400 mb-0.5">
+                        Matches all your filters
+                      </div>
+                      <div className="text-[12px] text-zinc-300 leading-relaxed">
+                        Location, visa status, experience level, and career path align perfectly.
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import FAQ from "./FAQ";
 
 export default function Footer() {
   const links = [
@@ -15,7 +14,6 @@ export default function Footer() {
 
   return (
     <>
-      <FAQ />
       <footer className="section-padding border-t border-white/10 bg-black/40">
         <div className="container-page">
           <motion.div
@@ -50,6 +48,9 @@ export default function Footer() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mt-8 pt-8 border-t border-white/5 text-center"
           >
+            <p className="text-sm text-zinc-400 mb-3">
+              Built by an early-career job seeker, for early-career job seekers. Let's beat this Job Market together.
+            </p>
             <p className="text-xs text-zinc-500">
               © {new Date().getFullYear()} JobPing. All rights reserved.
             </p>

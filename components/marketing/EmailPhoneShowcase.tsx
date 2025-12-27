@@ -63,7 +63,7 @@ export default function EmailPhoneShowcase({ day = 'monday' }: EmailPhoneShowcas
             <div className="absolute inset-0 -z-10 translate-y-8">
               <div className="h-full w-full scale-110 rounded-full bg-black/40 blur-lg-hero" />
             </div>
-            <DeviceFrame>
+            <DeviceFrame hideOnMobile={true}>
               <SampleInterviewEmail day={day} />
             </DeviceFrame>
           </motion.div>
