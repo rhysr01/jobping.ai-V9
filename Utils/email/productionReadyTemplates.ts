@@ -470,7 +470,6 @@ export function createJobMatchesEmail(
         <div class="job">${c.job.title || 'Job Title'}</div>
         <div class="company">${c.job.company || 'Company'}</div>
         <div class="loc">📍 ${c.job.location || 'Location'}</div>
-        ${matchReasonMarkup}
         ${desc ? '<div class="desc">' + desc + '</div>' : ''}
         ${tagsMarkup}
         ${feedbackButtons}
