@@ -13,8 +13,8 @@ import {
 
 export default function SocialProofRow() {
   const { stats, isLoading } = useStats();
-  const [weeklyNewJobs, setWeeklyNewJobs] = useState('287');
-  const [totalUsers, setTotalUsers] = useState('3,400');
+  const [weeklyNewJobs, setWeeklyNewJobs] = useState('');
+  const [totalUsers, setTotalUsers] = useState('');
   const [statsStale, setStatsStale] = useState(true);
 
   useEffect(() => {
@@ -28,22 +28,22 @@ export default function SocialProofRow() {
 
   const items = [
     {
-      icon: <BrandIcons.Users className="h-5 w-5" />,
-      eyebrow: 'Students across Europe',
-      title: statsStale ? 'Thousands of students rely on JobPing' : `Join ${totalUsers}+ students`,
-      description: 'Early-career candidates rely on JobPing each week.',
+      icon: <BrandIcons.Mail className="h-5 w-5" />,
+      eyebrow: '',
+      title: `5 roles you actually qualify for (filtered by visa, location, experience)`,
+      description: '',
     },
     {
-      icon: <BrandIcons.Mail className="h-5 w-5" />,
-      eyebrow: 'Every email',
-      title: `Your ${FREE_ROLES_PER_SEND} best-fit roles (no time-wasters)`,
-      description: 'Filtered by city, visa status, and experience to fit real applicants.',
+      icon: <BrandIcons.CheckCircle className="h-5 w-5" />,
+      eyebrow: '',
+      title: `Salary range and visa status upfront—no surprises`,
+      description: '',
     },
     {
       icon: <BrandIcons.Target className="h-5 w-5" />,
-      eyebrow: 'New roles this week',
-      title: isLoading ? '...' : `${weeklyNewJobs} new early-career roles added this week`,
-      description: 'Fresh opportunities added daily. Premium: 15 matches per week via email (3x per week: Mon/Wed/Fri).',
+      eyebrow: '',
+      title: `One-click feedback to improve future matches`,
+      description: '',
     },
   ];
 
@@ -54,6 +54,15 @@ export default function SocialProofRow() {
       {/* Soft section band */}
       <div className="pointer-events-none absolute inset-x-0 -top-10 h-40 bg-gradient-to-b from-zinc-900/40 to-transparent" />
       <div className="container-page relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mx-auto max-w-3xl text-center mb-8"
+        >
+          <h3 className="text-2xl font-semibold text-white mb-6">What's In Every Email</h3>
+        </motion.div>
         <div className="mt-8 md:mt-10">
             <div className="mx-auto max-w-6xl rounded-2xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl relative shadow-feature">
               <motion.div
@@ -87,21 +96,16 @@ export default function SocialProofRow() {
                 {item.icon}
               </motion.span>
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.16em] text-zinc-300 mb-2">
-                  {isLoading && (index === 0 || index === 2) ? 'Loading…' : item.eyebrow}
-                </p>
-                {isLoading && (index === 0 || index === 2) ? (
-                  <div className="space-y-2 mb-2">
-                    <div className="h-6 w-32 bg-white/10 rounded animate-pulse" />
-                    <div className="h-4 w-24 bg-white/5 rounded animate-pulse" />
-                  </div>
-                ) : (
-                  <>
-                    <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
-                    <p className="text-sm text-zinc-300 transition-colors duration-300 group-hover:text-zinc-200">
-                      {typeof item.description === 'string' ? item.description : item.description}
-                    </p>
-                  </>
+                {item.eyebrow && (
+                  <p className="text-xs uppercase tracking-[0.16em] text-zinc-300 mb-2">
+                    {item.eyebrow}
+                  </p>
+                )}
+                <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
+                {item.description && (
+                  <p className="text-sm text-zinc-300 transition-colors duration-300 group-hover:text-zinc-200">
+                    {item.description}
+                  </p>
                 )}
               </div>
             </motion.div>

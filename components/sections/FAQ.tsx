@@ -11,11 +11,11 @@ const faqs = [
   },
   {
     question: "What makes JobPing different from other services?",
-    answer: "We match roles to your visa status, preferred cities, and experience level. We specialize in early-career roles—internships, graduate programs, and entry-level positions. Premium users get 15 matches per week via email (Mon/Wed/Fri)."
+    answer: "We match roles to your visa status, preferred cities, and experience level. We specialize in early-career roles—internships, graduate programs, and entry-level positions."
   },
   {
     question: "Do you apply for me?",
-    answer: "No. We send you pre-matched roles with direct apply links. You review and apply when it's a perfect fit. Quality over quantity."
+    answer: "No. We send you pre-matched roles with direct apply links. You review and apply when it's a perfect fit."
   },
   {
     question: "What countries and cities do you cover?",
@@ -23,15 +23,15 @@ const faqs = [
   },
   {
     question: "How often will you email me?",
-    answer: `Free users get 5 matches (one-time, no emails). Premium users get 15 matches per week across 3 drops (Monday, Wednesday, Friday). You can pause or adjust frequency anytime.`
+    answer: `Free users get 5 matches (one-time, no emails). Premium users get 15 matches per week across 3 drops (Monday, Wednesday, Friday).`
   },
   {
     question: "Can I cancel immediately?",
-    answer: "Yes. Cancel anytime, instantly. Click the unsubscribe link in any email or reply 'STOP'. No questions asked, no hidden fees."
+    answer: "Yes. Cancel anytime, instantly. Click the unsubscribe link in any email or reply 'STOP'. No questions asked."
   },
   {
     question: "What types of jobs will I receive?",
-    answer: "Early-career opportunities only: internships, graduate schemes, and entry-level roles (0-2 years experience). Every match is tailored to your career path and experience level."
+    answer: "Early-career opportunities only: internships, graduate schemes, and entry-level roles (0-2 years experience). Every match is tailored to your career path."
   }
 ];
 

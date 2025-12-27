@@ -92,7 +92,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.45 }}
-              className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-gradient-to-r from-brand-500/10 to-brand-600/8 px-4 py-1.5 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200 shadow-[0_0_20px_rgba(107,90,133,0.15)] mb-2"
+              className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-gradient-to-r from-brand-500/10 to-brand-600/8 px-4 py-1.5 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200 shadow-[0_0_20px_rgba(109,40,217,0.15)] mb-2"
             >
               <BrandIcons.Mail className="h-3.5 w-3.5 text-brand-300" />
               {Copy.HERO_PILL}
@@ -132,7 +132,7 @@ export default function Hero() {
                 }}
                 variant="gradient"
                 size="lg"
-                className="w-full sm:w-auto sm:min-w-[240px] px-8 py-4 md:py-5 text-base md:text-lg shadow-[0_4px_20px_rgba(107,90,133,0.3)] hover:shadow-[0_6px_30px_rgba(107,90,133,0.4)] transition-shadow"
+                className="w-full sm:w-auto sm:min-w-[240px] px-8 py-4 md:py-5 text-base md:text-lg shadow-[0_4px_20px_rgba(109,40,217,0.3)] hover:shadow-[0_6px_30px_rgba(109,40,217,0.4)] transition-shadow"
                 aria-label="Show Me My Matches"
               >
                 <span className="flex items-center justify-center gap-2">
@@ -144,7 +144,7 @@ export default function Hero() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.35, duration: 0.6 }}
-                className="text-sm text-zinc-400 mt-2"
+                className="text-sm text-gray-600 mt-3"
               >
                 Free • No credit card • 2-minute setup
               </motion.p>
@@ -183,22 +183,6 @@ export default function Hero() {
           </motion.div>
         </div>
 
-        {/* Scroll Indicator - Desktop Only */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1, duration: 0.6 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:block"
-        >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="flex flex-col items-center gap-2 text-zinc-300"
-          >
-            <span className="text-xs uppercase tracking-wider">Scroll</span>
-            <BrandIcons.ChevronDown className="h-5 w-5" />
-          </motion.div>
-        </motion.div>
       </div>
 
     </section>

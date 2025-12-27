@@ -314,22 +314,37 @@ function detectVisaRequirements(description) {
   return null;
 }
 
-// Extract salary range
+// Extract salary range - ENHANCED with more patterns
 function extractSalaryRange(description) {
   if (!description) return null;
   
-  // Match various salary formats
+  // Match various salary formats - expanded patterns
   const patterns = [
-    /(?:€|EUR|euro)\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i,
-    /(?:£|GBP|pound)\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i,
-    /(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*(?:€|EUR|£|GBP)/i,
-    /salary[:\s]+(?:€|£|EUR|GBP)?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i
+    // Range formats: €30k-€50k, £30,000-£50,000
+    /(?:€|EUR|euro)\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(?:€|EUR|euro)?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i,
+    /(?:£|GBP|pound)\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(?:£|GBP|pound)?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i,
+    // Number first: 30k-50k €, 30,000-50,000 GBP
+    /(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*(?:€|EUR|£|GBP|euro|pound)/i,
+    // Single salary: €50k, £45,000
+    /(?:€|EUR|euro)\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*(?:per\s*(?:year|annum|annually))?/i,
+    /(?:£|GBP|pound)\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*(?:per\s*(?:year|annum|annually))?/i,
+    // Salary: prefix
+    /salary[:\s]+(?:€|£|EUR|GBP|euro|pound)?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i,
+    /salary[:\s]+(?:€|£|EUR|GBP|euro|pound)?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i,
+    // Compensation, remuneration
+    /(?:compensation|remuneration|package)[:\s]+(?:€|£|EUR|GBP)?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)\s*-?\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i,
+    // Up to format: up to €50k
+    /up\s+to\s+(?:€|£|EUR|GBP)\s*(\d{1,3}(?:[.,]\d{3})*(?:k|K)?)/i
   ];
   
   for (const pattern of patterns) {
     const match = description.match(pattern);
     if (match) {
-      return match[0].trim();
+      // Clean up the match
+      let salary = match[0].trim();
+      // Normalize spacing
+      salary = salary.replace(/\s+/g, ' ');
+      return salary;
     }
   }
   
@@ -369,12 +384,30 @@ async function saveJobs(jobs, source) {
   const rows = nonRemote.map(j => {
     const { city, country } = parseLocation(j.location || '');
     const { isInternship, isGraduate } = classifyJobType(j);
-    // Prioritize description field, fallback to company_description + skills
-    const description = (
+    // ENHANCED: Prioritize description field, enrich with company_description + skills if needed
+    let description = (
       (j.description && j.description.trim().length > 50 ? j.description : '') ||
       (j.company_description || '') ||
       (j.skills || '')
     ).trim();
+    
+    // If description is too short, try to enrich it
+    if (description.length < 100 && (j.company_description || j.skills)) {
+      const parts = [];
+      if (description) parts.push(description);
+      if (j.company_description && !description.includes(j.company_description)) {
+        parts.push(j.company_description);
+      }
+      if (j.skills && !description.includes(j.skills)) {
+        parts.push(j.skills);
+      }
+      description = parts.join(' ').trim();
+    }
+    
+    // Ensure minimum description length for quality
+    if (description.length < 20) {
+      description = `${j.title || ''} at ${j.company || ''}. ${description}`.trim();
+    }
     
     // Build categories array
     const categories = ['early-career'];
@@ -528,18 +561,33 @@ async function main() {
   // EXPANDED: Covers all role types - coordinator, assistant, representative, engineer, specialist, manager, designer, HR, legal, sustainability
   // Rotates 3 sets to maximize diversity over time
   // NOW INCLUDES EXACT ROLE NAMES FROM SIGNUP FORM (CLEANED) + expanded role types
+  // SIGNIFICANTLY EXPANDED with more specific role variations
   const QUERY_SETS = {
     SET_A: [
       // Focus: Internships, graduate programs, and coordinator roles
       'graduate programme', 'graduate scheme', 'internship', 'intern',
+      'graduate trainee', 'management trainee', 'trainee program',
+      'campus hire', 'new grad', 'recent graduate', 'entry level program',
       cleanRole('Marketing Coordinator'),         // ✅ Coordinator role
       cleanRole('Operations Coordinator'),       // ✅ Coordinator role
       cleanRole('Product Coordinator'),          // ✅ Coordinator role
       cleanRole('HR Coordinator'),               // ✅ Coordinator role
       cleanRole('Project Coordinator'),          // ✅ Coordinator role
       cleanRole('Sales Coordinator'),            // ✅ Coordinator role
+      cleanRole('Finance Coordinator'),          // ✅ NEW: Finance coordinator
+      cleanRole('Business Coordinator'),         // ✅ NEW: Business coordinator
       cleanRole('Finance Intern'),               // ✅ Exact role from form (cleaned)
-      cleanRole('Consulting Intern')             // ✅ Exact role from form (cleaned)
+      cleanRole('Consulting Intern'),            // ✅ Exact role from form (cleaned)
+      cleanRole('Marketing Intern'),             // ✅ NEW: Marketing intern
+      cleanRole('Data Intern'),                  // ✅ NEW: Data intern
+      cleanRole('Investment Banking Intern'),    // ✅ NEW: Investment banking intern
+      'entry level software engineer',           // ✅ NEW: Entry level engineer
+      'junior data scientist',                  // ✅ NEW: Junior data scientist
+      'graduate consultant',                    // ✅ NEW: Graduate consultant
+      'associate investment banker',            // ✅ NEW: Associate banker
+      'recent graduate finance',                // ✅ NEW: Recent grad finance
+      'campus recruiter',                       // ✅ NEW: Campus recruiter
+      'new grad program'                        // ✅ NEW: New grad program
     ],
     SET_B: [
       // Focus: Analyst, associate, assistant, and representative roles
@@ -547,26 +595,70 @@ async function main() {
       cleanRole('Business Analyst'),             // ✅ Exact role from form (cleaned)
       cleanRole('Data Analyst'),                  // ✅ Exact role from form (cleaned)
       cleanRole('Operations Analyst'),           // ✅ Exact role from form (cleaned)
+      cleanRole('Strategy Analyst'),             // ✅ NEW: Strategy analyst
+      cleanRole('Risk Analyst'),                 // ✅ NEW: Risk analyst
+      cleanRole('Investment Analyst'),           // ✅ NEW: Investment analyst
       cleanRole('Marketing Assistant'),           // ✅ Assistant role
       cleanRole('Brand Assistant'),              // ✅ Assistant role
       cleanRole('Product Assistant'),             // ✅ Assistant role
+      cleanRole('Finance Assistant'),            // ✅ NEW: Finance assistant
+      cleanRole('Operations Assistant'),         // ✅ NEW: Operations assistant
       cleanRole('Sales Development Representative (SDR)'), // ✅ Representative role
-      cleanRole('HR Assistant')                 // ✅ Assistant role
+      cleanRole('HR Assistant'),                 // ✅ Assistant role
+      'associate consultant',                    // ✅ NEW: Associate consultant
+      'graduate analyst',                        // ✅ NEW: Graduate analyst
+      'junior analyst',                          // ✅ NEW: Junior analyst
+      'entry level analyst',                     // ✅ NEW: Entry level analyst
+      'associate finance',                       // ✅ NEW: Associate finance
+      'graduate associate',                      // ✅ NEW: Graduate associate
+      'junior consultant',                       // ✅ NEW: Junior consultant
+      'associate product manager',               // ✅ NEW: Associate PM
+      'apm',                                     // ✅ NEW: APM abbreviation
+      'product analyst',                         // ✅ NEW: Product analyst
+      'customer success associate',              // ✅ NEW: Customer success
+      'account executive',                       // ✅ NEW: Account executive
+      'bdr',                                     // ✅ NEW: BDR abbreviation
+      'sdr'                                      // ✅ NEW: SDR abbreviation
     ],
     SET_C: [
       // Focus: Entry-level, junior, engineer, specialist, manager, designer, and program roles
       'entry level', 'junior', 'graduate', 'recent graduate',
       'early careers program', 'rotational graduate program',
+      'entry level software engineer',           // ✅ NEW: Entry level SWE
+      'junior software engineer',                // ✅ NEW: Junior SWE
+      'graduate software engineer',              // ✅ NEW: Graduate SWE
       cleanRole('Software Engineer Intern'),      // ✅ Engineer role
       cleanRole('Data Engineer Intern'),         // ✅ Engineer role
+      cleanRole('Cloud Engineer Intern'),        // ✅ NEW: Cloud engineer intern
+      cleanRole('Frontend Engineer Intern'),     // ✅ NEW: Frontend intern
+      cleanRole('Backend Engineer Intern'),      // ✅ NEW: Backend intern
       cleanRole('Associate Product Manager (APM)'), // ✅ Manager role
       cleanRole('Product Analyst'),               // ✅ Exact role from form (cleaned)
       cleanRole('Fulfilment Specialist'),         // ✅ Specialist role
       cleanRole('Technical Specialist'),         // ✅ Specialist role
+      cleanRole('HR Specialist'),                // ✅ NEW: HR specialist
+      cleanRole('Marketing Specialist'),         // ✅ NEW: Marketing specialist
       cleanRole('Product Designer'),              // ✅ Designer role
       cleanRole('UX Intern'),                    // ✅ Designer role
+      cleanRole('UX Designer'),                  // ✅ NEW: UX designer
+      cleanRole('Design Intern'),                // ✅ NEW: Design intern
       cleanRole('ESG Intern'),                   // ✅ Sustainability role
-      cleanRole('Sustainability Analyst')        // ✅ Sustainability role
+      cleanRole('Sustainability Analyst'),        // ✅ Sustainability role
+      cleanRole('Climate Analyst'),              // ✅ NEW: Climate analyst
+      'associate product manager',                // ✅ NEW: Associate PM
+      'apm',                                     // ✅ NEW: APM
+      'product analyst',                         // ✅ NEW: Product analyst
+      'junior product manager',                  // ✅ NEW: Junior PM
+      'entry level product',                     // ✅ NEW: Entry level product
+      'junior designer',                         // ✅ NEW: Junior designer
+      'graduate designer',                       // ✅ NEW: Graduate designer
+      'entry level designer',                    // ✅ NEW: Entry level designer
+      'junior engineer',                         // ✅ NEW: Junior engineer
+      'graduate engineer',                       // ✅ NEW: Graduate engineer
+      'entry level engineer',                    // ✅ NEW: Entry level engineer
+      'junior specialist',                       // ✅ NEW: Junior specialist
+      'graduate specialist',                     // ✅ NEW: Graduate specialist
+      'entry level specialist'                   // ✅ NEW: Entry level specialist
     ]
   };
 
@@ -679,8 +771,8 @@ async function main() {
   const MAX_Q_PER_CITY = parseInt(process.env.JOBSPY_MAX_Q_PER_CITY || '6', 10);
   // Priority cities get more queries and results
   const PRIORITY_MAX_Q = parseInt(process.env.JOBSPY_PRIORITY_MAX_Q || '10', 10); // More queries for priority cities
-  const RESULTS_WANTED = parseInt(process.env.JOBSPY_RESULTS_WANTED || '50', 10); // EXPANDED: Increased from 15 to 50
-  const PRIORITY_RESULTS_WANTED = parseInt(process.env.JOBSPY_PRIORITY_RESULTS || '75', 10); // More results for priority cities
+  const RESULTS_WANTED = parseInt(process.env.JOBSPY_RESULTS_WANTED || '75', 10); // EXPANDED: Increased from 50 to 75
+  const PRIORITY_RESULTS_WANTED = parseInt(process.env.JOBSPY_PRIORITY_RESULTS || '100', 10); // More results for priority cities (increased from 75 to 100)
   const JOBSPY_TIMEOUT_MS = parseInt(process.env.JOBSPY_TIMEOUT_MS || '20000', 10);
 
   const collected = [];
@@ -727,6 +819,13 @@ async function main() {
       const maxTries = 3;
       while (tries < maxTries) {
         tries++;
+        // Exponential backoff: wait longer between retries
+        if (tries > 1) {
+          const backoffDelay = Math.pow(2, tries - 2) * 1000; // 1s, 2s, 4s...
+          console.log(`↻ Retrying (${tries}/${maxTries}) after ${backoffDelay}ms backoff...`);
+          await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        }
+        
         py = spawnSync(pythonCmd, ['-c', `
 from jobspy import scrape_jobs
 import pandas as pd
@@ -771,10 +870,29 @@ print(df[cols].to_csv(index=False))
   env: { ...process.env, PATH: process.env.PATH }
 });
         if (py.status === 0) break;
-        console.error('Python error:', (py.stderr && py.stderr.trim()) || (py.stdout && py.stdout.trim()) || `status ${py.status}`);
-        if (tries < maxTries) {
-          console.log(`↻ Retrying (${tries}/${maxTries}) after backoff...`);
-          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
+        
+        // Filter out expected errors (GDPR blocking, geo restrictions)
+        const stderrText = (py.stderr || '').toLowerCase();
+        const stdoutText = (py.stdout || '').toLowerCase();
+        const errorText = stderrText + stdoutText;
+        
+        const expectedErrors = [
+          'ziprecruiter response status code 403',
+          'geoblocked-gdpr',
+          'glassdoor is not available for',
+          'not available in the european union',
+          'gdpr'
+        ];
+        
+        const isExpectedError = expectedErrors.some(err => errorText.includes(err));
+        
+        if (isExpectedError) {
+          // Suppress expected errors - these are normal for EU scraping
+          console.log(`ℹ️  Expected error (GDPR/Geo restriction) - continuing...`);
+          break; // Don't retry expected errors
+        } else {
+          // Log unexpected errors
+          console.error('Python error:', (py.stderr && py.stderr.trim()) || (py.stdout && py.stdout.trim()) || `status ${py.status}`);
         }
       }
       if (!py || py.status !== 0) continue;

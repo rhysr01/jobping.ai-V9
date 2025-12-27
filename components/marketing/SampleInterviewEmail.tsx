@@ -128,7 +128,11 @@ async function submitFeedback(jobHash: string, feedbackType: 'thumbs_up' | 'thum
   }
 }
 
-export default function SampleInterviewEmail() {
+interface SampleInterviewEmailProps {
+  day?: 'monday' | 'wednesday';
+}
+
+export default function SampleInterviewEmail({ day = 'monday' }: SampleInterviewEmailProps) {
   const [jobs, setJobs] = useState<Job[]>(FALLBACK_JOBS); // Start with fallback - no loading state
   const [feedbackSubmitted, setFeedbackSubmitted] = useState<Set<string>>(new Set());
 
@@ -136,7 +140,7 @@ export default function SampleInterviewEmail() {
     // Silently fetch real jobs in background, but show fallback immediately
     async function fetchJobs() {
       try {
-        const response = await fetch('/api/sample-jobs');
+        const response = await fetch(`/api/sample-jobs?day=${day}`);
         const data = await response.json();
         
         if (data.jobs && data.jobs.length > 0) {
@@ -150,7 +154,7 @@ export default function SampleInterviewEmail() {
     }
 
     fetchJobs();
-  }, []);
+  }, [day]);
 
   // Always show jobs (no loading state in preview)
   const displayJobs = jobs;
@@ -174,10 +178,10 @@ export default function SampleInterviewEmail() {
       <div className="rounded-lg border border-zinc-800/50 bg-white/[0.03] p-5 shadow-[0_4px_6px_rgba(0,0,0,0.1)] backdrop-blur-sm">
         {/* Title and intro - matches production exactly */}
         <h1 className="text-[22px] font-bold text-white mb-4 leading-tight">
-          Your 5 new matches are ready ✨
+          Your 5 new matches are ready
         </h1>
         <p className="text-[15px] text-zinc-300 leading-relaxed mb-4">
-          Alex, here are your 5 new matches. All roles below match your filters: London, visa sponsorship, entry-level Strategy roles.
+          Alex, here are your 5 new matches for {day === 'wednesday' ? 'Wednesday' : 'Monday'}. All roles below match your filters: London, visa sponsorship, entry-level Strategy roles.
         </p>
         <p className="text-[15px] text-zinc-400 leading-relaxed mb-6">
           See one you like? Apply now. Not a fit? Let us know and we'll adjust.

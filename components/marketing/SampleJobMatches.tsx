@@ -47,7 +47,6 @@ export default function SampleJobMatches() {
 
       {/* Email Content */}
       <div className="px-6 py-6 space-y-4">
-        {/* Greeting - Free Tier */}
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-white mb-2">Here's what you'll see in 2 minutes</h2>
         </div>
