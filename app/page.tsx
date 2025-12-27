@@ -53,7 +53,7 @@ export default function Page() {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="text-center mt-6 text-zinc-400"
             >
-              You'll get emails like this every Monday, Wednesday, and Friday - each with 5 fresh roles that match your profile.
+              Free users: See 5 matches instantly (one-time). Premium: Get emails like this every Monday, Wednesday, and Friday (15 matches/week) for €5/month.
             </motion.p>
           </div>
         </section>
