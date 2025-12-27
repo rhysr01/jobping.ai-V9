@@ -184,7 +184,6 @@ class RealJobRunner {
       'jobspy-career-roles': parseInt(process.env.JOBSPY_CAREER_TARGET || '3000', 10),    // Increased from 50
       'adzuna': parseInt(process.env.ADZUNA_TARGET || '500', 10),                 // Increased from 150
       'reed': parseInt(process.env.REED_TARGET || '200', 10),                      // Increased from 50
-      'greenhouse': parseInt(process.env.GREENHOUSE_TARGET || '100', 10),           // Increased from 20
       'careerjet': parseInt(process.env.CAREERJET_TARGET || '450', 10),            // New EU scraper
       'arbeitnow': parseInt(process.env.ARBEITNOW_TARGET || '80', 10)              // New DACH scraper
     };
@@ -337,16 +336,34 @@ class RealJobRunner {
   async runJobSpyScraper() {
     try {
       console.log('🔄 Running JobSpy scraper...');
+      
+      // Pre-flight check: Verify Python and JobSpy
+      try {
+        const pythonCheck = await execAsync('python3 --version', { timeout: 5000 });
+        console.log(`✅ Python check: ${pythonCheck.stdout.trim()}`);
+      } catch (e) {
+        console.error('❌ Python not found - JobSpy requires Python 3.11');
+        return 0;
+      }
+      
+      try {
+        await execAsync('python3 -c "import jobspy"', { timeout: 5000, stdio: 'ignore' });
+        console.log('✅ JobSpy Python package available');
+      } catch (e) {
+        console.error('❌ JobSpy Python package not installed - run: pip install python-jobspy');
+        return 0;
+      }
+      
       // Call standardized wrapper
       const { stdout, stderr } = await execAsync('NODE_ENV=production node scrapers/wrappers/jobspy-wrapper.cjs', {
         cwd: process.cwd(),
-        timeout: 600000, // 10 minutes timeout
+        timeout: 1200000, // 20 minutes timeout (increased from 10)
         env: { ...process.env }
       });
       
       // Log stderr if present (might contain important info)
       if (stderr && stderr.trim()) {
-        console.warn('⚠️  JobSpy stderr:', stderr.substring(0, 500));
+        console.warn('⚠️  JobSpy stderr:', stderr.substring(0, 1000));
       }
       
       // Parse job count from the result - try multiple patterns
@@ -371,10 +388,16 @@ class RealJobRunner {
             console.log(`ℹ️  JobSpy: DB fallback count: ${jobsSaved} jobs`);
           } else {
             console.warn('⚠️  JobSpy: No jobs found in DB - scraper may have filtered all jobs or found none');
-            // Show last 20 lines of output for debugging
+            // Show last 30 lines of output for debugging
             const lines = stdout.split('\n').filter(l => l.trim());
             if (lines.length > 0) {
-              console.log('📋 Last output lines:', lines.slice(-20).join('\n'));
+              console.log('📋 Last output lines:', lines.slice(-30).join('\n'));
+            }
+            // Also check if script completed
+            if (stdout.includes('Done') || stdout.includes('Complete')) {
+              console.log('ℹ️  Script completed but no jobs saved - likely filtering issue');
+            } else {
+              console.log('⚠️  Script may not have completed successfully');
             }
           }
         }
@@ -384,7 +407,16 @@ class RealJobRunner {
       return jobsSaved;
     } catch (error) {
       console.error('❌ JobSpy scraper failed:', error.message);
-      console.error('❌ Stack:', error.stack);
+      if (error.code === 'ETIMEDOUT') {
+        console.error('❌ JobSpy scraper timed out after 20 minutes');
+      }
+      console.error('❌ Error code:', error.code);
+      if (error.stdout) {
+        console.error('❌ stdout:', error.stdout.substring(0, 500));
+      }
+      if (error.stderr) {
+        console.error('❌ stderr:', error.stderr.substring(0, 500));
+      }
       return 0;
     }
   }
@@ -393,11 +425,16 @@ class RealJobRunner {
   async runJobSpyInternshipsScraper() {
     try {
       console.log('🎓 Running JobSpy Internships-Only scraper...');
-      const { stdout } = await execAsync('NODE_ENV=production node scripts/jobspy-internships-only.cjs', {
+      const { stdout, stderr } = await execAsync('NODE_ENV=production node scripts/jobspy-internships-only.cjs', {
         cwd: process.cwd(),
-        timeout: 600000, // 10 minutes timeout
+        timeout: 1200000, // 20 minutes timeout (increased from 10)
         env: { ...process.env }
       });
+      
+      // Log stderr if present
+      if (stderr && stderr.trim()) {
+        console.warn('⚠️  JobSpy Internships stderr:', stderr.substring(0, 1000));
+      }
       
       // Parse job count from the result
       let jobsSaved = 0;
@@ -414,6 +451,12 @@ class RealJobRunner {
         jobsSaved = error ? 0 : (count || 0);
         if (jobsSaved) {
           console.log(`ℹ️  JobSpy Internships: DB fallback count: ${jobsSaved} jobs`);
+        } else {
+          console.warn('⚠️  JobSpy Internships: No jobs found - showing last output');
+          const lines = stdout.split('\n').filter(l => l.trim());
+          if (lines.length > 0) {
+            console.log('📋 Last output:', lines.slice(-20).join('\n'));
+          }
         }
       }
       
@@ -421,6 +464,11 @@ class RealJobRunner {
       return jobsSaved;
     } catch (error) {
       console.error('❌ JobSpy Internships scraper failed:', error.message);
+      if (error.code === 'ETIMEDOUT') {
+        console.error('❌ JobSpy Internships scraper timed out after 20 minutes');
+      }
+      if (error.stdout) console.error('❌ stdout:', error.stdout.substring(0, 500));
+      if (error.stderr) console.error('❌ stderr:', error.stderr.substring(0, 500));
       return 0;
     }
   }
@@ -437,11 +485,16 @@ class RealJobRunner {
         env.TARGET_CITIES = JSON.stringify(targets.cities);
       }
       
-      const { stdout } = await execAsync('NODE_ENV=production node scripts/jobspy-career-path-roles.cjs', {
+      const { stdout, stderr } = await execAsync('NODE_ENV=production node scripts/jobspy-career-path-roles.cjs', {
         cwd: process.cwd(),
-        timeout: 600000, // 10 minutes timeout
+        timeout: 1200000, // 20 minutes timeout (increased from 10)
         env,
       });
+      
+      // Log stderr if present
+      if (stderr && stderr.trim()) {
+        console.warn('⚠️  Career Path Roles stderr:', stderr.substring(0, 1000));
+      }
       
       // Parse job count from the result
       let jobsSaved = 0;
@@ -458,6 +511,12 @@ class RealJobRunner {
         jobsSaved = error ? 0 : (count || 0);
         if (jobsSaved) {
           console.log(`ℹ️  Career Path Roles: DB fallback count: ${jobsSaved} jobs`);
+        } else {
+          console.warn('⚠️  Career Path Roles: No jobs found - showing last output');
+          const lines = stdout.split('\n').filter(l => l.trim());
+          if (lines.length > 0) {
+            console.log('📋 Last output:', lines.slice(-20).join('\n'));
+          }
         }
       }
       
@@ -465,6 +524,11 @@ class RealJobRunner {
       return jobsSaved;
     } catch (error) {
       console.error('❌ Career Path Roles scraper failed:', error.message);
+      if (error.code === 'ETIMEDOUT') {
+        console.error('❌ Career Path Roles scraper timed out after 20 minutes');
+      }
+      if (error.stdout) console.error('❌ stdout:', error.stdout.substring(0, 500));
+      if (error.stderr) console.error('❌ stderr:', error.stderr.substring(0, 500));
       return 0;
     }
   }
@@ -547,6 +611,7 @@ class RealJobRunner {
         console.error('🚨 CRITICAL: CareerJet API key missing! Check CAREERJET_API_KEY in .env.local');
         return 0;
       }
+      console.log('✅ CareerJet API key present');
       
       const { scrapeCareerJet } = require('../scrapers/careerjet.cjs');
       const { stdout, stderr } = await execAsync('node scrapers/careerjet.cjs', {
@@ -557,7 +622,12 @@ class RealJobRunner {
       
       // Log stderr if present
       if (stderr && stderr.trim()) {
-        console.warn('⚠️  CareerJet stderr:', stderr.substring(0, 500));
+        console.warn('⚠️  CareerJet stderr:', stderr.substring(0, 1000));
+      }
+      
+      // Log full output for debugging (first 500 chars)
+      if (stdout) {
+        console.log('📋 CareerJet output preview:', stdout.substring(0, 500));
       }
       
       let jobsSaved = 0;
@@ -565,6 +635,17 @@ class RealJobRunner {
       if (match) {
         jobsSaved = parseInt(match[1]);
       } else {
+        // Check for error messages
+        if (stdout.includes('❌') || stdout.includes('Error') || stdout.includes('error')) {
+          console.warn('⚠️  CareerJet output contains errors - check full logs');
+          const errorLines = stdout.split('\n').filter(l => 
+            l.includes('❌') || l.includes('Error') || l.includes('error') || l.includes('CRITICAL')
+          );
+          if (errorLines.length > 0) {
+            console.warn('⚠️  CareerJet errors:', errorLines.slice(0, 10).join('\n'));
+          }
+        }
+        
         // Fallback to DB count (last 10 minutes)
         const { count, error } = await supabase
           .from('jobs')
@@ -576,6 +657,7 @@ class RealJobRunner {
           console.log(`ℹ️  CareerJet: DB fallback count: ${jobsSaved} jobs`);
         } else {
           console.warn('⚠️  CareerJet: No jobs found in DB - scraper may have failed silently');
+          console.warn('⚠️  Check CareerJet API response and error logs above');
         }
       }
       
@@ -583,6 +665,11 @@ class RealJobRunner {
       return jobsSaved;
     } catch (error) {
       console.error('❌ CareerJet scraper failed:', error.message);
+      if (error.code === 'ETIMEDOUT') {
+        console.error('❌ CareerJet scraper timed out after 10 minutes');
+      }
+      if (error.stdout) console.error('❌ stdout:', error.stdout.substring(0, 500));
+      if (error.stderr) console.error('❌ stderr:', error.stderr.substring(0, 500));
       return 0;
     }
   }
@@ -631,78 +718,6 @@ class RealJobRunner {
     }
   }
 
-  // Run standardized Greenhouse scraper
-  async runGreenhouseScraper() {
-    try {
-      // Greenhouse standardized requires config present; skip if missing
-      if (!fs.existsSync('scrapers/greenhouse-standardized.js') || !fs.existsSync('scrapers/config/greenhouse-companies.js')) {
-        console.log('⚠️ Greenhouse standardized dependencies missing, skipping');
-        return 0;
-      }
-      console.log('🔄 Running enhanced Greenhouse scraper (standardized JS) ...');
-      const cmd = 'node scrapers/greenhouse-standardized.js';
-      const { stdout } = await execAsync(cmd, {
-        cwd: process.cwd(),
-        timeout: 600000,
-        env: { ...process.env }
-      });
-      let jobsSaved = 0;
-      const ghSummary = stdout.match(/\[greenhouse\]\s+source=greenhouse\s+found=(\d+)\s+upserted=(\d+)/);
-      if (ghSummary) {
-        jobsSaved = parseInt(ghSummary[2]);
-      } else {
-        const { count, error } = await supabase
-          .from('jobs')
-          .select('id', { count: 'exact', head: false })
-          .eq('source', 'greenhouse')
-          .gte('created_at', new Date(Date.now() - 60*60*1000).toISOString());
-        jobsSaved = error ? 0 : (count || 0);
-      }
-      
-      console.log(`✅ Greenhouse: ${jobsSaved} jobs processed`);
-      return jobsSaved;
-    } catch (error) {
-      console.error('❌ Greenhouse scraper failed:', error.message);
-      return 0;
-    }
-  }
-
-  // Fallback to standard Greenhouse scraper
-  async runStandardGreenhouseScraper() {
-    try {
-      console.log('🔄 Running standard Greenhouse scraper (TS import)...');
-      
-      // Execute the TS module directly via dynamic import and run persistence entry
-      const cmd = 'node -e "(async()=>{ const mod=await import(\'./scrapers/greenhouse-standardized.ts\'); await mod.runGreenhouseAndSave(); })().catch(e=>{ console.error(e?.message||e); process.exit(1); })"';
-      const { stdout } = await execAsync(cmd, {
-        cwd: process.cwd(),
-        timeout: 600000,
-        env: { ...process.env }
-      });
-      
-      // Prefer parsing standardized summary from the TS scraper
-      let jobsSaved = 0;
-      const ghSummary = stdout.match(/\[greenhouse\]\s+source=greenhouse\s+found=(\d+)\s+upserted=(\d+)/);
-      if (ghSummary) {
-        jobsSaved = parseInt(ghSummary[2]);
-      } else {
-        // Fallback to DB count (last 60 minutes)
-        const { count, error } = await supabase
-          .from('jobs')
-          .select('id', { count: 'exact', head: false })
-          .eq('source', 'greenhouse')
-          .gte('created_at', new Date(Date.now() - 60*60*1000).toISOString());
-        jobsSaved = error ? 0 : (count || 0);
-      }
-      
-      console.log(`✅ Standard Greenhouse: ${jobsSaved} jobs saved to database`);
-      return jobsSaved;
-      
-    } catch (error) {
-      console.error('❌ Standard Greenhouse scraper failed:', error.message);
-      return 0;
-    }
-  }
 
   // Run Indeed scraper
   // Indeed scraper removed - not working properly
@@ -870,7 +885,7 @@ class RealJobRunner {
     try {
       console.log('\n🚀 STARTING AUTOMATED SCRAPING CYCLE');
       console.log('=====================================');
-      console.log('🎯 Running streamlined scrapers: JobSpy, JobSpy Internships, Career Path Roles, Adzuna, Reed, Greenhouse, CareerJet, Arbeitnow');
+      console.log('🎯 Running streamlined scrapers: JobSpy, JobSpy Internships, Career Path Roles, Adzuna, Reed, CareerJet, Arbeitnow');
       
       const cycleStartIso = new Date().toISOString();
       const signupTargets = await this.getSignupTargets();
@@ -949,20 +964,6 @@ class RealJobRunner {
         console.log('⏹️  Skipping Adzuna + Reed scrapers - cycle job target reached.');
       }
 
-      // Run Greenhouse (low volume, high quality)
-      let greenhouseJobs = 0;
-      if (!stopDueToQuota) {
-        try {
-          greenhouseJobs = await this.runGreenhouseScraper();
-          console.log(`✅ Greenhouse completed: ${greenhouseJobs} jobs`);
-        } catch (error) {
-          console.error('❌ Greenhouse scraper failed, continuing with other scrapers:', error.message);
-        }
-        stopDueToQuota = await this.evaluateStopCondition('Greenhouse scraper', cycleStartIso);
-      } else {
-        console.log('⏹️  Skipping Greenhouse scraper - cycle job target reached.');
-      }
-
       // Run CareerJet (EU coverage)
       let careerjetJobs = 0;
       if (!stopDueToQuota) {
@@ -996,7 +997,7 @@ class RealJobRunner {
       }
       
       // Update stats with all scrapers
-      this.totalJobsSaved += (adzunaJobs + jobspyJobs + jobspyInternshipsJobs + careerPathRolesJobs + reedJobs + greenhouseJobs + careerjetJobs + arbeitnowJobs);
+      this.totalJobsSaved += (adzunaJobs + jobspyJobs + jobspyInternshipsJobs + careerPathRolesJobs + reedJobs + careerjetJobs + arbeitnowJobs);
       this.runCount++;
       this.lastRun = new Date();
       
@@ -1010,7 +1011,7 @@ class RealJobRunner {
       console.log('\n✅ SCRAPING CYCLE COMPLETE');
       console.log('============================');
       console.log(`⏱️  Duration: ${duration.toFixed(1)} seconds`);
-      console.log(`📊 Jobs processed this cycle: ${adzunaJobs + jobspyJobs + jobspyInternshipsJobs + careerPathRolesJobs + reedJobs + greenhouseJobs + careerjetJobs + arbeitnowJobs}`);
+      console.log(`📊 Jobs processed this cycle: ${adzunaJobs + jobspyJobs + jobspyInternshipsJobs + careerPathRolesJobs + reedJobs + careerjetJobs + arbeitnowJobs}`);
       console.log(`📈 Total jobs processed: ${this.totalJobsSaved}`);
       console.log(`🔄 Total cycles run: ${this.runCount}`);
       console.log(`📅 Last run: ${this.lastRun.toISOString()}`);
@@ -1022,7 +1023,6 @@ class RealJobRunner {
       console.log(`   - JobSpy (Internships Only): ${jobspyInternshipsJobs} jobs`);
       console.log(`   - Career Path Roles: ${careerPathRolesJobs} jobs`);
       console.log(`   - Reed: ${reedJobs} jobs (increased priority)`);
-      console.log(`   - Greenhouse: ${greenhouseJobs} jobs (expanded)`);
       console.log(`   - Adzuna: ${adzunaJobs} jobs (reduced priority)`);
       console.log(`   - CareerJet: ${careerjetJobs} jobs (EU coverage)`);
       console.log(`   - Arbeitnow: ${arbeitnowJobs} jobs (DACH region)`);
@@ -1088,7 +1088,7 @@ class RealJobRunner {
     console.log('   - Smart stop conditions per scraper');
     console.log('   - Daily health checks');
     console.log('   - Database monitoring');
-      console.log('   - 8 core scrapers: JobSpy, JobSpy Internships, Career Path Roles, Adzuna, Reed, Greenhouse, CareerJet, Arbeitnow');
+      console.log('   - 7 core scrapers: JobSpy, JobSpy Internships, Career Path Roles, Adzuna, Reed, CareerJet, Arbeitnow');
   }
 
   // Get status

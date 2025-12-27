@@ -47,7 +47,7 @@ function PreferencesContent() {
     }
 
     // Verify token and load user data
-    apiCallJson(`/api/preferences?token=${token}&email=${encodeURIComponent(email)}`)
+    apiCallJson<{ success: boolean; user?: any; error?: string }>(`/api/preferences?token=${token}&email=${encodeURIComponent(email)}`)
       .then(data => {
         if (data.success && data.user) {
           setUserData(data.user);

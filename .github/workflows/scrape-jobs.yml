@@ -71,7 +71,6 @@ jobs:
         REED_API_KEY: ${{ secrets.REED_API_KEY }}
         CAREERJET_API_KEY: ${{ secrets.CAREERJET_API_KEY }}
         MUSE_API_KEY: ${{ secrets.MUSE_API_KEY }}
-        GREENHOUSE_API_KEY: ${{ secrets.GREENHOUSE_API_KEY }}
         RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         JOBPING_API_KEY: ${{ secrets.JOBPING_API_KEY }}
         

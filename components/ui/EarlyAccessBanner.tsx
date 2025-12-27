@@ -11,7 +11,7 @@ export function EarlyAccessBanner() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    apiCallJson('/api/stats/signups')
+    apiCallJson<{ success: boolean; data?: { count: number } }>('/api/stats/signups')
       .then(data => {
         if (data.success && typeof data.data?.count === 'number') {
           setSignupCount(data.data.count);
