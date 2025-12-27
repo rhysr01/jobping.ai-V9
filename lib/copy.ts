@@ -20,7 +20,7 @@ export const VP_TAGLINE = "Stop searching. Start applying.\nNo logins. Zero scro
 // Hero section
 export const HERO_TITLE = "JobPing";
 export const HERO_HEADLINE = "Stop Scrolling Job Boards. Get Matched to Roles You Qualify For.";
-export const HERO_SUBLINE = "We scan 1,000+ EU companies daily. You get 5 matches in 2 minutes—filtered by location, visa status, and experience level.";
+export const HERO_SUBLINE = "We scan 1,000+ EU companies daily and send you only roles you're qualified for—filtered by location, visa status, and experience.";
 export const HERO_SUBLINE_MICRO = "No dashboards. No job boards. Just roles you can actually apply for.";
 export const HERO_SUBTITLE = "";
 export const HERO_CTA = "Get my first 5 matches";
@@ -39,7 +39,7 @@ export const HOW_IT_WORKS_STEPS = [
 ];
 
 // Built for students
-export const BUILT_FOR_STUDENTS_TITLE = "Built for early-career job hunters after university,";
+export const BUILT_FOR_STUDENTS_TITLE = "Why Students Choose JobPing";
 export const BUILT_FOR_STUDENTS_SUBTITLE = "We help first-time jobseekers land early-career roles they actually qualify for.";
 export const BUILT_FOR_STUDENTS_KICKER = "For early-career jobseekers";
 export const BUILT_FOR_STUDENTS_FEATURES = [
@@ -77,7 +77,7 @@ export const FREE_PLAN_FEATURES = [
   "No credit card required",
   "Takes under 2 minutes"
 ];
-export const FREE_PLAN_DESCRIPTION = `See 5 matches instantly. No credit card. One-time only—upgrade for weekly emails.`;
+export const FREE_PLAN_DESCRIPTION = `See your first 5 matches on your personalized dashboard. No credit card required.`;
 
 // Premium plan
 // Time-to-apply stats (estimated until real data available)
@@ -91,8 +91,7 @@ export const PREMIUM_PLAN_PRICE_UNIT = "/mo";
 export const PREMIUM_PLAN_ANNUAL = "€20 for 3 months (save €1)";
 export const PREMIUM_PLAN_DESCRIPTION = `Matches delivered to your inbox every Monday, Wednesday, and Friday—so you never miss an opportunity.`;
 export const PREMIUM_PLAN_FEATURES = [
-  `15 hand-picked roles per week (~60/month)`,
-  "Delivered Mon/Wed/Fri to your inbox",
+  `15 curated roles per week (3 emails: Mon / Wed / Fri)`,
   "Priority support",
   "Cancel anytime"
 ];

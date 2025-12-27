@@ -76,25 +76,38 @@ const QUERY_SETS = {
     // Focus: Internships, graduate programs, and coordinator roles
     'internship', 'graduate programme', 'graduate scheme', 'intern',
     'graduate trainee', 'management trainee', 'trainee program',
+    'campus hire', 'new grad', 'recent graduate', 'entry level program',
     'marketing coordinator', 'operations coordinator', 'product coordinator',
-    'hr coordinator', 'project coordinator', 'sales coordinator'
+    'hr coordinator', 'project coordinator', 'sales coordinator',
+    'finance coordinator', 'business coordinator', 'event coordinator',
+    'finance intern', 'consulting intern', 'marketing intern', 'data intern',
+    'investment banking intern', 'entry level software engineer',
+    'junior data scientist', 'graduate consultant', 'associate investment banker',
+    'recent graduate finance', 'campus recruiter', 'new grad program'
   ],
   SET_B: [
     // Focus: Analyst, associate, assistant, and representative roles
     'business analyst', 'financial analyst', 'data analyst', 'operations analyst',
-    'associate consultant', 'graduate analyst', 'junior analyst',
-    'marketing assistant', 'brand assistant', 'product assistant',
-    'sales development representative', 'sdr', 'bdr', 'account executive',
-    'customer success associate', 'hr assistant'
+    'strategy analyst', 'risk analyst', 'investment analyst', 'product analyst',
+    'associate consultant', 'graduate analyst', 'junior analyst', 'entry level analyst',
+    'marketing assistant', 'brand assistant', 'product assistant', 'finance assistant',
+    'operations assistant', 'sales development representative', 'sdr', 'bdr',
+    'account executive', 'customer success associate', 'hr assistant',
+    'associate finance', 'graduate associate', 'junior consultant',
+    'associate product manager', 'apm', 'entry level consultant'
   ],
   SET_C: [
     // Focus: Entry-level, junior, engineer, specialist, manager, designer, and program roles
     'entry level', 'junior', 'graduate', 'recent graduate',
     'early careers program', 'rotational graduate program',
+    'entry level software engineer', 'junior software engineer', 'graduate software engineer',
     'software engineer intern', 'data engineer intern', 'cloud engineer intern',
-    'associate product manager', 'apm', 'product analyst',
-    'fulfilment specialist', 'technical specialist', 'hr specialist',
-    'ux intern', 'product designer', 'design intern',
+    'frontend engineer intern', 'backend engineer intern', 'associate product manager',
+    'apm', 'product analyst', 'junior product manager', 'entry level product',
+    'fulfilment specialist', 'technical specialist', 'hr specialist', 'marketing specialist',
+    'product designer', 'ux intern', 'ux designer', 'design intern', 'junior designer',
+    'graduate designer', 'entry level designer', 'junior engineer', 'graduate engineer',
+    'entry level engineer', 'junior specialist', 'graduate specialist', 'entry level specialist',
     'esg intern', 'sustainability analyst', 'climate analyst'
   ]
 };
@@ -260,26 +273,33 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
     });
 
     const url = `${BASE_URL}?${params.toString()}`;
+    const startTime = Date.now();
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 JobPing/1.0',
         'Accept': 'application/json',
       },
     });
+    const responseTime = Date.now() - startTime;
     
     if (!response.ok) {
+      // Log error but don't fail completely - might be rate limit
+      if (response.status === 429) {
+        console.warn(`[CareerJet] Rate limit hit for ${keyword} in ${city.name} - will slow down`);
+        return { saved: 0, shouldSlowDown: true };
+      }
       console.error(`[CareerJet] API error ${response.status} for ${keyword} in ${city.name}`);
-      return 0;
+      return { saved: 0, shouldSlowDown: false };
     }
 
     const data = await response.json();
     const jobs = data.jobs || [];
     
     if (jobs.length === 0) {
-      return 0;
+      return { saved: 0, shouldSlowDown: false };
     }
 
-    console.log(`[CareerJet] Found ${jobs.length} jobs for "${keyword}" in ${city.name}`);
+    console.log(`[CareerJet] Found ${jobs.length} jobs for "${keyword}" in ${city.name} (${responseTime}ms)`);
     let savedCount = 0;
 
     // Process each job
@@ -363,7 +383,8 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
       }
     }
 
-    return savedCount;
+    // Return both count and whether to slow down (based on response time)
+    return { saved: savedCount, shouldSlowDown: responseTime > 2000 };
   } catch (error) {
     console.error(`[CareerJet] Error scraping ${keyword} in ${city.name}:`, error.message);
     return 0;
@@ -414,16 +435,34 @@ async function scrapeCareerJet() {
       console.log(`[CareerJet] ${city.name}: Using ${cityQueries.length} queries (${localTerms.slice(0, 3).length} local language terms)`);
     }
     
+    // Adaptive rate limiting: start with base delay, adjust based on API response
+    let currentDelay = 800; // Start faster (800ms) - will adapt if needed
+    let consecutiveSlowResponses = 0;
+    
     for (const keyword of cityQueries) {
       try {
-        const saved = await scrapeCareerJetQuery(city, keyword, supabase);
+        const result = await scrapeCareerJetQuery(city, keyword, supabase);
+        const saved = result.saved || 0;
         totalSaved += saved;
         
-        // Rate limiting: 1 second between requests (be nice to free API)
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Adaptive delay: slow down if API is slow or rate limited
+        if (result.shouldSlowDown) {
+          consecutiveSlowResponses++;
+          currentDelay = Math.min(currentDelay * 1.5, 3000); // Max 3 seconds
+          console.log(`[CareerJet] Slowing down to ${currentDelay}ms (slow response detected)`);
+        } else if (consecutiveSlowResponses > 0) {
+          // Gradually speed up if responses are fast again
+          consecutiveSlowResponses = Math.max(0, consecutiveSlowResponses - 1);
+          currentDelay = Math.max(800, currentDelay * 0.9); // Back to base delay
+        }
+        
+        // Rate limiting: adaptive delay between requests
+        await new Promise(resolve => setTimeout(resolve, currentDelay));
       } catch (error) {
         console.error(`[CareerJet] Error with ${keyword} in ${city.name}:`, error.message);
         errors++;
+        // Slow down on errors too
+        currentDelay = Math.min(currentDelay * 1.2, 3000);
       }
     }
   }

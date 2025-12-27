@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import * as Copy from '@/lib/copy';
 import { BrandIcons } from '@/components/ui/BrandIcons';
 import { trackEvent } from '@/lib/analytics';
+import { useStats } from '@/hooks/useStats';
 
 type PlanConfig = {
   id: 'free' | 'premium';
@@ -46,6 +47,8 @@ const plans: PlanConfig[] = [
 ];
 
 export default function Pricing() {
+  const { stats } = useStats();
+  
   return (
     <section id="pricing" data-testid="pricing" className="pt-20 pb-20 md:pt-24 md:pb-24 lg:pt-28 lg:pb-28 relative overflow-hidden bg-[#05010f] scroll-snap-section">
       {/* Scroll momentum fade */}
@@ -88,21 +91,23 @@ export default function Pricing() {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="text-center mt-6 text-zinc-400"
         >
-          💡 Premium gives you 15 roles per week. Free gives you 5 (one-time). More matches = more opportunities.
+          💡 Premium users get 15 roles per week. Free users get 5 (one-time). More matches = more opportunities.
         </motion.p>
 
         {/* Social Proof */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="text-center mt-4"
-        >
-          <p className="text-sm text-zinc-400">
-            Join <span className="font-semibold text-white">3,400+</span> students finding jobs
-          </p>
-        </motion.div>
+        {stats && stats.totalUsers > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="text-center mt-4"
+          >
+            <p className="text-sm text-zinc-400">
+              Join <span className="font-semibold text-white">{stats.totalUsers.toLocaleString('en-US')}+</span> students finding jobs
+            </p>
+          </motion.div>
+        )}
       </div>
     </section>
   );

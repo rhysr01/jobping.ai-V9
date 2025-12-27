@@ -10,12 +10,12 @@ export default {
       // Spacing removed - Tailwind defaults are sufficient
       colors: {
         brand: {
-          100: "#E8E6ED",
-          200: "#CAC4D3",
-          300: "#A59AB3",
-          500: "#6B5A85", // More desaturated, sophisticated matte purple
-          600: "#584A6F",
-          700: "#483D5A",
+          100: "#EDE9FE",
+          200: "#DDD6FE",
+          300: "#C4B5FD",
+          500: "#6D28D9", // Deep rich dark purple
+          600: "#5B21B6",
+          700: "#4C1D95",
         },
         // Semantic color system
         success: {
