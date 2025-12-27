@@ -79,9 +79,7 @@ export default function EmailPhoneShowcase({ day = 'monday', careerPath = 'finan
         transition={{ duration: 0.6, delay: 0.3 }}
         className="text-center mt-4 text-sm text-zinc-400"
       >
-        {day === 'wednesday' 
-          ? '5 new roles matched to your preferences'
-          : '5 new roles matched to your preferences'}
+        Example matches - Free: 5 matches (one-time) • Premium: 15 matches/week
       </motion.p>
     </div>
   );

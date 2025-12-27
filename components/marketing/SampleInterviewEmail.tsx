@@ -409,14 +409,14 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
           Your 5 new matches are ready ✨
         </h1>
         <p className="text-[15px] text-zinc-300 leading-relaxed mb-4">
-          {userProfile?.name || 'Alex'}, here are your 5 new matches for {day === 'wednesday' ? 'Wednesday' : 'Monday'}. All roles below match your filters: {userProfile?.cities?.join(', ') || 'London'}, {userProfile?.careerPath ? `${userProfile.careerPath} roles` : 'entry-level roles'}.
+          Here are 5 example matches for {day === 'wednesday' ? 'Wednesday' : 'Monday'}. All roles below match filters: {userProfile?.cities?.join(', ') || 'London'}, {userProfile?.careerPath ? `${userProfile.careerPath} roles` : 'entry-level roles'}.
         </p>
         <p className="text-[15px] text-zinc-400 leading-relaxed mb-4">
           See one you like? Apply now. Not a fit? Let us know and we'll adjust.
         </p>
         <div className="mb-6 p-3 rounded-lg bg-gradient-to-r from-brand-500/10 to-purple-600/10 border border-brand-500/20">
-          <p className="text-[13px] text-brand-300 font-semibold mb-1">💎 Premium Preview</p>
-          <p className="text-[12px] text-zinc-400 leading-relaxed">This is what Premium members get: 5 fresh jobs delivered Mon/Wed/Fri (15 per week). Upgrade for €5/month to get matches like these.</p>
+          <p className="text-[13px] text-brand-300 font-semibold mb-1">📧 Example Email</p>
+          <p className="text-[12px] text-zinc-400 leading-relaxed">This is what your matches will look like. Free: 5 matches (one-time). Premium: 15 matches/week (Mon/Wed/Fri) for €5/month.</p>
         </div>
 
         {displayJobs.map((job, index) => {

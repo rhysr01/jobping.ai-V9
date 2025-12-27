@@ -35,7 +35,7 @@ export const HOW_IT_WORKS_SUMMARY = "We do the searching. You do the applying.";
 export const HOW_IT_WORKS_STEPS = [
   { title: "1. Tell us your preferences", description: "Choose your cities, career path, and visa status. We'll only show roles you qualify for - no time wasters." },
   { title: "2. We search 1,000+ companies daily", description: "Our AI scans job boards and career pages across Europe - you get the best matches in your inbox." },
-  { title: "3. Get matched roles in your inbox", description: "Every Monday, Wednesday, and Friday, we send you 5 fresh roles that fit your profile." },
+  { title: "3. Get matched roles instantly (Free) or weekly (Premium)", description: "Free: See 5 matches right away (one-time). Premium: Get 5 fresh roles every Monday, Wednesday, and Friday (15 per week)." },
 ];
 
 // What Happens Next section
@@ -43,7 +43,7 @@ export const WHAT_HAPPENS_NEXT_TITLE = "What Happens Next";
 export const WHAT_HAPPENS_NEXT_STEPS = [
   { title: "Tell us your preferences", time: "2 minutes", description: "Choose your cities, career path, and visa status." },
   { title: "We hand-pick jobs for you", time: "Daily", description: "Our AI scans 1,000+ companies and matches roles to your profile." },
-  { title: "You get them in your inbox weekly", time: "Mon/Wed/Fri", description: "5 fresh matches delivered every Monday, Wednesday, and Friday." },
+  { title: "Get matches instantly (Free) or weekly (Premium)", time: "Instant / Mon/Wed/Fri", description: "Free: See 5 matches right away (one-time). Premium: 5 fresh matches every Monday, Wednesday, and Friday (15 per week)." },
 ];
 
 // Built for students
