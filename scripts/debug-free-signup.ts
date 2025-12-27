@@ -138,10 +138,56 @@ async function debug() {
     console.log('   4. OPENAI_API_KEY not set or invalid');
     
     // Check OpenAI key
+    console.log('\n' + '='.repeat(60));
+    console.log('STEP 4: Test OpenAI API Key');
+    console.log('='.repeat(60));
+    
     if (!process.env.OPENAI_API_KEY) {
-      console.log('\n⚠️  OPENAI_API_KEY not set! AI matching will fail.');
+      console.log('❌ OPENAI_API_KEY not set! AI matching will fail.');
     } else {
-      console.log('\n✅ OPENAI_API_KEY is set');
+      const apiKey = process.env.OPENAI_API_KEY;
+      console.log('✅ OPENAI_API_KEY is set');
+      console.log(`   Length: ${apiKey.length} chars`);
+      console.log(`   Starts with: ${apiKey.substring(0, 7)}...`);
+      
+      // Test the API key
+      console.log('\n🔄 Testing OpenAI API call...');
+      try {
+        const OpenAI = require('openai');
+        const openai = new OpenAI({ apiKey: apiKey.trim() });
+        
+        const startTime = Date.now();
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant.' },
+            { role: 'user', content: 'Say "API key is working" if you can read this.' }
+          ],
+          max_tokens: 20,
+        });
+        
+        const responseTime = Date.now() - startTime;
+        const message = response.choices[0]?.message?.content || 'No response';
+        
+        console.log('✅ OpenAI API key is WORKING!');
+        console.log(`   Response time: ${responseTime}ms`);
+        console.log(`   Model: ${response.model}`);
+        console.log(`   Response: ${message}`);
+        console.log(`   Tokens used: ${response.usage?.total_tokens || 'N/A'}`);
+      } catch (error: any) {
+        console.log('❌ OpenAI API test FAILED!');
+        console.log(`   Error: ${error.message || error}`);
+        
+        if (error.status === 401) {
+          console.log('\n💡 This means:');
+          console.log('   - API key is invalid or expired');
+          console.log('   - Check your OpenAI account billing/credits');
+        } else if (error.status === 429) {
+          console.log('\n💡 This means:');
+          console.log('   - Rate limit exceeded');
+          console.log('   - Wait a few minutes and try again');
+        }
+      }
     }
   } else {
     console.log('\n✅ Matches found! Checking job details...\n');
@@ -170,7 +216,7 @@ async function debug() {
   }
   
   console.log('\n' + '='.repeat(60));
-  console.log('STEP 4: Check API endpoint');
+  console.log('STEP 5: Check API endpoint');
   console.log('='.repeat(60));
   
   console.log('Test the matches API:');
