@@ -39,11 +39,13 @@ export default function TrustBadges() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4, delay: index * 0.1 }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-sm hover:bg-white/[0.12] hover:border-white/20 transition-all duration-200 shadow-sm"
+            className="flex items-center gap-3 px-5 py-3 rounded-xl border border-white/20 bg-white/[0.1] backdrop-blur-md hover:bg-white/[0.15] hover:border-white/30 transition-all duration-200 shadow-lg hover:shadow-xl"
           >
-            <Icon className="h-4 w-4 text-brand-300" />
-            <div className="flex flex-col">
-              <span className="text-xs font-semibold text-white leading-tight">{badge.label}</span>
+            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-brand-500/20 flex items-center justify-center border border-brand-500/30">
+              <Icon className="h-4 w-4 text-brand-300" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs font-bold text-white leading-tight">{badge.label}</span>
               <span className="text-[10px] text-zinc-400 leading-tight">{badge.description}</span>
             </div>
           </motion.div>

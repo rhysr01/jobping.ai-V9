@@ -84,7 +84,7 @@ export default function Hero() {
               className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold leading-[1.1] mb-3"
             >
               <span className="text-white">Get hand-picked early-career jobs across Europe</span>{' '}
-              <span className="text-zinc-400">without wasting hours searching</span>
+              <span className="text-zinc-400">— without wasting hours searching</span>
             </motion.h1>
 
             {/* Subheadline */}
