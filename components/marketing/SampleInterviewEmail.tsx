@@ -143,30 +143,48 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
         const response = await fetch(`/api/sample-jobs?day=${day}`);
         const data = await response.json();
         
+        // Always ensure we have exactly 5 jobs
+        let finalJobs: Job[] = [];
+        
         if (data.jobs && data.jobs.length > 0) {
-          // Ensure we always show 5 jobs (use fallback if needed)
           const realJobs = data.jobs.slice(0, 5);
           const needed = 5 - realJobs.length;
           
           if (needed > 0) {
             // Fill with fallback jobs if we don't have enough real ones
             const fallbackToAdd = FALLBACK_JOBS.slice(0, needed);
-            setJobs([...realJobs, ...fallbackToAdd].slice(0, 5));
+            finalJobs = [...realJobs, ...fallbackToAdd].slice(0, 5);
           } else {
-            setJobs(realJobs);
+            finalJobs = realJobs.slice(0, 5);
           }
+        } else {
+          // No real jobs, use all fallback
+          finalJobs = FALLBACK_JOBS.slice(0, 5);
         }
+        
+        // Ensure we always have exactly 5 jobs
+        if (finalJobs.length < 5) {
+          const additionalNeeded = 5 - finalJobs.length;
+          const additionalFallback = FALLBACK_JOBS.filter(
+            fb => !finalJobs.some(j => j.company === fb.company && j.title === fb.title)
+          ).slice(0, additionalNeeded);
+          finalJobs = [...finalJobs, ...additionalFallback].slice(0, 5);
+        }
+        
+        setJobs(finalJobs);
       } catch (error) {
         // Silently fail - fallback jobs already showing
         console.error('Failed to fetch sample jobs:', error);
+        // Ensure fallback jobs are set
+        setJobs(FALLBACK_JOBS.slice(0, 5));
       }
     }
 
     fetchJobs();
   }, [day]);
 
-  // Always show jobs (no loading state in preview)
-  const displayJobs = jobs;
+  // Always show exactly 5 jobs (no loading state in preview)
+  const displayJobs = jobs.slice(0, 5);
 
   const handleFeedback = async (jobHash: string, feedbackType: 'thumbs_up' | 'thumbs_down') => {
     if (!jobHash || feedbackSubmitted.has(jobHash)) return;
