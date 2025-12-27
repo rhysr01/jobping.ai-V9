@@ -20,8 +20,17 @@ export async function GET(request: NextRequest) {
     const email = request.cookies.get('free_user_email')?.value;
 
     if (!email) {
-      apiLogger.warn('Matches API: No cookie found', new Error('Unauthorized'), {});
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      // Log all cookies for debugging
+      const allCookies = request.cookies.getAll();
+      apiLogger.warn('Matches API: No cookie found', new Error('Unauthorized'), { 
+        cookieCount: allCookies.length,
+        cookieNames: allCookies.map(c => c.name),
+        hasFreeUserEmailCookie: !!request.cookies.get('free_user_email')
+      });
+      return NextResponse.json({ 
+        error: 'Unauthorized',
+        message: 'Please sign up again to see your matches.'
+      }, { status: 401 });
     }
 
     const supabase = getDatabaseClient();
