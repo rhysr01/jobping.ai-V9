@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { BrandIcons } from '@/components/ui/BrandIcons';
 import { trackEvent } from '@/lib/analytics';
+import { CTA_GET_MY_5_FREE_MATCHES, CTA_GET_MY_5_FREE_MATCHES_ARIA } from '@/lib/copy';
 
 export default function StickyMobileCTA() {
   const [isVisible, setIsVisible] = useState(false);
@@ -57,7 +58,7 @@ export default function StickyMobileCTA() {
             onClick={() => {
               trackEvent('cta_clicked', { type: 'free', location: 'sticky_mobile' });
             }}
-            aria-label="Get my 5 free matches"
+            aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
             className="pointer-events-auto w-full block"
           >
             <motion.div
@@ -66,7 +67,7 @@ export default function StickyMobileCTA() {
               className="btn-primary w-full flex items-center justify-center gap-2 min-h-[56px] text-base font-semibold"
             >
               <BrandIcons.Mail className="w-5 h-5" />
-              <span>Get My 5 Free Matches</span>
+              <span>{CTA_GET_MY_5_FREE_MATCHES}</span>
               <BrandIcons.ArrowRight className="w-5 h-5" />
             </motion.div>
           </Link>

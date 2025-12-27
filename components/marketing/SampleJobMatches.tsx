@@ -14,20 +14,43 @@ interface Job {
   matchReason: string;
 }
 
-export default function SampleJobMatches() {
+interface SampleJobMatchesProps {
+  preloadedJobs?: any[]; // Pre-loaded jobs from Hero
+}
+
+export default function SampleJobMatches({ preloadedJobs }: SampleJobMatchesProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch real jobs from API - MUST have URLs
+    // If pre-loaded jobs provided, use them immediately (NO loading state)
+    if (preloadedJobs && preloadedJobs.length > 0) {
+      const formattedJobs = preloadedJobs
+        .filter((job: any) => job.jobUrl && job.jobUrl.trim() !== '')
+        .map((job: any) => ({
+          title: job.title,
+          company: job.company,
+          location: job.location,
+          description: job.description || '',
+          jobUrl: job.jobUrl, // REAL URL from database
+          match: job.matchScore ? Math.round(job.matchScore * 100) : 85,
+          isHot: (job.matchScore || 0) >= 0.90,
+          tags: [
+            ...(job.categories || []).slice(0, 1).map((cat: string) => cat.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())),
+            job.workEnvironment || 'Hybrid',
+          ],
+          matchReason: job.matchReason || `Great match for roles in ${job.location}`,
+        }));
+      setJobs(formattedJobs);
+      return; // Don't fetch if pre-loaded
+    }
+
+    // Fallback: fetch if no pre-loaded jobs
     async function fetchJobs() {
       try {
-        setLoading(true);
-        const response = await fetch('/api/sample-jobs?day=monday');
+        const response = await fetch('/api/sample-jobs?day=monday&tier=free');
         const data = await response.json();
         
         if (data.jobs && data.jobs.length > 0) {
-          // Only use jobs that have URLs - CRITICAL
           const jobsWithUrls = data.jobs.filter((job: any) => job.jobUrl && job.jobUrl.trim() !== '');
           
           if (jobsWithUrls.length > 0) {
@@ -36,7 +59,7 @@ export default function SampleJobMatches() {
               company: job.company,
               location: job.location,
               description: job.description || '',
-              jobUrl: job.jobUrl, // REAL URL from database
+              jobUrl: job.jobUrl,
               match: job.matchScore ? Math.round(job.matchScore * 100) : 85,
               isHot: (job.matchScore || 0) >= 0.90,
               tags: [
@@ -46,24 +69,15 @@ export default function SampleJobMatches() {
               matchReason: job.matchReason || `Great match for roles in ${job.location}`,
             }));
             setJobs(formattedJobs);
-          } else {
-            console.error('No jobs with URLs found in API response');
-            setJobs([]);
           }
-        } else {
-          console.error('No jobs found in API response:', data.error);
-          setJobs([]);
         }
-        setLoading(false);
       } catch (error) {
         console.error('Failed to fetch sample jobs:', error);
-        setJobs([]); // No fallback - must be real jobs
-        setLoading(false);
       }
     }
 
     fetchJobs();
-  }, []);
+  }, [preloadedJobs]);
 
   // Fallback diverse sample jobs: 5 cities, 5 different career paths
   const fallbackJobs: Job[] = [
@@ -127,25 +141,7 @@ export default function SampleJobMatches() {
   // Only show jobs with URLs - no fallback to hardcoded jobs without URLs
   const displayJobs = jobs.filter(job => job.jobUrl && job.jobUrl.trim() !== '');
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="bg-black text-white h-full overflow-y-auto">
-        <div className="bg-gradient-to-br from-brand-600 via-brand-500 to-brand-700 px-6 py-8 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-50" />
-          <div className="relative z-10">
-            <div className="text-3xl font-bold text-white mb-2 tracking-tight">JobPing</div>
-            <div className="text-xs text-white/90 font-medium tracking-widest uppercase">AI-Powered Job Matching</div>
-          </div>
-        </div>
-        <div className="px-6 py-6 text-center">
-          <div className="text-zinc-400 text-sm">Loading real jobs...</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Empty state - should not happen if API works correctly
+  // NO loading state - if no jobs, show empty (shouldn't happen with pre-loaded)
   if (displayJobs.length === 0) {
     return (
       <div className="bg-black text-white h-full overflow-y-auto">
@@ -157,7 +153,7 @@ export default function SampleJobMatches() {
           </div>
         </div>
         <div className="px-6 py-6 text-center">
-          <div className="text-zinc-400 text-sm">Loading jobs...</div>
+          <div className="text-zinc-400 text-sm">No jobs available</div>
         </div>
       </div>
     );

@@ -26,15 +26,15 @@ export default function Button({
   
   const variants = {
     primary:
-      'h-11 bg-[#6D28D9] text-white font-medium shadow-md shadow-[#6D28D9]/30 hover:bg-[#5B21B6] hover:-translate-y-0.5 active:translate-y-0',
+      'h-11 bg-brand-500 text-white font-medium shadow-md shadow-brand-500/30 hover:bg-brand-600 hover:-translate-y-0.5 active:translate-y-0',
     secondary:
       'border-2 border-white/25 bg-white/[0.08] text-white font-medium hover:border-brand-500/50 hover:bg-white/12',
     ghost:
       'text-zinc-300 hover:text-white hover:bg-white/8 font-medium',
     danger:
-      'border-2 border-red-500/30 bg-red-500/15 text-red-200 hover:bg-red-500/25 font-medium',
+      'border-2 border-error-500/30 bg-error-500/15 text-error-200 hover:bg-error-500/25 font-medium',
     gradient:
-      'h-11 bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] text-white font-medium shadow-md shadow-[#6D28D9]/30 hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0'
+      'h-11 bg-gradient-to-r from-brand-500 to-purple-500 text-white font-medium shadow-md shadow-brand-500/30 hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0'
   };
 
   const sizes = {

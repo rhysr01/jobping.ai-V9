@@ -50,7 +50,7 @@ export default function Pricing() {
   const { stats } = useStats();
   
   return (
-    <section id="pricing" data-testid="pricing" className="pt-24 pb-24 md:pt-28 md:pb-28 lg:pt-32 lg:pb-32 relative overflow-hidden bg-[#05010f] scroll-snap-section">
+    <section id="pricing" data-testid="pricing" className="pt-24 pb-24 md:pt-28 md:pb-28 lg:pt-32 lg:pb-32 relative overflow-hidden bg-black scroll-snap-section">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       {/* Soft section band */}

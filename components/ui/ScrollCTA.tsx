@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { BrandIcons } from '@/components/ui/BrandIcons';
 import { trackEvent } from '@/lib/analytics';
+import { CTA_GET_MY_5_FREE_MATCHES, TRUST_TEXT_NO_CARD_SETUP } from '@/lib/copy';
 
 export default function ScrollCTA() {
   const [isVisible, setIsVisible] = useState(false);
@@ -54,8 +55,8 @@ export default function ScrollCTA() {
           >
             <div className="flex items-center gap-4">
               <div className="flex-1">
-                <p className="text-sm font-semibold text-white mb-1">Get My 5 Free Matches</p>
-                <p className="text-xs text-zinc-400">No credit card • 2-minute setup</p>
+                <p className="text-sm font-semibold text-white mb-1">{CTA_GET_MY_5_FREE_MATCHES}</p>
+                <p className="text-xs text-zinc-400">{TRUST_TEXT_NO_CARD_SETUP}</p>
               </div>
               <Link
                 href="/signup/free"
@@ -65,7 +66,7 @@ export default function ScrollCTA() {
                 }}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-500 text-white rounded-full text-sm font-semibold hover:bg-brand-500/90 transition-colors min-h-[44px]"
               >
-                Get My 5 Free Matches
+                {CTA_GET_MY_5_FREE_MATCHES}
                 <BrandIcons.ArrowRight className="h-4 w-4" />
               </Link>
               <button
