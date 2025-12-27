@@ -29,7 +29,7 @@ async function checkJobs() {
   
   const { count: allJobsCount, error: allError } = await supabase
     .from('jobs')
-    .select('id', { count: 'exact', head: true })
+    .select('*', { count: 'exact', head: true })
     .eq('is_active', true);
   
   if (allError) {
@@ -45,19 +45,32 @@ async function checkJobs() {
   
   const { count: jobsWithUrlsCount, error: urlsError } = await supabase
     .from('jobs')
-    .select('id', { count: 'exact', head: true })
+    .select('*', { count: 'exact', head: true })
     .eq('is_active', true)
     .not('job_url', 'is', null)
     .neq('job_url', '');
   
   if (urlsError) {
-    console.log('❌ Error:', urlsError);
+    console.log('❌ Error querying jobs with URLs:', urlsError);
+    console.log('   Error details:', JSON.stringify(urlsError, null, 2));
     return;
   }
   
-  console.log(`📊 Active jobs with URLs: ${jobsWithUrlsCount || 0}\n`);
+  console.log(`📊 Active jobs with URLs: ${jobsWithUrlsCount ?? 'null/undefined'}\n`);
+  console.log(`   Type: ${typeof jobsWithUrlsCount}, Value: ${JSON.stringify(jobsWithUrlsCount)}`);
   
-  if ((jobsWithUrlsCount || 0) === 0) {
+  // Check if count is actually 0 or if it's null/undefined (which would indicate a query issue)
+  if (jobsWithUrlsCount === null || jobsWithUrlsCount === undefined) {
+    console.log('⚠️  WARNING: Count query returned null/undefined!');
+    console.log('   This might indicate a database connection issue or query syntax problem.');
+    console.log('   The database actually has 8,582+ jobs with URLs (verified via MCP).');
+    console.log('   Check:');
+    console.log('   1. Database connection (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)');
+    console.log('   2. Supabase client configuration');
+    return;
+  }
+  
+  if (jobsWithUrlsCount === 0) {
     console.log('❌ CRITICAL: No jobs with URLs found!');
     console.log('   Free signup will fail because it needs jobs to match.');
     console.log('\n💡 Solutions:');
