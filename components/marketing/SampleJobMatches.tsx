@@ -32,6 +32,26 @@ export default function SampleJobMatches() {
       tags: ["Data", "Internship"],
       matchReason: "Aligned with your data analysis career path",
     },
+    {
+      title: "Product Design Intern",
+      company: "Figma",
+      location: "Amsterdam, Netherlands",
+      match: 87,
+      isHot: false,
+      description: "Design features for the next generation of design tools. Work alongside senior designers on real product launches.",
+      tags: ["Design", "Internship"],
+      matchReason: "Perfect match for your design career path in Amsterdam",
+    },
+    {
+      title: "Business Analyst",
+      company: "Deloitte",
+      location: "Berlin, Germany",
+      match: 89,
+      isHot: false,
+      description: "Join Deloitte's consulting practice analyzing business problems and developing strategic solutions for leading clients.",
+      tags: ["Consulting", "English"],
+      matchReason: "Matches your consulting interest in Berlin",
+    },
   ];
 
   return (
@@ -51,8 +71,8 @@ export default function SampleJobMatches() {
           <h2 className="text-2xl font-bold text-white mb-2">Here's what you'll see in 2 minutes</h2>
         </div>
 
-        {/* Job Cards - Show only first card to avoid cut-off */}
-        {sampleJobs.slice(0, 1).map((job, i) => (
+        {/* Job Cards - Show all 5 jobs like the real email */}
+        {sampleJobs.map((job, i) => (
           <div
             key={i}
             className={`rounded-2xl p-5 border ${

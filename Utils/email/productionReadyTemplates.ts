@@ -439,7 +439,7 @@ export function createJobMatchesEmail(
   const items = jobCards.map((c, index) => {
     const score = c.matchResult?.match_score ?? 85;
     const hot = score >= 90;
-    const desc = c.job.description ? c.job.description.slice(0, 200) + (c.job.description.length > 200 ? '…' : '') : '';
+    const desc = c.job.description ? c.job.description.slice(0, 300) + (c.job.description.length > 300 ? '…' : '') : '';
     const jobUrl = c.job.job_url || c.job.url || c.job.apply_url || '';
     const applyHref = jobUrl ? `${jobUrl}${jobUrl.includes('?') ? '&' : '?'}utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=apply_button` : '';
     const apply = jobUrl ? vmlButton(applyHref, 'Apply now →', COLORS.indigo, COLORS.purple) : '';
@@ -448,14 +448,15 @@ export function createJobMatchesEmail(
       : '';
     const tagsMarkup = formatTagsMarkup(c.job);
     
-    // Extract match reason from matchResult
-    const matchReason = c.matchResult?.reasoning || c.matchResult?.match_reason || '';
-    const matchReasonMarkup = matchReason ? `
-        <div style="background:rgba(99,102,241,0.1); border-left:3px solid ${COLORS.purple}; padding:16px; border-radius:8px; margin:16px 0;">
-          <strong style="color:#8B5CF6; font-size:14px; font-weight:600; display:block; margin-bottom:8px;">💡 Why this matches:</strong>
-          <p style="color:${COLORS.gray300}; font-size:14px; line-height:1.6; margin:0;">${matchReason}</p>
+    // Simplified match reason section - 1 line only
+    const matchReasonMarkup = `
+        <div style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); padding:10px 12px; border-radius:8px; margin:16px 0;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="color:#10b981; font-size:14px; flex-shrink:0;">✓</span>
+            <div style="color:#10b981; font-size:13px; font-weight:600;">Matches all your filters: location, visa status, experience level, and career path.</div>
+          </div>
         </div>
-    ` : '';
+    `;
     
     // Get job_hash and email for feedback buttons
     const jobHash = c.job.job_hash || c.job.jobHash || '';

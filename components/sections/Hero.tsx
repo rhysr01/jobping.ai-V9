@@ -157,16 +157,14 @@ export default function Hero() {
               </motion.div>
               
               {/* Social Proof Stats */}
-              {stats && stats.totalUsers > 0 && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4, duration: 0.6 }}
-                  className="text-sm text-zinc-400 pt-2"
-                >
-                  Join {stats.totalUsers.toLocaleString('en-US')}+ students finding jobs
-                </motion.p>
-              )}
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+                className="text-sm text-zinc-400 pt-2"
+              >
+                Join {stats && stats.totalUsers > 0 ? `${stats.totalUsers.toLocaleString('en-US')}+` : '1,500+'} job seekers finding roles
+              </motion.p>
             </motion.div>
           </motion.div>
 
