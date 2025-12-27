@@ -26,24 +26,32 @@ export default function SampleJobMatches() {
         const data = await response.json();
         
         if (data.jobs && data.jobs.length > 0) {
-          const formattedJobs = data.jobs.map((job: any) => ({
-            title: job.title,
-            company: job.company,
-            location: job.location,
-            description: job.description || '',
-            jobUrl: job.jobUrl || '',
-            match: job.matchScore ? Math.round(job.matchScore * 100) : 85,
-            isHot: (job.matchScore || 0) >= 0.90,
-            tags: [
-              ...(job.categories || []).slice(0, 1).map((cat: string) => cat.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())),
-              job.workEnvironment || 'Hybrid',
-            ],
-            matchReason: job.matchReason || `Great match for roles in ${job.location}`,
-          }));
-          setJobs(formattedJobs);
+          // Only use jobs that have URLs
+          const jobsWithUrls = data.jobs.filter((job: any) => job.jobUrl && job.jobUrl.trim() !== '');
+          
+          if (jobsWithUrls.length > 0) {
+            const formattedJobs = jobsWithUrls.map((job: any) => ({
+              title: job.title,
+              company: job.company,
+              location: job.location,
+              description: job.description || '',
+              jobUrl: job.jobUrl,
+              match: job.matchScore ? Math.round(job.matchScore * 100) : 85,
+              isHot: (job.matchScore || 0) >= 0.90,
+              tags: [
+                ...(job.categories || []).slice(0, 1).map((cat: string) => cat.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())),
+                job.workEnvironment || 'Hybrid',
+              ],
+              matchReason: job.matchReason || `Great match for roles in ${job.location}`,
+            }));
+            setJobs(formattedJobs);
+          } else {
+            console.error('No jobs with URLs found in API response');
+            setJobs([]);
+          }
         } else {
-          // Fallback to hardcoded jobs if API fails
-          setJobs(fallbackJobs);
+          console.error('No jobs found in API response');
+          setJobs([]);
         }
         setLoading(false);
       } catch (error) {
@@ -115,7 +123,8 @@ export default function SampleJobMatches() {
     },
   ];
 
-  const displayJobs = jobs.length > 0 ? jobs : fallbackJobs;
+  // Only show jobs with URLs - no fallback to hardcoded jobs without URLs
+  const displayJobs = jobs.filter(job => job.jobUrl && job.jobUrl.trim() !== '');
 
   return (
     <div className="bg-black text-white h-full overflow-y-auto">
