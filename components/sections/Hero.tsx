@@ -109,8 +109,8 @@ export default function Hero() {
               transition={{ delay: 0.2, duration: 0.6 }}
               className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold leading-[1.1] mb-3"
             >
-              <span className="text-white">Try it free</span>{' '}
-              <span className="text-zinc-400">— see 5 matches instantly</span>
+              <span className="text-white">Get 5 early career job matches instantly</span>{' '}
+              <span className="text-zinc-400">free</span>
             </motion.h1>
 
             {/* Subheadline - FREE-FIRST - Clear value prop */}
@@ -120,7 +120,7 @@ export default function Hero() {
               transition={{ delay: 0.25, duration: 0.6 }}
               className="text-lg md:text-xl text-zinc-300 leading-relaxed max-w-xl mb-4"
             >
-              See 5 hand-picked roles in 2 minutes. No credit card. Matched to your city, visa status, and career path.
+              Answer 3 questions, see roles matched to your city, visa status, and career path. Takes 2 minutes. No credit card.
             </motion.p>
 
             {/* CTAs */}
@@ -152,7 +152,7 @@ export default function Hero() {
                 className="space-y-2 mt-3"
               >
                 <p className="text-sm text-zinc-400">
-                  {TRUST_TEXT_INSTANT_SETUP}
+                  ⚡ 100% free to start • Real EU jobs • Cancel anytime
                 </p>
               </motion.div>
               
@@ -174,10 +174,7 @@ export default function Hero() {
                       <span className="text-xs font-bold text-brand-200 uppercase tracking-wide">Free First</span>
                     </div>
                     <p className="text-base md:text-lg font-semibold text-white leading-relaxed">
-                      <span className="text-brand-200">Try it free first</span> — see 5 matches instantly
-                    </p>
-                    <p className="text-sm md:text-base text-zinc-300 leading-relaxed">
-                      Like it? <span className="text-brand-300 font-bold">Upgrade to get 15 matches/week</span> (3x more) delivered Mon/Wed/Fri for €5/month.
+                      Like it? Upgrade for 15 matches/week (€5/mo) - 3x more opportunities.
                     </p>
                   </div>
                 </div>
