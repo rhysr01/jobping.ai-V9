@@ -81,11 +81,9 @@ export async function logMatchMetrics(metrics: MatchMetrics): Promise<void> {
       console.warn('Metrics table not available, logging to Sentry:', error);
     }
     
-    // Log to Sentry for monitoring
-    addBreadcrumb({
-      message: 'Match metrics logged',
-      level: 'info',
-      data: {
+    // Log metrics to Axiom
+    logger.info('Match metrics logged', {
+      metadata: {
         recallAt50: metrics.recallAt50,
         ndcgAt5: metrics.ndcgAt5,
         matchType: metrics.matchType

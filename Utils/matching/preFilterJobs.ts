@@ -53,12 +53,10 @@ export async function preFilterJobsByUserPreferencesEnhanced(
         }
       });
       
-      // Track feedback boosts for Sentry breadcrumb (no per-job logging)
+      // Track feedback boosts
       if (feedbackBoosts.size > 0) {
-        addBreadcrumb({
-          message: 'Feedback boosts applied',
-          level: 'debug',
-          data: {
+        logger.debug('Feedback boosts applied', {
+          metadata: {
             userEmail: user.email,
             boostCount: feedbackBoosts.size,
             boostTypes: Object.fromEntries(feedbackBoosts)
@@ -295,10 +293,8 @@ export async function preFilterJobsByUserPreferencesEnhanced(
 
   // Log match level for monitoring
   if (matchLevel !== 'exact' && targetCities.length > 0) {
-    addBreadcrumb({
-      message: 'Location matching fallback applied',
-      level: 'info',
-      data: {
+    logger.info('Location matching fallback applied', {
+      metadata: {
         email: user.email,
         matchLevel,
         targetCities,
@@ -819,10 +815,8 @@ export async function preFilterJobsByUserPreferencesEnhanced(
   
   // Log quality relaxation if applied
   if (isScarceJobs) {
-    addBreadcrumb({
-      message: 'Quality thresholds relaxed due to scarce jobs',
-      level: 'info',
-      data: {
+    logger.info('Quality thresholds relaxed due to scarce jobs', {
+      metadata: {
         email: user.email,
         availableJobs: availableJobsCount,
         adjustedMinimumScore,
@@ -869,9 +863,11 @@ export async function preFilterJobsByUserPreferencesEnhanced(
       sortedJobs: sortedJobs.length
     });
     
-    captureException(zeroMatchesError, {
-      tags: { component: 'matching', issue: 'zero_matches_emergency' },
-      extra: {
+    logger.error('Zero matches after emergency fallback', {
+      error: zeroMatchesError,
+      component: 'matching',
+      metadata: {
+        issue: 'zero_matches_emergency',
         email: user.email,
         targetCities: user.target_cities,
         originalJobs: jobs.length,
@@ -904,11 +900,9 @@ export async function preFilterJobsByUserPreferencesEnhanced(
     return jobs.slice(0, 100);
   }
   
-  // Log job filtering results to Sentry breadcrumb instead of console
-  addBreadcrumb({
-    message: 'Job filtering completed',
-    level: 'info',
-    data: {
+  // Log job filtering results
+  logger.info('Job filtering completed', {
+    metadata: {
       userEmail: user.email,
       originalCount: jobs.length,
       filteredCount: topJobs.length,
