@@ -305,69 +305,97 @@ export async function POST(request: NextRequest) {
     }
 
     // Run matching using YOUR matching engine
-    if (!process.env.OPENAI_API_KEY) {
-      apiLogger.error('OPENAI_API_KEY not set', new Error('Missing API key'), { email: normalizedEmail });
-      return NextResponse.json(
-        { error: 'Matching service unavailable. Please try again later.' },
-        { status: 500 }
-      );
-    }
-
-    const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
-    const jobsForAI = preFilteredJobs.slice(0, 50);
+    let matchedJobsRaw: any[] = [];
     
-    apiLogger.info('Starting AI matching', { 
-      email: normalizedEmail,
-      jobsCount: jobsForAI.length,
-      cities: targetCities,
-      careerPath: userData.career_path
-    });
-
-    let matchResult;
-    try {
-      matchResult = await matcher.performMatching(jobsForAI, userPrefs as any);
-    } catch (matchingError) {
-      apiLogger.error('AI matching failed', matchingError as Error, { 
+    if (!process.env.OPENAI_API_KEY) {
+      apiLogger.warn('OPENAI_API_KEY not set - using fallback matching without AI', { 
         email: normalizedEmail,
-        jobsCount: jobsForAI.length,
-        errorMessage: matchingError instanceof Error ? matchingError.message : String(matchingError)
+        preFilteredCount: preFilteredJobs.length
       });
-      return NextResponse.json(
-        { error: 'Matching failed. Please try again.' },
-        { status: 500 }
-      );
-    }
-
-    if (!matchResult || !matchResult.matches || matchResult.matches.length === 0) {
-      apiLogger.warn('No matches returned from AI matching', { 
+      
+      // FALLBACK: Use pre-filtered jobs directly with default scores
+      // This allows free signup to work even if OpenAI API key is missing
+      matchedJobsRaw = preFilteredJobs.slice(0, 50).map((job: any) => ({
+        ...job,
+        match_score: 75, // Default score for non-AI matched jobs
+        match_reason: 'Pre-filtered match (AI matching unavailable)',
+      }));
+      
+      apiLogger.info('Fallback matching completed (no AI)', {
+        email: normalizedEmail,
+        matchesCount: matchedJobsRaw.length
+      });
+    } else {
+      // Normal AI matching flow
+      const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
+      const jobsForAI = preFilteredJobs.slice(0, 50);
+      
+      apiLogger.info('Starting AI matching', { 
         email: normalizedEmail,
         jobsCount: jobsForAI.length,
-        preFilteredCount: preFilteredJobs.length,
         cities: targetCities,
         careerPath: userData.career_path
       });
+
+      let matchResult;
+      try {
+        matchResult = await matcher.performMatching(jobsForAI, userPrefs as any);
+      } catch (matchingError) {
+        apiLogger.error('AI matching failed', matchingError as Error, { 
+          email: normalizedEmail,
+          jobsCount: jobsForAI.length,
+          errorMessage: matchingError instanceof Error ? matchingError.message : String(matchingError)
+        });
+        
+        // FALLBACK: If AI matching fails, use pre-filtered jobs
+        apiLogger.warn('AI matching failed, using fallback', { email: normalizedEmail });
+        matchedJobsRaw = preFilteredJobs.slice(0, 50).map((job: any) => ({
+          ...job,
+          match_score: 70, // Slightly lower score for fallback
+          match_reason: 'Pre-filtered match (AI matching failed)',
+        }));
+      }
+
+      if (!matchResult || !matchResult.matches || matchResult.matches.length === 0) {
+        apiLogger.warn('No matches returned from AI matching, using fallback', { 
+          email: normalizedEmail,
+          jobsCount: jobsForAI.length,
+          preFilteredCount: preFilteredJobs.length,
+          cities: targetCities,
+          careerPath: userData.career_path
+        });
+        
+        // FALLBACK: Use pre-filtered jobs if AI returns nothing
+        matchedJobsRaw = preFilteredJobs.slice(0, 50).map((job: any) => ({
+          ...job,
+          match_score: 70,
+          match_reason: 'Pre-filtered match (AI returned no matches)',
+        }));
+      } else {
+        apiLogger.info('AI matching completed', { 
+          email: normalizedEmail,
+          matchesCount: matchResult.matches.length
+        });
+
+        // Get matched jobs with full data
+        for (const m of matchResult.matches) {
+          const job = preFilteredJobs.find((j: any) => j.job_hash === m.job_hash);
+          if (job) {
+            matchedJobsRaw.push({
+              ...job,
+              match_score: m.match_score,
+              match_reason: m.match_reason,
+            });
+          }
+        }
+      }
+    }
+
+    if (matchedJobsRaw.length === 0) {
       return NextResponse.json(
         { error: 'No matches found. Try different cities or career paths.' },
         { status: 404 }
       );
-    }
-
-    apiLogger.info('AI matching completed', { 
-      email: normalizedEmail,
-      matchesCount: matchResult.matches.length
-    });
-
-    // Get matched jobs with full data
-    const matchedJobsRaw: any[] = [];
-    for (const m of matchResult.matches) {
-      const job = preFilteredJobs.find((j: any) => j.job_hash === m.job_hash);
-      if (job) {
-        matchedJobsRaw.push({
-          ...job,
-          match_score: m.match_score,
-          match_reason: m.match_reason,
-        });
-      }
     }
 
     // Distribute jobs (max 5 for free)
