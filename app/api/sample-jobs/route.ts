@@ -156,7 +156,7 @@ export async function GET(req: NextRequest) {
         // Career path match (high priority)
         const jobCategories = (job.categories || []).map((c: string) => c.toLowerCase());
         const hasCareerMatch = careerPathCategories.some(cat => 
-          jobCategories.some(jc => jc.includes(cat.toLowerCase()) || cat.toLowerCase().includes(jc))
+          jobCategories.some((jc: string) => jc.includes(cat.toLowerCase()) || cat.toLowerCase().includes(jc))
         );
         if (hasCareerMatch) score += 10;
         
