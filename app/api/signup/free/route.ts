@@ -448,14 +448,14 @@ export async function POST(request: NextRequest) {
       }
       
       return {
-        user_email: normalizedEmail, // CRITICAL: Use user_email, not user_id!
-        job_hash: String(job.job_hash), // Ensure it's a string
+      user_email: normalizedEmail, // CRITICAL: Use user_email, not user_id!
+      job_hash: String(job.job_hash), // Ensure it's a string
         match_score: normalizedScore, // Normalized to 0-1
-        match_reason: job.match_reason || 'AI matched',
-        match_quality: 'high',
-        match_tags: userData.career_path || '',
-        matched_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
+      match_reason: job.match_reason || 'AI matched',
+      match_quality: 'high',
+      match_tags: userData.career_path || '',
+      matched_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
       };
     });
 
@@ -481,6 +481,15 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Log successful match creation for debugging
+    apiLogger.info('Free signup - matches saved successfully', { 
+      email: normalizedEmail, 
+      savedMatchesCount: savedMatches.length,
+      savedMatchHashes: savedMatches.map((m: any) => m.job_hash),
+      matchRecordsCount: matchRecords.length,
+      validJobsCount: validJobs.length
+    });
 
     // Track analytics (optional - don't fail if this fails)
     try {
@@ -512,9 +521,23 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: isProduction && isHttps, // Only secure in production HTTPS
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30, // 30 days to match free_expires_at
-      path: '/', // Ensure cookie is available site-wide
+      maxAge: 60 * 60 * 24 * 30,
+      path: '/',
     });
+
+    // Optional: Still create session for future use, but don't rely on it
+    try {
+      const sessionId = crypto.randomUUID();
+      await supabase.from('free_sessions').insert({
+        session_id: sessionId,
+        user_email: normalizedEmail,
+        expires_at: freeExpiresAt.toISOString(),
+        created_at: new Date().toISOString()
+      });
+    } catch (sessionError) {
+      // Non-critical - log but don't fail
+      apiLogger.warn('Failed to create session (non-critical)', sessionError as Error);
+    }
 
     apiLogger.info('Cookie set for free user', { 
       email: normalizedEmail,

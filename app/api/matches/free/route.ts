@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Get user email from cookie (simple approach)
-    const email = request.cookies.get('free_user_email')?.value;
+    const email = request.cookies.get('free_user_email')?.value?.toLowerCase().trim();
 
     if (!email) {
       // Log all cookies for debugging
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       .eq('email', email)
       .eq('subscription_tier', 'free')
       .single();
-    
+
     const userResult = await queryWithTimeout(
       userQuery,
       10000, // 10 second timeout
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
       .eq('user_email', email) // CRITICAL: Use user_email, not user_id!
       .order('match_score', { ascending: false })
       .limit(5);
-    
+
     const matchesResult = await queryWithTimeout(
       matchesQuery,
       10000, // 10 second timeout
@@ -127,9 +127,21 @@ export async function GET(request: NextRequest) {
     const matchesData = matchesResult.data;
 
     if (!matchesData || !Array.isArray(matchesData) || matchesData.length === 0) {
-      apiLogger.info('No matches found for user', { email });
+      apiLogger.info('No matches found for user', { 
+        email,
+        matchesDataType: typeof matchesData,
+        isArray: Array.isArray(matchesData),
+        matchesDataLength: Array.isArray(matchesData) ? matchesData.length : 0
+      });
       return NextResponse.json({ jobs: [] });
     }
+
+    // Log matches found for debugging
+    apiLogger.info('Matches found for user', {
+      email,
+      matchesCount: matchesData.length,
+      matchJobHashes: matchesData.map((m: any) => m.job_hash).slice(0, 5)
+    });
 
     // Extract job_hashes and fetch jobs manually (more reliable than join)
     const jobHashes = matchesData.map((m: any) => m.job_hash).filter(Boolean);
@@ -140,17 +152,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch jobs by job_hash (with timeout)
-    const jobsQuery = supabase
+    // First try with active filter
+    let jobsQuery = supabase
       .from('jobs')
-      .select('id, title, company, location, city, country, description, job_url, work_environment, categories, job_hash')
+      .select('id, title, company, location, city, country, description, job_url, work_environment, categories, job_hash, is_active, status')
       .in('job_hash', jobHashes)
       .eq('is_active', true)
       .eq('status', 'active');
-    
-    const jobsResult = await queryWithTimeout(
+
+    let jobsResult = await queryWithTimeout(
       jobsQuery,
       10000, // 10 second timeout
-      'fetch_jobs'
+      'fetch_jobs_active'
     );
 
     if (jobsResult.error) {
@@ -165,11 +178,67 @@ export async function GET(request: NextRequest) {
       throw jobsResult.error;
     }
 
-    const jobsData = jobsResult.data;
+    let jobsData = jobsResult.data;
+    let jobsArray = Array.isArray(jobsData) ? jobsData : [];
+
+    // FALLBACK: If no active jobs found, try without active filter
+    // This handles the case where jobs were matched but later deactivated
+    if (jobsArray.length === 0 && jobHashes.length > 0) {
+      apiLogger.warn('No active jobs found for matches, trying fallback (include inactive)', {
+        email,
+        jobHashesRequested: jobHashes.length,
+        jobHashes: jobHashes.slice(0, 3)
+      });
+
+      const fallbackQuery = supabase
+        .from('jobs')
+        .select('id, title, company, location, city, country, description, job_url, work_environment, categories, job_hash, is_active, status')
+        .in('job_hash', jobHashes);
+
+      const fallbackResult = await queryWithTimeout(
+        fallbackQuery,
+        10000,
+        'fetch_jobs_fallback'
+      );
+
+      if (!fallbackResult.error && fallbackResult.data) {
+        jobsArray = Array.isArray(fallbackResult.data) ? fallbackResult.data : [];
+        apiLogger.info('Fallback query found jobs', {
+          email,
+          jobsFound: jobsArray.length,
+          activeJobs: jobsArray.filter(j => j.is_active && j.status === 'active').length,
+          inactiveJobs: jobsArray.filter(j => !j.is_active || j.status !== 'active').length
+        });
+      }
+    }
 
     // Create a map of job_hash -> job for quick lookup
-    const jobsArray = Array.isArray(jobsData) ? jobsData : [];
     const jobsMap = new Map(jobsArray.map((job: any) => [job.job_hash, job]));
+
+    // Log missing jobs for debugging
+    const missingHashes = jobHashes.filter(hash => !jobsMap.has(hash));
+    if (missingHashes.length > 0) {
+      apiLogger.warn('Jobs not found for matches', { 
+        email,
+        missingCount: missingHashes.length,
+        missingHashes: missingHashes.slice(0, 5),
+        totalMatches: matchesData.length,
+        jobsFound: jobsArray.length,
+        reason: 'Jobs may have been deleted from database'
+      });
+    }
+
+    // Log active vs inactive jobs
+    const activeJobs = jobsArray.filter(j => j.is_active && j.status === 'active');
+    const inactiveJobs = jobsArray.filter(j => !j.is_active || j.status !== 'active');
+    if (inactiveJobs.length > 0) {
+      apiLogger.info('Some matched jobs are inactive', {
+        email,
+        activeCount: activeJobs.length,
+        inactiveCount: inactiveJobs.length,
+        inactiveJobHashes: inactiveJobs.map(j => j.job_hash).slice(0, 3)
+      });
+    }
 
     // Format response with normalized location data
     const jobs = matchesData
