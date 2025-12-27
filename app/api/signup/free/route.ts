@@ -6,6 +6,7 @@ import { getDatabaseCategoriesForForm } from '@/Utils/matching/categoryMapper';
 import { distributeJobsWithDiversity } from '@/Utils/matching/jobDistribution';
 import { apiLogger } from '@/lib/api-logger';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
+import { getCountryFromCity } from '@/lib/countryFlags';
 import { z } from 'zod';
 
 // Input validation schema
@@ -149,11 +150,97 @@ export async function POST(request: NextRequest) {
       query = query.overlaps('categories', careerPathCategories);
     }
 
+    // Filter for early-career roles (same as preview API)
+    // This ensures we get internships, graduate roles, or early-career jobs
+    query = query.or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
+
     query = query.order('created_at', { ascending: false }).limit(1000);
 
-    const { data: allJobs, error: jobsError } = await query;
+    let { data: allJobs, error: jobsError } = await query;
 
+    // Fallback logic: If no jobs found for exact cities, try country-level matching
+    if ((jobsError || !allJobs || allJobs.length === 0) && targetCities.length > 0) {
+      apiLogger.info('Free signup - no jobs for exact cities, trying country-level fallback', {
+        email: normalizedEmail,
+        cities: targetCities
+      });
+
+      // Get countries for the selected cities
+      const countries = targetCities
+        .map(city => getCountryFromCity(city))
+        .filter(country => country !== '');
+
+      if (countries.length > 0) {
+        // Try filtering by country instead of city
+        let fallbackQuery = supabase
+          .from('jobs')
+          .select('*')
+          .eq('is_active', true)
+          .eq('status', 'active')
+          .is('filtered_reason', null)
+          .in('country', countries);
+
+        if (careerPathCategories.length > 0) {
+          fallbackQuery = fallbackQuery.overlaps('categories', careerPathCategories);
+        }
+
+        // Also filter for early-career roles in fallback
+        fallbackQuery = fallbackQuery.or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
+
+        fallbackQuery = fallbackQuery.order('created_at', { ascending: false }).limit(1000);
+        const fallbackResult = await fallbackQuery;
+
+        if (!fallbackResult.error && fallbackResult.data && fallbackResult.data.length > 0) {
+          allJobs = fallbackResult.data;
+          jobsError = null;
+          apiLogger.info('Free signup - found jobs using country-level fallback', {
+            email: normalizedEmail,
+            countries,
+            jobCount: allJobs.length
+          });
+        } else {
+          // Last resort: remove city/country filter entirely, just use career path
+          apiLogger.info('Free signup - no jobs for countries either, trying career path only', {
+            email: normalizedEmail,
+            countries
+          });
+
+          let lastResortQuery = supabase
+            .from('jobs')
+            .select('*')
+            .eq('is_active', true)
+            .eq('status', 'active')
+            .is('filtered_reason', null);
+
+          if (careerPathCategories.length > 0) {
+            lastResortQuery = lastResortQuery.overlaps('categories', careerPathCategories);
+          }
+
+          // Also filter for early-career roles in last resort
+          lastResortQuery = lastResortQuery.or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
+
+          lastResortQuery = lastResortQuery.order('created_at', { ascending: false }).limit(1000);
+          const lastResortResult = await lastResortQuery;
+
+          if (!lastResortResult.error && lastResortResult.data && lastResortResult.data.length > 0) {
+            allJobs = lastResortResult.data;
+            jobsError = null;
+            apiLogger.info('Free signup - found jobs using career path only fallback', {
+              email: normalizedEmail,
+              jobCount: allJobs.length
+            });
+          }
+        }
+      }
+    }
+
+    // Final check: if still no jobs, return error
     if (jobsError || !allJobs || allJobs.length === 0) {
+      apiLogger.warn('Free signup - no jobs found after all fallbacks', {
+        email: normalizedEmail,
+        cities: targetCities,
+        careerPath: userData.career_path
+      });
       return NextResponse.json(
         { error: 'No jobs found. Try different cities or career paths.' },
         { status: 404 }

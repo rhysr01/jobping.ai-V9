@@ -17,6 +17,7 @@
     "test:free": "tsx scripts/test-free-version.ts",
     "debug:free": "tsx scripts/debug-free-signup.ts",
     "test:signup": "tsx scripts/test-free-signup-flow.ts",
+    "check:jobs": "tsx scripts/check-jobs-database.ts",
     "automation:start": "node automation/real-job-runner.cjs",
     "cleanup:jobs": "tsx scripts/cleanup-jobs.ts",
     "health:check": "curl -f http://localhost:3000/api/health || exit 1",
