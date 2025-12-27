@@ -103,7 +103,7 @@ curl https://your-domain.com/api/monitoring/zero-matches
 ### Daily Checks
 - [ ] Check `/api/health` - ensure scraper status is "healthy"
 - [ ] Check `/api/monitoring/zero-matches` - ensure rate <1%
-- [ ] Review Sentry for zero-match errors
+- [ ] Review Axiom logs for zero-match errors
 
 ### Weekly Checks
 - [ ] Review scraper health trends
@@ -181,7 +181,7 @@ fi
 
 1. ✅ Set up uptime monitoring for `/api/health`
 2. ✅ Set up daily check for `/api/monitoring/zero-matches`
-3. ✅ Configure alerts in Sentry for zero-match errors
+3. ✅ Configure alerts in Axiom for zero-match errors
 4. ⏳ Monitor for 1 week to establish baseline
 5. ⏳ Adjust thresholds if needed
 

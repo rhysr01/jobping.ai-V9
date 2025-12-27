@@ -90,20 +90,7 @@ function createAuthenticatedRequest(body: any, method: string = 'POST'): NextReq
   });
 }
 
-// Mock Sentry
-jest.mock('@sentry/nextjs', () => ({
-  addBreadcrumb: jest.fn(),
-  captureMessage: jest.fn(),
-  captureException: jest.fn(),
-  setContext: jest.fn(),
-  setTag: jest.fn(),
-  setUser: jest.fn(),
-  startTransaction: jest.fn(() => ({
-    setTag: jest.fn(),
-    setData: jest.fn(),
-    finish: jest.fn()
-  }))
-}));
+// Sentry removed - using Axiom for error tracking
 
 // Integration tests require full environment (DB, Redis, OpenAI)
 describe('/api/match-users Integration Tests', () => {

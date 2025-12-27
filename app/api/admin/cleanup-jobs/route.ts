@@ -6,7 +6,7 @@
  * 
  * Features:
  * - Secure admin authentication
- * - Comprehensive error tracking with Sentry
+ * - Comprehensive error tracking with Axiom
  * - Structured logging for monitoring
  * - Safety checks and dry-run mode
  * - Performance metrics and reporting

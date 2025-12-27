@@ -9,11 +9,7 @@ import {
   logError
 } from '@/Utils/error-handling/errorHandler';
 
-jest.mock('@sentry/nextjs', () => ({
-  captureException: jest.fn(),
-  addBreadcrumb: jest.fn(),
-  __esModule: true
-}));
+// Sentry removed - using Axiom for error tracking
 
 describe('Error Handler', () => {
   beforeEach(() => {
@@ -29,14 +25,7 @@ describe('Error Handler', () => {
       expect(result).toBeDefined();
     });
 
-    it('should log to Sentry', () => {
-      const error = new Error('Test error');
-
-      handleError(error);
-
-      const Sentry = require('@sentry/nextjs');
-      expect(Sentry.captureException).toHaveBeenCalled();
-    });
+    // Sentry removed - error logging now handled by Axiom
   });
 
   describe('formatError', () => {

@@ -6,10 +6,7 @@
 import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilterJobs';
 import { buildMockUser, buildMockJob } from '@/__tests__/_helpers/testBuilders';
 
-jest.mock('@sentry/nextjs', () => ({
-  addBreadcrumb: jest.fn(),
-  captureException: jest.fn()
-}));
+// Sentry removed - using Axiom for error tracking
 
 jest.mock('@/Utils/databasePool', () => ({
   getDatabaseClient: jest.fn(() => ({

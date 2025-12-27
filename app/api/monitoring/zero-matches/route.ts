@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   try {
     const supabase = getDatabaseClient();
     
-    // Get zero-match incidents from Sentry breadcrumbs or logs
+    // Get zero-match incidents from logs
     // For now, we'll check recent matching activity and flag potential issues
     
     // Get users who might have zero matches (users with no recent matches)

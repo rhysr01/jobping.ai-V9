@@ -15,27 +15,7 @@ jest.mock('@/Utils/matching/categoryMapper', () => ({
     return mapping[formValue] || [];
   })
 }));
-jest.mock('@sentry/nextjs', () => {
-  const mockAddBreadcrumb = jest.fn();
-  const mockCaptureException = jest.fn();
-  const mockCaptureMessage = jest.fn();
-  const mockSetUser = jest.fn();
-  const mockSetContext = jest.fn();
-  
-  const mockSentry = {
-    addBreadcrumb: mockAddBreadcrumb,
-    captureException: mockCaptureException,
-    captureMessage: mockCaptureMessage,
-    setUser: mockSetUser,
-    setContext: mockSetContext
-  };
-  
-  return {
-    __esModule: true,
-    default: mockSentry,
-    ...mockSentry
-  };
-});
+// Sentry removed - using Axiom for error tracking
 
 describe('Pre-Filter Jobs', () => {
   let mockSupabase: any;
