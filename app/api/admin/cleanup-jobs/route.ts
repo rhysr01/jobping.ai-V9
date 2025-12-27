@@ -295,9 +295,12 @@ export const POST = async (req: NextRequest) => {
   const requestId = crypto.randomUUID();
   
   try {
-    // Set Sentry context
-logger.info('Tag set', { metadata: { ['operation']: 'job-cleanup' } });
-logger.info('Context set', { metadata: { ['request']: { requestId });
+    // Log request context
+    logger.info('Job cleanup request started', {
+      component: 'job-cleanup',
+      operation: 'job-cleanup',
+      metadata: { requestId }
+    });
 
     // Authenticate the request
     authenticateRequest(req);
