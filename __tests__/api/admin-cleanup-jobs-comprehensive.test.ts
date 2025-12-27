@@ -7,10 +7,7 @@ import { POST } from '@/app/api/admin/cleanup-jobs/route';
 import { NextRequest } from 'next/server';
 
 jest.mock('@supabase/supabase-js');
-jest.mock('@sentry/nextjs', () => ({
-  captureException: jest.fn(),
-  setContext: jest.fn()
-}));
+// Sentry removed - using Axiom for error tracking
 
 describe('Admin Cleanup Jobs API Route', () => {
   let mockRequest: NextRequest;

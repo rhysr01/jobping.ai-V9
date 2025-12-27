@@ -86,6 +86,6 @@
 
 **Mitigation**: 
 - Test changes in staging first
-- Monitor Sentry for errors
+- Monitor Axiom logs for errors
 - Keep fallback mechanisms active
 

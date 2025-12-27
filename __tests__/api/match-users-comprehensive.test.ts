@@ -14,10 +14,7 @@ jest.mock('@/Utils/matching/semanticRetrieval');
 jest.mock('@/Utils/matching/integrated-matching.service');
 jest.mock('@/Utils/matching/batch-processor.service');
 jest.mock('@/Utils/matching/logging.service');
-jest.mock('@sentry/nextjs', () => ({
-  captureException: jest.fn(),
-  addBreadcrumb: jest.fn()
-}));
+// Sentry removed - using Axiom for error tracking
 
 describe('Match Users API Route - Comprehensive', () => {
   let mockRequest: NextRequest;

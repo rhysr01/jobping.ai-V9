@@ -104,7 +104,6 @@ const additionalUsedVars = [
   'MUSE_API_KEY',
   'GREENHOUSE_API_KEY',
   'JOBPING_API_KEY',
-  'SENTRY_DSN',
   'SKIP_ADZUNA',
 ];
 
@@ -236,7 +235,6 @@ function formatEnvFile(vars: Map<string, string>, validVars: Set<string>): strin
     ],
     'Logging & Monitoring': [
       'LOG_LEVEL',
-      'SENTRY_DSN',
     ],
     'Legacy/Development': [
       'SUPABASE_PROJECT_REF_DEV',

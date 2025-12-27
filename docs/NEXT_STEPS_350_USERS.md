@@ -8,11 +8,11 @@
 ## Immediate Actions (This Week)
 
 ### 1. Monitor Zero-Match Rate ⚠️
-**What to watch**: Sentry alerts for "Zero matches after pre-filtering"
+**What to watch**: Axiom logs for "Zero matches after pre-filtering"
 
 **How to check**:
 ```bash
-# Check Sentry for errors tagged with:
+# Check Axiom logs for errors tagged with:
 component: 'matching'
 issue: 'zero_matches'
 ```
@@ -124,7 +124,7 @@ async function checkScraperHealth(): Promise<ServiceCheck> {
 ## Weekly Checklist
 
 ### Monday
-- [ ] Check Sentry for zero-match errors
+- [ ] Check Axiom logs for zero-match errors
 - [ ] Review email delivery logs
 - [ ] Check scraper health (JobSpy last run)
 - [ ] Monitor user signups
@@ -202,7 +202,7 @@ const getMinimumScore = () => {
 
 ## Questions to Answer This Week
 
-1. ✅ Are zero matches reduced? (Check Sentry)
+1. ✅ Are zero matches reduced? (Check Axiom logs)
 2. ✅ Can we send emails to 350 users? (Test batch)
 3. ✅ Is matching fast enough? (Monitor logs)
 4. ✅ Are users engaging? (Check Resend dashboard)

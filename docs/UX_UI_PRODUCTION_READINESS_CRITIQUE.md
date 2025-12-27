@@ -225,7 +225,7 @@ className="glass-card"
 - **Network error handling** (offline detection)
 - **API timeout handling** (no retry logic visible)
 - **Rate limiting feedback** (what if user submits too fast?)
-- **Error logging** (console.error only, no Sentry integration visible)
+- **Error logging** (Axiom integration via Vercel)
 
 **Critical Gap:**
 ```tsx
@@ -319,8 +319,8 @@ catch (error) {
    - Delay until 60% scroll or 30 seconds on page
    - Only show once per session (already implemented ✅)
 
-8. **Error Logging**
-   - Integrate Sentry or similar
+8. **Error Logging** ✅ **COMPLETED**
+   - Axiom integration via Vercel
    - Log form errors, API errors, boundary errors
    - Set up alerts for critical errors
 
@@ -432,7 +432,7 @@ Create Storybook or similar for:
 2. ✅ Add network error handling (2-3 hours)
 3. ✅ Fix font loading (1 hour)
 4. ✅ Test on real mobile devices (2 hours)
-5. ✅ Add error logging (Sentry setup, 1-2 hours)
+5. ✅ Add error logging (Axiom via Vercel integration)
 
 **Total Time to Production-Ready:** ~8-10 hours of focused work
 

@@ -2,10 +2,7 @@ import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilt
 import type { Job } from '@/scrapers/types';
 import type { UserPreferences } from '@/Utils/matching/types';
 
-// Mock Sentry
-jest.mock('@sentry/nextjs', () => ({
-  addBreadcrumb: jest.fn(),
-}));
+// Sentry removed - using Axiom for error tracking
 
 jest.mock('@/Utils/databasePool', () => ({
   getDatabaseClient: jest.fn(() => ({

@@ -54,7 +54,7 @@
 
 ## 🧪 Testing Recommendations
 
-1. **Test with real users**: Monitor Sentry for zero-match alerts
+1. **Test with real users**: Monitor Axiom logs for zero-match alerts
 2. **Verify matching quality**: Check that lower thresholds don't reduce quality
 3. **Monitor performance**: Ensure 400 users can be processed in <2s per user
 4. **Check entry level matching**: Verify internship/graduate roles match correctly
@@ -80,7 +80,7 @@
 If issues occur:
 1. Revert `userCap` to 300 (if processing too slow)
 2. Revert thresholds to original values (if quality drops)
-3. Monitor Sentry for error patterns
+3. Monitor Axiom logs for error patterns
 
 ---
 

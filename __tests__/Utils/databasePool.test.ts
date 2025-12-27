@@ -6,9 +6,7 @@
 import { getDatabaseClient } from '@/Utils/databasePool';
 
 jest.mock('@supabase/supabase-js');
-jest.mock('@sentry/nextjs', () => ({
-  captureException: jest.fn()
-}));
+// Sentry removed - using Axiom for error tracking
 
 describe('Database Pool', () => {
   beforeEach(() => {

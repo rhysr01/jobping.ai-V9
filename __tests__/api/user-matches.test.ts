@@ -9,9 +9,7 @@ import { NextRequest } from 'next/server';
 jest.mock('@/Utils/databasePool');
 jest.mock('@/Utils/productionRateLimiter');
 jest.mock('@/Utils/auth/hmac');
-jest.mock('@sentry/nextjs', () => ({
-  addBreadcrumb: jest.fn()
-}));
+// Sentry removed - using Axiom for error tracking
 
 describe('User Matches API Route', () => {
   let mockRequest: NextRequest;

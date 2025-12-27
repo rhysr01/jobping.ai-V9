@@ -77,8 +77,8 @@ export async function logMatchMetrics(metrics: MatchMetrics): Promise<void> {
       });
     
     if (error) {
-      // Table might not exist yet - log to Sentry instead
-      console.warn('Metrics table not available, logging to Sentry:', error);
+      // Table might not exist yet - log to console
+      console.warn('Metrics table not available:', error);
     }
     
     // Log metrics to Axiom

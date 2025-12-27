@@ -11,11 +11,7 @@ import {
 } from '@/Utils/matching/metrics.service';
 
 jest.mock('@/Utils/databasePool');
-jest.mock('@sentry/nextjs', () => ({
-  addBreadcrumb: jest.fn(),
-  __esModule: true,
-  default: {}
-}));
+// Sentry removed - using Axiom for error tracking
 
 describe('Match Metrics Service', () => {
   let mockSupabase: any;

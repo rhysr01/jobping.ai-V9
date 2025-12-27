@@ -385,8 +385,7 @@ const matchUsersHandler = async (req: NextRequest) => {
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
   
-  // Sentry removed - no longer using error tracking service
-  // Performance monitoring now handled by apiLogger
+  // Performance monitoring handled by apiLogger
   
   // Context for API monitoring
 logger.info('API request', {
@@ -523,7 +522,7 @@ logger.info('API request', {
       return NextResponse.json({ message: 'No users found' });
     }
 
-    // Log user count to Sentry breadcrumb (no console spam)
+    // Log user count
     logger.info('Active users found', {
       metadata: { userCount: users.length }
     });
@@ -613,7 +612,7 @@ logger.info('API request', {
       return NextResponse.json({ message: 'No active jobs to process' });
     }
 
-    // Log job fetch results to Sentry breadcrumb
+    // Log job fetch results
     logger.info('Jobs fetched successfully', {
       metadata: { jobCount: jobs.length, fetchTime: jobFetchTime }
     });
@@ -661,7 +660,6 @@ logger.info('API request', {
     // Skip in-memory job reservations; Redis global lock already protects this run
 
     // Log overall job distribution
-    // Log total jobs to Sentry breadcrumb
     logger.debug('Total jobs processed', {
       metadata: { totalJobs: jobs.length }
     });
@@ -758,7 +756,7 @@ logger.info('API request', {
             rolesSelected: user.preferences.roles_selected
           });
           
-          // Send to Sentry for monitoring
+          // Log zero matches for monitoring
           logger.error('Zero matches after pre-filtering', {
             error: zeroJobsError,
             component: 'matching',
@@ -779,7 +777,7 @@ logger.info('API request', {
         // This reduces token cost by 50% while maintaining match quality
         // Top 50 contains all perfect/great matches from pre-filtering
         const considered = preFilteredJobs.slice(0, 50);
-        // Log pre-filter results to Sentry breadcrumb
+        // Log pre-filter results
           logger.debug('Pre-filter results', {
             metadata: {
               userEmail: user.email,
@@ -788,7 +786,7 @@ logger.info('API request', {
             }
           });
         
-        // Log score distribution to Sentry breadcrumb for observability
+        // Log score distribution for observability
         if (preFilteredJobs.length >= 50) {
           const top10Scores = preFilteredJobs.slice(0, 10).map((j: any) => (j as any).score || 'N/A');
           const next40Scores = preFilteredJobs.slice(10, 50).map((j: any) => (j as any).score || 'N/A');
@@ -1137,7 +1135,7 @@ logger.info('API request', {
                 });
               }
               
-              // Log diversity improvement to Sentry breadcrumb
+              // Log diversity improvement
               logger.debug('Enforced source diversity', {
                 metadata: {
                   userEmail: user.email,
@@ -1167,7 +1165,7 @@ logger.info('API request', {
           }).filter(Boolean);
           const finalUniqueCities = new Set(finalCities);
           
-          // Log final diversity to Sentry breadcrumb
+          // Log final diversity
           logger.debug('Final diversity achieved', {
             metadata: {
               userEmail: user.email,
@@ -1334,11 +1332,12 @@ logger.info('API request', {
     return result;
   } catch (error) {
     const requestDuration = Date.now() - startTime;
-    apiLogger.error('Match-users processing error', error as Error, { requestId, requestDuration });
+    const errorInstance: Error = error instanceof Error ? error : new Error(String(error));
+    apiLogger.error('Match-users processing error', errorInstance, { requestId, requestDuration });
     
-    // Sentry error tracking with context
+    // Error tracking with context
     logger.error('Match-users batch processing error', {
-      error: error,
+      error: errorInstance,
       component: 'match-users',
       operation: 'batch-processing',
       metadata: {
@@ -1354,7 +1353,7 @@ logger.info('API request', {
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   } finally {
-    // Sentry removed - transaction tracking no longer needed
+    // Cleanup completed
   }
 };
 

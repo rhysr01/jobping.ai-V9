@@ -13,10 +13,7 @@ jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn()
 }));
 
-jest.mock('@sentry/nextjs', () => ({
-  captureException: jest.fn(),
-  addBreadcrumb: jest.fn()
-}));
+// Sentry removed - using Axiom for error tracking
 
 describe('Database Pool', () => {
   let mockCreateClient: any;
@@ -165,8 +162,7 @@ describe('Database Pool', () => {
         getDatabaseClient();
       }).toThrow();
 
-      const Sentry = require('@sentry/nextjs');
-      expect(Sentry.captureException).toHaveBeenCalled();
+      // Error logging now handled by Axiom
     });
   });
 });

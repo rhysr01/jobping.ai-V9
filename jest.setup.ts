@@ -80,32 +80,7 @@ jest.mock('resend', () => ({
   })),
 }));
 
-// Mock Sentry (no-op in test mode)
-jest.mock('@sentry/nextjs', () => {
-  const mockAddBreadcrumb = jest.fn();
-  const mockCaptureException = jest.fn();
-  const mockCaptureMessage = jest.fn();
-  const mockSetUser = jest.fn();
-  const mockSetContext = jest.fn();
-  const mockWithScope = jest.fn();
-  const mockSetTag = jest.fn();
-  
-  const mockSentry = {
-    addBreadcrumb: mockAddBreadcrumb,
-    captureException: mockCaptureException,
-    captureMessage: mockCaptureMessage,
-    setUser: mockSetUser,
-    setContext: mockSetContext,
-    withScope: mockWithScope,
-    setTag: mockSetTag
-  };
-  
-  return {
-    __esModule: true,
-    default: mockSentry,
-    ...mockSentry
-  };
-});
+// Sentry removed - using Axiom for error tracking
 
 // EnhancedAIMatchingCache removed - no longer needed
 
