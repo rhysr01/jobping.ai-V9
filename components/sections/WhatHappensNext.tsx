@@ -7,7 +7,7 @@ export default function WhatHappensNext() {
   const stepIcons = [BrandIcons.Users, BrandIcons.Zap, BrandIcons.Mail];
 
   return (
-    <section className="pt-24 pb-24 md:pt-28 md:pb-28 lg:pt-32 lg:pb-32 relative overflow-hidden bg-zinc-950/50">
+    <section className="pt-24 pb-24 md:pt-28 md:pb-28 lg:pt-32 lg:pb-32 relative overflow-hidden bg-[#0a0a0a]">
       <div className="container-page relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
