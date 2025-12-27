@@ -71,16 +71,6 @@ export default function EmailPhoneShowcase({ day = 'monday', careerPath = 'finan
         </motion.div>
       </div>
 
-      {/* Schedule text below email */}
-      <motion.p
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, delay: 0.3 }}
-        className="text-center mt-4 text-sm text-zinc-400"
-      >
-        Try it free: Get 5 matches now • <span className="text-brand-300">Like it? Upgrade to 15 matches/week</span>
-      </motion.p>
     </div>
   );
 }

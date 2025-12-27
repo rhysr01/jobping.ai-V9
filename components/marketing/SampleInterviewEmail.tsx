@@ -416,7 +416,7 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
         </p>
         <div className="mb-6 p-3 rounded-lg bg-gradient-to-r from-brand-500/10 to-purple-600/10 border border-brand-500/20">
           <p className="text-[13px] text-brand-300 font-semibold mb-1">📧 Example Email</p>
-          <p className="text-[12px] text-zinc-400 leading-relaxed">This is what your matches will look like. <span className="text-white font-semibold">Try it free: Get 5 matches now.</span> Like it? Upgrade to get 15 matches/week (Mon/Wed/Fri) for €5/month.</p>
+          <p className="text-[12px] text-zinc-400 leading-relaxed">This is what your matches will look like. Sign up to get your own personalized matches.</p>
         </div>
 
         {displayJobs.map((job, index) => {

@@ -138,9 +138,6 @@ export default function Hero() {
                 <p className="text-sm text-zinc-400">
                   ⚡ Instant matches • No credit card • 2-minute setup
                 </p>
-                <p className="text-xs text-zinc-500 italic">
-                  Like it? Upgrade to get 15 matches/week delivered Mon/Wed/Fri for €5/month
-                </p>
               </motion.div>
               <TrustBadges />
               
