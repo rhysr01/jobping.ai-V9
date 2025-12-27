@@ -259,16 +259,6 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
                 <div className="text-[15px] text-zinc-300 font-medium mb-2">{job.company}</div>
                 <div className="text-[13px] text-zinc-500 mb-4">📍 {job.location}</div>
                 
-                {/* Why you should apply section - 1 line only */}
-                <div className="mb-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-emerald-400 flex-shrink-0">✓</span>
-                    <div className="text-[13px] font-semibold text-emerald-400">
-                      Matches your filters: London, Entry-level, Visa sponsorship, Strategy role
-                    </div>
-                  </div>
-                </div>
-
                 <div className="text-[14px] text-zinc-400 leading-relaxed mb-4">
                   {formatDescription(job.description)}
                 </div>
