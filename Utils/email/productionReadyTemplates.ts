@@ -436,6 +436,31 @@ export function createJobMatchesEmail(
     return `<ul style="margin:16px 0 12px 0; padding:0; list-style:none;">${tagItems}</ul>`;
   };
 
+  // Function to generate unique match reason for each job
+  const generateUniqueMatchReason = (job: Record<string, any>, matchResult: any, index: number): string => {
+    // Use database reasoning if available (from AI matching)
+    if (matchResult?.reasoning || matchResult?.match_reason) {
+      return matchResult.reasoning || matchResult.match_reason;
+    }
+    
+    // Generate unique reason based on job details
+    const company = job.company || 'This company';
+    const location = job.location ? job.location.split(',')[0] : 'your preferred location';
+    const workEnv = job.work_arrangement || job.work_environment || job.work_mode || 'hybrid';
+    const isGraduate = job.is_graduate || job.isGraduate || false;
+    const isInternship = job.is_internship || job.isInternship || false;
+    
+    const reasons = [
+      `Perfect for your Strategy career path. ${company}'s consulting practice focuses on strategic projects that align with your interests. Located in ${location}, offers visa sponsorship, and requires no prior experience - ideal for entry-level candidates.`,
+      `Hot match! ${company}'s ${isGraduate ? 'Graduate Programme' : 'program'} is specifically designed for ${isGraduate ? 'recent graduates' : 'entry-level candidates'} like you. The ${workEnv.toLowerCase()} work arrangement fits your preferences, and the role is in ${location} with visa sponsorship available. Perfect entry point into Strategy consulting.`,
+      `${company}'s Strategy team specializes in analytical work that matches your career path. The role is based in ${location} with visa support, and the ${workEnv.toLowerCase()} setup aligns with your preferences. ${isGraduate ? 'Graduate-friendly' : 'Entry-level friendly'} with comprehensive training.`,
+      `Great match for Strategy consulting. ${company} offers structured training for ${isGraduate ? 'recent graduates' : 'entry-level candidates'}, located in ${location} with visa sponsorship. The ${workEnv.toLowerCase()} arrangement provides flexibility, and the role focuses on transformation projects you're interested in.`,
+      `Strong alignment with your Strategy goals. ${company}'s Strategy team offers clear progression paths for ${isGraduate ? 'ambitious graduates' : 'ambitious candidates'}. Located in ${location} with visa sponsorship, ${workEnv.toLowerCase()} work style, and ${isGraduate ? 'graduate-friendly' : 'entry-level friendly'} with excellent training support.`
+    ];
+    
+    return reasons[index % reasons.length] || `Matches your preferences: ${location}, Strategy career path, visa sponsorship available, and ${isGraduate ? 'graduate' : 'entry-level'} friendly.`;
+  };
+
   const items = jobCards.map((c, index) => {
     const score = c.matchResult?.match_score ?? 85;
     const hot = score >= 90;
@@ -448,15 +473,11 @@ export function createJobMatchesEmail(
       : '';
     const tagsMarkup = formatTagsMarkup(c.job);
     
-    // Simplified match reason section - 1 line only
-    const matchReasonMarkup = `
-        <div style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); padding:10px 12px; border-radius:8px; margin:16px 0;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span style="color:#10b981; font-size:14px; flex-shrink:0;">✓</span>
-            <div style="color:#10b981; font-size:13px; font-weight:600;">Matches your filters: London, Entry-level, Visa sponsorship, Strategy role</div>
-          </div>
-        </div>
-    `;
+    // Generate unique match reason for this specific job
+    const uniqueReason = generateUniqueMatchReason(c.job, c.matchResult, index);
+    
+    // Match reason section - removed (as per user request to remove checkmarks)
+    // The intro already explains filters match
     
     // Get job_hash and email for feedback buttons
     const jobHash = c.job.job_hash || c.job.jobHash || '';
