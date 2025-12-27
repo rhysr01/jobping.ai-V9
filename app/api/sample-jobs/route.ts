@@ -27,10 +27,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ jobs: [], error: 'No users found' }, { status: 500 });
     }
 
-    // Find users who have matches - try multiple users
+    // Find users who have matches - try multiple users to get variety
     let selectedUser = null;
     let userMatches = null;
-    let usersChecked = 0;
     const maxUsersToCheck = Math.min(10, usersWithMatches.length);
 
     // Start from offset to get different user based on day
