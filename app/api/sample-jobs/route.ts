@@ -111,6 +111,8 @@ export async function GET(req: NextRequest) {
     // Map career path to database categories (e.g., 'Tech' → 'tech-transformation')
     const careerPathCategories = getDatabaseCategoriesForForm(selectedUserProfile.careerPath.toLowerCase());
     
+    // SIMPLIFIED: Get jobs with early-career filter, but don't filter by career path or cities at DB level
+    // We'll do all filtering in memory to avoid losing jobs
     let query = supabase
       .from('jobs')
       .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
@@ -118,19 +120,11 @@ export async function GET(req: NextRequest) {
       .eq('status', 'active')
       .is('filtered_reason', null)
       .not('job_url', 'is', null)
-      .neq('job_url', '');
-    
-    // Filter by career path categories (same as preview-matches and signup routes)
-    if (careerPathCategories.length > 0 && careerPathCategories.length <= 20) {
-      query = query.overlaps('categories', careerPathCategories);
-    }
-    
-    // Filter for early-career roles (same as preview-matches and signup routes)
-    query = query.or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
-    
-    query = query.order('created_at', { ascending: false }).limit(100); // Get more jobs to filter for diversity
+      .neq('job_url', '')
+      .or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}') // Early-career filter only
+      .order('created_at', { ascending: false })
+      .limit(200); // Get more jobs to filter for diversity
 
-    // Try to filter by cities, but if that returns too few results, we'll filter in memory
     const { data: allJobs, error: jobsError } = await query;
 
     // Log query result for debugging
@@ -147,13 +141,46 @@ export async function GET(req: NextRequest) {
     });
 
     if (!jobsError && allJobs && allJobs.length > 0) {
-      // Filter to preferred cities and ensure valid jobs with URLs
+      // Filter in memory: prefer jobs matching career path AND preferred cities, but accept others too
       const validJobs = allJobs.filter(job => {
         if (!job.job_url || job.job_url.trim() === '' || usedJobHashes.has(job.job_hash)) {
           return false;
         }
+        return true; // Accept all jobs with URLs - we'll prioritize by career path and city in sorting
+      });
+
+      // Score jobs: prefer career path matches and city matches
+      const scoredJobs = validJobs.map(job => {
+        let score = 0;
         
-        // Check if job matches preferred cities (case-insensitive, handle variations)
+        // Career path match (high priority)
+        const jobCategories = (job.categories || []).map((c: string) => c.toLowerCase());
+        const hasCareerMatch = careerPathCategories.some(cat => 
+          jobCategories.some(jc => jc.includes(cat.toLowerCase()) || cat.toLowerCase().includes(jc))
+        );
+        if (hasCareerMatch) score += 10;
+        
+        // City match (high priority)
+        const jobCity = (job.city || job.location?.split(',')[0] || '').toLowerCase().trim();
+        const matchesPreferredCity = normalizedCities.some(prefCity => 
+          jobCity.includes(prefCity) || 
+          prefCity.includes(jobCity) ||
+          job.location?.toLowerCase().includes(prefCity)
+        );
+        if (matchesPreferredCity) score += 10;
+        
+        return { job, score };
+      }).sort((a, b) => b.score - a.score); // Sort by score (best matches first)
+
+      console.log(`After filtering: ${scoredJobs.length} valid jobs (scored and sorted)`);
+      
+      // Add jobs from scored list, ensuring diversity
+      const citiesUsed = new Set<string>();
+      
+      // First pass: Try to get jobs from preferred cities (prioritize high-scored jobs)
+      for (const { job, score } of scoredJobs) {
+        if (resultJobs.length >= 5) break;
+        
         const jobCity = (job.city || job.location?.split(',')[0] || '').toLowerCase().trim();
         const matchesPreferredCity = normalizedCities.some(prefCity => 
           jobCity.includes(prefCity) || 
@@ -161,114 +188,85 @@ export async function GET(req: NextRequest) {
           job.location?.toLowerCase().includes(prefCity)
         );
         
-        return matchesPreferredCity;
-      });
-
-      console.log(`After city filtering: ${validJobs.length} jobs match preferred cities`);
+        // Prefer jobs matching preferred cities
+        if (matchesPreferredCity && !citiesUsed.has(jobCity)) {
+          const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
+          const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
+          resultJobs.push({
+            ...job,
+            matchScore,
+            matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
+          });
+          usedJobHashes.add(job.job_hash);
+          citiesUsed.add(jobCity);
+        }
+      }
       
-      // Ensure city diversity: try to get at least one job from each preferred city
-      const citiesUsed = new Set<string>();
-      const jobsByCity: { [city: string]: any[] } = {};
-      
-      // Group jobs by matching preferred city
-      validJobs.forEach(job => {
-        const jobCity = job.city || job.location?.split(',')[0] || 'Unknown';
-        const jobCityLower = jobCity.toLowerCase().trim();
+      // Second pass: Fill remaining slots with any high-scored jobs
+      for (const { job, score } of scoredJobs) {
+        if (resultJobs.length >= 5) break;
+        if (usedJobHashes.has(job.job_hash)) continue;
         
-        // Find which preferred city this job matches
-        const matchedPrefCity = selectedUserProfile.cities.find(prefCity => {
-          const prefCityLower = prefCity.toLowerCase();
-          return jobCityLower.includes(prefCityLower) || 
-                 prefCityLower.includes(jobCityLower) ||
-                 job.location?.toLowerCase().includes(prefCityLower);
+        const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
+        const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
+        resultJobs.push({
+          ...job,
+          matchScore,
+          matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
         });
-        
-        const cityKey = matchedPrefCity || jobCity;
-        if (!jobsByCity[cityKey]) {
-          jobsByCity[cityKey] = [];
-        }
-        jobsByCity[cityKey].push(job);
-      });
-      
-      // First pass: Get one job from each preferred city
-      selectedUserProfile.cities.forEach(prefCity => {
-        const matchingCity = Object.keys(jobsByCity).find(city => {
-          const cityLower = city.toLowerCase();
-          const prefCityLower = prefCity.toLowerCase();
-          return cityLower.includes(prefCityLower) || 
-                 prefCityLower.includes(cityLower) ||
-                 city === prefCity;
-        });
-        
-        if (matchingCity && jobsByCity[matchingCity].length > 0 && resultJobs.length < 5) {
-          const job = jobsByCity[matchingCity].shift();
-          if (job && job.job_url && job.job_url.trim() !== '') {
-            const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
-            const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
-            resultJobs.push({
-              ...job,
-              matchScore,
-              matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
-            });
-            usedJobHashes.add(job.job_hash);
-            citiesUsed.add(matchingCity);
-          }
-        }
-      });
-      
-      // Second pass: Fill remaining slots with diverse cities from preferred list
-      const remainingJobs = validJobs.filter(job => 
-        !usedJobHashes.has(job.job_hash) && 
-        job.job_url && 
-        job.job_url.trim() !== ''
-      );
-      
-      // Group remaining by city for diversity
-      const remainingByCity: { [city: string]: any[] } = {};
-      remainingJobs.forEach(job => {
-        const jobCity = job.city || job.location?.split(',')[0] || 'Unknown';
-        if (!remainingByCity[jobCity]) {
-          remainingByCity[jobCity] = [];
-        }
-        remainingByCity[jobCity].push(job);
-      });
-      
-      // Fill slots ensuring diversity
-      while (resultJobs.length < 5 && Object.keys(remainingByCity).length > 0) {
-        // Find a city we haven't used yet
-        const unusedCity = Object.keys(remainingByCity).find(city => !citiesUsed.has(city));
-        const cityToUse = unusedCity || Object.keys(remainingByCity)[0];
-        
-        if (remainingByCity[cityToUse] && remainingByCity[cityToUse].length > 0) {
-          const job = remainingByCity[cityToUse].shift();
-          if (job && job.job_url && job.job_url.trim() !== '') {
-            const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
-            const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
-            resultJobs.push({
-              ...job,
-              matchScore,
-              matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
-            });
-            usedJobHashes.add(job.job_hash);
-            citiesUsed.add(cityToUse);
-          }
-          
-          // Remove city if empty
-          if (remainingByCity[cityToUse].length === 0) {
-            delete remainingByCity[cityToUse];
-          }
-        } else {
-          break;
-        }
+        usedJobHashes.add(job.job_hash);
       }
     }
     
-    // If we still don't have 5 jobs OR initial query failed, try progressive fallback
-    if (resultJobs.length < 5 || jobsError || !allJobs || allJobs.length === 0) {
-      console.log(`Fallback needed: Only found ${resultJobs.length} jobs from initial query`);
+    // If initial query failed or returned no jobs, try simple fallback
+    if (jobsError || !allJobs || allJobs.length === 0) {
+      console.log(`Fallback needed: Initial query failed or returned 0 jobs`);
       
-      // Fallback Level 1: Try without city filter but keep career path + early-career
-      let fallbackQuery = supabase
+      // Simple fallback: Get ANY early-career jobs
+      const { data: fallbackJobs, error: fallbackError } = await supabase
+        .from('jobs')
+        .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
+        .eq('is_active', true)
+        .eq('status', 'active')
+        .is('filtered_reason', null)
+        .not('job_url', 'is', null)
+        .neq('job_url', '')
+        .or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (fallbackError) {
+        console.warn('Fallback query error:', fallbackError);
+      }
+      
+      if (!fallbackError && fallbackJobs && fallbackJobs.length > 0) {
+        console.log(`Fallback: Found ${fallbackJobs.length} jobs`);
+        
+        // Add jobs from fallback
+        fallbackJobs.forEach((job, index) => {
+          if (resultJobs.length < 5 && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
+            const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
+            const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
+            resultJobs.push({
+              ...job,
+              matchScore,
+              matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
+            });
+            usedJobHashes.add(job.job_hash);
+          }
+        });
+      }
+    }
+
+    // Final validation - ensure all jobs have URLs
+    let validJobs = resultJobs.filter(job => job.job_url && job.job_url.trim() !== '');
+    
+    // If we have less than 5 jobs, try emergency fallback (even if we have 1-4 jobs)
+    if (validJobs.length < 5) {
+      console.log(`Emergency fallback: Only ${validJobs.length} jobs, trying emergency query to get to 5...`);
+      
+      // Emergency: Get ANY early-career job with URL, no filters
+      let emergencyQuery = supabase
         .from('jobs')
         .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
         .eq('is_active', true)
@@ -278,147 +276,34 @@ export async function GET(req: NextRequest) {
         .neq('job_url', '')
         .not('job_hash', 'in', Array.from(usedJobHashes));
       
-      // Still filter by career path in fallback
-      if (careerPathCategories.length > 0 && careerPathCategories.length <= 20) {
-        fallbackQuery = fallbackQuery.overlaps('categories', careerPathCategories);
+      // Still prefer early-career but don't require it in emergency
+      emergencyQuery = emergencyQuery.or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
+      emergencyQuery = emergencyQuery.order('created_at', { ascending: false }).limit(20);
+      
+      const { data: emergencyJobs, error: emergencyError } = await emergencyQuery;
+      
+      if (emergencyError) {
+        console.warn('Emergency query error:', emergencyError);
       }
       
-      // Still filter for early-career roles
-      fallbackQuery = fallbackQuery.or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
-      
-      fallbackQuery = fallbackQuery.order('created_at', { ascending: false }).limit(50);
-      
-      const { data: fallbackJobs, error: fallbackError } = await fallbackQuery;
-
-      if (fallbackError) {
-        console.warn('Fallback Level 1 query error:', fallbackError);
-      }
-
-      if (!fallbackError && fallbackJobs && fallbackJobs.length > 0) {
-        console.log(`Fallback Level 1: Found ${fallbackJobs.length} jobs (career path + early-career, no city filter)`);
-        // Ensure diversity in fallback too
-        const fallbackCitiesUsed = new Set<string>();
-        const fallbackJobsByCity: { [city: string]: any[] } = {};
+      if (!emergencyError && emergencyJobs && emergencyJobs.length > 0) {
+        console.log(`Emergency fallback: Found ${emergencyJobs.length} jobs`);
         
-        fallbackJobs.forEach(job => {
-          const jobCity = job.city || job.location?.split(',')[0] || 'Unknown';
-          if (!fallbackJobsByCity[jobCity]) {
-            fallbackJobsByCity[jobCity] = [];
-          }
-          fallbackJobsByCity[jobCity].push(job);
-        });
-        
-        // Prefer diverse cities (reuse calculateMatchScore function)
-        Object.keys(fallbackJobsByCity).forEach(city => {
-          if (resultJobs.length < 5 && fallbackJobsByCity[city].length > 0) {
-            const job = fallbackJobsByCity[city].shift();
-            if (job && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
-              const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
-              const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
-              resultJobs.push({
-                ...job,
-                matchScore,
-                matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
-              });
-              usedJobHashes.add(job.job_hash);
-              fallbackCitiesUsed.add(city);
-            }
-          }
-        });
-        
-        // Fill remaining slots if needed
-        if (resultJobs.length < 5) {
-          fallbackJobs.forEach((job, index) => {
-            if (resultJobs.length < 5 && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
-              const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
-              const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
-              resultJobs.push({
-                ...job,
-                matchScore,
-                matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
-              });
-              usedJobHashes.add(job.job_hash);
-            }
-          });
-        }
-      }
-
-      // Fallback Level 2: If still not enough, try without career path filter (just early-career)
-      if (resultJobs.length < 5) {
-        console.log(`Fallback Level 2: Only ${resultJobs.length} jobs, trying without career path filter...`);
-        
-        let fallback2Query = supabase
-          .from('jobs')
-          .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
-          .eq('is_active', true)
-          .eq('status', 'active')
-          .is('filtered_reason', null)
-          .not('job_url', 'is', null)
-          .neq('job_url', '')
-          .not('job_hash', 'in', Array.from(usedJobHashes))
-          .or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}')
-          .order('created_at', { ascending: false })
-          .limit(50);
-        
-        const { data: fallback2Jobs, error: fallback2Error } = await fallback2Query;
-        
-        if (fallback2Error) {
-          console.warn('Fallback Level 2 query error:', fallback2Error);
-        }
-        
-        if (!fallback2Error && fallback2Jobs && fallback2Jobs.length > 0) {
-          console.log(`Fallback Level 2: Found ${fallback2Jobs.length} jobs (early-career only, no career path filter)`);
-          
-          // Add jobs from fallback 2
-          const fallback2CitiesUsed = new Set<string>();
-          const fallback2JobsByCity: { [city: string]: any[] } = {};
-          
-          fallback2Jobs.forEach(job => {
-            const jobCity = job.city || job.location?.split(',')[0] || 'Unknown';
-            if (!fallback2JobsByCity[jobCity]) {
-              fallback2JobsByCity[jobCity] = [];
-            }
-            fallback2JobsByCity[jobCity].push(job);
-          });
-          
-          Object.keys(fallback2JobsByCity).forEach(city => {
-            if (resultJobs.length < 5 && fallback2JobsByCity[city].length > 0) {
-              const job = fallback2JobsByCity[city].shift();
-              if (job && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
-                const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
-                const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
-                resultJobs.push({
-                  ...job,
-                  matchScore,
-                  matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
-                });
-                usedJobHashes.add(job.job_hash);
-                fallback2CitiesUsed.add(city);
-              }
-            }
-          });
-          
-          // Fill remaining slots
-          if (resultJobs.length < 5) {
-            fallback2Jobs.forEach((job, index) => {
-              if (resultJobs.length < 5 && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
-                const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
-                const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
-                resultJobs.push({
-                  ...job,
-                  matchScore,
-                  matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
-                });
-                usedJobHashes.add(job.job_hash);
-              }
+        // Add jobs until we have 5
+        emergencyJobs.forEach((job, index) => {
+          if (validJobs.length < 5 && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
+            const hotMatches = validJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
+            const matchScore = calculateMatchScore(validJobs.length, hotMatches);
+            validJobs.push({
+              ...job,
+              matchScore,
+              matchReason: getMatchReason(job, validJobs.length, selectedUserProfile),
             });
+            usedJobHashes.add(job.job_hash);
           }
-        }
+        });
       }
     }
-
-    // Final validation - ensure all jobs have URLs
-    const validJobs = resultJobs.filter(job => job.job_url && job.job_url.trim() !== '');
     
     if (validJobs.length === 0) {
       console.error('CRITICAL: No jobs with URLs found after all filters');
@@ -426,34 +311,32 @@ export async function GET(req: NextRequest) {
       console.error(`  - Result jobs before filtering: ${resultJobs.length}`);
       console.error(`  - Used job hashes: ${usedJobHashes.size}`);
       
-      // Last resort: try to get ANY job with URL, but still filter by early-career
-      let emergencyQuery = supabase
+      // Last resort: try to get ANY job with URL (no filters at all)
+      let lastResortQuery = supabase
         .from('jobs')
         .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
         .eq('is_active', true)
         .eq('status', 'active')
         .is('filtered_reason', null)
         .not('job_url', 'is', null)
-        .neq('job_url', '');
+        .neq('job_url', '')
+        .order('created_at', { ascending: false })
+        .limit(10);
       
-      // Still filter for early-career roles even in emergency fallback
-      emergencyQuery = emergencyQuery.or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
-      emergencyQuery = emergencyQuery.limit(10);
+      const { data: lastResortJobs, error: lastResortError } = await lastResortQuery;
       
-      const { data: emergencyJobs, error: emergencyError } = await emergencyQuery;
-      
-      if (emergencyError) {
-        console.error('Emergency query error:', emergencyError);
+      if (lastResortError) {
+        console.error('Last resort query error:', lastResortError);
         // Check for Supabase blocking
-        const errorStr = JSON.stringify(emergencyError).toLowerCase();
+        const errorStr = JSON.stringify(lastResortError).toLowerCase();
         if (errorStr.includes('rate limit') || errorStr.includes('429') || errorStr.includes('memory')) {
           console.error('⚠️  Supabase appears to be blocking queries (rate limit or memory issue)');
         }
       }
       
-      if (emergencyJobs && emergencyJobs.length > 0) {
-        console.log(`Emergency fallback: Found ${emergencyJobs.length} jobs`);
-        emergencyJobs.forEach((job, index) => {
+      if (lastResortJobs && lastResortJobs.length > 0) {
+        console.log(`Last resort: Found ${lastResortJobs.length} jobs (no filters)`);
+        lastResortJobs.forEach((job, index) => {
           // Only add if job has a URL
           if (job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
             const hotMatches = validJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
@@ -478,8 +361,8 @@ export async function GET(req: NextRequest) {
           error: 'No jobs available. Please try again later.',
           debug: {
             initialQueryError: jobsError?.message,
-            emergencyQueryError: emergencyError?.message,
-            supabaseBlocking: emergencyError ? JSON.stringify(emergencyError).toLowerCase().includes('rate limit') : false
+            lastResortQueryError: lastResortError?.message,
+            supabaseBlocking: lastResortError ? JSON.stringify(lastResortError).toLowerCase().includes('rate limit') : false
           }
         }, { status: 200 }); // Return 200 to prevent UI errors
       }
