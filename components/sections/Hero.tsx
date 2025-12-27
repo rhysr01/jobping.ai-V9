@@ -157,14 +157,19 @@ export default function Hero() {
               </motion.div>
               
               {/* Social Proof Stats */}
-              <motion.p
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
-                className="text-sm text-zinc-400 pt-2"
+                className="pt-3"
               >
-                Join {stats && stats.totalUsers > 0 ? `${stats.totalUsers.toLocaleString('en-US')}+` : '1,500+'} job seekers finding roles
-              </motion.p>
+                <p className="text-base font-semibold text-zinc-300 mb-1">
+                  Join {stats && stats.totalUsers > 0 ? `${stats.totalUsers.toLocaleString('en-US')}+` : '1,500+'} job seekers finding roles
+                </p>
+                <p className="text-xs text-zinc-500">
+                  Trusted by students across Europe
+                </p>
+              </motion.div>
             </motion.div>
           </motion.div>
 

@@ -236,18 +236,24 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
                 } p-5`}
               >
                 <div className="mb-4">
-                  <span 
-                    className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r ${
-                      hot 
-                        ? 'from-brand-600 to-brand-500' 
-                        : 'from-brand-500 to-brand-600'
-                    } px-4 py-1.5 text-[11px] font-semibold text-white cursor-help group relative`}
-                    aria-label={`${score} percent match score. ${hot ? 'Hot match' : 'Good match'} - based on your location, career path, visa status, and experience level matching this role.`}
-                    title={`${score}% Match: This score shows how well this role matches your preferences. ${hot ? 'Hot matches (90%+) are highly aligned with your location, career path, visa status, and experience level.' : 'Good matches (85-89%) align well with most of your preferences.'} Hover for details.`}
-                  >
-                    {hot ? `🔥 Hot Match ${score}%` : `${score}% Match`}
-                    <span className="opacity-60 group-hover:opacity-100 transition-opacity" aria-hidden="true" title="Match score explained: Based on location, career path, visa status, and experience level alignment">ℹ️</span>
-                  </span>
+                  <div className="inline-flex items-center gap-2">
+                    <span 
+                      className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r ${
+                        hot 
+                          ? 'from-brand-600 to-brand-500' 
+                          : 'from-brand-500 to-brand-600'
+                      } px-4 py-1.5 text-[11px] font-semibold text-white`}
+                    >
+                      {hot ? `🔥 Hot Match ${score}%` : `${score}% Match`}
+                    </span>
+                    <button
+                      className="text-[10px] text-zinc-400 hover:text-zinc-300 underline decoration-dotted underline-offset-2 transition-colors"
+                      title={`${score}% Match: This score shows how well this role matches your preferences. ${hot ? 'Hot matches (90%+) are highly aligned with your location, career path, visa status, and experience level.' : 'Good matches (85-89%) align well with most of your preferences.'} The score is calculated based on: Location match (${job.location}), Career path (Strategy), Visa sponsorship availability, and Experience level (Entry-level).`}
+                      aria-label="Why this score? Click to learn more about match percentage"
+                    >
+                      Why this score?
+                    </button>
+                  </div>
                 </div>
                 <div className="font-bold text-[18px] text-white mb-2 leading-tight">{job.title}</div>
                 <div className="text-[15px] text-zinc-300 font-medium mb-2">{job.company}</div>
@@ -258,7 +264,7 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
                   <div className="flex items-center gap-2">
                     <span className="text-emerald-400 flex-shrink-0">✓</span>
                     <div className="text-[13px] font-semibold text-emerald-400">
-                      Matches all your filters: location, visa status, experience level, and career path.
+                      Matches your filters: London, Entry-level, Visa sponsorship, Strategy role
                     </div>
                   </div>
                 </div>
@@ -314,7 +320,7 @@ export default function SampleInterviewEmail({ day = 'monday' }: SampleInterview
                   target={job.jobUrl ? "_blank" : undefined}
                   rel={job.jobUrl ? "noopener noreferrer" : undefined}
                   aria-label={`Apply now: ${job.title} at ${job.company}`}
-                  className="inline-block rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-[14px] font-semibold text-white shadow-[0_4px_16px_rgba(109,90,143,0.3)] hover:opacity-90 transition-opacity"
+                  className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 px-8 py-3.5 text-[15px] font-bold text-white shadow-[0_4px_20px_rgba(139,92,246,0.4)] hover:shadow-[0_6px_24px_rgba(139,92,246,0.5)] hover:scale-[1.02] transition-all duration-200"
                 >
                   Apply now →
                 </a>

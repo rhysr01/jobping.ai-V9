@@ -453,7 +453,7 @@ export function createJobMatchesEmail(
         <div style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); padding:10px 12px; border-radius:8px; margin:16px 0;">
           <div style="display:flex; align-items:center; gap:8px;">
             <span style="color:#10b981; font-size:14px; flex-shrink:0;">✓</span>
-            <div style="color:#10b981; font-size:13px; font-weight:600;">Matches all your filters: location, visa status, experience level, and career path.</div>
+            <div style="color:#10b981; font-size:13px; font-weight:600;">Matches your filters: London, Entry-level, Visa sponsorship, Strategy role</div>
           </div>
         </div>
     `;
