@@ -288,25 +288,45 @@ export async function POST(request: NextRequest) {
       created_at: new Date().toISOString(),
     }));
 
-    const { error: matchesError } = await supabase
+    // CRITICAL: Save matches - fail if this doesn't work
+    const { data: savedMatches, error: matchesError } = await supabase
       .from('matches')
-      .upsert(matchRecords, { onConflict: 'user_email,job_hash' }); // Update if exists
+      .upsert(matchRecords, { onConflict: 'user_email,job_hash' })
+      .select();
 
     if (matchesError) {
       apiLogger.error('Failed to store matches', matchesError as Error, { email: normalizedEmail });
+      return NextResponse.json(
+        { error: 'Failed to save matches. Please try again.' },
+        { status: 500 }
+      );
     }
 
-    // Track analytics (optional)
-    await supabase.from('free_signups_analytics').insert({
-      email: normalizedEmail,
-      cities: preferred_cities,
-      career_path: career_paths[0],
-    });
+    // Verify matches were saved
+    if (!savedMatches || savedMatches.length === 0) {
+      apiLogger.error('No matches saved', new Error('Matches array empty'), { email: normalizedEmail, matchRecordsCount: matchRecords.length });
+      return NextResponse.json(
+        { error: 'Failed to save matches. Please try again.' },
+        { status: 500 }
+      );
+    }
+
+    // Track analytics (optional - don't fail if this fails)
+    try {
+      await supabase.from('free_signups_analytics').insert({
+        email: normalizedEmail,
+        cities: preferred_cities,
+        career_path: career_paths[0],
+      });
+    } catch (analyticsError) {
+      // Non-critical - log but don't fail
+      apiLogger.warn('Failed to track analytics', analyticsError as Error, { email: normalizedEmail });
+    }
 
     // Set session cookie for client-side auth
     const response = NextResponse.json({
       success: true,
-      matchCount: finalJobs.length,
+      matchCount: savedMatches.length,
       userId: userData.id,
     });
 
@@ -319,7 +339,7 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 30, // 30 days to match free_expires_at
     });
 
-    apiLogger.info('Free signup successful', { email: normalizedEmail, matchCount: finalJobs.length });
+    apiLogger.info('Free signup successful', { email: normalizedEmail, matchCount: savedMatches.length, savedMatchesCount: savedMatches.length });
 
     return response;
 

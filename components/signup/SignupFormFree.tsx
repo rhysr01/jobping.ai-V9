@@ -29,14 +29,14 @@ const EuropeMap = dynamic(() => import('@/components/ui/EuropeMap'), {
 });
 
 const CAREER_PATHS = [
-  { value: 'finance', label: 'Finance & Investment', emoji: '💰' },
-  { value: 'tech', label: 'Tech & Engineering', emoji: '💻' },
-  { value: 'strategy', label: 'Strategy & Consulting', emoji: '📊' },
-  { value: 'marketing', label: 'Marketing & Growth', emoji: '📱' },
-  { value: 'sales', label: 'Sales & Client Success', emoji: '💬' },
-  { value: 'operations', label: 'Operations & Supply Chain', emoji: '⚙️' },
-  { value: 'data', label: 'Data & Analytics', emoji: '📈' },
-  { value: 'product', label: 'Product & Innovation', emoji: '🚀' },
+  { value: 'finance', label: 'Finance & Investment' },
+  { value: 'tech', label: 'Tech & Engineering' },
+  { value: 'strategy', label: 'Strategy & Consulting' },
+  { value: 'marketing', label: 'Marketing & Growth' },
+  { value: 'sales', label: 'Sales & Client Success' },
+  { value: 'operations', label: 'Operations & Supply Chain' },
+  { value: 'data', label: 'Data & Analytics' },
+  { value: 'product', label: 'Product & Innovation' },
 ];
 
 const CITIES = ['Dublin', 'London', 'Paris', 'Amsterdam', 'Manchester', 'Birmingham', 'Belfast', 'Madrid', 'Barcelona', 'Berlin', 'Hamburg', 'Munich', 'Zurich', 'Milan', 'Rome', 'Brussels', 'Stockholm', 'Copenhagen', 'Vienna', 'Prague', 'Warsaw'];
@@ -478,7 +478,6 @@ export default function SignupFormFree() {
                           : 'border-zinc-700 bg-zinc-900/40 hover:border-zinc-600'
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      <div className="text-xl mb-1">{path.emoji}</div>
                       <span className="font-medium text-xs text-white">{path.label}</span>
                     </motion.button>
                   ))}
@@ -512,7 +511,7 @@ export default function SignupFormFree() {
                         Found {jobCount.toLocaleString()} {jobCount === 1 ? 'job' : 'jobs'} in {formData.cities.join(' and ')}
                       </AriaLiveRegion>
                       <p className="text-sm text-zinc-300">
-                        ✨ Based on your selections, we found{' '}
+                        Based on your selections, we found{' '}
                         <span className="text-brand-400 font-semibold">{jobCount.toLocaleString()}</span>{' '}
                         {jobCount === 1 ? 'job' : 'jobs'} in {formData.cities.join(' and ')}
                       </p>
