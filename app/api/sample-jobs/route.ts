@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseClient } from '@/Utils/databasePool';
+import { getDatabaseCategoriesForForm } from '@/Utils/matching/categoryMapper';
 
 export const dynamic = 'force-dynamic'; // Force dynamic rendering
 export const revalidate = 3600; // Cache for 1 hour
@@ -107,14 +108,27 @@ export async function GET(req: NextRequest) {
     // Normalize city names for matching (handle case-insensitive and variations)
     const normalizedCities = selectedUserProfile.cities.map(c => c.toLowerCase().trim());
     
+    // Map career path to database categories (e.g., 'Tech' → 'tech-transformation')
+    const careerPathCategories = getDatabaseCategoriesForForm(selectedUserProfile.careerPath.toLowerCase());
+    
     let query = supabase
       .from('jobs')
       .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
       .eq('is_active', true)
+      .eq('status', 'active')
+      .is('filtered_reason', null)
       .not('job_url', 'is', null)
-      .neq('job_url', '')
-      .order('created_at', { ascending: false })
-      .limit(100); // Get more jobs to filter for diversity
+      .neq('job_url', '');
+    
+    // Filter by career path categories (same as preview-matches and signup routes)
+    if (careerPathCategories.length > 0 && careerPathCategories.length <= 20) {
+      query = query.overlaps('categories', careerPathCategories);
+    }
+    
+    // Filter for early-career roles (same as preview-matches and signup routes)
+    query = query.or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
+    
+    query = query.order('created_at', { ascending: false }).limit(100); // Get more jobs to filter for diversity
 
     // Try to filter by cities, but if that returns too few results, we'll filter in memory
     const { data: allJobs, error: jobsError } = await query;
@@ -244,15 +258,28 @@ export async function GET(req: NextRequest) {
     if (resultJobs.length < 5 || jobsError || !allJobs || allJobs.length === 0) {
       console.log(`Fallback: Only found ${resultJobs.length} jobs, trying fallback query...`);
       
-      const { data: fallbackJobs, error: fallbackError } = await supabase
+      // Fallback: try without city filter but still filter by career path and early-career
+      let fallbackQuery = supabase
         .from('jobs')
         .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
         .eq('is_active', true)
+        .eq('status', 'active')
+        .is('filtered_reason', null)
         .not('job_url', 'is', null)
         .neq('job_url', '')
-        .not('job_hash', 'in', Array.from(usedJobHashes))
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .not('job_hash', 'in', Array.from(usedJobHashes));
+      
+      // Still filter by career path in fallback
+      if (careerPathCategories.length > 0 && careerPathCategories.length <= 20) {
+        fallbackQuery = fallbackQuery.overlaps('categories', careerPathCategories);
+      }
+      
+      // Still filter for early-career roles
+      fallbackQuery = fallbackQuery.or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
+      
+      fallbackQuery = fallbackQuery.order('created_at', { ascending: false }).limit(50);
+      
+      const { data: fallbackJobs, error: fallbackError } = await fallbackQuery;
 
       if (fallbackError) {
         console.warn('Fallback query error:', fallbackError);
@@ -317,14 +344,21 @@ export async function GET(req: NextRequest) {
       console.error(`  - Result jobs before filtering: ${resultJobs.length}`);
       console.error(`  - Used job hashes: ${usedJobHashes.size}`);
       
-      // Last resort: try to get ANY job with URL, no filters
-      const { data: emergencyJobs, error: emergencyError } = await supabase
+      // Last resort: try to get ANY job with URL, but still filter by early-career
+      let emergencyQuery = supabase
         .from('jobs')
         .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
         .eq('is_active', true)
+        .eq('status', 'active')
+        .is('filtered_reason', null)
         .not('job_url', 'is', null)
-        .neq('job_url', '')
-        .limit(10);
+        .neq('job_url', '');
+      
+      // Still filter for early-career roles even in emergency fallback
+      emergencyQuery = emergencyQuery.or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
+      emergencyQuery = emergencyQuery.limit(10);
+      
+      const { data: emergencyJobs, error: emergencyError } = await emergencyQuery;
       
       if (emergencyError) {
         console.error('Emergency query error:', emergencyError);
