@@ -10,7 +10,7 @@ export default function HowItWorks() {
     <section
       id="how-it-works"
       data-testid="how-it-works"
-      className="pt-24 pb-24 md:pt-28 md:pb-28 lg:pt-32 lg:pb-32 bg-zinc-950/50 scroll-snap-section relative"
+      className="pt-24 pb-24 md:pt-28 md:pb-28 lg:pt-32 lg:pb-32 bg-[#0a0a0a] scroll-snap-section relative"
     >
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />

@@ -33,7 +33,7 @@ export default function CompanyLogos() {
 
   if (isLoading) {
     return (
-      <section className="pt-24 pb-24 md:pt-28 md:pb-28 lg:pt-32 lg:pb-32 bg-zinc-950/50 scroll-snap-section relative">
+      <section className="pt-24 pb-24 md:pt-28 md:pb-28 lg:pt-32 lg:pb-32 bg-[#0a0a0a] scroll-snap-section relative">
         <div className="container-page">
           <div className="h-[200px] flex items-center justify-center">
             <div className="h-6 w-64 bg-white/10 rounded animate-pulse" />

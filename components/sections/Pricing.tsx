@@ -57,7 +57,7 @@ export default function Pricing() {
       <div className="pointer-events-none absolute inset-x-0 -top-10 h-40 bg-gradient-to-b from-indigo-900/40 to-transparent" />
       {/* Overhead spotlight crown */}
       <div className="absolute inset-x-0 -top-36 h-44 bg-gradient-to-b from-violet-600/15 to-transparent blur-lg-hero pointer-events-none" />
-      <div className="absolute inset-0 bg-black" />
+      {/* Base background is set on section element */}
 
       <div className="container-page relative z-10">
         <motion.div
