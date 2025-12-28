@@ -55,6 +55,7 @@ export default function SignupFormFree() {
     careerPath: '',
     email: '',
     fullName: '',
+    visaSponsorship: '', // Added visa sponsorship field
   });
 
   const [jobCount, setJobCount] = useState<number | null>(null);
@@ -65,6 +66,7 @@ export default function SignupFormFree() {
   const emailValidation = useEmailValidation(formData.email);
   const nameValidation = useRequiredValidation(formData.fullName, 'Full name');
   const citiesValidation = useRequiredValidation(formData.cities, 'Preferred cities');
+  const visaSponsorshipValidation = useRequiredValidation(formData.visaSponsorship, 'Visa sponsorship');
 
   // Memoized helper functions
   const toggleArray = useCallback((arr: string[], value: string) => {
@@ -88,8 +90,12 @@ export default function SignupFormFree() {
       return formData.fullName.length > 3;
     }
     
+    if (fieldName === 'visaSponsorship' && hasValue && !isValid) {
+      return formData.visaSponsorship.length > 0;
+    }
+
     return touchedFields.has(fieldName) && hasValue && !isValid;
-  }, [touchedFields, formData.email, formData.fullName]);
+  }, [touchedFields, formData.email, formData.fullName, formData.visaSponsorship]);
 
   // Track when user completes step 1 (cities + career path selected)
   useEffect(() => {
@@ -158,16 +164,18 @@ export default function SignupFormFree() {
     if (formData.careerPath) completed++;
     if (formData.email && emailValidation.isValid) completed++;
     if (formData.fullName && nameValidation.isValid) completed++;
-    return (completed / 4) * 100;
-  }, [formData, emailValidation.isValid, nameValidation.isValid]);
+    if (formData.visaSponsorship && visaSponsorshipValidation.isValid) completed++;
+    return (completed / 5) * 100; // Updated to 5 steps
+  }, [formData, emailValidation.isValid, nameValidation.isValid, visaSponsorshipValidation.isValid]);
 
   // Memoized computed values
   const isFormValid = useMemo(() => 
     formData.cities.length > 0 && 
     formData.careerPath && 
     emailValidation.isValid && 
-    nameValidation.isValid,
-    [formData.cities.length, formData.careerPath, emailValidation.isValid, nameValidation.isValid]
+    nameValidation.isValid &&
+    visaSponsorshipValidation.isValid,
+    [formData.cities.length, formData.careerPath, emailValidation.isValid, nameValidation.isValid, visaSponsorshipValidation.isValid]
   );
 
   // Memoized event handlers
@@ -207,6 +215,11 @@ export default function SignupFormFree() {
     setTouchedFields(prev => new Set(prev).add('careerPath'));
   }, []);
 
+  const handleVisaSponsorshipChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, visaSponsorship: value }));
+    setTouchedFields(prev => new Set(prev).add('visaSponsorship'));
+  }, []);
+
   const handleCitiesBlur = useCallback(() => {
     setTouchedFields(prev => new Set(prev).add('cities'));
   }, []);
@@ -217,7 +230,7 @@ export default function SignupFormFree() {
     if (isSubmitting) return; // Prevent double submission
     
     if (!isFormValid) {
-      setTouchedFields(new Set(['cities', 'careerPath', 'email', 'fullName']));
+      setTouchedFields(new Set(['cities', 'careerPath', 'email', 'fullName', 'visaSponsorship']));
       return;
     }
     
@@ -236,6 +249,7 @@ export default function SignupFormFree() {
           full_name: formData.fullName,
           preferred_cities: formData.cities,
           career_paths: [formData.careerPath],
+          visa_sponsorship: formData.visaSponsorship,
           entry_level_preferences: ['graduate', 'intern', 'junior'],
         }),
       });
@@ -406,6 +420,78 @@ export default function SignupFormFree() {
                 {emailValidation.error && `Email error: ${emailValidation.error}`}
               </div>
               
+              {/* VISA SPONSORSHIP - PRIMARY QUESTION (FIRST) */}
+              <div className="mb-8">
+                <label className="block text-lg font-bold text-white mb-3">
+                  Do you require visa sponsorship to work in the EU? *
+                </label>
+                <p className="text-sm text-zinc-300 mb-4">
+                  90% of graduate applications from international students are rejected because of visa issues.
+                </p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <motion.button
+                    type="button"
+                    onClick={() => handleVisaSponsorshipChange('yes')}
+                    whileTap={{ scale: 0.97 }}
+                    disabled={isSubmitting}
+                    className={`p-8 rounded-xl border-2 transition-all duration-300 text-left relative ${
+                      formData.visaSponsorship === 'yes'
+                        ? 'border-emerald-500 bg-emerald-500/20 shadow-lg shadow-emerald-500/20 ring-2 ring-emerald-500/30'
+                        : formData.visaSponsorship === 'no'
+                        ? 'opacity-50 border-zinc-700 bg-zinc-900/40'
+                        : 'border-zinc-700 bg-zinc-900/40 hover:border-zinc-600'
+                    }`}
+                  >
+                    {/* Inner glow effect when selected */}
+                    {formData.visaSponsorship === 'yes' && (
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-emerald-400/20 to-transparent pointer-events-none" />
+                    )}
+                    <div className="relative flex flex-col">
+                      <div className="flex items-center gap-2 mb-4">
+                        <span className="text-xl">✅</span>
+                        <span className="font-bold text-white">Yes, I need a visa</span>
+                      </div>
+                      <p className="text-sm text-zinc-300 relative">
+                        Tier 2, Blue Card, or work permit
+                      </p>
+                    </div>
+                  </motion.button>
+                  
+                  <motion.button
+                    type="button"
+                    onClick={() => handleVisaSponsorshipChange('no')}
+                    whileTap={{ scale: 0.97 }}
+                    disabled={isSubmitting}
+                    className={`p-8 rounded-xl border-2 transition-all duration-300 text-left relative ${
+                      formData.visaSponsorship === 'no'
+                        ? 'border-brand-500 bg-brand-500/20 shadow-lg shadow-brand-500/20 ring-2 ring-brand-500/30'
+                        : formData.visaSponsorship === 'yes'
+                        ? 'opacity-50 border-zinc-700 bg-zinc-900/40'
+                        : 'border-zinc-700 bg-zinc-900/40 hover:border-zinc-600'
+                    }`}
+                  >
+                    {/* Inner glow effect when selected */}
+                    {formData.visaSponsorship === 'no' && (
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-brand-400/20 to-transparent pointer-events-none" />
+                    )}
+                    <div className="relative flex flex-col">
+                      <div className="flex items-center gap-2 mb-4">
+                        <span className="text-xl">🇪🇺</span>
+                        <span className="font-bold text-white">No, I have EU citizenship</span>
+                      </div>
+                      <p className="text-sm text-zinc-300 relative">
+                        EU/EEA citizen or permanent residency
+                      </p>
+                    </div>
+                  </motion.button>
+                </div>
+                
+                {shouldShowError('visaSponsorship', !formData.visaSponsorship, !!formData.visaSponsorship) && (
+                  <FormFieldError error="Please select your visa sponsorship requirement." id="visa-error" />
+                )}
+              </div>
+
               {/* Cities Selection with Map - KEPT AS REQUESTED */}
               <div>
                 <label id="cities-label" htmlFor="cities-field" className="block text-base font-bold text-white mb-3">

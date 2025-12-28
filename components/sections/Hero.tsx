@@ -107,7 +107,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
-              className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold leading-[1.1] mb-3"
+              className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3"
             >
               <span className="text-white">Get 5 early-career</span>{' '}
               <span className="text-white">job matches</span>{' '}
@@ -121,7 +121,9 @@ export default function Hero() {
               transition={{ delay: 0.25, duration: 0.6 }}
               className="text-lg md:text-xl text-zinc-300 leading-relaxed max-w-xl mb-4"
             >
-              Matched to your city, visa, and career path. 2 minutes. No credit card.
+              Matched to your city,{' '}
+              <span className="text-emerald-400 font-semibold">verified visa sponsorship</span>,{' '}
+              and career path. 2 minutes. No credit card.
             </motion.p>
 
             {/* CTAs */}

@@ -604,20 +604,43 @@ export function distributeJobsWithDiversity(
         continue;
       }
 
-      // Sort by source diversity (prefer sources we haven't used much)
+      // ENTERPRISE-LEVEL FIX: Multi-criteria sorting for balanced quality
+      // Priority order: Quality > Source Diversity > City Balance > Work Environment Balance
       availableJobs.sort((a, b) => {
+        // Primary sort: Quality (match_score DESC) - highest quality first
+        const scoreA = (a as any).match_score || 0;
+        const scoreB = (b as any).match_score || 0;
+        if (scoreA !== scoreB) {
+          return scoreB - scoreA; // Higher score = better quality
+        }
+        
+        // Secondary sort: Source diversity (prefer sources we haven't used much)
         const sourceA = a.source || 'unknown';
         const sourceB = b.source || 'unknown';
         const countA = sourceCounts[sourceA] || 0;
         const countB = sourceCounts[sourceB] || 0;
         
-        // Prefer sources with fewer selections
         if (countA !== countB) return countA - countB;
         
-        // If counts are equal, prefer sources that can still be added
+        // Tertiary sort: Can still add from source
         const canAddA = canAddFromSource(sourceA);
         const canAddB = canAddFromSource(sourceB);
         if (canAddA !== canAddB) return canAddB ? 1 : -1;
+        
+        // Quaternary sort: City balance (prefer cities we need more from)
+        if (canBalanceCities && targetCity !== 'any') {
+          const cityA = (a.city || '').toLowerCase();
+          const locA = ((a as any).location || '').toLowerCase();
+          const cityB = (b.city || '').toLowerCase();
+          const locB = ((b as any).location || '').toLowerCase();
+          
+          const matchesCityA = matchesCity(cityA, locA, targetCity);
+          const matchesCityB = matchesCity(cityB, locB, targetCity);
+          
+          if (matchesCityA !== matchesCityB) {
+            return matchesCityA ? -1 : 1; // Prefer jobs matching target city
+          }
+        }
         
         return 0;
       });
@@ -779,8 +802,16 @@ export function distributeJobsWithDiversity(
         }
       }
       
-      // Sort diverse jobs by source diversity
+      // ENTERPRISE-LEVEL FIX: Sort diverse jobs by quality first, then source diversity
       diverseJobs.sort((a, b) => {
+        // Primary: Quality (match_score DESC)
+        const scoreA = (a as any).match_score || 0;
+        const scoreB = (b as any).match_score || 0;
+        if (scoreA !== scoreB) {
+          return scoreB - scoreA;
+        }
+        
+        // Secondary: Source diversity
         const sourceA = a.source || 'unknown';
         const sourceB = b.source || 'unknown';
         const countA = sourceCounts[sourceA] || 0;
@@ -815,7 +846,16 @@ export function distributeJobsWithDiversity(
         }
         
         // Sort by source diversity first
+        // ENTERPRISE-LEVEL FIX: Sort remaining jobs by quality first, then source diversity
         remaining.sort((a, b) => {
+          // Primary: Quality (match_score DESC)
+          const scoreA = (a as any).match_score || 0;
+          const scoreB = (b as any).match_score || 0;
+          if (scoreA !== scoreB) {
+            return scoreB - scoreA;
+          }
+          
+          // Secondary: Source diversity
           const sourceA = a.source || 'unknown';
           const sourceB = b.source || 'unknown';
           const countA = sourceCounts[sourceA] || 0;
@@ -854,8 +894,16 @@ export function distributeJobsWithDiversity(
       }
     }
 
-    // Sort by source diversity, city balance, AND work environment balance
+    // ENTERPRISE-LEVEL FIX: Sort by quality first, then diversity factors
     remaining.sort((a, b) => {
+      // Primary: Quality (match_score DESC)
+      const scoreA = (a as any).match_score || 0;
+      const scoreB = (b as any).match_score || 0;
+      if (scoreA !== scoreB) {
+        return scoreB - scoreA;
+      }
+      
+      // Secondary: Source diversity, city balance, AND work environment balance
       const sourceA = a.source || 'unknown';
       const sourceB = b.source || 'unknown';
       const countA = sourceCounts[sourceA] || 0;

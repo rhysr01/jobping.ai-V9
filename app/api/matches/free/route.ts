@@ -3,6 +3,7 @@ import { getDatabaseClient } from '@/Utils/databasePool';
 import { apiLogger } from '@/lib/api-logger';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
 import { normalizeJobLocation } from '@/lib/locationNormalizer';
+import { calculateVisaConfidence, getVisaConfidenceLabel } from '@/Utils/matching/visa-confidence';
 
 /**
  * Wrapper for database queries with timeout protection
@@ -260,6 +261,15 @@ export async function GET(request: NextRequest) {
           location: job.location,
         });
         
+        // Calculate visa confidence
+        const visaConfidence = calculateVisaConfidence({
+          description: job.description,
+          title: job.title,
+          company: job.company,
+          visa_friendly: (job as any).visa_friendly,
+          visa_sponsorship: (job as any).visa_sponsorship,
+        });
+        
         return {
           id: job.id,
           title: job.title,
@@ -272,6 +282,11 @@ export async function GET(request: NextRequest) {
           work_environment: job.work_environment,
           match_score: m.match_score,
           match_reason: m.match_reason,
+          visa_confidence: visaConfidence.confidence,
+          visa_confidence_label: getVisaConfidenceLabel(visaConfidence.confidence),
+          visa_confidence_reason: visaConfidence.reason,
+          visa_confidence_percentage: visaConfidence.confidencePercentage,
+          job_hash: job.job_hash || m.job_hash, // Include job_hash for feedback
         };
       })
       .filter(Boolean); // Remove null entries

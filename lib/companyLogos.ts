@@ -46,6 +46,21 @@ export const COMPANY_LOGOS: CompanyLogo[] = [
   { name: 'Glovo', logoPath: '/logos/companies/glovo.svg', domain: 'glovo.com' },
 ];
 
+// Runtime validation: Ensure COMPANY_LOGOS is never empty
+if (COMPANY_LOGOS.length === 0) {
+  throw new Error('[companyLogos] COMPANY_LOGOS array cannot be empty. At least one company logo must be defined.');
+}
+
+// Validate logo paths are properly formatted
+COMPANY_LOGOS.forEach((logo, index) => {
+  if (!logo.logoPath || !logo.logoPath.startsWith('/logos/companies/')) {
+    throw new Error(`[companyLogos] Invalid logoPath at index ${index}: "${logo.logoPath}". Must start with "/logos/companies/"`);
+  }
+  if (!logo.name || logo.name.trim().length === 0) {
+    throw new Error(`[companyLogos] Invalid name at index ${index}: "${logo.name}". Name cannot be empty.`);
+  }
+});
+
 // Create a lookup map for fast access
 const LOGO_MAP = new Map<string, CompanyLogo>();
 COMPANY_LOGOS.forEach(company => {
@@ -94,8 +109,19 @@ export function getCompanyLogo(companyName: string): CompanyLogo | undefined {
 
 /**
  * Get all companies with logos (for display)
+ * GUARANTEED to return at least one logo (validated at module load)
  */
 export function getAllCompanyLogos(): CompanyLogo[] {
+  // Double-check at runtime (defensive programming)
+  if (COMPANY_LOGOS.length === 0) {
+    console.error('[companyLogos] CRITICAL: COMPANY_LOGOS is empty! This should never happen.');
+    // Return a minimal fallback to prevent complete failure
+    return [
+      { name: 'Spotify', logoPath: '/logos/companies/spotify.svg', domain: 'spotify.com' },
+      { name: 'Google', logoPath: '/logos/companies/google.svg', domain: 'google.com' },
+      { name: 'Apple', logoPath: '/logos/companies/apple.svg', domain: 'apple.com' },
+    ];
+  }
   return COMPANY_LOGOS;
 }
 

@@ -16,6 +16,7 @@ const freeSignupSchema = z.object({
   preferred_cities: z.array(z.string().max(50)).min(1, 'Select at least one city').max(3, 'Maximum 3 cities allowed'),
   career_paths: z.array(z.string()).min(1, 'Select at least one career path'),
   entry_level_preferences: z.array(z.string()).optional().default(['graduate', 'intern', 'junior']),
+  visa_sponsorship: z.string().min(1, 'Visa sponsorship status is required'),
 });
 
 export async function POST(request: NextRequest) {
@@ -44,7 +45,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, full_name, preferred_cities, career_paths, entry_level_preferences } = validationResult.data;
+    const { email, full_name, preferred_cities, career_paths, entry_level_preferences, visa_sponsorship } = validationResult.data;
+    
+    // Map visa_sponsorship ('yes'/'no') to visa_status format
+    const visa_status = visa_sponsorship === 'yes' 
+      ? 'Non-EU (require sponsorship)' 
+      : 'EU citizen';
 
     const supabase = getDatabaseClient();
     const normalizedEmail = email.toLowerCase().trim();
@@ -113,6 +119,7 @@ export async function POST(request: NextRequest) {
         target_cities: preferred_cities, // Use target_cities, not preferred_cities
         career_path: career_paths[0] || null, // Single value, not array
         entry_level_preference: entry_level_preferences?.join(', ') || 'graduate, intern, junior',
+        visa_status: visa_status, // Map visa sponsorship to visa_status
         email_verified: true,
         subscription_active: false, // Free users not active
         active: true,
@@ -161,6 +168,26 @@ export async function POST(request: NextRequest) {
       careerPathCategories = getDatabaseCategoriesForForm(userData.career_path);
     }
 
+    // ENTERPRISE-LEVEL FIX: Use country-level matching instead of exact city matching
+    // This is more forgiving and lets pre-filtering handle exact city matching
+    // Strategy: Fetch jobs from target countries, then let pre-filtering match exact cities
+    const targetCountries = new Set<string>();
+    if (targetCities.length > 0) {
+      targetCities.forEach(city => {
+        const country = getCountryFromCity(city);
+        if (country) {
+          targetCountries.add(country);
+        }
+      });
+    }
+
+    apiLogger.info('Free signup - job fetching strategy', { 
+      email: normalizedEmail, 
+      targetCities: targetCities,
+      targetCountries: Array.from(targetCountries),
+      strategy: targetCountries.size > 0 ? 'country-level' : 'no-location-filter'
+    });
+
     let query = supabase
       .from('jobs')
       .select('*')
@@ -168,12 +195,14 @@ export async function POST(request: NextRequest) {
       .eq('status', 'active')
       .is('filtered_reason', null);
 
-    if (targetCities.length > 0) {
-      query = query.in('city', targetCities);
-      apiLogger.info('Free signup - filtering jobs by cities', { 
+    // ENTERPRISE-LEVEL FIX: Use country-level filtering (more forgiving than exact city match)
+    // Pre-filtering will handle exact city matching with fuzzy logic
+    if (targetCountries.size > 0) {
+      query = query.in('country', Array.from(targetCountries));
+      apiLogger.info('Free signup - filtering jobs by countries', { 
         email: normalizedEmail, 
-        cities: targetCities,
-        cityCount: targetCities.length
+        countries: Array.from(targetCountries),
+        countryCount: targetCountries.size
       });
     }
 
@@ -185,83 +214,61 @@ export async function POST(request: NextRequest) {
     // This ensures we get internships, graduate roles, or early-career jobs
     query = query.or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
 
-    query = query.order('created_at', { ascending: false }).limit(1000);
+    // Fetch jobs from last 60 days for recency, but use id-based ordering for variety
+    // This balances recency (quality) with variety (better matching pool)
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    
+    query = query
+      .gte('created_at', sixtyDaysAgo.toISOString()) // Only recent jobs (last 60 days)
+      .order('id', { ascending: false }) // Pseudo-random ordering via id for variety
+      .limit(2000); // Fetch more jobs for better diversity
 
     let { data: allJobs, error: jobsError } = await query;
 
-    // Fallback logic: If no jobs found for exact cities, try country-level matching
-    if ((jobsError || !allJobs || allJobs.length === 0) && targetCities.length > 0) {
-      apiLogger.info('Free signup - no jobs for exact cities, trying country-level fallback', {
+    // ENTERPRISE-LEVEL FIX: Improved fallback logic
+    // Since we already use country-level matching, fallback is simpler
+    if ((jobsError || !allJobs || allJobs.length === 0) && targetCountries.size > 0) {
+      apiLogger.warn('Free signup - no jobs found for target countries, trying broader fallback', {
         email: normalizedEmail,
+        countries: Array.from(targetCountries),
         cities: targetCities
       });
 
-      // Get countries for the selected cities
-      const countries = targetCities
-        .map(city => getCountryFromCity(city))
-        .filter(country => country !== '');
+      // Fallback: Remove country filter, keep career path and early-career filters
+      let fallbackQuery = supabase
+        .from('jobs')
+        .select('*')
+        .eq('is_active', true)
+        .eq('status', 'active')
+        .is('filtered_reason', null);
 
-      if (countries.length > 0) {
-        // Try filtering by country instead of city
-        let fallbackQuery = supabase
-          .from('jobs')
-          .select('*')
-          .eq('is_active', true)
-          .eq('status', 'active')
-          .is('filtered_reason', null)
-          .in('country', countries);
+      if (careerPathCategories.length > 0) {
+        fallbackQuery = fallbackQuery.overlaps('categories', careerPathCategories);
+      }
 
-        if (careerPathCategories.length > 0) {
-          fallbackQuery = fallbackQuery.overlaps('categories', careerPathCategories);
-        }
+      // Also filter for early-career roles in fallback
+      fallbackQuery = fallbackQuery.or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
 
-        // Also filter for early-career roles in fallback
-        fallbackQuery = fallbackQuery.or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
+      // Use same variety strategy for fallback
+      const sixtyDaysAgoFallback = new Date();
+      sixtyDaysAgoFallback.setDate(sixtyDaysAgoFallback.getDate() - 60);
+      
+      fallbackQuery = fallbackQuery
+        .gte('created_at', sixtyDaysAgoFallback.toISOString())
+        .order('id', { ascending: false })
+        .limit(2000);
+      
+      const fallbackResult = await fallbackQuery;
 
-        fallbackQuery = fallbackQuery.order('created_at', { ascending: false }).limit(1000);
-        const fallbackResult = await fallbackQuery;
-
-        if (!fallbackResult.error && fallbackResult.data && fallbackResult.data.length > 0) {
-          allJobs = fallbackResult.data;
-          jobsError = null;
-          apiLogger.info('Free signup - found jobs using country-level fallback', {
-            email: normalizedEmail,
-            countries,
-            jobCount: allJobs.length
-          });
-        } else {
-          // Last resort: remove city/country filter entirely, just use career path
-          apiLogger.info('Free signup - no jobs for countries either, trying career path only', {
-            email: normalizedEmail,
-            countries
-          });
-
-          let lastResortQuery = supabase
-            .from('jobs')
-            .select('*')
-            .eq('is_active', true)
-            .eq('status', 'active')
-            .is('filtered_reason', null);
-
-          if (careerPathCategories.length > 0) {
-            lastResortQuery = lastResortQuery.overlaps('categories', careerPathCategories);
-          }
-
-          // Also filter for early-career roles in last resort
-          lastResortQuery = lastResortQuery.or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
-
-          lastResortQuery = lastResortQuery.order('created_at', { ascending: false }).limit(1000);
-          const lastResortResult = await lastResortQuery;
-
-          if (!lastResortResult.error && lastResortResult.data && lastResortResult.data.length > 0) {
-            allJobs = lastResortResult.data;
-            jobsError = null;
-            apiLogger.info('Free signup - found jobs using career path only fallback', {
-              email: normalizedEmail,
-              jobCount: allJobs.length
-            });
-          }
-        }
+      if (!fallbackResult.error && fallbackResult.data && fallbackResult.data.length > 0) {
+        allJobs = fallbackResult.data;
+        jobsError = null;
+        apiLogger.info('Free signup - found jobs using broader fallback (no country filter)', {
+          email: normalizedEmail,
+          jobCount: allJobs.length,
+          note: 'Pre-filtering will handle city matching'
+        });
       }
     }
 
@@ -278,10 +285,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Pre-filter jobs
+    // ENTERPRISE-LEVEL FIX: Pre-filter jobs with enhanced location matching
+    // This handles exact city matching with fuzzy logic (case-insensitive, variations, etc.)
+    // Since we fetched jobs by country, pre-filtering will match exact cities
+    apiLogger.info('Free signup - pre-filtering jobs for exact city matching', {
+      email: normalizedEmail,
+      totalJobsFetched: allJobs?.length || 0,
+      targetCities: targetCities,
+      note: 'Pre-filtering will match exact cities from country-level job pool'
+    });
+
     const userPrefs = {
       email: userData.email,
-      target_cities: targetCities, // Use normalized array
+      target_cities: targetCities, // Use normalized array - pre-filtering handles fuzzy matching
       career_path: userData.career_path ? [userData.career_path] : [],
       entry_level_preference: userData.entry_level_preference,
       work_environment: userData.work_environment,
@@ -296,6 +312,17 @@ export async function POST(request: NextRequest) {
       allJobs as any[],
       userPrefs as any
     );
+
+    // ENTERPRISE-LEVEL FIX: Log pre-filtering results for debugging
+    apiLogger.info('Free signup - pre-filtering results', {
+      email: normalizedEmail,
+      jobsBeforePreFilter: allJobs?.length || 0,
+      jobsAfterPreFilter: preFilteredJobs?.length || 0,
+      targetCities: targetCities,
+      targetCountries: Array.from(targetCountries),
+      matchLevel: preFilteredJobs?.length > 0 ? 'success' : 'no_matches',
+      note: 'Pre-filtering handles exact city matching with fuzzy logic'
+    });
 
     if (!preFilteredJobs || preFilteredJobs.length === 0) {
       return NextResponse.json(
@@ -328,7 +355,31 @@ export async function POST(request: NextRequest) {
     } else {
       // Normal AI matching flow
       const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
-      const jobsForAI = preFilteredJobs.slice(0, 50);
+      
+      // Take diverse sample from pre-filtered jobs for better variety
+      // Instead of just first 50, sample evenly across the pool
+      const sampleSize = Math.min(50, preFilteredJobs.length);
+      const jobsForAI: any[] = [];
+      
+      if (preFilteredJobs.length <= sampleSize) {
+        // If we have fewer jobs than sample size, use all
+        jobsForAI.push(...preFilteredJobs);
+      } else {
+        // Sample evenly across the array for variety
+        const step = Math.floor(preFilteredJobs.length / sampleSize);
+        for (let i = 0; i < preFilteredJobs.length && jobsForAI.length < sampleSize; i += step) {
+          jobsForAI.push(preFilteredJobs[i]);
+        }
+        
+        // Fill remaining slots with random samples if needed
+        while (jobsForAI.length < sampleSize) {
+          const randomIndex = Math.floor(Math.random() * preFilteredJobs.length);
+          const randomJob = preFilteredJobs[randomIndex];
+          if (!jobsForAI.includes(randomJob)) {
+            jobsForAI.push(randomJob);
+          }
+        }
+      }
       
       apiLogger.info('Starting AI matching', { 
         email: normalizedEmail,
@@ -398,6 +449,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ENTERPRISE-LEVEL FIX: Prioritize quality while maintaining balance
+    // Step 1: Sort by match_score DESC to prioritize highest-quality matches
+    matchedJobsRaw.sort((a: any, b: any) => {
+      const scoreA = a.match_score || 0;
+      const scoreB = b.match_score || 0;
+      return scoreB - scoreA; // Higher score = better quality
+    });
+
+    // Step 2: Filter low-quality matches (quality threshold)
+    // Only include jobs with match_score >= 60 for consistent quality
+    const qualityThreshold = 60;
+    const highQualityJobs = matchedJobsRaw.filter((job: any) => {
+      const score = job.match_score || 0;
+      return score >= qualityThreshold;
+    });
+
+    // Step 3: Calculate quality metrics for logging
+    const averageScore = matchedJobsRaw.length > 0 
+      ? matchedJobsRaw.reduce((sum: number, j: any) => sum + (j.match_score || 0), 0) / matchedJobsRaw.length 
+      : 0;
+    const minScore = matchedJobsRaw.length > 0
+      ? Math.min(...matchedJobsRaw.map((j: any) => j.match_score || 0))
+      : 0;
+    const maxScore = matchedJobsRaw.length > 0
+      ? Math.max(...matchedJobsRaw.map((j: any) => j.match_score || 0))
+      : 0;
+
+    apiLogger.info('Free signup - quality filtering', {
+      email: normalizedEmail,
+      totalMatches: matchedJobsRaw.length,
+      highQualityMatches: highQualityJobs.length,
+      qualityThreshold,
+      averageScore: Math.round(averageScore * 10) / 10,
+      minScore,
+      maxScore,
+      qualityFilterApplied: highQualityJobs.length < matchedJobsRaw.length
+    });
+
+    // Step 4: Use high-quality jobs if we have enough, otherwise use all (with quality priority)
+    // This ensures we always return 5 jobs if possible, but prioritize quality
+    const jobsForDistribution = highQualityJobs.length >= 5 
+      ? highQualityJobs 
+      : matchedJobsRaw; // Fallback to all if not enough high-quality (but still sorted by quality)
+
     // Distribute jobs (max 5 for free)
     // Extract work environment preferences (may be comma-separated string or array)
     let targetWorkEnvironments: string[] = [];
@@ -430,7 +525,8 @@ export async function POST(request: NextRequest) {
       targetWorkEnvironments: targetWorkEnvironments
     });
 
-    const distributedJobs = distributeJobsWithDiversity(matchedJobsRaw as any[], {
+    // ENTERPRISE-LEVEL FIX: Use quality-filtered jobs for distribution
+    const distributedJobs = distributeJobsWithDiversity(jobsForDistribution as any[], {
       targetCount: 5,
       targetCities: targetCities, // Use normalized array
       maxPerSource: 2,
@@ -459,9 +555,44 @@ export async function POST(request: NextRequest) {
       targetWorkEnvironments: targetWorkEnvironments
     });
 
-    const finalJobs = distributedJobs.length > 0 
-      ? distributedJobs.slice(0, 5) 
-      : matchedJobsRaw.slice(0, 5);
+    // ENTERPRISE-LEVEL FIX: Ensure final jobs maintain quality
+    // If distribution returned jobs, use them (they're already balanced and quality-filtered)
+    // Otherwise fallback to top-quality jobs (sorted by match_score)
+    let finalJobs: any[];
+    if (distributedJobs.length > 0) {
+      finalJobs = distributedJobs.slice(0, 5);
+    } else {
+      // Fallback: Use top-quality jobs sorted by match_score
+      const sortedByQuality = [...jobsForDistribution].sort((a: any, b: any) => {
+        const scoreA = a.match_score || 0;
+        const scoreB = b.match_score || 0;
+        return scoreB - scoreA;
+      });
+      finalJobs = sortedByQuality.slice(0, 5);
+      
+      apiLogger.warn('Free signup - distribution returned empty, using top-quality fallback', {
+        email: normalizedEmail,
+        fallbackJobsCount: finalJobs.length,
+        topScores: finalJobs.map((j: any) => j.match_score || 0)
+      });
+    }
+    
+    // ENTERPRISE-LEVEL FIX: Log final quality metrics
+    const finalAverageScore = finalJobs.length > 0
+      ? finalJobs.reduce((sum: number, j: any) => sum + (j.match_score || 0), 0) / finalJobs.length
+      : 0;
+    const finalMinScore = finalJobs.length > 0
+      ? Math.min(...finalJobs.map((j: any) => j.match_score || 0))
+      : 0;
+    
+    apiLogger.info('Free signup - final job quality', {
+      email: normalizedEmail,
+      finalJobsCount: finalJobs.length,
+      averageScore: Math.round(finalAverageScore * 10) / 10,
+      minScore: finalMinScore,
+      maxScore: finalJobs.length > 0 ? Math.max(...finalJobs.map((j: any) => j.match_score || 0)) : 0,
+      qualityThresholdMet: finalMinScore >= qualityThreshold
+    });
 
     // CRITICAL: Filter out jobs without job_hash before saving
     const validJobs = finalJobs.filter((job: any) => {

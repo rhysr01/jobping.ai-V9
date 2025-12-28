@@ -9,6 +9,7 @@ import {
   PREMIUM_ROLES_PER_MONTH,
 } from '../../lib/productMetrics';
 import { buildPreferencesLink } from '../preferences/links';
+import { getVisaConfidenceLabel, getVisaConfidenceStyle, calculateVisaConfidence, getVisaProTip } from '../../Utils/matching/visa-confidence';
 
 const COLORS = {
   bg: '#0a0a0a',
@@ -431,6 +432,17 @@ export function createJobMatchesEmail(
   </tr>`;
   const formatTagsMarkup = (job: Record<string, any>) => {
     const tags = formatJobTags(job);
+    
+    // Add visa confidence tag if available
+    if (job.visa_confidence && job.visa_confidence !== 'unknown') {
+      const visaLabel = job.visa_confidence_label || getVisaConfidenceLabel(job.visa_confidence);
+      const style = getVisaConfidenceStyle(job.visa_confidence);
+      
+      // Use hex codes directly for email compatibility
+      const visaTag = `<span style="display:inline-block; margin:0 8px 8px 0; padding:6px 12px; border-radius:999px; background-color:${style.emailBgColor}; color:${style.emailTextColor}; font-size:13px; font-weight:600; letter-spacing:0.2px; border:1px solid ${style.emailBorderColor};">${style.icon} ${visaLabel}</span>`;
+      tags.push(visaTag);
+    }
+    
     if (!tags.length) return '';
     const tagItems = tags.map(tag => `<li style="display:inline-block; margin:0 8px 8px 0; padding:6px 12px; border-radius:999px; background:rgba(99,102,241,0.15); color:${COLORS.gray300}; font-size:13px; font-weight:600; letter-spacing:0.2px;">${tag}</li>`).join('');
     return `<ul style="margin:16px 0 12px 0; padding:0; list-style:none;">${tagItems}</ul>`;
@@ -471,7 +483,24 @@ export function createJobMatchesEmail(
     const plainLink = jobUrl
       ? `<p class="text" style="color:${COLORS.gray500}; font-size:13px; margin-top:18px;">Button not working? Paste this link: <a href="${applyHref}" style="color:#8B5CF6; word-break:break-all;">${jobUrl}</a></p>`
       : '';
-    const tagsMarkup = formatTagsMarkup(c.job);
+    
+    // Calculate visa confidence for this job
+    const visaConfidence = calculateVisaConfidence({
+      description: c.job.description,
+      title: c.job.title,
+      company: c.job.company,
+      visa_friendly: c.job.visa_friendly,
+      visa_sponsorship: c.job.visa_sponsorship,
+    });
+    
+    // Add visa confidence to job object for formatTagsMarkup
+    const jobWithVisaConfidence = {
+      ...c.job,
+      visa_confidence: visaConfidence.confidence,
+      visa_confidence_label: getVisaConfidenceLabel(visaConfidence.confidence),
+    };
+    
+    const tagsMarkup = formatTagsMarkup(jobWithVisaConfidence);
     
     // Generate unique match reason for this specific job
     const uniqueReason = generateUniqueMatchReason(c.job, c.matchResult, index);

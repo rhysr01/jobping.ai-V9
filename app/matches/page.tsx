@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Button from '@/components/ui/Button';
 import Link from 'next/link';
@@ -10,6 +10,9 @@ import { FREE_ROLES_PER_SEND, PREMIUM_ROLES_PER_WEEK } from '@/lib/productMetric
 import { apiCall, apiCallJson, ApiError } from '@/lib/api-client';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { trackEvent } from '@/lib/analytics';
+import { getVisaConfidenceLabel, getVisaConfidenceStyle } from '@/Utils/matching/visa-confidence';
+import { VisaConfidenceTooltip } from '@/components/ui/VisaConfidenceTooltip';
+import { showToast } from '@/lib/toast';
 
 interface Job {
   id: number;
@@ -23,6 +26,11 @@ interface Job {
   work_environment: string;
   match_score?: number;
   match_reason?: string;
+  visa_confidence?: 'verified' | 'likely' | 'local-only' | 'unknown';
+  visa_confidence_label?: string;
+  visa_confidence_reason?: string;
+  visa_confidence_percentage?: number;
+  job_hash?: string;
 }
 
 function MatchesPageContent() {
@@ -32,6 +40,8 @@ function MatchesPageContent() {
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
   const [jobsViewed, setJobsViewed] = useState(0);
   const [clickedJobId, setClickedJobId] = useState<number | null>(null);
+  const [dismissedJobIds, setDismissedJobIds] = useState<Set<number>>(new Set());
+  const [dismissingJobId, setDismissingJobId] = useState<number | null>(null);
   const jobsContainerRef = useRef<HTMLDivElement>(null);
 
   const fetchMatches = useCallback(async () => {
@@ -100,6 +110,65 @@ function MatchesPageContent() {
       setShowUpgradeBanner(true);
     }
   }, []);
+
+  // Get user email from cookie for feedback
+  const getUserEmail = useCallback(() => {
+    if (typeof document === 'undefined') return null;
+    const cookies = document.cookie.split(';');
+    const emailCookie = cookies.find(c => c.trim().startsWith('free_user_email='));
+    if (emailCookie) {
+      return decodeURIComponent(emailCookie.split('=')[1]).toLowerCase().trim();
+    }
+    return null;
+  }, []);
+
+  // Handle job dismissal with ghost state animation
+  const handleJobDismiss = useCallback(async (job: Job) => {
+    if (dismissingJobId === job.id) return;
+    
+    setDismissingJobId(job.id);
+    
+    // Start ghost animation (shrink and fade)
+    setTimeout(() => {
+      setDismissedJobIds(prev => new Set(prev).add(job.id));
+      setDismissingJobId(null);
+      
+      // Show toast notification
+      showToast.success(`Got it. We won't show you ${job.company} again.`);
+      
+      // Track feedback
+      trackEvent('job_dismissed', {
+        job_id: job.id,
+        company: job.company,
+        title: job.title,
+      });
+      
+      // Send feedback to API
+      const email = getUserEmail();
+      if (email) {
+        // Use job_hash if available, otherwise generate from job data
+        const jobHash = job.job_hash || `job-${job.id}-${job.company.toLowerCase().replace(/\s+/g, '-')}`;
+        
+        apiCallJson('/api/feedback/enhanced', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jobHash,
+            email,
+            feedbackType: 'not_relevant',
+            verdict: 'negative',
+            relevanceScore: 1,
+            matchQualityScore: 1,
+            reason: 'User marked as not relevant',
+            source: 'web',
+          }),
+        }).catch(err => {
+          console.error('Failed to send feedback:', err);
+          // Don't show error to user - feedback is non-critical
+        });
+      }
+    }, 300); // Animation duration
+  }, [dismissingJobId, getUserEmail]);
 
   // Memoized job click handler to prevent re-creating on every render
   const handleJobClick = useCallback((jobId: number, company: string, position: number) => {
@@ -202,16 +271,22 @@ function MatchesPageContent() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card elevation-2 p-8 text-center max-w-md mx-auto"
+          className="glass-card elevation-2 p-8 text-center max-w-md mx-auto border-dashed border-zinc-700"
         >
-          <h2 className="text-2xl font-bold mb-4">No matches found</h2>
-          <p className="text-zinc-300 mb-6">
-            We couldn't find jobs matching your preferences.
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="w-12 h-12 border-2 border-zinc-700 border-t-brand-500 rounded-full mx-auto mb-6"
+            aria-hidden="true"
+          />
+          <h2 className="text-2xl font-bold mb-4 text-zinc-100 tracking-tight">No matches found</h2>
+          <p className="text-zinc-400 mb-6 leading-relaxed">
+            We couldn't find jobs matching your preferences right now.
           </p>
           
-          <div className="space-y-3">
-            <p className="text-sm text-zinc-300">Try:</p>
-            <ul className="text-sm text-zinc-300 space-y-2">
+          <div className="space-y-4 mb-6">
+            <p className="text-sm text-zinc-400 font-medium">Try:</p>
+            <ul className="text-sm text-zinc-400 space-y-2 leading-relaxed">
               <li>• Selecting more cities</li>
               <li>• Choosing a different career path</li>
               <li>• Coming back tomorrow (we add 100+ jobs daily)</li>
@@ -233,7 +308,7 @@ function MatchesPageContent() {
 
   return (
     <div className="min-h-screen bg-black py-8">
-      <div className="container max-w-4xl mx-auto px-4">
+      <div className="container max-w-5xl mx-auto px-4">
         {/* Tier Indicator */}
         <div className="text-center mb-6">
           <motion.span
@@ -248,8 +323,8 @@ function MatchesPageContent() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Your {jobs.length} Matched Jobs</h1>
-          <p className="text-zinc-300">
+          <h1 className="text-4xl font-bold mb-2 tracking-tight text-zinc-100">Your {jobs.length} Matched Jobs</h1>
+          <p className="text-zinc-400 leading-relaxed">
             Hand-picked by our AI based on your preferences
           </p>
           {/* Screen reader announcement for loaded jobs */}
@@ -293,18 +368,41 @@ function MatchesPageContent() {
 
         {/* Job Cards */}
         <div ref={jobsContainerRef} className="space-y-6 mb-12" role="list" aria-label="Job matches">
-          {jobs.map((job, index) => {
-            const companyLogo = getCompanyLogo(job.company);
-            return (
-              <motion.article
-                key={job.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="glass-card elevation-2 p-6 hover:elevation-3 transition-all"
-                role="listitem"
-                aria-labelledby={`job-title-${job.id}`}
-              >
+          <AnimatePresence mode="popLayout">
+            {jobs
+              .filter(job => !dismissedJobIds.has(job.id))
+              .map((job, index) => {
+                const companyLogo = getCompanyLogo(job.company);
+                const isDismissing = dismissingJobId === job.id;
+                return (
+                  <motion.article
+                    key={job.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={isDismissing ? { 
+                      opacity: 0.2, 
+                      scale: 0.95,
+                      height: 0,
+                      marginBottom: 0,
+                    } : { 
+                      opacity: 1, 
+                      y: 0,
+                      scale: 1,
+                    }}
+                    exit={{ 
+                      opacity: 0, 
+                      scale: 0.95,
+                      height: 0,
+                      marginBottom: 0,
+                    }}
+                    transition={{ 
+                      duration: isDismissing ? 0.3 : 0.5,
+                      delay: isDismissing ? 0 : index * 0.1,
+                      ease: 'easeInOut'
+                    }}
+                    className="glass-card elevation-2 p-6 hover:elevation-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/5 overflow-hidden"
+                    role="listitem"
+                    aria-labelledby={`job-title-${job.id}`}
+                  >
                 <div className="flex justify-between items-start mb-4 gap-4">
                   <div className="flex-1 flex items-start gap-4">
                     {/* Company Logo */}
@@ -326,6 +424,49 @@ function MatchesPageContent() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
+                      {/* Visa Confidence Tag - ABOVE title for maximum visibility */}
+                      {job.visa_confidence && job.visa_confidence !== 'unknown' && (
+                        <div className="mb-3">
+                          <VisaConfidenceTooltip
+                            confidence={job.visa_confidence}
+                            reason={job.visa_confidence_reason || 'No visa information available'}
+                            confidencePercentage={job.visa_confidence_percentage}
+                          >
+                            {(() => {
+                              const style = getVisaConfidenceStyle(job.visa_confidence);
+                              const label = job.visa_confidence_label || getVisaConfidenceLabel(job.visa_confidence);
+                              return (
+                                <span 
+                                  className={`
+                                    inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm
+                                    border border-white/5
+                                    ${style.bgColor}
+                                    backdrop-blur-md
+                                    ${style.textColor}
+                                    shadow-[0_0_15px_rgba(16,185,129,0.1)]
+                                    relative overflow-hidden
+                                    group
+                                    transition-all duration-300
+                                  `}
+                                >
+                                  {/* Shimmer effect */}
+                                  <span 
+                                    className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-[4000ms] ease-in-out bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                                    aria-hidden="true"
+                                  />
+                                  {/* Status dot instead of emoji - with opacity for high-res screens */}
+                                  <span className={`w-2 h-2 rounded-full ${style.dotColor} opacity-80 relative z-10`} aria-hidden="true" />
+                                  {/* Content */}
+                                  <span className="relative z-10 font-medium">
+                                    {label}
+                                  </span>
+                                </span>
+                              );
+                            })()}
+                          </VisaConfidenceTooltip>
+                        </div>
+                      )}
+                      
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <span className="text-xs font-bold text-brand-400 bg-brand-500/20 px-2 py-1 rounded-full">
                           #{index + 1}
@@ -336,18 +477,18 @@ function MatchesPageContent() {
                           </span>
                         )}
                       </div>
-                      <h3 id={`job-title-${job.id}`} className="text-xl font-bold mb-1 text-white break-words">{job.title}</h3>
+                      <h3 id={`job-title-${job.id}`} className="text-xl font-bold mb-1 text-zinc-100 break-words tracking-tight">{job.title}</h3>
                       <p className="text-brand-300 font-medium break-words">{job.company}</p>
                     </div>
                   </div>
                 </div>
 
               <div className="flex flex-wrap gap-3 mb-4">
-                <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-zinc-800 text-sm">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-zinc-800 text-sm text-zinc-400">
                   📍 {job.location || `${job.city}${job.country ? `, ${job.country}` : ''}`}
                 </span>
                 {job.work_environment && (
-                  <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-zinc-800 text-sm capitalize">
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-zinc-800 text-sm capitalize text-zinc-400">
                     {job.work_environment === 'remote' && '🌍'}
                     {job.work_environment === 'hybrid' && '🏢'}
                     {job.work_environment === 'office' && '🏛️'}
@@ -356,31 +497,55 @@ function MatchesPageContent() {
                 )}
               </div>
 
-              <p className="text-zinc-300 text-sm mb-4 line-clamp-3">
+              <p className="text-zinc-400 text-sm mb-4 line-clamp-3 leading-relaxed">
                 {job.description?.replace(/<[^>]*>/g, '').substring(0, 200)}...
               </p>
 
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full"
-                disabled={clickedJobId === job.id}
-                onClick={() => {
-                  setClickedJobId(job.id);
-                  handleJobClick(job.id, job.company, index + 1);
-                  
-                  // Open URL
-                  window.open(job.url, '_blank', 'noopener,noreferrer');
-                  
-                  // Clear loading state after 2s
-                  setTimeout(() => setClickedJobId(null), 2000);
-                }}
-              >
-                {clickedJobId === job.id ? 'Opening...' : 'Apply Now →'}
-              </Button>
+              <div className="flex gap-3">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="flex-1 bg-emerald-500 text-zinc-950 font-bold px-6 hover:bg-emerald-400 transition-all duration-200"
+                  disabled={clickedJobId === job.id || isDismissing}
+                  onClick={() => {
+                    setClickedJobId(job.id);
+                    handleJobClick(job.id, job.company, index + 1);
+                    
+                    // Open URL
+                    window.open(job.url, '_blank', 'noopener,noreferrer');
+                    
+                    // Clear loading state after 2s
+                    setTimeout(() => setClickedJobId(null), 2000);
+                  }}
+                >
+                  {clickedJobId === job.id ? 'Opening...' : 'Apply Now →'}
+                </Button>
+                
+                <motion.button
+                  type="button"
+                  onClick={() => handleJobDismiss(job)}
+                  disabled={isDismissing}
+                  whileTap={{ scale: 1.5 }}
+                  className={`
+                    px-4 py-2.5 rounded-lg
+                    border border-zinc-700 bg-zinc-900/40
+                    text-zinc-400 hover:text-zinc-300 hover:bg-zinc-800/60
+                    transition-all duration-200
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    text-sm font-medium
+                  `}
+                  aria-label={`Mark ${job.company} as not relevant`}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <span>👎</span>
+                    <span className="hidden sm:inline">Not Relevant</span>
+                  </span>
+                </motion.button>
+              </div>
             </motion.article>
             );
           })}
+          </AnimatePresence>
         </div>
 
         {/* Bottom CTA - Only show after viewing jobs */}

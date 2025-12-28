@@ -74,9 +74,19 @@ export function applyHardGates(job: Job, userPrefs: UserPreferences): { passed: 
   // Check visa sponsorship requirement (CRITICAL HARD GATE)
   if (userPrefs.visa_status) {
     const visaStatus = userPrefs.visa_status.toLowerCase();
-    const needsVisaSponsorship = !visaStatus.includes('eu-citizen') && 
-                                 !visaStatus.includes('citizen') && 
-                                 !visaStatus.includes('permanent');
+    // Explicit check for sponsorship requirement
+    // Handles: "Non-EU (require sponsorship)", "Non-UK (require sponsorship)", 
+    // "EU citizen", etc.
+    const needsVisaSponsorship = 
+      visaStatus.includes('non-eu') || 
+      visaStatus.includes('non-uk') ||
+      visaStatus.includes('require sponsorship') ||
+      (visaStatus.includes('sponsorship') && !visaStatus.includes('eu')) ||
+      (!visaStatus.includes('eu-citizen') && 
+       !visaStatus.includes('eu citizen') &&
+       !visaStatus.includes('citizen') && 
+       !visaStatus.includes('permanent') &&
+       visaStatus.length > 0);
     
     if (needsVisaSponsorship) {
       // User needs visa sponsorship - check if job offers it
