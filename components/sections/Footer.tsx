@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import LogoWordmark from "@/components/LogoWordmark";
 
 export default function Footer() {
   const links = [
@@ -14,31 +15,44 @@ export default function Footer() {
 
   return (
     <>
-      <footer className="section-padding border-t border-white/10 bg-black/40">
+      <footer className="section-padding pb-[max(2rem,env(safe-area-inset-bottom))] border-t border-white/10 bg-black/40">
         <div className="container-page">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="flex flex-col items-center gap-6 text-center sm:flex-row sm:justify-between sm:text-left"
+            className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12"
           >
-            <div className="flex flex-col gap-2">
-              <p className="text-lg font-semibold text-white">JobPing</p>
-              <p className="text-sm text-zinc-300">EU early-career roles. Free: instant matches. Premium: 3x per week.</p>
+            {/* Left: Logo + Tagline */}
+            <div className="flex flex-col gap-3">
+              <div className="scale-60 md:scale-80 origin-left">
+                <LogoWordmark />
+              </div>
+              <p className="text-xs text-zinc-500 max-w-md">
+                The visa-first job board for the next generation of builders.
+              </p>
             </div>
             
-            <nav className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-              {links.map((link, index) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-sm font-medium text-zinc-300 transition-colors hover:text-brand-200"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
+            {/* Right: System Status */}
+            <div className="flex flex-col items-start md:items-end gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-xs text-zinc-500">Status: All Systems Operational</span>
+              </div>
+              
+              <nav className="flex flex-wrap items-center gap-3 md:justify-end">
+                {links.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="text-xs text-zinc-500 transition-all duration-200 hover:text-zinc-300"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
           </motion.div>
           
           <motion.div
@@ -48,9 +62,6 @@ export default function Footer() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mt-8 pt-8 border-t border-white/5 text-center"
           >
-            <p className="text-sm text-zinc-400 mb-3">
-              Built by an early-career job seeker, for early-career job seekers. Let's beat this Job Market together.
-            </p>
             <p className="text-xs text-zinc-500">
               © {new Date().getFullYear()} JobPing. All rights reserved.
             </p>

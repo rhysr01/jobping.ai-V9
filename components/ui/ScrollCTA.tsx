@@ -46,17 +46,17 @@ export default function ScrollCTA() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden lg:block"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-50 hidden lg:block lg:bottom-[max(1.5rem,env(safe-area-inset-bottom))]"
         >
           <motion.div
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
-            className="bg-white/[0.08] border border-white/20 backdrop-blur-xl rounded-2xl px-6 py-4 shadow-lg shadow-black/50"
+            className="bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl"
           >
             <div className="flex items-center gap-4">
               <div className="flex-1">
                 <p className="text-sm font-semibold text-white mb-1">{CTA_GET_MY_5_FREE_MATCHES}</p>
-                <p className="text-xs text-zinc-400">{TRUST_TEXT_NO_CARD_SETUP}</p>
+                <p className="text-xs text-zinc-400 hidden md:flex">{TRUST_TEXT_NO_CARD_SETUP}</p>
               </div>
               <Link
                 href="/signup/free"

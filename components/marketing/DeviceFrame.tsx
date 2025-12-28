@@ -8,9 +8,10 @@ type Props = {
   children: React.ReactNode; // the email preview
   className?: string;
   hideOnMobile?: boolean; // NEW prop: hide device frame on mobile
+  priority?: boolean; // NEW prop: prioritize image loading for LCP
 };
 
-export default function DeviceFrame({ children, className, hideOnMobile = false }: Props) {
+export default function DeviceFrame({ children, className, hideOnMobile = false, priority = false }: Props) {
   // iPhone 14 logical size used by our SVG: outer 390x844, inner screen 366x820 at (12,12)
   // Visual size reduced via responsive scale to avoid dominating the layout
   
@@ -89,8 +90,8 @@ export default function DeviceFrame({ children, className, hideOnMobile = false 
           <Image
             src="/device/iphone-14.svg"
             alt=""
-            priority={false}
-            loading="lazy"
+            priority={priority}
+            loading={priority ? undefined : "lazy"}
             fill
             sizes="(max-width: 768px) 390px, 440px"
             quality={85}

@@ -104,8 +104,14 @@ function SignupForm() {
     'English', 'French', 'German', 'Spanish', 'Italian', 'Dutch', 'Portuguese',
     // Additional EU languages
     'Polish', 'Swedish', 'Danish', 'Finnish', 'Czech', 'Romanian', 'Hungarian', 'Greek',
+    'Bulgarian', 'Croatian', 'Serbian', 'Slovak', 'Slovenian', 'Estonian', 'Latvian', 'Lithuanian', 'Ukrainian',
+    // Middle Eastern & Central Asian (common visa seekers)
+    'Arabic', 'Turkish', 'Hebrew', 'Persian', 'Farsi', 'Urdu',
+    // Asian languages (common visa seekers)
+    'Japanese', 'Chinese', 'Mandarin', 'Cantonese', 'Korean', 'Hindi', 'Thai', 'Vietnamese', 
+    'Indonesian', 'Tagalog', 'Malay', 'Bengali', 'Tamil', 'Telugu',
     // Other common languages
-    'Arabic'
+    'Russian'
   ];
   
   // NEW CONSTANTS FOR BETTER MATCHING

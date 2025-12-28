@@ -85,7 +85,7 @@ export default function HowItWorks() {
                 </motion.span>
                 <div className="flex items-center gap-3">
                   <motion.span 
-                    className="relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-500/12 text-brand-200 transition-all duration-300 group-hover:bg-brand-500/20 group-hover:scale-110"
+                    className="relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-500/12 text-brand-200 transition-all duration-200 group-hover:bg-brand-500/20 group-hover:scale-110"
                     whileHover={{ rotate: 360 }}
                     transition={{ duration: 0.6 }}
                   >

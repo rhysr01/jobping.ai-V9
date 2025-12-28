@@ -114,6 +114,131 @@ export function applyHardGates(job: Job, userPrefs: UserPreferences): { passed: 
     }
   }
 
+  // Check language requirements (CRITICAL HARD GATE)
+  // Default to English if no languages specified (for free users)
+  const userLanguages = (userPrefs.languages_spoken && Array.isArray(userPrefs.languages_spoken) && userPrefs.languages_spoken.length > 0)
+    ? userPrefs.languages_spoken
+    : ['English']; // Default free users to English only
+  
+  if (userLanguages && userLanguages.length > 0) {
+    const jobLanguages = (job as any).language_requirements;
+    
+    // If job has explicit language requirements, check if user speaks any of them
+    if (jobLanguages && Array.isArray(jobLanguages) && jobLanguages.length > 0) {
+      const userLanguagesLower = userLanguages.map(lang => lang.toLowerCase());
+      const jobLanguagesLower = jobLanguages.map((lang: string) => lang.toLowerCase());
+      
+      // Check if user speaks any of the required languages
+      const hasMatchingLanguage = jobLanguagesLower.some((jobLang: string) => 
+        userLanguagesLower.some(userLang => 
+          userLang.includes(jobLang) || 
+          jobLang.includes(userLang) ||
+          // Handle common language name variations
+          (userLang === 'english' && (jobLang.includes('english') || jobLang.includes('eng'))) ||
+          (userLang === 'spanish' && (jobLang.includes('spanish') || jobLang.includes('español') || jobLang.includes('castellano'))) ||
+          (userLang === 'french' && (jobLang.includes('french') || jobLang.includes('français') || jobLang.includes('francais'))) ||
+          (userLang === 'german' && (jobLang.includes('german') || jobLang.includes('deutsch'))) ||
+          (userLang === 'italian' && (jobLang.includes('italian') || jobLang.includes('italiano'))) ||
+          (userLang === 'portuguese' && (jobLang.includes('portuguese') || jobLang.includes('português') || jobLang.includes('portugues'))) ||
+          (userLang === 'dutch' && (jobLang.includes('dutch') || jobLang.includes('nederlands'))) ||
+          (userLang === 'japanese' && (jobLang.includes('japanese') || jobLang.includes('日本語') || jobLang.includes('nihongo'))) ||
+          (userLang === 'chinese' && (jobLang.includes('chinese') || jobLang.includes('中文') || jobLang.includes('mandarin') || jobLang.includes('cantonese'))) ||
+          (userLang === 'korean' && (jobLang.includes('korean') || jobLang.includes('한국어'))) ||
+          (userLang === 'mandarin' && (jobLang.includes('chinese') || jobLang.includes('mandarin') || jobLang.includes('中文'))) ||
+          (userLang === 'cantonese' && (jobLang.includes('chinese') || jobLang.includes('cantonese'))) ||
+          // Additional EU languages
+          (userLang === 'polish' && (jobLang.includes('polish') || jobLang.includes('polski'))) ||
+          (userLang === 'swedish' && (jobLang.includes('swedish') || jobLang.includes('svenska'))) ||
+          (userLang === 'danish' && (jobLang.includes('danish') || jobLang.includes('dansk'))) ||
+          (userLang === 'finnish' && (jobLang.includes('finnish') || jobLang.includes('suomi'))) ||
+          (userLang === 'czech' && (jobLang.includes('czech') || jobLang.includes('čeština'))) ||
+          (userLang === 'romanian' && (jobLang.includes('romanian') || jobLang.includes('română'))) ||
+          (userLang === 'hungarian' && (jobLang.includes('hungarian') || jobLang.includes('magyar'))) ||
+          (userLang === 'greek' && (jobLang.includes('greek') || jobLang.includes('ελληνικά'))) ||
+          (userLang === 'bulgarian' && (jobLang.includes('bulgarian') || jobLang.includes('български'))) ||
+          (userLang === 'croatian' && (jobLang.includes('croatian') || jobLang.includes('hrvatski'))) ||
+          (userLang === 'serbian' && (jobLang.includes('serbian') || jobLang.includes('српски'))) ||
+          (userLang === 'russian' && (jobLang.includes('russian') || jobLang.includes('русский'))) ||
+          (userLang === 'ukrainian' && (jobLang.includes('ukrainian') || jobLang.includes('українська'))) ||
+          // Middle Eastern & Central Asian
+          (userLang === 'arabic' && (jobLang.includes('arabic') || jobLang.includes('العربية'))) ||
+          (userLang === 'turkish' && (jobLang.includes('turkish') || jobLang.includes('türkçe'))) ||
+          (userLang === 'hebrew' && (jobLang.includes('hebrew') || jobLang.includes('עברית'))) ||
+          (userLang === 'persian' && (jobLang.includes('persian') || jobLang.includes('farsi') || jobLang.includes('فارسی'))) ||
+          (userLang === 'farsi' && (jobLang.includes('persian') || jobLang.includes('farsi') || jobLang.includes('فارسی'))) ||
+          (userLang === 'urdu' && (jobLang.includes('urdu') || jobLang.includes('اردو'))) ||
+          // Asian languages
+          (userLang === 'hindi' && (jobLang.includes('hindi') || jobLang.includes('हिन्दी'))) ||
+          (userLang === 'thai' && (jobLang.includes('thai') || jobLang.includes('ไทย'))) ||
+          (userLang === 'vietnamese' && (jobLang.includes('vietnamese') || jobLang.includes('tiếng việt'))) ||
+          (userLang === 'indonesian' && (jobLang.includes('indonesian') || jobLang.includes('bahasa indonesia'))) ||
+          (userLang === 'tagalog' && (jobLang.includes('tagalog') || jobLang.includes('filipino'))) ||
+          (userLang === 'malay' && (jobLang.includes('malay') || jobLang.includes('bahasa melayu'))) ||
+          (userLang === 'bengali' && (jobLang.includes('bengali') || jobLang.includes('বাংলা'))) ||
+          (userLang === 'tamil' && (jobLang.includes('tamil') || jobLang.includes('தமிழ்'))) ||
+          (userLang === 'telugu' && (jobLang.includes('telugu') || jobLang.includes('తెలుగు')))
+        )
+      );
+      
+      if (!hasMatchingLanguage) {
+        return { 
+          passed: false, 
+          reason: `Job requires languages user doesn't speak: ${jobLanguages.join(', ')}` 
+        };
+      }
+    }
+    
+    // Also check description for language requirements (fallback)
+    const jobDesc = (job.description || '').toLowerCase();
+    const jobTitle = (job.title || '').toLowerCase();
+    const jobText = `${jobDesc} ${jobTitle}`.toLowerCase();
+    
+    // Common language requirement patterns
+    const languageRequirementKeywords = [
+      'japanese speaker', 'chinese speaker', 'mandarin speaker', 'korean speaker',
+      'arabic speaker', 'hindi speaker', 'thai speaker', 'russian speaker',
+      'polish speaker', 'czech speaker', 'hungarian speaker', 'romanian speaker',
+      'greek speaker', 'turkish speaker', 'fluent japanese', 'fluent chinese',
+      'fluent mandarin', 'fluent korean', 'native japanese', 'native chinese',
+      'native mandarin', 'native korean', 'must speak japanese', 'must speak chinese',
+      'must speak mandarin', 'must speak korean', 'requires japanese', 'requires chinese',
+      'requires mandarin', 'requires korean', 'japanese language', 'chinese language',
+      'mandarin language', 'korean language', 'japanese proficiency', 'chinese proficiency',
+      'mandarin proficiency', 'korean proficiency'
+    ];
+    
+    const userLanguagesLower = userLanguages.map(lang => lang.toLowerCase());
+    const requiresUnknownLanguage = languageRequirementKeywords.some(keyword => {
+      if (!jobText.includes(keyword)) return false;
+      
+        // Extract language from keyword
+        const langInKeyword = keyword.split(' ').find(word => 
+          ['japanese', 'chinese', 'mandarin', 'cantonese', 'korean', 'hindi', 'thai', 'vietnamese',
+           'indonesian', 'tagalog', 'malay', 'bengali', 'tamil', 'telugu',
+           'arabic', 'turkish', 'hebrew', 'persian', 'farsi', 'urdu',
+           'russian', 'polish', 'czech', 'hungarian', 'romanian', 'greek', 'bulgarian',
+           'croatian', 'serbian', 'ukrainian'].includes(word)
+        );
+      
+      if (!langInKeyword) return false;
+      
+      // Check if user speaks this language
+      return !userLanguagesLower.some(userLang => 
+        userLang.includes(langInKeyword) || langInKeyword.includes(userLang) ||
+        (userLang === 'mandarin' && langInKeyword === 'chinese') ||
+        (userLang === 'chinese' && langInKeyword === 'mandarin') ||
+        (userLang === 'cantonese' && langInKeyword === 'chinese')
+      );
+    });
+    
+    if (requiresUnknownLanguage) {
+      return { 
+        passed: false, 
+        reason: 'Job description requires languages user doesn\'t speak' 
+      };
+    }
+  }
+
   return { passed: true, reason: 'Passed all hard gates' };
 }
 

@@ -6,6 +6,8 @@ import * as Copy from '@/lib/copy';
 import { BrandIcons } from '@/components/ui/BrandIcons';
 import { trackEvent } from '@/lib/analytics';
 import { useStats } from '@/hooks/useStats';
+import SocialProofTicker from '@/components/ui/SocialProofTicker';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 type PlanConfig = {
   id: 'free' | 'premium';
@@ -85,19 +87,28 @@ export default function Pricing() {
 
 
         {/* Social Proof */}
-        {stats && stats.totalUsers > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-center mt-4"
-          >
-            <p className="text-sm text-zinc-400">
-              Join <span className="font-semibold text-white">{stats.totalUsers.toLocaleString('en-US')}+</span> students finding jobs
-            </p>
-          </motion.div>
-        )}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="text-center mt-8 space-y-3"
+        >
+          {stats ? (
+            stats.totalUsers > 0 && (
+              <p className="text-sm text-zinc-400">
+                Join <span className="font-semibold text-white">{stats.totalUsers.toLocaleString('en-US')}+</span> students finding jobs
+              </p>
+            )
+          ) : (
+            <div className="h-4 w-56 bg-white/5 rounded animate-pulse mx-auto" />
+          )}
+          <div className="flex justify-center">
+            <ErrorBoundary fallback={null}>
+              <SocialProofTicker />
+            </ErrorBoundary>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -106,43 +117,13 @@ export default function Pricing() {
 function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
   const isPremium = plan.id === 'premium';
 
-  return (
-    <div className="relative">
-      <motion.article
-        data-testid={`${plan.id}-plan`}
-        initial={{ opacity: 0, y: 28 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.55, delay: index * 0.1 }}
-        className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-xl backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7 ${
-          isPremium 
-            ? 'bg-zinc-900 border border-purple-500/30 shadow-pricing md:scale-[1.05] md:-translate-y-2 shadow-[0_0_50px_rgba(139,92,246,0.2)]' 
-            : 'bg-white/[0.06] border border-white/10 shadow-pricing md:scale-100 md:translate-y-0 shadow-[0_0_50px_rgba(0,0,0,0.3)]'
-        }`}
-      >
-        {isPremium && (
-          <>
-            <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] bg-[radial-gradient(circle_at_center,theme(colors.brand.500/0.35),_transparent_70%)] blur-sm-hero" />
-            {/* Subtle pulsing glow border instead of badge */}
-            <motion.div 
-              className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] border border-purple-500/30"
-              animate={{
-                boxShadow: [
-                  '0 0 20px rgba(139, 92, 246, 0.2)',
-                  '0 0 30px rgba(139, 92, 246, 0.4)',
-                  '0 0 20px rgba(139, 92, 246, 0.2)',
-                ],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-            />
-          </>
-        )}
+  const cardContent = (
+    <>
+      {isPremium && (
+        <div className="pointer-events-none absolute inset-0 -z-10 rounded-[2rem] bg-[radial-gradient(circle_at_center,theme(colors.brand.500/0.35),_transparent_70%)] blur-sm-hero" />
+      )}
 
-        <div className="space-y-5">
+      <div className="space-y-5">
         <div className="flex items-baseline gap-2">
           <span className="text-4xl font-semibold text-white sm:text-5xl leading-[1.05]">{plan.price}</span>
           {plan.suffix && <span className="text-base font-medium text-zinc-300 leading-[1.05]">{plan.suffix}</span>}
@@ -151,7 +132,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
         <h3 className="text-xl font-semibold text-white sm:text-2xl mb-2">{plan.headline}</h3>
         <p className="text-base text-zinc-300/90 leading-relaxed">{plan.description}</p>
 
-        <ul className="mt-6 space-y-4">
+        <ul className="mt-6 space-y-4 min-h-[260px]">
           {plan.features.map(feature => (
             <li key={feature} className="flex items-start gap-4 text-sm font-medium text-zinc-100 sm:text-base">
               <span className="mt-0.5 inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-brand-200">
@@ -163,7 +144,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
         </ul>
       </div>
 
-      <div className="mt-8 flex flex-col gap-3">
+      <div className="mt-auto flex flex-col gap-3 pt-8">
         <motion.div
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -178,15 +159,15 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
               }
             }}
             aria-label={isPremium ? "Start Premium - Weekly emails" : "Try Free Now - Instant matches"}
-            className={`group relative inline-flex items-center justify-center overflow-hidden h-11 rounded-full px-6 text-sm font-medium transition-all duration-300 sm:text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+            className={`group relative inline-flex items-center justify-center overflow-hidden h-11 rounded-full px-6 text-sm font-medium transition-all duration-200 sm:text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
               isPremium
                 ? 'bg-brand-500 text-white shadow-md shadow-brand-500/40 hover:bg-purple-600 hover:-translate-y-0.5 hover:shadow-feature transition-all'
                 : 'border border-white/15 bg-white/5 text-white hover:border-brand-500/40 hover:bg-white/5 transition-all'
             }`}
           >
             <span className="relative flex items-center gap-2">
-              {!isPremium && <BrandIcons.Zap className="h-4 w-4" />}
-              {isPremium && <BrandIcons.Mail className="h-4 w-4" />}
+              {!isPremium && <BrandIcons.Mail className="h-4 w-4" />}
+              {isPremium && <BrandIcons.Zap className="h-4 w-4" />}
               {plan.cta.label}
               <motion.span
                 animate={{ x: [0, 4, 0] }}
@@ -199,7 +180,38 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
           </Link>
         </motion.div>
       </div>
-    </motion.article>
+    </>
+  );
+
+  return (
+    <div className="relative">
+      {isPremium ? (
+        // Premium card with conic-gradient border (with fallback)
+        <div className="relative rounded-[2rem] p-[1px] border border-purple-500/30 bg-[conic-gradient(from_0deg_at_50%_50%,rgba(139,92,246,0.5),rgba(168,85,247,0.3),rgba(139,92,246,0.5))] md:scale-[1.05] md:-translate-y-2">
+          <motion.article
+            data-testid={`${plan.id}-plan`}
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.55, delay: index * 0.1 }}
+            className="group relative flex flex-col h-full overflow-hidden rounded-[2rem] bg-zinc-900 backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7 shadow-[0_0_50px_-12px_rgba(139,92,246,0.3)]"
+          >
+            {cardContent}
+          </motion.article>
+        </div>
+      ) : (
+        // Free card with inset shadow
+        <motion.article
+          data-testid={`${plan.id}-plan`}
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.55, delay: index * 0.1 }}
+          className="group relative flex flex-col h-full overflow-hidden rounded-[2rem] bg-zinc-900/30 border border-white/5 backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7 md:scale-100 md:translate-y-0 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]"
+        >
+          {cardContent}
+        </motion.article>
+      )}
     </div>
   );
 }

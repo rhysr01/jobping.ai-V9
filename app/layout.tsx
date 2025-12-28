@@ -59,10 +59,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://getjobping.com/og-image.png",
+        url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://getjobping.com'}/api/og?city=Berlin&count=14`,
         width: 1200,
         height: 630,
-        alt: "JobPing - AI-powered job matching for early-career jobs in Europe",
+        alt: "JobPing - 14 new jobs found in Berlin",
       },
     ],
   },
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
     description:
       "EU early-career roles. Free: Get 5 instant matches. Premium: 15 jobs per week via email (3x per week: Mon/Wed/Fri).",
     creator: "@jobping",
-    images: ["https://getjobping.com/og-image.png"],
+    images: [`${process.env.NEXT_PUBLIC_BASE_URL || 'https://getjobping.com'}/api/og?city=Berlin&count=14`],
   },
   metadataBase: new URL("https://getjobping.com"),
   alternates: {
@@ -98,7 +98,7 @@ export default async function RootLayout({
   const nonce = headersList.get('x-nonce') || '';
 
   return (
-    <html lang="en">
+    <html lang="en" className="scroll-smooth">
       <head>
         {/* Font preconnect for faster font loading */}
         <link
@@ -143,7 +143,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="text-white premium-bg custom-scrollbar relative">
+      <body className="text-white premium-bg custom-scrollbar relative bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-purple-900/10 via-zinc-950 to-zinc-950">
         {/* Cursor follower radial gradient - desktop only */}
         <div 
           id="cursor-follower"
@@ -162,8 +162,6 @@ export default async function RootLayout({
           Skip to content
         </a>
         <Header />
-        {/* Spacer for fixed header */}
-        <div className="h-20 md:h-24" aria-hidden />
         <ErrorBoundary>{children}</ErrorBoundary>
         <Toaster />
         <CookieBanner />
@@ -214,6 +212,19 @@ export default async function RootLayout({
             gtag('config', 'G-G40ZHDYNL6');
           `}
         </Script>
+        {/* PostHog Analytics - Session Replay & Feature Flags */}
+        {process.env.NEXT_PUBLIC_POSTHOG_KEY && (
+          <Script
+            id="posthog"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+                !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+                posthog.init('${process.env.NEXT_PUBLIC_POSTHOG_KEY}',{api_host:'https://app.posthog.com'});
+              `,
+            }}
+          />
+        )}
       </body>
     </html>
   );

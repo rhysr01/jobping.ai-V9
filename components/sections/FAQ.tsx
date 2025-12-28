@@ -52,7 +52,7 @@ export default function FAQ() {
           <h2 className="text-2xl font-semibold text-white mb-2 text-center">Frequently Asked Questions</h2>
           <p className="text-sm text-zinc-400 text-center mb-6">Click any question to see the answer</p>
           
-          <div className="space-y-3">
+          <div className="divide-y divide-white/5 space-y-0">
             {faqs.map((faq, index) => {
               const isOpen = openIndex === index;
               
@@ -63,14 +63,14 @@ export default function FAQ() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: index * 0.05 }}
-                  className="rounded-lg border border-white/10 bg-white/[0.02] backdrop-blur-sm overflow-hidden"
+                  className="py-6 md:py-8 first:pt-0"
                 >
                   <button
                     onClick={() => setOpenIndex(isOpen ? null : index)}
-                    className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-white/[0.03] transition-colors"
+                    className="w-full flex items-center justify-between text-left hover:opacity-80 transition-all duration-200"
                     aria-expanded={isOpen}
                   >
-                    <span className="text-sm font-medium text-white pr-4">{faq.question}</span>
+                    <span className="text-sm font-medium text-zinc-200 pr-4">{faq.question}</span>
                     <motion.div
                       animate={{ rotate: isOpen ? 180 : 0 }}
                       transition={{ duration: 0.2 }}
@@ -89,8 +89,8 @@ export default function FAQ() {
                         transition={{ duration: 0.2 }}
                         className="overflow-hidden"
                       >
-                        <div className="px-4 pb-3 pt-0">
-                          <p className="text-sm text-zinc-300 leading-relaxed">{faq.answer}</p>
+                        <div className="pt-4">
+                          <p className="text-sm text-zinc-400 leading-relaxed">{faq.answer}</p>
                         </div>
                       </motion.div>
                     )}

@@ -635,14 +635,19 @@ ${careerPaths ? `2. **CAREER PATH MATCH IS REQUIRED**: Jobs MUST align with: ${c
 ${roles ? `3. **ROLE MATCH IS REQUIRED**: Jobs MUST match these roles: ${roles}
    - Job title or description must include these role keywords
    - DO NOT recommend jobs that don't match these roles` : ''}
+${languages ? `4. **LANGUAGE REQUIREMENTS ARE CRITICAL**: User speaks: ${languages}
+   - DO NOT recommend jobs that require languages the user doesn't speak
+   - If job requires "Japanese speaker", "Chinese speaker", "Mandarin speaker", "Korean speaker", etc., and user doesn't speak that language, EXCLUDE the job
+   - Only recommend jobs where user speaks at least one required language` : ''}
 
 INSTRUCTIONS:
 Analyze each job carefully and return ONLY jobs that meet ALL critical requirements above.
+${languages ? `**CRITICAL**: If a job requires languages the user doesn't speak (e.g., "Japanese speaker" but user doesn't speak Japanese), EXCLUDE it immediately.` : ''}
 Then rank by:
 1. Location match quality (exact city > remote/hybrid)
 2. Experience level fit (entry-level, graduate, junior keywords)
 3. Role alignment strength with career path and expertise
-4. Language requirements (if specified)
+${languages ? `4. Language match (user must speak at least one required language)` : '4. Language requirements (if specified)'}
 5. Company type and culture fit
 
 Return JSON array with exactly 5 matches (or fewer if less than 5 meet requirements), ranked by relevance:

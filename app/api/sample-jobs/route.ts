@@ -35,18 +35,21 @@ export async function GET(req: NextRequest) {
     // Create fictional user profiles for free and premium
     // These profiles represent typical user preferences
     // Jobs MUST be real from database, profiles are fictional
+    // Assume users speak English + common EU languages (not Japanese, Chinese, Korean, etc.)
     const fictionalProfiles = {
       free: {
         email: 'sample-free@jobping.com',
         name: 'Alex',
         cities: ['London', 'Amsterdam', 'Berlin'],
         careerPath: 'Tech',
+        languages_spoken: ['English', 'German'], // Common EU languages
       },
       premium: {
         email: 'sample-premium@jobping.com',
         name: 'Sam',
         cities: ['Stockholm', 'Dublin', 'Paris'],
         careerPath: 'Finance',
+        languages_spoken: ['English', 'French'], // Common EU languages
       },
     };
     
@@ -141,12 +144,105 @@ export async function GET(req: NextRequest) {
     });
 
     if (!jobsError && allJobs && allJobs.length > 0) {
-      // Filter in memory: prefer jobs matching career path AND preferred cities, but accept others too
+      // Filter in memory: apply new rules
       const validJobs = allJobs.filter(job => {
+        // Basic filters
         if (!job.job_url || job.job_url.trim() === '' || usedJobHashes.has(job.job_hash)) {
           return false;
         }
-        return true; // Accept all jobs with URLs - we'll prioritize by career path and city in sorting
+        
+        const jobTitle = (job.title || '').toLowerCase();
+        const jobDesc = (job.description || '').toLowerCase();
+        const jobText = `${jobTitle} ${jobDesc}`;
+        
+        // EXCLUDE: Teaching/Education jobs (unless business-related)
+        if ((jobTitle.includes('teacher') || jobTitle.includes('teaching') || 
+             jobTitle.includes('educator') || jobTitle.includes('tutor') ||
+             jobTitle.includes('instructor') || jobTitle.includes('lecturer')) &&
+            !jobTitle.includes('business') && !jobDesc.includes('business')) {
+          return false;
+        }
+        
+        // EXCLUDE: Legal jobs (unless compliance/regulatory/business legal)
+        if ((jobTitle.includes('lawyer') || jobTitle.includes('attorney') ||
+             jobTitle.includes('solicitor') || jobTitle.includes('barrister') ||
+             (jobTitle.includes('legal') && (jobTitle.includes('counsel') || jobTitle.includes('advisor')))) &&
+            !jobTitle.includes('compliance') && !jobTitle.includes('regulatory') &&
+            !jobDesc.includes('business') && !jobDesc.includes('corporate')) {
+          return false;
+        }
+        
+        // EXCLUDE: Virtual Assistant, Executive Assistant, Personal Assistant
+        if (jobTitle.includes('virtual assistant') || jobTitle.includes('executive assistant') ||
+            jobTitle.includes('personal assistant') || jobTitle.includes('administrative assistant')) {
+          return false;
+        }
+        
+        // EXCLUDE: Manager roles (unless graduate/trainee/junior/associate manager)
+        if (jobTitle.includes('manager') &&
+            !jobTitle.includes('graduate') && !jobTitle.includes('trainee') &&
+            !jobTitle.includes('junior') && !jobTitle.includes('entry') &&
+            !jobTitle.includes('associate')) {
+          // Allow compliance/regulatory managers (business-related)
+          if (!jobTitle.includes('compliance') && !jobTitle.includes('regulatory') &&
+              !jobTitle.includes('tax') && !jobTitle.includes('legal')) {
+            return false;
+          }
+        }
+        
+        // EXCLUDE: Jobs requiring languages user doesn't speak
+        const userLanguages = selectedUserProfile.languages_spoken || ['English'];
+        const userLanguagesLower = userLanguages.map(lang => lang.toLowerCase());
+        
+        // Check structured language requirements
+        const jobLanguages = (job as any).language_requirements;
+        if (jobLanguages && Array.isArray(jobLanguages) && jobLanguages.length > 0) {
+          const jobLanguagesLower = jobLanguages.map((lang: string) => lang.toLowerCase());
+          const hasMatchingLanguage = jobLanguagesLower.some((jobLang: string) => 
+            userLanguagesLower.some(userLang => 
+              userLang.includes(jobLang) || jobLang.includes(userLang) ||
+              (userLang === 'english' && (jobLang.includes('english') || jobLang.includes('eng'))) ||
+              (userLang === 'german' && (jobLang.includes('german') || jobLang.includes('deutsch'))) ||
+              (userLang === 'french' && (jobLang.includes('french') || jobLang.includes('français')))
+            )
+          );
+          
+          if (!hasMatchingLanguage) {
+            return false; // Exclude jobs requiring languages user doesn't speak
+          }
+        }
+        
+        // Check description for language requirements
+        const languageRequirementKeywords = [
+          'japanese speaker', 'chinese speaker', 'mandarin speaker', 'korean speaker',
+          'arabic speaker', 'hindi speaker', 'thai speaker', 'russian speaker',
+          'fluent japanese', 'fluent chinese', 'fluent mandarin', 'fluent korean',
+          'native japanese', 'native chinese', 'native mandarin', 'native korean',
+          'must speak japanese', 'must speak chinese', 'must speak mandarin', 'must speak korean',
+          'requires japanese', 'requires chinese', 'requires mandarin', 'requires korean'
+        ];
+        
+        const requiresUnknownLanguage = languageRequirementKeywords.some(keyword => {
+          if (!jobText.includes(keyword)) return false;
+          
+          // Extract language from keyword
+          const langInKeyword = keyword.split(' ').find(word => 
+            ['japanese', 'chinese', 'mandarin', 'korean', 'arabic', 'hindi', 'thai', 'russian'].includes(word)
+          );
+          
+          if (!langInKeyword) return false;
+          
+          // Check if user speaks this language
+          return !userLanguagesLower.some(userLang => 
+            userLang.includes(langInKeyword) || langInKeyword.includes(userLang)
+          );
+        });
+        
+        if (requiresUnknownLanguage) {
+          return false; // Exclude jobs requiring languages user doesn't speak
+        }
+        
+        return true; // Job passed all filters
       });
 
       // Score jobs: prefer career path matches and city matches
@@ -222,10 +318,10 @@ export async function GET(req: NextRequest) {
     if (jobsError || !allJobs || allJobs.length === 0) {
       console.log(`Fallback needed: Initial query failed or returned 0 jobs`);
       
-      // Simple fallback: Get ANY early-career jobs
+      // Simple fallback: Get ANY early-career jobs (with same filters)
       const { data: fallbackJobs, error: fallbackError } = await supabase
         .from('jobs')
-        .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
+        .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash, language_requirements')
         .eq('is_active', true)
         .eq('status', 'active')
         .is('filtered_reason', null)
@@ -242,8 +338,77 @@ export async function GET(req: NextRequest) {
       if (!fallbackError && fallbackJobs && fallbackJobs.length > 0) {
         console.log(`Fallback: Found ${fallbackJobs.length} jobs`);
         
-        // Add jobs from fallback
-        fallbackJobs.forEach((job, index) => {
+        // Apply same filters as main query
+        const userLanguages = selectedUserProfile.languages_spoken || ['English'];
+        const userLanguagesLower = userLanguages.map(lang => lang.toLowerCase());
+        
+        const filteredFallbackJobs = fallbackJobs.filter(job => {
+          const jobTitle = (job.title || '').toLowerCase();
+          const jobDesc = (job.description || '').toLowerCase();
+          const jobText = `${jobTitle} ${jobDesc}`;
+          
+          // Same filters as main query
+          if ((jobTitle.includes('teacher') || jobTitle.includes('teaching') || 
+               jobTitle.includes('educator') || jobTitle.includes('tutor')) &&
+              !jobTitle.includes('business') && !jobDesc.includes('business')) {
+            return false;
+          }
+          
+          if ((jobTitle.includes('lawyer') || jobTitle.includes('attorney') ||
+               jobTitle.includes('solicitor') || jobTitle.includes('barrister')) &&
+              !jobTitle.includes('compliance') && !jobTitle.includes('regulatory') &&
+              !jobDesc.includes('business') && !jobDesc.includes('corporate')) {
+            return false;
+          }
+          
+          if (jobTitle.includes('virtual assistant') || jobTitle.includes('executive assistant') ||
+              jobTitle.includes('personal assistant')) {
+            return false;
+          }
+          
+          if (jobTitle.includes('manager') &&
+              !jobTitle.includes('graduate') && !jobTitle.includes('trainee') &&
+              !jobTitle.includes('junior') && !jobTitle.includes('entry') &&
+              !jobTitle.includes('associate') &&
+              !jobTitle.includes('compliance') && !jobTitle.includes('regulatory')) {
+            return false;
+          }
+          
+          // Language filter
+          const jobLanguages = job.language_requirements;
+          if (jobLanguages && Array.isArray(jobLanguages) && jobLanguages.length > 0) {
+            const jobLanguagesLower = jobLanguages.map((lang: string) => lang.toLowerCase());
+            const hasMatchingLanguage = jobLanguagesLower.some((jobLang: string) => 
+              userLanguagesLower.some(userLang => 
+                userLang.includes(jobLang) || jobLang.includes(userLang)
+              )
+            );
+            if (!hasMatchingLanguage) return false;
+          }
+          
+          const languageRequirementKeywords = [
+            'japanese speaker', 'chinese speaker', 'mandarin speaker', 'korean speaker',
+            'fluent japanese', 'fluent chinese', 'fluent mandarin', 'fluent korean',
+            'must speak japanese', 'must speak chinese', 'must speak mandarin', 'must speak korean'
+          ];
+          
+          const requiresUnknownLanguage = languageRequirementKeywords.some(keyword => {
+            if (!jobText.includes(keyword)) return false;
+            const langInKeyword = keyword.split(' ').find(word => 
+              ['japanese', 'chinese', 'mandarin', 'korean'].includes(word)
+            );
+            return langInKeyword && !userLanguagesLower.some(userLang => 
+              userLang.includes(langInKeyword) || langInKeyword.includes(userLang)
+            );
+          });
+          
+          if (requiresUnknownLanguage) return false;
+          
+          return true;
+        });
+        
+        // Add filtered jobs from fallback
+        filteredFallbackJobs.forEach((job, index) => {
           if (resultJobs.length < 5 && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
             const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
             const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
@@ -265,10 +430,10 @@ export async function GET(req: NextRequest) {
     if (validJobs.length < 5) {
       console.log(`Emergency fallback: Only ${validJobs.length} jobs, trying emergency query to get to 5...`);
       
-      // Emergency: Get ANY early-career job with URL, no filters
+      // Emergency: Get ANY early-career job with URL, apply filters
       let emergencyQuery = supabase
         .from('jobs')
-        .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash')
+        .select('title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash, language_requirements')
         .eq('is_active', true)
         .eq('status', 'active')
         .is('filtered_reason', null)
@@ -278,7 +443,7 @@ export async function GET(req: NextRequest) {
       
       // Still prefer early-career but don't require it in emergency
       emergencyQuery = emergencyQuery.or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
-      emergencyQuery = emergencyQuery.order('created_at', { ascending: false }).limit(20);
+      emergencyQuery = emergencyQuery.order('created_at', { ascending: false }).limit(50);
       
       const { data: emergencyJobs, error: emergencyError } = await emergencyQuery;
       
@@ -289,8 +454,77 @@ export async function GET(req: NextRequest) {
       if (!emergencyError && emergencyJobs && emergencyJobs.length > 0) {
         console.log(`Emergency fallback: Found ${emergencyJobs.length} jobs`);
         
-        // Add jobs until we have 5
-        emergencyJobs.forEach((job, index) => {
+        // Apply same filters
+        const userLanguages = selectedUserProfile.languages_spoken || ['English'];
+        const userLanguagesLower = userLanguages.map(lang => lang.toLowerCase());
+        
+        const filteredEmergencyJobs = emergencyJobs.filter(job => {
+          const jobTitle = (job.title || '').toLowerCase();
+          const jobDesc = (job.description || '').toLowerCase();
+          const jobText = `${jobTitle} ${jobDesc}`;
+          
+          // Same filters as main query
+          if ((jobTitle.includes('teacher') || jobTitle.includes('teaching') || 
+               jobTitle.includes('educator') || jobTitle.includes('tutor')) &&
+              !jobTitle.includes('business') && !jobDesc.includes('business')) {
+            return false;
+          }
+          
+          if ((jobTitle.includes('lawyer') || jobTitle.includes('attorney') ||
+               jobTitle.includes('solicitor') || jobTitle.includes('barrister')) &&
+              !jobTitle.includes('compliance') && !jobTitle.includes('regulatory') &&
+              !jobDesc.includes('business') && !jobDesc.includes('corporate')) {
+            return false;
+          }
+          
+          if (jobTitle.includes('virtual assistant') || jobTitle.includes('executive assistant') ||
+              jobTitle.includes('personal assistant')) {
+            return false;
+          }
+          
+          if (jobTitle.includes('manager') &&
+              !jobTitle.includes('graduate') && !jobTitle.includes('trainee') &&
+              !jobTitle.includes('junior') && !jobTitle.includes('entry') &&
+              !jobTitle.includes('associate') &&
+              !jobTitle.includes('compliance') && !jobTitle.includes('regulatory')) {
+            return false;
+          }
+          
+          // Language filter
+          const jobLanguages = job.language_requirements;
+          if (jobLanguages && Array.isArray(jobLanguages) && jobLanguages.length > 0) {
+            const jobLanguagesLower = jobLanguages.map((lang: string) => lang.toLowerCase());
+            const hasMatchingLanguage = jobLanguagesLower.some((jobLang: string) => 
+              userLanguagesLower.some(userLang => 
+                userLang.includes(jobLang) || jobLang.includes(userLang)
+              )
+            );
+            if (!hasMatchingLanguage) return false;
+          }
+          
+          const languageRequirementKeywords = [
+            'japanese speaker', 'chinese speaker', 'mandarin speaker', 'korean speaker',
+            'fluent japanese', 'fluent chinese', 'fluent mandarin', 'fluent korean',
+            'must speak japanese', 'must speak chinese', 'must speak mandarin', 'must speak korean'
+          ];
+          
+          const requiresUnknownLanguage = languageRequirementKeywords.some(keyword => {
+            if (!jobText.includes(keyword)) return false;
+            const langInKeyword = keyword.split(' ').find(word => 
+              ['japanese', 'chinese', 'mandarin', 'korean'].includes(word)
+            );
+            return langInKeyword && !userLanguagesLower.some(userLang => 
+              userLang.includes(langInKeyword) || langInKeyword.includes(userLang)
+            );
+          });
+          
+          if (requiresUnknownLanguage) return false;
+          
+          return true;
+        });
+        
+        // Add filtered jobs until we have 5
+        filteredEmergencyJobs.forEach((job, index) => {
           if (validJobs.length < 5 && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
             const hotMatches = validJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
             const matchScore = calculateMatchScore(validJobs.length, hotMatches);

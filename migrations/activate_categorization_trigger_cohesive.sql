@@ -21,21 +21,47 @@ BEGIN
 
   -- ============================================================================
   -- STEP 1: Ensure 'early-career' category (matches form entry_level_preference)
+  -- EXCLUDE: Virtual Assistant, Executive Assistant, Manager roles (unless graduate/trainee)
   -- ============================================================================
   IF NOT ('early-career' = ANY(job_categories)) THEN
-    IF job_title LIKE '%graduate%' OR job_title LIKE '%grad%' OR
-       job_title LIKE '%intern%' OR job_title LIKE '%internship%' OR
-       job_title LIKE '%entry level%' OR job_title LIKE '%entry-level%' OR
-       job_title LIKE '%junior%' OR job_title LIKE '%trainee%' OR
-       job_title LIKE '%associate%' OR job_title LIKE '%assistant%' OR
-       job_title LIKE '%stage%' OR job_title LIKE '%praktikum%' OR
-       job_title LIKE '%prácticas%' OR job_title LIKE '%tirocinio%' OR
-       job_title LIKE '%becario%' OR job_title LIKE '%werkstudent%' OR
-       job_title LIKE '%placement%' OR job_title LIKE '%summer%' OR
-       job_title LIKE '%winter%' OR job_description LIKE '%graduate%' OR
-       job_description LIKE '%internship%' OR job_description LIKE '%entry level%' OR
-       NEW.is_graduate = true OR NEW.is_internship = true THEN
-      job_categories := array_append(job_categories, 'early-career');
+    -- EXCLUDE: Virtual Assistant, Executive Assistant, Personal Assistant - these are often freelance/contract
+    IF NOT (job_title ILIKE '%virtual assistant%' OR 
+            job_title ILIKE '%executive assistant%' OR 
+            job_title ILIKE '%personal assistant%' OR
+            job_title ILIKE '%administrative assistant%') THEN
+      -- EXCLUDE: Manager roles unless they're specifically graduate/trainee managers
+      IF NOT (job_title ILIKE '%manager%' AND 
+              NOT (job_title ILIKE '%graduate%manager%' OR 
+                   job_title ILIKE '%trainee%manager%' OR 
+                   job_title ILIKE '%junior%manager%' OR 
+                   job_title ILIKE '%entry%level%manager%' OR
+                   job_title ILIKE '%associate%manager%')) THEN
+        -- EXCLUDE: Compliance Manager, Tax Manager, etc. - these require expertise
+        IF NOT (job_title ILIKE '%compliance%manager%' OR 
+                job_title ILIKE '%tax%manager%' OR 
+                job_title ILIKE '%legal%manager%' OR
+                job_title ILIKE '%regulatory%manager%' OR
+                job_title ILIKE '%risk%manager%' OR
+                job_title ILIKE '%audit%manager%' OR
+                job_title ILIKE '%accounting%manager%') THEN
+          IF job_title LIKE '%graduate%' OR job_title LIKE '%grad%' OR
+             job_title LIKE '%intern%' OR job_title LIKE '%internship%' OR
+             job_title LIKE '%entry level%' OR job_title LIKE '%entry-level%' OR
+             job_title LIKE '%junior%' OR job_title LIKE '%trainee%' OR
+             job_title LIKE '%associate%' OR 
+             -- Only include "assistant" if it's NOT Virtual/Executive/Personal Assistant (already excluded above)
+             (job_title LIKE '%assistant%' AND NOT job_title ILIKE '%virtual%' AND NOT job_title ILIKE '%executive%' AND NOT job_title ILIKE '%personal%') OR
+             job_title LIKE '%stage%' OR job_title LIKE '%praktikum%' OR
+             job_title LIKE '%prácticas%' OR job_title LIKE '%tirocinio%' OR
+             job_title LIKE '%becario%' OR job_title LIKE '%werkstudent%' OR
+             job_title LIKE '%placement%' OR job_title LIKE '%summer%' OR
+             job_title LIKE '%winter%' OR job_description LIKE '%graduate%' OR
+             job_description LIKE '%internship%' OR job_description LIKE '%entry level%' OR
+             NEW.is_graduate = true OR NEW.is_internship = true THEN
+            job_categories := array_append(job_categories, 'early-career');
+          END IF;
+        END IF;
+      END IF;
     END IF;
   END IF;
 
@@ -612,16 +638,42 @@ BEGIN
   -- ============================================================================
   -- STEP 12.6: Add 'entry-level' category for entry-level roles (matches form entry_level_preference)
   -- Note: This is distinct from 'early-career' which is a broader category
+  -- EXCLUDE: Virtual Assistant, Executive Assistant, Manager roles
   -- ============================================================================
   IF NOT ('entry-level' = ANY(job_categories)) THEN
-    IF (NEW.is_early_career = true OR 
-        (job_title LIKE '%entry level%' OR job_title LIKE '%entry-level%' OR
-         job_title LIKE '%junior%' OR job_title LIKE '%associate%' OR
-         job_title LIKE '%assistant%' OR job_title LIKE '%first full-time%' OR
-         job_description LIKE '%entry level%' OR job_description LIKE '%entry-level%' OR
-         job_description LIKE '%first full-time role%' OR job_description LIKE '%first full time role%')) AND
-       NEW.is_internship != true AND NEW.is_graduate != true THEN
-      job_categories := array_append(job_categories, 'entry-level');
+    -- EXCLUDE: Virtual Assistant, Executive Assistant, Personal Assistant
+    IF NOT (job_title ILIKE '%virtual assistant%' OR 
+            job_title ILIKE '%executive assistant%' OR 
+            job_title ILIKE '%personal assistant%' OR
+            job_title ILIKE '%administrative assistant%') THEN
+      -- EXCLUDE: Manager roles unless they're specifically graduate/trainee managers
+      IF NOT (job_title ILIKE '%manager%' AND 
+              NOT (job_title ILIKE '%graduate%manager%' OR 
+                   job_title ILIKE '%trainee%manager%' OR 
+                   job_title ILIKE '%junior%manager%' OR 
+                   job_title ILIKE '%entry%level%manager%' OR
+                   job_title ILIKE '%associate%manager%')) THEN
+        -- EXCLUDE: Compliance Manager, Tax Manager, etc.
+        IF NOT (job_title ILIKE '%compliance%manager%' OR 
+                job_title ILIKE '%tax%manager%' OR 
+                job_title ILIKE '%legal%manager%' OR
+                job_title ILIKE '%regulatory%manager%' OR
+                job_title ILIKE '%risk%manager%' OR
+                job_title ILIKE '%audit%manager%' OR
+                job_title ILIKE '%accounting%manager%') THEN
+          IF (NEW.is_early_career = true OR 
+              (job_title LIKE '%entry level%' OR job_title LIKE '%entry-level%' OR
+               job_title LIKE '%junior%' OR job_title LIKE '%associate%' OR
+               -- Only include "assistant" if it's NOT Virtual/Executive/Personal Assistant (already excluded above)
+               (job_title LIKE '%assistant%' AND NOT job_title ILIKE '%virtual%' AND NOT job_title ILIKE '%executive%' AND NOT job_title ILIKE '%personal%') OR
+               job_title LIKE '%first full-time%' OR
+               job_description LIKE '%entry level%' OR job_description LIKE '%entry-level%' OR
+               job_description LIKE '%first full-time role%' OR job_description LIKE '%first full time role%')) AND
+             NEW.is_internship != true AND NEW.is_graduate != true THEN
+            job_categories := array_append(job_categories, 'entry-level');
+          END IF;
+        END IF;
+      END IF;
     END IF;
   END IF;
 
@@ -648,16 +700,30 @@ BEGIN
   -- Only filter if no business-relevant category was assigned
   -- ============================================================================
   IF NOT (job_categories && ARRAY['strategy-business-design', 'finance-investment', 'sales-client-success', 'marketing-growth', 'data-analytics', 'operations-supply-chain', 'product-innovation', 'tech-transformation', 'sustainability-esg']) THEN
-    IF (job_title LIKE '%dental%' OR job_title LIKE '%dentist%' OR
-        job_title LIKE '%army%' OR job_title LIKE '%soldier%' OR
-        job_title LIKE '%cameriere%' OR job_title LIKE '%waiter%' OR job_title LIKE '%waitress%' OR
-        (job_title LIKE '%trainer%' AND (job_description LIKE '%sport%' OR job_description LIKE '%fitness%' OR job_description LIKE '%gym%')) OR
-        job_title LIKE '%work from home%' OR job_title LIKE '%flexible hours%' OR
-        job_description LIKE '%paid online tasks%' OR job_description LIKE '%cashback%' OR
-        job_title LIKE '%teacher%' OR job_title LIKE '%teaching%' OR job_title LIKE '%educator%' OR
-        (job_title LIKE '%nurse%' AND NOT job_title LIKE '%business%') OR
-        (job_title LIKE '%engineer%' AND (job_description LIKE '%mechanical%' OR job_description LIKE '%civil%' OR job_description LIKE '%electrical%') AND NOT job_description LIKE '%software%' AND NOT job_description LIKE '%it%')) AND
-        NOT (job_title LIKE '%business%' OR job_title LIKE '%strategy%' OR job_title LIKE '%finance%' OR job_title LIKE '%consulting%') THEN
+    IF (
+        -- Basic exclusions
+        (job_title LIKE '%dental%' OR job_title LIKE '%dentist%' OR
+         job_title LIKE '%army%' OR job_title LIKE '%soldier%' OR
+         job_title LIKE '%cameriere%' OR job_title LIKE '%waiter%' OR job_title LIKE '%waitress%' OR
+         (job_title LIKE '%trainer%' AND (job_description LIKE '%sport%' OR job_description LIKE '%fitness%' OR job_description LIKE '%gym%')) OR
+         job_title LIKE '%work from home%' OR job_title LIKE '%flexible hours%' OR
+         job_description LIKE '%paid online tasks%' OR job_description LIKE '%cashback%' OR
+         -- Teaching/Education roles (unless business-related)
+         (job_title LIKE '%teacher%' OR job_title LIKE '%teaching%' OR job_title LIKE '%educator%' OR
+          job_title LIKE '%tutor%' OR job_title LIKE '%instructor%' OR job_title LIKE '%lecturer%') OR
+         -- Legal roles (unless compliance/regulatory/business legal)
+         ((job_title LIKE '%lawyer%' OR job_title LIKE '%attorney%' OR job_title LIKE '%solicitor%' OR 
+           job_title LIKE '%barrister%' OR job_title LIKE '%legal counsel%' OR job_title LIKE '%legal advisor%') AND
+          NOT (job_title LIKE '%compliance%' OR job_title LIKE '%regulatory%' OR job_description LIKE '%business%' OR job_description LIKE '%corporate%')) OR
+         -- Healthcare roles (unless business related)
+         ((job_title LIKE '%nurse%' OR job_title LIKE '%doctor%' OR job_title LIKE '%physician%' OR 
+           job_title LIKE '%therapist%' OR job_title LIKE '%counselor%') AND NOT job_title LIKE '%business%') OR
+         -- Engineering roles (unless software/IT)
+         (job_title LIKE '%engineer%' AND (job_description LIKE '%mechanical%' OR job_description LIKE '%civil%' OR job_description LIKE '%electrical%' OR job_description LIKE '%chemical%') AND NOT job_description LIKE '%software%' AND NOT job_description LIKE '%it%' AND NOT job_description LIKE '%computer%')
+        ) AND
+        -- Exclude if it's business-related
+        NOT (job_title LIKE '%business%' OR job_title LIKE '%strategy%' OR job_title LIKE '%finance%' OR job_title LIKE '%consulting%' OR job_title LIKE '%compliance%' OR job_title LIKE '%regulatory%')
+    ) THEN
       -- Mark as inactive
       NEW.status := 'inactive';
       NEW.is_active := false;

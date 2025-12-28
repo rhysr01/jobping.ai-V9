@@ -107,7 +107,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
-              className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3"
+              className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3 max-w-[540px]"
             >
               <span className="text-white">Get 5 early-career</span>{' '}
               <span className="text-white">job matches</span>{' '}
@@ -138,7 +138,7 @@ export default function Hero() {
                 }}
                 variant="gradient"
                 size="lg"
-                className="w-full sm:w-auto sm:max-w-xs mx-auto sm:mx-0 px-8 py-4 md:py-5 text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)] transition-all duration-200"
+                className="w-full sm:w-auto sm:max-w-xs px-8 py-4 md:py-5 text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)] transition-all duration-200"
                 aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
               >
                 <span className="flex items-center justify-center gap-2">
@@ -152,33 +152,9 @@ export default function Hero() {
                 transition={{ delay: 0.35, duration: 0.6 }}
                 className="space-y-2 mt-3"
               >
-                <p className="text-xs text-zinc-500">
+                <p className="text-[11px] text-zinc-500">
                   100% free to start • Real entry-level roles • No spam
                 </p>
-              </motion.div>
-              
-              {/* Upgrade message - Standout design */}
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.6 }}
-                className="mt-6"
-              >
-                <div className="relative rounded-xl bg-gradient-to-br from-brand-500/20 via-purple-600/15 to-brand-500/20 border-2 border-brand-500/40 p-5 md:p-6 shadow-lg shadow-brand-500/10 backdrop-blur-sm">
-                  {/* Decorative elements */}
-                  <div className="absolute top-0 left-0 w-24 h-24 bg-brand-500/10 rounded-full blur-2xl -z-10" />
-                  <div className="absolute bottom-0 right-0 w-32 h-32 bg-purple-600/10 rounded-full blur-2xl -z-10" />
-                  
-                  <div className="space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/20 border border-brand-500/40">
-                      <span className="text-lg">💡</span>
-                      <span className="text-xs font-bold text-brand-200 uppercase tracking-wide">Free First</span>
-                    </div>
-                    <p className="text-base md:text-lg font-semibold text-white leading-relaxed">
-                      Like it? Upgrade for 15 matches/week (€5/mo) - 3x more opportunities.
-                    </p>
-                  </div>
-                </div>
               </motion.div>
               
               <TrustBadges />
@@ -218,12 +194,21 @@ export default function Hero() {
                 transition={{ delay: 0.4, duration: 0.6 }}
                 className="pt-3"
               >
-                <p className="text-base font-semibold text-zinc-300 mb-1">
-                  Join {stats && stats.totalUsers > 0 ? `${stats.totalUsers.toLocaleString('en-US')}+` : '1,500+'} job seekers finding roles
-                </p>
-                <p className="text-xs text-zinc-500">
-                  Trusted by students across Europe
-                </p>
+                {stats ? (
+                  <>
+                    <p className="text-base font-semibold text-zinc-300 mb-1">
+                      Join {stats.totalUsers > 0 ? `${stats.totalUsers.toLocaleString('en-US')}+` : '1,500+'} job seekers finding roles
+                    </p>
+                    <p className="text-xs text-zinc-500">
+                      Trusted by students across Europe
+                    </p>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="h-5 w-48 bg-white/5 rounded animate-pulse" />
+                    <div className="h-3 w-32 bg-white/5 rounded animate-pulse" />
+                  </div>
+                )}
               </motion.div>
             </motion.div>
           </motion.div>
@@ -238,9 +223,9 @@ export default function Hero() {
             {/* Background glow behind phone */}
             <div className="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-brand-600/10 to-brand-500/10 rounded-full blur-3xl -z-10 opacity-50" />
             
-            {/* iPhone Mockup - 15-20% larger, top-aligned, with bleed effect */}
-            <div className="scale-[0.9] md:scale-[1.05] lg:scale-[1.15] xl:scale-[1.2] origin-top lg:origin-top-left drop-shadow-[0_20px_60px_rgba(0,0,0,0.6)] relative z-10 lg:-mr-8">
-              <DeviceFrame>
+            {/* iPhone Mockup - Supporting visual, not the headline */}
+            <div className="scale-90 md:scale-95 lg:scale-100 origin-top lg:origin-top-left drop-shadow-[0_20px_60px_rgba(0,0,0,0.6)] relative z-10 lg:-mr-8">
+              <DeviceFrame priority={true}>
                 <SampleJobMatches preloadedJobs={preloadedJobs} />
               </DeviceFrame>
             </div>

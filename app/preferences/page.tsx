@@ -36,7 +36,20 @@ function PreferencesContent() {
   });
 
   const CITIES = ['Dublin', 'London', 'Paris', 'Amsterdam', 'Manchester', 'Birmingham', 'Belfast', 'Madrid', 'Barcelona', 'Berlin', 'Hamburg', 'Munich', 'Zurich', 'Milan', 'Rome', 'Brussels', 'Stockholm', 'Copenhagen', 'Vienna', 'Prague', 'Warsaw'];
-  const LANGUAGES = ['English', 'French', 'German', 'Spanish', 'Italian', 'Dutch', 'Portuguese', 'Polish', 'Swedish', 'Danish', 'Finnish', 'Czech', 'Romanian', 'Hungarian', 'Greek', 'Arabic'];
+  const LANGUAGES = [
+    // Most common EU languages
+    'English', 'French', 'German', 'Spanish', 'Italian', 'Dutch', 'Portuguese',
+    // Additional EU languages
+    'Polish', 'Swedish', 'Danish', 'Finnish', 'Czech', 'Romanian', 'Hungarian', 'Greek',
+    'Bulgarian', 'Croatian', 'Serbian', 'Slovak', 'Slovenian', 'Estonian', 'Latvian', 'Lithuanian', 'Ukrainian',
+    // Middle Eastern & Central Asian (common visa seekers)
+    'Arabic', 'Turkish', 'Hebrew', 'Persian', 'Farsi', 'Urdu',
+    // Asian languages (common visa seekers)
+    'Japanese', 'Chinese', 'Mandarin', 'Cantonese', 'Korean', 'Hindi', 'Thai', 'Vietnamese', 
+    'Indonesian', 'Tagalog', 'Malay', 'Bengali', 'Tamil', 'Telugu',
+    // Other common languages
+    'Russian'
+  ];
   const COMPANIES = ['Global Consulting Firms', 'Startups / Scaleups', 'Tech Giants', 'Investment Firms / VCs', 'Multinationals', 'Public Sector / NGOs', 'B2B SaaS', 'Financial Services'];
 
   useEffect(() => {

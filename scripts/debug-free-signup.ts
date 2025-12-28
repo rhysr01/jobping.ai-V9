@@ -89,6 +89,69 @@ async function debug() {
   const testCities = ['Prague', 'Warsaw', 'London', 'Madrid', 'Berlin'];
   console.log('Checking cities:', testCities);
   
+  // Progressive filtering to see where jobs are lost
+  console.log('\n📊 Progressive filter check:');
+  
+  // 1. City filter only
+  const { count: cityOnly } = await supabase
+    .from('jobs')
+    .select('*', { count: 'exact', head: true })
+    .in('city', testCities);
+  console.log(`   1. City filter only: ${cityOnly || 0} jobs`);
+  
+  // 2. + is_active
+  const { count: withActive } = await supabase
+    .from('jobs')
+    .select('*', { count: 'exact', head: true })
+    .in('city', testCities)
+    .eq('is_active', true);
+  console.log(`   2. + is_active=true: ${withActive || 0} jobs`);
+  
+  // 3. + status
+  const { count: withStatus } = await supabase
+    .from('jobs')
+    .select('*', { count: 'exact', head: true })
+    .in('city', testCities)
+    .eq('is_active', true)
+    .eq('status', 'active');
+  console.log(`   3. + status='active': ${withStatus || 0} jobs`);
+  
+  // 4. + filtered_reason
+  const { count: withFilteredReason } = await supabase
+    .from('jobs')
+    .select('*', { count: 'exact', head: true })
+    .in('city', testCities)
+    .eq('is_active', true)
+    .eq('status', 'active')
+    .is('filtered_reason', null);
+  console.log(`   4. + filtered_reason IS NULL: ${withFilteredReason || 0} jobs`);
+  
+  // 5. + job_url
+  const { count: withUrl } = await supabase
+    .from('jobs')
+    .select('*', { count: 'exact', head: true })
+    .in('city', testCities)
+    .eq('is_active', true)
+    .eq('status', 'active')
+    .is('filtered_reason', null)
+    .not('job_url', 'is', null)
+    .neq('job_url', '');
+  console.log(`   5. + has job_url: ${withUrl || 0} jobs`);
+  
+  // 6. + early-career
+  const { count: earlyCareer } = await supabase
+    .from('jobs')
+    .select('*', { count: 'exact', head: true })
+    .in('city', testCities)
+    .eq('is_active', true)
+    .eq('status', 'active')
+    .is('filtered_reason', null)
+    .not('job_url', 'is', null)
+    .neq('job_url', '')
+    .or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}');
+  console.log(`   6. + early-career: ${earlyCareer || 0} jobs`);
+  
+  // Get actual jobs
   const { data: jobs, error: jobsError } = await supabase
     .from('jobs')
     .select('id, title, company, city, is_active, status, job_url')
@@ -99,12 +162,12 @@ async function debug() {
     .not('job_url', 'is', null)
     .neq('job_url', '')
     .or('is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}')
-    .limit(20);
+    .limit(100);
   
   if (jobsError) {
-    console.log('❌ Error fetching jobs:', jobsError);
+    console.log('\n❌ Error fetching jobs:', jobsError);
   } else {
-    console.log(`📊 Found ${jobs?.length || 0} active early-career jobs with URLs`);
+    console.log(`\n📊 Final result: ${jobs?.length || 0} jobs (limited to 100)`);
     
     if (jobs && jobs.length > 0) {
       const cityCounts = jobs.reduce((acc: Record<string, number>, job: any) => {
@@ -112,18 +175,28 @@ async function debug() {
         return acc;
       }, {});
       
-      console.log('\nJobs by city:');
+      console.log('\nJobs by city (sample):');
       Object.entries(cityCounts).forEach(([city, count]) => {
         console.log(`   ${city}: ${count} jobs`);
       });
       
       console.log('\n✅ Jobs exist! Free signup should work.');
+      console.log(`\n💡 Note: MCP query shows 2,288 total early-career jobs with URLs`);
+      console.log(`   - Berlin: 408 jobs`);
+      console.log(`   - London: 1,676 jobs`);
+      console.log(`   - Madrid: 110 jobs`);
+      console.log(`   - Warsaw: 94 jobs`);
+      console.log(`   - Prague: 0 jobs (not in database)`);
     } else {
-      console.log('❌ No jobs found! Free signup will fail.');
-      console.log('\n💡 Possible issues:');
-      console.log('   1. No jobs in database for these cities');
-      console.log('   2. All jobs are inactive or filtered');
-      console.log('   3. No jobs have valid URLs');
+      console.log('\n❌ No jobs found after filtering!');
+      console.log('\n💡 Filter breakdown shows where jobs are lost:');
+      console.log(`   - ${cityOnly || 0} total jobs in cities`);
+      console.log(`   - ${withActive || 0} are active`);
+      console.log(`   - ${withStatus || 0} have status='active'`);
+      console.log(`   - ${withFilteredReason || 0} have filtered_reason IS NULL`);
+      console.log(`   - ${withUrl || 0} have URLs`);
+      console.log(`   - ${earlyCareer || 0} are early-career`);
+      console.log('\n⚠️  MCP query shows 2,288 jobs exist - check if Supabase client is blocking queries');
     }
   }
 

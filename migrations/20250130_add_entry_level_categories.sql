@@ -51,6 +51,7 @@ WHERE is_active = true
   );
 
 -- Add 'entry-level' category to entry-level roles (not internships or graduate programmes)
+-- EXCLUDE: Virtual Assistant, Executive Assistant, Manager roles
 UPDATE jobs
 SET categories = array_append(
   COALESCE(categories, ARRAY[]::text[]),
@@ -60,13 +61,34 @@ WHERE is_active = true
   AND ('entry-level' = ANY(categories)) IS NOT TRUE
   AND is_internship != true
   AND is_graduate != true
+  -- EXCLUDE: Virtual Assistant, Executive Assistant, Personal Assistant
+  AND NOT (LOWER(title) LIKE '%virtual assistant%' OR 
+           LOWER(title) LIKE '%executive assistant%' OR 
+           LOWER(title) LIKE '%personal assistant%' OR
+           LOWER(title) LIKE '%administrative assistant%')
+  -- EXCLUDE: Manager roles unless they're specifically graduate/trainee managers
+  AND NOT (LOWER(title) LIKE '%manager%' AND 
+           NOT (LOWER(title) LIKE '%graduate%manager%' OR 
+                LOWER(title) LIKE '%trainee%manager%' OR 
+                LOWER(title) LIKE '%junior%manager%' OR 
+                LOWER(title) LIKE '%entry%level%manager%' OR
+                LOWER(title) LIKE '%associate%manager%'))
+  -- EXCLUDE: Compliance Manager, Tax Manager, etc.
+  AND NOT (LOWER(title) LIKE '%compliance%manager%' OR 
+           LOWER(title) LIKE '%tax%manager%' OR 
+           LOWER(title) LIKE '%legal%manager%' OR
+           LOWER(title) LIKE '%regulatory%manager%' OR
+           LOWER(title) LIKE '%risk%manager%' OR
+           LOWER(title) LIKE '%audit%manager%' OR
+           LOWER(title) LIKE '%accounting%manager%')
   AND (
     is_early_career = true OR
     LOWER(title) LIKE '%entry level%' OR
     LOWER(title) LIKE '%entry-level%' OR
     LOWER(title) LIKE '%junior%' OR
     LOWER(title) LIKE '%associate%' OR
-    LOWER(title) LIKE '%assistant%' OR
+    -- Only include "assistant" if it's NOT Virtual/Executive/Personal Assistant (already excluded above)
+    (LOWER(title) LIKE '%assistant%' AND NOT LOWER(title) LIKE '%virtual%' AND NOT LOWER(title) LIKE '%executive%' AND NOT LOWER(title) LIKE '%personal%') OR
     LOWER(title) LIKE '%first full-time%' OR
     LOWER(description) LIKE '%entry level%' OR
     LOWER(description) LIKE '%entry-level%' OR
@@ -75,6 +97,7 @@ WHERE is_active = true
   );
 
 -- Ensure all active jobs have at least 'early-career' category
+-- EXCLUDE: Virtual Assistant, Executive Assistant, Manager roles
 UPDATE jobs
 SET categories = array_append(
   COALESCE(categories, ARRAY[]::text[]),
@@ -82,6 +105,26 @@ SET categories = array_append(
 )
 WHERE is_active = true
   AND ('early-career' = ANY(categories)) IS NOT TRUE
+  -- EXCLUDE: Virtual Assistant, Executive Assistant, Personal Assistant
+  AND NOT (LOWER(title) LIKE '%virtual assistant%' OR 
+           LOWER(title) LIKE '%executive assistant%' OR 
+           LOWER(title) LIKE '%personal assistant%' OR
+           LOWER(title) LIKE '%administrative assistant%')
+  -- EXCLUDE: Manager roles unless they're specifically graduate/trainee managers
+  AND NOT (LOWER(title) LIKE '%manager%' AND 
+           NOT (LOWER(title) LIKE '%graduate%manager%' OR 
+                LOWER(title) LIKE '%trainee%manager%' OR 
+                LOWER(title) LIKE '%junior%manager%' OR 
+                LOWER(title) LIKE '%entry%level%manager%' OR
+                LOWER(title) LIKE '%associate%manager%'))
+  -- EXCLUDE: Compliance Manager, Tax Manager, etc.
+  AND NOT (LOWER(title) LIKE '%compliance%manager%' OR 
+           LOWER(title) LIKE '%tax%manager%' OR 
+           LOWER(title) LIKE '%legal%manager%' OR
+           LOWER(title) LIKE '%regulatory%manager%' OR
+           LOWER(title) LIKE '%risk%manager%' OR
+           LOWER(title) LIKE '%audit%manager%' OR
+           LOWER(title) LIKE '%accounting%manager%')
   AND (
     is_internship = true OR
     is_graduate = true OR
@@ -95,7 +138,8 @@ WHERE is_active = true
     LOWER(title) LIKE '%junior%' OR
     LOWER(title) LIKE '%trainee%' OR
     LOWER(title) LIKE '%associate%' OR
-    LOWER(title) LIKE '%assistant%' OR
+    -- Only include "assistant" if it's NOT Virtual/Executive/Personal Assistant (already excluded above)
+    (LOWER(title) LIKE '%assistant%' AND NOT LOWER(title) LIKE '%virtual%' AND NOT LOWER(title) LIKE '%executive%' AND NOT LOWER(title) LIKE '%personal%') OR
     LOWER(description) LIKE '%graduate%' OR
     LOWER(description) LIKE '%internship%' OR
     LOWER(description) LIKE '%entry level%'

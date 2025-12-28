@@ -89,7 +89,7 @@ export default function SocialProofRow() {
                 <span className="hidden md:inline absolute right-0 top-1/2 h-4 w-px bg-white/10 -translate-y-1/2" />
               )}
               <motion.span 
-                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/12 text-brand-200 transition-all duration-300 group-hover:bg-brand-500/20 group-hover:scale-110"
+                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/12 text-brand-200 transition-all duration-200 group-hover:bg-brand-500/20 group-hover:scale-110"
                 whileHover={{ rotate: [0, -10, 10, 0] }}
                 transition={{ duration: 0.5 }}
               >
@@ -103,7 +103,7 @@ export default function SocialProofRow() {
                 )}
                 <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
                 {item.description && (
-                  <p className="text-sm text-zinc-300 transition-colors duration-300 group-hover:text-zinc-200">
+                  <p className="text-sm text-zinc-300 transition-all duration-200 group-hover:text-zinc-200">
                     {item.description}
                   </p>
                 )}

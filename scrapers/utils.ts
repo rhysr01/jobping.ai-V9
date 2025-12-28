@@ -20,9 +20,32 @@ export interface IngestJob {
 export function classifyEarlyCareer(job: IngestJob): boolean {
   const { title, description } = job;
   const text = `${title} ${description}`;
+  const titleLower = title.toLowerCase();
+  
+  // EXCLUDE: Roles that are NOT early-career even if they contain certain keywords
+  // Virtual Assistant, Executive Assistant, Personal Assistant - these are often freelance/contract
+  if (/virtual\s+assistant|executive\s+assistant|personal\s+assistant|administrative\s+assistant/i.test(titleLower)) {
+    return false;
+  }
+  
+  // EXCLUDE: Manager roles unless they're specifically graduate/trainee managers
+  if (/\bmanager\b/i.test(titleLower) && !/(graduate|trainee|junior|entry.?level|associate)\s+manager/i.test(text)) {
+    return false;
+  }
+  
+  // EXCLUDE: Director, VP, Head of, Chief roles
+  if (/\b(director|vp|vice.?president|head\s+of|chief|executive|president)\b/i.test(titleLower)) {
+    return false;
+  }
+  
+  // EXCLUDE: Compliance Manager, Tax Manager, etc. - these require expertise
+  if (/\b(compliance|tax|legal|regulatory|risk|audit|accounting)\s+manager\b/i.test(titleLower)) {
+    return false;
+  }
   
   //  COMPREHENSIVE: Multilingual early career detection based on user research
-  const graduateRegex = /(graduate|new.?grad|recent.?graduate|campus.?hire|graduate.?scheme|graduate.?program|rotational.?program|university.?hire|college.?hire|entry.?level|junior|trainee|intern|internship|placement|analyst|assistant|fellowship|apprenticeship|apprentice|stagiaire|alternant|alternance|d[ée]butant|formation|dipl[oô]m[eé]|apprenti|poste.?d.?entr[ée]e|niveau.?d[ée]butant|praktikum|praktikant|traineeprogramm|berufseinstieg|absolvent|absolventenprogramm|ausbildung|auszubildende|werkstudent|einsteiger|becario|pr[a�]cticas|programa.?de.?graduados|reci[eé]n.?titulado|aprendiz|nivel.?inicial|puesto.?de.?entrada|j[u�]nior|formaci[oó]n.?dual|tirocinio|stagista|apprendista|apprendistato|neolaureato|formazione|inserimento.?lavorativo|stage|stagiair|starterfunctie|traineeship|afgestudeerde|leerwerkplek|instapfunctie|fresher|nyuddannet|nyutdannet|nyexaminerad|neo.?laureato|nuovo.?laureato|recién.?graduado|nuevo.?graduado|joven.?profesional|nieuwe.?medewerker)/i;
+  // REMOVED "assistant" from the regex - too broad, catches Virtual Assistant, Executive Assistant, etc.
+  const graduateRegex = /(graduate|new.?grad|recent.?graduate|campus.?hire|graduate.?scheme|graduate.?program|rotational.?program|university.?hire|college.?hire|entry.?level|junior|trainee|intern|internship|placement|analyst|fellowship|apprenticeship|apprentice|stagiaire|alternant|alternance|d[ée]butant|formation|dipl[oô]m[eé]|apprenti|poste.?d.?entr[ée]e|niveau.?d[ée]butant|praktikum|praktikant|traineeprogramm|berufseinstieg|absolvent|absolventenprogramm|ausbildung|auszubildende|werkstudent|einsteiger|becario|pr[a�]cticas|programa.?de.?graduados|reci[eé]n.?titulado|aprendiz|nivel.?inicial|puesto.?de.?entrada|j[u�]nior|formaci[oó]n.?dual|tirocinio|stagista|apprendista|apprendistato|neolaureato|formazione|inserimento.?lavorativo|stage|stagiair|starterfunctie|traineeship|afgestudeerde|leerwerkplek|instapfunctie|fresher|nyuddannet|nyutdannet|nyexaminerad|neo.?laureato|nuovo.?laureato|recién.?graduado|nuevo.?graduado|joven.?profesional|nieuwe.?medewerker)/i;
   
   // Exclude clearly senior signals only; allow consultant/management trainee variants
   const seniorRegex = /(senior|lead|principal|director|head.?of|vp|chief|executive\s+level|executive\s+director|5\+.?years|7\+.?years|10\+.?years|experienced\s+professional|architect\b|team.?lead|tech.?lead|staff\b|distinguished)/i;
@@ -105,7 +128,7 @@ export function parseLocation(location: string): {
     'dublin','cork','galway',
     'berlin','munich','hamburg','cologne','frankfurt','stuttgart','düsseldorf','duesseldorf',
     'paris','marseille','lyon','toulouse','nice','nantes','strasbourg',
-    'madrid','barcelona','valencia','seville','bilbao','m�laga','malaga',
+    'madrid','barcelona','valencia','seville','bilbao','m�laga','malaga',
     'rome','milan','naples','turin','florence','bologna',
     'amsterdam','rotterdam','the hague','den haag','utrecht','eindhoven',
     'brussels','antwerp','ghent','bruges',
@@ -115,7 +138,7 @@ export function parseLocation(location: string): {
     'copenhagen','aarhus','odense','aalborg',
     'oslo','bergen','trondheim','stavanger',
     'helsinki','espoo','tampere','vantaa',
-    'warsaw','krakow','gdansk','wroclaw','poznan','wrocław','pozna�',
+    'warsaw','krakow','gdansk','wroclaw','poznan','wrocław','pozna�',
     'prague','brno','ostrava','plzen','plzeň',
     'budapest','debrecen','szeged','miskolc',
     'lisbon','porto','braga','coimbra',
@@ -220,7 +243,7 @@ export function convertToDatabaseFormat(job: IngestJob) {
   const jobHash = makeJobHash(job);
   
   //  Log early career classification for debugging
-  console.log(`� Early Career: "${job.title}" - ${isEarlyCareer ? 'YES' : 'NO'}`);
+  console.log(`� Early Career: "${job.title}" - ${isEarlyCareer ? 'YES' : 'NO'}`);
   
   return {
     job_hash: jobHash,

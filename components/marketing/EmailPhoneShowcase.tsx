@@ -85,8 +85,11 @@ export default function EmailPhoneShowcase({ day = 'monday', careerPath = 'finan
               repeat: prefersReduced ? 0 : Infinity,
               ease: "easeInOut",
             }}
+            whileHover={{ y: -5 }}
             className="relative"
           >
+            {/* Backlight gradient behind phone */}
+            <div className="absolute -inset-4 bg-purple-500/10 blur-3xl rounded-full -z-10" />
             <div className="absolute inset-0 -z-10 translate-y-8">
               <div className="h-full w-full scale-110 rounded-full bg-black/40 blur-lg-hero" />
             </div>

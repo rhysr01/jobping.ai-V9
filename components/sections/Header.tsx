@@ -18,7 +18,7 @@ export default function Header() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
+      setScrolled(window.scrollY > 20);
       
       // Detect active section based on scroll position
       const howItWorks = document.getElementById('how-it-works');
@@ -76,10 +76,10 @@ export default function Header() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? 'bg-zinc-950/70 backdrop-blur-md border-b border-white/5 shadow-lg'
-            : 'bg-zinc-950/70 backdrop-blur-md border-b border-white/5'
+        className={`sticky top-0 left-0 right-0 z-50 transition-all duration-200 ${
+          scrolled 
+            ? 'bg-zinc-950/70 backdrop-blur-md border-b border-white/5 shadow-lg' 
+            : 'bg-transparent border-b border-transparent'
         }`}
       >
         <div className="container-page">
@@ -108,7 +108,7 @@ export default function Header() {
                   key={link.href}
                   href={link.href}
                   onClick={(e) => handleNavClick(e, link.href, link.scroll)}
-                  className={`text-sm font-medium transition-colors ${
+                  className={`text-sm font-medium transition-all duration-200 ${
                     activeSection === link.href
                       ? 'text-white'
                       : 'text-zinc-500 hover:text-white'
@@ -122,7 +122,7 @@ export default function Header() {
                 onClick={() => {
                   trackEvent('cta_clicked', { type: 'free', location: 'header' });
                 }}
-                variant="gradient"
+                variant={scrolled ? "gradient" : "ghost"}
                 size="sm"
                 className="ml-4"
               >
@@ -136,7 +136,7 @@ export default function Header() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-zinc-300 hover:text-white transition-colors"
+              className="md:hidden p-2 text-zinc-300 hover:text-white transition-all duration-200"
               aria-label="Toggle menu"
               aria-expanded={mobileMenuOpen}
             >
@@ -175,7 +175,7 @@ export default function Header() {
                   <LogoWordmark />
                   <button
                     onClick={() => setMobileMenuOpen(false)}
-                    className="p-2 text-zinc-300 hover:text-white"
+                    className="p-2 text-zinc-300 hover:text-white transition-all duration-200"
                     aria-label="Close menu"
                   >
                     <BrandIcons.X className="h-6 w-6" />
@@ -187,7 +187,7 @@ export default function Header() {
                       key={link.href}
                       href={link.href}
                       onClick={(e) => handleNavClick(e, link.href, link.scroll)}
-                      className={`text-lg font-medium transition-colors py-2 ${
+                      className={`text-lg font-medium transition-all duration-200 py-2 ${
                         activeSection === link.href
                           ? 'text-white'
                           : 'text-zinc-500 hover:text-white'

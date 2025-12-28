@@ -14,6 +14,7 @@ import { useStats } from '@/hooks/useStats';
 import { apiCall, apiCallJson, ApiError } from '@/lib/api-client';
 import AriaLiveRegion from '@/components/ui/AriaLiveRegion';
 import { trackEvent } from '@/lib/analytics';
+import confetti from 'canvas-confetti';
 
 // Code split EuropeMap for better performance
 const EuropeMap = dynamic(() => import('@/components/ui/EuropeMap'), {
@@ -61,6 +62,8 @@ export default function SignupFormFree() {
   const [jobCount, setJobCount] = useState<number | null>(null);
   const [isLoadingJobCount, setIsLoadingJobCount] = useState(false);
   const [countdown, setCountdown] = useState(3);
+  const [matchCount, setMatchCount] = useState<number>(0);
+  const [showPersonalizing, setShowPersonalizing] = useState(false);
 
   // Form validation hooks
   const emailValidation = useEmailValidation(formData.email);
@@ -141,11 +144,16 @@ export default function SignupFormFree() {
 
   // Countdown and redirect on success
   useEffect(() => {
-    if (showSuccess) {
+    if (showSuccess && !showPersonalizing) {
       const interval = setInterval(() => {
         setCountdown(prev => {
           if (prev <= 1) {
-            router.push('/matches');
+            // Show "Personalizing Your Feed" screen before redirect
+            setShowPersonalizing(true);
+            // Redirect after personalizing screen (2 seconds)
+            setTimeout(() => {
+              router.push('/matches');
+            }, 2000);
             return 0;
           }
           return prev - 1;
@@ -155,7 +163,7 @@ export default function SignupFormFree() {
       return () => clearInterval(interval);
     }
     return undefined;
-  }, [showSuccess, router]);
+  }, [showSuccess, showPersonalizing, router]);
 
   // Calculate form completion percentage
   const formProgress = useMemo(() => {
@@ -280,10 +288,13 @@ export default function SignupFormFree() {
       }
 
       // Check if matches were actually created
-      const matchCount = data.matchCount || 0;
+      const matchCountValue = data.matchCount || 0;
+      setMatchCount(matchCountValue);
       
-      if (matchCount === 0) {
-        console.warn('Signup succeeded but no matches created', data);
+      if (matchCountValue === 0) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Signup succeeded but no matches created', data);
+        }
         setError('We couldn\'t find any matches for your preferences. Try selecting different cities or career paths.');
         trackEvent('signup_failed', { tier: 'free', error: 'no_matches' });
         return;
@@ -294,13 +305,45 @@ export default function SignupFormFree() {
         tier: 'free',
         cities: formData.cities.length,
         career_path: formData.careerPath,
-        matchCount,
+        matchCount: matchCountValue,
       });
+
+      // Trigger confetti animation
+      const triggerConfetti = () => {
+        const duration = 3000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+
+        function randomInRange(min: number, max: number) {
+          return Math.random() * (max - min) + min;
+        }
+
+        const interval: NodeJS.Timeout = setInterval(function() {
+          const timeLeft = animationEnd - Date.now();
+
+          if (timeLeft <= 0) {
+            return clearInterval(interval);
+          }
+
+          const particleCount = 50 * (timeLeft / duration);
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+          });
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+          });
+        }, 250);
+      };
 
       // Show success animation
       setShowSuccess(true);
       setCountdown(3);
-      showToast.success(`Account created! Found ${matchCount} perfect matches...`);
+      triggerConfetti();
+      showToast.success(`Account created! Found ${matchCountValue} perfect matches...`);
 
     } catch (err) {
       const errorMessage = err instanceof ApiError 
@@ -695,69 +738,145 @@ export default function SignupFormFree() {
           </motion.div>
         </div>
 
-        {/* Success Animation Overlay */}
-        <AnimatePresence>
-          {showSuccess && (
+        {/* Personalizing Feed Screen */}
+        <AnimatePresence mode="wait">
+          {showPersonalizing ? (
             <motion.div
+              key="personalizing"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md"
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md"
             >
               <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                className="rounded-2xl border-2 border-brand-500/30 bg-gradient-to-br from-brand-500/8 via-black/80 to-brand-500/8 p-12 max-w-md text-center backdrop-blur-xl"
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                className="text-center max-w-md px-4"
               >
                 <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                  className="mb-6"
-                >
-                  <BrandIcons.CheckCircle className="h-20 w-20 text-brand-500 mx-auto" />
-                </motion.div>
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                  className="mx-auto mb-6 h-16 w-16 rounded-full border-4 border-brand-500 border-t-transparent"
+                />
                 <motion.h2
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="text-3xl font-bold text-white mb-3"
+                  className="text-2xl md:text-3xl font-bold text-white mb-3"
                 >
-                  Account Created!
+                  Personalizing Your Feed
                 </motion.h2>
                 <motion.p
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="text-zinc-300 mb-6"
+                  className="text-zinc-400"
                 >
-                  Finding your perfect matches...
+                  We're matching your preferences with the best opportunities...
                 </motion.p>
-                <motion.p
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="text-zinc-300 text-sm"
-                >
-                  Redirecting in {countdown}s...
-                </motion.p>
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
+        {/* Success Animation Overlay */}
+        <AnimatePresence mode="wait">
+          {showSuccess && !showPersonalizing ? (
+            <motion.div
+              key="success"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                className="relative z-20 w-full max-w-md"
+              >
                 <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: '100%' }}
-                  transition={{ delay: 0.4, duration: 1.5 }}
-                  className="h-2 bg-zinc-800 rounded-full overflow-hidden"
+                  className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-zinc-900/90 to-zinc-950/90 backdrop-blur-xl p-8 md:p-12 shadow-2xl"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1 }}
                 >
+                  {/* Success Icon */}
                   <motion.div
-                    className="h-full bg-gradient-to-r from-brand-500 to-brand-600"
-                    initial={{ width: 0 }}
-                    animate={{ width: '100%' }}
-                    transition={{ delay: 0.4, duration: 1.5 }}
-                  />
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
+                    className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/20 ring-4 ring-emerald-500/10"
+                  >
+                    <BrandIcons.CheckCircle className="h-10 w-10 text-emerald-400" />
+                  </motion.div>
+
+                  {/* Success Message */}
+                  <motion.h2
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-center text-2xl md:text-3xl font-bold text-white mb-3"
+                  >
+                    Account Created!
+                  </motion.h2>
+                  
+                  <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="text-center text-zinc-300 mb-6"
+                  >
+                    Found {matchCount} perfect matches for you
+                  </motion.p>
+
+                  {/* Scanning Animation */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                    className="flex items-center justify-center gap-3 text-sm text-zinc-400 mb-8"
+                  >
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                      className="h-4 w-4 rounded-full border-2 border-emerald-500 border-t-transparent"
+                    />
+                    <span>Scanning 420+ sources for your matches...</span>
+                  </motion.div>
+
+                  {/* Email Instruction */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                    className="rounded-xl bg-zinc-900/50 border border-white/10 p-4 text-center"
+                  >
+                    <p className="text-sm text-zinc-300 mb-2">
+                      <span className="font-semibold text-white">Check your inbox in 60 seconds</span>
+                    </p>
+                    <p className="text-xs text-zinc-500">
+                      We're sending your matches to <span className="text-zinc-300">{formData.email}</span>
+                    </p>
+                  </motion.div>
+
+                  {/* Auto-redirect countdown */}
+                  {countdown > 0 && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center text-xs text-zinc-500 mt-4"
+                    >
+                      Redirecting to your matches in {countdown}...
+                    </motion.p>
+                  )}
                 </motion.div>
               </motion.div>
             </motion.div>
-          )}
+          ) : null}
         </AnimatePresence>
       </div>
     </div>

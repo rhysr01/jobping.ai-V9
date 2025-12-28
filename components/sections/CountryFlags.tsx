@@ -162,9 +162,9 @@ export default function CountryFlags() {
                   role="listitem"
                   aria-label={`${countryData.country}: ${countryData.cities.length > 0 ? countryData.cities.join(', ') : countryData.country}`}
                 >
-                  <div className="relative h-[160px] w-[180px] flex flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.04] border border-white/10 backdrop-blur-xl shadow-feature p-6 transition-all duration-300 hover:border-white/20 hover:shadow-hover group overflow-hidden">
+                  <div className="relative h-[160px] w-[180px] flex flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.04] border border-white/10 backdrop-blur-xl shadow-feature p-6 transition-all duration-200 hover:border-white/20 hover:shadow-hover group overflow-hidden">
                     {/* Subtle gradient overlay on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 via-brand-500/0 to-purple-500/0 group-hover:from-brand-500/10 group-hover:via-brand-500/5 group-hover:to-purple-500/10 transition-all duration-300 rounded-2xl" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 via-brand-500/0 to-purple-500/0 group-hover:from-brand-500/10 group-hover:via-brand-500/5 group-hover:to-purple-500/10 transition-all duration-200 rounded-2xl" />
                     
                     {/* Flag - prominent */}
                     <div className="relative z-10 mb-3">
@@ -190,7 +190,7 @@ export default function CountryFlags() {
                     </div>
                     
                     {/* Subtle shine effect on hover */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl shine-effect" />
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-2xl shine-effect" />
                   </div>
                 </motion.div>
               );

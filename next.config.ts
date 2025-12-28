@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['framer-motion'],
   },
+  // Remove console logs in production (keep errors and warnings)
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'], // Keep errors and warnings for production debugging
+    } : false,
+  },
   // Mark Stripe as server-side external package (required for API routes)
   serverExternalPackages: ['stripe'],
   images: {

@@ -14,15 +14,21 @@ interface Company {
 export default function CompanyLogos() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     async function fetchCompanies() {
       try {
+        setIsLoading(true);
+        setError(false);
         const data = await apiCallJson<{ companies?: Company[] }>('/api/companies');
-        console.log('Companies API response:', data);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Companies API response:', data);
+        }
         setCompanies(data.companies || []);
       } catch (error) {
         console.error('Failed to fetch companies:', error);
+        setError(true);
         // Silently fail - this is not critical for page functionality
       } finally {
         setIsLoading(false);
@@ -36,7 +42,10 @@ export default function CompanyLogos() {
       <section className="py-24 md:py-32 bg-black scroll-snap-section relative">
         <div className="container-page">
           <div className="h-[200px] flex items-center justify-center">
-            <div className="h-6 w-64 bg-white/10 rounded animate-pulse" />
+            <div className="space-y-3">
+              <div className="h-6 w-64 bg-white/10 rounded animate-pulse mx-auto" />
+              <div className="h-4 w-48 bg-white/5 rounded animate-pulse mx-auto" />
+            </div>
           </div>
         </div>
       </section>
@@ -44,8 +53,14 @@ export default function CompanyLogos() {
   }
 
   // Hide section if no companies (production-ready)
+  // Error state: silently hide - not critical for conversion
   if (companies.length === 0) {
     return null;
+  }
+  
+  // If error, still show section but with empty state (graceful degradation)
+  if (error) {
+    return null; // Silent fail - section is not critical
   }
 
   return (
@@ -81,31 +96,13 @@ export default function CompanyLogos() {
           </p>
         </motion.div>
 
-        <div className="relative">
-          {/* Enhanced fade edges with gradient glow - more visible */}
-          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
-          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-black via-black/80 to-transparent z-10" />
-          
-          {/* Scroll indicator arrow on the right */}
-          {companies.length > 5 && (
-            <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 z-20 flex items-center gap-2">
-              <motion.div
-                animate={{ x: [0, 4, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                className="text-white/60"
-              >
-                <BrandIcons.ArrowRight className="h-6 w-6" />
-              </motion.div>
-              <span className="text-xs text-white/40 font-medium">Scroll</span>
-            </div>
-          )}
-          
+        <div className="relative after:absolute after:inset-y-0 after:right-0 after:w-20 after:bg-gradient-to-l after:from-zinc-950 after:to-transparent before:absolute before:inset-y-0 before:left-0 before:z-10 before:w-20 before:bg-gradient-to-r before:from-zinc-950 before:to-transparent">
           {/* Subtle spotlight effect */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-brand-500/3 to-transparent z-0" />
 
           {/* Horizontal scroll container */}
           <div 
-            className="flex gap-8 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-8 px-8"
+            className="flex gap-8 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-8 px-8 [mask-image:linear-gradient(to_right,transparent,white_20%,white_80%,transparent)] will-change-transform"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -126,9 +123,9 @@ export default function CompanyLogos() {
                 }}
                 className="flex-shrink-0 snap-start"
               >
-                <div className="relative h-[160px] w-[180px] flex items-center justify-center rounded-2xl bg-zinc-900/50 backdrop-blur-sm border border-white/10 shadow-feature p-6 transition-all duration-700 ease-in-out hover:border-white/20 hover:shadow-hover group overflow-hidden">
+                <div className="relative h-[160px] w-[180px] flex items-center justify-center rounded-2xl bg-zinc-900/50 backdrop-blur-sm border border-white/10 shadow-feature p-6 transition-all duration-200 ease-in-out hover:border-white/20 hover:shadow-hover group overflow-hidden">
                   {/* Subtle gradient overlay on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 via-brand-500/0 to-brand-600/0 group-hover:from-brand-500/8 group-hover:via-brand-500/4 group-hover:to-brand-600/8 transition-all duration-300 rounded-2xl" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 via-brand-500/0 to-brand-600/0 group-hover:from-brand-500/8 group-hover:via-brand-500/4 group-hover:to-brand-600/8 transition-all duration-200 rounded-2xl" />
                   
                   {/* Logo - unified grayscale treatment */}
                   <div className="relative z-10 flex items-center justify-center">
@@ -137,7 +134,7 @@ export default function CompanyLogos() {
                       alt={`${company.name} company logo`}
                       width={140}
                       height={140}
-                      className="object-contain h-[120px] w-auto opacity-50 grayscale transition-all duration-700 ease-in-out group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-110"
+                      className="object-contain h-[120px] w-auto opacity-50 grayscale transition-all duration-200 ease-in-out group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-110"
                       onError={(e) => {
                         console.error(`Failed to load logo: ${company.logoPath}`, e);
                         // Hide broken logos - no text fallback
@@ -147,7 +144,9 @@ export default function CompanyLogos() {
                         }
                       }}
                       onLoad={() => {
-                        console.log(`Successfully loaded logo: ${company.logoPath}`);
+                        if (process.env.NODE_ENV === 'development') {
+                          console.log(`Successfully loaded logo: ${company.logoPath}`);
+                        }
                       }}
                       loading="lazy"
                     />
@@ -155,7 +154,7 @@ export default function CompanyLogos() {
                   
                   
                   {/* Subtle shine effect on hover */}
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full" 
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-2xl bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full" 
                        style={{ transition: 'transform 0.6s ease-in-out, opacity 0.3s ease-in-out' }} />
                 </div>
               </motion.div>
