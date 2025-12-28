@@ -268,9 +268,10 @@ export async function POST(req: NextRequest) {
         throw jobsError;
       }
 
-      // OPTIMIZED: Skip pre-filtering - let AI do semantic matching
-      // AI matching is semantic and can understand relevance even without exact category matches
-      // Pre-filtering was too restrictive and removing good matches
+      // NEW ARCHITECTURE: "Funnel of Truth"
+      // Stage 1: SQL Filter (already done - is_active, city, categories)
+      // Stage 2-4: Hard Gates + Pre-Ranking + AI (handled in consolidatedMatchingV2)
+      // Stage 5: Diversity Pass (in distributeJobsWithDiversity)
       const userPrefs = {
         email: userData.email,
         target_cities: userData.target_cities,
@@ -284,25 +285,22 @@ export async function POST(req: NextRequest) {
         company_types: userData.company_types || [],
       };
       
-      // Use all jobs directly - AI will do semantic matching
-      const preFilteredJobs = allJobs || [];
+      // Pass all jobs to matching engine - it handles hard gates and pre-ranking
+      const jobsForMatching = allJobs || [];
       
-      apiLogger.info('Jobs for AI matching', { 
+      apiLogger.info('Jobs for matching', { 
         email: data.email, 
         allJobsCount: allJobs?.length || 0,
-        jobsForAI: Math.min(50, preFilteredJobs.length),
-        note: 'Skipping pre-filtering - AI handles semantic matching'
+        note: 'Matching engine handles hard gates, pre-ranking, and AI matching'
       });
-      console.log(`[SIGNUP] Using ${allJobs?.length || 0} jobs, sending top 50 to AI for semantic matching`);
+      console.log(`[SIGNUP] Using ${allJobs?.length || 0} jobs, matching engine will handle filtering and ranking`);
 
       try {
-        if (preFilteredJobs && preFilteredJobs.length > 0) {
-          console.log(`[SIGNUP] Found ${preFilteredJobs.length} jobs, attempting AI matching...`);
+        if (jobsForMatching && jobsForMatching.length > 0) {
+          console.log(`[SIGNUP] Found ${jobsForMatching.length} jobs, attempting matching...`);
         
-        // Send top 50 jobs to AI (AI will do semantic matching)
-        const jobsForAI = preFilteredJobs.slice(0, 50);
-        
-        const matchResult = await matcher.performMatching(jobsForAI, userPrefs as any);
+        // Pass all jobs - engine handles hard gates, pre-ranking, and selects top 50 for AI
+        const matchResult = await matcher.performMatching(jobsForMatching as any[], userPrefs as any);
         console.log(`[SIGNUP] Matching complete: ${matchResult.matches?.length || 0} matches found`);
         
         if (matchResult.matches && matchResult.matches.length > 0) {
@@ -311,10 +309,10 @@ export async function POST(req: NextRequest) {
           const userCitiesForMatches = userData.target_cities || [];
           const matchAlgorithmForMatches = matchResult.method;
           
-          // Get matched jobs with full data - ensure we have valid preFilteredJobs array
+          // Get matched jobs with full data
           const matchedJobsRaw: any[] = [];
           for (const m of matchResult.matches) {
-            const job = preFilteredJobs.find(j => j.job_hash === m.job_hash);
+            const job = jobsForMatching.find(j => j.job_hash === m.job_hash);
             if (job) {
               matchedJobsRaw.push({
                 ...job,

@@ -18,6 +18,9 @@ export interface DistributionOptions {
   // Work environment balancing
   targetWorkEnvironments?: string[]; // Form values: ['Office', 'Hybrid', 'Remote']
   ensureWorkEnvironmentBalance?: boolean;
+  // Quality floor for diversity swaps (default: 10 points)
+  // Only swap jobs for diversity if alternative is within this point range
+  qualityFloorThreshold?: number;
 }
 
 /**
@@ -38,7 +41,8 @@ export function distributeJobsWithDiversity(
     maxPerSource = Math.ceil(targetCount / 3), // Default: max 1/3 from any source
     ensureCityBalance: initialCityBalance = true,
     targetWorkEnvironments = [],
-    ensureWorkEnvironmentBalance: initialWorkEnvBalance = true
+    ensureWorkEnvironmentBalance: initialWorkEnvBalance = true,
+    qualityFloorThreshold = 10 // Default: only swap if within 10 points
   } = options;
 
   if (jobsArray.length === 0) return [];
@@ -124,22 +128,41 @@ export function distributeJobsWithDiversity(
     }
   }
   const hasMultipleSources = uniqueSources.size >= 2;
+  const MIN_REQUIRED_SOURCES = 2; // Minimum 2 different sources required
   
-  if (!hasMultipleSources && ensureCityBalance && targetCities.length > 0) {
-    // Not enough diverse sources - log warning but continue
+  if (!hasMultipleSources) {
+    // Not enough diverse sources - log warning
     console.warn('[JobDistribution] Insufficient source diversity', {
       uniqueSources: Array.from(uniqueSources),
       totalJobs: jobsArray.length,
       targetCities,
+      requiredSources: MIN_REQUIRED_SOURCES,
       recommendation: 'Consider relaxing source diversity constraints or expanding job pool'
     });
   }
   
-  // If only one source exists, adjust maxPerSource to allow all jobs from that source
-  // This prevents returning fewer jobs than requested when diversity isn't possible
-  const effectiveMaxPerSource: number = !hasMultipleSources && uniqueSources.size === 1
-    ? targetCount // Allow all jobs from single source
-    : maxPerSource;
+  // Calculate effective maxPerSource to ensure minimum 2 sources
+  // If we have multiple sources, limit per source to ensure diversity
+  // Formula: If targetCount = 5, maxPerSource = 3 ensures at least 2 sources (3+2=5)
+  let effectiveMaxPerSource: number;
+  if (!hasMultipleSources && uniqueSources.size === 1) {
+    // Only one source available - allow all jobs (fallback)
+    effectiveMaxPerSource = targetCount;
+  } else if (hasMultipleSources) {
+    // Multiple sources available - calculate max to ensure minimum 2 sources
+    // For targetCount = 5: maxPerSource = 3 ensures we can get 3+2=5 (2 sources)
+    // For targetCount = 10: maxPerSource = 8 ensures we can get 8+2=10 (2 sources)
+    const calculatedMax = Math.ceil(targetCount * 0.8); // Allow up to 80% from one source
+    effectiveMaxPerSource = Math.min(maxPerSource, calculatedMax);
+    
+    // Ensure we can still get minimum 2 sources
+    // If maxPerSource is too high, reduce it
+    if (effectiveMaxPerSource >= targetCount - 1) {
+      effectiveMaxPerSource = Math.max(1, targetCount - 1); // Ensure at least 1 job from second source
+    }
+  } else {
+    effectiveMaxPerSource = maxPerSource;
+  }
 
   // Helper: Consistent city matching (same logic as preFilterJobs.ts)
   // CRITICAL: Define before use to avoid "used before declaration" errors
@@ -554,6 +577,28 @@ export function distributeJobsWithDiversity(
     return `${title}_${company}_${city}_${location}_${url}` || Math.random().toString();
   };
 
+  // Helper: Get match score from job (handles both 0-100 and 0-1 scales)
+  const getJobScore = (job: JobWithSource): number => {
+    const score = (job as any).match_score;
+    if (score === undefined || score === null) return 0;
+    // If score is > 1, assume it's 0-100 scale, normalize to 0-100
+    // If score is <= 1, assume it's 0-1 scale, convert to 0-100
+    return score > 1 ? score : score * 100;
+  };
+
+  // Helper: Check if swapping jobA for jobB is acceptable (quality floor check)
+  // Only allow swap if jobB is within qualityFloorThreshold points of jobA
+  const isAcceptableSwap = (jobA: JobWithSource, jobB: JobWithSource): boolean => {
+    const scoreA = getJobScore(jobA);
+    const scoreB = getJobScore(jobB);
+    const scoreDiff = scoreA - scoreB;
+    
+    // Allow swap if:
+    // 1. jobB is better than jobA (scoreDiff < 0), OR
+    // 2. jobB is within quality floor threshold (scoreDiff <= qualityFloorThreshold)
+    return scoreDiff <= qualityFloorThreshold;
+  };
+
   // Step 4: Round-robin selection prioritizing diversity
   // First pass: Try to get balanced distribution
   // CRITICAL FIX: Use effectiveTargetCities for round calculation
@@ -626,8 +671,8 @@ export function distributeJobsWithDiversity(
       // Priority order: Quality > Source Diversity > City Balance > Work Environment Balance
       availableJobs.sort((a, b) => {
         // Primary sort: Quality (match_score DESC) - highest quality first
-        const scoreA = (a as any).match_score || 0;
-        const scoreB = (b as any).match_score || 0;
+        const scoreA = getJobScore(a);
+        const scoreB = getJobScore(b);
         if (scoreA !== scoreB) {
           return scoreB - scoreA; // Higher score = better quality
         }
@@ -717,12 +762,43 @@ export function distributeJobsWithDiversity(
       }
       
       // If no job was found that fits constraints, relax them
+      // BUT: Apply quality floor check - only add if it doesn't degrade quality significantly
       if (!foundJob && availableJobs.length > 0) {
-        // Try to add any job from available jobs, prioritizing source diversity
-        const bestJob = availableJobs[0];
-        selectedJobs.push(bestJob);
-        const source = bestJob.source || 'unknown';
-        sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+        // Get the minimum score of currently selected jobs (if any)
+        let minSelectedScore = 100; // Start high
+        if (selectedJobs.length > 0) {
+          for (let i = 0; i < selectedJobs.length; i++) {
+            const score = getJobScore(selectedJobs[i]);
+            if (score < minSelectedScore) {
+              minSelectedScore = score;
+            }
+          }
+        }
+        
+        // Find best job that meets quality floor
+        let bestJob: JobWithSource | null = null;
+        for (let i = 0; i < availableJobs.length; i++) {
+          const job = availableJobs[i];
+          const jobScore = getJobScore(job);
+          
+          // Only consider if it meets quality floor (within threshold of minimum selected)
+          if (jobScore >= minSelectedScore - qualityFloorThreshold) {
+            bestJob = job;
+            break;
+          }
+        }
+        
+        // If no job meets quality floor, use the highest-scoring available job anyway
+        // (This is a fallback - better to have a job than none)
+        if (!bestJob && availableJobs.length > 0) {
+          bestJob = availableJobs[0];
+        }
+        
+        if (bestJob) {
+          selectedJobs.push(bestJob);
+          const source = bestJob.source || 'unknown';
+          sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+        }
       }
     }
     
@@ -792,8 +868,8 @@ export function distributeJobsWithDiversity(
       // Sort by a quality metric (if available) or keep first ones
       // Prioritize jobs with match_score if available, otherwise keep first ones
       jobsFromDominantSource.sort((a, b) => {
-        const scoreA = (a.job as any).match_score || 0;
-        const scoreB = (b.job as any).match_score || 0;
+        const scoreA = getJobScore(a.job);
+        const scoreB = getJobScore(b.job);
         return scoreB - scoreA; // Higher score = better, keep these
       });
       
@@ -834,8 +910,8 @@ export function distributeJobsWithDiversity(
       // ENTERPRISE-LEVEL FIX: Sort diverse jobs by quality first, then source diversity
       diverseJobs.sort((a, b) => {
         // Primary: Quality (match_score DESC)
-        const scoreA = (a as any).match_score || 0;
-        const scoreB = (b as any).match_score || 0;
+        const scoreA = getJobScore(a);
+        const scoreB = getJobScore(b);
         if (scoreA !== scoreB) {
           return scoreB - scoreA;
         }
@@ -848,12 +924,37 @@ export function distributeJobsWithDiversity(
         return countA - countB;
       });
       
-      // Add diverse jobs to fill slots
+      // Add diverse jobs to fill slots (with quality floor check)
+      // Get the minimum score of jobs we're removing (to ensure we don't degrade quality)
+      const removedJobScores: number[] = [];
+      for (let i = 0; i < toRemove.length; i++) {
+        removedJobScores.push(getJobScore(toRemove[i].job));
+      }
+      const minRemovedScore = removedJobScores.length > 0 
+        ? Math.min(...removedJobScores) 
+        : 0;
+      
       const toAdd = Math.min(excess, diverseJobs.length);
-      for (let i = 0; i < toAdd; i++) {
+      let addedCount = 0;
+      for (let i = 0; i < diverseJobs.length && addedCount < toAdd; i++) {
         const job = diverseJobs[i];
-        rebalancedJobs.push(job);
-        sourceCounts[job.source || 'unknown'] = (sourceCounts[job.source || 'unknown'] || 0) + 1;
+        const jobScore = getJobScore(job);
+        
+        // QUALITY FLOOR: Only add if job is within threshold of minimum removed score
+        // This ensures we don't replace "Excellent" (95) with "Fair" (60) just for diversity
+        if (jobScore >= minRemovedScore - qualityFloorThreshold) {
+          rebalancedJobs.push(job);
+          sourceCounts[job.source || 'unknown'] = (sourceCounts[job.source || 'unknown'] || 0) + 1;
+          addedCount++;
+        } else {
+          // Log when quality floor prevents a swap
+          console.debug('[JobDistribution] Quality floor prevented swap', {
+            removedScore: minRemovedScore,
+            candidateScore: jobScore,
+            threshold: qualityFloorThreshold,
+            reason: `Candidate score ${jobScore} is more than ${qualityFloorThreshold} points below minimum removed score ${minRemovedScore}`
+          });
+        }
       }
       
       selectedJobs.length = 0;
@@ -878,8 +979,8 @@ export function distributeJobsWithDiversity(
         // ENTERPRISE-LEVEL FIX: Sort remaining jobs by quality first, then source diversity
         remaining.sort((a, b) => {
           // Primary: Quality (match_score DESC)
-          const scoreA = (a as any).match_score || 0;
-          const scoreB = (b as any).match_score || 0;
+          const scoreA = getJobScore(a);
+          const scoreB = getJobScore(b);
           if (scoreA !== scoreB) {
             return scoreB - scoreA;
           }
@@ -926,8 +1027,8 @@ export function distributeJobsWithDiversity(
     // ENTERPRISE-LEVEL FIX: Sort by quality first, then diversity factors
     remaining.sort((a, b) => {
       // Primary: Quality (match_score DESC)
-      const scoreA = (a as any).match_score || 0;
-      const scoreB = (b as any).match_score || 0;
+      const scoreA = getJobScore(a);
+      const scoreB = getJobScore(b);
       if (scoreA !== scoreB) {
         return scoreB - scoreA;
       }
@@ -967,6 +1068,17 @@ export function distributeJobsWithDiversity(
       return 0;
     });
 
+    // QUALITY FLOOR: Get minimum score of currently selected jobs
+    let minSelectedScore = 100; // Start high
+    if (selectedJobs.length > 0) {
+      for (let i = 0; i < selectedJobs.length; i++) {
+        const score = getJobScore(selectedJobs[i]);
+        if (score < minSelectedScore) {
+          minSelectedScore = score;
+        }
+      }
+    }
+
     // CRITICAL FIX: Limit iterations in this loop too
     const maxFillIterations = Math.min(remaining.length, MAX_ITERATIONS - iterationCount, targetCount - selectedJobs.length);
     for (let i = 0; i < maxFillIterations && selectedJobs.length < targetCount && iterationCount < MAX_ITERATIONS; i++) {
@@ -975,10 +1087,22 @@ export function distributeJobsWithDiversity(
       if (!job) break;
       
       const source = job.source || 'unknown';
+      const jobScore = getJobScore(job);
+      
+      // QUALITY FLOOR: Only add if job meets quality threshold
+      // Allow if: within quality floor threshold OR we're running out of iterations (fallback)
+      const meetsQualityFloor = jobScore >= minSelectedScore - qualityFloorThreshold;
+      const canRelaxForDiversity = iterationCount > MAX_ITERATIONS * 0.8;
+      
       // CRITICAL FIX: Relax source constraint if we're running out of iterations
-      if (canAddFromSource(source) || iterationCount > MAX_ITERATIONS * 0.8) {
+      if ((canAddFromSource(source) || canRelaxForDiversity) && (meetsQualityFloor || canRelaxForDiversity)) {
         selectedJobs.push(job);
         sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+        
+        // Update minimum selected score if this job has a lower score
+        if (jobScore < minSelectedScore) {
+          minSelectedScore = jobScore;
+        }
         
         // Update city count if tracking (use consistent matching)
         // CRITICAL: Use imperative loop instead of find to avoid TDZ errors
@@ -1051,7 +1175,139 @@ export function distributeJobsWithDiversity(
     }
   }
 
-  return selectedJobs.slice(0, targetCount);
+  // Step 8: ENFORCE MINIMUM 2 SOURCES (Quality Floor Protected)
+  // Ensure we have at least 2 different sources in final selection
+  const finalSelectedJobs = selectedJobs.slice(0, targetCount);
+  const finalSourceCounts: Record<string, number> = {};
+  const finalSourceSet = new Set<string>();
+  // MIN_REQUIRED_SOURCES already defined at line 131 in function scope
+  
+  // Count sources in final selection
+  for (let i = 0; i < finalSelectedJobs.length; i++) {
+    const source = finalSelectedJobs[i].source || 'unknown';
+    finalSourceCounts[source] = (finalSourceCounts[source] || 0) + 1;
+    if (source !== 'unknown') {
+      finalSourceSet.add(source);
+    }
+  }
+  
+  // If we have fewer than 2 sources and multiple sources are available, enforce diversity
+  if (finalSourceSet.size < MIN_REQUIRED_SOURCES && hasMultipleSources && finalSelectedJobs.length >= MIN_REQUIRED_SOURCES) {
+    console.log('[JobDistribution] Enforcing minimum 2 sources', {
+      currentSources: Array.from(finalSourceSet),
+      requiredSources: MIN_REQUIRED_SOURCES,
+      totalJobs: finalSelectedJobs.length
+    });
+    
+    // Find jobs from underrepresented sources
+    const underrepresentedSources: string[] = [];
+    for (const source of uniqueSources) {
+      if (!finalSourceSet.has(source)) {
+        underrepresentedSources.push(source);
+      }
+    }
+    
+    if (underrepresentedSources.length > 0) {
+      // Get minimum score of currently selected jobs (for quality floor)
+      let minSelectedScore = 100;
+      for (let i = 0; i < finalSelectedJobs.length; i++) {
+        const score = getJobScore(finalSelectedJobs[i]);
+        if (score < minSelectedScore) {
+          minSelectedScore = score;
+        }
+      }
+      
+      // Find lowest-scoring job from overrepresented source to potentially replace
+      const overrepresentedSource = Array.from(finalSourceSet)[0];
+      const jobsFromOverrepresented: Array<{ job: JobWithSource; index: number; score: number }> = [];
+      for (let i = 0; i < finalSelectedJobs.length; i++) {
+        const job = finalSelectedJobs[i];
+        if ((job.source || 'unknown') === overrepresentedSource) {
+          jobsFromOverrepresented.push({
+            job,
+            index: i,
+            score: getJobScore(job)
+          });
+        }
+      }
+      
+      // Sort by score (lowest first - these are candidates for replacement)
+      jobsFromOverrepresented.sort((a, b) => a.score - b.score);
+      
+      // Find replacement jobs from underrepresented sources
+      const selectedIds = new Set<string>();
+      for (let i = 0; i < finalSelectedJobs.length; i++) {
+        selectedIds.add(getJobId(finalSelectedJobs[i]));
+      }
+      
+      const replacementCandidates: Array<{ job: JobWithSource; score: number }> = [];
+      for (let i = 0; i < jobsArray.length; i++) {
+        const job = jobsArray[i];
+        if (selectedIds.has(getJobId(job))) continue;
+        
+        const jobSource = job.source || 'unknown';
+        if (underrepresentedSources.includes(jobSource)) {
+          const jobScore = getJobScore(job);
+          // QUALITY FLOOR: Only consider if within threshold of lowest selected
+          if (jobScore >= minSelectedScore - qualityFloorThreshold) {
+            replacementCandidates.push({ job, score: jobScore });
+          }
+        }
+      }
+      
+      // Sort replacement candidates by score (highest first)
+      replacementCandidates.sort((a, b) => b.score - a.score);
+      
+      // Replace lowest-scoring jobs from overrepresented source with best from underrepresented
+      let replacedCount = 0;
+      const neededReplacements = MIN_REQUIRED_SOURCES - finalSourceSet.size;
+      
+      for (let i = 0; i < Math.min(neededReplacements, jobsFromOverrepresented.length, replacementCandidates.length); i++) {
+        const toReplace = jobsFromOverrepresented[i];
+        const replacement = replacementCandidates[i];
+        
+        // Double-check quality floor
+        if (replacement.score >= toReplace.score - qualityFloorThreshold) {
+          // Replace in final selection
+          const replaceIndex = finalSelectedJobs.findIndex(j => getJobId(j) === getJobId(toReplace.job));
+          if (replaceIndex !== -1) {
+            finalSelectedJobs[replaceIndex] = replacement.job;
+            replacedCount++;
+            finalSourceSet.add(replacement.job.source || 'unknown');
+            
+            console.log('[JobDistribution] Source diversity swap', {
+              replaced: {
+                source: toReplace.job.source,
+                score: toReplace.score
+              },
+              replacement: {
+                source: replacement.job.source,
+                score: replacement.score
+              },
+              qualityFloor: qualityFloorThreshold
+            });
+          }
+        }
+      }
+      
+      if (replacedCount > 0) {
+        console.log('[JobDistribution] Enforced minimum 2 sources', {
+          replacedCount,
+          finalSources: Array.from(finalSourceSet),
+          totalJobs: finalSelectedJobs.length
+        });
+      } else {
+        console.warn('[JobDistribution] Could not enforce minimum 2 sources (quality floor prevented swaps)', {
+          currentSources: Array.from(finalSourceSet),
+          availableSources: Array.from(uniqueSources),
+          qualityFloor: qualityFloorThreshold,
+          minSelectedScore
+        });
+      }
+    }
+  }
+
+  return finalSelectedJobs.slice(0, targetCount);
 }
 
 /**

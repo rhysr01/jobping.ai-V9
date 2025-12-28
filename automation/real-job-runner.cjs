@@ -872,6 +872,44 @@ class RealJobRunner {
     }
   }
 
+  // Deactivate stale jobs (lifecycle management)
+  // Sets is_active = false for jobs not seen in the last N days
+  async deactivateStaleJobs() {
+    try {
+      const ttlDays = parseInt(process.env.JOB_TTL_DAYS || '10', 10);
+      const cutoffDate = new Date(Date.now() - ttlDays * 24 * 60 * 60 * 1000);
+      const cutoffIso = cutoffDate.toISOString();
+      
+      console.log(`🧹 Checking for stale jobs (older than ${ttlDays} days, cutoff: ${cutoffIso})...`);
+      
+      // Update jobs where last_seen_at is older than cutoff and is_active is true
+      const { data, error } = await supabase
+        .from('jobs')
+        .update({ is_active: false })
+        .eq('is_active', true)
+        .lt('last_seen_at', cutoffIso)
+        .select('id');
+      
+      if (error) {
+        console.error('❌ Failed to deactivate stale jobs:', error.message);
+        return 0;
+      }
+      
+      const deactivatedCount = Array.isArray(data) ? data.length : 0;
+      
+      if (deactivatedCount > 0) {
+        console.log(`✅ Deactivated ${deactivatedCount} stale jobs (last_seen_at < ${cutoffIso})`);
+      } else {
+        console.log(`✅ No stale jobs found (all jobs seen within last ${ttlDays} days)`);
+      }
+      
+      return deactivatedCount;
+    } catch (error) {
+      console.error('❌ Deactivate stale jobs failed:', error.message);
+      return 0;
+    }
+  }
+
   // Main scraping cycle
   async runScrapingCycle() {
     if (this.isRunning) {
@@ -1004,6 +1042,12 @@ class RealJobRunner {
       // Check database health
       await this.checkDatabaseHealth();
       
+      // Perform database cleanup: deactivate stale jobs
+      const deactivatedCount = await this.deactivateStaleJobs();
+      if (deactivatedCount > 0) {
+        console.log(`🧹 Database cleanup: Deactivated ${deactivatedCount} stale jobs`);
+      }
+      
       // Get final stats
       const dbStats = await this.getDatabaseStats();
       
@@ -1028,6 +1072,9 @@ class RealJobRunner {
       console.log(`   - Arbeitnow: ${arbeitnowJobs} jobs (DACH region)`);
       console.log(`🧮 Unique job hashes this cycle: ${this.currentCycleStats.total}`);
       console.log(`📦 Per-source breakdown this cycle: ${JSON.stringify(this.currentCycleStats.perSource)}`);
+      if (deactivatedCount > 0) {
+        console.log(`🧹 Stale jobs deactivated: ${deactivatedCount}`);
+      }
       
     } catch (error) {
       console.error('❌ Scraping cycle failed:', error);

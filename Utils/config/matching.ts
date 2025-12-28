@@ -36,9 +36,9 @@ export const MATCHING_CONFIG = {
       workEnvironment: 15,   // Office/Hybrid/Remote - IMPORTANT for early career
       roleFit: 10,           // Specific role within career path (reduced from 20%)
       experienceLevel: 10,   // Entry/junior/mid level matching
-      companyCulture: 3,     // Startup vs corporate, company type
+      timing: 10,            // Job freshness, urgency - INCREASED from 1% (early-career roles close fast!)
+      companyCulture: 2,     // Startup vs corporate, company type - DECREASED from 3% (less critical for juniors)
       skills: 1,             // Technical/soft skills alignment
-      timing: 1,             // Job freshness, urgency
     },
     
     // Score thresholds (use decimals for tests expecting 0-1 scale)

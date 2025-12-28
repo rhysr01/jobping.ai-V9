@@ -115,34 +115,13 @@ export default function Hero() {
               }}
             />
             
-            {/* Headline - "Silver Silk" gradient with scanline shimmer */}
+            {/* Headline - "Silver Silk" gradient */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
               className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3 max-w-[540px] relative"
             >
-              {/* Scanline shimmer - narrow 45-degree white comet sweeping across */}
-              <motion.div
-                animate={{
-                  x: ['-100%', '200%'],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  repeatDelay: 2,
-                  ease: 'easeInOut',
-                }}
-                className="absolute inset-0 pointer-events-none z-10"
-                style={{
-                  background: 'linear-gradient(45deg, transparent 0%, rgba(255,255,255,0.3) 48%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.3) 52%, transparent 100%)',
-                  width: '30%',
-                  height: '100%',
-                  transform: 'skewX(-15deg)',
-                  mixBlendMode: 'overlay',
-                }}
-              />
-              
               {/* Silver Silk gradient: purple-500/80 (20%) → zinc-100 (50%) → purple-500/80 (80%) */}
               <span 
                 className="relative bg-clip-text text-transparent"

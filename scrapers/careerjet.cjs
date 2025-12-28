@@ -3,6 +3,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { classifyEarlyCareer, makeJobHash, normalizeString, CAREER_PATH_KEYWORDS } = require('./shared/helpers.cjs');
 const { getAllRoles, getEarlyCareerRoles, getTopRolesByCareerPath, getRoleVariations, cleanRoleForSearch } = require('./shared/roles.cjs');
 const { recordScraperRun } = require('./shared/telemetry.cjs');
+const { processIncomingJob } = require('./shared/processor.cjs');
 
 const CAREERJET_API_KEY = process.env.CAREERJET_API_KEY;
 const BASE_URL = 'http://public.api.careerjet.net/search';
@@ -330,7 +331,7 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
     // Process each job
     for (const job of jobs) {
       try {
-        // Create normalized job object
+        // Create normalized job object for early-career check
         const normalizedJob = {
           title: job.title || '',
           company: job.company || '',
@@ -344,19 +345,7 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
           continue; // Skip non-early-career jobs
         }
 
-        // Generate job_hash using shared helper
-        const job_hash = makeJobHash(normalizedJob);
-
-        // Determine job type flags
-        const titleLower = normalizeString(job.title);
-        const descLower = normalizeString(job.description);
-        const is_internship = /intern|internship|stage|praktikum|stagiaire|tirocinio/i.test(titleLower);
-        const is_graduate = /graduate|grad scheme|grad program|trainee|absolvent/i.test(titleLower);
-
-        // Parse posted date
-        const posted_at = parseRelativeDate(job.date || 'today');
-
-        // ENHANCED: Extract salary from description
+        // ENHANCED: Extract salary from description (keep this as it's CareerJet-specific)
         function extractSalary(desc) {
           if (!desc) return null;
           const patterns = [
@@ -375,48 +364,44 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
         }
         const salary = extractSalary(job.description || '');
 
-        // ENHANCED: Infer categories using CAREER_PATH_KEYWORDS
-        const categories = inferCategories(job.title, job.description);
-
-        // Normalize location data
-        const { normalizeJobLocation } = require('./shared/locationNormalizer.cjs');
-        const normalized = normalizeJobLocation({
-          city: city.name,
-          country: city.country,
-          location: job.location,
-        });
-
         // ENHANCED: Enrich description if too short
         let enrichedDescription = job.description || '';
         if (enrichedDescription.length < 50 && job.site) {
           enrichedDescription = `${job.title || ''} at ${job.company || ''}. ${enrichedDescription}`.trim();
         }
-        
-        // Prepare database record
-        const nowIso = new Date().toISOString();
-        const jobRecord = {
-          job_hash,
+
+        // Process through standardization pipe
+        const processed = processIncomingJob({
           title: job.title,
           company: job.company,
-          location: normalized.location, // Use normalized location
-          city: normalized.city, // Use normalized city
-          country: normalized.country, // Use normalized country
-          description: enrichedDescription, // ENHANCED: Use enriched description
-          job_url: job.url,
-          posted_at: posted_at,
-          original_posted_date: job.date || posted_at,
+          location: job.location || city.name,
+          description: enrichedDescription,
+          url: job.url,
+          posted_at: parseRelativeDate(job.date || 'today'),
+          date: job.date,
+        }, {
           source: 'careerjet',
-          is_active: true,
-          status: 'active',
-          is_internship,
-          is_graduate,
-          categories, // ENHANCED: Better category inference
-          work_environment: 'on-site', // Default, can be enhanced with remote detection
-          experience_required: is_internship ? 'internship' : (is_graduate ? 'graduate' : 'entry-level'),
-          // ENHANCED: Add salary if extracted
+          defaultCity: city.name,
+          defaultCountry: city.country,
+        });
+
+        // Generate job_hash
+        const job_hash = makeJobHash({
+          title: processed.title,
+          company: processed.company,
+          location: processed.location,
+        });
+
+        // ENHANCED: Infer categories using CAREER_PATH_KEYWORDS (keep this as it's CareerJet-specific)
+        const categories = inferCategories(job.title, enrichedDescription);
+
+        // Prepare database record with all standardized fields
+        const jobRecord = {
+          ...processed,
+          job_hash,
+          categories, // Override with CareerJet-specific categories
+          // Add salary if extracted (CareerJet-specific)
           ...(salary ? { salary_range: salary } : {}),
-          last_seen_at: nowIso,
-          created_at: nowIso,
         };
 
         // Upsert to database

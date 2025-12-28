@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface TickerItem {
@@ -28,7 +28,7 @@ export default function SocialProofTicker() {
     setIsMounted(true);
   }, []);
 
-  const fetchRecentMatches = async () => {
+  const fetchRecentMatches = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(false);
@@ -49,14 +49,14 @@ export default function SocialProofTicker() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!isMounted) return; // Only fetch after mount
     fetchRecentMatches();
     const interval = setInterval(fetchRecentMatches, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
-  }, [isMounted]);
+  }, [isMounted, fetchRecentMatches]);
 
   // Server and client both render this skeleton - no hydration mismatch
   if (!isMounted || (isLoading && !currentItem)) {

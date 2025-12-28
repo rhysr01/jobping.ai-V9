@@ -3,6 +3,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { classifyEarlyCareer, makeJobHash, normalizeString, CAREER_PATH_KEYWORDS } = require('./shared/helpers.cjs');
 const { getAllRoles, getEarlyCareerRoles, getTopRolesByCareerPath, getRoleVariations, cleanRoleForSearch } = require('./shared/roles.cjs');
 const { recordScraperRun } = require('./shared/telemetry.cjs');
+const { processIncomingJob } = require('./shared/processor.cjs');
 
 const BASE_URL = 'https://www.arbeitnow.com/api/job-board-api';
 
@@ -256,7 +257,7 @@ async function scrapeArbeitnowQuery(keyword, location, supabase) {
         const city = extractCity(job.location);
         const country = inferCountry(job.location);
 
-        // Create normalized job object for classification
+        // Create normalized job object for early-career check
         const normalizedJob = {
           title: job.title || '',
           company: job.company_name || '',
@@ -270,50 +271,36 @@ async function scrapeArbeitnowQuery(keyword, location, supabase) {
           continue; // Skip non-early-career jobs
         }
 
-        // Generate job_hash
-        const job_hash = makeJobHash(normalizedJob);
-
-        // Determine job type flags
-        const titleLower = normalizeString(job.title);
-        const descLower = normalizeString(job.description);
-        const is_internship = /intern|internship|praktikum|stage|stagiaire/i.test(titleLower);
-        const is_graduate = /graduate|trainee|absolvent|grad scheme/i.test(titleLower);
-
-        // Infer categories
-        const categories = inferCategoriesFromTags(job.tags || [], job.title);
-
-        // Normalize location data
-        const { normalizeJobLocation } = require('./shared/locationNormalizer.cjs');
-        const normalized = normalizeJobLocation({
-          city,
-          country,
-          location: job.location,
-        });
-
-        // Prepare database record
-        const nowIso = new Date().toISOString();
-        const postedAt = normalizeDate(job.created_at);
-        const jobRecord = {
-          job_hash,
+        // Process through standardization pipe
+        const processed = processIncomingJob({
           title: job.title,
           company: job.company_name,
-          location: normalized.location, // Use normalized location
-          city: normalized.city, // Use normalized city
-          country: normalized.country, // Use normalized country
+          location: job.location,
           description: job.description,
-          job_url: job.url,
-          posted_at: postedAt,
-          original_posted_date: postedAt,
+          url: job.url,
+          posted_at: normalizeDate(job.created_at),
+          created_at: job.created_at,
+        }, {
           source: 'arbeitnow',
-          is_active: true,
-          status: 'active',
-          is_internship,
-          is_graduate,
-          work_environment: job.remote ? 'remote' : 'on-site',
-          experience_required: is_internship ? 'internship' : (is_graduate ? 'graduate' : 'entry-level'),
-          categories,
-          last_seen_at: nowIso,
-          created_at: nowIso,
+          defaultCity: city,
+          defaultCountry: country,
+        });
+
+        // Generate job_hash
+        const job_hash = makeJobHash({
+          title: processed.title,
+          company: processed.company,
+          location: processed.location,
+        });
+
+        // Infer categories from tags (Arbeitnow-specific)
+        const categories = inferCategoriesFromTags(job.tags || [], job.title);
+
+        // Prepare database record with all standardized fields
+        const jobRecord = {
+          ...processed,
+          job_hash,
+          categories, // Override with Arbeitnow-specific categories
         };
 
         // Upsert to database

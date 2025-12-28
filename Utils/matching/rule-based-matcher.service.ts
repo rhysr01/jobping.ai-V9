@@ -239,6 +239,19 @@ export function applyHardGates(job: Job, userPrefs: UserPreferences): { passed: 
     }
   }
 
+  // Years of Experience (YoE) check: Only gate if numeric values are available
+  // If YoE extraction returned null (regex miss), DEFAULT TO ALLOWING JOB TO PASS
+  // This ensures we don't accidentally block perfect jobs due to weirdly worded descriptions
+  // Better to spend $0.01 on an AI check than hide a perfect job
+  const jobYoE = (job as any);
+  if (jobYoE.min_yoe !== null && jobYoE.min_yoe !== undefined && 
+      typeof jobYoE.min_yoe === 'number') {
+    // YoE regex extraction succeeded - could add hard gate here in future
+    // For now, we let all jobs pass through (including those with numeric YoE)
+    // This is intentional: let AI make the final decision on experience matching
+  }
+  // If min_yoe is null/undefined (regex miss), job automatically passes through
+
   return { passed: true, reason: 'Passed all hard gates' };
 }
 

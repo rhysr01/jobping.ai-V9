@@ -10,17 +10,36 @@
 require('dotenv').config({ path: '.env.local' });
 const { spawnSync } = require('child_process');
 const { createClient } = require('@supabase/supabase-js');
+const { processIncomingJob } = require('../scrapers/shared/processor.cjs');
 
 function getSupabase() {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
   if (!url || !key) throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY/ANON_KEY');
   
-  const fetchWithTimeout = typeof fetch !== 'undefined' ? (fetchUrl, fetchOptions = {}) => {
-    const timeout = 30000; // 30 seconds
+  const fetchWithTimeout = typeof fetch !== 'undefined' ? async (fetchUrl, fetchOptions = {}) => {
+    const timeout = 60000; // 60 seconds (increased for GitHub Actions)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
-    return fetch(fetchUrl, { ...fetchOptions, signal: controller.signal }).finally(() => clearTimeout(timeoutId));
+    
+    try {
+      const response = await fetch(fetchUrl, {
+        ...fetchOptions,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      // Wrap network errors to ensure they're retryable
+      if (error instanceof TypeError && error.message?.includes('fetch failed')) {
+        const networkError = new Error(`Network error: ${error.message}`);
+        networkError.name = 'NetworkError';
+        networkError.cause = error;
+        throw networkError;
+      }
+      throw error;
+    }
   } : undefined;
   
   return createClient(url, key, { 
@@ -36,17 +55,28 @@ async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
     try {
       return await fn();
     } catch (error) {
-      const isNetworkError = error.message?.includes('fetch failed') || 
-                           error.message?.includes('network') ||
-                           error.message?.includes('timeout') ||
-                           error.name === 'AbortError';
+      // Enhanced network error detection
+      const errorMessage = error?.message || String(error || '');
+      const errorName = error?.name || '';
+      const isNetworkError = 
+        errorName === 'NetworkError' ||
+        errorName === 'AbortError' ||
+        errorName === 'TypeError' ||
+        errorMessage.toLowerCase().includes('fetch failed') ||
+        errorMessage.toLowerCase().includes('network') ||
+        errorMessage.toLowerCase().includes('timeout') ||
+        errorMessage.toLowerCase().includes('econnrefused') ||
+        errorMessage.toLowerCase().includes('enotfound') ||
+        errorMessage.toLowerCase().includes('econnreset') ||
+        errorMessage.toLowerCase().includes('etimedout') ||
+        (error instanceof TypeError && errorMessage.toLowerCase().includes('fetch'));
       
       if (!isNetworkError || attempt === maxRetries - 1) {
-        throw error;
+        throw error; // Don't retry non-network errors or on last attempt
       }
       
       const delay = baseDelay * Math.pow(2, attempt);
-      console.warn(`⚠️  Network error (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms...`, error.message);
+      console.warn(`⚠️  Network error (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms...`, errorMessage);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
@@ -397,8 +427,6 @@ async function saveJobs(jobs, source) {
   const nowIso = new Date().toISOString();
   const nonRemote = jobs.filter(j => !((j.location||'').toLowerCase().includes('remote')));
   const rows = nonRemote.map(j => {
-    const { city, country } = parseLocation(j.location || '');
-    const { isInternship, isGraduate } = classifyJobType(j);
     // Prioritize description field, fallback to company_description + skills
     const description = (
       (j.description && j.description.trim().length > 50 ? j.description : '') ||
@@ -406,53 +434,24 @@ async function saveJobs(jobs, source) {
       (j.skills || '')
     ).trim();
     
-    // Build categories array
-    const categories = ['early-career'];
-    if (isInternship) {
-      categories.push('internship');
-    }
-    
-    // Clean company name - remove extra whitespace, trim
-    const companyName = (j.company || '').trim().replace(/\s+/g, ' ');
-    
-    // Extract all metadata
-    const workEnv = detectWorkEnvironment(j);
-    const languages = extractLanguageRequirements(description);
-    
-    // Mutually exclusive categorization: internship OR graduate OR early-career
-    // Maps to form options: "Internship", "Graduate Programmes", "Entry Level"
-    const isEarlyCareer = !isInternship && !isGraduate; // Entry-level roles
-    
-    // Normalize location data
-    const { normalizeJobLocation } = require('../scrapers/shared/locationNormalizer.cjs');
-    const normalized = normalizeJobLocation({
-      city,
-      country,
+    // Process through standardization pipe
+    const processed = processIncomingJob({
+      title: j.title,
+      company: j.company,
       location: j.location,
+      description: description,
+      url: j.job_url || j.url,
+      posted_at: j.posted_at,
+    }, {
+      source,
     });
     
+    // Generate job_hash
+    const job_hash = hashJob(j.title, processed.company, j.location);
+    
     return {
-      job_hash: hashJob(j.title, companyName, j.location),
-      title: (j.title||'').trim(),
-      company: companyName, // Clean company name
-      location: normalized.location, // Use normalized location
-      city: normalized.city, // Use normalized city
-      country: normalized.country, // Use normalized country
-      description: description,
-      job_url: (j.job_url || j.url || '').trim(),
-      source,
-      posted_at: j.posted_at || nowIso,
-      categories: categories,
-      work_environment: workEnv, // Detect from location/description
-      experience_required: isInternship ? 'internship' : (isGraduate ? 'graduate' : 'entry-level'),
-      is_internship: isInternship, // Maps to form: "Internship"
-      is_graduate: isGraduate, // Maps to form: "Graduate Programmes"
-      is_early_career: isEarlyCareer, // Maps to form: "Entry Level" (mutually exclusive)
-      language_requirements: languages.length > 0 ? languages : null, // Extract languages
-      original_posted_date: j.posted_at || nowIso,
-      last_seen_at: nowIso,
-      is_active: true,
-      created_at: nowIso
+      ...processed,
+      job_hash,
     };
   });
   const unique = Array.from(new Map(rows.map(r=>[r.job_hash,r])).values());

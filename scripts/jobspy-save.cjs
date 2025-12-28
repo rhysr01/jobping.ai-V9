@@ -11,6 +11,7 @@
 require('dotenv').config({ path: '.env.local' });
 const { spawnSync } = require('child_process');
 const { createClient } = require('@supabase/supabase-js');
+const { processIncomingJob } = require('../scrapers/shared/processor.cjs');
 
 function getSupabase() {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -18,17 +19,29 @@ function getSupabase() {
   if (!url || !key) throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY/ANON_KEY');
   
   // Use global fetch with timeout wrapper if available
-  const fetchWithTimeout = typeof fetch !== 'undefined' ? (fetchUrl, fetchOptions = {}) => {
-    const timeout = 30000; // 30 seconds
+  const fetchWithTimeout = typeof fetch !== 'undefined' ? async (fetchUrl, fetchOptions = {}) => {
+    const timeout = 60000; // 60 seconds (increased for GitHub Actions)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
     
-    return fetch(fetchUrl, {
-      ...fetchOptions,
-      signal: controller.signal
-    }).finally(() => {
+    try {
+      const response = await fetch(fetchUrl, {
+        ...fetchOptions,
+        signal: controller.signal
+      });
       clearTimeout(timeoutId);
-    });
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      // Wrap network errors to ensure they're retryable
+      if (error instanceof TypeError && error.message?.includes('fetch failed')) {
+        const networkError = new Error(`Network error: ${error.message}`);
+        networkError.name = 'NetworkError';
+        networkError.cause = error;
+        throw networkError;
+      }
+      throw error;
+    }
   } : undefined;
   
   return createClient(url, key, { 
@@ -44,17 +57,28 @@ async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
     try {
       return await fn();
     } catch (error) {
-      const isNetworkError = error.message?.includes('fetch failed') || 
-                           error.message?.includes('network') ||
-                           error.message?.includes('timeout') ||
-                           error.name === 'AbortError';
+      // Enhanced network error detection
+      const errorMessage = error?.message || String(error || '');
+      const errorName = error?.name || '';
+      const isNetworkError = 
+        errorName === 'NetworkError' ||
+        errorName === 'AbortError' ||
+        errorName === 'TypeError' ||
+        errorMessage.toLowerCase().includes('fetch failed') ||
+        errorMessage.toLowerCase().includes('network') ||
+        errorMessage.toLowerCase().includes('timeout') ||
+        errorMessage.toLowerCase().includes('econnrefused') ||
+        errorMessage.toLowerCase().includes('enotfound') ||
+        errorMessage.toLowerCase().includes('econnreset') ||
+        errorMessage.toLowerCase().includes('etimedout') ||
+        (error instanceof TypeError && errorMessage.toLowerCase().includes('fetch'));
       
       if (!isNetworkError || attempt === maxRetries - 1) {
         throw error; // Don't retry non-network errors or on last attempt
       }
       
       const delay = baseDelay * Math.pow(2, attempt);
-      console.warn(`⚠️  Network error (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms...`, error.message);
+      console.warn(`⚠️  Network error (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms...`, errorMessage);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
@@ -499,8 +523,6 @@ async function saveJobs(jobs, source) {
   const nowIso = new Date().toISOString();
   const nonRemote = jobs.filter(j => !((j.location||'').toLowerCase().includes('remote')));
   const rows = nonRemote.map(j => {
-    const { city, country } = parseLocation(j.location || '');
-    const { isInternship, isGraduate } = classifyJobType(j);
     // ENHANCED: Prioritize description field, enrich with company_description + skills if needed
     let description = (
       (j.description && j.description.trim().length > 50 ? j.description : '') ||
@@ -526,12 +548,21 @@ async function saveJobs(jobs, source) {
       description = `${j.title || ''} at ${j.company || ''}. ${description}`.trim();
     }
     
-    // ENHANCED: Build categories array using CAREER_PATH_KEYWORDS
+    // Process through standardization pipe
+    const processed = processIncomingJob({
+      title: j.title,
+      company: j.company,
+      location: j.location,
+      description: description,
+      url: j.job_url || j.url,
+      posted_at: j.posted_at,
+    }, {
+      source,
+    });
+    
+    // ENHANCED: Build categories array using CAREER_PATH_KEYWORDS (JobSpy-specific enhancement)
     const { CAREER_PATH_KEYWORDS } = require('../scrapers/shared/helpers.cjs');
-    const categories = ['early-career'];
-    if (isInternship) {
-      categories.push('internship');
-    }
+    const categories = [...processed.categories]; // Start with processor categories
     
     // Infer career path categories from title and description
     const fullText = `${(j.title || '').toLowerCase()} ${description.toLowerCase()}`;
@@ -560,59 +591,26 @@ async function saveJobs(jobs, source) {
       }
     });
     
-    // If no specific category found, keep 'early-career' only
+    // If no specific category found, add 'general'
     if (categories.length === 1) {
       categories.push('general');
     }
     
-    // Clean company name - remove extra whitespace, trim
-    const companyName = (j.company || '').trim().replace(/\s+/g, ' ');
-    
-    // Extract all metadata
-    const workEnv = detectWorkEnvironment(j);
+    // JobSpy-specific extractions (keep these as they're additional metadata)
     const industries = extractIndustries(description);
-    const companySize = extractCompanySize(description, companyName);
+    const companySize = extractCompanySize(description, processed.company);
     const skills = extractSkills(description);
-    const languages = extractLanguageRequirements(description);
-    const visaStatus = detectVisaRequirements(description);
     const salary = extractSalaryRange(description);
     
-    // Mutually exclusive categorization: internship OR graduate OR early-career
-    // Maps to form options: "Internship", "Graduate Programmes", "Entry Level"
-    const isEarlyCareer = !isInternship && !isGraduate; // Entry-level roles
-    
-    // Normalize location data
-    const { normalizeJobLocation } = require('../scrapers/shared/locationNormalizer.cjs');
-    const normalized = normalizeJobLocation({
-      city,
-      country,
-      location: j.location,
-    });
+    // Generate job_hash
+    const job_hash = hashJob(j.title, processed.company, j.location);
     
     return {
-      job_hash: hashJob(j.title, companyName, j.location),
-      title: (j.title||'').trim(),
-      company: companyName, // Clean company name
-      location: normalized.location, // Use normalized location
-      city: normalized.city, // Use normalized city
-      country: normalized.country, // Use normalized country
-      description: description,
-      job_url: (j.job_url || j.url || '').trim(),
-      source,
-      posted_at: j.posted_at || nowIso,
-      categories: categories, // ENHANCED: Now includes career path categories
-      work_environment: workEnv, // Detect from location/description
-      experience_required: isInternship ? 'internship' : (isGraduate ? 'graduate' : 'entry-level'),
-      is_internship: isInternship, // Maps to form: "Internship"
-      is_graduate: isGraduate, // Maps to form: "Graduate Programmes"
-      is_early_career: isEarlyCareer, // Maps to form: "Entry Level" (mutually exclusive)
-      language_requirements: languages.length > 0 ? languages : null, // Extract languages
-      // ENHANCED: Add salary if extracted
+      ...processed,
+      job_hash,
+      categories, // Use enhanced categories
+      // JobSpy-specific fields (if your schema supports them)
       ...(salary ? { salary_range: salary } : {}),
-      original_posted_date: j.posted_at || nowIso,
-      last_seen_at: nowIso,
-      is_active: true,
-      created_at: nowIso
     };
   });
   // Validate jobs before saving

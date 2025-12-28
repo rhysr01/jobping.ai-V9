@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseClient } from '@/Utils/databasePool';
+import { withRedis } from '@/lib/redis-client';
 
 // Enhanced feedback data interface
 interface EnhancedFeedbackData {
@@ -62,6 +63,9 @@ export async function POST(request: NextRequest) {
       .eq('email', email)
       .single();
 
+    // Extract metadata from body for apply_clicked tracking
+    const metadata = body.metadata || {};
+    
     // Create enhanced feedback data
     const feedbackData: EnhancedFeedbackData = {
       user_email: email,
@@ -77,7 +81,8 @@ export async function POST(request: NextRequest) {
       match_context: {
         feedback_source: source,
         session_id: sessionId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        ...metadata // Include metadata (e.g., action: 'apply_clicked')
       },
       timestamp: new Date().toISOString(),
       source,
@@ -87,6 +92,11 @@ export async function POST(request: NextRequest) {
 
     // Record feedback to match_logs table
     await recordFeedbackToMatchLogs(feedbackData);
+    
+    // Invalidate user's avoidance cache for this category (if negative feedback)
+    if (feedbackData.verdict === 'negative' || feedbackData.verdict === 'positive') {
+      await invalidateAvoidanceCache(feedbackData.user_email, feedbackData.job_context);
+    }
 
     // Also record to feedback table for backward compatibility
     await recordFeedbackToDatabase(feedbackData);
@@ -336,7 +346,9 @@ async function recordFeedbackToMatchLogs(feedbackData: EnhancedFeedbackData) {
         source: feedbackData.source,
         session_id: feedbackData.session_id,
         dwell_time_ms: feedbackData.dwell_time_ms,
-        decay_applied: existingFeedback && existingFeedback.length > 0
+        decay_applied: existingFeedback && existingFeedback.length > 0,
+        // Include metadata from match_context (e.g., action: 'apply_clicked')
+        ...(feedbackData.match_context || {})
       },
       matched_at: feedbackData.timestamp,
       created_at: feedbackData.timestamp,
@@ -379,6 +391,34 @@ async function recordFeedbackToDatabase(feedbackData: EnhancedFeedbackData) {
   if (error) {
     console.error('Error recording to feedback table:', error);
     // Don't throw here - match_logs is the primary table
+  }
+}
+
+// Invalidate user's avoidance cache when feedback is recorded
+async function invalidateAvoidanceCache(
+  userEmail: string,
+  jobContext: Record<string, unknown> | undefined
+): Promise<void> {
+  if (!jobContext) return;
+  
+  try {
+    // Extract category from job context
+    const category = (jobContext as any)?.category || 
+                     (jobContext as any)?.categories?.[0] || 
+                     (jobContext as any)?.career_path || '';
+    
+    if (!category) return;
+    
+    const normalizedCategory = String(category).toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    const cacheKey = `user:avoidance:${userEmail}:${normalizedCategory}`;
+    
+    // Delete cache key
+    await withRedis(async (client) => {
+      await client.del(cacheKey);
+    });
+  } catch (error) {
+    // Fail silently - cache invalidation is not critical
+    console.warn('Failed to invalidate avoidance cache', error);
   }
 }
 
