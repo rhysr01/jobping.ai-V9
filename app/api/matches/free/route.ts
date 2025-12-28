@@ -152,19 +152,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ jobs: [] });
     }
 
-    // Fetch jobs by job_hash (with timeout)
-    // First try with active filter
-    let jobsQuery = supabase
+    // CRITICAL FIX: Fetch ALL matched jobs (active or inactive)
+    // Jobs were matched when they were active, so we should show them even if they became inactive
+    // This ensures users see the jobs they were matched with
+    const jobsQuery = supabase
       .from('jobs')
       .select('id, title, company, location, city, country, description, job_url, work_environment, categories, job_hash, is_active, status')
-      .in('job_hash', jobHashes)
-      .eq('is_active', true)
-      .eq('status', 'active');
+      .in('job_hash', jobHashes);
 
-    let jobsResult = await queryWithTimeout(
+    const jobsResult = await queryWithTimeout(
       jobsQuery,
       10000, // 10 second timeout
-      'fetch_jobs_active'
+      'fetch_jobs_all'
     );
 
     if (jobsResult.error) {
@@ -179,39 +178,20 @@ export async function GET(request: NextRequest) {
       throw jobsResult.error;
     }
 
-    let jobsData = jobsResult.data;
-    let jobsArray = Array.isArray(jobsData) ? jobsData : [];
-
-    // FALLBACK: If no active jobs found, try without active filter
-    // This handles the case where jobs were matched but later deactivated
-    if (jobsArray.length === 0 && jobHashes.length > 0) {
-      apiLogger.warn('No active jobs found for matches, trying fallback (include inactive)', {
-        email,
-        jobHashesRequested: jobHashes.length,
-        jobHashes: jobHashes.slice(0, 3)
-      });
-
-      const fallbackQuery = supabase
-        .from('jobs')
-        .select('id, title, company, location, city, country, description, job_url, work_environment, categories, job_hash, is_active, status')
-        .in('job_hash', jobHashes);
-
-      const fallbackResult = await queryWithTimeout(
-        fallbackQuery,
-        10000,
-        'fetch_jobs_fallback'
-      );
-
-      if (!fallbackResult.error && fallbackResult.data) {
-        jobsArray = Array.isArray(fallbackResult.data) ? fallbackResult.data : [];
-        apiLogger.info('Fallback query found jobs', {
-          email,
-          jobsFound: jobsArray.length,
-          activeJobs: jobsArray.filter(j => j.is_active && j.status === 'active').length,
-          inactiveJobs: jobsArray.filter(j => !j.is_active || j.status !== 'active').length
-        });
-      }
-    }
+    let jobsArray = Array.isArray(jobsResult.data) ? jobsResult.data : [];
+    
+    // Sort jobs: active first, then by match score
+    // This ensures active jobs are shown first, but inactive jobs are still shown
+    const activeJobs = jobsArray.filter(j => j.is_active && j.status === 'active');
+    const inactiveJobs = jobsArray.filter(j => !j.is_active || j.status !== 'active');
+    
+    apiLogger.info('Fetched matched jobs', {
+      email,
+      totalJobs: jobsArray.length,
+      activeJobs: activeJobs.length,
+      inactiveJobs: inactiveJobs.length,
+      note: 'Showing all matched jobs (active and inactive)'
+    });
 
     // Create a map of job_hash -> job for quick lookup
     const jobsMap = new Map(jobsArray.map((job: any) => [job.job_hash, job]));
@@ -229,19 +209,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Log active vs inactive jobs
-    const activeJobs = jobsArray.filter(j => j.is_active && j.status === 'active');
-    const inactiveJobs = jobsArray.filter(j => !j.is_active || j.status !== 'active');
-    if (inactiveJobs.length > 0) {
-      apiLogger.info('Some matched jobs are inactive', {
-        email,
-        activeCount: activeJobs.length,
-        inactiveCount: inactiveJobs.length,
-        inactiveJobHashes: inactiveJobs.map(j => j.job_hash).slice(0, 3)
-      });
-    }
-
     // Format response with normalized location data
+    // Sort by: active jobs first, then by match score (highest first)
     const jobs = matchesData
       .map((m: any) => {
         const job = jobsMap.get(m.job_hash);
@@ -253,6 +222,8 @@ export async function GET(request: NextRequest) {
           });
           return null;
         }
+        
+        const isActive = job.is_active && job.status === 'active';
         
         // Normalize location data for consistent display
         const normalized = normalizeJobLocation({
@@ -287,9 +258,17 @@ export async function GET(request: NextRequest) {
           visa_confidence_reason: visaConfidence.reason,
           visa_confidence_percentage: visaConfidence.confidencePercentage,
           job_hash: job.job_hash || m.job_hash, // Include job_hash for feedback
+          is_active: isActive, // Include status so frontend can show warning if needed
         };
       })
-      .filter(Boolean); // Remove null entries
+      .filter(Boolean) // Remove null entries
+      .sort((a: any, b: any) => {
+        // Sort: active jobs first, then by match score
+        if (a.is_active !== b.is_active) {
+          return b.is_active ? 1 : -1; // Active first
+        }
+        return (b.match_score || 0) - (a.match_score || 0); // Higher score first
+      });
 
     apiLogger.info('Matches fetched successfully', { 
       email, 

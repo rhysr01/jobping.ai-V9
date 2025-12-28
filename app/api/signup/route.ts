@@ -3,7 +3,7 @@ import { getDatabaseClient } from '@/Utils/databasePool';
 import { createConsolidatedMatcher } from '@/Utils/consolidatedMatchingV2';
 import { sendWelcomeEmail, sendMatchedJobsEmail } from '@/Utils/email/sender';
 import { apiLogger } from '@/lib/api-logger';
-import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilterJobs';
+// Pre-filtering removed - AI handles semantic matching
 import { getDatabaseCategoriesForForm } from '@/Utils/matching/categoryMapper';
 import { distributeJobsWithDiversity, getDistributionStats } from '@/Utils/matching/jobDistribution';
 
@@ -268,8 +268,9 @@ export async function POST(req: NextRequest) {
         throw jobsError;
       }
 
-      // CRITICAL: Use the same strict pre-filtering as match-users route
-      // This ensures welcome email jobs match user preferences perfectly
+      // OPTIMIZED: Skip pre-filtering - let AI do semantic matching
+      // AI matching is semantic and can understand relevance even without exact category matches
+      // Pre-filtering was too restrictive and removing good matches
       const userPrefs = {
         email: userData.email,
         target_cities: userData.target_cities,
@@ -283,29 +284,22 @@ export async function POST(req: NextRequest) {
         company_types: userData.company_types || [],
       };
       
-      // Use the same enhanced pre-filtering that ensures strict location/career matching
-      const preFilteredJobs = await preFilterJobsByUserPreferencesEnhanced(
-        (allJobs || []) as any[],
-        userPrefs as any
-      );
+      // Use all jobs directly - AI will do semantic matching
+      const preFilteredJobs = allJobs || [];
       
-      // Ensure preFilteredJobs is an array
-      if (!Array.isArray(preFilteredJobs)) {
-        throw new Error('preFilterJobsByUserPreferencesEnhanced did not return an array');
-      }
-      
-      apiLogger.info('Jobs filtered', { 
+      apiLogger.info('Jobs for AI matching', { 
         email: data.email, 
         allJobsCount: allJobs?.length || 0,
-        preFilteredCount: preFilteredJobs.length 
+        jobsForAI: Math.min(50, preFilteredJobs.length),
+        note: 'Skipping pre-filtering - AI handles semantic matching'
       });
-      console.log(`[SIGNUP] Jobs filtered: ${allJobs?.length || 0} total, ${preFilteredJobs.length} after strict pre-filtering`);
+      console.log(`[SIGNUP] Using ${allJobs?.length || 0} jobs, sending top 50 to AI for semantic matching`);
 
       try {
         if (preFilteredJobs && preFilteredJobs.length > 0) {
-          console.log(`[SIGNUP] Found ${preFilteredJobs.length} pre-filtered jobs, attempting AI matching...`);
+          console.log(`[SIGNUP] Found ${preFilteredJobs.length} jobs, attempting AI matching...`);
         
-        // Send top 50 pre-filtered jobs to AI (same as match-users route)
+        // Send top 50 jobs to AI (AI will do semantic matching)
         const jobsForAI = preFilteredJobs.slice(0, 50);
         
         const matchResult = await matcher.performMatching(jobsForAI, userPrefs as any);

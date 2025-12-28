@@ -18,7 +18,7 @@ import {
 import { Job as ScrapersJob } from '@/scrapers/types';
 import { WORK_TYPE_CATEGORIES, mapFormLabelToDatabase, getStudentSatisfactionScore } from '@/Utils/matching/categoryMapper';
 import { semanticRetrievalService } from '@/Utils/matching/semanticRetrieval';
-import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilterJobs';
+// Pre-filtering removed - AI handles semantic matching
 // import { integratedMatchingService } from '@/Utils/matching/integrated-matching.service'; // Reserved for future use
 import { batchMatchingProcessor } from '@/Utils/matching/batch-processor.service';
 import { withRedisLock } from '@/Utils/locks';
@@ -741,42 +741,11 @@ logger.info('API request', {
         // Filter out jobs the user has already received
         const unseenJobs = jobs.filter(job => !previousJobHashes.has(job.job_hash));
         
-        // Pre-filter jobs to reduce AI processing load (with feedback learning)
-        const preFilteredJobs = await preFilterJobsByUserPreferencesEnhanced(unseenJobs as any[], user as unknown as UserPreferences);
-        
-        // EARLY DETECTION: Log and handle zero-match scenarios
-        if (preFilteredJobs.length === 0) {
-          const zeroJobsError = new Error('Zero matches after pre-filtering');
-          apiLogger.error('CRITICAL: Pre-filtering returned zero jobs', zeroJobsError, {
-            email: user.email,
-            targetCities: user.preferences.target_cities,
-            totalJobs: unseenJobs.length,
-            workEnvironment: user.preferences.work_environment,
-            careerPath: user.preferences.career_path,
-            rolesSelected: user.preferences.roles_selected
-          });
-          
-          // Log zero matches for monitoring
-          logger.error('Zero matches after pre-filtering', {
-            error: zeroJobsError,
-            component: 'matching',
-            metadata: {
-              issue: 'zero_matches',
-              email: user.email,
-              targetCities: user.preferences.target_cities,
-              totalJobs: unseenJobs.length
-            }
-          });
-          
-          // Skip this user - emergency fallback should have been applied in preFilterJobs
-          // If we still have zero, there's a deeper issue that needs investigation
-          return { user: user.email, success: false, error: 'No jobs found after pre-filtering' };
-        }
-        
-        // OPTIMIZED: Send top 50 pre-filtered jobs to AI (was 100/200)
-        // This reduces token cost by 50% while maintaining match quality
-        // Top 50 contains all perfect/great matches from pre-filtering
-        const considered = preFilteredJobs.slice(0, 50);
+        // OPTIMIZED: Skip pre-filtering - let AI do semantic matching
+        // AI matching is semantic and can understand relevance even without exact category matches
+        // Pre-filtering was too restrictive and removing good matches
+        // Send top 50 jobs to AI for semantic matching
+        const considered = unseenJobs.slice(0, 50);
         // Log pre-filter results
           logger.debug('Pre-filter results', {
             metadata: {

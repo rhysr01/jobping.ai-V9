@@ -15,7 +15,7 @@ import { createConsolidatedMatcher } from '@/Utils/consolidatedMatchingV2';
 import { fetchCandidateJobs } from '@/Utils/matching/jobSearchService';
 import { fetchActiveUsers, transformUsers } from '@/Utils/matching/userBatchService';
 import { distributeJobsWithDiversity } from '@/Utils/matching/jobDistribution';
-import { preFilterJobsByUserPreferencesEnhanced } from '@/Utils/matching/preFilterJobs';
+// Pre-filtering removed - AI handles semantic matching
 import type { UserPreferences } from '@/Utils/matching/types';
 import { Database } from '@/lib/database.types';
 
@@ -186,14 +186,11 @@ async function handleSendScheduledEmails(req: NextRequest) {
         const plan = SEND_PLAN[userTier];
         const jobsPerSend = plan.perSend;
 
-        // Pre-filter jobs for this user
-        const preFilteredJobs = await preFilterJobsByUserPreferencesEnhanced(
-          jobs as any[],
-          user as unknown as UserPreferences
-        );
-
+        // OPTIMIZED: Skip pre-filtering - let AI do semantic matching
+        // AI matching is semantic and can understand relevance even without exact category matches
+        // Pre-filtering was too restrictive and removing good matches
         // Get top candidates for AI matching
-        const candidates = preFilteredJobs.slice(0, 50);
+        const candidates = jobs.slice(0, 50);
 
         // Perform AI matching
         const matchResult = await matcher.performMatching(

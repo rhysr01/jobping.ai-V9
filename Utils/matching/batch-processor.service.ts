@@ -282,27 +282,11 @@ export class BatchMatchingProcessor {
   ): Promise<void> {
     const startTime = Date.now();
 
-    // OPTIMIZATION: Pre-filter jobs before AI matching (like individual processing)
-    // This reduces token costs by 50-90% by sending only relevant jobs to AI
-    let preFilteredJobs: any[] = jobs;
-    
-    try {
-      // Import pre-filter function from utility
-      const { preFilterJobsByUserPreferencesEnhanced } = await import('./preFilterJobs');
-      
-      // Pre-filter jobs using representative user preferences
-      preFilteredJobs = await preFilterJobsByUserPreferencesEnhanced(
-        jobs as any[],
-        segment.representativeUser
-      );
-      
-      // Only send top 50 pre-filtered jobs to AI (same as individual processing)
-      preFilteredJobs = preFilteredJobs.slice(0, 50);
-    } catch (error) {
-      console.warn('Pre-filtering failed, using all jobs:', error);
-      // Fallback: use all jobs if pre-filtering fails
-      preFilteredJobs = jobs.slice(0, 50);
-    }
+    // OPTIMIZED: Skip pre-filtering - let AI do semantic matching
+    // AI matching is semantic and can understand relevance even without exact category matches
+    // Pre-filtering was too restrictive and removing good matches
+    // Only send top 50 jobs to AI (same as individual processing)
+    const preFilteredJobs = jobs.slice(0, 50);
 
     // Use representative user for AI matching with pre-filtered jobs
     const matchResult = await this.matcher.performMatching(

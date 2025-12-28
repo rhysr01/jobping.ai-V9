@@ -22,6 +22,7 @@ export default function DeviceFrame({
   scrollSpeed = 1 
 }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const deviceFrameRef = useRef<HTMLDivElement>(null); // NEW: ref for device frame container
   const [isHovered, setIsHovered] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const [maxScroll, setMaxScroll] = useState(0);
@@ -84,9 +85,8 @@ export default function DeviceFrame({
       }
     );
 
-    // Find the device frame container (the outermost div with relative positioning)
-    const container = scrollContainerRef.current?.closest('.relative')?.parentElement || 
-                      scrollContainerRef.current?.parentElement?.parentElement?.parentElement;
+    // Use deviceFrameRef if available, otherwise fallback to scrollContainerRef
+    const container = deviceFrameRef.current || scrollContainerRef.current?.closest('.relative') || scrollContainerRef.current;
     if (container) {
       observer.observe(container);
     }
@@ -184,15 +184,31 @@ export default function DeviceFrame({
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
-    // Start animation after a small delay to ensure content is ready
-    const startTimeout = setTimeout(() => {
-      if (scrollContainerRef.current && maxScroll > 0) {
+    // Start animation immediately if conditions are met, or wait for maxScroll to be ready
+    const startAnimation = () => {
+      if (scrollContainerRef.current && maxScroll > 0 && isInView) {
         animationFrameRef.current = requestAnimationFrame(animate);
       }
-    }, 500);
+    };
 
+    // If maxScroll is already > 0, start immediately, otherwise wait a bit
+    if (maxScroll > 0) {
+      const startTimeout = setTimeout(startAnimation, 300);
+      return () => {
+        clearTimeout(startTimeout);
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
+        if (resetTimeoutRef.current) {
+          clearTimeout(resetTimeoutRef.current);
+          resetTimeoutRef.current = null;
+        }
+      };
+    }
+    
+    // If maxScroll is 0, the effect will re-run when maxScroll changes
     return () => {
-      clearTimeout(startTimeout);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
@@ -235,7 +251,10 @@ export default function DeviceFrame({
         </div>
         
         {/* Desktop: Show with device frame */}
-        <div className={`hidden md:inline-block origin-top scale-[0.75] sm:scale-[0.78] md:scale-[0.82] lg:scale-[0.88] xl:scale-95 w-full max-w-[600px] mx-auto ${className ?? ""}`}>
+        <div 
+          ref={deviceFrameRef}
+          className={`hidden md:inline-block origin-top scale-[0.75] sm:scale-[0.78] md:scale-[0.82] lg:scale-[0.88] xl:scale-95 w-full max-w-[600px] mx-auto ${className ?? ""}`}
+        >
           <div className="relative mx-auto max-w-sm rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-[0_4px_6px_rgba(0,0,0,0.1),0_40px_80px_rgba(0,0,0,0.8)] p-1 ring-1 ring-white/5 backdrop-blur-sm">
             <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full bg-white/10" />
             <div className="relative w-[390px] h-[844px] drop-shadow-2xl">
@@ -293,7 +312,10 @@ export default function DeviceFrame({
   
   // Default behavior: show frame on all sizes (for Hero and ExampleMatchesModal)
   return (
-        <div className={`inline-block origin-top scale-[0.82] sm:scale-[0.86] md:scale-[0.9] lg:scale-100 w-full max-w-[600px] mx-auto ${className ?? ""}`}>
+    <div 
+      ref={deviceFrameRef}
+      className={`inline-block origin-top scale-[0.82] sm:scale-[0.86] md:scale-[0.9] lg:scale-100 w-full max-w-[600px] mx-auto ${className ?? ""}`}
+    >
       <div className="relative mx-auto max-w-sm rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-[0_20px_50px_rgba(139,92,246,0.15),0_4px_6px_rgba(0,0,0,0.1),0_40px_80px_rgba(0,0,0,0.8)] p-1 ring-1 ring-white/5 backdrop-blur-sm">
         <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full bg-white/10" />
         <div className="relative w-[390px] h-[844px] drop-shadow-2xl">

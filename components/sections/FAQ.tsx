@@ -40,7 +40,7 @@ export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="py-24 md:py-32 border-t border-white/10 bg-black/40">
+    <section className="py-20 border-t border-white/10 bg-black/40">
       <div className="container-page">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

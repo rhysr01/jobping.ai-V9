@@ -10,6 +10,7 @@ import { CTA_GET_MY_5_FREE_MATCHES, TRUST_TEXT_NO_CARD_SETUP } from '@/lib/copy'
 export default function ScrollCTA() {
   const [isVisible, setIsVisible] = useState(false);
   const [hasShown, setHasShown] = useState(false);
+  const [opacity, setOpacity] = useState(1);
 
   useEffect(() => {
     // Don't show on mobile - let sticky mobile CTA handle it
@@ -23,43 +24,52 @@ export default function ScrollCTA() {
       const windowHeight = window.innerHeight;
       const scrollPercentage = (scrollY / (documentHeight - windowHeight)) * 100;
 
-      // Check if Pricing section is in viewport - more aggressive detection
+      // Check if Pricing section is within 200px of viewport bottom
       const pricingSection = document.getElementById('pricing') || document.querySelector('[data-section="pricing"]');
-      let isInPricingSection = false;
+      let shouldHide = false;
       
       if (pricingSection) {
         const rect = pricingSection.getBoundingClientRect();
-        // Hide if Pricing section is approaching or visible (within 200px of viewport)
-        isInPricingSection = rect.top < (windowHeight + 200) && rect.bottom > -200;
+        // Hide if Pricing section top is within 200px of viewport bottom
+        const distanceFromBottom = windowHeight - rect.top;
+        shouldHide = distanceFromBottom < 200 && rect.top < windowHeight;
       }
 
-      // Show after scrolling 50% of page, but hide if approaching/in Pricing section
-      if (scrollPercentage >= 50 && !hasShown && !isInPricingSection) {
+      // Show after scrolling 50% of page
+      if (scrollPercentage >= 50 && !hasShown) {
         setIsVisible(true);
         setHasShown(true);
-      } else if (scrollPercentage < 50 || isInPricingSection) {
+        setOpacity(shouldHide ? 0 : 1);
+      } else if (scrollPercentage < 50) {
         setIsVisible(false);
-        // Reset hasShown if scrolled back up
-        if (scrollPercentage < 50) {
-          setHasShown(false);
-        }
+        setOpacity(0);
+        setHasShown(false);
+      } else if (shouldHide) {
+        // Smooth fade out when near pricing section
+        setOpacity(0);
+      } else if (isVisible && !shouldHide) {
+        // Fade back in if moved away from pricing section
+        setOpacity(1);
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [hasShown]);
+  }, [hasShown, isVisible]);
 
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
           initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
+          animate={{ y: 0, opacity }}
           exit={{ y: 16, opacity: 0 }}
           transition={{ 
             opacity: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
             y: { duration: 0.4, ease: [0.4, 0, 0.2, 1] }
+          }}
+          style={{
+            pointerEvents: opacity === 0 ? 'none' : 'auto',
           }}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-50 hidden lg:block lg:bottom-[max(1.5rem,env(safe-area-inset-bottom))]"
         >

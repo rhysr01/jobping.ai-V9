@@ -475,7 +475,7 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
                 {job.description && (
                   <div className="text-[14px] text-zinc-400 leading-relaxed mb-4 line-clamp-2">
                     {job.description.length > 120 ? job.description.slice(0, 120) + '...' : job.description}
-                  </div>
+                </div>
                 )}
                 
                 <div className="mb-4 flex flex-wrap gap-2">

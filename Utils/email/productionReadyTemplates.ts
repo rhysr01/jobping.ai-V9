@@ -539,10 +539,10 @@ export function createJobMatchesEmail(
                 📍 ${c.job.location || 'Location'}
               </div>
               ${descMarkup}
-              ${tagsMarkup}
-              ${feedbackButtons}
-              ${apply}
-              ${plainLink}
+        ${tagsMarkup}
+        ${feedbackButtons}
+        ${apply}
+        ${plainLink}
             </td>
           </tr>
         </table>

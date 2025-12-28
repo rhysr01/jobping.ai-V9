@@ -177,10 +177,10 @@ export default function CountryFlags() {
                     <div className="relative z-10 flex flex-col items-center gap-1 w-full">
                       {countryData.cities.length > 0 ? (
                         <div className="text-xs font-semibold text-zinc-200 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm">
-                          {countryData.cities.length <= 3 
-                            ? countryData.cities.join(', ')
-                            : `${countryData.cities.slice(0, 2).join(', ')}, +${countryData.cities.length - 2}`
-                          }
+                            {countryData.cities.length <= 3 
+                              ? countryData.cities.join(', ')
+                              : `${countryData.cities.slice(0, 2).join(', ')}, +${countryData.cities.length - 2}`
+                            }
                         </div>
                       ) : (
                         <span className="text-xs font-semibold text-zinc-300 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">{countryData.country}</span>

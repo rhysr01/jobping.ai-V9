@@ -896,30 +896,24 @@ export async function preFilterJobsByUserPreferencesEnhanced(
       // Quality threshold - ensure matches are actually good (adjusted for scarcity)
       if (item.score < adjustedMinimumScore) return false;
       
-      // CRITICAL: Career path matching is REQUIRED when user specifies it
-      // BUT: Relax in scarce job scenarios to ensure matches
+      // OPTIMIZED: Career path matching is PREFERRED but not REQUIRED
+      // Always allow non-career matches with a penalty to ensure users get matches
+      // This prevents zero matches while still prioritizing career-relevant jobs
       if (userHasCareerPreference && !item.hasCareerMatch) {
-        if (isVeryScarceJobs) {
-          // In very scarce scenarios, allow non-career matches but with penalty
-          apiLogger.info('Relaxing career path requirement due to very scarce jobs', {
-            email: user.email,
-            availableJobs: availableJobsCount,
-            reason: 'Ensuring user gets matches rather than zero results',
-            penaltyApplied: 20
-          });
-          item.score = Math.max(item.score - 20, adjustedMinimumScore);
-        } else if (isScarceJobs) {
-          // In scarce scenarios, allow non-career matches with moderate penalty
-          apiLogger.info('Relaxing career path requirement due to scarce jobs', {
-            email: user.email,
-            availableJobs: availableJobsCount,
-            reason: 'Ensuring user gets quality matches despite limited options',
-            penaltyApplied: 15
-          });
-          item.score = Math.max(item.score - 15, adjustedMinimumScore);
-        } else {
-          return false; // Hard requirement - must match career path
-        }
+        // Apply penalty based on match level - stricter for exact location matches
+        const penalty = matchLevel === 'exact' ? 15 : 
+                       matchLevel === 'country' ? 12 : 
+                       matchLevel === 'remote' ? 10 : 
+                       8; // Minimal penalty for fallback
+        
+        apiLogger.info('Allowing non-career match with penalty', {
+          email: user.email,
+          availableJobs: availableJobsCount,
+          matchLevel,
+          penaltyApplied: penalty,
+          reason: 'Ensuring users get matches while prioritizing career-relevant jobs'
+        });
+        item.score = Math.max(item.score - penalty, adjustedMinimumScore - 5);
       }
       
       // OPTIMIZED QUALITY CHECK: If user has role preferences, ensure job has some relevance
