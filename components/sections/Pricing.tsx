@@ -120,12 +120,12 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
   const isPremium = plan.id === 'premium';
   const [borderBeamPosition, setBorderBeamPosition] = useState(0);
 
-  // Border beam animation (travels around border - slower for smoother motion)
+  // Border beam animation (travels around border - full 360 degrees)
   useEffect(() => {
     if (!isPremium) return;
     const interval = setInterval(() => {
       setBorderBeamPosition((prev) => (prev + 1) % 100);
-    }, 80); // Slower: 80ms for smoother, more premium motion
+    }, 60); // Smooth 60ms updates for full 360° rotation
     return () => clearInterval(interval);
   }, [isPremium]);
 
@@ -223,37 +223,47 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
             ⭐ Most Popular
           </span>
           
-          {/* Premium card with conic-gradient border */}
-          <div className="relative rounded-[2rem] p-[1px] border border-purple-500/30 bg-[conic-gradient(from_0deg_at_50%_50%,rgba(139,92,246,0.5),rgba(168,85,247,0.3),rgba(139,92,246,0.5))]">
-            {/* Dual rotating beams for premium effect */}
-            <div className="absolute inset-0 rounded-[2rem] overflow-hidden pointer-events-none z-30">
-              {/* Primary beam - wider, more prominent */}
-              <motion.div
-                animate={{
-                  background: `conic-gradient(from ${borderBeamPosition * 3.6}deg,
-                    transparent 0deg,
-                    rgba(139,92,246,0.7) 20deg,
-                    rgba(168,85,247,0.9) 30deg,
-                    rgba(139,92,246,0.7) 40deg,
-                    transparent 60deg)`,
-                }}
-                transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
-                className="absolute inset-0"
-              />
-              {/* Secondary beam - rotating opposite direction */}
-              <motion.div
-                animate={{
-                  background: `conic-gradient(from ${(360 - borderBeamPosition * 3.6)}deg,
-                    transparent 0deg,
-                    rgba(139,92,246,0.4) 15deg,
-                    rgba(139,92,246,0.3) 25deg,
-                    transparent 35deg)`,
-                }}
-                transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                className="absolute inset-0"
-                style={{ opacity: 0.6 }}
-              />
-            </div>
+          {/* Premium card with rotating beam border - full box coverage */}
+          <div className="relative rounded-[2rem] p-[2px]">
+            {/* Rotating beam background - full 360° smooth coverage */}
+            <div 
+              className="absolute inset-0 rounded-[2rem] pointer-events-none"
+              style={{
+                background: `conic-gradient(from ${borderBeamPosition * 3.6}deg at 50% 50%,
+                  transparent 0deg,
+                  rgba(139,92,246,0.4) 15deg,
+                  rgba(139,92,246,0.7) 25deg,
+                  rgba(168,85,247,1) 35deg,
+                  rgba(139,92,246,1) 45deg,
+                  rgba(168,85,247,1) 50deg,
+                  rgba(139,92,246,1) 55deg,
+                  rgba(168,85,247,1) 65deg,
+                  rgba(139,92,246,0.7) 75deg,
+                  rgba(139,92,246,0.4) 85deg,
+                  transparent 100deg)`,
+                zIndex: 0,
+              }}
+            />
+            {/* Secondary counter-rotating beam for depth */}
+            <div 
+              className="absolute inset-0 rounded-[2rem] pointer-events-none"
+              style={{
+                background: `conic-gradient(from ${(360 - borderBeamPosition * 3.6)}deg at 50% 50%,
+                  transparent 0deg,
+                  rgba(139,92,246,0.25) 12deg,
+                  rgba(168,85,247,0.6) 22deg,
+                  rgba(139,92,246,0.9) 32deg,
+                  rgba(168,85,247,1) 42deg,
+                  rgba(139,92,246,1) 48deg,
+                  rgba(168,85,247,1) 52deg,
+                  rgba(139,92,246,0.9) 62deg,
+                  rgba(168,85,247,0.6) 72deg,
+                  rgba(139,92,246,0.25) 82deg,
+                  transparent 92deg)`,
+                opacity: 0.9,
+                zIndex: 0,
+              }}
+            />
             
             <motion.article
               data-testid={`${plan.id}-plan`}
@@ -261,10 +271,10 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.55, delay: index * 0.1 }}
-              className="group relative flex flex-col h-full overflow-hidden rounded-[2rem] bg-zinc-900/80 backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] hover:shadow-hover md:px-7 md:py-7 shadow-[0_0_50px_-12px_rgba(139,92,246,0.3)] border-2 border-purple-500/30"
+              className="group relative flex flex-col h-full overflow-hidden rounded-[calc(2rem-4px)] bg-zinc-900/80 backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] hover:shadow-hover md:px-7 md:py-7 shadow-[0_0_50px_-12px_rgba(139,92,246,0.3)] z-10"
             >
               {/* Glass gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none rounded-[2rem]" />
+              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none rounded-[calc(2rem-4px)]" />
               <div className="relative z-10">
                 {cardContent}
               </div>

@@ -23,17 +23,17 @@ export default function ScrollCTA() {
       const windowHeight = window.innerHeight;
       const scrollPercentage = (scrollY / (documentHeight - windowHeight)) * 100;
 
-      // Check if Pricing section is in viewport
+      // Check if Pricing section is in viewport - more aggressive detection
       const pricingSection = document.getElementById('pricing') || document.querySelector('[data-section="pricing"]');
       let isInPricingSection = false;
       
       if (pricingSection) {
         const rect = pricingSection.getBoundingClientRect();
-        // Hide if Pricing section is visible (within viewport)
-        isInPricingSection = rect.top < windowHeight && rect.bottom > 0;
+        // Hide if Pricing section is approaching or visible (within 200px of viewport)
+        isInPricingSection = rect.top < (windowHeight + 200) && rect.bottom > -200;
       }
 
-      // Show after scrolling 50% of page, but hide if in Pricing section
+      // Show after scrolling 50% of page, but hide if approaching/in Pricing section
       if (scrollPercentage >= 50 && !hasShown && !isInPricingSection) {
         setIsVisible(true);
         setHasShown(true);
@@ -50,16 +50,17 @@ export default function ScrollCTA() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [hasShown]);
 
-  if (!isVisible) return null;
-
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
+          exit={{ y: 16, opacity: 0 }}
+          transition={{ 
+            opacity: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
+            y: { duration: 0.4, ease: [0.4, 0, 0.2, 1] }
+          }}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-50 hidden lg:block lg:bottom-[max(1.5rem,env(safe-area-inset-bottom))]"
         >
           <motion.div

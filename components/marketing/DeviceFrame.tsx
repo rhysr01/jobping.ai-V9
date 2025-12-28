@@ -35,24 +35,32 @@ export default function DeviceFrame({
       const updateMaxScroll = () => {
         const container = scrollContainerRef.current;
         if (container) {
-          const max = container.scrollHeight - container.clientHeight;
-          setMaxScroll(max);
+          // Use requestAnimationFrame to ensure DOM is fully rendered
+          requestAnimationFrame(() => {
+            if (container) {
+              const max = Math.max(0, container.scrollHeight - container.clientHeight);
+              setMaxScroll(max);
+            }
+          });
         }
       };
       
-      // Initial calculation
-      updateMaxScroll();
+      // Initial calculation with small delay to ensure content is loaded
+      const timeoutId = setTimeout(updateMaxScroll, 100);
       
       // Update on resize or content change
-      const resizeObserver = new ResizeObserver(updateMaxScroll);
+      const resizeObserver = new ResizeObserver(() => {
+        updateMaxScroll();
+      });
       if (scrollContainerRef.current) {
         resizeObserver.observe(scrollContainerRef.current);
       }
       
       // Also check periodically for dynamic content
-      const interval = setInterval(updateMaxScroll, 500);
+      const interval = setInterval(updateMaxScroll, 1000);
       
       return () => {
+        clearTimeout(timeoutId);
         resizeObserver.disconnect();
         clearInterval(interval);
       };
@@ -70,10 +78,15 @@ export default function DeviceFrame({
           setIsInView(entry.isIntersecting);
         });
       },
-      { threshold: 0.3 } // Trigger when 30% visible
+      { 
+        threshold: 0.1, // Lower threshold for better detection
+        rootMargin: '50px' // Start animation slightly before entering viewport
+      }
     );
 
-    const container = scrollContainerRef.current?.parentElement?.parentElement;
+    // Find the device frame container (the outermost div with relative positioning)
+    const container = scrollContainerRef.current?.closest('.relative')?.parentElement || 
+                      scrollContainerRef.current?.parentElement?.parentElement?.parentElement;
     if (container) {
       observer.observe(container);
     }
@@ -85,7 +98,7 @@ export default function DeviceFrame({
     };
   }, [autoScroll]);
 
-  // Auto-scroll animation - seamless continuous loop
+  // Auto-scroll animation - ultra-smooth linear scroll with no flashing
   useEffect(() => {
     if (!autoScroll || prefersReducedMotion || !isInView || isHovered || maxScroll <= 0) {
       // Clean up any running animations
@@ -100,39 +113,86 @@ export default function DeviceFrame({
       return;
     }
 
-    const scrollDuration = 12000; // 12 seconds for smooth, slower scroll
-    let animationStartTime: number | null = null;
+    const scrollDuration = 25000; // 25 seconds for very slow, smooth scroll down
+    const resetDuration = 25000; // 25 seconds for smooth scroll back up
+    let lastTimestamp: number | null = null;
+    let currentScroll = scrollContainerRef.current?.scrollTop || 0;
+    let isScrollingDown = true;
+    let pauseUntil: number | null = null;
 
     const animate = (timestamp: number) => {
-      if (isHovered || !isInView || !scrollContainerRef.current) {
+      if (isHovered || !isInView || !scrollContainerRef.current || maxScroll <= 0) {
         animationFrameRef.current = null;
+        lastTimestamp = null;
         return;
       }
 
-      if (animationStartTime === null) {
-        animationStartTime = timestamp;
+      // Handle pause at top/bottom
+      if (pauseUntil !== null) {
+        if (timestamp < pauseUntil) {
+          animationFrameRef.current = requestAnimationFrame(animate);
+          return;
+        } else {
+          pauseUntil = null;
+          lastTimestamp = timestamp;
+        }
       }
 
-      const elapsed = timestamp - animationStartTime;
-      // Use modulo to create seamless loop (no abrupt resets)
-      const progress = (elapsed % scrollDuration) / scrollDuration;
+      if (lastTimestamp === null) {
+        lastTimestamp = timestamp;
+        currentScroll = scrollContainerRef.current.scrollTop || 0;
+      }
+
+      const deltaTime = timestamp - lastTimestamp;
+      lastTimestamp = timestamp;
       
-      // Smooth sine wave for continuous looping (0 to 1 and back to 0 seamlessly)
-      const eased = Math.sin(progress * Math.PI * 2) * 0.5 + 0.5; // Smooth 0 to 1 wave
+      // Calculate scroll speed (pixels per millisecond)
+      const activeDuration = isScrollingDown ? scrollDuration : resetDuration;
+      const scrollSpeedPx = (maxScroll / activeDuration) * scrollSpeed;
       
-      const newScroll = maxScroll * eased * scrollSpeed;
+      if (isScrollingDown) {
+        // Scroll down smoothly
+        currentScroll += scrollSpeedPx * deltaTime;
+        
+        if (currentScroll >= maxScroll) {
+          // Reached bottom, pause then scroll back up
+          currentScroll = maxScroll;
+          isScrollingDown = false;
+          pauseUntil = timestamp + 3000; // 3 second pause at bottom
+          lastTimestamp = null; // Reset timestamp after pause
+        }
+      } else {
+        // Scroll back up smoothly
+        currentScroll -= scrollSpeedPx * deltaTime;
+        
+        if (currentScroll <= 0) {
+          // Reached top, pause then scroll down again
+          currentScroll = 0;
+          isScrollingDown = true;
+          pauseUntil = timestamp + 3000; // 3 second pause at top
+          lastTimestamp = null; // Reset timestamp after pause
+        }
+      }
       
+      // Apply scroll smoothly
       if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollTop = newScroll;
+        const clampedScroll = Math.max(0, Math.min(maxScroll, currentScroll));
+        scrollContainerRef.current.scrollTop = clampedScroll;
       }
 
       // Continue animation loop indefinitely
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
-    animationFrameRef.current = requestAnimationFrame(animate);
+    // Start animation after a small delay to ensure content is ready
+    const startTimeout = setTimeout(() => {
+      if (scrollContainerRef.current && maxScroll > 0) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+      }
+    }, 500);
 
     return () => {
+      clearTimeout(startTimeout);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
@@ -141,26 +201,26 @@ export default function DeviceFrame({
         clearTimeout(resetTimeoutRef.current);
         resetTimeoutRef.current = null;
       }
+      lastTimestamp = null;
+      pauseUntil = null;
     };
   }, [autoScroll, prefersReducedMotion, isInView, isHovered, maxScroll, scrollSpeed]);
 
-  // Scrollable content wrapper component
+  // Scrollable content wrapper component - Remove opacity animation to prevent flashing
   const ScrollableContent = ({ children }: { children: React.ReactNode }) => (
-    <motion.div 
+    <div 
       ref={scrollContainerRef}
       className="relative z-10 h-[788px] overflow-y-auto pb-6 px-4 scrollbar-hide"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.4, duration: 0.6 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
+        WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
       }}
     >
       {children}
-    </motion.div>
+    </div>
   );
   // iPhone 14 logical size used by our SVG: outer 390x844, inner screen 366x820 at (12,12)
   // Visual size reduced via responsive scale to avoid dominating the layout
@@ -287,3 +347,4 @@ export default function DeviceFrame({
     </div>
   );
 }
+

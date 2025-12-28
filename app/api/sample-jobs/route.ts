@@ -41,14 +41,14 @@ export async function GET(req: NextRequest) {
     const fictionalProfiles = {
       free: {
         email: 'sample-free@jobping.com',
-        name: 'Alex',
+        // No name - using "Hi user" instead
         cities: ['London', 'Amsterdam', 'Berlin'],
         careerPath: 'Tech',
         languages_spoken: ['English', 'German'], // Common EU languages
       },
       premium: {
         email: 'sample-premium@jobping.com',
-        name: 'Sam',
+        // No name - using "Hi user" instead
         cities: ['Stockholm', 'Dublin', 'Paris'],
         careerPath: 'Finance',
         languages_spoken: ['English', 'French'], // Common EU languages

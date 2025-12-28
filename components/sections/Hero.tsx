@@ -101,33 +101,67 @@ export default function Hero() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-left space-y-6"
+            className="text-left space-y-6 relative"
           >
-            {/* Headline - Metallic "Silver Silk" with shimmer */}
+            {/* Ethereal radial gradient glow behind text - separate absolute div */}
+            <div 
+              className="absolute -inset-20 pointer-events-none"
+              style={{
+                background: 'radial-gradient(circle at 30% 50%, rgba(139,92,246,0.15) 0%, rgba(139,92,246,0) 70%)',
+                filter: 'blur(80px)',
+                zIndex: -10,
+              }}
+            />
+            
+            {/* Headline - "Silver Silk" gradient with scanline shimmer */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
               className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3 max-w-[540px] relative"
             >
-              {/* Shimmer overlay animation */}
-              <motion.span
+              {/* Scanline shimmer - narrow 45-degree white comet sweeping across */}
+              <motion.div
                 animate={{
-                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                  x: ['-100%', '200%'],
                 }}
                 transition={{
-                  duration: 3,
+                  duration: 6,
                   repeat: Infinity,
-                  ease: 'linear',
+                  repeatDelay: 2,
+                  ease: 'easeInOut',
                 }}
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent bg-[length:200%_100%] pointer-events-none rounded-lg"
-                style={{ mixBlendMode: 'overlay' }}
+                className="absolute inset-0 pointer-events-none z-10"
+                style={{
+                  background: 'linear-gradient(45deg, transparent 0%, rgba(255,255,255,0.3) 48%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.3) 52%, transparent 100%)',
+                  width: '30%',
+                  height: '100%',
+                  transform: 'skewX(-15deg)',
+                  mixBlendMode: 'overlay',
+                }}
               />
               
-              <span className="relative bg-gradient-to-br from-zinc-100 via-white to-zinc-500 bg-clip-text text-transparent">
+              {/* Silver Silk gradient: purple-500/80 (20%) → zinc-100 (50%) → purple-500/80 (80%) */}
+              <span 
+                className="relative bg-clip-text text-transparent"
+                style={{
+                  backgroundImage: 'linear-gradient(to right, rgba(168,85,247,0.8) 0%, rgba(168,85,247,0.8) 20%, rgb(244,244,245) 50%, rgba(168,85,247,0.8) 80%, rgba(168,85,247,0.8) 100%)',
+                WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
                 Get 5 early-career
               </span>{' '}
-              <span className="relative bg-gradient-to-br from-purple-400 via-purple-300 to-purple-500 bg-clip-text text-transparent">
+              <span 
+                className="relative bg-clip-text text-transparent"
+                style={{
+                  backgroundImage: 'linear-gradient(to right, rgba(168,85,247,0.8) 0%, rgba(168,85,247,0.8) 20%, rgb(244,244,245) 50%, rgba(168,85,247,0.8) 80%, rgba(168,85,247,0.8) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
                 job matches
               </span>{' '}
               <span className="text-white whitespace-nowrap">instantly <span className="text-zinc-400">- free</span></span>
@@ -291,8 +325,12 @@ export default function Hero() {
               }}
             />
             
-            {/* iPhone Mockup */}
-            <div className="scale-90 md:scale-95 lg:scale-100 origin-top lg:origin-top-left drop-shadow-[0_20px_60px_rgba(0,0,0,0.6)] relative z-10 lg:-mr-8">
+            {/* iPhone Mockup with enhanced glow */}
+            <div className="scale-90 md:scale-95 lg:scale-100 origin-top lg:origin-top-left relative z-10 lg:-mr-8"
+              style={{
+                filter: 'drop-shadow(0 20px 50px rgba(139,92,246,0.15))',
+              }}
+            >
               <DeviceFrame priority={true} autoScroll={true} scrollSpeed={1.2}>
                 <SampleJobMatches preloadedJobs={preloadedJobs} />
               </DeviceFrame>

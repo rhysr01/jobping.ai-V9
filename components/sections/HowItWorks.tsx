@@ -39,13 +39,14 @@ export default function HowItWorks() {
           </p>
         </motion.div>
 
-        {/* Pro 3-Column Layout - Equal width cards */}
-        <div className="relative mt-14 grid gap-8 sm:mt-16 md:grid-cols-3 max-w-5xl mx-auto">
-          {/* Animated connecting path - subtle SVG arrows */}
+        {/* Pro 3-Column Layout - Equal width cards in single row */}
+        <div className="relative mt-14 grid gap-8 sm:mt-16 grid-cols-1 md:grid-cols-3 max-w-5xl mx-auto">
+          {/* Animated connecting path - dashed line with flowing dots */}
           <svg
-            className="pointer-events-none absolute left-1/2 top-[80px] hidden md:block w-[calc(100%-4rem)] h-[4px] -translate-x-1/2 z-0"
+            className="pointer-events-none absolute left-0 top-[80px] hidden md:block w-full h-[4px] z-0"
             viewBox="0 0 100 4"
             preserveAspectRatio="none"
+            style={{ left: '0', right: '0' }}
           >
             <defs>
               <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -62,10 +63,21 @@ export default function HowItWorks() {
               y2="2"
               stroke="url(#flowGradient)"
               strokeWidth="2"
-              initial={{ pathLength: 0 }}
+              strokeDasharray="4 8"
+              initial={{ pathLength: 0, strokeDashoffset: 0 }}
               whileInView={{ pathLength: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 1.5, delay: 0.5 }}
+              animate={{
+                strokeDashoffset: [0, -12],
+              }}
+              transition={{
+                pathLength: { duration: 1.5, delay: 0.5 },
+                strokeDashoffset: {
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: 'linear',
+                },
+              }}
             />
           </svg>
           

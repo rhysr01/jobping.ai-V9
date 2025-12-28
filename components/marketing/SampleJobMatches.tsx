@@ -197,11 +197,24 @@ export default function SampleJobMatches({ preloadedJobs }: SampleJobMatchesProp
       <div className="px-6 py-6 space-y-4">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-white mb-2">
-            {userProfile?.name ? `Hi ${userProfile.name}, ` : ''}Here's what you'll see in 2 minutes
+            Hi user, here's what you'll see in 2 minutes
           </h2>
-          {userProfile?.cities && (
+          {/* Contextual intro based on form selections */}
+          {userProfile?.cities && userProfile?.careerPath ? (
+            <p className="text-sm text-zinc-300 mt-2 leading-relaxed">
+              Example matches for <span className="font-semibold text-white">{userProfile.cities.join(', ')}</span> in <span className="font-semibold text-white">{userProfile.careerPath}</span> roles
+            </p>
+          ) : userProfile?.cities ? (
+            <p className="text-sm text-zinc-300 mt-2 leading-relaxed">
+              Example matches personalized for <span className="font-semibold text-white">{userProfile.cities.join(', ')}</span>
+            </p>
+          ) : userProfile?.careerPath ? (
+            <p className="text-sm text-zinc-300 mt-2 leading-relaxed">
+              Example matches for <span className="font-semibold text-white">{userProfile.careerPath}</span> roles
+            </p>
+          ) : (
             <p className="text-sm text-zinc-400 mt-2">
-              Personalized for {userProfile.cities.join(', ')}
+              Personalized early-career matches
             </p>
           )}
         </div>

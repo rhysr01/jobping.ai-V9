@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { BrandIcons } from '@/components/ui/BrandIcons';
@@ -15,6 +15,9 @@ export default function CompanyLogos() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const animationFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     async function fetchCompanies() {
@@ -36,6 +39,67 @@ export default function CompanyLogos() {
     }
     fetchCompanies();
   }, []);
+
+  // Auto-scroll logos slowly to the right
+  useEffect(() => {
+    if (!scrollContainerRef.current || companies.length === 0 || isHovered) {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      return;
+    }
+
+    let lastTimestamp: number | null = null;
+    const scrollSpeed = 0.3; // Pixels per millisecond (very slow)
+
+    const animate = (timestamp: number) => {
+      if (!scrollContainerRef.current || isHovered) {
+        animationFrameRef.current = null;
+        return;
+      }
+
+      if (lastTimestamp === null) {
+        lastTimestamp = timestamp;
+      }
+
+      const deltaTime = timestamp - lastTimestamp;
+      lastTimestamp = timestamp;
+
+      const container = scrollContainerRef.current;
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      const currentScroll = container.scrollLeft;
+
+      // If we've reached the end, smoothly reset to start
+      if (currentScroll >= maxScroll - 1) {
+        container.scrollTo({
+          left: 0,
+          behavior: 'smooth'
+        });
+        // Wait a moment before restarting
+        setTimeout(() => {
+          lastTimestamp = null;
+          animationFrameRef.current = requestAnimationFrame(animate);
+        }, 2000);
+        return;
+      }
+
+      // Scroll slowly to the right
+      const newScroll = currentScroll + (scrollSpeed * deltaTime);
+      container.scrollLeft = Math.min(newScroll, maxScroll);
+
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    };
+  }, [companies, isHovered]);
 
   if (isLoading) {
     return (
@@ -115,9 +179,12 @@ export default function CompanyLogos() {
           {/* Subtle spotlight effect */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-purple-500/5 to-transparent z-0" />
 
-          {/* Horizontal scroll container */}
+          {/* Horizontal scroll container with auto-scroll */}
           <div 
-            className="flex gap-8 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-8 px-8 [mask-image:linear-gradient(to_right,transparent_0%,white_15%,white_85%,transparent_100%)] will-change-transform"
+            ref={scrollContainerRef}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className="flex gap-8 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-8 px-8 [mask-image:linear-gradient(to_right,transparent_0%,white_10%,white_90%,transparent_100%)] will-change-transform"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
