@@ -542,14 +542,14 @@ async function main() {
       const priorityLabel = isPriority ? '🎯 [PRIORITY] ' : '';
       console.log(`\n${priorityLabel}🔎 Fetching: "${term}" internships in ${city}, ${country}`);
       
-      const         // Optimize: Skip Glassdoor for cities where it's blocked (reduces errors)
-        const GLASSDOOR_BLOCKED_CITIES = ['Stockholm', 'Copenhagen', 'Prague', 'Warsaw'];
-        const sites = ['indeed', 'google', 'zip_recruiter'];
-        if (!GLASSDOOR_BLOCKED_CITIES.includes(city)) {
-          sites.push('glassdoor');
-        }
-        
-        py = spawnSync(pythonCmd, ['-c', `
+      // Optimize: Skip Glassdoor for cities where it's blocked (reduces errors)
+      const GLASSDOOR_BLOCKED_CITIES = ['Stockholm', 'Copenhagen', 'Prague', 'Warsaw'];
+      const sites = ['indeed', 'google', 'zip_recruiter'];
+      if (!GLASSDOOR_BLOCKED_CITIES.includes(city)) {
+        sites.push('glassdoor');
+      }
+      
+      py = spawnSync(pythonCmd, ['-c', `
 from jobspy import scrape_jobs
 import pandas as pd
 df = scrape_jobs(
