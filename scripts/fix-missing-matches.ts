@@ -18,7 +18,7 @@ try {
 
 import { getDatabaseClient } from '../Utils/databasePool';
 import { createConsolidatedMatcher } from '../Utils/consolidatedMatchingV2';
-import { preFilterJobsByUserPreferencesEnhanced } from '../Utils/matching/preFilterJobs';
+// Pre-filtering now handled in matching engine
 import { getDatabaseCategoriesForForm } from '../Utils/matching/categoryMapper';
 import { distributeJobsWithDiversity } from '../Utils/matching/jobDistribution';
 import { getCountryFromCity, getCountryVariations } from '../lib/countryFlags';
@@ -132,8 +132,8 @@ async function fixMatches() {
   
   console.log(`✅ Found ${allJobs.length} jobs`);
   
-  // Skip pre-filtering - let AI do semantic matching
-  console.log('\n🔍 Skipping pre-filtering - using AI semantic matching...');
+  // NEW ARCHITECTURE: Matching engine handles hard gates and pre-ranking
+  console.log('\n🔍 Using new matching architecture (hard gates + pre-ranking + AI)...');
   const userPrefs = {
     email: user.email,
     target_cities: targetCities,
@@ -147,42 +147,40 @@ async function fixMatches() {
     professional_expertise: user.career_path || '',
   };
   
-  // Use all jobs directly - AI will handle semantic matching
-  const preFilteredJobs = allJobs || [];
+  // Pass all jobs - matching engine handles hard gates and pre-ranking
+  const jobsForMatching = allJobs || [];
   
-  console.log(`✅ Using ${preFilteredJobs.length} jobs for AI matching (no pre-filtering)`);
+  console.log(`✅ Using ${jobsForMatching.length} jobs (matching engine will filter and rank)`);
   
-  if (preFilteredJobs.length === 0) {
+  if (jobsForMatching.length === 0) {
     console.error('❌ No jobs found');
     return;
   }
   
-  // Run AI matching
-  console.log('\n🤖 Running AI matching...');
+  // Run matching (engine handles hard gates, pre-ranking, and AI)
+  console.log('\n🤖 Running matching (hard gates → pre-ranking → AI)...');
   const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
-  
-  const sampleSize = Math.min(50, preFilteredJobs.length);
-  const jobsForAI = preFilteredJobs.slice(0, sampleSize);
   
   let matchResult;
   try {
-    matchResult = await matcher.performMatching(jobsForAI, userPrefs as any);
+    // Pass all jobs - engine handles hard gates, pre-ranking, and selects top 50 for AI
+    matchResult = await matcher.performMatching(jobsForMatching as any[], userPrefs as any);
   } catch (error) {
-    console.error('❌ AI matching failed:', error);
+    console.error('❌ Matching failed:', error);
     return;
   }
-  
+
   if (!matchResult || !matchResult.matches || matchResult.matches.length === 0) {
-    console.error('❌ No matches returned from AI');
+    console.error('❌ No matches returned from matching engine');
     return;
   }
-  
-  console.log(`✅ AI matched ${matchResult.matches.length} jobs`);
-  
+
+  console.log(`✅ Matched ${matchResult.matches.length} jobs (method: ${matchResult.method})`);
+
   // Get matched jobs with full data
   const matchedJobsRaw: any[] = [];
   for (const m of matchResult.matches) {
-    const job = preFilteredJobs.find((j: any) => j.job_hash === m.job_hash);
+    const job = jobsForMatching.find((j: any) => j.job_hash === m.job_hash);
     if (job) {
       matchedJobsRaw.push({
         ...job,

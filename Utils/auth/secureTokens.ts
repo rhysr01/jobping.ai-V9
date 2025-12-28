@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 
-type TokenPurpose = 'preferences' | 'email_verification';
+type TokenPurpose = 'preferences' | 'email_verification' | 'match_evidence';
 
 interface IssueTokenOptions {
   ttlMinutes?: number;
@@ -15,6 +15,7 @@ interface VerificationResult {
 const PURPOSE_SECRETS: Record<TokenPurpose, string | undefined> = {
   preferences: process.env.PREFERENCES_SECRET,
   email_verification: process.env.EMAIL_VERIFICATION_SECRET,
+  match_evidence: process.env.MATCH_EVIDENCE_SECRET,
 };
 
 function resolveSecret(purpose: TokenPurpose): string {
@@ -162,6 +163,8 @@ export function describeTokenPurpose(purpose: TokenPurpose): string {
       return 'preferences';
     case 'email_verification':
       return 'email verification';
+    case 'match_evidence':
+      return 'match evidence';
     default:
       return purpose;
   }

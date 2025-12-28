@@ -5,7 +5,7 @@ import { getDatabaseClient } from '@/Utils/databasePool';
 interface ImplicitSignalData {
   user_email: string;
   job_hash: string;
-  signal_type: 'open' | 'click' | 'dwell' | 'scroll' | 'close';
+  signal_type: 'open' | 'click' | 'dwell' | 'scroll' | 'close' | 'shown';
   value?: number; // For dwell time, scroll percentage, etc.
   metadata?: any;
   timestamp: string;
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate signal type
-    const validSignalTypes = ['open', 'click', 'dwell', 'scroll', 'close'];
+    const validSignalTypes = ['open', 'click', 'dwell', 'scroll', 'close', 'shown'];
     if (!validSignalTypes.includes(signalType)) {
       return NextResponse.json({ error: 'Invalid signal type' }, { status: 400 });
     }
@@ -70,8 +70,14 @@ export async function POST(request: NextRequest) {
     await recordImplicitSignal(signalData);
 
     // If it's a click or significant dwell, also record as feedback
+    // Note: 'shown' signals are tracked but not converted to feedback (they're for CTR calculation)
     if (signalType === 'click' || (signalType === 'dwell' && (value || 0) > 5000)) {
       await recordAsFeedbackSignal(signalData);
+    }
+    
+    // For 'shown' signals, also record to match_logs for CTR calculation
+    if (signalType === 'shown') {
+      await recordShownSignal(signalData);
     }
 
     return NextResponse.json({ 
@@ -161,6 +167,42 @@ async function recordImplicitSignal(signalData: ImplicitSignalData) {
   if (error) {
     console.error('Error recording implicit signal:', error);
     throw error;
+  }
+}
+
+// Record 'shown' signal to match_logs for CTR calculation
+async function recordShownSignal(signalData: ImplicitSignalData) {
+  const supabase = getDatabaseClient();
+
+  // Record to match_logs with neutral quality (for CTR calculation)
+  const { error } = await supabase
+    .from('match_logs')
+    .insert({
+      user_email: signalData.user_email,
+      job_hash: signalData.job_hash,
+      match_score: 0, // Neutral score for shown signals
+      match_reason: `Match shown to user (${signalData.source})`,
+      match_quality: 'neutral',
+      match_tags: {
+        signal_type: 'shown',
+        source: signalData.source,
+        session_id: signalData.session_id,
+        implicit_signal: true
+      },
+      matched_at: signalData.timestamp,
+      created_at: signalData.timestamp,
+      match_algorithm: 'implicit_tracking',
+      ai_model: null,
+      prompt_version: null,
+      ai_latency_ms: null,
+      ai_cost_usd: null,
+      cache_hit: false,
+      fallback_reason: null
+    });
+
+  if (error) {
+    console.error('Error recording shown signal:', error);
+    // Don't throw - this is secondary to the main signal recording
   }
 }
 

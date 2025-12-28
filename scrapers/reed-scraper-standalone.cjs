@@ -5,6 +5,7 @@ const axios = require('axios');
 const { createClient } = require('@supabase/supabase-js');
 const { classifyEarlyCareer, makeJobHash, CAREER_PATH_KEYWORDS } = require('./shared/helpers.cjs');
 const { recordScraperRun } = require('./shared/telemetry.cjs');
+const { processIncomingJob } = require('./shared/processor.cjs');
 
 // Parse location to extract city and country
 function parseLocation(location) {
@@ -64,200 +65,23 @@ function parseLocation(location) {
   return { city, country, isRemote: false };
 }
 
-// Classify job as internship, graduate, or entry-level
-function classifyJobType(job) {
-  const title = (job.title || '').toLowerCase();
-  const description = (job.description || '').toLowerCase();
-  const text = `${title} ${description}`;
-  
-  // Internship indicators (multilingual)
-  const internshipTerms = [
-    'intern', 'internship', 'stage', 'praktikum', 'prácticas', 'tirocinio',
-    'stagiaire', 'stagiar', 'becario', 'werkstudent', 'placement',
-    'summer intern', 'winter intern', 'co-op', 'coop'
-  ];
-  
-  // Graduate program indicators
-  const graduateTerms = [
-    'graduate', 'grad scheme', 'grad program', 'graduate programme',
-    'graduate program', 'graduate scheme', 'graduate trainee',
-    'management trainee', 'trainee program', 'trainee programme',
-    'rotational program', 'rotational programme', 'campus hire',
-    'new grad', 'recent graduate'
-  ];
-  
-  // Check for internship first (more specific)
-  const isInternship = internshipTerms.some(term => 
-    title.includes(term) || description.includes(term)
-  );
-  
-  // Check for graduate program
-  const isGraduate = !isInternship && graduateTerms.some(term => 
-    title.includes(term) || description.includes(term)
-  );
-  
-  return { isInternship, isGraduate };
-}
-
-// Detect work environment from location and description
-function detectWorkEnvironment(job) {
-  const location = (job.location || '').toLowerCase();
-  const description = (job.description || '').toLowerCase();
-  const text = `${location} ${description}`;
-  
-  // Remote indicators (strongest signal)
-  if (/remote|work\s+from\s+home|wfh|anywhere|fully\s+remote|100%\s+remote/i.test(text)) {
-    return 'remote';
-  }
-  
-  // Hybrid indicators
-  if (/hybrid|flexible|partially\s+remote|2-3\s+days|3\s+days\s+remote|mix\s+of\s+remote/i.test(text)) {
-    return 'hybrid';
-  }
-  
-  // Default to on-site
-  return 'on-site';
-}
-
-// Extract language requirements from description (comprehensive - includes all visa-seeking languages)
-function extractLanguageRequirements(description) {
-  if (!description) return [];
-  const desc = description.toLowerCase();
-  const languages = [];
-  
-  // Comprehensive language patterns - includes all visa-seeking languages
-  const languagePatterns = [
-    // EU languages
-    { pattern: /\b(english|anglais|eng\b|fluent.*english|native.*english|english.*speaker|english.*speaking|english.*language|english.*proficiency)\b/i, lang: 'English' },
-    { pattern: /\b(french|français|francais|fluent.*french|native.*french|french.*speaker|french.*speaking)\b/i, lang: 'French' },
-    { pattern: /\b(german|deutsch|fluent.*german|native.*german|german.*speaker|german.*speaking)\b/i, lang: 'German' },
-    { pattern: /\b(spanish|español|espanol|castellano|fluent.*spanish|native.*spanish|spanish.*speaker|spanish.*speaking)\b/i, lang: 'Spanish' },
-    { pattern: /\b(italian|italiano|fluent.*italian|native.*italian|italian.*speaker|italian.*speaking)\b/i, lang: 'Italian' },
-    { pattern: /\b(dutch|nederlands|fluent.*dutch|native.*dutch|dutch.*speaker|dutch.*speaking)\b/i, lang: 'Dutch' },
-    { pattern: /\b(portuguese|português|portugues|fluent.*portuguese|native.*portuguese|portuguese.*speaker)\b/i, lang: 'Portuguese' },
-    { pattern: /\b(polish|polski|fluent.*polish|native.*polish|polish.*speaker|polish.*speaking)\b/i, lang: 'Polish' },
-    { pattern: /\b(swedish|svenska|fluent.*swedish|native.*swedish|swedish.*speaker)\b/i, lang: 'Swedish' },
-    { pattern: /\b(danish|dansk|fluent.*danish|native.*danish|danish.*speaker)\b/i, lang: 'Danish' },
-    { pattern: /\b(finnish|suomi|fluent.*finnish|native.*finnish|finnish.*speaker)\b/i, lang: 'Finnish' },
-    { pattern: /\b(czech|čeština|fluent.*czech|native.*czech|czech.*speaker)\b/i, lang: 'Czech' },
-    { pattern: /\b(romanian|română|romana|fluent.*romanian|native.*romanian|romanian.*speaker)\b/i, lang: 'Romanian' },
-    { pattern: /\b(hungarian|magyar|fluent.*hungarian|native.*hungarian|hungarian.*speaker)\b/i, lang: 'Hungarian' },
-    { pattern: /\b(greek|ελληνικά|fluent.*greek|native.*greek|greek.*speaker)\b/i, lang: 'Greek' },
-    { pattern: /\b(bulgarian|български|fluent.*bulgarian|native.*bulgarian|bulgarian.*speaker)\b/i, lang: 'Bulgarian' },
-    { pattern: /\b(croatian|hrvatski|fluent.*croatian|native.*croatian|croatian.*speaker)\b/i, lang: 'Croatian' },
-    { pattern: /\b(serbian|српски|fluent.*serbian|native.*serbian|serbian.*speaker)\b/i, lang: 'Serbian' },
-    { pattern: /\b(russian|русский|fluent.*russian|native.*russian|russian.*speaker|russian.*speaking)\b/i, lang: 'Russian' },
-    { pattern: /\b(ukrainian|українська|fluent.*ukrainian|native.*ukrainian|ukrainian.*speaker)\b/i, lang: 'Ukrainian' },
-    // Middle Eastern & Central Asian
-    { pattern: /\b(arabic|العربية|fluent.*arabic|native.*arabic|arabic.*speaker|arabic.*speaking)\b/i, lang: 'Arabic' },
-    { pattern: /\b(turkish|türkçe|turkce|fluent.*turkish|native.*turkish|turkish.*speaker|turkish.*speaking)\b/i, lang: 'Turkish' },
-    { pattern: /\b(hebrew|עברית|fluent.*hebrew|native.*hebrew|hebrew.*speaker)\b/i, lang: 'Hebrew' },
-    { pattern: /\b(persian|farsi|فارسی|fluent.*persian|fluent.*farsi|native.*persian|native.*farsi|persian.*speaker|farsi.*speaker)\b/i, lang: 'Persian' },
-    { pattern: /\b(urdu|اردو|fluent.*urdu|native.*urdu|urdu.*speaker)\b/i, lang: 'Urdu' },
-    // Asian languages
-    { pattern: /\b(japanese|日本語|nihongo|fluent.*japanese|native.*japanese|japanese.*speaker|japanese.*speaking|japanese.*language|japanese.*proficiency)\b/i, lang: 'Japanese' },
-    { pattern: /\b(chinese|中文|mandarin|fluent.*chinese|fluent.*mandarin|native.*chinese|native.*mandarin|chinese.*speaker|mandarin.*speaker|chinese.*speaking|mandarin.*speaking|chinese.*language|mandarin.*language|chinese.*proficiency|mandarin.*proficiency)\b/i, lang: 'Chinese' },
-    { pattern: /\b(cantonese|fluent.*cantonese|native.*cantonese|cantonese.*speaker|cantonese.*speaking)\b/i, lang: 'Cantonese' },
-    { pattern: /\b(korean|한국어|fluent.*korean|native.*korean|korean.*speaker|korean.*speaking|korean.*language|korean.*proficiency)\b/i, lang: 'Korean' },
-    { pattern: /\b(hindi|हिन्दी|fluent.*hindi|native.*hindi|hindi.*speaker|hindi.*speaking|hindi.*language|hindi.*proficiency)\b/i, lang: 'Hindi' },
-    { pattern: /\b(thai|ไทย|fluent.*thai|native.*thai|thai.*speaker|thai.*speaking|thai.*language|thai.*proficiency)\b/i, lang: 'Thai' },
-    { pattern: /\b(vietnamese|tiếng việt|fluent.*vietnamese|native.*vietnamese|vietnamese.*speaker|vietnamese.*speaking)\b/i, lang: 'Vietnamese' },
-    { pattern: /\b(indonesian|bahasa indonesia|fluent.*indonesian|native.*indonesian|indonesian.*speaker)\b/i, lang: 'Indonesian' },
-    { pattern: /\b(tagalog|filipino|fluent.*tagalog|fluent.*filipino|native.*tagalog|native.*filipino|tagalog.*speaker|filipino.*speaker)\b/i, lang: 'Tagalog' },
-    { pattern: /\b(malay|bahasa melayu|fluent.*malay|native.*malay|malay.*speaker)\b/i, lang: 'Malay' },
-    { pattern: /\b(bengali|বাংলা|fluent.*bengali|native.*bengali|bengali.*speaker)\b/i, lang: 'Bengali' },
-    { pattern: /\b(tamil|தமிழ்|fluent.*tamil|native.*tamil|tamil.*speaker)\b/i, lang: 'Tamil' },
-    { pattern: /\b(telugu|తెలుగు|fluent.*telugu|native.*telugu|telugu.*speaker)\b/i, lang: 'Telugu' },
-  ];
-  
-  // Also check for common phrases like "must speak X", "requires X", "X speaker", "X speaking"
-  const commonPhrases = [
-    'must speak', 'requires', 'speaker', 'speaking', 'fluent', 'native', 'proficiency', 'language requirement'
-  ];
-  
-  for (const { pattern, lang } of languagePatterns) {
-    if (pattern.test(desc) && !languages.includes(lang)) {
-      languages.push(lang);
-    }
-  }
-  
-  // Remove duplicates and return
-  return [...new Set(languages)];
-}
-
+// Use centralized processor for standardization
 function convertToDatabaseFormat(job) {
-  const nowIso = new Date().toISOString();
-  const { city, country } = parseLocation(job.location || '');
-  const { isInternship, isGraduate } = classifyJobType(job);
-  const job_hash = makeJobHash(job);
+  // Process through standardization pipe
+  const processed = processIncomingJob(job, {
+    source: 'reed',
+  });
   
-  // Normalize date to ISO (Reed often returns DD/MM/YYYY or ISO format)
-  const normalizeDate = (d) => {
-    if (!d) return nowIso;
-    if (typeof d === 'string' && /\d{2}\/\d{2}\/\d{4}/.test(d)) {
-      // DD/MM/YYYY format
-      const [dd, mm, yyyy] = d.split('/');
-      const iso = new Date(`${yyyy}-${mm}-${dd}T00:00:00Z`).toISOString();
-      return iso;
-    }
-    try { 
-      const date = new Date(d);
-      if (isNaN(date.getTime())) return nowIso;
-      return date.toISOString();
-    } catch { 
-      return nowIso;
-    }
-  };
-  
-  const postedAt = normalizeDate(job.posted_at);
-  
-  // Build categories array
-  const categories = ['early-career'];
-  if (isInternship) {
-    categories.push('internship');
-  }
-  
-  // Clean company name - remove extra whitespace
-  const companyName = (job.company || '').trim().replace(/\s+/g, ' ');
-  
-  // Extract metadata
-  const workEnv = detectWorkEnvironment(job);
-  const languages = extractLanguageRequirements(job.description || '');
-  
-  // Mutually exclusive categorization: internship OR graduate OR early-career
-  // Maps to form options: "Internship", "Graduate Programmes", "Entry Level"
-  const isEarlyCareer = !isInternship && !isGraduate; // Entry-level roles
-  
-  // Normalize location data
-  const { normalizeJobLocation } = require('./shared/locationNormalizer.cjs');
-  const normalized = normalizeJobLocation({
-    city,
-    country,
-    location: job.location,
+  // Add job_hash (needs to be calculated after processing)
+  const job_hash = makeJobHash({
+    title: processed.title,
+    company: processed.company,
+    location: processed.location,
   });
   
   return {
+    ...processed,
     job_hash,
-    title: (job.title || '').trim(),
-    company: companyName,
-    location: normalized.location, // Use normalized location
-    city: normalized.city, // Use normalized city
-    country: normalized.country, // Use normalized country
-    description: (job.description || '').trim(),
-    job_url: (job.url || '').trim(),
-    source: (job.source || 'reed').trim(),
-    posted_at: postedAt,
-    categories: categories, // Array with 'early-career' and optionally 'internship'
-    work_environment: workEnv, // 'remote', 'hybrid', or 'on-site'
-    experience_required: isInternship ? 'internship' : (isGraduate ? 'graduate' : 'entry-level'),
-    is_internship: isInternship, // Maps to form: "Internship"
-    is_graduate: isGraduate, // Maps to form: "Graduate Programmes"
-    is_early_career: isEarlyCareer, // Maps to form: "Entry Level" (mutually exclusive)
-    language_requirements: languages.length > 0 ? languages : null,
-    original_posted_date: postedAt,
-    last_seen_at: nowIso,
-    is_active: true,
-    created_at: nowIso
   };
 }
 

@@ -10,6 +10,7 @@ import {
 } from '../../lib/productMetrics';
 import { buildPreferencesLink } from '../preferences/links';
 import { getVisaConfidenceLabel, getVisaConfidenceStyle, calculateVisaConfidence, getVisaProTip } from '../../Utils/matching/visa-confidence';
+import { issueSecureToken } from '../auth/secureTokens';
 
 const COLORS = {
   bg: '#0a0a0a',
@@ -476,11 +477,28 @@ export function createJobMatchesEmail(
   const items = jobCards.map((c, index) => {
     const score = c.matchResult?.match_score ?? 85;
     const hot = score >= 92;
+    const currentJobHash = c.job.job_hash || '';
     const jobUrl = c.job.job_url || c.job.url || c.job.apply_url || '';
-    const applyHref = jobUrl ? `${jobUrl}${jobUrl.includes('?') ? '&' : '?'}utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=apply_button` : '';
-    const apply = jobUrl ? vmlButton(applyHref, 'Apply now →', COLORS.indigo, COLORS.purple) : '';
-    const plainLink = jobUrl
-      ? `<p class="text" style="color:${COLORS.gray500}; font-size:13px; margin-top:18px;">Button not working? Paste this link: <a href="${applyHref}" style="color:#8B5CF6; word-break:break-all;">${jobUrl}</a></p>`
+    
+    // Generate evidence page link with JWT token (7-day expiry)
+    let evidenceHref = '';
+    if (currentJobHash && userEmail) {
+      try {
+        const token = issueSecureToken(userEmail, 'match_evidence', { ttlMinutes: 7 * 24 * 60 }); // 7 days
+        evidenceHref = `${baseUrl}/matches/${encodeURIComponent(currentJobHash)}?email=${encodeURIComponent(userEmail)}&token=${encodeURIComponent(token)}&utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=evidence_page`;
+      } catch (error) {
+        console.warn('Failed to generate evidence token, falling back to direct link', error);
+        // Fallback to direct job URL if token generation fails
+        evidenceHref = jobUrl ? `${jobUrl}${jobUrl.includes('?') ? '&' : '?'}utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=apply_button` : '';
+      }
+    } else {
+      // Fallback to direct job URL if no job hash
+      evidenceHref = jobUrl ? `${jobUrl}${jobUrl.includes('?') ? '&' : '?'}utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=apply_button` : '';
+    }
+    
+    const apply = evidenceHref ? vmlButton(evidenceHref, 'View Match Evidence →', COLORS.indigo, COLORS.purple) : '';
+    const plainLink = evidenceHref
+      ? `<p class="text" style="color:${COLORS.gray500}; font-size:13px; margin-top:18px;">Button not working? Paste this link: <a href="${evidenceHref}" style="color:#8B5CF6; word-break:break-all;">${evidenceHref.substring(0, 80)}...</a></p>`
       : '';
     
     // Calculate visa confidence for this job (still need description for visa detection)
@@ -520,6 +538,17 @@ export function createJobMatchesEmail(
     const emailForFeedback = userEmail || c.job.user_email || '';
     const feedbackButtons = jobHash ? vmlJobFeedbackButtons(jobHash, emailForFeedback, baseUrl, campaign) : '';
     
+    // Add tracking pixel for email impressions (shown signal)
+    let trackingPixel = '';
+    if (jobHash && emailForFeedback) {
+      try {
+        const token = issueSecureToken(emailForFeedback, 'match_evidence', { ttlMinutes: 7 * 24 * 60 });
+        trackingPixel = `<img src="${baseUrl}/api/tracking/pixel?jobHash=${encodeURIComponent(jobHash)}&email=${encodeURIComponent(emailForFeedback)}&token=${encodeURIComponent(token)}" width="1" height="1" style="display:none;" alt="" />`;
+      } catch (error) {
+        // Fail silently - tracking pixel is optional
+      }
+    }
+    
     return `
     <tr><td class="content">
       <div class="card${hot ? ' hot' : ''}" style="background:${hot ? 'linear-gradient(135deg,rgba(16,185,129,0.1),rgba(16,185,129,0.05))' : 'rgba(0,0,0,0.4)'}; border:1px solid ${hot ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.1)'}; border-radius:12px; padding:20px; margin-bottom:20px;">
@@ -543,6 +572,7 @@ export function createJobMatchesEmail(
         ${feedbackButtons}
         ${apply}
         ${plainLink}
+        ${trackingPixel}
             </td>
           </tr>
         </table>

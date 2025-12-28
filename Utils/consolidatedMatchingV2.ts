@@ -10,6 +10,8 @@ import type { Job } from '../scrapers/types';
 import { UserPreferences, JobMatch } from './matching/types';
 import type { ParsedMatch } from '@/lib/types';
 import { apiLogger } from '@/lib/api-logger';
+import { withRedis } from '@/lib/redis-client';
+import { getDatabaseClient } from '@/Utils/databasePool';
 // Simple configuration - no complex config module needed
 const JOBS_TO_ANALYZE = 50;
 const CACHE_TTL_HOURS = 48;
@@ -37,6 +39,9 @@ interface ConsolidatedMatchResult {
   method: 'ai_success' | 'ai_timeout' | 'ai_failed' | 'rule_based';
   processingTime: number;
   confidence: number;
+  aiModel?: string;        // AI model used (e.g., 'gpt-4o-mini')
+  aiCostUsd?: number;      // Calculated cost in USD
+  aiTokensUsed?: number;   // Tokens consumed (optional, for debugging)
 }
 
 // ============================================
@@ -225,6 +230,7 @@ export class ConsolidatedMatchingEngine {
     CIRCUIT_BREAKER_TIMEOUT
   );
   private readonly CACHE_TTL = CACHE_TTL_HOURS * 60 * 60 * 1000; // Configurable cache TTL
+  private lastAIMetadata: { model: string; tokens: number; cost: number } | null = null; // Track AI usage for database logging
 
   constructor(openaiApiKey?: string) {
     if (openaiApiKey) {
@@ -269,7 +275,12 @@ export class ConsolidatedMatchingEngine {
   }
 
   /**
-   * Main matching function - tries cache first, then AI, then rules
+   * Main matching function - "Funnel of Truth" architecture
+   * Stage 1: SQL Filter (already done in jobSearchService)
+   * Stage 2: Hard Gates (visa, language, location) - before AI sees jobs
+   * Stage 3: Rule-Ranker (weighted scoring) - ensures numerical relevancy
+   * Stage 4: AI Semantic Pass (top 50) - creates evidence-based reasons
+   * Stage 5: Diversity Pass (in distributeJobsWithDiversity)
    */
   async performMatching(
     jobs: Job[],
@@ -286,89 +297,192 @@ export class ConsolidatedMatchingEngine {
         matches: [],
         method: 'rule_based',
         processingTime: Date.now() - startTime,
-        confidence: 0.0
+        confidence: 0.0,
+        aiModel: undefined,
+        aiCostUsd: 0,
+        aiTokensUsed: 0
       };
     }
 
-    // Check cache first (saves $$$ on repeat matches)
-    const cacheKey = this.generateCacheKey(jobsArray, userPrefs);
-    const cached = await this.matchCache.get(cacheKey);
+    // STAGE 2: Apply Hard Gates (before AI sees jobs) - saves API costs
+    const { preFilterByHardGates } = await import('./matching/preFilterHardGates');
+    const eligibleJobs = preFilterByHardGates(jobsArray, userPrefs);
+    
+    if (eligibleJobs.length === 0) {
+      apiLogger.warn('No jobs passed hard gates', {
+        email: userPrefs.email || 'unknown',
+        originalJobCount: jobsArray.length,
+        reason: 'All jobs filtered by visa/language/location requirements'
+      });
+      return {
+        matches: [],
+        method: 'rule_based',
+        processingTime: Date.now() - startTime,
+        confidence: 0.0,
+        aiModel: undefined,
+        aiCostUsd: 0,
+        aiTokensUsed: 0
+      };
+    }
+
+    // Check cache (with stale check)
+    const cacheKey = this.generateCacheKey(eligibleJobs, userPrefs);
+    const shouldBypass = await this.shouldBypassCache(cacheKey, userPrefs, eligibleJobs);
+    const cached = shouldBypass ? null : await this.matchCache.get(cacheKey);
+    
     if (cached) {
+      // Cached matches - no AI cost but indicate it was originally AI-generated
       return {
         matches: cached,
         method: 'ai_success',
         processingTime: Date.now() - startTime,
-        confidence: 0.9
+        confidence: 0.9,
+        aiModel: 'gpt-4o-mini', // Assume cached matches were from AI
+        aiCostUsd: 0, // No cost (cached)
+        aiTokensUsed: 0
       };
     }
 
     // Skip AI if explicitly disabled, no client, or circuit breaker open
     if (forceRulesBased || !this.openai || !this.circuitBreaker.canExecute()) {
-      const ruleMatches = this.performRuleBasedMatching(jobsArray, userPrefs);
+      // STAGE 3: Pre-rank by rule-based scoring
+      const scoredJobs = await this.preRankJobsByScore(eligibleJobs, userPrefs);
+      const topJobs = scoredJobs.slice(0, 8).map(item => item.job);
+      const ruleMatches = await this.performRuleBasedMatching(topJobs, userPrefs);
       return {
         matches: ruleMatches,
         method: 'rule_based',
         processingTime: Date.now() - startTime,
-        confidence: 0.8
+        confidence: 0.8,
+        aiModel: undefined,
+        aiCostUsd: 0,
+        aiTokensUsed: 0
       };
     }
 
+    // STAGE 3: Pre-rank by rule-based scoring (ensures AI sees most relevant, not just recent)
+    const scoredJobs = await this.preRankJobsByScore(eligibleJobs, userPrefs);
+    
+    // STAGE 4: Send top 50 highest-scoring jobs to AI (not most recent)
+    const top50Jobs = scoredJobs.slice(0, 50).map(item => item.job);
+
     // Try AI matching with timeout and retry
     try {
-      const aiMatches = await this.performAIMatchingWithRetry(jobsArray, userPrefs);
+      const aiMatches = await this.performAIMatchingWithRetry(top50Jobs, userPrefs);
       if (aiMatches && aiMatches.length > 0) {
-        // CRITICAL: Post-filter AI matches to ensure they meet location/career requirements
-        const validatedMatches = this.validateAIMatches(aiMatches, jobsArray, userPrefs);
+        // Validation is now minimal since hard gates already applied
+        const validatedMatches = this.validateAIMatches(aiMatches, top50Jobs, userPrefs);
         
         if (validatedMatches.length === 0) {
-          // If all AI matches were filtered out, fall back to rules
+          // If all AI matches were filtered out, fall back to rules from pre-ranked jobs
           console.warn('All AI matches failed validation, falling back to rules');
-          // Log why validation failed
           apiLogger.warn('AI matches failed validation', {
             reason: 'all_matches_filtered_out',
             originalMatchCount: aiMatches.length,
             validatedMatchCount: 0
           });
-        } else {
-          // Cache successful AI matches
-          await this.matchCache.set(cacheKey, validatedMatches);
-          this.circuitBreaker.recordSuccess();
           
-          // Update cost tracking
-          this.updateCostTracking('gpt4omini', 1, 0.01); // Estimate cost
-          
-          // Log match quality metrics
-          const matchQuality = this.calculateMatchQualityMetrics(validatedMatches, jobsArray, userPrefs);
-          apiLogger.info('Match quality metrics', {
-            email: userPrefs.email || 'unknown',
-            averageScore: matchQuality.averageScore,
-            scoreDistribution: matchQuality.scoreDistribution,
-            cityCoverage: matchQuality.cityCoverage,
-            sourceDiversity: matchQuality.sourceDiversity,
-            method: 'ai_success',
-            matchCount: validatedMatches.length
-          });
-          
+          const topScoredJobs = scoredJobs.slice(0, 8).map(item => item.job);
+          const ruleMatches = await this.performRuleBasedMatching(topScoredJobs, userPrefs);
+          this.lastAIMetadata = null; // Reset (AI validation failed, using rules)
           return {
-            matches: validatedMatches,
-            method: 'ai_success',
+            matches: ruleMatches,
+            method: 'ai_failed',
             processingTime: Date.now() - startTime,
-            confidence: 0.9
+            confidence: 0.7,
+            aiModel: undefined,
+            aiCostUsd: 0,
+            aiTokensUsed: 0
           };
         }
+        
+        // Cache successful AI matches
+        await this.matchCache.set(cacheKey, validatedMatches);
+        this.circuitBreaker.recordSuccess();
+        
+        // Note: Cost tracking now done in callOpenAIAPI, lastAIMetadata stores it
+        
+        // Log match quality metrics
+        const matchQuality = this.calculateMatchQualityMetrics(validatedMatches, top50Jobs, userPrefs);
+        
+        // EVIDENCE VERIFICATION: Log match reason lengths to detect weak evidence
+        const reasonLengths = validatedMatches.map(m => {
+          const reason = m.match_reason || '';
+          const wordCount = reason.trim().split(/\s+/).filter(w => w.length > 0).length;
+          return wordCount;
+        });
+        const avgReasonLength = reasonLengths.length > 0 
+          ? Math.round(reasonLengths.reduce((sum, len) => sum + len, 0) / reasonLengths.length)
+          : 0;
+        const minReasonLength = reasonLengths.length > 0 ? Math.min(...reasonLengths) : 0;
+        const shortReasons = reasonLengths.filter(len => len < 20).length;
+        
+        apiLogger.info('Match quality metrics', {
+          email: userPrefs.email || 'unknown',
+          averageScore: matchQuality.averageScore,
+          scoreDistribution: matchQuality.scoreDistribution,
+          cityCoverage: matchQuality.cityCoverage,
+          sourceDiversity: matchQuality.sourceDiversity,
+          method: 'ai_success',
+          matchCount: validatedMatches.length,
+          eligibleJobsAfterHardGates: eligibleJobs.length,
+          top50PreRanked: top50Jobs.length,
+          // Evidence verification metrics
+          matchReasonLengths: {
+            average: avgReasonLength,
+            minimum: minReasonLength,
+            all: reasonLengths,
+            shortReasonsCount: shortReasons, // Reasons <20 words (weak evidence indicator)
+            hasWeakEvidence: shortReasons > 0 // Flag if any reasons are too short
+          }
+        });
+        
+        // Warn if we have short reasons (potential weak evidence)
+        if (shortReasons > 0) {
+          apiLogger.warn('AI match reasons may lack evidence', {
+            email: userPrefs.email || 'unknown',
+            shortReasonsCount: shortReasons,
+            totalMatches: validatedMatches.length,
+            minReasonLength,
+            avgReasonLength,
+            note: 'Short match reasons (<20 words) may indicate AI struggled to find strong evidence linking user skills to job requirements'
+          });
+        }
+        
+        // Get AI metadata and reset (for database logging)
+        const aiMetadata = this.lastAIMetadata;
+        this.lastAIMetadata = null; // Reset after use
+        
+        return {
+          matches: validatedMatches,
+          method: 'ai_success',
+          processingTime: Date.now() - startTime,
+          confidence: 0.9,
+          aiModel: aiMetadata?.model || 'gpt-4o-mini',
+          aiCostUsd: aiMetadata?.cost,
+          aiTokensUsed: aiMetadata?.tokens
+        };
       }
     } catch (error) {
       this.circuitBreaker.recordFailure();
       console.warn('AI matching failed, falling back to rules:', error instanceof Error ? error.message : 'Unknown error');
     }
 
-    // Fallback to rule-based matching
-    const ruleMatches = this.performRuleBasedMatching(jobsArray, userPrefs);
+    // Fallback to rule-based matching from pre-ranked jobs
+    const topScoredJobs = scoredJobs.slice(0, 8).map(item => item.job);
+    const ruleMatches = await this.performRuleBasedMatching(topScoredJobs, userPrefs);
+    
+    // Reset AI metadata (no AI used in fallback)
+    this.lastAIMetadata = null;
+    
     return {
       matches: ruleMatches,
       method: 'ai_failed',
       processingTime: Date.now() - startTime,
-      confidence: 0.7
+      confidence: 0.7,
+      aiModel: undefined,
+      aiCostUsd: 0,
+      aiTokensUsed: 0
     };
   }
 
@@ -448,6 +562,26 @@ export class ConsolidatedMatchingEngine {
   }
 
   /**
+   * Calculate AI cost based on model and token usage
+   * GPT-4o-mini pricing (as of 2025):
+   * - Input: $0.15 per 1M tokens
+   * - Output: $0.60 per 1M tokens
+   * Typical function calling: ~80% input, 20% output
+   */
+  private calculateAICost(tokens: number, model: string): number {
+    if (model === 'gpt-4o-mini') {
+      // Estimate: 80% input, 20% output (typical for function calling)
+      const inputTokens = Math.floor(tokens * 0.8);
+      const outputTokens = tokens - inputTokens;
+      const inputCost = (inputTokens / 1_000_000) * 0.15;
+      const outputCost = (outputTokens / 1_000_000) * 0.60;
+      return inputCost + outputCost;
+    }
+    // For other models, return 0 (can extend later if needed)
+    return 0;
+  }
+
+  /**
    * Calculate complexity score (0-1) to determine model choice
    */
   private calculateComplexityScore(jobs: Job[], userPrefs: UserPreferences): number {
@@ -496,19 +630,25 @@ export class ConsolidatedMatchingEngine {
       messages: [
         {
           role: 'system',
-          content: `You're a friendly career advisor (not a corporate recruiter). 
+          content: `You're a professional career advisor focused on evidence-based matching.
 
-Your job: Find 5 perfect job matches and explain WHY they're exciting.
+Your job: Find 5 perfect job matches and explain WHY they're relevant using factual evidence.
 
-Write match reasons that create "WOW" moments:
-BE SPECIFIC: "You need React + TypeScript. This role uses both PLUS Next.js"
-BE PERSONAL: Reference their feedback, preferences, location
-BE CONFIDENT: "You're overqualified for this (easy interview)"
-BE EMOTIONAL: "This is the startup you'll tell your friends about"
+Write match reasons that are:
+- SPECIFIC: Link user's stated skills/experience to explicit job requirements
+  Example: "Your React + TypeScript experience matches their requirement for 'frontend expertise with modern frameworks'"
+- FACTUAL: Reference actual job description text and user profile data
+  Example: "The job requires '2+ years marketing experience' and you have 3 years in digital marketing"
+- TRANSPARENT: Acknowledge both strengths and potential gaps honestly
+  Example: "This role focuses on B2B marketing, which aligns with your experience, though it's more enterprise-focused than your previous B2C work"
+- PROFESSIONAL: Avoid emotional language, hype, or outcome predictions
 
-NEVER use: "Good match", "Aligns with preferences", "Strong fit" (boring!)
+NEVER use:
+- "Easy interview" or confidence claims about outcomes
+- "This is the startup you'll tell your friends about" (emotional hype)
+- "Good match" or "Aligns with preferences" (too generic)
 
-Keep match reasons 2-3 sentences max. Make every word count.`
+Keep match reasons 2-3 sentences max. Make every word count with evidence.`
         },
         {
           role: 'user',
@@ -533,7 +673,7 @@ Keep match reasons 2-3 sentences max. Make every word count.`
                   job_index: { type: 'number', minimum: 1, description: 'Index of the job from the list provided' },
                   job_hash: { type: 'string', description: 'Exact job_hash from the job list' },
                   match_score: { type: 'number', minimum: 50, maximum: 100, description: 'How well this job matches the user (50-100)' },
-                  match_reason: { type: 'string', maxLength: 400, description: 'Exciting, specific, personal reason (2-3 sentences max). Reference user preferences, feedback, or create WOW moments. NO boring corporate speak!' }
+                  match_reason: { type: 'string', maxLength: 400, description: 'Evidence-based reason (2-3 sentences max) that explicitly links user profile to job requirements. Reference specific skills, experience, or requirements. NO emotional hype or outcome predictions.' }
                 },
                 required: ['job_index', 'job_hash', 'match_score', 'match_reason']
               }
@@ -545,12 +685,17 @@ Keep match reasons 2-3 sentences max. Make every word count.`
       function_call: { name: 'return_job_matches' }
     });
 
-    // Track costs (simplified for now)
+    // Track costs and store metadata for database logging
     if (completion.usage) {
+      const tokens = completion.usage.total_tokens || 0;
       const trackerKey = model === 'gpt-4o-mini' ? 'gpt4omini' : (model === 'gpt-4' ? 'gpt4' : 'gpt35');
       this.costTracker[trackerKey] = this.costTracker[trackerKey] || { calls: 0, tokens: 0 };
       this.costTracker[trackerKey].calls++;
-      this.costTracker[trackerKey].tokens += completion.usage.total_tokens || 0;
+      this.costTracker[trackerKey].tokens += tokens;
+      
+      // Store metadata for database logging (for dashboard views)
+      const cost = this.calculateAICost(tokens, model);
+      this.lastAIMetadata = { model, tokens, cost };
     }
 
     const functionCall = completion.choices[0]?.message?.function_call;
@@ -650,17 +795,33 @@ Then rank by:
 ${languages ? `4. Language match (user must speak at least one required language)` : '4. Language requirements (if specified)'}
 5. Company type and culture fit
 
+MATCH REASON GUIDELINES (Evidence-Based):
+- BE SPECIFIC: Link user's stated skills/experience to job requirements
+  Example: "Your React + TypeScript experience matches their requirement for 'frontend expertise with modern frameworks'"
+- BE FACTUAL: Reference actual job description requirements
+  Example: "The job requires '2+ years marketing experience' and you have 3 years in digital marketing"
+- BE TRANSPARENT: Acknowledge gaps when relevant
+  Example: "This role focuses on B2B marketing, which aligns with your experience, though it's more enterprise-focused than your previous B2C work"
+- AVOID: Emotional hype ("This is the startup you'll tell your friends about")
+- AVOID: Confidence claims about outcomes ("easy interview", "guaranteed fit")
+- AVOID: Generic statements ("Good match for your skills", "Aligns with preferences")
+
+DIVERSITY REQUIREMENT:
+When selecting your top 5 matches, prioritize variety:
+- Include jobs from different company types (startup, corporate, agency)
+- Include jobs from different sources when possible
+- Balance work environments (if user allows multiple types)
+
 Return JSON array with exactly 5 matches (or fewer if less than 5 meet requirements), ranked by relevance:
-[{"job_index":1,"job_hash":"actual-hash","match_score":85,"match_reason":"Specific reason why this matches user profile"}]
+[{"job_index":1,"job_hash":"actual-hash","match_score":85,"match_reason":"Evidence-based reason linking user profile to job requirements"}]
 
 Requirements:
 - job_index: Must be 1-${jobsToAnalyze.length}
 - job_hash: Must match the hash from the job list above
 - match_score: 50-100 (be selective, only recommend truly relevant jobs)
-- match_reason: Brief, specific explanation of why this job fits the user (must mention location AND career/role match)
+- match_reason: Evidence-based explanation (2-3 sentences) that explicitly links user's profile to job requirements
 - Return exactly 5 matches (or fewer if less than 5 good matches exist)
-- Valid JSON array only, no markdown or extra text
-- DO NOT include jobs that don't match the required location or career path`;
+- Valid JSON array only, no markdown or extra text`;
   }
 
   /**
@@ -936,6 +1097,24 @@ Requirements:
         }
       }
       
+      // EVIDENCE VERIFICATION: Check match reason length
+      const matchReason = match.match_reason || '';
+      const wordCount = matchReason.trim().split(/\s+/).filter(w => w.length > 0).length;
+      const EVIDENCE_THRESHOLD = 20; // Minimum words for strong evidence
+      
+      if (wordCount < EVIDENCE_THRESHOLD) {
+        // Log short reason as potential weak evidence
+        apiLogger.debug('Short match reason detected (potential weak evidence)', {
+          email: userPrefs.email || 'unknown',
+          jobHash: match.job_hash,
+          jobTitle: job.title,
+          reasonLength: wordCount,
+          reason: matchReason.substring(0, 100), // First 100 chars for context
+          threshold: EVIDENCE_THRESHOLD,
+          note: 'AI may have struggled to find strong evidence linking user skills to job requirements'
+        });
+      }
+      
       // All validations passed
       validatedMatches.push(match);
     }
@@ -944,9 +1123,111 @@ Requirements:
   }
 
   /**
+   * Pre-rank jobs using rule-based scoring before AI matching
+   * This ensures AI sees the most relevant jobs, not just the most recent
+   */
+  private async preRankJobsByScore(
+    jobs: Job[],
+    userPrefs: UserPreferences
+  ): Promise<Array<{ job: Job; score: number }>> {
+    const jobsArray = Array.isArray(jobs) ? jobs : [];
+    const userCities = Array.isArray(userPrefs.target_cities) 
+      ? userPrefs.target_cities 
+      : userPrefs.target_cities 
+        ? [userPrefs.target_cities] 
+        : [];
+    
+    const userCareer = userPrefs.professional_expertise || '';
+    const userCareerPaths = Array.isArray(userPrefs.career_path) 
+      ? userPrefs.career_path 
+      : userPrefs.career_path 
+        ? [userPrefs.career_path] 
+        : [];
+    
+    const scoredJobs: Array<{ job: Job; score: number }> = [];
+    
+    for (let i = 0; i < jobsArray.length; i++) {
+      const job = jobsArray[i];
+      const scoreResult = await this.calculateWeightedScore(
+        job,
+        userPrefs,
+        userCities,
+        userCareer,
+        userCareerPaths
+      );
+      
+      scoredJobs.push({
+        job,
+        score: scoreResult.score
+      });
+    }
+    
+    // Sort by score descending (highest score first)
+    const sorted = [...scoredJobs];
+    for (let i = 0; i < sorted.length - 1; i++) {
+      for (let j = i + 1; j < sorted.length; j++) {
+        if (sorted[i].score < sorted[j].score) {
+          const temp = sorted[i];
+          sorted[i] = sorted[j];
+          sorted[j] = temp;
+        }
+      }
+    }
+    
+    return sorted;
+  }
+
+  /**
+   * Check if cache should be bypassed due to stale data
+   * If >20 new matching jobs exist since cache entry, bypass cache
+   */
+  private async shouldBypassCache(
+    cacheKey: string,
+    userPrefs: UserPreferences,
+    jobs: Job[]
+  ): Promise<boolean> {
+    const cached = await this.matchCache.get(cacheKey);
+    if (!cached) return false;
+    
+    // Check if significant new jobs have been added
+    const cities = Array.isArray(userPrefs.target_cities) 
+      ? userPrefs.target_cities 
+      : userPrefs.target_cities ? [userPrefs.target_cities] : [];
+    
+    const careerPaths = Array.isArray(userPrefs.career_path) 
+      ? userPrefs.career_path 
+      : userPrefs.career_path ? [userPrefs.career_path] : [];
+    
+    // Count jobs matching user's criteria in current pool
+    let matchingJobCount = 0;
+    for (const job of jobs) {
+      const jobCity = (job.city || '').toLowerCase();
+      const matchesCity = cities.length === 0 || cities.some(city => 
+        jobCity.includes(city.toLowerCase())
+      );
+      
+      const jobCategories = (job.categories || []).map(c => String(c).toLowerCase());
+      const matchesCareer = careerPaths.length === 0 || careerPaths.some(path => {
+        const pathLower = String(path).toLowerCase();
+        return jobCategories.some(cat => 
+          cat.includes(pathLower) || pathLower.includes(cat)
+        );
+      });
+      
+      if (matchesCity && matchesCareer) {
+        matchingJobCount++;
+      }
+    }
+    
+    // If >20 new matching jobs since cache entry, bypass cache
+    const STALE_THRESHOLD = 20;
+    return matchingJobCount > STALE_THRESHOLD;
+  }
+
+  /**
    * Enhanced rule-based matching with weighted linear scoring model
    */
-  private performRuleBasedMatching(jobs: Job[], userPrefs: UserPreferences): JobMatch[] {
+  private async performRuleBasedMatching(jobs: Job[], userPrefs: UserPreferences): Promise<JobMatch[]> {
     // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
     const jobsArray = Array.isArray(jobs) ? jobs : [];
     
@@ -957,7 +1238,7 @@ Requirements:
 
     for (let i = 0; i < Math.min(jobsArray.length, 20); i++) {
       const job = jobsArray[i];
-      const scoreResult = this.calculateWeightedScore(job, userPrefs, userCities, userCareer, userCareerPaths);
+      const scoreResult = await this.calculateWeightedScore(job, userPrefs, userCities, userCareer, userCareerPaths);
       
       // Include matches above threshold (balanced for good coverage)
       if (scoreResult.score >= 65) {
@@ -997,13 +1278,13 @@ Requirements:
    * - Cold Start Boost: 15% (new users)
    * NO FRESHNESS: All jobs filtered to 60 days, so all are fresh!
    */
-  private calculateWeightedScore(
+  private async calculateWeightedScore(
     job: Job, 
     userPrefs: UserPreferences, 
     userCities: string[], 
     userCareer: string,
     userCareerPaths: string[]
-  ): { score: number; reasons: string[] } {
+  ): Promise<{ score: number; reasons: string[] }> {
     let score = 55; // Base score (increased for better match %s)
     const reasons: string[] = [];
     
@@ -1050,7 +1331,191 @@ Requirements:
 
     // Freshness removed: All jobs filtered to 60 days, so they're all fresh!
 
-    return { score: Math.min(100, Math.max(0, score)), reasons };
+    // Apply feedback-driven penalty (multiplicative)
+    const finalScore = await this.applyFeedbackPenalty(score, job, userPrefs);
+    
+    return { score: Math.min(100, Math.max(0, finalScore)), reasons };
+  }
+
+  /**
+   * Apply feedback-driven penalty to match score
+   * Formula: finalScore = initialScore * (1 - penalty)
+   * Penalty is 0-0.3 (max 30% reduction) based on user's negative feedback
+   */
+  private async applyFeedbackPenalty(
+    initialScore: number,
+    job: Job,
+    userPrefs: UserPreferences
+  ): Promise<number> {
+    // Feature flag: Enable/disable penalty system
+    const penaltyEnabled = process.env.ENABLE_FEEDBACK_PENALTY !== 'false'; // Default: enabled
+    if (!penaltyEnabled) {
+      return initialScore;
+    }
+
+    const userEmail = userPrefs.email;
+    if (!userEmail) {
+      return initialScore; // No user email = no penalty
+    }
+
+    try {
+      const penalty = await this.getUserAvoidancePenalty(userEmail, job);
+      
+      // Apply multiplicative penalty: finalScore = initialScore * (1 - penalty)
+      const finalScore = initialScore * (1 - penalty);
+      
+      // Log penalty application for monitoring
+      if (penalty > 0) {
+        apiLogger.debug('Feedback penalty applied', {
+          email: userEmail,
+          jobHash: job.job_hash,
+          initialScore,
+          penalty,
+          finalScore,
+          penaltyReason: `User has ${penalty > 0.2 ? 'strong' : 'moderate'} avoidance pattern for this category`
+        });
+      }
+      
+      return finalScore;
+    } catch (error) {
+      // If penalty calculation fails, return original score (fail-safe)
+      apiLogger.warn('Failed to calculate feedback penalty', {
+        email: userEmail,
+        jobHash: job.job_hash,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return initialScore;
+    }
+  }
+
+  /**
+   * Get user avoidance penalty for a job category
+   * Uses Redis caching to minimize database queries
+   * Returns penalty value 0-0.3 (max 30% reduction)
+   */
+  private async getUserAvoidancePenalty(
+    userEmail: string,
+    job: Job
+  ): Promise<number> {
+    // Get job category (primary anchor for penalty)
+    const category = job.categories?.[0] || '';
+    if (!category) {
+      return 0; // No category = no penalty
+    }
+
+    // Normalize category for cache key
+    const normalizedCategory = category.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    const cacheKey = `user:avoidance:${userEmail}:${normalizedCategory}`;
+    const cacheTTL = 300; // 5 minutes (feedback changes infrequently)
+
+    // Try Redis cache first
+    const cached = await withRedis(async (client) => {
+      const cached = await client.get(cacheKey);
+      if (cached) {
+        return parseFloat(cached);
+      }
+      return null;
+    });
+
+    if (cached !== null && !isNaN(cached)) {
+      return cached; // Return cached penalty
+    }
+
+    // Cache miss - calculate penalty from database
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const supabase = getDatabaseClient();
+    const { data: feedback, error } = await supabase
+      .from('match_logs')
+      .select('match_quality, job_context, match_tags, created_at')
+      .eq('user_email', userEmail)
+      .gte('created_at', thirtyDaysAgo.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(100); // Limit to recent feedback for performance
+
+    if (error) {
+      apiLogger.warn('Failed to fetch feedback for penalty calculation', {
+        email: userEmail,
+        error: error.message
+      });
+      // Cache zero penalty on error (fail-safe)
+      await withRedis(async (client) => {
+        await client.setEx(cacheKey, cacheTTL, '0');
+      });
+      return 0;
+    }
+
+    if (!feedback || feedback.length < 3) {
+      // Not enough data - cache zero penalty
+      await withRedis(async (client) => {
+        await client.setEx(cacheKey, cacheTTL, '0');
+      });
+      return 0;
+    }
+
+    // Filter feedback for this category
+    const categoryFeedback = feedback.filter(f => {
+      const ctx = f.job_context as any;
+      if (!ctx) return false;
+      
+      // Check if job context matches category
+      const jobCategory = ctx.category || ctx.categories?.[0] || ctx.career_path || '';
+      const jobCategories = Array.isArray(ctx.categories) ? ctx.categories : [];
+      
+      return jobCategory.toLowerCase() === category.toLowerCase() ||
+             jobCategories.some((cat: string) => 
+               String(cat).toLowerCase() === category.toLowerCase()
+             );
+    });
+
+    if (categoryFeedback.length < 3) {
+      // Not enough category-specific feedback
+      await withRedis(async (client) => {
+        await client.setEx(cacheKey, cacheTTL, '0');
+      });
+      return 0;
+    }
+
+    // Calculate penalty with asymmetric weighting: (hides - clicks*2) / (total + clicks), capped at 0.3
+    // Formula: NetAvoidance = (Hides - Clicks * 2) / (Total + Clicks)
+    // This ensures clicks count 2x more than hides (clicks = strong intent, hides = "not right now")
+    const hides = categoryFeedback.filter(f => 
+      f.match_quality === 'negative' || f.match_quality === 'hide'
+    ).length;
+    
+    // Count apply clicks first (these are also clicks, so we need to separate them)
+    // Check match_tags for 'apply_clicked' action (stored in match_context metadata)
+    const applyClicks = categoryFeedback.filter(f => {
+      const tags = f.match_tags as any;
+      if (!tags || typeof tags !== 'object') return false;
+      // Check if action is 'apply_clicked' in match_tags (from match_context metadata)
+      return tags.action === 'apply_clicked';
+    }).length;
+    
+    // Count regular clicks (excluding apply clicks to avoid double-counting)
+    const regularClicks = categoryFeedback.filter(f => {
+      const tags = f.match_tags as any;
+      const isApplyClick = tags && typeof tags === 'object' && tags.action === 'apply_clicked';
+      return !isApplyClick && (f.match_quality === 'positive' || f.match_quality === 'click');
+    }).length;
+    
+    const total = categoryFeedback.length;
+    
+    // Asymmetric weighting: regular clicks count 2x, apply clicks count 5x
+    // Formula: NetAvoidance = (Hides - RegularClicks*2 - ApplyClicks*5) / Total
+    const weightedClicks = (regularClicks * 2) + (applyClicks * 5);
+    const netAvoidance = (hides - weightedClicks) / total;
+    
+    // Cap penalty at 0.3 (30% max reduction)
+    const penalty = Math.min(0.3, Math.max(0, netAvoidance));
+
+    // Cache the result
+    await withRedis(async (client) => {
+      await client.setEx(cacheKey, cacheTTL, penalty.toString());
+    });
+
+    return penalty;
   }
 
   /**

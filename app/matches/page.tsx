@@ -171,7 +171,7 @@ function MatchesPageContent() {
   }, [dismissingJobId, getUserEmail]);
 
   // Memoized job click handler to prevent re-creating on every render
-  const handleJobClick = useCallback((jobId: number, company: string, position: number) => {
+  const handleJobClick = useCallback((jobId: number, company: string, position: number, job?: Job) => {
     // Track job view
     setJobsViewed(prev => {
       const newCount = prev + 1;
@@ -501,15 +501,95 @@ function MatchesPageContent() {
                 {job.description?.replace(/<[^>]*>/g, '').substring(0, 200)}...
               </p>
 
+              {/* Match Reason Display */}
+              {job.match_reason && (
+                <div className="mt-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+                  <p className="text-sm font-semibold text-emerald-400 mb-2 flex items-center gap-2">
+                    <span>💡</span>
+                    Why this match?
+                  </p>
+                  <p className="text-sm text-zinc-300 leading-relaxed mb-3">
+                    {job.match_reason}
+                  </p>
+                  
+                  {/* Match Pills - Extract from match reason */}
+                  {(() => {
+                    const pills: string[] = [];
+                    const reasonLower = job.match_reason.toLowerCase();
+                    
+                    // Extract location mentions
+                    const cities = ['london', 'dublin', 'paris', 'amsterdam', 'berlin', 'madrid', 'barcelona', 'munich', 'zurich', 'milan', 'rome', 'stockholm', 'copenhagen', 'vienna', 'prague', 'warsaw'];
+                    cities.forEach(city => {
+                      if (reasonLower.includes(city)) {
+                        const cityCapitalized = city.charAt(0).toUpperCase() + city.slice(1);
+                        if (!pills.includes(`📍 ${cityCapitalized}`)) {
+                          pills.push(`📍 ${cityCapitalized}`);
+                        }
+                      }
+                    });
+                    
+                    // Extract common skill/career mentions (if reason mentions them)
+                    const commonTerms = ['python', 'react', 'javascript', 'strategy', 'finance', 'marketing', 'sales', 'data', 'analytics', 'consulting'];
+                    commonTerms.forEach(term => {
+                      if (reasonLower.includes(term)) {
+                        const termCapitalized = term.charAt(0).toUpperCase() + term.slice(1);
+                        if (!pills.includes(`✓ ${termCapitalized}`)) {
+                          pills.push(`✓ ${termCapitalized}`);
+                        }
+                      }
+                    });
+                    
+                    if (pills.length > 0) {
+                      return (
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {pills.slice(0, 3).map((pill, idx) => (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-xs font-medium text-emerald-300"
+                            >
+                              {pill}
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <Button
                   variant="primary"
                   size="lg"
                   className="flex-1 bg-emerald-500 text-zinc-950 font-bold px-6 hover:bg-emerald-400 transition-all duration-200"
                   disabled={clickedJobId === job.id || isDismissing}
-                  onClick={() => {
+                  onClick={async () => {
                     setClickedJobId(job.id);
                     handleJobClick(job.id, job.company, index + 1);
+                    
+                    // Track apply click (5x weight in penalty calculation)
+                    const email = getUserEmail();
+                    if (email && job.job_hash) {
+                      apiCallJson('/api/feedback/enhanced', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          jobHash: job.job_hash,
+                          email,
+                          feedbackType: 'click',
+                          verdict: 'positive',
+                          relevanceScore: job.match_score || 80,
+                          matchQualityScore: 5,
+                          reason: 'User clicked Apply button',
+                          source: 'web',
+                          metadata: { action: 'apply_clicked', page: 'matches' },
+                        }),
+                      }).catch(err => {
+                        console.error('Failed to track apply click:', err);
+                        // Don't block user - tracking is non-critical
+                      });
+                    }
                     
                     // Open URL
                     window.open(job.url, '_blank', 'noopener,noreferrer');

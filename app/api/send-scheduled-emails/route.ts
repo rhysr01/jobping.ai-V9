@@ -219,61 +219,145 @@ async function handleSendScheduledEmails(req: NextRequest) {
           .filter(j => j !== null)
           .slice(0, jobsPerSend);
 
-        if (matchedJobs.length < jobsPerSend) {
-          usersWithoutMatches++;
-          apiLogger.debug('Insufficient matches for user', {
-            email: user.email,
-            found: matchedJobs.length,
-            required: jobsPerSend
-          });
-          continue;
-        }
-
-        // Extract work environment preferences (may be comma-separated string or array)
-        let targetWorkEnvironments: string[] = [];
-        if (user.preferences.work_environment) {
-          if (Array.isArray(user.preferences.work_environment)) {
-            targetWorkEnvironments = user.preferences.work_environment;
-          } else if (typeof user.preferences.work_environment === 'string') {
-            // Parse comma-separated string: "Office, Hybrid" -> ["Office", "Hybrid"]
-            targetWorkEnvironments = user.preferences.work_environment.split(',').map(env => env.trim()).filter(Boolean);
+        // DIGEST BATCHING: If user has >10 matches, send top 10 and queue the rest
+        const MAX_JOBS_PER_EMAIL = 10;
+        const hasExcessMatches = matchedJobs.length > MAX_JOBS_PER_EMAIL;
+        
+        if (hasExcessMatches) {
+          // Sort by match score and take top 10
+          const sortedJobs = [...matchedJobs].sort((a, b) => 
+            (b.match_score || 0) - (a.match_score || 0)
+          );
+          const topJobs = sortedJobs.slice(0, MAX_JOBS_PER_EMAIL);
+          const remainingJobs = sortedJobs.slice(MAX_JOBS_PER_EMAIL);
+          
+          // Extract work environment preferences
+          let targetWorkEnvironments: string[] = [];
+          if (user.preferences.work_environment) {
+            if (Array.isArray(user.preferences.work_environment)) {
+              targetWorkEnvironments = user.preferences.work_environment;
+            } else if (typeof user.preferences.work_environment === 'string') {
+              targetWorkEnvironments = user.preferences.work_environment.split(',').map(env => env.trim()).filter(Boolean);
+            }
           }
+
+          // Apply job distribution for diversity
+          const distributedJobs = distributeJobsWithDiversity(topJobs as any[], {
+            targetCount: MAX_JOBS_PER_EMAIL,
+            targetCities: user.preferences.target_cities || [],
+            maxPerSource: Math.ceil(MAX_JOBS_PER_EMAIL / 3),
+            ensureCityBalance: true,
+            targetWorkEnvironments: targetWorkEnvironments,
+            ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0
+          });
+
+          // Send first digest immediately
+          await sendMatchedJobsEmail({
+            to: user.email || '',
+            jobs: distributedJobs,
+            userName: user.full_name || undefined,
+            subscriptionTier: userTier,
+            isSignupEmail: false
+          });
+
+          // Queue remaining matches for 48 hours later
+          if (remainingJobs.length > 0) {
+            const scheduledFor = new Date();
+            scheduledFor.setHours(scheduledFor.getHours() + 48);
+            
+            // Store job data as JSONB
+            const jobData = remainingJobs.map(job => ({
+              job_hash: job.job_hash,
+              match_score: job.match_score || 0,
+              match_reason: job.match_reason || 'AI-matched'
+            }));
+
+            await supabase
+              .from('pending_digests')
+              .insert({
+                user_email: user.email,
+                job_hashes: jobData,
+                scheduled_for: scheduledFor.toISOString(),
+                sent: false,
+                cancelled: false
+              });
+            
+            apiLogger.info('Queued pending digest for user', {
+              email: user.email,
+              jobsQueued: remainingJobs.length,
+              scheduledFor: scheduledFor.toISOString()
+            });
+          }
+
+          // Update user's last_email_sent
+          await supabase
+            .from('users')
+            .update({
+              last_email_sent: new Date().toISOString(),
+              email_count: (originalUser.email_count || 0) + 1
+            })
+            .eq('email', user.email);
+
+          emailsSent++;
+        } else {
+          // User has <= 10 matches, send all at once (normal flow)
+          if (matchedJobs.length < jobsPerSend) {
+            usersWithoutMatches++;
+            apiLogger.debug('Insufficient matches for user', {
+              email: user.email,
+              found: matchedJobs.length,
+              required: jobsPerSend
+            });
+            continue;
+          }
+
+          // Extract work environment preferences (may be comma-separated string or array)
+          let targetWorkEnvironments: string[] = [];
+          if (user.preferences.work_environment) {
+            if (Array.isArray(user.preferences.work_environment)) {
+              targetWorkEnvironments = user.preferences.work_environment;
+            } else if (typeof user.preferences.work_environment === 'string') {
+              // Parse comma-separated string: "Office, Hybrid" -> ["Office", "Hybrid"]
+              targetWorkEnvironments = user.preferences.work_environment.split(',').map(env => env.trim()).filter(Boolean);
+            }
+          }
+
+          // Apply job distribution for diversity (cities AND work environments)
+          const distributedJobs = distributeJobsWithDiversity(matchedJobs as any[], {
+            targetCount: jobsPerSend,
+            targetCities: user.preferences.target_cities || [],
+            maxPerSource: Math.ceil(jobsPerSend / 3),
+            ensureCityBalance: true,
+            targetWorkEnvironments: targetWorkEnvironments,
+            ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0
+          });
+
+          // Send email
+          await sendMatchedJobsEmail({
+            to: user.email || '',
+            jobs: distributedJobs,
+            userName: user.full_name || undefined,
+            subscriptionTier: userTier,
+            isSignupEmail: false
+          });
+
+          // Update user's last_email_sent
+          await supabase
+            .from('users')
+            .update({
+              last_email_sent: new Date().toISOString(),
+              email_count: (originalUser.email_count || 0) + 1
+            })
+            .eq('email', user.email);
+
+          emailsSent++;
+          
+          apiLogger.info('Scheduled email sent successfully', {
+            email: user.email,
+            tier: userTier,
+            jobsSent: distributedJobs.length
+          });
         }
-
-        // Apply job distribution for diversity (cities AND work environments)
-        const distributedJobs = distributeJobsWithDiversity(matchedJobs as any[], {
-          targetCount: jobsPerSend,
-          targetCities: user.preferences.target_cities || [],
-          maxPerSource: Math.ceil(jobsPerSend / 3),
-          ensureCityBalance: true,
-          targetWorkEnvironments: targetWorkEnvironments,
-          ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0
-        });
-
-        // Send email
-        await sendMatchedJobsEmail({
-          to: user.email || '',
-          jobs: distributedJobs,
-          userName: user.full_name || undefined,
-          subscriptionTier: userTier,
-          isSignupEmail: false
-        });
-
-        // Update user's last_email_sent
-        await supabase
-          .from('users')
-          .update({
-            last_email_sent: new Date().toISOString(),
-            email_count: (originalUser.email_count || 0) + 1
-          })
-          .eq('email', user.email);
-
-        emailsSent++;
-        apiLogger.info('Scheduled email sent successfully', {
-          email: user.email,
-          tier: userTier,
-          jobsSent: distributedJobs.length
-        });
 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';

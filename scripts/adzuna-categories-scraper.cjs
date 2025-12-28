@@ -29,11 +29,28 @@ function isEarlyCareerJob(job) {
 const scriptStart = Date.now();
 let scrapeErrors = 0;
 
+/**
+ * Get country code for Adzuna API based on city name
+ * Adzuna requires specific country codes in the API path
+ * This ensures Dublin/Cork use 'ie' endpoint instead of 'gb'
+ */
+function getCountryCode(cityName, fallbackCountryCode = 'gb') {
+  // Ireland cities require 'ie' country code (critical fix for Dublin 404 errors)
+  if (cityName === 'Dublin' || cityName === 'Cork') {
+    return 'ie';
+  }
+  // For other cities, use the provided fallback (from EU_CITIES_CATEGORIES)
+  // This handles all other countries correctly (es, de, fr, it, nl, etc.)
+  return fallbackCountryCode;
+}
+
 // EU Cities - EXPANDED to 20 cities for better coverage
 const EU_CITIES_CATEGORIES = [
   { name: 'London', country: 'gb' },    // ✅ High performer
   { name: 'Manchester', country: 'gb' }, // 🆕 UK's 2nd largest city
   { name: 'Birmingham', country: 'gb' }, // 🆕 UK's 3rd largest city
+  { name: 'Dublin', country: 'ie' },     // ✅ RE-ENABLED: Fixed with getCountryCode helper
+  { name: 'Cork', country: 'ie' },       // 🆕 Ireland's 2nd largest city
   { name: 'Madrid', country: 'es' },    // ✅ High performer (prácticas goldmine)
   { name: 'Barcelona', country: 'es' }, // 🆕 Spain's 2nd largest city (tech/finance hub)
   { name: 'Berlin', country: 'de' },    // ✅ Moderate performer
@@ -45,7 +62,6 @@ const EU_CITIES_CATEGORIES = [
   { name: 'Zurich', country: 'ch' },    // ✅ Moderate performer
   { name: 'Milan', country: 'it' },     // ✅ High performer (470 jobs)
   { name: 'Rome', country: 'it' },      // 🆕 Italy's capital
-  // { name: 'Dublin', country: 'ie' },     // ❌ REMOVED: Not supported by Adzuna API (404 errors)
   { name: 'Stockholm', country: 'se' },  // 🆕 Nordic tech/finance hub
   { name: 'Copenhagen', country: 'dk' }, // 🆕 Nordic business hub
   { name: 'Vienna', country: 'at' },     // 🆕 Central European business hub
@@ -291,7 +307,10 @@ async function scrapeCityCategories(cityName, countryCode, queries, options = {}
       let hasMorePages = true;
       
       while (hasMorePages && page <= queryMaxPages) {
-        const url = `https://api.adzuna.com/v1/api/jobs/${countryCode}/search/${page}?app_id=${appId}&app_key=${appKey}&what=${encodeURIComponent(query)}&where=${encodeURIComponent(cityName)}&results_per_page=${resultsPerPage}&sort_by=date&max_days_old=${maxDaysOld}`;
+        // Use getCountryCode helper to ensure correct country code for API endpoint
+        // This fixes Dublin 404 errors by using 'ie' instead of 'gb'
+        const apiCountryCode = getCountryCode(cityName, countryCode);
+        const url = `https://api.adzuna.com/v1/api/jobs/${apiCountryCode}/search/${page}?app_id=${appId}&app_key=${appKey}&what=${encodeURIComponent(query)}&where=${encodeURIComponent(cityName)}&results_per_page=${resultsPerPage}&sort_by=date&max_days_old=${maxDaysOld}`;
       
         let response;
         let retries = 0;
@@ -614,6 +633,7 @@ module.exports = {
   scrapeCityCategories,
   scrapeAllCitiesCategories,
   generateCityQueries,
+  getCountryCode,
   EU_CITIES_CATEGORIES,
   CORE_ENGLISH_TERMS,
   LOCAL_EARLY_CAREER_TERMS,

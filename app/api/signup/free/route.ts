@@ -342,15 +342,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // OPTIMIZED: Skip pre-filtering - let AI do semantic matching
-    // AI matching is semantic and can understand relevance even without exact category matches
-    // Pre-filtering was too restrictive and removing good matches
-    // Only do basic location filtering (already done in DB query)
-    apiLogger.info('Free signup - skipping pre-filtering, using AI semantic matching', {
+    // NEW ARCHITECTURE: "Funnel of Truth"
+    // Stage 1: SQL Filter (already done - is_active, city, early-career)
+    // Stage 2-4: Hard Gates + Pre-Ranking + AI (handled in consolidatedMatchingV2)
+    // Stage 5: Diversity Pass (in distributeJobsWithDiversity)
+    apiLogger.info('Free signup - using new matching architecture', {
       email: normalizedEmail,
       totalJobsFetched: allJobs?.length || 0,
       targetCities: targetCities,
-      note: 'AI will handle semantic matching - understands context and relevance'
+      note: 'Matching engine handles hard gates, pre-ranking, and AI matching'
     });
 
     const userPrefs = {
@@ -366,32 +366,42 @@ export async function POST(request: NextRequest) {
       professional_expertise: userData.career_path || '',
     };
 
-    // Use all jobs directly - AI will do semantic matching
-    const preFilteredJobs = allJobs || [];
+    // Pass all jobs to matching engine - it handles hard gates and pre-ranking
+    const jobsForMatching = allJobs || [];
 
-    if (!preFilteredJobs || preFilteredJobs.length === 0) {
+    if (!jobsForMatching || jobsForMatching.length === 0) {
       return NextResponse.json(
         { error: 'No matches found. Try different cities or career paths.' },
         { status: 404 }
       );
     }
 
-    // Run matching using YOUR matching engine
+    // Run matching using consolidated matching engine
+    // Engine handles: Hard Gates → Pre-Ranking → AI Matching
     let matchedJobsRaw: any[] = [];
     
     if (!process.env.OPENAI_API_KEY) {
       apiLogger.warn('OPENAI_API_KEY not set - using fallback matching without AI', { 
         email: normalizedEmail,
-        preFilteredCount: preFilteredJobs.length
+        jobCount: jobsForMatching.length
       });
       
-      // FALLBACK: Use pre-filtered jobs directly with default scores
-      // This allows free signup to work even if OpenAI API key is missing
-      matchedJobsRaw = preFilteredJobs.slice(0, 50).map((job: any) => ({
-        ...job,
-        match_score: 75, // Default score for non-AI matched jobs
-        match_reason: 'Pre-filtered match (AI matching unavailable)',
-      }));
+      // FALLBACK: Use rule-based matching (engine will handle hard gates and pre-ranking)
+      const matcher = createConsolidatedMatcher();
+      const matchResult = await matcher.performMatching(
+        jobsForMatching as any[],
+        userPrefs as any,
+        true // Force rule-based
+      );
+      
+      matchedJobsRaw = matchResult.matches.map((m: any) => {
+        const job = jobsForMatching.find((j: any) => j.job_hash === m.job_hash);
+        return job ? {
+          ...job,
+          match_score: m.match_score,
+          match_reason: m.match_reason,
+        } : null;
+      }).filter((j: any) => j !== null);
       
       apiLogger.info('Fallback matching completed (no AI)', {
         email: normalizedEmail,
@@ -399,83 +409,60 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // Normal AI matching flow
+      // Matching engine handles: Hard Gates → Pre-Ranking → AI Matching
       const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
-      
-      // Take diverse sample from pre-filtered jobs for better variety
-      // Instead of just first 50, sample evenly across the pool
-      const sampleSize = Math.min(50, preFilteredJobs.length);
-      const jobsForAI: any[] = [];
-      
-      if (preFilteredJobs.length <= sampleSize) {
-        // If we have fewer jobs than sample size, use all
-        jobsForAI.push(...preFilteredJobs);
-      } else {
-        // Sample evenly across the array for variety
-        const step = Math.floor(preFilteredJobs.length / sampleSize);
-        for (let i = 0; i < preFilteredJobs.length && jobsForAI.length < sampleSize; i += step) {
-          jobsForAI.push(preFilteredJobs[i]);
-        }
-        
-        // Fill remaining slots with random samples if needed
-        while (jobsForAI.length < sampleSize) {
-          const randomIndex = Math.floor(Math.random() * preFilteredJobs.length);
-          const randomJob = preFilteredJobs[randomIndex];
-          if (!jobsForAI.includes(randomJob)) {
-            jobsForAI.push(randomJob);
-          }
-        }
-      }
       
       apiLogger.info('Starting AI matching', { 
         email: normalizedEmail,
-        jobsCount: jobsForAI.length,
+        jobsCount: jobsForMatching.length,
         cities: targetCities,
-        careerPath: userData.career_path
+        careerPath: userData.career_path,
+        note: 'Matching engine will apply hard gates, pre-rank, and select top 50 for AI'
       });
 
       let matchResult;
       try {
-        matchResult = await matcher.performMatching(jobsForAI, userPrefs as any);
+        // Pass all jobs - engine handles hard gates and pre-ranking internally
+        matchResult = await matcher.performMatching(jobsForMatching as any[], userPrefs as any);
       } catch (matchingError) {
         apiLogger.error('AI matching failed', matchingError as Error, { 
           email: normalizedEmail,
-          jobsCount: jobsForAI.length,
+          jobsCount: jobsForMatching.length,
           errorMessage: matchingError instanceof Error ? matchingError.message : String(matchingError)
         });
         
-        // FALLBACK: If AI matching fails, use pre-filtered jobs
-        apiLogger.warn('AI matching failed, using fallback', { email: normalizedEmail });
-        matchedJobsRaw = preFilteredJobs.slice(0, 50).map((job: any) => ({
-          ...job,
-          match_score: 70, // Slightly lower score for fallback
-          match_reason: 'Pre-filtered match (AI matching failed)',
-        }));
+        // FALLBACK: Engine will use rule-based matching automatically
+        apiLogger.warn('AI matching failed, engine will use rule-based fallback', { email: normalizedEmail });
+        const fallbackResult = await matcher.performMatching(
+          jobsForMatching as any[],
+          userPrefs as any,
+          true // Force rule-based
+        );
+        matchResult = fallbackResult;
       }
 
       if (!matchResult || !matchResult.matches || matchResult.matches.length === 0) {
-        apiLogger.warn('No matches returned from AI matching, using fallback', { 
+        apiLogger.warn('No matches returned from matching engine', { 
           email: normalizedEmail,
-          jobsCount: jobsForAI.length,
-          preFilteredCount: preFilteredJobs.length,
+          jobsCount: jobsForMatching.length,
           cities: targetCities,
           careerPath: userData.career_path
         });
         
-        // FALLBACK: Use pre-filtered jobs if AI returns nothing
-        matchedJobsRaw = preFilteredJobs.slice(0, 50).map((job: any) => ({
-          ...job,
-          match_score: 70,
-          match_reason: 'Pre-filtered match (AI returned no matches)',
-        }));
+        return NextResponse.json(
+          { error: 'No matches found. Try different cities or career paths.' },
+          { status: 404 }
+        );
       } else {
-        apiLogger.info('AI matching completed', { 
+        apiLogger.info('Matching completed', { 
           email: normalizedEmail,
-          matchesCount: matchResult.matches.length
+          matchesCount: matchResult.matches.length,
+          method: matchResult.method
         });
 
         // Get matched jobs with full data
         for (const m of matchResult.matches) {
-          const job = preFilteredJobs.find((j: any) => j.job_hash === m.job_hash);
+          const job = jobsForMatching.find((j: any) => j.job_hash === m.job_hash);
           if (job) {
             matchedJobsRaw.push({
               ...job,

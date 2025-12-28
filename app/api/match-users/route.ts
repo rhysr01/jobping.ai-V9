@@ -741,61 +741,18 @@ logger.info('API request', {
         // Filter out jobs the user has already received
         const unseenJobs = jobs.filter(job => !previousJobHashes.has(job.job_hash));
         
-        // OPTIMIZED: Skip pre-filtering - let AI do semantic matching
-        // AI matching is semantic and can understand relevance even without exact category matches
-        // Pre-filtering was too restrictive and removing good matches
-        // Send top 50 jobs to AI for semantic matching
-        const considered = unseenJobs.slice(0, 50);
-        // Log pre-filter results
-          logger.debug('Pre-filter results', {
-            metadata: {
-              userEmail: user.email,
-              totalJobs: preFilteredJobs.length,
-              sendingToAI: 50
-            }
-          });
+        // NEW ARCHITECTURE: "Funnel of Truth"
+        // Stage 1: SQL Filter (already done in jobSearchService)
+        // Stage 2-4: Hard Gates + Pre-Ranking + AI (handled in consolidatedMatchingV2)
+        // Stage 5: Diversity Pass (after AI matching)
         
-        // Log score distribution for observability
-        if (preFilteredJobs.length >= 50) {
-          const top10Scores = preFilteredJobs.slice(0, 10).map((j: any) => (j as any).score || 'N/A');
-          const next40Scores = preFilteredJobs.slice(10, 50).map((j: any) => (j as any).score || 'N/A');
-          
-            logger.debug('Job score distribution analysis', {
-              metadata: {
-                userEmail: user.email,
-                totalJobs: preFilteredJobs.length,
-                top10Scores: top10Scores.filter((s: any) => typeof s === 'number'),
-                next40Range: {
-                  max: Math.max(...next40Scores.filter((s: any) => typeof s === 'number')),
-                  min: Math.min(...next40Scores.filter((s: any) => typeof s === 'number'))
-                }
-              }
-            });
-        }
-        
-        // Apply simple job distribution
-        const distributionStart = Date.now();
-        lap('distribute');
-        // Get user form values for student satisfaction scoring
-        const userFormValues = user.preferences.career_path && user.preferences.career_path.length > 0
-          ? user.preferences.career_path.map(path => mapFormLabelToDatabase(path))
-          : undefined;
-
-        const { jobs: distributedJobs, metrics: distributionMetrics } = distributeJobs(
-          considered,
-          user.subscription_tier || 'free',
-          user.email || '',
-          user.preferences.career_path && user.preferences.career_path.length > 0 ? user.preferences.career_path[0] : undefined,
-          userFormValues,
-          user.preferences.work_environment || undefined,
-          user.preferences.entry_level_preference || undefined,
-          user.preferences.company_types || undefined
-        );
-        const distributionTime = Date.now() - distributionStart;
-        totalTierDistributionTime += distributionTime;
-
-        // AI will pick best 5 from these top 50 pre-filtered & distributed jobs
-        const capped = distributedJobs.slice(0, 50);
+        logger.debug('Starting matching pipeline', {
+          metadata: {
+            userEmail: user.email,
+            totalJobs: unseenJobs.length,
+            note: 'Hard gates and pre-ranking now handled in matching engine'
+          }
+        });
 
         // AI matching with performance tracking and circuit breaker
         let matches: JobMatch[] = [];
@@ -810,8 +767,11 @@ logger.info('API request', {
         lap('ai_or_rules');
 
         // Use the consolidated matching engine
-        // Cast to Job[] for the matching engine
-        const jobsForMatching = distributedJobs as any[];
+        // The engine now handles:
+        // - Hard gates (visa, language, location) - before AI
+        // - Pre-ranking by rule-based scoring - ensures AI sees most relevant jobs
+        // - AI semantic matching - top 50 highest-scoring jobs
+        const jobsForMatching = unseenJobs as any[];
         const result = await matcher.performMatching(
           jobsForMatching,
           user as unknown as UserPreferences,
@@ -829,7 +789,7 @@ logger.info('API request', {
         if (matches && matches.length > 0) {
           // Get full job data for matched jobs
           const matchedJobsRaw = matches.map(m => {
-            const job = distributedJobs.find(j => j.job_hash === m.job_hash);
+            const job = unseenJobs.find(j => j.job_hash === m.job_hash);
             return job ? {
               ...job,
               match_score: m.match_score,
@@ -905,7 +865,7 @@ logger.info('API request', {
           });
 
           const matchedJobs = matches.map(m => {
-            const job = distributedJobs.find(j => j.job_hash === m.job_hash);
+            const job = unseenJobs.find(j => j.job_hash === m.job_hash);
             return job ? { ...m, source: (job as any).source, location: job.location } : m;
           });
           
@@ -939,7 +899,7 @@ logger.info('API request', {
           if (userTargetCities.length >= 2 && matches.length >= 3) {
             apiLogger.debug(`Ensuring even city distribution`, {
               targetCities: userTargetCities.length,
-              availableJobs: distributedJobs.length
+              availableJobs: unseenJobs.length
             });
             
             // Calculate target distribution (3+2 for 2 cities, 2+2+1 for 3 cities, etc.)
@@ -999,7 +959,7 @@ logger.info('API request', {
             
             for (const allocation of cityAllocations) {
               // Get all jobs from this city
-              const cityJobs = distributedJobs.filter(job => {
+              const cityJobs = unseenJobs.filter(job => {
                 const loc = job.location.toLowerCase();
                 return loc.includes(allocation.city.toLowerCase()) &&
                        !newMatches.some(m => m.job_hash === job.job_hash);
@@ -1057,7 +1017,7 @@ logger.info('API request', {
           const maxAllowedFromOneSource = Math.ceil(matches.length / 2); // Max 50% from one source
           const dominantSource = Object.entries(sourceCounts).find(([_, count]) => count > maxAllowedFromOneSource);
           
-          if (dominantSource && distributedJobs.length > 10) {
+          if (dominantSource && unseenJobs.length > 10) {
             const [primarySource, count] = dominantSource;
             const excess = count - maxAllowedFromOneSource;
             
@@ -1070,7 +1030,7 @@ logger.info('API request', {
             });
             
             // Find jobs from OTHER sources in our pre-filtered pool
-            const alternativeSources = distributedJobs.filter(j => {
+            const alternativeSources = unseenJobs.filter(j => {
               const jobSource = (j as any).source || 'unknown';
               return jobSource !== primarySource;
             });
@@ -1118,13 +1078,13 @@ logger.info('API request', {
           
           // Log final diversity
           const finalSources = matches.map(m => {
-            const job = distributedJobs.find(j => j.job_hash === m.job_hash);
+            const job = unseenJobs.find(j => j.job_hash === m.job_hash);
             return (job as any)?.source;
           }).filter(Boolean);
           const finalUniqueSources = new Set(finalSources);
           
           const finalCities = matches.map(m => {
-            const job = distributedJobs.find(j => j.job_hash === m.job_hash);
+            const job = unseenJobs.find(j => j.job_hash === m.job_hash);
             const loc = job?.location?.toLowerCase() || '';
             const jobCity = job?.city?.toLowerCase() || '';
             return userTargetCities.find((city: string) => {
@@ -1153,7 +1113,9 @@ logger.info('API request', {
             match_algorithm: matchType === 'ai_success' ? 'ai' : 'rules',
             ai_latency_ms: aiMatchingTime,
             cache_hit: userProvenance.cache_hit || false,
-            fallback_reason: matchType !== 'ai_success' ? 'ai_failed_or_fallback' : undefined
+            fallback_reason: matchType !== 'ai_success' ? 'ai_failed_or_fallback' : undefined,
+            ai_model: result.aiModel || null,
+            ai_cost_usd: result.aiCostUsd || null
           };
           
           // Add user email to matches for service
@@ -1176,6 +1138,8 @@ logger.info('API request', {
                 ai_latency_ms: finalProvenance.ai_latency_ms || null,
                 cache_hit: finalProvenance.cache_hit || false,
                 fallback_reason: finalProvenance.fallback_reason || null,
+                ai_model: finalProvenance.ai_model || null,
+                ai_cost_usd: finalProvenance.ai_cost_usd || null,
               }));
 
             if (matchEntries.length > 0) {

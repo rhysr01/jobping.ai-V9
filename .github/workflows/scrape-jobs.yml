@@ -2,8 +2,8 @@ name: Automated Job Scraping
 
 on:
   schedule:
-    # Run every 4 hours
-    - cron: '0 */4 * * *'
+    # Runs at 08:00 and 18:00 UTC every day (2x daily)
+    - cron: '0 8,18 * * *'
   
   # Allow manual triggering
   workflow_dispatch:
@@ -18,11 +18,6 @@ on:
         required: false
         default: ''
         type: string
-      cleanup_only:
-        description: 'Run cleanup only'
-        required: false
-        default: false
-        type: boolean
 
 concurrency:
   group: scrape
@@ -31,21 +26,30 @@ concurrency:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    timeout-minutes: 120 # Prevent hanging runs
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Node.js
+    - name: Setup Node.js (LTS)
       uses: actions/setup-node@v4
       with:
-        node-version: '24'
+        node-version: '20'  # Use LTS instead of 24
         cache: 'npm'
 
     - name: Setup Python 3.11 (for JobSpy)
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('scripts/python-requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
 
     - name: Install Python deps (JobSpy)
       run: |
@@ -55,11 +59,29 @@ jobs:
     - name: Install dependencies
       run: npm ci
       
+    - name: Validate required secrets
+      run: |
+        if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+          echo "❌ SUPABASE_URL secret is missing"
+          exit 1
+        fi
+        if [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
+          echo "❌ SUPABASE_SERVICE_ROLE_KEY secret is missing"
+          exit 1
+        fi
+        if [ -z "${{ secrets.ADZUNA_APP_ID }}" ]; then
+          echo "⚠️  ADZUNA_APP_ID secret is missing (Adzuna scraper will fail)"
+        fi
+        if [ -z "${{ secrets.REED_API_KEY }}" ]; then
+          echo "⚠️  REED_API_KEY secret is missing (Reed scraper will fail)"
+        fi
+        echo "✅ Required secrets validated"
+      
     - name: Run scraping
       env:
-        # Database (use existing secret for now)
-        NEXT_PUBLIC_SUPABASE_URL: https://kpecjbjtdjzgkzywylhn.supabase.co
-        SUPABASE_URL: https://kpecfrvtbgnjbjtdjzgkzywylhn.supabase.co
+        # Database (from secrets, not hardcoded)
+        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -74,17 +96,25 @@ jobs:
         RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         JOBPING_API_KEY: ${{ secrets.JOBPING_API_KEY }}
         
+        # Scraper Configuration
+        SCRAPER_CYCLE_JOB_TARGET: 5000
+        JOB_TTL_DAYS: 10
+        
         # Environment
         NODE_ENV: production
         JOBPING_PRODUCTION_MODE: 'true'
+        GITHUB_ACTIONS: 'true' # Ensures single-run mode
         CITY: ${{ github.event.inputs.city }}
-        # Tell your Node script which interpreter to use
         PYTHON: python
       run: |
+        set -e  # Exit on error
+        set -o pipefail  # Catch errors in pipes
+        
         echo "🚀 Starting JobPing scraping..."
         SCRAPERS_INPUT="${{ github.event.inputs.scrapers }}"
+        
         if [ -z "$SCRAPERS_INPUT" ] || [ "$SCRAPERS_INPUT" = "orchestrator" ]; then
-          echo "▶️ Running streamlined orchestrator (4 core scrapers)"
+          echo "▶️ Running streamlined orchestrator (all scrapers via real-job-runner)"
           node automation/real-job-runner.cjs --single-run
         else
           IFS=',' read -ra NAMES <<< "$SCRAPERS_INPUT"
@@ -92,7 +122,11 @@ jobs:
             case "$s" in
               adzuna)
                 echo "▶️ Running Adzuna wrapper (CITY=$CITY)"
-                if [ -n "$CITY" ]; then CITY="$CITY" node scrapers/wrappers/adzuna-wrapper.cjs; else node scrapers/wrappers/adzuna-wrapper.cjs; fi
+                if [ -n "$CITY" ]; then 
+                  CITY="$CITY" node scrapers/wrappers/adzuna-wrapper.cjs
+                else 
+                  node scrapers/wrappers/adzuna-wrapper.cjs
+                fi
                 ;;
               jobspy)
                 echo "▶️ Running JobSpy wrapper"
@@ -104,46 +138,21 @@ jobs:
                 ;;
               *)
                 echo "❓ Unknown scraper: $s (supported: adzuna, jobspy, reed, orchestrator)"
+                exit 1
                 ;;
             esac
           done
         fi
 
-  # Optional: Add a job to run cleanup more frequently
-  cleanup:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' # Only run on schedule, not manual
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
+    - name: Upload logs (on failure)
+      if: failure()
+      uses: actions/upload-artifact@v3
       with:
-        node-version: '24'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Run cleanup
-      env:
-        NEXT_PUBLIC_SUPABASE_URL: https://kpecjbjtdjzgkzywylhn.supabase.co
-        SUPABASE_URL: https://kpecjbjtdjzgkzywylhn.supabase.co
-        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        NODE_ENV: production
-      run: |
-        echo "🔍 Preflight checks..."
-        if [ -z "$SUPABASE_URL" ]; then
-          echo "❌ SUPABASE_URL is not set"
-          exit 1
-        fi
-        if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
-          echo "❌ SUPABASE_SERVICE_ROLE_KEY is not set"
-          exit 1
-        fi
-        echo "✅ Environment variables validated"
-        echo "🧹 Starting cleanup..."
-        npx tsx scripts/cleanup-jobs.ts
+        name: scraper-logs-${{ github.run_id }}
+        path: |
+          *.log
+          logs/
+        retention-days: 7
+
+    # Note: Cleanup is already handled by real-job-runner.cjs (deactivateStaleJobs)
+    # The separate cleanup job was removed as it's redundant

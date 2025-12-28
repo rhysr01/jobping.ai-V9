@@ -19,6 +19,7 @@ function parseJson(value) {
 
 const { recordScraperRun } = require('../shared/telemetry.cjs');
 const { classifyEarlyCareer, makeJobHash } = require('../shared/helpers.cjs');
+const { processIncomingJob } = require('../shared/processor.cjs');
 
 async function main() {
   const startTime = Date.now();
@@ -59,13 +60,7 @@ async function main() {
     const allFormRoles = getAllRoles().map(r => r.toLowerCase());
     
     function convertToDatabaseFormat(job) {
-      const { isRemote } = localParseLocation(job.location);
-      const job_hash = makeJobHash(job);
-      const nowIso = new Date().toISOString();
-      
       const titleLower = (job.title || '').toLowerCase();
-      const descLower = (job.description || '').toLowerCase();
-      const fullText = `${titleLower} ${descLower}`;
       
       // Check multiple criteria for early-career classification
       const hasEarlyTerms = classifyEarlyCareer(job);
@@ -85,22 +80,21 @@ async function main() {
         return null;
       }
       
+      // Process through standardization pipe
+      const processed = processIncomingJob(job, {
+        source: 'adzuna',
+      });
+      
+      // Generate job_hash
+      const job_hash = makeJobHash({
+        title: processed.title,
+        company: processed.company,
+        location: processed.location,
+      });
+      
       return {
+        ...processed,
         job_hash,
-        title: (job.title || '').trim(),
-        company: (job.company || '').trim(),
-        location: (job.location || '').trim(),
-        description: (job.description || '').trim(),
-        job_url: (job.url || '').trim(),
-        source: (job.source || 'adzuna').trim(),
-        posted_at: job.posted_at || nowIso,
-        categories: ['early-career'],
-        work_environment: isRemote ? 'remote' : 'on-site',
-        experience_required: 'entry-level',
-        original_posted_date: job.posted_at || nowIso,
-        last_seen_at: nowIso,
-        is_active: true,
-        created_at: nowIso
       };
     }
     

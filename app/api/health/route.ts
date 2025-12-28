@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseClient } from '@/Utils/databasePool';
-import { createClient as createRedisClient } from 'redis';
+import { isRedisAvailable } from '@/lib/redis-client';
 
 // Helper to get requestId from request
 function getRequestId(req: NextRequest): string {
@@ -156,41 +156,25 @@ function checkEnvironment(): { status: HealthStatus; message: string; missing: s
 }
 
 async function checkRedis(): Promise<ServiceCheck> {
-  const url = process.env.REDIS_URL;
-  if (!url) {
+  if (!process.env.REDIS_URL) {
     return { status: 'degraded', message: 'REDIS_URL not configured' };
   }
 
   const started = Date.now();
-  const client = createRedisClient({
-    url,
-    socket: {
-      connectTimeout: 2000
-    }
-  });
-
   try {
-    await client.connect();
-    const pong = await client.ping();
+    const available = await isRedisAvailable();
     return {
-      status: pong === 'PONG' ? 'healthy' : 'degraded',
-      message: `Redis ping: ${pong}`,
+      status: available ? 'healthy' : 'degraded',
+      message: available ? 'Redis connection OK' : 'Redis unavailable',
       latencyMs: Date.now() - started
     };
   } catch (error) {
     return {
       status: 'unhealthy',
       message: error instanceof Error ? error.message : 'Redis connection failed',
-      details: { error }
+      details: { error },
+      latencyMs: Date.now() - started
     };
-  } finally {
-    try {
-      if (client.isOpen) {
-        await client.quit();
-      }
-    } catch (closeError) {
-      console.warn('Failed to close Redis client during health check', closeError);
-    }
   }
 }
 
