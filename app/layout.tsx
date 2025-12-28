@@ -13,7 +13,7 @@ import CookieBanner from "@/components/ui/CookieBanner";
 export const metadata: Metadata = {
   title: "JobPing → EU early-career roles. Free: instant matches. Premium: 3x per week.",
   description:
-    "EU early-career roles. Free: See 5 example matches to try it out. Premium: 15 jobs per week via email (3x per week: Mon/Wed/Fri). We monitor 1,000+ companies across Europe and send you hand-picked internships, graduate schemes, and entry-level roles - matched to your city, skills, and goals.",
+    "EU early-career roles. Free: Get 5 instant matches. Premium: 15 jobs per week via email (3x per week: Mon/Wed/Fri). We monitor 1,000+ companies across Europe and send you hand-picked internships, graduate schemes, and entry-level roles - matched to your city, skills, and goals.",
   keywords: [
     "graduate jobs",
     "internships Europe",
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "JobPing → EU early-career roles. Free: instant matches. Premium: 3x per week.",
     description:
-      "EU early-career roles. Free: See 5 example matches to try it out. Premium: 15 jobs per week via email (3x per week: Mon/Wed/Fri). Hand-picked internships, graduate schemes, and entry-level roles matched to your profile.",
+      "EU early-career roles. Free: Get 5 instant matches. Premium: 15 jobs per week via email (3x per week: Mon/Wed/Fri). Hand-picked internships, graduate schemes, and entry-level roles matched to your profile.",
     url: "https://getjobping.com",
     siteName: "JobPing",
     locale: "en_US",
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "JobPing → EU early-career roles. Free: instant matches. Premium: 3x per week.",
     description:
-      "EU early-career roles. Free: See 5 example matches to try it out. Premium: 15 jobs per week via email (3x per week: Mon/Wed/Fri).",
+      "EU early-career roles. Free: Get 5 instant matches. Premium: 15 jobs per week via email (3x per week: Mon/Wed/Fri).",
     creator: "@jobping",
     images: ["https://getjobping.com/og-image.png"],
   },
@@ -143,7 +143,17 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="text-white premium-bg custom-scrollbar">
+      <body className="text-white premium-bg custom-scrollbar relative">
+        {/* Cursor follower radial gradient - desktop only */}
+        <div 
+          id="cursor-follower"
+          className="fixed pointer-events-none z-0 w-[600px] h-[600px] rounded-full opacity-0 transition-opacity duration-300 hidden md:block"
+          style={{
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.03), transparent 70%)',
+            transform: 'translate(-50%, -50%)',
+            willChange: 'transform',
+          }}
+        />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3
@@ -157,6 +167,37 @@ export default async function RootLayout({
         <ErrorBoundary>{children}</ErrorBoundary>
         <Toaster />
         <CookieBanner />
+        {/* Cursor follower script - desktop only */}
+        <Script id="cursor-follower" strategy="afterInteractive">
+          {`
+            if (window.matchMedia('(min-width: 768px)').matches) {
+              const follower = document.getElementById('cursor-follower');
+              if (follower) {
+                let mouseX = 0, mouseY = 0;
+                let followerX = 0, followerY = 0;
+                
+                document.addEventListener('mousemove', (e) => {
+                  mouseX = e.clientX;
+                  mouseY = e.clientY;
+                  follower.style.opacity = '1';
+                });
+                
+                function animate() {
+                  followerX += (mouseX - followerX) * 0.1;
+                  followerY += (mouseY - followerY) * 0.1;
+                  follower.style.left = followerX + 'px';
+                  follower.style.top = followerY + 'px';
+                  requestAnimationFrame(animate);
+                }
+                animate();
+                
+                document.addEventListener('mouseleave', () => {
+                  follower.style.opacity = '0';
+                });
+              }
+            }
+          `}
+        </Script>
         {/* Google Analytics - inline script will work with CSP nonce via Next.js */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-G40ZHDYNL6"

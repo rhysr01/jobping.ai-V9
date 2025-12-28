@@ -50,7 +50,7 @@ export default function Pricing() {
   const { stats } = useStats();
   
   return (
-    <section id="pricing" data-testid="pricing" className="pt-24 pb-24 md:pt-28 md:pb-28 lg:pt-32 lg:pb-32 relative overflow-hidden bg-black scroll-snap-section">
+    <section id="pricing" data-testid="pricing" className="py-24 md:py-32 relative overflow-hidden bg-black scroll-snap-section">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       {/* Soft section band */}
@@ -108,11 +108,6 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
 
   return (
     <div className="relative">
-      {plan.badge && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 text-xs font-semibold px-4 py-1.5 rounded-full bg-yellow-400/20 border border-yellow-400/50 text-yellow-200 shadow-md shadow-yellow-400/20 whitespace-nowrap">
-          Most popular
-        </span>
-      )}
       <motion.article
         data-testid={`${plan.id}-plan`}
         initial={{ opacity: 0, y: 28 }}
@@ -121,14 +116,29 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
         transition={{ duration: 0.55, delay: index * 0.1 }}
         className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-xl backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7 ${
           isPremium 
-            ? 'bg-zinc-900 border border-brand-500/60 shadow-pricing md:scale-[1.05] md:-translate-y-2' 
-            : 'bg-white/[0.06] border border-white/10 shadow-pricing md:scale-100 md:translate-y-0'
+            ? 'bg-zinc-900 border border-purple-500/30 shadow-pricing md:scale-[1.05] md:-translate-y-2 shadow-[0_0_50px_rgba(139,92,246,0.2)]' 
+            : 'bg-white/[0.06] border border-white/10 shadow-pricing md:scale-100 md:translate-y-0 shadow-[0_0_50px_rgba(0,0,0,0.3)]'
         }`}
       >
         {isPremium && (
           <>
             <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] bg-[radial-gradient(circle_at_center,theme(colors.brand.500/0.35),_transparent_70%)] blur-sm-hero" />
-            <div className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] ring-1 ring-violet-500/30" />
+            {/* Subtle pulsing glow border instead of badge */}
+            <motion.div 
+              className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] border border-purple-500/30"
+              animate={{
+                boxShadow: [
+                  '0 0 20px rgba(139, 92, 246, 0.2)',
+                  '0 0 30px rgba(139, 92, 246, 0.4)',
+                  '0 0 20px rgba(139, 92, 246, 0.2)',
+                ],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+            />
           </>
         )}
 
@@ -143,7 +153,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
 
         <ul className="mt-6 space-y-4">
           {plan.features.map(feature => (
-            <li key={feature} className="flex items-start gap-3 text-sm font-medium text-zinc-100 sm:text-base">
+            <li key={feature} className="flex items-start gap-4 text-sm font-medium text-zinc-100 sm:text-base">
               <span className="mt-0.5 inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-brand-200">
                 <BrandIcons.Check className="h-3.5 w-3.5" />
               </span>
@@ -170,8 +180,8 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
             aria-label={isPremium ? "Start Premium - Weekly emails" : "Try Free Now - Instant matches"}
             className={`group relative inline-flex items-center justify-center overflow-hidden h-11 rounded-full px-6 text-sm font-medium transition-all duration-300 sm:text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
               isPremium
-                ? 'bg-brand-500 text-white shadow-md shadow-brand-500/40 hover:bg-brand-500/90 hover:-translate-y-0.5 hover:shadow-feature'
-                : 'border border-white/15 bg-white/5 text-white hover:border-brand-500/40 hover:bg-brand-500/10'
+                ? 'bg-brand-500 text-white shadow-md shadow-brand-500/40 hover:bg-purple-600 hover:-translate-y-0.5 hover:shadow-feature transition-all'
+                : 'border border-white/15 bg-white/5 text-white hover:border-brand-500/40 hover:bg-white/5 transition-all'
             }`}
           >
             <span className="relative flex items-center gap-2">

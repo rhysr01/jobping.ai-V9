@@ -23,7 +23,7 @@ const faqs = [
   },
   {
     question: "How often will you email me?",
-    answer: `Free users get 5 example matches to try it out (one-time preview, no emails). Premium users get 15 matches per week across 3 drops (Monday, Wednesday, Friday).`
+    answer: `Free users get 5 instant matches to try it out (one-time preview, no emails). Premium users get 15 matches per week across 3 drops (Monday, Wednesday, Friday).`
   },
   {
     question: "Can I cancel immediately?",

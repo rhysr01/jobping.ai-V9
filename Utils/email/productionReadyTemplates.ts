@@ -393,7 +393,7 @@ export function createWelcomeEmail(
     <td class="content" align="center">
       <div class="pill">${matchCount} new ${matchesLabel} already picked for you <span role="img" aria-label="target">🎯</span></div>
       <h1 class="title">Welcome, ${friendName}! <span role="img" aria-label="rocket">🚀</span></h1>
-      <p class="text">We're here to get you into a high-quality EU early-career role — no job board scrolling, no generic blasts.</p>
+      <p class="text">We're here to get you into a high-quality EU early-career role - no job board scrolling, no generic blasts.</p>
       <p class="text">You'll receive your first ${matchesLabel} within the next 24 hours, then fresh, hand-curated drops every week. Each one is filtered against your preferences so you only see roles you can realistically land.</p>
       <p class="text">Quick start:</p>
       <ul style="color:${COLORS.gray300}; font-size:15px; line-height:1.6; text-align:left; margin:0 auto 24px auto; max-width:420px; padding:0 0 0 18px;">
@@ -402,7 +402,7 @@ export function createWelcomeEmail(
         <li>Reply to this email if you want us to refine your matches further</li>
       </ul>
       <p class="text" style="color:${COLORS.gray500}; font-size:13px; margin-top:20px;">Need help? <a href="${getBaseUrl()}" style="color:#8B5CF6;">Visit JobPing</a></p>
-      <p class="text" style="color:${COLORS.gray500}; font-size:14px; margin-top:28px;">Need to tweak anything? <a href="${buildPreferencesLink(userEmail)}" style="color:#8B5CF6; text-decoration:underline;">Update your preferences</a> any time — or reply to this email and we'll handle it for you.</p>
+      <p class="text" style="color:${COLORS.gray500}; font-size:14px; margin-top:28px;">Need to tweak anything? <a href="${buildPreferencesLink(userEmail)}" style="color:#8B5CF6; text-decoration:underline;">Update your preferences</a> any time - or reply to this email and we'll handle it for you.</p>
     </td>
   </tr>`;
   return wrapEmail('Welcome to JobPing', body, userEmail);
@@ -426,8 +426,8 @@ export function createJobMatchesEmail(
     <td class="content" align="left">
       ${subscriptionTier === 'premium' ? '<div class="badge" style="margin-bottom:24px;">⭐ Premium Member</div>' : ''}
       <h1 class="title">${title} <span role="img" aria-label="sparkles">✨</span></h1>
-      <p class="text">${userName ? `${userName}, ` : ''}here's what our matcher surfaced for you today. Every role below cleared the filters you set — location, career path, visa, and early-career fit.</p>
-      <p class="text" style="color:${COLORS.gray400}; font-size:15px;">Review the highlights, tap through to apply, and let us know if anything feels off — your feedback powers the next batch.</p>
+      <p class="text">${userName ? `${userName}, ` : ''}here's what our matcher surfaced for you today. Every role below cleared the filters you set - location, career path, visa, and early-career fit.</p>
+      <p class="text" style="color:${COLORS.gray400}; font-size:15px;">Review the highlights, tap through to apply, and let us know if anything feels off - your feedback powers the next batch.</p>
     </td>
   </tr>`;
   const formatTagsMarkup = (job: Record<string, any>) => {
@@ -589,9 +589,9 @@ export function createReEngagementEmailTemplate(userName: string, unsubscribeUrl
       
       <p class="text">Since you last visited, we've:</p>
       <ul style="color:${COLORS.gray300}; font-size:15px; line-height:1.7; text-align:left; margin:0 auto 28px auto; max-width:420px; padding:0 0 0 20px;">
-        <li style="margin-bottom:10px;">🎯 <span style="color:#8B5CF6; font-weight:600;">Improved our AI matching</span> — even better job recommendations</li>
+        <li style="margin-bottom:10px;">🎯 <span style="color:#8B5CF6; font-weight:600;">Improved our AI matching</span> - even better job recommendations</li>
         <li style="margin-bottom:10px;">🚀 <span style="color:#8B5CF6; font-weight:600;">Added 2,000+ new opportunities</span> across Europe</li>
-        <li style="margin-bottom:10px;">⚡ <span style="color:#8B5CF6; font-weight:600;">Made the experience faster</span> — 60-second job reviews</li>
+        <li style="margin-bottom:10px;">⚡ <span style="color:#8B5CF6; font-weight:600;">Made the experience faster</span> - 60-second job reviews</li>
         <li style="margin-bottom:10px;">💎 <span style="color:#8B5CF6; font-weight:600;">Launched premium features</span> for serious job seekers</li>
       </ul>
       
@@ -600,7 +600,7 @@ export function createReEngagementEmailTemplate(userName: string, unsubscribeUrl
       ${vmlButton(`${baseUrl}?utm_source=email&utm_medium=reengagement&utm_campaign=comeback`, 'Show Me What\'s New! 🚀', COLORS.indigo, COLORS.purple)}
       
       <p class="text" style="color:${COLORS.gray500}; font-size:13px; margin-top:24px;">
-        Or if you'd prefer, you can <a href="${unsubscribeUrl}" style="color:#8B5CF6; text-decoration:underline;">unsubscribe here</a> — no hard feelings! 💙
+        Or if you'd prefer, you can <a href="${unsubscribeUrl}" style="color:#8B5CF6; text-decoration:underline;">unsubscribe here</a> - no hard feelings! 💙
       </p>
     </td>
   </tr>`;
