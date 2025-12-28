@@ -6,7 +6,7 @@ import { getDatabaseCategoriesForForm } from '@/Utils/matching/categoryMapper';
 import { distributeJobsWithDiversity } from '@/Utils/matching/jobDistribution';
 import { apiLogger } from '@/lib/api-logger';
 import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-import { getCountryFromCity } from '@/lib/countryFlags';
+import { getCountryFromCity, getCountryVariations } from '@/lib/countryFlags';
 import { z } from 'zod';
 
 // Input validation schema
@@ -172,11 +172,16 @@ export async function POST(request: NextRequest) {
     // This is more forgiving and lets pre-filtering handle exact city matching
     // Strategy: Fetch jobs from target countries, then let pre-filtering match exact cities
     const targetCountries = new Set<string>();
+    const targetCountryVariations = new Set<string>(); // All variations (codes, names, etc.)
+    
     if (targetCities.length > 0) {
       targetCities.forEach(city => {
         const country = getCountryFromCity(city);
         if (country) {
           targetCountries.add(country);
+          // Get all variations for this country (IE, Ireland, DUBLIN, etc.)
+          const variations = getCountryVariations(country);
+          variations.forEach(v => targetCountryVariations.add(v));
         }
       });
     }
@@ -185,6 +190,7 @@ export async function POST(request: NextRequest) {
       email: normalizedEmail, 
       targetCities: targetCities,
       targetCountries: Array.from(targetCountries),
+      targetCountryVariations: Array.from(targetCountryVariations),
       strategy: targetCountries.size > 0 ? 'country-level' : 'no-location-filter'
     });
 
@@ -195,14 +201,80 @@ export async function POST(request: NextRequest) {
       .eq('status', 'active')
       .is('filtered_reason', null);
 
-    // ENTERPRISE-LEVEL FIX: Use country-level filtering (more forgiving than exact city match)
-    // Pre-filtering will handle exact city matching with fuzzy logic
-    if (targetCountries.size > 0) {
-      query = query.in('country', Array.from(targetCountries));
-      apiLogger.info('Free signup - filtering jobs by countries', { 
+    // CRITICAL FIX: City is MORE IMPORTANT than country - filter by city first
+    // Build city variations array (handles native names like Wien, Zürich, Milano, Roma)
+    const cityVariations = new Set<string>();
+    if (targetCities.length > 0) {
+      targetCities.forEach(city => {
+        cityVariations.add(city); // Original: "Dublin"
+        cityVariations.add(city.toUpperCase()); // "DUBLIN"
+        cityVariations.add(city.toLowerCase()); // "dublin"
+        
+        // Add native language variations (based on actual database values)
+        const cityVariants: Record<string, string[]> = {
+          'Vienna': ['Wien', 'WIEN', 'wien'],
+          'Zurich': ['Zürich', 'ZURICH', 'zürich'],
+          'Milan': ['Milano', 'MILANO', 'milano'],
+          'Rome': ['Roma', 'ROMA', 'roma'],
+          'Prague': ['Praha', 'PRAHA', 'praha'],
+          'Warsaw': ['Warszawa', 'WARSZAWA', 'warszawa'],
+          'Brussels': ['Bruxelles', 'BRUXELLES', 'bruxelles', 'Brussel', 'BRUSSEL'],
+          'Munich': ['München', 'MÜNCHEN', 'münchen'],
+          'Copenhagen': ['København', 'KØBENHAVN'],
+          'Stockholm': ['Stockholms län'],
+          'Helsinki': ['Helsingfors'],
+          'Dublin': ['Baile Átha Cliath'],
+        };
+        
+        if (cityVariants[city]) {
+          cityVariants[city].forEach(v => cityVariations.add(v));
+        }
+        
+        // Add London area variations (based on actual database values)
+        if (city.toLowerCase() === 'london') {
+          ['Central London', 'City Of London', 'East London', 'North London', 'South London', 'West London'].forEach(v => {
+            cityVariations.add(v);
+            cityVariations.add(v.toUpperCase());
+            cityVariations.add(v.toLowerCase());
+          });
+        }
+      });
+    }
+
+    // PRIORITY 1: Filter by city variations (city is more important)
+    // This catches jobs where city field matches any variation
+    if (cityVariations.size > 0) {
+      query = query.in('city', Array.from(cityVariations));
+      apiLogger.info('Free signup - filtering jobs by cities (with variations)', { 
+        email: normalizedEmail, 
+        targetCities: targetCities,
+        cityVariations: Array.from(cityVariations).slice(0, 15), // Log first 15
+        cityVariationCount: cityVariations.size,
+        note: 'City filtering is primary - catches Wien/Vienna, Zürich/Zurich, Milano/Milan, etc.'
+      });
+    }
+    
+    // PRIORITY 2: Also filter by country variations as additional filter
+    // This ensures we catch jobs even if city field has slight variations or is null
+    // Note: We use AND condition (city matches AND country matches) for better precision
+    // Pre-filtering will handle cases where city doesn't match exactly
+    if (targetCountryVariations.size > 0 && cityVariations.size > 0) {
+      query = query.in('country', Array.from(targetCountryVariations));
+      apiLogger.info('Free signup - also filtering by country variations', { 
         email: normalizedEmail, 
         countries: Array.from(targetCountries),
-        countryCount: targetCountries.size
+        countryVariations: Array.from(targetCountryVariations).slice(0, 10),
+        variationCount: targetCountryVariations.size,
+        note: 'Country filter applied as secondary filter (city is primary)'
+      });
+    } else if (targetCountryVariations.size > 0) {
+      // Fallback: if no city variations, use country only
+      query = query.in('country', Array.from(targetCountryVariations));
+      apiLogger.info('Free signup - filtering by country only (no city variations)', { 
+        email: normalizedEmail, 
+        countries: Array.from(targetCountries),
+        countryVariations: Array.from(targetCountryVariations).slice(0, 10),
+        variationCount: targetCountryVariations.size
       });
     }
 

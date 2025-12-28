@@ -301,10 +301,15 @@ export function distributeJobsWithDiversity(
   }
 
   // Step 2: Check feasibility - can we balance cities?
+  // CRITICAL FIX: Filter out cities with no jobs and only balance across cities that have jobs
   let canBalanceCities = ensureCityBalance && targetCities.length > 0;
+  let effectiveTargetCities = [...targetCities]; // Cities we'll actually try to balance across
   if (canBalanceCities) {
     // CRITICAL: Use imperative loops instead of map/filter/reduce to avoid TDZ errors
     const jobsByCityCount: number[] = [];
+    const citiesWithJobs: string[] = [];
+    const citiesWithNoJobs: string[] = [];
+    
     for (let cityIdx = 0; cityIdx < targetCities.length; cityIdx++) {
       const city = targetCities[cityIdx];
       let count = 0;
@@ -317,35 +322,22 @@ export function distributeJobsWithDiversity(
         }
       }
       jobsByCityCount.push(count);
-    }
-    
-    let minCityJobs = jobsByCityCount.length > 0 ? jobsByCityCount[0] : 0;
-    for (let i = 1; i < jobsByCityCount.length; i++) {
-      if (jobsByCityCount[i] < minCityJobs) {
-        minCityJobs = jobsByCityCount[i];
+      
+      if (count === 0) {
+        citiesWithNoJobs.push(city);
+      } else {
+        citiesWithJobs.push(city);
       }
     }
-    let totalCityJobs = 0;
-    for (let i = 0; i < jobsByCityCount.length; i++) {
-      totalCityJobs += jobsByCityCount[i];
-    }
     
-    // Can't balance if:
-    // 1. Any city has zero jobs (impossible to balance)
-    // 2. Total jobs from all cities is less than targetCount (can't fill quota)
-    if (minCityJobs === 0 || totalCityJobs < targetCount) {
+    // Filter out cities with no jobs from effective target cities
+    if (citiesWithNoJobs.length > 0) {
+      effectiveTargetCities = citiesWithJobs;
+      
       // Create detailed city breakdown for debugging
       const cityBreakdown: Record<string, number> = {};
       for (let i = 0; i < targetCities.length; i++) {
         cityBreakdown[targetCities[i]] = jobsByCityCount[i];
-      }
-      
-      // Find cities with zero jobs
-      const citiesWithNoJobs: string[] = [];
-      for (let i = 0; i < targetCities.length; i++) {
-        if (jobsByCityCount[i] === 0) {
-          citiesWithNoJobs.push(targetCities[i]);
-        }
       }
       
       console.warn('[JobDistribution] Cannot balance cities', {
@@ -353,17 +345,38 @@ export function distributeJobsWithDiversity(
         jobsPerCity: jobsByCityCount,
         cityBreakdown,
         citiesWithNoJobs,
-        minCityJobs,
-        totalCityJobs,
+        citiesWithJobs,
+        minCityJobs: Math.min(...jobsByCityCount.filter(c => c > 0)),
+        totalCityJobs: jobsByCityCount.reduce((sum, c) => sum + c, 0),
         targetCount,
         totalJobsAvailable: jobsArray.length,
-        reason: minCityJobs === 0 ? 'Some cities have no jobs' : 'Insufficient jobs to fill quota',
-        recommendation: minCityJobs === 0 
-          ? 'Jobs may have been filtered out by scoring/career path requirements, or city name variations (e.g., Roma vs Rome) not matching'
-          : 'Consider relaxing scoring thresholds or expanding job pool'
+        reason: 'Some cities have no jobs',
+        recommendation: 'Jobs may have been filtered out by scoring/career path requirements, or city name variations (e.g., Roma vs Rome) not matching. Will balance across cities with available jobs.',
+        action: `Filtering out ${citiesWithNoJobs.length} city/cities with no jobs, balancing across ${citiesWithJobs.length} city/cities with jobs`
       });
+    }
+    
+    // Check if we can balance across cities that have jobs
+    if (effectiveTargetCities.length === 0) {
+      // No cities have jobs - disable city balance entirely
       canBalanceCities = false;
-      ensureCityBalance = false; // Update local variable
+      ensureCityBalance = false;
+      effectiveTargetCities = [];
+    } else if (effectiveTargetCities.length === 1) {
+      // Only one city has jobs - can't balance, but still prefer that city
+      canBalanceCities = false;
+      ensureCityBalance = false;
+    } else {
+      // Multiple cities have jobs - check if we have enough total jobs
+      const totalCityJobs = jobsByCityCount.reduce((sum, c) => sum + c, 0);
+      if (totalCityJobs < targetCount) {
+        // Not enough jobs to fill quota - disable strict balance but still prefer target cities
+        canBalanceCities = false;
+        ensureCityBalance = false;
+      } else {
+        // We can balance across cities that have jobs
+        canBalanceCities = true;
+      }
     }
   }
 
@@ -433,12 +446,13 @@ export function distributeJobsWithDiversity(
   }
 
   // Step 2: Calculate jobs per city (balanced distribution)
-  const jobsPerCity = canBalanceCities && targetCities.length > 0
-    ? Math.floor(targetCount / targetCities.length)
+  // CRITICAL FIX: Use effectiveTargetCities (cities with jobs) for balancing calculations
+  const jobsPerCity = canBalanceCities && effectiveTargetCities.length > 0
+    ? Math.floor(targetCount / effectiveTargetCities.length)
     : targetCount;
   
-  const cityRemainder = canBalanceCities && targetCities.length > 0
-    ? targetCount % targetCities.length
+  const cityRemainder = canBalanceCities && effectiveTargetCities.length > 0
+    ? targetCount % effectiveTargetCities.length
     : 0;
 
   // Step 2.6: Calculate jobs per work environment (balanced distribution)
@@ -462,6 +476,8 @@ export function distributeJobsWithDiversity(
   for (let i = 0; i < sourceKeys.length; i++) {
     sourceCounts[sourceKeys[i]] = 0;
   }
+  // CRITICAL FIX: Initialize city counts for all target cities (including those with no jobs)
+  // This allows us to track jobs from any target city, even if we can't balance
   for (let i = 0; i < targetCities.length; i++) {
     cityCounts[targetCities[i].toLowerCase()] = 0;
   }
@@ -479,24 +495,24 @@ export function distributeJobsWithDiversity(
 
   // Helper: Check if we need more jobs from this city (uses consistent matching)
   const needsMoreFromCity = (city: string, location?: string): boolean => {
-    if (!ensureCityBalance || targetCities.length === 0) return true;
+    if (!ensureCityBalance || effectiveTargetCities.length === 0) return true;
     
     // Use consistent city matching function
     // CRITICAL: Use imperative loop instead of find to avoid TDZ errors
     const jobCity = city.toLowerCase();
     const jobLocation = (location || '').toLowerCase();
     let matchedTargetCity: string | undefined;
-    for (let i = 0; i < targetCities.length; i++) {
-      if (matchesCity(jobCity, jobLocation, targetCities[i])) {
-        matchedTargetCity = targetCities[i];
+    for (let i = 0; i < effectiveTargetCities.length; i++) {
+      if (matchesCity(jobCity, jobLocation, effectiveTargetCities[i])) {
+        matchedTargetCity = effectiveTargetCities[i];
         break;
       }
     }
     
-    if (!matchedTargetCity) return true; // City not in target list, can still add
+    if (!matchedTargetCity) return true; // City not in effective target list, can still add
     
     const currentCount = cityCounts[matchedTargetCity.toLowerCase()] || 0;
-    const targetCount = jobsPerCity + (targetCities.indexOf(matchedTargetCity) < cityRemainder ? 1 : 0);
+    const targetCount = jobsPerCity + (effectiveTargetCities.indexOf(matchedTargetCity) < cityRemainder ? 1 : 0);
     return currentCount < targetCount;
   };
 
@@ -540,8 +556,9 @@ export function distributeJobsWithDiversity(
 
   // Step 4: Round-robin selection prioritizing diversity
   // First pass: Try to get balanced distribution
-  const maxRounds = canBalanceCities && targetCities.length > 0 
-    ? Math.ceil(targetCount / Math.max(1, targetCities.length))
+  // CRITICAL FIX: Use effectiveTargetCities for round calculation
+  const maxRounds = canBalanceCities && effectiveTargetCities.length > 0 
+    ? Math.ceil(targetCount / Math.max(1, effectiveTargetCities.length))
     : Math.ceil(targetCount / 2);
   
   // CRITICAL FIX: Add maximum iteration limit to prevent timeouts
@@ -554,8 +571,9 @@ export function distributeJobsWithDiversity(
     const jobsBeforeRound = selectedJobs.length;
     
     // Rotate through cities (or all jobs if no city balance)
-    const citiesToProcess = canBalanceCities && targetCities.length > 0 
-      ? targetCities 
+    // CRITICAL FIX: Use effectiveTargetCities (cities with jobs) for rotation
+    const citiesToProcess = canBalanceCities && effectiveTargetCities.length > 0 
+      ? effectiveTargetCities 
       : ['any']; // Process all jobs if no city balance
     
     for (const targetCity of citiesToProcess) {
@@ -659,14 +677,25 @@ export function distributeJobsWithDiversity(
           
           // Update city count (use consistent matching)
           // CRITICAL: Use imperative loop instead of find to avoid TDZ errors
-          if (canBalanceCities && targetCities.length > 0) {
+          // CRITICAL FIX: Check against all target cities (not just effective ones) for tracking
+          if (targetCities.length > 0) {
             const jobCity = city.toLowerCase();
             const jobLocation = location.toLowerCase();
             let matchedCity: string | undefined;
-            for (let i = 0; i < targetCities.length; i++) {
-              if (matchesCity(jobCity, jobLocation, targetCities[i])) {
-                matchedCity = targetCities[i];
+            // First check effective cities (for balancing)
+            for (let i = 0; i < effectiveTargetCities.length; i++) {
+              if (matchesCity(jobCity, jobLocation, effectiveTargetCities[i])) {
+                matchedCity = effectiveTargetCities[i];
                 break;
+              }
+            }
+            // If not found in effective cities, check all target cities (for tracking)
+            if (!matchedCity) {
+              for (let i = 0; i < targetCities.length; i++) {
+                if (matchesCity(jobCity, jobLocation, targetCities[i])) {
+                  matchedCity = targetCities[i];
+                  break;
+                }
               }
             }
             if (matchedCity) {
@@ -917,7 +946,8 @@ export function distributeJobsWithDiversity(
       if (canAddA !== canAddB) return canAddB ? 1 : -1;
       
       // If source diversity is equal, prefer cities we need more from
-      if (ensureCityBalance && targetCities.length > 0) {
+      // CRITICAL FIX: Use effectiveTargetCities for city balance preference
+      if (ensureCityBalance && effectiveTargetCities.length > 0) {
         const cityA = a.city || '';
         const cityB = b.city || '';
         const locationA = ((a as any).location || '').toLowerCase();
@@ -952,14 +982,25 @@ export function distributeJobsWithDiversity(
         
         // Update city count if tracking (use consistent matching)
         // CRITICAL: Use imperative loop instead of find to avoid TDZ errors
-        if (canBalanceCities && targetCities.length > 0) {
+        // CRITICAL FIX: Check against all target cities for tracking
+        if (targetCities.length > 0) {
           const jobCity = (job.city || '').toLowerCase();
           const jobLocation = ((job as any).location || '').toLowerCase();
           let matchedCity: string | undefined;
-          for (let j = 0; j < targetCities.length; j++) {
-            if (matchesCity(jobCity, jobLocation, targetCities[j])) {
-              matchedCity = targetCities[j];
+          // First check effective cities
+          for (let j = 0; j < effectiveTargetCities.length; j++) {
+            if (matchesCity(jobCity, jobLocation, effectiveTargetCities[j])) {
+              matchedCity = effectiveTargetCities[j];
               break;
+            }
+          }
+          // If not found, check all target cities
+          if (!matchedCity) {
+            for (let j = 0; j < targetCities.length; j++) {
+              if (matchesCity(jobCity, jobLocation, targetCities[j])) {
+                matchedCity = targetCities[j];
+                break;
+              }
             }
           }
           if (matchedCity) {

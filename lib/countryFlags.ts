@@ -65,6 +65,58 @@ export function getCountryFromCity(city: string): string {
 }
 
 /**
+ * Get all possible country variations for a country name (for database queries)
+ * Returns array of country codes, names, common variations, and city names
+ * This handles cases where city names are incorrectly stored in the country field
+ */
+export function getCountryVariations(country: string): string[] {
+  if (!country) return [];
+  
+  const variations = new Set<string>([country]); // Include the country name itself
+  
+  // Map of country names to their variations (codes, common names, etc.)
+  const COUNTRY_VARIATIONS: Record<string, string[]> = {
+    'Ireland': ['IE', 'ie', 'IRL', 'irl', 'EIRE', 'eire', 'Ireland'],
+    'United Kingdom': ['GB', 'gb', 'UK', 'uk', 'ENG', 'eng', 'England', 'Scotland', 'Wales', 'Northern Ireland', 'Great Britain'],
+    'France': ['FR', 'fr', 'France'],
+    'Germany': ['DE', 'de', 'Germany', 'Deutschland'],
+    'Spain': ['ES', 'es', 'Spain', 'España'],
+    'Italy': ['IT', 'it', 'Italy', 'Italia'],
+    'Netherlands': ['NL', 'nl', 'Netherlands', 'Holland'],
+    'Belgium': ['BE', 'be', 'Belgium', 'België', 'Belgique'],
+    'Switzerland': ['CH', 'ch', 'Switzerland', 'Schweiz', 'Suisse'],
+    'Sweden': ['SE', 'se', 'Sweden', 'Sverige'],
+    'Denmark': ['DK', 'dk', 'Denmark', 'Danmark'],
+    'Austria': ['AT', 'at', 'Austria', 'Österreich'],
+    'Czech Republic': ['CZ', 'cz', 'Czech Republic', 'Czechia'],
+    'Poland': ['PL', 'pl', 'Poland', 'Polska'],
+  };
+  
+  // Add country code/name variations (including lowercase versions)
+  const countryVariations = COUNTRY_VARIATIONS[country];
+  if (countryVariations) {
+    countryVariations.forEach(v => {
+      variations.add(v);
+      // Also add lowercase version for case-insensitive matching
+      if (v !== v.toLowerCase()) {
+        variations.add(v.toLowerCase());
+      }
+    });
+  }
+  
+  // CRITICAL FIX: Also add all city names for this country (handles cases where city names are incorrectly stored as country)
+  // This ensures we catch jobs even when city names like "DUBLIN", "LONDON", etc. are stored in the country field
+  for (const [cityName, cityCountry] of Object.entries(CITY_TO_COUNTRY)) {
+    if (cityCountry === country) {
+      variations.add(cityName); // Add city name (e.g., "Dublin")
+      variations.add(cityName.toUpperCase()); // Add uppercase version (e.g., "DUBLIN" - common error)
+    }
+  }
+  
+  return Array.from(variations);
+}
+
+/**
  * Extract country from location string (e.g., "London, United Kingdom" or "Berlin, Germany")
  */
 export function extractCountryFromLocation(location: string): string {
