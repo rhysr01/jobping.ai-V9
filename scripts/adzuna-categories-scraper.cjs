@@ -214,21 +214,21 @@ function generateCityQueries(countryCode) {
     return cleaned[0]; // Use primary cleaned version
   });
   
-  // Add exact role names (remove duplicates, limit to top 6)
+  // Add exact role names (remove duplicates, limit to top 2 for free tier)
   const uniqueRoles = [...new Set(cleanedRoles)];
-  queries.push(...uniqueRoles.slice(0, 6)); // Top 6 exact role names
+  queries.push(...uniqueRoles.slice(0, 2)); // Top 2 exact role names (prioritized)
   
-  // 🥈 TIER 2: Core English terms from rotation (2-3 terms)
-  queries.push(...CORE_ENGLISH_TERMS.slice(0, 2)); // Top 2 from rotation set
+  // 🥈 TIER 2: Core English terms from rotation (1 term)
+  queries.push(...CORE_ENGLISH_TERMS.slice(0, 1)); // Top 1 from rotation set
   
-  // 🥉 TIER 3: Local language terms (2-3 terms, highest performing)
+  // 🥉 TIER 3: Local language terms (1 term, highest performing)
   const localTerms = LOCAL_EARLY_CAREER_TERMS[countryCode] || [];
   // Prioritize internship/graduate terms in local language
   const prioritizedLocal = [
     ...localTerms.filter(t => /(prácticas|becario|stagiaire|stage|praktik|tirocinio|staż)/i.test(t)),
     ...localTerms.filter(t => !/(prácticas|becario|stagiaire|stage|praktik|tirocinio|staż)/i.test(t))
   ];
-  queries.push(...prioritizedLocal.slice(0, 2)); // Top 2 local terms
+  queries.push(...prioritizedLocal.slice(0, 1)); // Top 1 local term
   
   // 🎯 TIER 4: High-performing sector internships (only if we have room)
   // Only add 1-2 sector combinations if we're under 10 queries
@@ -243,8 +243,10 @@ function generateCityQueries(countryCode) {
     }
   }
   
-  // Remove duplicates and limit to 8-10 queries per city (optimized like JobSpy)
-  const limitedQueries = [...new Set(queries)].slice(0, 10);
+  // Remove duplicates and limit to stay within free tier (250 requests/day)
+  // With 21 cities × 2 runs/day = 125 requests per run
+  // Target: 3 queries per city × 2 pages avg = ~126 requests (perfect!)
+  const limitedQueries = [...new Set(queries)].slice(0, 3); // Reduced to 3 queries per city for free tier
   return limitedQueries;
 }
 
@@ -262,12 +264,14 @@ function getMaxPagesForQuery(query) {
   const genericPattern = /^(internship|graduate|junior|entry level|trainee|intern)$/i;
   const isGeneric = genericPattern.test(query.trim());
   
+  // Reduced pagination to stay within free tier (250 requests/day)
+  // With 21 cities × 4 queries × 2 runs/day = 168 requests (safe)
   if (isRoleBased) {
-    return parseInt(process.env.ADZUNA_MAX_PAGES_ROLE || '5', 10); // More pages for roles
+    return parseInt(process.env.ADZUNA_MAX_PAGES_ROLE || '2', 10); // Reduced to 2 pages for free tier
   } else if (isGeneric) {
-    return parseInt(process.env.ADZUNA_MAX_PAGES_GENERIC || '3', 10); // Fewer pages for generic
+    return parseInt(process.env.ADZUNA_MAX_PAGES_GENERIC || '2', 10); // Reduced to 2 pages for free tier
   }
-  return parseInt(process.env.ADZUNA_MAX_PAGES || '4', 10); // Default
+  return parseInt(process.env.ADZUNA_MAX_PAGES || '2', 10); // Default: 2 pages for free tier
 }
 
 /**
@@ -511,13 +515,15 @@ async function scrapeAllCitiesCategories(options = {}) {
     : parseInt(process.env.ADZUNA_PAGE_DELAY_JITTER_MS || '0', 10);
   const maxQueriesPerCity = typeof overrideMaxQueriesPerCity === 'number'
     ? overrideMaxQueriesPerCity
-    : parseInt(process.env.ADZUNA_MAX_QUERIES_PER_CITY || '15', 10); // Increased from 10 to 15 for more coverage
+    : parseInt(process.env.ADZUNA_MAX_QUERIES_PER_CITY || '3', 10); // Reduced to 3 for free tier (250 requests/day)
   
   console.log(`🎓 Starting multilingual early-career job search across ${EU_CITIES_CATEGORIES.length} EU cities...`);
   console.log(`📅 Time range: Last 28 days for wider coverage`);
   console.log(`🌍 Languages: English + local terms per country`);
   console.log(`🏢 Target sectors: ${HIGH_PERFORMING_SECTORS.join(', ')}`);
-  console.log(`📊 API Usage: ~${EU_CITIES_CATEGORIES.length * maxQueriesPerCity} queries × avg 3 pages = ~${EU_CITIES_CATEGORIES.length * maxQueriesPerCity * 3} calls (optimized for 250 daily limit)`);
+  const estimatedRequests = EU_CITIES_CATEGORIES.length * maxQueriesPerCity * 2; // 2 pages avg
+  console.log(`📊 API Usage: ~${EU_CITIES_CATEGORIES.length} cities × ${maxQueriesPerCity} queries × 2 pages = ~${estimatedRequests} calls per run`);
+  console.log(`⚠️  Free Tier Limit: 250 requests/day (2 runs/day = 125 per run). Current: ~${estimatedRequests} (${estimatedRequests <= 125 ? '✅ SAFE' : '❌ EXCEEDS LIMIT'})`);
   console.log(`⚡ Strategy: Prioritizing exact role names (highest performing), smart pagination (more pages for roles)`);
   console.log(`⚙️  Adzuna config: ${JSON.stringify({
     resultsPerPage,
