@@ -62,7 +62,7 @@ export default function HowItWorks() {
               x2="100"
               y2="2"
               stroke="url(#flowGradient)"
-              strokeWidth="2"
+              strokeWidth="1.5"
               strokeDasharray="4 8"
               initial={{ pathLength: 0, strokeDashoffset: 0 }}
               whileInView={{ pathLength: 1 }}
@@ -77,6 +77,9 @@ export default function HowItWorks() {
                   repeat: Infinity,
                   ease: 'linear',
                 },
+              }}
+              style={{
+                filter: 'drop-shadow(0 0 2px rgba(139, 92, 246, 0.4))',
               }}
             />
           </svg>

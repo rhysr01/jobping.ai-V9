@@ -97,13 +97,15 @@ export default function Hero() {
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center mt-4 md:mt-8">
           
           {/* LEFT SIDE - Content */}
+          {/* CRITICAL: Text container must be 100% transparent - no background colors */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
             className="text-left space-y-6 relative"
+            style={{ backgroundColor: 'transparent' }}
           >
-            {/* Ethereal radial gradient glow behind text - separate absolute div */}
+            {/* Ethereal radial gradient glow behind text - separate absolute div (NOT on text container) */}
             <div 
               className="absolute -inset-20 pointer-events-none"
               style={{
