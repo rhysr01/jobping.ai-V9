@@ -647,28 +647,78 @@ async function saveJobs(jobs, source) {
   let savedCount = 0;
   let failedCount = 0;
   
-  for (let i=0;i<unique.length;i+=150){
-    const slice = unique.slice(i,i+150);
+  // Reduced batch size to avoid overwhelming connection
+  const BATCH_SIZE = 50; // Reduced from 150
+  for (let i=0;i<unique.length;i+=BATCH_SIZE){
+    const slice = unique.slice(i,i+BATCH_SIZE);
     
     try {
+      // Increased retries: 5 attempts with longer delays (2s, 4s, 8s, 16s, 32s)
       const result = await retryWithBackoff(async () => {
-        const upsertResult = await supabase
-      .from('jobs')
-      .upsert(slice, { onConflict: 'job_hash', ignoreDuplicates: false });
-        if (upsertResult.error) {
-          // Check if it's a network error that should be retried
-          const isNetworkError = upsertResult.error.message?.includes('fetch failed') || 
-                               upsertResult.error.message?.includes('network') ||
-                               upsertResult.error.message?.includes('timeout');
-          if (isNetworkError) {
-            throw upsertResult.error; // Retry network errors
+        try {
+          const upsertResult = await supabase
+            .from('jobs')
+            .upsert(slice, { onConflict: 'job_hash', ignoreDuplicates: false });
+          
+          if (upsertResult.error) {
+            // Enhanced error logging
+            console.error(`   Upsert error details:`, {
+              message: upsertResult.error.message,
+              code: upsertResult.error.code,
+              details: upsertResult.error.details,
+              hint: upsertResult.error.hint
+            });
+            // Check if it's a network error that should be retried
+            const isNetworkError = upsertResult.error.message?.includes('fetch failed') || 
+                                 upsertResult.error.message?.includes('network') ||
+                                 upsertResult.error.message?.includes('timeout') ||
+                                 upsertResult.error.message?.includes('ECONNREFUSED') ||
+                                 upsertResult.error.message?.includes('ENOTFOUND') ||
+                                 upsertResult.error.message?.includes('ETIMEDOUT');
+            if (isNetworkError) {
+              throw upsertResult.error; // Retry network errors
+            }
           }
+          return upsertResult;
+        } catch (error) {
+          // CRITICAL FIX: Catch exceptions thrown by fetch (not just error properties)
+          // This handles "TypeError: fetch failed" exceptions from undici
+          const errorMessage = error?.message || String(error || '');
+          const errorName = error?.name || '';
+          const errorCode = error?.code || error?.cause?.code || '';
+          
+          // Check if this is a network error (fetch exception)
+          const isNetworkException = 
+            errorName === 'TypeError' && errorMessage.includes('fetch failed') ||
+            errorName === 'NetworkError' ||
+            errorName === 'AbortError' ||
+            errorCode === 'UND_ERR_CONNECT_TIMEOUT' ||
+            errorCode === 'UND_ERR_SOCKET' ||
+            errorCode === 'UND_ERR_REQUEST_TIMEOUT' ||
+            errorMessage.toLowerCase().includes('fetch failed') ||
+            errorMessage.toLowerCase().includes('network') ||
+            errorMessage.toLowerCase().includes('timeout');
+          
+          if (isNetworkException) {
+            // Log the exception for debugging
+            console.error(`   Fetch exception caught:`, {
+              name: errorName,
+              message: errorMessage,
+              code: errorCode,
+              cause: error.cause ? {
+                code: error.cause.code,
+                message: error.cause.message
+              } : null
+            });
+            throw error; // Will be retried
+          }
+          // Re-throw non-network exceptions
+          throw error;
         }
-        return upsertResult;
-      }, 3, 1000);
+      }, 5, 2000); // 5 retries, 2s base delay
       
       if (result.error) {
-        console.error(`❌ Upsert error (batch ${i/150 + 1}):`, result.error.message);
+        console.error(`❌ Upsert error (batch ${Math.floor(i/BATCH_SIZE) + 1}):`, result.error.message);
         console.error(`   Code: ${result.error.code}, Details: ${result.error.details || 'none'}`);
         failedCount += slice.length;
       // Log first few failed rows for debugging
@@ -676,12 +726,26 @@ async function saveJobs(jobs, source) {
         console.error('Sample failed row:', JSON.stringify(slice[0], null, 2));
       }
     } else {
-        console.log(`✅ Saved ${slice.length} jobs (batch ${i/150 + 1})`);
+        console.log(`✅ Saved ${slice.length} jobs (batch ${Math.floor(i/BATCH_SIZE) + 1})`);
         savedCount += slice.length;
     }
     } catch (error) {
-      console.error(`❌ Fatal upsert error after retries (batch ${i/150 + 1}):`, error.message);
-      console.error(`   Error type: ${error.name}, Stack: ${error.stack?.substring(0, 200)}`);
+      console.error(`❌ Fatal upsert error after retries (batch ${Math.floor(i/BATCH_SIZE) + 1}):`, error.message);
+      console.error(`   Error type: ${error.name}`);
+      console.error(`   Full error details:`, {
+        message: error.message,
+        name: error.name,
+        code: error.code,
+        errno: error.errno,
+        syscall: error.syscall,
+        hostname: error.hostname,
+        cause: error.cause ? {
+          message: error.cause.message,
+          name: error.cause.name,
+          code: error.cause.code
+        } : null,
+        stack: error.stack?.substring(0, 500)
+      });
       failedCount += slice.length;
   }
   }
@@ -955,11 +1019,68 @@ async function main() {
 
   const collected = [];
   const pythonCmd = pickPythonCommand();
+  
+  // Helper function to execute Python scraper and parse results
+  async function runJobSpyScraper(pythonCode, label) {
+    let py;
+    let tries = 0;
+    const maxTries = 3;
+    
+    while (tries < maxTries) {
+      tries++;
+      if (tries > 1) {
+        const backoffDelay = Math.pow(2, tries - 2) * 1000;
+        console.log(`↻ Retrying ${label} (${tries}/${maxTries}) after ${backoffDelay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      }
+      
+      py = spawnSync(pythonCmd, ['-c', pythonCode], { 
+        encoding: 'utf8', 
+        timeout: JOBSPY_TIMEOUT_MS,
+        env: { ...process.env, PATH: process.env.PATH }
+      });
+      
+      if (py.status === 0) break;
+      
+      // Filter out expected errors (GDPR blocking, geo restrictions)
+      const stderrText = (py.stderr || '').toLowerCase();
+      const stdoutText = (py.stdout || '').toLowerCase();
+      const errorText = stderrText + stdoutText;
+      
+      const expectedErrors = [
+        'ziprecruiter response status code 403',
+        'geoblocked-gdpr',
+        'glassdoor is not available for',
+        'not available in the european union',
+        'gdpr'
+      ];
+      
+      const isExpectedError = expectedErrors.some(err => errorText.includes(err));
+      
+      if (isExpectedError) {
+        console.log(`ℹ️  Expected error (GDPR/Geo restriction) - continuing...`);
+        break;
+      } else {
+        console.error(`${label} Python error:`, (py.stderr && py.stderr.trim()) || (py.stdout && py.stdout.trim()) || `status ${py.status}`);
+      }
+    }
+    
+    if (py && py.status === 0) {
+      const rows = parseCsv(py.stdout);
+      if (rows.length > 0) {
+        rows.forEach(r => collected.push(r));
+        return rows.length;
+      }
+    }
+    return 0;
+  }
+  
   for (const city of cities) {
     const isPriority = PRIORITY_CITIES.includes(city);
     const maxQueries = isPriority ? PRIORITY_MAX_Q : MAX_Q_PER_CITY;
     const resultsWanted = isPriority ? PRIORITY_RESULTS_WANTED : RESULTS_WANTED;
     const localized = CITY_LOCAL[city] || [];
+    
     // Combine core + extras + localized, internship/graduate-first prioritization
     const combined = [...CORE_EN, ...EXTRA_TERMS, ...localized];
     const prioritized = [
@@ -967,6 +1088,8 @@ async function main() {
       ...combined.filter(q => !/(intern|internship|placement|stagiaire|prácticas|stage|praktik|graduate(\s+(scheme|program(me)?))?)/i.test(q))
     ];
     const toRun = prioritized.slice(0, maxQueries);
+    
+    // Country mapping for Indeed (lowercase, for country_indeed parameter)
     const country = city === 'London' ? 'united kingdom'
                   : city === 'Manchester' ? 'united kingdom'
                   : city === 'Birmingham' ? 'united kingdom'
@@ -989,26 +1112,51 @@ async function main() {
                   : city === 'Prague' ? 'czech republic'
                   : city === 'Warsaw' ? 'poland'
                   : 'europe';
+    
+    // Country name for Google (capitalized, full name - baked into search string)
+    const countryName = city === 'London' ? 'United Kingdom'
+                      : city === 'Manchester' ? 'United Kingdom'
+                      : city === 'Birmingham' ? 'United Kingdom'
+                      : city === 'Belfast' ? 'United Kingdom'
+                      : city === 'Paris' ? 'France'
+                      : city === 'Madrid' ? 'Spain'
+                      : city === 'Barcelona' ? 'Spain'
+                      : city === 'Berlin' ? 'Germany'
+                      : city === 'Hamburg' ? 'Germany'
+                      : city === 'Munich' ? 'Germany'
+                      : city === 'Amsterdam' ? 'Netherlands'
+                      : city === 'Brussels' ? 'Belgium'
+                      : city === 'Zurich' ? 'Switzerland'
+                      : city === 'Dublin' ? 'Ireland'
+                      : city === 'Milan' ? 'Italy'
+                      : city === 'Rome' ? 'Italy'
+                      : city === 'Stockholm' ? 'Sweden'
+                      : city === 'Copenhagen' ? 'Denmark'
+                      : city === 'Vienna' ? 'Austria'
+                      : city === 'Prague' ? 'Czech Republic'
+                      : city === 'Warsaw' ? 'Poland'
+                      : 'Europe';
+    
     for (const term of toRun) {
       const priorityLabel = isPriority ? '🎯 [PRIORITY] ' : '';
-      console.log(`\n${priorityLabel}🔎 Fetching: ${term} in ${city}, ${country}`);
-      let py;
-      let tries = 0;
-      const maxTries = 3;
-      while (tries < maxTries) {
-        tries++;
-        // Exponential backoff: wait longer between retries
-        if (tries > 1) {
-          const backoffDelay = Math.pow(2, tries - 2) * 1000; // 1s, 2s, 4s...
-          console.log(`↻ Retrying (${tries}/${maxTries}) after ${backoffDelay}ms backoff...`);
-          await new Promise(resolve => setTimeout(resolve, backoffDelay));
-        }
-        
-        py = spawnSync(pythonCmd, ['-c', `
+      
+      // ============================================
+      // PART A: INDEED (Structured Search)
+      // ============================================
+      console.log(`\n${priorityLabel}📡 Indeed: "${term}" in ${city}, ${country}`);
+      
+      // Optimize: Skip Glassdoor for cities where it's blocked
+      const GLASSDOOR_BLOCKED_CITIES = ['Stockholm', 'Copenhagen', 'Prague', 'Warsaw'];
+      const indeedSites = ['indeed'];
+      if (!GLASSDOOR_BLOCKED_CITIES.includes(city)) {
+        indeedSites.push('glassdoor');
+      }
+      
+      const indeedPython = `
 from jobspy import scrape_jobs
 import pandas as pd
 df = scrape_jobs(
-  site_name=['indeed', 'glassdoor', 'google', 'zip_recruiter'],
+  site_name=${JSON.stringify(indeedSites)},
   search_term='''${term.replace(/'/g, "''")}''',
   location='''${city}''',
   country_indeed='''${country}''',
@@ -1018,14 +1166,12 @@ df = scrape_jobs(
 )
 import sys
 print('Available columns:', list(df.columns), file=sys.stderr)
-# Try to get full description - check multiple possible column names
 desc_cols = ['description', 'job_description', 'full_description', 'job_details', 'details']
 desc_col = None
 for col in desc_cols:
     if col in df.columns:
         desc_col = col
         break
-# If no description column, combine company_description and skills
 if desc_col is None:
     df['description'] = df.apply(lambda x: ' '.join(filter(None, [
         str(x.get('company_description', '') or ''),
@@ -1034,7 +1180,6 @@ if desc_col is None:
         str(x.get('job_type', '') or '')
     ])), axis=1)
 else:
-    # Use the found description column, but fallback to company_description if empty
     df['description'] = df.apply(lambda x: (
         str(x.get(desc_col, '') or '') or 
         str(x.get('company_description', '') or '') or
@@ -1042,41 +1187,104 @@ else:
     ), axis=1)
 cols=[c for c in ['title','company','location','job_url','description','company_description','skills'] if c in df.columns]
 print(df[cols].to_csv(index=False))
-`], { 
-  encoding: 'utf8', 
-  timeout: JOBSPY_TIMEOUT_MS,
-  env: { ...process.env, PATH: process.env.PATH }
-});
-        if (py.status === 0) break;
-        
-        // Filter out expected errors (GDPR blocking, geo restrictions)
-        const stderrText = (py.stderr || '').toLowerCase();
-        const stdoutText = (py.stdout || '').toLowerCase();
-        const errorText = stderrText + stdoutText;
-        
-        const expectedErrors = [
-          'ziprecruiter response status code 403',
-          'geoblocked-gdpr',
-          'glassdoor is not available for',
-          'not available in the european union',
-          'gdpr'
-        ];
-        
-        const isExpectedError = expectedErrors.some(err => errorText.includes(err));
-        
-        if (isExpectedError) {
-          // Suppress expected errors - these are normal for EU scraping
-          console.log(`ℹ️  Expected error (GDPR/Geo restriction) - continuing...`);
-          break; // Don't retry expected errors
-        } else {
-          // Log unexpected errors
-          console.error('Python error:', (py.stderr && py.stderr.trim()) || (py.stdout && py.stdout.trim()) || `status ${py.status}`);
-        }
+`;
+      
+      const indeedRows = await runJobSpyScraper(indeedPython, 'Indeed');
+      if (indeedRows > 0) {
+        console.log(`→ Indeed: Collected ${indeedRows} rows`);
       }
-      if (!py || py.status !== 0) continue;
-      const rows = parseCsv(py.stdout);
-      console.log(`→ Collected ${rows.length} rows`);
-      if (rows.length > 0) rows.forEach(r => collected.push(r));
+      
+      // ============================================
+      // PART B: GOOGLE (Natural Language Search)
+      // ============================================
+      // Merge English term + local synonyms into one natural language query
+      const termLower = term.toLowerCase();
+      const localSynonyms = localized.filter(localTerm => {
+        // Match local synonyms that are conceptually similar to the English term
+        if (termLower.includes('intern') || termLower.includes('internship')) {
+          return /(praktik|stage|stagiaire|prácticas|tirocinio|staż)/i.test(localTerm);
+        }
+        if (termLower.includes('graduate') || termLower.includes('entry level') || termLower.includes('entry-level')) {
+          return /(absolvent|absolwent|nyexaminerad|nyuddannet|neolaureato|recién graduado|laureato)/i.test(localTerm);
+        }
+        if (termLower.includes('junior')) {
+          return /(junior|débutant|beginnend|primo lavoro|nivel inicial)/i.test(localTerm);
+        }
+        if (termLower.includes('trainee') || termLower.includes('traineeship')) {
+          return /(trainee|praktikant|stagiaire|becario|tirocinio)/i.test(localTerm);
+        }
+        // If term contains coordinator, assistant, analyst, etc., include relevant local terms
+        if (termLower.includes('coordinator') || termLower.includes('assistant') || termLower.includes('analyst')) {
+          return /(koordinator|coordinat|assistent|asistente|analyst)/i.test(localTerm);
+        }
+        return false;
+      });
+      
+      // Build natural language Google query with merged synonyms
+      const englishPart = term;
+      const synonymBlock = localSynonyms.length > 0 
+        ? ` OR "${localSynonyms.join('" OR "')}"` 
+        : '';
+      
+      // Add year filter for better targeting (2025/2026 internships/graduate programs)
+      const yearFilter = (termLower.includes('intern') || termLower.includes('graduate') || termLower.includes('entry level'))
+        ? ' (2025 OR 2026)'
+        : '';
+      
+      const googleNaturalString = `"${englishPart}"${synonymBlock}${yearFilter} jobs in ${city}, ${countryName} -senior -lead -manager -director`;
+      
+      console.log(`\n${priorityLabel}🔍 Google: "${googleNaturalString.substring(0, 100)}..." in ${city}`);
+      
+      const googlePython = `
+from jobspy import scrape_jobs
+import pandas as pd
+df = scrape_jobs(
+  site_name=['google'],
+  google_search_term='''${googleNaturalString.replace(/'/g, "''")}''',
+  results_wanted=${resultsWanted},
+  hours_old=720
+)
+import sys
+print('Available columns:', list(df.columns), file=sys.stderr)
+desc_cols = ['description', 'job_description', 'full_description', 'job_details', 'details']
+desc_col = None
+for col in desc_cols:
+    if col in df.columns:
+        desc_col = col
+        break
+if desc_col is None:
+    df['description'] = df.apply(lambda x: ' '.join(filter(None, [
+        str(x.get('company_description', '') or ''),
+        str(x.get('skills', '') or ''),
+        str(x.get('job_function', '') or ''),
+        str(x.get('job_type', '') or '')
+    ])), axis=1)
+else:
+    df['description'] = df.apply(lambda x: (
+        str(x.get(desc_col, '') or '') or 
+        str(x.get('company_description', '') or '') or
+        str(x.get('skills', '') or '')
+    ), axis=1)
+cols=[c for c in ['title','company','location','job_url','description','company_description','skills'] if c in df.columns]
+print(df[cols].to_csv(index=False))
+`;
+      
+      const googleRows = await runJobSpyScraper(googlePython, 'Google');
+      if (googleRows > 0) {
+        console.log(`→ Google: Collected ${googleRows} rows`);
+      }
+      
+      // ============================================
+      // RATE LIMIT PROTECTION: 5s cooldown after Google
+      // ============================================
+      console.log(`⏳ Cooldown: 5s delay to protect IP from Google rate limits...`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+    
+    // Optional: Brief pause between cities
+    if (cities.indexOf(city) < cities.length - 1) {
+      console.log(`⏸️  Brief pause before next city...`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
 

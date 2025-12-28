@@ -338,32 +338,89 @@ async function saveJobs(jobs, source) {
   let savedCount = 0;
   let failedCount = 0;
   
-  for (let i=0;i<unique.length;i+=150){
-    const slice = unique.slice(i,i+150);
+  // Reduced batch size to avoid overwhelming connection
+  const BATCH_SIZE = 50; // Reduced from 150
+  for (let i=0;i<unique.length;i+=BATCH_SIZE){
+    const slice = unique.slice(i,i+BATCH_SIZE);
     
     try {
+      // Increased retries: 5 attempts with longer delays (2s, 4s, 8s, 16s, 32s)
       const result = await retryWithBackoff(async () => {
-        const upsertResult = await supabase
-          .from('jobs')
-          .upsert(slice, { onConflict: 'job_hash', ignoreDuplicates: false });
-        if (upsertResult.error) {
-          const isNetworkError = upsertResult.error.message?.includes('fetch failed') || 
-                               upsertResult.error.message?.includes('network') ||
-                               upsertResult.error.message?.includes('timeout');
-          if (isNetworkError) throw upsertResult.error;
+        try {
+          const upsertResult = await supabase
+            .from('jobs')
+            .upsert(slice, { onConflict: 'job_hash', ignoreDuplicates: false });
+          
+          if (upsertResult.error) {
+            // Enhanced error logging
+            console.error(`   Upsert error details:`, {
+              message: upsertResult.error.message,
+              code: upsertResult.error.code,
+              details: upsertResult.error.details,
+              hint: upsertResult.error.hint
+            });
+            const isNetworkError = upsertResult.error.message?.includes('fetch failed') || 
+                                 upsertResult.error.message?.includes('network') ||
+                                 upsertResult.error.message?.includes('timeout') ||
+                                 upsertResult.error.message?.includes('ECONNREFUSED') ||
+                                 upsertResult.error.message?.includes('ENOTFOUND') ||
+                                 upsertResult.error.message?.includes('ETIMEDOUT');
+            if (isNetworkError) throw upsertResult.error;
+          }
+          return upsertResult;
+        } catch (error) {
+          // CRITICAL FIX: Catch exceptions thrown by fetch (not just error properties)
+          const errorMessage = error?.message || String(error || '');
+          const errorName = error?.name || '';
+          const errorCode = error?.code || error?.cause?.code || '';
+          
+          const isNetworkException = 
+            errorName === 'TypeError' && errorMessage.includes('fetch failed') ||
+            errorName === 'NetworkError' ||
+            errorName === 'AbortError' ||
+            errorCode === 'UND_ERR_CONNECT_TIMEOUT' ||
+            errorCode === 'UND_ERR_SOCKET' ||
+            errorCode === 'UND_ERR_REQUEST_TIMEOUT' ||
+            errorMessage.toLowerCase().includes('fetch failed') ||
+            errorMessage.toLowerCase().includes('network') ||
+            errorMessage.toLowerCase().includes('timeout');
+          
+          if (isNetworkException) {
+            console.error(`   Fetch exception caught:`, {
+              name: errorName,
+              message: errorMessage,
+              code: errorCode,
+              cause: error.cause ? { code: error.cause.code, message: error.cause.message } : null
+            });
+            throw error;
+          }
+          throw error;
         }
-        return upsertResult;
-      }, 3, 1000);
+      }, 5, 2000); // 5 retries, 2s base delay
       
       if (result.error) {
-        console.error(`❌ Upsert error (batch ${i/150 + 1}):`, result.error.message);
+        console.error(`❌ Upsert error (batch ${Math.floor(i/BATCH_SIZE) + 1}):`, result.error.message);
         failedCount += slice.length;
       } else {
-        console.log(`✅ Saved ${slice.length} internship jobs (batch ${i/150 + 1})`);
+        console.log(`✅ Saved ${slice.length} internship jobs (batch ${Math.floor(i/BATCH_SIZE) + 1})`);
         savedCount += slice.length;
       }
     } catch (error) {
-      console.error(`❌ Fatal upsert error after retries (batch ${i/150 + 1}):`, error.message);
+      console.error(`❌ Fatal upsert error after retries (batch ${Math.floor(i/BATCH_SIZE) + 1}):`, error.message);
+      console.error(`   Full error details:`, {
+        message: error.message,
+        name: error.name,
+        code: error.code,
+        errno: error.errno,
+        syscall: error.syscall,
+        hostname: error.hostname,
+        cause: error.cause ? {
+          message: error.cause.message,
+          name: error.cause.name,
+          code: error.cause.code
+        } : null,
+        stack: error.stack?.substring(0, 500)
+      });
       failedCount += slice.length;
     }
   }
@@ -485,11 +542,18 @@ async function main() {
       const priorityLabel = isPriority ? '🎯 [PRIORITY] ' : '';
       console.log(`\n${priorityLabel}🔎 Fetching: "${term}" internships in ${city}, ${country}`);
       
-      const py = spawnSync(pythonCmd, ['-c', `
+      const         // Optimize: Skip Glassdoor for cities where it's blocked (reduces errors)
+        const GLASSDOOR_BLOCKED_CITIES = ['Stockholm', 'Copenhagen', 'Prague', 'Warsaw'];
+        const sites = ['indeed', 'google', 'zip_recruiter'];
+        if (!GLASSDOOR_BLOCKED_CITIES.includes(city)) {
+          sites.push('glassdoor');
+        }
+        
+        py = spawnSync(pythonCmd, ['-c', `
 from jobspy import scrape_jobs
 import pandas as pd
 df = scrape_jobs(
-  site_name=['indeed', 'glassdoor', 'google', 'zip_recruiter'],
+  site_name=${JSON.stringify(sites)},
   search_term='''${term.replace(/'/g, "''")}''',
   location='''${city}''',
   country_indeed='''${country}''',
