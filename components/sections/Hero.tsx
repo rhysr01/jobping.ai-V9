@@ -111,19 +111,17 @@ export default function Hero() {
             >
               <span className="text-white">Get 5 early-career</span>{' '}
               <span className="text-white">job matches</span>{' '}
-              <span className="text-white whitespace-nowrap">instantly <span className="text-zinc-400">— free</span></span>
+              <span className="text-white whitespace-nowrap">instantly <span className="text-zinc-400">- free</span></span>
             </motion.h1>
 
-            {/* Subheadline - FREE-FIRST - Clear value prop */}
+            {/* Subheadline - HIGH-STAKES - Clear value prop */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25, duration: 0.6 }}
-              className="text-lg md:text-xl text-zinc-300 leading-relaxed max-w-xl mb-4"
+              className="text-lg md:text-xl text-zinc-300 leading-relaxed max-w-xl mb-4 mt-6"
             >
-              Matched to your city,{' '}
-              <span className="text-emerald-400 font-semibold">verified visa sponsorship</span>,{' '}
-              and career path. 2 minutes. No credit card.
+              Stop guessing about visa status. Get curated graduate roles matched to your city and career path in under 2 minutes.
             </motion.p>
 
             {/* CTAs */}
@@ -140,7 +138,7 @@ export default function Hero() {
                 }}
                 variant="gradient"
                 size="lg"
-                className="w-full sm:w-auto sm:min-w-[240px] px-8 py-4 md:py-5 text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)] transition-all duration-200"
+                className="w-full sm:w-auto sm:max-w-xs mx-auto sm:mx-0 px-8 py-4 md:py-5 text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)] transition-all duration-200"
                 aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
               >
                 <span className="flex items-center justify-center gap-2">
@@ -154,8 +152,8 @@ export default function Hero() {
                 transition={{ delay: 0.35, duration: 0.6 }}
                 className="space-y-2 mt-3"
               >
-                <p className="text-sm text-zinc-400">
-                  ⚡ 100% free to start • Real entry-level roles • No spam
+                <p className="text-xs text-zinc-500">
+                  100% free to start • Real entry-level roles • No spam
                 </p>
               </motion.div>
               
@@ -230,22 +228,24 @@ export default function Hero() {
             </motion.div>
           </motion.div>
 
-          {/* RIGHT SIDE - iPhone Mockup */}
+          {/* RIGHT SIDE - iPhone Mockup - Larger and aligned */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="relative flex justify-center lg:justify-end"
+            className="relative flex justify-center lg:justify-end items-start"
           >
             {/* Background glow behind phone */}
             <div className="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-brand-600/10 to-brand-500/10 rounded-full blur-3xl -z-10 opacity-50" />
             
-            {/* iPhone Mockup - Responsive scaling with shadow */}
-            <div className="scale-75 md:scale-90 lg:scale-100 origin-center drop-shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
+            {/* iPhone Mockup - 15-20% larger, top-aligned, with bleed effect */}
+            <div className="scale-[0.9] md:scale-[1.05] lg:scale-[1.15] xl:scale-[1.2] origin-top lg:origin-top-left drop-shadow-[0_20px_60px_rgba(0,0,0,0.6)] relative z-10 lg:-mr-8">
               <DeviceFrame>
                 <SampleJobMatches preloadedJobs={preloadedJobs} />
               </DeviceFrame>
             </div>
+            {/* Gradient bleed effect - bottom of phone bleeds off */}
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none -z-0" />
           </motion.div>
         </div>
 

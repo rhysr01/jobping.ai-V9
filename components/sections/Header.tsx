@@ -13,14 +13,29 @@ import { CTA_GET_MY_5_FREE_MATCHES } from '@/lib/copy';
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>('');
   const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
+      
+      // Detect active section based on scroll position
+      const howItWorks = document.getElementById('how-it-works');
+      const pricing = document.getElementById('pricing');
+      const scrollY = window.scrollY + 100; // Offset for header height
+      
+      if (pricing && scrollY >= pricing.offsetTop) {
+        setActiveSection('#pricing');
+      } else if (howItWorks && scrollY >= howItWorks.offsetTop) {
+        setActiveSection('#how-it-works');
+      } else {
+        setActiveSection('');
+      }
     };
 
     window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial check
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -63,8 +78,8 @@ export default function Header() {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
-            ? 'bg-black/90 backdrop-blur-md border-b border-white/10 shadow-lg'
-            : 'bg-transparent'
+            ? 'bg-zinc-950/70 backdrop-blur-md border-b border-white/5 shadow-lg'
+            : 'bg-zinc-950/70 backdrop-blur-md border-b border-white/5'
         }`}
       >
         <div className="container-page">
@@ -93,7 +108,11 @@ export default function Header() {
                   key={link.href}
                   href={link.href}
                   onClick={(e) => handleNavClick(e, link.href, link.scroll)}
-                  className="text-sm font-medium text-zinc-300 hover:text-white transition-colors"
+                  className={`text-sm font-medium transition-colors ${
+                    activeSection === link.href
+                      ? 'text-white'
+                      : 'text-zinc-500 hover:text-white'
+                  }`}
                 >
                   {link.label}
                 </Link>
@@ -168,7 +187,11 @@ export default function Header() {
                       key={link.href}
                       href={link.href}
                       onClick={(e) => handleNavClick(e, link.href, link.scroll)}
-                      className="text-lg font-medium text-zinc-300 hover:text-white transition-colors py-2"
+                      className={`text-lg font-medium transition-colors py-2 ${
+                        activeSection === link.href
+                          ? 'text-white'
+                          : 'text-zinc-500 hover:text-white'
+                      }`}
                     >
                       {link.label}
                     </Link>

@@ -49,7 +49,7 @@ We've already queued your first ${args.matchCount} ${matchesLabel}. Expect them 
 
 Tip: add hello@getjobping.com to your contacts so nothing hits spam. Need to tweak your preferences? Visit ${baseUrl}/preferences or reply to this email and we'll help.
 
-— The JobPing Team`;
+- The JobPing Team`;
     
     apiLogger.info('Email content generated', { from: EMAIL_CONFIG.from });
     assertValidFrom(EMAIL_CONFIG.from);

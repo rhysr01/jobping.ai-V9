@@ -10,7 +10,7 @@ export default function HowItWorks() {
     <section
       id="how-it-works"
       data-testid="how-it-works"
-      className="pt-24 pb-24 md:pt-28 md:pb-28 lg:pt-32 lg:pb-32 bg-black scroll-snap-section relative"
+      className="py-24 md:py-32 bg-black scroll-snap-section relative"
     >
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
@@ -22,7 +22,7 @@ export default function HowItWorks() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="mx-auto max-w-3xl text-left sm:text-center"
+          className="mx-auto max-w-5xl text-left sm:text-center"
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200">
             <BrandIcons.GraduationCap className="h-[5.2px] w-[5.2px] text-brand-300" />
@@ -39,58 +39,26 @@ export default function HowItWorks() {
           </p>
         </motion.div>
 
-        {/* Student-focused benefits */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-12 mb-14 max-w-4xl mx-auto"
-        >
-          <div className="space-y-3">
-            {Copy.BUILT_FOR_STUDENTS_FEATURES.filter(feature => feature && feature.title).map((feature, index) => {
-              const featureIcons = [BrandIcons.Briefcase, BrandIcons.CheckCircle, BrandIcons.Mail];
-              const Icon = featureIcons[index] || BrandIcons.Sparkles;
-              return (
-                <motion.div
-                  key={feature.num}
-                  initial={{ opacity: 0, y: 24 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.45, delay: index * 0.05 }}
-                  className="group relative overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 p-6 backdrop-blur-xl shadow-feature transition-all duration-200 hover:-translate-y-1 hover:shadow-hover"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[radial-gradient(circle_at_center,theme(colors.brand.500/0.4),transparent_70%)]">
-                      <Icon className="h-5 w-5 text-brand-300" />
-                    </div>
-                    <div className="max-w-md">
-                      <h3 className="text-base md:text-lg font-semibold text-white">
-                        {feature.title}
-                      </h3>
-                      <p className="text-sm text-zinc-300 mt-1 max-w-[600px]">
-                        {feature.body}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
-
-        <div className="relative mt-14 grid gap-4 sm:mt-16 md:grid-cols-3">
-          {/* Connecting line for desktop - curved */}
+        <div className="relative mt-14 grid gap-4 sm:mt-16 md:grid-cols-3 max-w-5xl mx-auto">
+          {/* Connecting line for desktop - curved, gradient, thicker */}
           <svg
-            className="pointer-events-none absolute left-1/2 top-10 hidden md:block w-[72%] h-[60px] -translate-x-1/2"
+            className="pointer-events-none absolute left-1/2 top-[56px] hidden md:block w-[72%] h-[60px] -translate-x-1/2"
             viewBox="0 0 100 20"
             preserveAspectRatio="none"
           >
+            <defs>
+              <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="rgb(139, 92, 246)" stopOpacity="0.8" />
+                <stop offset="50%" stopColor="rgb(139, 92, 246)" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="rgb(139, 92, 246)" stopOpacity="0" />
+              </linearGradient>
+            </defs>
             <path
               d="M0,10 C30,0 70,20 100,10"
-              stroke="rgb(113 113 122 / 0.5)"
-              strokeWidth="1"
+              stroke="url(#progressGradient)"
+              strokeWidth="2"
               fill="none"
+              className="drop-shadow-[0_0_8px_rgba(139,92,246,0.3)]"
             />
           </svg>
           {Copy.HOW_IT_WORKS_STEPS.filter(step => step && step.title).map((step, index) => {
@@ -106,7 +74,7 @@ export default function HowItWorks() {
                   y: -4,
                   transition: { type: 'spring', stiffness: 300, damping: 20 }
                 }}
-                className="group relative flex h-full flex-col gap-2 overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-feature px-6 py-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7"
+                className="group relative flex h-full flex-col gap-2 overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-feature shadow-[0_0_50px_rgba(0,0,0,0.3)] px-6 py-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-hover hover:shadow-[0_0_60px_rgba(0,0,0,0.4)] md:px-7 md:py-7"
               >
                 <motion.span 
                   className="number-chip brightness-95 font-semibold group-hover:bg-brand-500/25 group-hover:scale-110 shadow-md shadow-black/40 h-12 w-12 md:h-14 md:w-14 text-2xl md:text-3xl text-brand-400"
@@ -125,7 +93,7 @@ export default function HowItWorks() {
                   </motion.span>
                   <h3 className="text-xl font-semibold text-white sm:text-2xl mb-2">{step.title}</h3>
                 </div>
-                <p className="text-sm text-zinc-300">{step.description}</p>
+                <p className="text-sm text-zinc-300 leading-relaxed">{step.description}</p>
               </motion.article>
             );
           })}

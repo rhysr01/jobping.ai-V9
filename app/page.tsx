@@ -7,7 +7,6 @@ import CompanyLogos from "@/components/sections/CompanyLogos";
 import HowItWorks from "@/components/sections/HowItWorks";
 import Pricing from "@/components/sections/Pricing";
 import EmailPhoneShowcase from "@/components/marketing/EmailPhoneShowcase";
-import WhatHappensNext from "@/components/sections/WhatHappensNext";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import ExitIntentPopup from "@/components/ui/ExitIntentPopup";
 import ScrollCTA from "@/components/ui/ScrollCTA";
@@ -30,7 +29,7 @@ export default function Page() {
         <CompanyLogos />
         <HowItWorks />
         {/* Email preview section - Monday only */}
-        <section className="pt-24 pb-24 md:pt-28 md:pb-28 lg:pt-32 lg:pb-32 relative overflow-hidden bg-black">
+        <section className="py-24 md:py-32 relative overflow-hidden bg-black">
           <div className="container-page relative z-10 px-4 md:px-6">
             <div className="mx-auto max-w-3xl text-center mb-12 md:mb-16">
               <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1 text-[11px] font-medium tracking-[0.16em] uppercase text-brand-200">
@@ -48,7 +47,6 @@ export default function Page() {
             </div>
           </div>
         </section>
-        <WhatHappensNext />
         <Pricing />
         <SocialProofRow />
         <FAQ />

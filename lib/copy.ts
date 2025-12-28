@@ -28,12 +28,12 @@ export const TRUST_TEXT_NO_CARD_SETUP = "No credit card • 2-minute setup";
 // Hero section
 export const HERO_TITLE = "JobPing";
 export const HERO_HEADLINE = "Get hand-picked early-career jobs across Europe without wasting hours searching";
-export const HERO_SUBLINE = "We scan 1,000+ EU companies daily and send you only roles you're qualified for—filtered by location, visa status, and experience.";
+export const HERO_SUBLINE = "We scan 1,000+ EU companies daily and send you only roles you're qualified for - filtered by location, visa status, and experience.";
 export const HERO_SUBLINE_MICRO = "No dashboards. No job boards. Just roles you can actually apply for.";
 export const HERO_SUBTITLE = "";
 export const HERO_CTA = "Get my first 5 matches";
 export const HERO_PRIMARY_CTA = "Start Free - See Your First 5 Matches";
-export const HERO_SECONDARY_CTA = "View Example Matches";
+export const HERO_SECONDARY_CTA = "View Instant Matches";
 export const HERO_PILL = "For EU students & recent grads";
 export const HERO_SOCIAL_PROOF = "Trusted by students in 7 countries";
 
@@ -41,9 +41,9 @@ export const HERO_SOCIAL_PROOF = "Trusted by students in 7 countries";
 export const HOW_IT_WORKS_TITLE = "How it works";
 export const HOW_IT_WORKS_SUMMARY = "We do the searching. You do the applying.";
 export const HOW_IT_WORKS_STEPS = [
-  { title: "1. Tell us your preferences", description: "Choose your cities, career path, and visa status. We'll only show roles you qualify for - no time wasters." },
-  { title: "2. We search 1,000+ companies daily", description: "Our AI scans job boards and career pages across Europe - you get the best matches in your inbox." },
-  { title: "3. Get matched roles instantly (Free) or weekly (Premium)", description: "Free: See 5 matches right away (one-time). Premium: Get 5 fresh roles every Monday, Wednesday, and Friday (15 per week)." },
+  { title: "1. Tell us your preferences", description: "Choose your cities, career path, and visa status. We'll only show roles you qualify for - no time wasters. Only junior-friendly roles: internships, graduate programmes, and entry-level positions." },
+  { title: "2. We search 1,000+ companies daily", description: "Our AI scans job boards and career pages across Europe - you get the best matches in your inbox. Every email includes salary hints, visa notes, and why the role fits you." },
+  { title: "3. Get matched roles instantly (Free) or weekly (Premium)", description: "Free: See 5 matches right away (one-time). Premium: Get 5 fresh roles every Monday, Wednesday, and Friday (15 per week). No dashboards. Open the email and apply when you like a role." },
 ];
 
 // What Happens Next section
@@ -81,17 +81,18 @@ export const BUILT_FOR_STUDENTS_FEATURES = [
 
 // Pricing
 export const PRICING_TITLE = "Choose Your Plan";
-export const PRICING_SUBTITLE = `Graduate roles and internships across Europe. Cancel anytime.`;
+export const PRICING_SUBTITLE = `Unlock the full European market. Join 1,000+ students finding verified sponsorship roles.`;
 export const PRICING_BADGE = "Simple pricing • Cancel anytime";
 
 // Free plan
 export const FREE_PLAN_TITLE = "Free";
 export const FREE_PLAN_SUBTITLE = "Try it out";
 export const FREE_PLAN_FEATURES = [
-  `See 5 example matches to try it out`,
+  `Get 5 instant matches`,
   "View matches on website",
   "No credit card required",
-  "Takes under 2 minutes"
+  "Takes under 2 minutes",
+  "No recurring fees"
 ];
 export const FREE_PLAN_DESCRIPTION = `See your first 5 matches on your personalized dashboard. This is a one-time preview to see how JobPing works. No credit card required.`;
 
@@ -108,7 +109,7 @@ export const PREMIUM_PLAN_ANNUAL = "€20 for 3 months (save €1)";
 export const PREMIUM_PLAN_DESCRIPTION = `Matches delivered to your inbox every Monday, Wednesday, and Friday - so you never miss an opportunity.`;
 export const PREMIUM_PLAN_FEATURES = [
   `15 curated roles per week (3 emails: Mon / Wed / Fri)`,
-  "Priority support",
+  "Priority curation",
   "Cancel anytime"
 ];
 
