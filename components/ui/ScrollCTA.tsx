@@ -23,12 +23,26 @@ export default function ScrollCTA() {
       const windowHeight = window.innerHeight;
       const scrollPercentage = (scrollY / (documentHeight - windowHeight)) * 100;
 
-      // Show after scrolling 50% of page
-      if (scrollPercentage >= 50 && !hasShown) {
+      // Check if Pricing section is in viewport
+      const pricingSection = document.getElementById('pricing') || document.querySelector('[data-section="pricing"]');
+      let isInPricingSection = false;
+      
+      if (pricingSection) {
+        const rect = pricingSection.getBoundingClientRect();
+        // Hide if Pricing section is visible (within viewport)
+        isInPricingSection = rect.top < windowHeight && rect.bottom > 0;
+      }
+
+      // Show after scrolling 50% of page, but hide if in Pricing section
+      if (scrollPercentage >= 50 && !hasShown && !isInPricingSection) {
         setIsVisible(true);
         setHasShown(true);
-      } else if (scrollPercentage < 50) {
+      } else if (scrollPercentage < 50 || isInPricingSection) {
         setIsVisible(false);
+        // Reset hasShown if scrolled back up
+        if (scrollPercentage < 50) {
+          setHasShown(false);
+        }
       }
     };
 

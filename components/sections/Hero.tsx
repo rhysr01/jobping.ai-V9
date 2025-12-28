@@ -247,26 +247,49 @@ export default function Hero() {
             onMouseLeave={() => setMousePosition({ x: 50, y: 50 })}
             className="relative flex justify-center lg:justify-end items-start"
           >
-            {/* Dynamic backlight that follows cursor */}
+            {/* Dynamic backlight that follows cursor - smooth radial gradient fade */}
             <motion.div
               animate={{
                 x: `${mousePosition.x}%`,
                 y: `${mousePosition.y}%`,
               }}
-              transition={{ type: 'spring', stiffness: 50, damping: 20 }}
-              className="absolute bg-purple-500/25 blur-3xl rounded-full opacity-60 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+              transition={{ type: 'spring', stiffness: 40, damping: 25 }}
+              className="absolute pointer-events-none -translate-x-1/2 -translate-y-1/2"
               style={{
-                width: '400px',
-                height: '400px',
+                width: '500px',
+                height: '500px',
+                background: 'radial-gradient(circle, rgba(139,92,246,0.3) 0%, rgba(139,92,246,0.15) 30%, rgba(139,92,246,0.05) 50%, transparent 70%)',
+                filter: 'blur(60px)',
+                opacity: 0.7,
               }}
             />
             
-            {/* Secondary static glow layers */}
-            <div className="absolute -inset-6 bg-purple-600/15 blur-2xl rounded-full opacity-40" />
-            <div className="absolute -inset-4 bg-purple-400/10 blur-xl rounded-full opacity-30" />
+            {/* Secondary static glow layers - radial gradients for smooth fade */}
+            <div 
+              className="absolute -inset-8 pointer-events-none"
+              style={{
+                background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, rgba(139,92,246,0.06) 40%, transparent 70%)',
+                filter: 'blur(50px)',
+                opacity: 0.5,
+              }}
+            />
+            <div 
+              className="absolute -inset-6 pointer-events-none"
+              style={{
+                background: 'radial-gradient(circle, rgba(168,85,247,0.08) 0%, rgba(168,85,247,0.04) 40%, transparent 70%)',
+                filter: 'blur(40px)',
+                opacity: 0.4,
+              }}
+            />
             
-            {/* Floating shadow */}
-            <div className="absolute inset-0 translate-y-16 bg-black/70 blur-3xl rounded-full -z-20 scale-110" />
+            {/* Floating shadow - smooth radial fade */}
+            <div 
+              className="absolute inset-0 translate-y-16 pointer-events-none -z-20 scale-110"
+              style={{
+                background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 50%, transparent 80%)',
+                filter: 'blur(60px)',
+              }}
+            />
             
             {/* iPhone Mockup */}
             <div className="scale-90 md:scale-95 lg:scale-100 origin-top lg:origin-top-left drop-shadow-[0_20px_60px_rgba(0,0,0,0.6)] relative z-10 lg:-mr-8">

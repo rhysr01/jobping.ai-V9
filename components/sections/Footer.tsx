@@ -30,7 +30,7 @@ export default function Footer() {
                 <LogoWordmark />
               </div>
               <p className="text-xs text-zinc-400 max-w-md">
-                The visa-first job board for the next generation of builders.
+                AI-powered job matching for early-career roles across Europe. Get personalized matches delivered to your inbox.
               </p>
             </div>
             

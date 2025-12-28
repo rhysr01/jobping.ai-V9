@@ -103,17 +103,17 @@ export default function CompanyLogos() {
             <BrandIcons.Briefcase className="h-4 w-4 text-brand-300" />
             Featured Companies
           </motion.span>
-          <h2 className="section-title mt-4 mb-3">
+          <h2 className="section-title mt-4 mb-3 text-zinc-100">
             Jobs from companies like:
           </h2>
-          <p className="text-xl text-zinc-300 md:text-2xl leading-relaxed">
+          <p className="text-xl text-zinc-200 md:text-2xl leading-relaxed">
             We've matched roles from these companies (and 400+ more)
           </p>
         </motion.div>
 
-        <div className="relative after:absolute after:inset-y-0 after:right-0 after:w-20 after:bg-gradient-to-l after:from-zinc-950 after:to-transparent before:absolute before:inset-y-0 before:left-0 before:z-10 before:w-20 before:bg-gradient-to-r before:from-zinc-950 before:to-transparent">
+        <div className="relative after:absolute after:inset-y-0 after:right-0 after:w-12 after:bg-gradient-to-l after:from-zinc-950 after:to-transparent before:absolute before:inset-y-0 before:left-0 before:z-10 before:w-12 before:bg-gradient-to-r before:from-zinc-950 before:to-transparent">
           {/* Subtle spotlight effect */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-brand-500/3 to-transparent z-0" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-purple-500/5 to-transparent z-0" />
 
           {/* Horizontal scroll container */}
           <div 
@@ -142,7 +142,7 @@ export default function CompanyLogos() {
                 }}
                 className="flex-shrink-0 snap-start"
               >
-                <div className="relative h-[180px] w-[200px] flex items-center justify-center rounded-2xl bg-gradient-to-br from-white/[0.12] via-white/[0.08] to-white/[0.12] backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.2)] p-6 transition-all duration-300 ease-out hover:border-purple-500/30 hover:shadow-[0_12px_48px_rgba(139,92,246,0.2),inset_0_1px_0_rgba(255,255,255,0.25)] group overflow-hidden">
+                <div className="relative h-[180px] w-[200px] flex items-center justify-center rounded-2xl bg-gradient-to-br from-white/[0.18] via-white/[0.12] to-white/[0.18] backdrop-blur-xl border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.3)] p-6 transition-all duration-300 ease-out hover:border-purple-500/50 hover:shadow-[0_12px_48px_rgba(139,92,246,0.3),inset_0_1px_0_rgba(255,255,255,0.35)] group overflow-hidden">
                   {/* Animated shimmer sweep */}
                   <motion.div
                     initial={{ x: '-100%' }}
@@ -157,7 +157,7 @@ export default function CompanyLogos() {
                   />
                   
                   {/* Inner glow with light source */}
-                  <div className="absolute inset-[1px] bg-gradient-to-br from-white/[0.08] via-transparent to-white/[0.02] rounded-2xl pointer-events-none" />
+                  <div className="absolute inset-[1px] bg-gradient-to-br from-white/[0.12] via-transparent to-white/[0.04] rounded-2xl pointer-events-none" />
                   
                   {/* Logo with stronger contrast */}
                   <div className="relative z-10 flex items-center justify-center">
@@ -166,7 +166,7 @@ export default function CompanyLogos() {
                       alt={`${company.name} company logo`}
                       width={140}
                       height={140}
-                      className="object-contain h-[140px] w-auto opacity-40 grayscale transition-all duration-500 ease-out group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-125 filter drop-shadow-[0_4px_12px_rgba(139,92,246,0.3)]"
+                      className="object-contain h-[140px] w-auto opacity-70 grayscale transition-all duration-500 ease-out group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-125 filter drop-shadow-[0_4px_12px_rgba(139,92,246,0.4)]"
                       onError={(e) => {
                         console.error(`Failed to load logo: ${company.logoPath}`, e);
                         const parent = (e.target as HTMLElement).parentElement?.parentElement?.parentElement;
@@ -188,7 +188,7 @@ export default function CompanyLogos() {
           </div>
         </div>
 
-        {/* Counter */}
+        {/* Disclaimer */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -196,10 +196,7 @@ export default function CompanyLogos() {
           transition={{ delay: 0.3 }}
           className="text-center mt-8"
         >
-          <p className="text-xs md:text-sm text-zinc-400">
-            {companies.length}+ companies this month • Updated daily
-          </p>
-          <p className="text-xs text-zinc-400 mt-2">
+          <p className="text-xs text-zinc-400">
             JobPing is not affiliated to these companies, we match you with their public job listings
           </p>
         </motion.div>

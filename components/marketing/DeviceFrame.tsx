@@ -85,7 +85,7 @@ export default function DeviceFrame({
     };
   }, [autoScroll]);
 
-  // Auto-scroll animation
+  // Auto-scroll animation - seamless continuous loop
   useEffect(() => {
     if (!autoScroll || prefersReducedMotion || !isInView || isHovered || maxScroll <= 0) {
       // Clean up any running animations
@@ -100,9 +100,8 @@ export default function DeviceFrame({
       return;
     }
 
-    const scrollDuration = 8000; // 8 seconds to scroll from top to bottom
-    let startTime: number | null = null;
-    let startScroll = 0;
+    const scrollDuration = 12000; // 12 seconds for smooth, slower scroll
+    let animationStartTime: number | null = null;
 
     const animate = (timestamp: number) => {
       if (isHovered || !isInView || !scrollContainerRef.current) {
@@ -110,43 +109,25 @@ export default function DeviceFrame({
         return;
       }
 
-      if (startTime === null) {
-        startTime = timestamp;
-        startScroll = scrollContainerRef.current.scrollTop;
+      if (animationStartTime === null) {
+        animationStartTime = timestamp;
       }
 
-      const elapsed = timestamp - startTime;
-      const progress = Math.min(elapsed / scrollDuration, 1);
+      const elapsed = timestamp - animationStartTime;
+      // Use modulo to create seamless loop (no abrupt resets)
+      const progress = (elapsed % scrollDuration) / scrollDuration;
       
-      // Ease-in-out curve for smooth acceleration/deceleration
-      const eased = progress < 0.5
-        ? 2 * progress * progress
-        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-
-      const newScroll = startScroll + (maxScroll * eased * scrollSpeed);
+      // Smooth sine wave for continuous looping (0 to 1 and back to 0 seamlessly)
+      const eased = Math.sin(progress * Math.PI * 2) * 0.5 + 0.5; // Smooth 0 to 1 wave
+      
+      const newScroll = maxScroll * eased * scrollSpeed;
       
       if (scrollContainerRef.current) {
         scrollContainerRef.current.scrollTop = newScroll;
       }
 
-      if (progress < 1) {
-        animationFrameRef.current = requestAnimationFrame(animate);
-      } else {
-        // Reset to top smoothly after reaching bottom
-        if (resetTimeoutRef.current) {
-          clearTimeout(resetTimeoutRef.current);
-        }
-        resetTimeoutRef.current = setTimeout(() => {
-          if (scrollContainerRef.current && !isHovered && isInView) {
-            scrollContainerRef.current.scrollTo({
-              top: 0,
-              behavior: 'smooth'
-            });
-            startTime = null; // Reset for next cycle
-          }
-        }, 1000); // Pause 1 second at bottom before resetting
-        animationFrameRef.current = null;
-      }
+      // Continue animation loop indefinitely
+      animationFrameRef.current = requestAnimationFrame(animate);
     };
 
     animationFrameRef.current = requestAnimationFrame(animate);
