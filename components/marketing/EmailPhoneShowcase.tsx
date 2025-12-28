@@ -71,23 +71,49 @@ export default function EmailPhoneShowcase({ day = 'monday', careerPath = 'finan
         }}
         onMouseLeave={() => setMousePosition({ x: 50, y: 50 })}
       >
-        {/* Dynamic backlight following cursor */}
+        {/* Dynamic backlight following cursor - smooth radial gradient fade */}
         <motion.div
           animate={{
             x: `${mousePosition.x}%`,
             y: `${mousePosition.y}%`,
           }}
           transition={{ type: 'spring', stiffness: 40, damping: 25 }}
-          className="absolute bg-purple-500/25 blur-3xl rounded-full opacity-70 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-          style={{ width: '500px', height: '500px' }}
+          className="absolute pointer-events-none -translate-x-1/2 -translate-y-1/2"
+          style={{
+            width: '600px',
+            height: '600px',
+            background: 'radial-gradient(circle, rgba(139,92,246,0.35) 0%, rgba(139,92,246,0.18) 30%, rgba(139,92,246,0.08) 50%, transparent 70%)',
+            filter: 'blur(70px)',
+            opacity: 0.75,
+          }}
         />
         
-        {/* Static glow layers */}
-        <div className="absolute -inset-6 bg-purple-600/15 blur-2xl rounded-full opacity-50" />
-        <div className="absolute -inset-4 bg-purple-400/10 blur-xl rounded-full opacity-40" />
+        {/* Static glow layers - radial gradients for smooth fade */}
+        <div 
+          className="absolute -inset-8 pointer-events-none"
+          style={{
+            background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, rgba(139,92,246,0.08) 40%, transparent 70%)',
+            filter: 'blur(60px)',
+            opacity: 0.6,
+          }}
+        />
+        <div 
+          className="absolute -inset-6 pointer-events-none"
+          style={{
+            background: 'radial-gradient(circle, rgba(168,85,247,0.1) 0%, rgba(168,85,247,0.05) 40%, transparent 70%)',
+            filter: 'blur(50px)',
+            opacity: 0.5,
+          }}
+        />
         
-        {/* Floating shadow */}
-        <div className="absolute inset-0 translate-y-20 bg-black/80 blur-3xl rounded-full -z-20 scale-110" />
+        {/* Floating shadow - smooth radial fade */}
+        <div 
+          className="absolute inset-0 translate-y-20 pointer-events-none -z-20 scale-110"
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.4) 50%, transparent 80%)',
+            filter: 'blur(70px)',
+          }}
+        />
         
         {/* Single phone - Email Preview */}
         <motion.div

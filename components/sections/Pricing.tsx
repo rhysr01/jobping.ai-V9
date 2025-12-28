@@ -50,6 +50,7 @@ const plans: PlanConfig[] = [
 ];
 
 export default function Pricing() {
+  // Add id to section for ScrollCTA detection
   const { stats } = useStats();
   
   return (
@@ -119,12 +120,12 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
   const isPremium = plan.id === 'premium';
   const [borderBeamPosition, setBorderBeamPosition] = useState(0);
 
-  // Border beam animation (travels around border every 5 seconds)
+  // Border beam animation (travels around border - slower for smoother motion)
   useEffect(() => {
     if (!isPremium) return;
     const interval = setInterval(() => {
       setBorderBeamPosition((prev) => (prev + 1) % 100);
-    }, 50); // Update every 50ms for smooth animation
+    }, 80); // Slower: 80ms for smoother, more premium motion
     return () => clearInterval(interval);
   }, [isPremium]);
 
@@ -224,14 +225,33 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
           
           {/* Premium card with conic-gradient border */}
           <div className="relative rounded-[2rem] p-[1px] border border-purple-500/30 bg-[conic-gradient(from_0deg_at_50%_50%,rgba(139,92,246,0.5),rgba(168,85,247,0.3),rgba(139,92,246,0.5))]">
-            {/* Border beam animation */}
+            {/* Dual rotating beams for premium effect */}
             <div className="absolute inset-0 rounded-[2rem] overflow-hidden pointer-events-none z-30">
+              {/* Primary beam - wider, more prominent */}
               <motion.div
                 animate={{
-                  background: `conic-gradient(from ${borderBeamPosition * 3.6}deg, transparent 0deg, rgba(139,92,246,0.6) 10deg, transparent 20deg)`,
+                  background: `conic-gradient(from ${borderBeamPosition * 3.6}deg,
+                    transparent 0deg,
+                    rgba(139,92,246,0.7) 20deg,
+                    rgba(168,85,247,0.9) 30deg,
+                    rgba(139,92,246,0.7) 40deg,
+                    transparent 60deg)`,
                 }}
-                transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
                 className="absolute inset-0"
+              />
+              {/* Secondary beam - rotating opposite direction */}
+              <motion.div
+                animate={{
+                  background: `conic-gradient(from ${(360 - borderBeamPosition * 3.6)}deg,
+                    transparent 0deg,
+                    rgba(139,92,246,0.4) 15deg,
+                    rgba(139,92,246,0.3) 25deg,
+                    transparent 35deg)`,
+                }}
+                transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                className="absolute inset-0"
+                style={{ opacity: 0.6 }}
               />
             </div>
             
