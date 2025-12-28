@@ -184,7 +184,7 @@ export default function CompanyLogos() {
             ref={scrollContainerRef}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            className="flex gap-8 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-8 px-8 [mask-image:linear-gradient(to_right,transparent_0%,white_10%,white_90%,transparent_100%)] will-change-transform"
+            className="flex gap-8 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-8 px-8 [mask-image:linear-gradient(to_right,transparent_0%,white_10%,white_90%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,transparent_0%,white_10%,white_90%,transparent_100%)] will-change-transform"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',

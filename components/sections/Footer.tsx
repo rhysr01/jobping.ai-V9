@@ -43,15 +43,15 @@ export default function Footer() {
               
               <nav className="flex flex-wrap items-center gap-3 md:justify-end">
                 {links.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
+                <Link
+                  key={link.href}
+                  href={link.href}
                     className="text-xs text-zinc-400 transition-all duration-200 hover:text-zinc-300"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </nav>
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
             </div>
           </motion.div>
           

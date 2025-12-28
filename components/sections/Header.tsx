@@ -77,8 +77,8 @@ export default function Header() {
     <>
       <header
         className={`sticky top-0 left-0 right-0 z-50 transition-all duration-200 ${
-          scrolled 
-            ? 'bg-zinc-950/70 backdrop-blur-md border-b border-white/5 shadow-lg' 
+          scrolled
+            ? 'bg-zinc-950/70 backdrop-blur-md border-b border-white/5 shadow-lg'
             : 'bg-transparent border-b border-transparent'
         }`}
       >
@@ -105,18 +105,18 @@ export default function Header() {
             <nav className="hidden md:flex items-center gap-6">
               {/* Navigation Links Group */}
               <div className="flex items-center gap-6 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={(e) => handleNavClick(e, link.href, link.scroll)}
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={(e) => handleNavClick(e, link.href, link.scroll)}
                     className={`text-sm font-semibold transition-all duration-200 relative ${
-                      activeSection === link.href
-                        ? 'text-white'
+                    activeSection === link.href
+                      ? 'text-white'
                         : 'text-zinc-300 hover:text-white'
-                    }`}
-                  >
-                    {link.label}
+                  }`}
+                >
+                  {link.label}
                     {activeSection === link.href && (
                       <motion.div
                         layoutId="activeNav"
@@ -125,8 +125,8 @@ export default function Header() {
                         transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                       />
                     )}
-                  </Link>
-                ))}
+                </Link>
+              ))}
               </div>
               
               {/* CTA Button - Always prominent */}

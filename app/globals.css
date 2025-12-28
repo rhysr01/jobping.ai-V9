@@ -267,32 +267,32 @@ a {
 
 .glass-card.elevation-1 {
   /* Base cards - subtle depth (feature cards, info boxes) */
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.12),
-    0 1px 2px rgba(0, 0, 0, 0.24);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transform: translateZ(0);
-}
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.12),
+      0 1px 2px rgba(0, 0, 0, 0.24);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transform: translateZ(0);
+  }
 
-.elevation-2 {
-  /* Foreground cards - prominent depth (CTAs, premium cards) */
-  box-shadow:
-    0 3px 6px rgba(0, 0, 0, 0.16),
-    0 2px 4px rgba(0, 0, 0, 0.23),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  transform: translateZ(0);
-}
+  .elevation-2 {
+    /* Foreground cards - prominent depth (CTAs, premium cards) */
+    box-shadow:
+      0 3px 6px rgba(0, 0, 0, 0.16),
+      0 2px 4px rgba(0, 0, 0, 0.23),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transform: translateZ(0);
+  }
 
-.elevation-3 {
-  /* Floating elements - maximum depth (modals, popovers) */
-  box-shadow:
-    0 10px 20px rgba(0, 0, 0, 0.19),
-    0 6px 6px rgba(0, 0, 0, 0.23),
-    0 0 0 1px rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  transform: translateZ(0);
-}
+  .elevation-3 {
+    /* Floating elements - maximum depth (modals, popovers) */
+    box-shadow:
+      0 10px 20px rgba(0, 0, 0, 0.19),
+      0 6px 6px rgba(0, 0, 0, 0.23),
+      0 0 0 1px rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    transform: translateZ(0);
+  }
 
   /* Border hierarchy system */
   .border-subtle {
@@ -442,18 +442,18 @@ a {
       @apply border-brand-500/50 bg-white/5;
     }
   }
-
+  
   /* Feature card hover effects */
   .feature-card {
     @apply transition-all duration-200;
   }
-
+  
   @media (hover: hover) and (pointer: fine) {
     .feature-card:hover {
       @apply -translate-y-1 shadow-hover;
     }
   }
-
+  
   /* Logo cloud item hover */
   .logo-cloud-item {
     @apply transition-all duration-200;
@@ -464,7 +464,7 @@ a {
       @apply border-white/20 shadow-hover;
     }
   }
-
+  
   /* Number chip consistent styling */
   .number-chip {
     @apply inline-flex items-center justify-center rounded-full bg-brand-500/15 text-brand-200 transition-all duration-300;
@@ -489,7 +489,7 @@ a {
       font-size: 1.25rem;
     }
   }
-
+  
   /* Section padding utility */
   .section-padding {
     @apply py-12 md:py-16 lg:py-24 px-4 sm:px-6 md:px-8;
@@ -499,7 +499,7 @@ a {
   .container-page {
     @apply max-w-7xl mx-auto px-4 sm:px-6 md:px-8;
   }
-
+  
   /* Scroll snap sections */
   .scroll-snap-section {
     scroll-snap-align: start;
@@ -518,33 +518,33 @@ a {
       0 10px 15px -3px rgba(0, 0, 0, 0.1),
       0 4px 6px -2px rgba(0, 0, 0, 0.05),
       0 0 0 1px rgba(255, 255, 255, 0.1);
-  }
+}
 
   /* Scrollbar polish - Premium Dark Theme */
-  .custom-scrollbar::-webkit-scrollbar {
+.custom-scrollbar::-webkit-scrollbar {
     width: 8px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
     background: #27272a; /* Zinc 800 */
     border-radius: 10px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #3f3f46; /* Zinc 700 */
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
+}
+.custom-scrollbar::-webkit-scrollbar-track {
     background: #09090b; /* Zinc 950 */
-  }
+}
 
-  /* Hide scrollbar for company logos horizontal scroll */
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+/* Hide scrollbar for company logos horizontal scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
 
-  /* Performance: Only add will-change when actually animating */
-  .hero-logo-capsule {
-    will-change: auto;
-  }
+/* Performance: Only add will-change when actually animating */
+.hero-logo-capsule {
+  will-change: auto;
+}

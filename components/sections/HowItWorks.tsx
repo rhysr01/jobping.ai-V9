@@ -63,12 +63,12 @@ export default function HowItWorks() {
               y2="2"
               stroke="url(#flowGradient)"
               strokeWidth="1.5"
-              strokeDasharray="4 8"
+              strokeDasharray="4 4"
               initial={{ pathLength: 0, strokeDashoffset: 0 }}
               whileInView={{ pathLength: 1 }}
               viewport={{ once: true }}
               animate={{
-                strokeDashoffset: [0, -12],
+                strokeDashoffset: [0, -8],
               }}
               transition={{
                 pathLength: { duration: 1.5, delay: 0.5 },

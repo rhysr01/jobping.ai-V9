@@ -30,14 +30,14 @@ const EuropeMap = dynamic(() => import('@/components/ui/EuropeMap'), {
 });
 
 const CAREER_PATHS = [
+  { value: 'strategy', label: 'Strategy & Business Design' },
   { value: 'finance', label: 'Finance & Investment' },
-  { value: 'tech', label: 'Tech & Engineering' },
-  { value: 'strategy', label: 'Strategy & Consulting' },
-  { value: 'marketing', label: 'Marketing & Growth' },
   { value: 'sales', label: 'Sales & Client Success' },
-  { value: 'operations', label: 'Operations & Supply Chain' },
+  { value: 'marketing', label: 'Marketing & Growth' },
   { value: 'data', label: 'Data & Analytics' },
+  { value: 'operations', label: 'Operations & Supply Chain' },
   { value: 'product', label: 'Product & Innovation' },
+  { value: 'tech', label: 'Tech & Engineering' },
 ];
 
 const CITIES = ['Dublin', 'London', 'Paris', 'Amsterdam', 'Manchester', 'Birmingham', 'Belfast', 'Madrid', 'Barcelona', 'Berlin', 'Hamburg', 'Munich', 'Zurich', 'Milan', 'Rome', 'Brussels', 'Stockholm', 'Copenhagen', 'Vienna', 'Prague', 'Warsaw'];
@@ -152,7 +152,7 @@ export default function SignupFormFree() {
             setShowPersonalizing(true);
             // Redirect after personalizing screen (2 seconds)
             setTimeout(() => {
-              router.push('/matches');
+            router.push('/matches');
             }, 2000);
             return 0;
           }
@@ -293,7 +293,7 @@ export default function SignupFormFree() {
       
       if (matchCountValue === 0) {
         if (process.env.NODE_ENV === 'development') {
-          console.warn('Signup succeeded but no matches created', data);
+        console.warn('Signup succeeded but no matches created', data);
         }
         setError('We couldn\'t find any matches for your preferences. Try selecting different cities or career paths.');
         trackEvent('signup_failed', { tier: 'free', error: 'no_matches' });
@@ -807,7 +807,7 @@ export default function SignupFormFree() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
-            >
+                >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -846,7 +846,7 @@ export default function SignupFormFree() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
                     className="text-center text-zinc-300 mb-6"
-                  >
+                >
                     Found {matchCount} perfect matches for you
                   </motion.p>
 
