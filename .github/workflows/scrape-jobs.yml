@@ -64,14 +64,15 @@ jobs:
     - name: Validate required secrets
       run: |
         # Store secrets in variables first to avoid evaluation issues
-        SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
+        # Use NEXT_PUBLIC_SUPABASE_URL if SUPABASE_URL is not set (backward compatibility)
+        SUPABASE_URL="${{ secrets.SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}"
         SUPABASE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
         
         # Debug: Check if secrets are accessible (without exposing values)
         echo "🔍 Checking secrets..."
         if [ -z "$SUPABASE_URL" ]; then
-          echo "❌ SUPABASE_URL secret is missing or empty"
-          echo "💡 Check: Settings → Secrets and variables → Actions → SUPABASE_URL"
+          echo "❌ SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL secret is missing or empty"
+          echo "💡 Check: Settings → Secrets and variables → Actions → SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL"
           exit 1
         else
           echo "✅ SUPABASE_URL is set (length: ${#SUPABASE_URL} chars)"
@@ -103,8 +104,9 @@ jobs:
     - name: Run scraping
       env:
         # Database (from secrets, not hardcoded)
-        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        # Use NEXT_PUBLIC_SUPABASE_URL if SUPABASE_URL is not set (backward compatibility)
+        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
