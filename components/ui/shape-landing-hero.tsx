@@ -420,7 +420,7 @@ export function HeroGeometric() {
               {(hasInternships || hasGraduates) && (
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5">
                   {hasInternships && <span>{`${formatNumber(displayInternships)} internships`}</span>}
-                  {hasInternships && hasGraduates && <span className="text-zinc-600">•</span>}
+                  {hasInternships && hasGraduates && <span className="text-zinc-500">•</span>}
                   {hasGraduates && <span>{`${formatNumber(displayGraduates)} graduate programmes`}</span>}
                 </div>
               )}

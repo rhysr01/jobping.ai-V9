@@ -48,7 +48,7 @@ export default function SocialProofRow() {
   ];
 
   return (
-    <section className="pt-8 pb-12 md:pt-12 md:pb-16 lg:pt-16 lg:pb-20 scroll-snap-section relative bg-black">
+    <section className="py-32 md:py-40 scroll-snap-section relative bg-black">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       {/* Soft section band */}
@@ -83,25 +83,36 @@ export default function SocialProofRow() {
                 y: -4,
                 transition: { type: 'spring', stiffness: 300, damping: 20 }
               }}
-              className="group relative flex flex-col gap-2 overflow-hidden rounded-xl bg-white/[0.06] border border-white/10 backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7"
+              className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-900/60 via-zinc-900/40 to-zinc-900/60 backdrop-blur-md border-light-source px-6 py-6 transition-all duration-300 hover:border-purple-500/30 hover:shadow-[0_12px_40px_rgba(139,92,246,0.15)] hover:scale-[1.02] active:scale-[0.98]"
             >
+              {/* Glass overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent pointer-events-none rounded-2xl" />
+              
+              {/* Glowing divider */}
               {index < items.length - 1 && (
-                <span className="hidden md:inline absolute right-0 top-1/2 h-4 w-px bg-white/10 -translate-y-1/2" />
+                <span className="hidden md:inline absolute right-0 top-1/2 h-12 w-px bg-gradient-to-b from-transparent via-purple-500/40 to-transparent -translate-y-1/2" />
               )}
+              
+              {/* Icon with glow effect */}
               <motion.span 
-                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/12 text-brand-200 transition-all duration-200 group-hover:bg-brand-500/20 group-hover:scale-110"
-                whileHover={{ rotate: [0, -10, 10, 0] }}
-                transition={{ duration: 0.5 }}
+                className="relative inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/30 to-purple-600/20 border-t border-purple-500/40 border-r border-purple-500/30 border-b border-purple-500/20 border-l border-purple-500/30 text-purple-200 shadow-[0_4px_16px_rgba(139,92,246,0.3)] group-hover:shadow-[0_8px_24px_rgba(139,92,246,0.5)] transition-all duration-300"
+                whileHover={{ scale: 1.15, rotate: [0, -10, 10, 0] }}
               >
-                {item.icon}
+                {/* Inner glow */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent rounded-xl" />
+                <div className="relative z-10">{item.icon}</div>
               </motion.span>
-              <div className="space-y-2">
+              
+              <div className="space-y-2 relative z-10">
                 {item.eyebrow && (
                   <p className="text-xs uppercase tracking-[0.16em] text-zinc-300 mb-2">
                     {item.eyebrow}
                   </p>
                 )}
-                <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
+                {/* Title with subtle gradient */}
+                <h3 className="text-xl font-bold text-zinc-100 mb-2 bg-gradient-to-r from-white to-zinc-200 bg-clip-text text-transparent">
+                  {item.title}
+                </h3>
                 {item.description && (
                   <p className="text-sm text-zinc-300 transition-all duration-200 group-hover:text-zinc-200">
                     {item.description}

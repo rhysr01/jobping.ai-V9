@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import * as Copy from '@/lib/copy';
 import { BrandIcons } from '@/components/ui/BrandIcons';
 import { trackEvent } from '@/lib/analytics';
@@ -116,27 +117,50 @@ export default function Pricing() {
 
 function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
   const isPremium = plan.id === 'premium';
+  const [borderBeamPosition, setBorderBeamPosition] = useState(0);
+
+  // Border beam animation (travels around border every 5 seconds)
+  useEffect(() => {
+    if (!isPremium) return;
+    const interval = setInterval(() => {
+      setBorderBeamPosition((prev) => (prev + 1) % 100);
+    }, 50); // Update every 50ms for smooth animation
+    return () => clearInterval(interval);
+  }, [isPremium]);
+
+  // Extract price number and currency
+  const priceMatch = plan.price.match(/€(\d+)/);
+  const priceNumber = priceMatch ? priceMatch[1] : plan.price.replace(/[€$]/g, '');
+  const currency = plan.price.includes('€') ? '€' : plan.price.includes('$') ? '$' : '';
 
   const cardContent = (
     <>
-      {isPremium && (
-        <div className="pointer-events-none absolute inset-0 -z-10 rounded-[2rem] bg-[radial-gradient(circle_at_center,theme(colors.brand.500/0.35),_transparent_70%)] blur-sm-hero" />
-      )}
-
       <div className="space-y-5">
-        <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-semibold text-white sm:text-5xl leading-[1.05]">{plan.price}</span>
-          {plan.suffix && <span className="text-base font-medium text-zinc-300 leading-[1.05]">{plan.suffix}</span>}
+        {/* Price with typographic refinement - currency half size, top-aligned */}
+        <div className="flex items-baseline gap-2 mb-2">
+          {currency && (
+            <span className="text-2xl md:text-3xl font-bold text-zinc-400 leading-none self-start mt-1">
+              {currency}
+            </span>
+          )}
+          <span className="text-5xl md:text-6xl font-black bg-gradient-to-br from-white via-purple-100 to-white bg-clip-text text-transparent leading-none">
+            {priceNumber}
+          </span>
+          {plan.suffix && (
+            <span className="text-lg font-semibold text-zinc-300/80 leading-none self-end mb-1">
+              {plan.suffix}
+            </span>
+          )}
         </div>
         <p className="text-xs uppercase tracking-wider text-zinc-300">{plan.name}</p>
-        <h3 className="text-xl font-semibold text-white sm:text-2xl mb-2">{plan.headline}</h3>
-        <p className="text-base text-zinc-300/90 leading-relaxed">{plan.description}</p>
+        <h3 className="text-xl font-semibold text-zinc-100 sm:text-2xl mb-2 tracking-tight">{plan.headline}</h3>
+        <p className="text-base text-zinc-400 leading-relaxed">{plan.description}</p>
 
         <ul className="mt-6 space-y-4 min-h-[260px]">
           {plan.features.map(feature => (
-            <li key={feature} className="flex items-start gap-4 text-sm font-medium text-zinc-100 sm:text-base">
-              <span className="mt-0.5 inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-brand-200">
-                <BrandIcons.Check className="h-3.5 w-3.5" />
+            <li key={feature} className="flex items-start gap-4 text-sm font-medium text-zinc-100 sm:text-base group/item">
+              <span className="mt-0.5 inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/30 to-purple-600/20 border border-purple-500/30 text-purple-200 shadow-[0_2px_8px_rgba(139,92,246,0.2)] group-hover/item:shadow-[0_4px_16px_rgba(139,92,246,0.4)] transition-all duration-200">
+                <BrandIcons.Check className="h-4 w-4" />
               </span>
               <span className="leading-relaxed">{feature}</span>
             </li>
@@ -186,30 +210,62 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
   return (
     <div className="relative">
       {isPremium ? (
-        // Premium card with conic-gradient border (with fallback)
-        <div className="relative rounded-[2rem] p-[1px] border border-purple-500/30 bg-[conic-gradient(from_0deg_at_50%_50%,rgba(139,92,246,0.5),rgba(168,85,247,0.3),rgba(139,92,246,0.5))] md:scale-[1.05] md:-translate-y-2">
-          <motion.article
-            data-testid={`${plan.id}-plan`}
-            initial={{ opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.55, delay: index * 0.1 }}
-            className="group relative flex flex-col h-full overflow-hidden rounded-[2rem] bg-zinc-900 backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7 shadow-[0_0_50px_-12px_rgba(139,92,246,0.3)]"
-          >
-            {cardContent}
-          </motion.article>
+        // Premium card with glow and "Most Popular" badge
+        <div className="relative md:scale-[1.05] md:-translate-y-2">
+          {/* Triple-layer glow */}
+          <div className="absolute -inset-6 bg-purple-600/15 blur-3xl rounded-full opacity-60 animate-pulse" />
+          <div className="absolute -inset-4 bg-purple-500/20 blur-2xl rounded-full opacity-40" />
+          <div className="absolute -inset-2 bg-purple-400/10 blur-xl rounded-full opacity-30" />
+          
+          {/* Most Popular badge */}
+          <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-500 via-purple-400 to-purple-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full z-20 shadow-[0_4px_16px_rgba(139,92,246,0.5),inset_0_1px_0_rgba(255,255,255,0.3)]">
+            ⭐ Most Popular
+          </span>
+          
+          {/* Premium card with conic-gradient border */}
+          <div className="relative rounded-[2rem] p-[1px] border border-purple-500/30 bg-[conic-gradient(from_0deg_at_50%_50%,rgba(139,92,246,0.5),rgba(168,85,247,0.3),rgba(139,92,246,0.5))]">
+            {/* Border beam animation */}
+            <div className="absolute inset-0 rounded-[2rem] overflow-hidden pointer-events-none z-30">
+              <motion.div
+                animate={{
+                  background: `conic-gradient(from ${borderBeamPosition * 3.6}deg, transparent 0deg, rgba(139,92,246,0.6) 10deg, transparent 20deg)`,
+                }}
+                transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
+                className="absolute inset-0"
+              />
+            </div>
+            
+            <motion.article
+              data-testid={`${plan.id}-plan`}
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.55, delay: index * 0.1 }}
+              className="group relative flex flex-col h-full overflow-hidden rounded-[2rem] bg-zinc-900/80 backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] hover:shadow-hover md:px-7 md:py-7 shadow-[0_0_50px_-12px_rgba(139,92,246,0.3)] border-2 border-purple-500/30"
+            >
+              {/* Glass gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none rounded-[2rem]" />
+              <div className="relative z-10">
+                {cardContent}
+              </div>
+            </motion.article>
+          </div>
         </div>
       ) : (
-        // Free card with inset shadow
+        // Free card with light source borders
         <motion.article
           data-testid={`${plan.id}-plan`}
           initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55, delay: index * 0.1 }}
-          className="group relative flex flex-col h-full overflow-hidden rounded-[2rem] bg-zinc-900/30 border border-white/5 backdrop-blur-xl px-6 py-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-hover md:px-7 md:py-7 md:scale-100 md:translate-y-0 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]"
+          className="group relative flex flex-col h-full overflow-hidden rounded-[2rem] border-light-source bg-zinc-900/30 backdrop-blur-sm px-6 py-6 transition-all duration-200 hover:border-purple-500/20 hover:scale-[1.02] active:scale-[0.98] md:px-7 md:py-7 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]"
         >
-          {cardContent}
+          {/* Glass gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none rounded-[2rem]" />
+          <div className="relative z-10">
+            {cardContent}
+          </div>
         </motion.article>
       )}
     </div>

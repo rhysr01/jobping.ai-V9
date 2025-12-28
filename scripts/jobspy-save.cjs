@@ -16,7 +16,48 @@ function getSupabase() {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
   if (!url || !key) throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY/ANON_KEY');
-  return createClient(url, key, { auth: { persistSession: false } });
+  
+  // Use global fetch with timeout wrapper if available
+  const fetchWithTimeout = typeof fetch !== 'undefined' ? (fetchUrl, fetchOptions = {}) => {
+    const timeout = 30000; // 30 seconds
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    return fetch(fetchUrl, {
+      ...fetchOptions,
+      signal: controller.signal
+    }).finally(() => {
+      clearTimeout(timeoutId);
+    });
+  } : undefined;
+  
+  return createClient(url, key, { 
+    auth: { persistSession: false },
+    db: { schema: 'public' },
+    ...(fetchWithTimeout ? { global: { fetch: fetchWithTimeout } } : {})
+  });
+}
+
+// Retry helper with exponential backoff
+async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      const isNetworkError = error.message?.includes('fetch failed') || 
+                           error.message?.includes('network') ||
+                           error.message?.includes('timeout') ||
+                           error.name === 'AbortError';
+      
+      if (!isNetworkError || attempt === maxRetries - 1) {
+        throw error; // Don't retry non-network errors or on last attempt
+      }
+      
+      const delay = baseDelay * Math.pow(2, attempt);
+      console.warn(`⚠️  Network error (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms...`, error.message);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
 }
 
 function hashJob(title, company, location) {
@@ -605,21 +646,49 @@ async function saveJobs(jobs, source) {
   const unique = Array.from(new Map(validatedRows.map(r=>[r.job_hash,r])).values());
   console.log(`📊 Validated: ${rows.length} → ${validatedRows.length} → ${unique.length} unique jobs`);
   
+  let savedCount = 0;
+  let failedCount = 0;
+  
   for (let i=0;i<unique.length;i+=150){
     const slice = unique.slice(i,i+150);
-    const { data, error } = await supabase
+    
+    try {
+      const result = await retryWithBackoff(async () => {
+        const upsertResult = await supabase
       .from('jobs')
       .upsert(slice, { onConflict: 'job_hash', ignoreDuplicates: false });
-    if (error) {
-      console.error('Upsert error:', error.message);
+        if (upsertResult.error) {
+          // Check if it's a network error that should be retried
+          const isNetworkError = upsertResult.error.message?.includes('fetch failed') || 
+                               upsertResult.error.message?.includes('network') ||
+                               upsertResult.error.message?.includes('timeout');
+          if (isNetworkError) {
+            throw upsertResult.error; // Retry network errors
+          }
+        }
+        return upsertResult;
+      }, 3, 1000);
+      
+      if (result.error) {
+        console.error(`❌ Upsert error (batch ${i/150 + 1}):`, result.error.message);
+        console.error(`   Code: ${result.error.code}, Details: ${result.error.details || 'none'}`);
+        failedCount += slice.length;
       // Log first few failed rows for debugging
       if (i === 0 && slice.length > 0) {
         console.error('Sample failed row:', JSON.stringify(slice[0], null, 2));
       }
     } else {
-      console.log(`✅ Saved ${slice.length} jobs (upserted)`);
+        console.log(`✅ Saved ${slice.length} jobs (batch ${i/150 + 1})`);
+        savedCount += slice.length;
     }
+    } catch (error) {
+      console.error(`❌ Fatal upsert error after retries (batch ${i/150 + 1}):`, error.message);
+      console.error(`   Error type: ${error.name}, Stack: ${error.stack?.substring(0, 200)}`);
+      failedCount += slice.length;
   }
+  }
+  
+  console.log(`📊 Save summary: ${savedCount} saved, ${failedCount} failed out of ${unique.length} total`);
 }
 
 function pickPythonCommand() {

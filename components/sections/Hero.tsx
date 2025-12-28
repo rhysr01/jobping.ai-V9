@@ -19,6 +19,7 @@ export default function Hero() {
   const [enableMotion, setEnableMotion] = useState(true);
   const [shouldLoadAnimations, setShouldLoadAnimations] = useState(false);
   const [preloadedJobs, setPreloadedJobs] = useState<any[]>([]);
+  const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
   const prefersReduced = useReducedMotion();
   const shouldThrottle = shouldThrottleAnimations();
   const { stats } = useStats();
@@ -102,15 +103,33 @@ export default function Hero() {
             transition={{ duration: 0.6 }}
             className="text-left space-y-6"
           >
-            {/* Headline - FREE-FIRST APPROACH */}
+            {/* Headline - Metallic "Silver Silk" with shimmer */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
-              className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3 max-w-[540px]"
+              className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3 max-w-[540px] relative"
             >
-              <span className="text-white">Get 5 early-career</span>{' '}
-              <span className="text-white">job matches</span>{' '}
+              {/* Shimmer overlay animation */}
+              <motion.span
+                animate={{
+                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: 'linear',
+                }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent bg-[length:200%_100%] pointer-events-none rounded-lg"
+                style={{ mixBlendMode: 'overlay' }}
+              />
+              
+              <span className="relative bg-gradient-to-br from-zinc-100 via-white to-zinc-500 bg-clip-text text-transparent">
+                Get 5 early-career
+              </span>{' '}
+              <span className="relative bg-gradient-to-br from-purple-400 via-purple-300 to-purple-500 bg-clip-text text-transparent">
+                job matches
+              </span>{' '}
               <span className="text-white whitespace-nowrap">instantly <span className="text-zinc-400">- free</span></span>
             </motion.h1>
 
@@ -152,7 +171,7 @@ export default function Hero() {
                 transition={{ delay: 0.35, duration: 0.6 }}
                 className="space-y-2 mt-3"
               >
-                <p className="text-[11px] text-zinc-500">
+                <p className="text-[11px] text-zinc-400">
                   100% free to start • Real entry-level roles • No spam
                 </p>
               </motion.div>
@@ -199,7 +218,7 @@ export default function Hero() {
                     <p className="text-base font-semibold text-zinc-300 mb-1">
                       Join {stats.totalUsers > 0 ? `${stats.totalUsers.toLocaleString('en-US')}+` : '1,500+'} job seekers finding roles
                     </p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-zinc-400">
                       Trusted by students across Europe
                     </p>
                   </>
@@ -213,19 +232,45 @@ export default function Hero() {
             </motion.div>
           </motion.div>
 
-          {/* RIGHT SIDE - iPhone Mockup - Larger and aligned */}
+          {/* RIGHT SIDE - iPhone Mockup with Dynamic Backlight */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
+            onMouseMove={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setMousePosition({
+                x: ((e.clientX - rect.left) / rect.width) * 100,
+                y: ((e.clientY - rect.top) / rect.height) * 100,
+              });
+            }}
+            onMouseLeave={() => setMousePosition({ x: 50, y: 50 })}
             className="relative flex justify-center lg:justify-end items-start"
           >
-            {/* Background glow behind phone */}
-            <div className="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-brand-600/10 to-brand-500/10 rounded-full blur-3xl -z-10 opacity-50" />
+            {/* Dynamic backlight that follows cursor */}
+            <motion.div
+              animate={{
+                x: `${mousePosition.x}%`,
+                y: `${mousePosition.y}%`,
+              }}
+              transition={{ type: 'spring', stiffness: 50, damping: 20 }}
+              className="absolute bg-purple-500/25 blur-3xl rounded-full opacity-60 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+              style={{
+                width: '400px',
+                height: '400px',
+              }}
+            />
             
-            {/* iPhone Mockup - Supporting visual, not the headline */}
+            {/* Secondary static glow layers */}
+            <div className="absolute -inset-6 bg-purple-600/15 blur-2xl rounded-full opacity-40" />
+            <div className="absolute -inset-4 bg-purple-400/10 blur-xl rounded-full opacity-30" />
+            
+            {/* Floating shadow */}
+            <div className="absolute inset-0 translate-y-16 bg-black/70 blur-3xl rounded-full -z-20 scale-110" />
+            
+            {/* iPhone Mockup */}
             <div className="scale-90 md:scale-95 lg:scale-100 origin-top lg:origin-top-left drop-shadow-[0_20px_60px_rgba(0,0,0,0.6)] relative z-10 lg:-mr-8">
-              <DeviceFrame priority={true}>
+              <DeviceFrame priority={true} autoScroll={true} scrollSpeed={1.2}>
                 <SampleJobMatches preloadedJobs={preloadedJobs} />
               </DeviceFrame>
             </div>

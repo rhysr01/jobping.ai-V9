@@ -16,6 +16,7 @@ interface EmailPhoneShowcaseProps {
 export default function EmailPhoneShowcase({ day = 'monday', careerPath = 'finance' }: EmailPhoneShowcaseProps) {
   const prefersReduced = useReducedMotion();
   const [preloadedJobs, setPreloadedJobs] = useState<any[]>([]);
+  const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
   const pointIcons = [BrandIcons.Check, BrandIcons.Shield, BrandIcons.Mail];
   const dayLabel = day === 'wednesday' ? 'Wednesday' : 'Monday';
 
@@ -58,10 +59,35 @@ export default function EmailPhoneShowcase({ day = 'monday', careerPath = 'finan
         </span>
       </motion.div>
 
-      {/* Single phone centered */}
-      <div className="relative flex items-center justify-center">
-        {/* Spotlight */}
-        <div className="pointer-events-none absolute left-1/2 top-[30%] -translate-x-1/2 h-[400px] w-[400px] bg-[radial-gradient(circle_at_center,_theme(colors.brand.500/0.22),_transparent_70%)] blur-md-hero opacity-70" />
+      {/* Single phone centered with dynamic backlight */}
+      <div 
+        className="relative flex items-center justify-center"
+        onMouseMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          setMousePosition({
+            x: ((e.clientX - rect.left) / rect.width) * 100,
+            y: ((e.clientY - rect.top) / rect.height) * 100,
+          });
+        }}
+        onMouseLeave={() => setMousePosition({ x: 50, y: 50 })}
+      >
+        {/* Dynamic backlight following cursor */}
+        <motion.div
+          animate={{
+            x: `${mousePosition.x}%`,
+            y: `${mousePosition.y}%`,
+          }}
+          transition={{ type: 'spring', stiffness: 40, damping: 25 }}
+          className="absolute bg-purple-500/25 blur-3xl rounded-full opacity-70 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          style={{ width: '500px', height: '500px' }}
+        />
+        
+        {/* Static glow layers */}
+        <div className="absolute -inset-6 bg-purple-600/15 blur-2xl rounded-full opacity-50" />
+        <div className="absolute -inset-4 bg-purple-400/10 blur-xl rounded-full opacity-40" />
+        
+        {/* Floating shadow */}
+        <div className="absolute inset-0 translate-y-20 bg-black/80 blur-3xl rounded-full -z-20 scale-110" />
         
         {/* Single phone - Email Preview */}
         <motion.div
@@ -85,15 +111,10 @@ export default function EmailPhoneShowcase({ day = 'monday', careerPath = 'finan
               repeat: prefersReduced ? 0 : Infinity,
               ease: "easeInOut",
             }}
-            whileHover={{ y: -5 }}
+            whileHover={{ y: -8, scale: 1.02 }}
             className="relative"
           >
-            {/* Backlight gradient behind phone */}
-            <div className="absolute -inset-4 bg-purple-500/10 blur-3xl rounded-full -z-10" />
-            <div className="absolute inset-0 -z-10 translate-y-8">
-              <div className="h-full w-full scale-110 rounded-full bg-black/40 blur-lg-hero" />
-            </div>
-            <DeviceFrame hideOnMobile={true}>
+            <DeviceFrame hideOnMobile={true} autoScroll={true} scrollSpeed={1}>
               <SampleInterviewEmail day={day} careerPath={careerPath} preloadedJobs={preloadedJobs} />
             </DeviceFrame>
           </motion.div>

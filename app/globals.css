@@ -132,6 +132,16 @@ a {
   touch-action: manipulation; /* Removes 300ms tap delay */
 }
 
+/* Section titles - High contrast for headers */
+.section-title {
+  @apply text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-zinc-100 text-balance mb-2;
+}
+
+/* Card hover scale - Springy interactions */
+.card-interactive {
+  @apply transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98];
+}
+
 /* Prevent iOS zoom on input focus */
 @media (max-width: 768px) {
   input[type="text"],
@@ -159,15 +169,70 @@ a {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Subtle texture overlay for professional finish */
+/* Enhanced texture overlay - Higher frequency noise for smoother gradients */
 .premium-bg::after {
   content: "";
   position: fixed;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
   pointer-events: none;
   z-index: var(--z-background);
   mix-blend-mode: overlay;
+}
+
+/* Light source system - Top-right corner */
+:root {
+  --light-source-x: 100%;
+  --light-source-y: 0%;
+}
+
+/* Border light source effect - brighter on top/right, darker on bottom/left */
+.border-light-source {
+  border-top-width: 1px;
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+  border-top-color: rgba(255, 255, 255, 0.15);
+  border-right-color: rgba(255, 255, 255, 0.12);
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+  border-left-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Shimmer animation for logo cards */
+@keyframes shimmer {
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
+}
+
+/* Depth layers for premium feel */
+.depth-layer-1 {
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.depth-layer-2 {
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.depth-layer-3 {
+  box-shadow: 
+    0 12px 48px rgba(139, 92, 246, 0.2),
+    0 0 0 1px rgba(139, 92, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Removed light-sheen animations - too template-like */

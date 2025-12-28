@@ -475,8 +475,7 @@ export function createJobMatchesEmail(
 
   const items = jobCards.map((c, index) => {
     const score = c.matchResult?.match_score ?? 85;
-    const hot = score >= 90;
-    const desc = c.job.description ? c.job.description.slice(0, 300) + (c.job.description.length > 300 ? '…' : '') : '';
+    const hot = score >= 92;
     const jobUrl = c.job.job_url || c.job.url || c.job.apply_url || '';
     const applyHref = jobUrl ? `${jobUrl}${jobUrl.includes('?') ? '&' : '?'}utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=apply_button` : '';
     const apply = jobUrl ? vmlButton(applyHref, 'Apply now →', COLORS.indigo, COLORS.purple) : '';
@@ -484,9 +483,9 @@ export function createJobMatchesEmail(
       ? `<p class="text" style="color:${COLORS.gray500}; font-size:13px; margin-top:18px;">Button not working? Paste this link: <a href="${applyHref}" style="color:#8B5CF6; word-break:break-all;">${jobUrl}</a></p>`
       : '';
     
-    // Calculate visa confidence for this job
+    // Calculate visa confidence for this job (still need description for visa detection)
     const visaConfidence = calculateVisaConfidence({
-      description: c.job.description,
+      description: c.job.description || '',
       title: c.job.title,
       company: c.job.company,
       visa_friendly: c.job.visa_friendly,
@@ -500,13 +499,21 @@ export function createJobMatchesEmail(
       visa_confidence_label: getVisaConfidenceLabel(visaConfidence.confidence),
     };
     
-    const tagsMarkup = formatTagsMarkup(jobWithVisaConfidence);
+    // Short description (max 120 chars)
+    const shortDesc = c.job.description 
+      ? (c.job.description.length > 120 ? c.job.description.slice(0, 120) + '…' : c.job.description)
+      : '';
+    const descMarkup = shortDesc 
+      ? `<div style="color:${COLORS.gray400}; font-size:14px; line-height:1.6; margin:12px 0 16px 0;">${shortDesc}</div>`
+      : '';
     
-    // Generate unique match reason for this specific job
-    const uniqueReason = generateUniqueMatchReason(c.job, c.matchResult, index);
-    
-    // Match reason section - removed (as per user request to remove checkmarks)
-    // The intro already explains filters match
+    // Limit tags to 2 most important
+    const tags = formatJobTags(jobWithVisaConfidence).slice(0, 2);
+    const tagsMarkup = tags.length > 0 
+      ? `<div style="margin:12px 0 16px 0;">
+          ${tags.map(tag => `<span style="display:inline-block; margin:0 6px 6px 0; padding:5px 10px; border-radius:6px; background:rgba(139,92,246,0.15); color:${COLORS.gray300}; font-size:12px; font-weight:600;">${tag}</span>`).join('')}
+        </div>`
+      : '';
     
     // Get job_hash and email for feedback buttons
     const jobHash = c.job.job_hash || c.job.jobHash || '';
@@ -515,16 +522,30 @@ export function createJobMatchesEmail(
     
     return `
     <tr><td class="content">
-      <div class="card${hot ? ' hot' : ''}">
-        ${hot ? '<div class="badge">🔥 Hot Match ' + score + '%</div>' : '<div class="score">' + score + '% Match</div>'}
-        <div class="job">${c.job.title || 'Job Title'}</div>
-        <div class="company">${c.job.company || 'Company'}</div>
-        <div class="loc">📍 ${c.job.location || 'Location'}</div>
-        ${desc ? '<div class="desc">' + desc + '</div>' : ''}
-        ${tagsMarkup}
-        ${feedbackButtons}
-        ${apply}
-        ${plainLink}
+      <div class="card${hot ? ' hot' : ''}" style="background:${hot ? 'linear-gradient(135deg,rgba(16,185,129,0.1),rgba(16,185,129,0.05))' : 'rgba(0,0,0,0.4)'}; border:1px solid ${hot ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.1)'}; border-radius:12px; padding:20px; margin-bottom:20px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;">
+          <tr>
+            <td style="padding:0;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                <span style="display:inline-block; padding:6px 12px; border-radius:6px; background:${hot ? 'rgba(16,185,129,0.2)' : 'rgba(139,92,246,0.2)'}; color:${hot ? COLORS.emerald : COLORS.purple}; font-size:12px; font-weight:700; border:1px solid ${hot ? 'rgba(16,185,129,0.3)' : 'rgba(139,92,246,0.3)'};">
+                  ${hot ? '🔥 ' : ''}${score}% Match
+                </span>
+                <div style="text-align:right;">
+                  <div style="color:${COLORS.gray200}; font-size:14px; font-weight:600;">${c.job.company || 'Company'}</div>
+                </div>
+              </div>
+              <div style="color:${COLORS.white}; font-size:20px; font-weight:700; margin-bottom:8px; line-height:1.3;">${c.job.title || 'Job Title'}</div>
+              <div style="color:${COLORS.gray300}; font-size:14px; margin-bottom:12px;">
+                📍 ${c.job.location || 'Location'}
+              </div>
+              ${descMarkup}
+              ${tagsMarkup}
+              ${feedbackButtons}
+              ${apply}
+              ${plainLink}
+            </td>
+          </tr>
+        </table>
       </div>
     </td></tr>`;
   }).join('');

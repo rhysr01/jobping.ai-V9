@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseClient } from '@/Utils/databasePool';
 import { getDatabaseCategoriesForForm } from '@/Utils/matching/categoryMapper';
+import { calculateMatchScore, generateMatchExplanation } from '@/Utils/matching/rule-based-matcher.service';
+import { UserPreferences, Job } from '@/Utils/matching/types';
 
 export const dynamic = 'force-dynamic'; // Force dynamic rendering
 export const revalidate = 3600; // Cache for 1 hour
@@ -55,48 +57,123 @@ export async function GET(req: NextRequest) {
     
     const selectedUserProfile = fictionalProfiles[tier as 'free' | 'premium'] || fictionalProfiles.free;
     
-    // Helper function to calculate realistic match score with hot match limit
-    const calculateMatchScore = (index: number, existingHotMatches: number): number => {
-      // More realistic score distribution: 80-92% range
-      const baseScore = 0.80; // Lower base (was 0.85)
-      const increment = 0.015; // Smaller increment (was 0.02)
-      const randomRange = 0.03; // Smaller random component (was 0.05)
-      const maxScore = 0.92; // Lower max (was 0.95)
-      
-      let score = baseScore + (index * increment) + (Math.random() * randomRange);
-      score = Math.min(score, maxScore);
-      
-      // Ensure only 1-2 hot matches (92%+) max (raised threshold)
-      if (score >= 0.92 && existingHotMatches >= 2) {
-        // Cap at 91% if we already have 2 hot matches
-        score = Math.min(score, 0.91);
-      }
-      
-      return score;
+    // Convert fictional profile to UserPreferences format for real matching engine
+    const userPrefs: UserPreferences = {
+      email: selectedUserProfile.email,
+      target_cities: selectedUserProfile.cities || [],
+      career_path: selectedUserProfile.careerPath ? [selectedUserProfile.careerPath.toLowerCase()] : [],
+      work_environment: 'hybrid', // Default to hybrid
+      entry_level_preference: 'entry',
+      languages_spoken: selectedUserProfile.languages_spoken || ['English'],
+      company_types: [],
+      skills: [],
+      visa_status: 'need_sponsorship',
     };
     
-    // Helper function to generate personalized match reasons based on profile
-    const getMatchReason = (job: any, index: number, profile: typeof selectedUserProfile): string => {
-      const city = job.city || job.location?.split(',')[0] || 'Europe';
-      const category = job.categories?.[0]?.replace(/-/g, ' ') || 'roles';
-      const isInPreferredCity = profile.cities.some(prefCity => 
-        city.toLowerCase().includes(prefCity.toLowerCase()) || 
-        job.location?.toLowerCase().includes(prefCity.toLowerCase())
-      );
-      
-      if (isInPreferredCity) {
-        return `Perfect match! This ${category} role in ${city} aligns with your preference for ${profile.cities.join(' and ')}. Entry-level friendly with excellent growth opportunities.`;
+    // Enhanced match score calculation using REAL matching engine
+    const calculateRealMatchScore = (
+      job: any, 
+      profile: typeof selectedUserProfile,
+      existingHotMatches: number
+    ): { score: number; reason: string; breakdown: any } => {
+      // Convert job to Job format expected by matching engine
+      const now = new Date().toISOString();
+      const jobForMatching: Job = {
+        title: job.title || '',
+        company: job.company || '',
+        location: job.location || '',
+        description: job.description || '',
+        categories: job.categories || [],
+        work_environment: job.work_environment || 'Hybrid',
+        is_internship: job.is_internship || false,
+        is_graduate: job.is_graduate || false,
+        city: job.city || job.location?.split(',')[0] || '',
+        job_url: job.job_url || '',
+        job_hash: job.job_hash || '',
+        experience_required: job.experience_required || 'Entry level',
+        source: job.source || 'unknown',
+        company_profile_url: job.company_profile_url || '',
+        language_requirements: job.language_requirements || [],
+        scrape_timestamp: job.scrape_timestamp || now,
+        original_posted_date: job.original_posted_date || now,
+        posted_at: job.posted_at || now,
+        last_seen_at: job.last_seen_at || now,
+        created_at: job.created_at || now,
+        is_active: job.is_active !== undefined ? job.is_active : true,
+      };
+
+      try {
+        // Use REAL matching engine
+        const matchResult = calculateMatchScore(jobForMatching, userPrefs);
+        const explanation = generateMatchExplanation(jobForMatching, matchResult, userPrefs);
+        
+        // Get base score from matching engine (0-100, convert to 0-1)
+        let baseScore = matchResult.overall / 100;
+        
+        // Ensure realistic distribution: vary scores but respect matching engine
+        const jobCity = (job.city || job.location?.split(',')[0] || '').toLowerCase().trim();
+        const matchesPreferredCity = normalizedCities.some(prefCity => 
+          jobCity.includes(prefCity) || prefCity.includes(jobCity) ||
+          job.location?.toLowerCase().includes(prefCity)
+        );
+        
+        const jobCategories = (job.categories || []).map((c: string) => c.toLowerCase());
+        const hasCareerMatch = careerPathCategories.some(cat => 
+          jobCategories.some((jc: string) => jc.includes(cat.toLowerCase()) || cat.toLowerCase().includes(jc))
+        );
+        
+        // Boost score for perfect matches (city + career)
+        if (matchesPreferredCity && hasCareerMatch && matchResult.overall >= 75) {
+          baseScore = Math.min(0.92, baseScore + 0.05);
+        } else if ((matchesPreferredCity || hasCareerMatch) && matchResult.overall >= 70) {
+          baseScore = Math.min(0.90, baseScore + 0.03);
+        }
+        
+        // Ensure only 1-2 hot matches (92%+)
+        if (baseScore >= 0.92 && existingHotMatches >= 2) {
+          baseScore = Math.min(0.91, baseScore);
+        }
+        
+        // Generate personalized reason based on actual match factors
+        const city = job.city || job.location?.split(',')[0] || 'Europe';
+        const category = job.categories?.[0]?.replace(/-/g, ' ') || 'roles';
+        const company = job.company || 'This company';
+        const workEnv = job.work_environment || 'Hybrid';
+        const isGraduate = job.is_graduate || false;
+        const isInternship = job.is_internship || false;
+        
+        // Build personalized reason
+        let personalizedReason = explanation.reason;
+        
+        // Enhance with specific details
+        if (matchesPreferredCity && hasCareerMatch) {
+          personalizedReason = `Perfect match! This ${category} role at ${company} in ${city} aligns perfectly with your preference for ${profile.cities.join(' and ')} and your ${profile.careerPath} career path. ${isGraduate ? 'Graduate programme' : isInternship ? 'Internship' : 'Entry-level friendly'} with excellent growth opportunities.`;
+        } else if (matchesPreferredCity) {
+          personalizedReason = `Great location match! This ${category} role at ${company} is located in ${city}, one of your preferred cities (${profile.cities.join(', ')}). ${isGraduate ? 'Graduate-friendly' : 'Entry-level friendly'} with opportunities to grow.`;
+        } else if (hasCareerMatch) {
+          personalizedReason = `Excellent ${profile.careerPath} match! ${company}'s ${category} role in ${city} aligns perfectly with your career interests. ${isGraduate ? 'Graduate programme' : isInternship ? 'Internship' : 'Entry-level friendly'} with clear progression paths.`;
+        } else {
+          // Use explanation from matching engine but personalize it
+          personalizedReason = `${explanation.reason}. ${company}'s ${category} position in ${city} offers ${isGraduate ? 'graduate-friendly' : 'entry-level'} opportunities.`;
+        }
+        
+        return {
+          score: baseScore,
+          reason: personalizedReason,
+          breakdown: matchResult,
+        };
+      } catch (error) {
+        console.error('Error calculating real match score:', error);
+        // Fallback to simple scoring
+        const baseScore = 0.80 + (Math.random() * 0.12);
+        const city = job.city || job.location?.split(',')[0] || 'Europe';
+        const category = job.categories?.[0]?.replace(/-/g, ' ') || 'roles';
+        return {
+          score: Math.min(0.91, baseScore),
+          reason: `Good match for ${category} roles in ${city}. Entry-level friendly with growth opportunities.`,
+          breakdown: null,
+        };
       }
-      
-      const reasons = [
-        `Great match for ${category} roles. Based on your interest in ${profile.careerPath}, this position offers excellent entry-level opportunities in ${city}.`,
-        `Strong alignment with your ${profile.careerPath} career path. Located in ${city}, this role is entry-level friendly and offers comprehensive training.`,
-        `Excellent match for ${category} roles in ${city}. Perfect for someone interested in ${profile.careerPath} with entry-level opportunities and mentorship.`,
-        `Great opportunity in ${city} for ${category} roles. Matches your ${profile.careerPath} interests with entry-level friendly requirements and clear progression.`,
-        `Perfect match for ${category} roles. Located in ${city}, this position aligns with your ${profile.careerPath} career goals and offers entry-level opportunities.`,
-      ];
-      
-      return reasons[index % reasons.length];
     };
     
     // Calculate job offset based on week number and tier
@@ -245,70 +322,100 @@ export async function GET(req: NextRequest) {
         return true; // Job passed all filters
       });
 
-      // Score jobs: prefer career path matches and city matches
-      const scoredJobs = validJobs.map(job => {
-        let score = 0;
+      // Score jobs using REAL matching engine
+      let hotMatchCount = 0;
+      const scoredJobs = validJobs.map((job, index) => {
+        const matchResult = calculateRealMatchScore(job, selectedUserProfile, hotMatchCount);
+        if (matchResult.score >= 0.92) hotMatchCount++;
         
-        // Career path match (high priority)
-        const jobCategories = (job.categories || []).map((c: string) => c.toLowerCase());
-        const hasCareerMatch = careerPathCategories.some(cat => 
-          jobCategories.some((jc: string) => jc.includes(cat.toLowerCase()) || cat.toLowerCase().includes(jc))
-        );
-        if (hasCareerMatch) score += 10;
-        
-        // City match (high priority)
         const jobCity = (job.city || job.location?.split(',')[0] || '').toLowerCase().trim();
-        const matchesPreferredCity = normalizedCities.some(prefCity => 
-          jobCity.includes(prefCity) || 
-          prefCity.includes(jobCity) ||
+        const matchesCity = normalizedCities.some(prefCity => 
+          jobCity.includes(prefCity) || prefCity.includes(jobCity) ||
           job.location?.toLowerCase().includes(prefCity)
         );
-        if (matchesPreferredCity) score += 10;
+        const jobCategories = (job.categories || []).map((c: string) => c.toLowerCase());
+        const matchesCareer = careerPathCategories.some(cat => 
+          jobCategories.some((jc: string) => jc.includes(cat.toLowerCase()) || cat.toLowerCase().includes(jc))
+        );
         
-        return { job, score };
-      }).sort((a, b) => b.score - a.score); // Sort by score (best matches first)
+        return {
+          job,
+          score: matchResult.score,
+          reason: matchResult.reason,
+          breakdown: matchResult.breakdown,
+          matchesCity,
+          matchesCareer,
+          isPerfectMatch: matchesCity && matchesCareer,
+        };
+      }).sort((a, b) => {
+        // Sort by: perfect matches first, then score
+        if (a.isPerfectMatch !== b.isPerfectMatch) {
+          return b.isPerfectMatch ? 1 : -1;
+        }
+        return b.score - a.score;
+      });
 
       console.log(`After filtering: ${scoredJobs.length} valid jobs (scored and sorted)`);
       
-      // Add jobs from scored list, ensuring diversity
+      // Add jobs from scored list, ensuring diversity and realistic distribution
       const citiesUsed = new Set<string>();
+      let finalHotMatchCount = 0;
       
-      // First pass: Try to get jobs from preferred cities (prioritize high-scored jobs)
-      for (const { job, score } of scoredJobs) {
+      // First pass: Perfect matches (city + career) - highest priority
+      for (const { job, score, reason, isPerfectMatch } of scoredJobs) {
         if (resultJobs.length >= 5) break;
+        if (usedJobHashes.has(job.job_hash)) continue;
         
         const jobCity = (job.city || job.location?.split(',')[0] || '').toLowerCase().trim();
-        const matchesPreferredCity = normalizedCities.some(prefCity => 
-          jobCity.includes(prefCity) || 
-          prefCity.includes(jobCity) ||
-          job.location?.toLowerCase().includes(prefCity)
-        );
         
-        // Prefer jobs matching preferred cities
-        if (matchesPreferredCity && !citiesUsed.has(jobCity)) {
-          const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
-          const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
+        if (isPerfectMatch && !citiesUsed.has(jobCity)) {
+          // Ensure only 1-2 hot matches
+          const finalScore = score >= 0.92 && finalHotMatchCount >= 2 ? Math.min(0.91, score) : score;
+          if (finalScore >= 0.92) finalHotMatchCount++;
+          
           resultJobs.push({
             ...job,
-            matchScore,
-            matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
+            matchScore: finalScore,
+            matchReason: reason,
           });
           usedJobHashes.add(job.job_hash);
           citiesUsed.add(jobCity);
         }
       }
       
-      // Second pass: Fill remaining slots with any high-scored jobs
-      for (const { job, score } of scoredJobs) {
+      // Second pass: City matches (preferred cities)
+      for (const { job, score, reason, matchesCity } of scoredJobs) {
         if (resultJobs.length >= 5) break;
         if (usedJobHashes.has(job.job_hash)) continue;
         
-        const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
-        const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
+        const jobCity = (job.city || job.location?.split(',')[0] || '').toLowerCase().trim();
+        
+        if (matchesCity && !citiesUsed.has(jobCity)) {
+          const finalScore = score >= 0.92 && finalHotMatchCount >= 2 ? Math.min(0.91, score) : score;
+          if (finalScore >= 0.92) finalHotMatchCount++;
+          
+          resultJobs.push({
+            ...job,
+            matchScore: finalScore,
+            matchReason: reason,
+          });
+          usedJobHashes.add(job.job_hash);
+          citiesUsed.add(jobCity);
+        }
+      }
+      
+      // Third pass: Career matches or any remaining high-scored jobs
+      for (const { job, score, reason } of scoredJobs) {
+        if (resultJobs.length >= 5) break;
+        if (usedJobHashes.has(job.job_hash)) continue;
+        
+        const finalScore = score >= 0.92 && finalHotMatchCount >= 2 ? Math.min(0.91, score) : score;
+        if (finalScore >= 0.92) finalHotMatchCount++;
+        
         resultJobs.push({
           ...job,
-          matchScore,
-          matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
+          matchScore: finalScore,
+          matchReason: reason,
         });
         usedJobHashes.add(job.job_hash);
       }
@@ -407,15 +514,15 @@ export async function GET(req: NextRequest) {
           return true;
         });
         
-        // Add filtered jobs from fallback
+        // Add filtered jobs from fallback using real matching
         filteredFallbackJobs.forEach((job, index) => {
           if (resultJobs.length < 5 && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
-            const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
-            const matchScore = calculateMatchScore(resultJobs.length, hotMatches);
+            const hotMatches = resultJobs.filter(j => (j.matchScore || 0) >= 0.92).length;
+            const matchResult = calculateRealMatchScore(job, selectedUserProfile, hotMatches);
             resultJobs.push({
               ...job,
-              matchScore,
-              matchReason: getMatchReason(job, resultJobs.length, selectedUserProfile),
+              matchScore: matchResult.score,
+              matchReason: matchResult.reason,
             });
             usedJobHashes.add(job.job_hash);
           }
@@ -523,15 +630,15 @@ export async function GET(req: NextRequest) {
           return true;
         });
         
-        // Add filtered jobs until we have 5
+        // Add filtered jobs until we have 5 using real matching
         filteredEmergencyJobs.forEach((job, index) => {
           if (validJobs.length < 5 && job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
-            const hotMatches = validJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
-            const matchScore = calculateMatchScore(validJobs.length, hotMatches);
+            const hotMatches = validJobs.filter(j => (j.matchScore || 0) >= 0.92).length;
+            const matchResult = calculateRealMatchScore(job, selectedUserProfile, hotMatches);
             validJobs.push({
               ...job,
-              matchScore,
-              matchReason: getMatchReason(job, validJobs.length, selectedUserProfile),
+              matchScore: matchResult.score,
+              matchReason: matchResult.reason,
             });
             usedJobHashes.add(job.job_hash);
           }
@@ -573,14 +680,14 @@ export async function GET(req: NextRequest) {
         lastResortJobs.forEach((job, index) => {
           // Only add if job has a URL
           if (job.job_url && job.job_url.trim() !== '' && !usedJobHashes.has(job.job_hash)) {
-            const hotMatches = validJobs.filter(j => (j.matchScore || 0) >= 0.90).length;
-            const matchScore = calculateMatchScore(index, hotMatches);
+            const hotMatches = validJobs.filter(j => (j.matchScore || 0) >= 0.92).length;
+            const matchResult = calculateRealMatchScore(job, selectedUserProfile, hotMatches);
             
             validJobs.push({
               ...job,
               job_url: job.job_url,
-              matchScore,
-              matchReason: getMatchReason(job, index, selectedUserProfile),
+              matchScore: matchResult.score,
+              matchReason: matchResult.reason,
             });
             usedJobHashes.add(job.job_hash);
           }
@@ -623,7 +730,7 @@ export async function GET(req: NextRequest) {
           isInternship: job.is_internship || false,
           isGraduate: job.is_graduate || false,
           matchScore: job.matchScore || 0.85,
-          matchReason: job.matchReason || getMatchReason(job, 0, selectedUserProfile),
+          matchReason: job.matchReason || 'Good match based on your preferences',
           userProfile: selectedUserProfile, // Always use the fictional profile
         };
       });

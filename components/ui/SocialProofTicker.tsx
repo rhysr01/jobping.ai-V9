@@ -85,7 +85,7 @@ export default function SocialProofTicker() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.3 }}
-          className="flex items-center gap-2 text-zinc-500 text-xs"
+          className="flex items-center gap-2 text-zinc-400 text-xs"
         >
           <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
           Scanning 50+ new sources for today's matches...

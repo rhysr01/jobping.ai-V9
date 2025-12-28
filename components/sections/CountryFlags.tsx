@@ -78,7 +78,7 @@ export default function CountryFlags() {
   }
 
   return (
-    <section className="pt-16 pb-16 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24 bg-black scroll-snap-section relative">
+    <section className="py-32 md:py-40 bg-black scroll-snap-section relative">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       {/* Soft section band */}
@@ -162,35 +162,30 @@ export default function CountryFlags() {
                   role="listitem"
                   aria-label={`${countryData.country}: ${countryData.cities.length > 0 ? countryData.cities.join(', ') : countryData.country}`}
                 >
-                  <div className="relative h-[160px] w-[180px] flex flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.04] border border-white/10 backdrop-blur-xl shadow-feature p-6 transition-all duration-200 hover:border-white/20 hover:shadow-hover group overflow-hidden">
-                    {/* Subtle gradient overlay on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 via-brand-500/0 to-purple-500/0 group-hover:from-brand-500/10 group-hover:via-brand-500/5 group-hover:to-purple-500/10 transition-all duration-200 rounded-2xl" />
+                  <div className="relative h-[180px] w-[200px] flex flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-zinc-900/70 via-zinc-900/50 to-zinc-900/70 backdrop-blur-md border-light-source shadow-[0_8px_32px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.1)] p-6 transition-all duration-300 hover:border-purple-500/30 hover:shadow-[0_12px_48px_rgba(139,92,246,0.2)] group overflow-hidden">
+                    {/* Animated background gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 via-purple-500/0 to-purple-500/0 group-hover:from-purple-500/10 group-hover:via-purple-500/5 group-hover:to-purple-500/10 transition-all duration-500 rounded-2xl" />
                     
-                    {/* Flag - prominent */}
-                    <div className="relative z-10 mb-3">
-                      <span className="text-4xl leading-none drop-shadow-lg" role="img" aria-label={countryData.country}>
+                    {/* Flag with shadow and scale */}
+                    <div className="relative z-10 mb-4 transform group-hover:scale-110 transition-transform duration-300">
+                      <span className="text-5xl leading-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.4)] filter brightness-110" role="img" aria-label={countryData.country}>
                         {countryData.flag}
                       </span>
                     </div>
                     
-                    {/* Cities as compact text */}
+                    {/* Cities with subtle glow */}
                     <div className="relative z-10 flex flex-col items-center gap-1 w-full">
                       {countryData.cities.length > 0 ? (
-                        <div className="text-center px-2">
-                          <div className="text-xs font-medium text-zinc-300 leading-tight">
-                            {countryData.cities.length <= 3 
-                              ? countryData.cities.join(', ')
-                              : `${countryData.cities.slice(0, 2).join(', ')}, +${countryData.cities.length - 2}`
-                            }
-                          </div>
+                        <div className="text-xs font-semibold text-zinc-200 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm">
+                          {countryData.cities.length <= 3 
+                            ? countryData.cities.join(', ')
+                            : `${countryData.cities.slice(0, 2).join(', ')}, +${countryData.cities.length - 2}`
+                          }
                         </div>
                       ) : (
-                        <span className="text-xs font-medium text-zinc-400">{countryData.country}</span>
+                        <span className="text-xs font-semibold text-zinc-300 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">{countryData.country}</span>
                       )}
                     </div>
-                    
-                    {/* Subtle shine effect on hover */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-2xl shine-effect" />
                   </div>
                 </motion.div>
               );

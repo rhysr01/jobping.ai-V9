@@ -79,7 +79,7 @@ export default function CompanyLogos() {
   }
 
   return (
-    <section className="py-24 md:py-32 bg-black scroll-snap-section relative">
+    <section className="py-32 md:py-40 bg-black scroll-snap-section relative">
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       {/* Soft section band */}
@@ -117,7 +117,7 @@ export default function CompanyLogos() {
 
           {/* Horizontal scroll container */}
           <div 
-            className="flex gap-8 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-8 px-8 [mask-image:linear-gradient(to_right,transparent,white_20%,white_80%,transparent)] will-change-transform"
+            className="flex gap-8 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-8 px-8 [mask-image:linear-gradient(to_right,transparent_0%,white_15%,white_85%,transparent_100%)] will-change-transform"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -142,21 +142,33 @@ export default function CompanyLogos() {
                 }}
                 className="flex-shrink-0 snap-start"
               >
-                <div className="relative h-[160px] w-[180px] flex items-center justify-center rounded-2xl bg-zinc-900/50 backdrop-blur-sm border border-white/10 shadow-feature p-6 transition-all duration-200 ease-in-out hover:border-white/20 hover:shadow-hover group overflow-hidden">
-                  {/* Subtle gradient overlay on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 via-brand-500/0 to-brand-600/0 group-hover:from-brand-500/8 group-hover:via-brand-500/4 group-hover:to-brand-600/8 transition-all duration-200 rounded-2xl" />
+                <div className="relative h-[180px] w-[200px] flex items-center justify-center rounded-2xl bg-gradient-to-br from-white/[0.12] via-white/[0.08] to-white/[0.12] backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.2)] p-6 transition-all duration-300 ease-out hover:border-purple-500/30 hover:shadow-[0_12px_48px_rgba(139,92,246,0.2),inset_0_1px_0_rgba(255,255,255,0.25)] group overflow-hidden">
+                  {/* Animated shimmer sweep */}
+                  <motion.div
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '200%' }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 3,
+                      ease: 'easeInOut',
+                    }}
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12"
+                  />
                   
-                  {/* Logo - unified grayscale treatment */}
+                  {/* Inner glow with light source */}
+                  <div className="absolute inset-[1px] bg-gradient-to-br from-white/[0.08] via-transparent to-white/[0.02] rounded-2xl pointer-events-none" />
+                  
+                  {/* Logo with stronger contrast */}
                   <div className="relative z-10 flex items-center justify-center">
                     <Image
                       src={company.logoPath}
                       alt={`${company.name} company logo`}
                       width={140}
                       height={140}
-                      className="object-contain h-[120px] w-auto opacity-50 grayscale transition-all duration-200 ease-in-out group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-110"
+                      className="object-contain h-[140px] w-auto opacity-40 grayscale transition-all duration-500 ease-out group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-125 filter drop-shadow-[0_4px_12px_rgba(139,92,246,0.3)]"
                       onError={(e) => {
                         console.error(`Failed to load logo: ${company.logoPath}`, e);
-                        // Hide broken logos - no text fallback
                         const parent = (e.target as HTMLElement).parentElement?.parentElement?.parentElement;
                         if (parent) {
                           parent.style.display = 'none';
@@ -170,11 +182,6 @@ export default function CompanyLogos() {
                       loading="lazy"
                     />
                   </div>
-                  
-                  
-                  {/* Subtle shine effect on hover */}
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-2xl bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full" 
-                       style={{ transition: 'transform 0.6s ease-in-out, opacity 0.3s ease-in-out' }} />
                 </div>
               </motion.div>
             ))}
@@ -189,10 +196,10 @@ export default function CompanyLogos() {
           transition={{ delay: 0.3 }}
           className="text-center mt-8"
         >
-          <p className="text-xs md:text-sm text-zinc-500">
+          <p className="text-xs md:text-sm text-zinc-400">
             {companies.length}+ companies this month • Updated daily
           </p>
-          <p className="text-xs text-zinc-500 mt-2">
+          <p className="text-xs text-zinc-400 mt-2">
             JobPing is not affiliated to these companies, we match you with their public job listings
           </p>
         </motion.div>

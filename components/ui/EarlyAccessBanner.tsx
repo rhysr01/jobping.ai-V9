@@ -72,7 +72,7 @@ export function EarlyAccessBanner() {
               </span>
               <span className="text-zinc-400">/300 spots claimed</span>
             </div>
-            <span className="text-zinc-600">•</span>
+            <span className="text-zinc-500">•</span>
             <span className="text-zinc-400">
               <span className="font-medium text-brand-200">{remaining}</span> spots left
             </span>

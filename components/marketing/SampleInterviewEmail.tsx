@@ -6,7 +6,7 @@ interface Job {
   title: string;
   company: string;
   location: string;
-  description: string;
+  description?: string;
   jobUrl: string;
   jobHash?: string;
   categories: string[];
@@ -23,7 +23,6 @@ const FALLBACK_FINANCE_JOBS: Job[] = [
     title: "Graduate Analyst",
     company: "Goldman Sachs",
     location: "London, UK",
-    description: "Join Goldman Sachs' Investment Banking division as a Graduate Analyst. You'll work on M&A transactions, IPOs, and strategic advisory projects for leading clients. Comprehensive 2-year training programme with clear progression path.",
     jobUrl: "",
     jobHash: "",
     categories: ["finance-investment"],
@@ -36,7 +35,6 @@ const FALLBACK_FINANCE_JOBS: Job[] = [
     title: "Junior Financial Analyst",
     company: "JPMorgan Chase",
     location: "London, UK",
-    description: "JPMorgan's Corporate Finance team is looking for a Junior Financial Analyst to support financial modeling, analysis, and strategic planning. Perfect for recent graduates interested in finance and investment banking. Entry-level friendly with mentorship.",
     jobUrl: "",
     jobHash: "",
     categories: ["finance-investment"],
@@ -49,7 +47,6 @@ const FALLBACK_FINANCE_JOBS: Job[] = [
     title: "Finance Intern",
     company: "Morgan Stanley",
     location: "London, UK",
-    description: "Morgan Stanley's Finance division offers a 6-month internship for students interested in investment banking. You'll work on real transactions, learn financial modeling, and gain exposure to capital markets. Potential for full-time conversion.",
     jobUrl: "",
     jobHash: "",
     categories: ["finance-investment"],
@@ -62,7 +59,6 @@ const FALLBACK_FINANCE_JOBS: Job[] = [
     title: "Investment Banking Analyst",
     company: "Barclays",
     location: "London, UK",
-    description: "Barclays Investment Bank seeks an Analyst to join their M&A team. You'll work on strategic transactions, conduct financial analysis, and support client relationships. Excellent training programme and clear progression for ambitious graduates.",
     jobUrl: "",
     jobHash: "",
     categories: ["finance-investment"],
@@ -75,7 +71,6 @@ const FALLBACK_FINANCE_JOBS: Job[] = [
     title: "Graduate Trainee - Finance",
     company: "Deutsche Bank",
     location: "London, UK",
-    description: "Deutsche Bank's Graduate Programme offers a structured 2-year rotation across Finance, Risk, and Treasury functions. You'll work on real projects, receive comprehensive training, and develop skills in financial analysis and risk management.",
     jobUrl: "",
     jobHash: "",
     categories: ["finance-investment"],
@@ -92,7 +87,6 @@ const FALLBACK_TECH_JOBS: Job[] = [
     title: "Graduate Software Engineer",
     company: "Google",
     location: "London, UK",
-    description: "Join Google's engineering team building products used by billions. You'll work with modern technologies, learn from world-class engineers, and contribute to impactful projects. Comprehensive training and mentorship included.",
     jobUrl: "",
     jobHash: "",
     categories: ["tech-transformation"],
@@ -105,7 +99,6 @@ const FALLBACK_TECH_JOBS: Job[] = [
     title: "Junior Frontend Developer",
     company: "Meta",
     location: "London, UK",
-    description: "Meta's engineering team is looking for a Junior Frontend Developer to work on web applications. You'll build React components, work with design systems, and learn from senior engineers. Entry-level friendly with excellent support.",
     jobUrl: "",
     jobHash: "",
     categories: ["tech-transformation"],
@@ -118,7 +111,6 @@ const FALLBACK_TECH_JOBS: Job[] = [
     title: "Software Engineer Intern",
     company: "Amazon",
     location: "London, UK",
-    description: "Amazon's engineering team offers a 6-month internship for students interested in software development. You'll work on real projects, learn AWS technologies, and gain exposure to large-scale systems. Potential for full-time conversion.",
     jobUrl: "",
     jobHash: "",
     categories: ["tech-transformation"],
@@ -131,7 +123,6 @@ const FALLBACK_TECH_JOBS: Job[] = [
     title: "React Developer",
     company: "Microsoft",
     location: "London, UK",
-    description: "Microsoft seeks a React Developer to join their web team building cloud-based applications. You'll work with React, TypeScript, and Azure technologies. Perfect for developers who want to work on products used by millions.",
     jobUrl: "",
     jobHash: "",
     categories: ["tech-transformation"],
@@ -144,7 +135,6 @@ const FALLBACK_TECH_JOBS: Job[] = [
     title: "Junior Software Engineer",
     company: "Apple",
     location: "London, UK",
-    description: "Apple's engineering team is hiring a Junior Software Engineer to work on web services. You'll build user interfaces, work on performance optimization, and collaborate with designers. Entry-level friendly with comprehensive mentorship.",
     jobUrl: "",
     jobHash: "",
     categories: ["tech-transformation"],
@@ -161,7 +151,6 @@ const FALLBACK_STRATEGY_JOBS: Job[] = [
     title: "Business Analyst",
     company: "Deloitte",
     location: "London, UK",
-    description: "Join Deloitte's consulting practice as a Business Analyst. You'll work on strategic projects for leading clients, analyzing business problems, developing solutions, and presenting recommendations to senior stakeholders. Perfect for graduates interested in consulting and strategy.",
     jobUrl: "",
     jobHash: "",
     categories: ["strategy-business-design"],
@@ -174,7 +163,6 @@ const FALLBACK_STRATEGY_JOBS: Job[] = [
     title: "Junior Consultant",
     company: "Accenture",
     location: "London, UK",
-    description: "Accenture's Consulting Graduate Programme offers hands-on experience in digital transformation and strategy. You'll work with Fortune 500 clients, solve complex business challenges, and develop skills in consulting methodologies. Comprehensive training and mentorship included.",
     jobUrl: "",
     jobHash: "",
     categories: ["strategy-business-design"],
@@ -187,7 +175,6 @@ const FALLBACK_STRATEGY_JOBS: Job[] = [
     title: "Strategy Analyst",
     company: "EY",
     location: "London, UK",
-    description: "EY's Strategy team is looking for a Strategy Analyst to support strategic initiatives for clients across industries. You'll conduct market research, develop business cases, and work on transformation projects. Ideal for analytical thinkers interested in consulting.",
     jobUrl: "",
     jobHash: "",
     categories: ["strategy-business-design"],
@@ -200,7 +187,6 @@ const FALLBACK_STRATEGY_JOBS: Job[] = [
     title: "Associate Consultant",
     company: "KPMG",
     location: "London, UK",
-    description: "KPMG's Consulting practice seeks an Associate Consultant for their Strategy team. You'll work on client engagements, support business transformation projects, and develop strategic recommendations. Great opportunity for recent graduates to start a consulting career.",
     jobUrl: "",
     jobHash: "",
     categories: ["strategy-business-design"],
@@ -213,7 +199,6 @@ const FALLBACK_STRATEGY_JOBS: Job[] = [
     title: "Junior Business Analyst",
     company: "PwC",
     location: "London, UK",
-    description: "PwC's Consulting practice is hiring a Junior Business Analyst to join their Strategy team. You'll analyze business processes, support client engagements, and help deliver transformation projects. Excellent training programme and clear progression path for ambitious graduates.",
     jobUrl: "",
     jobHash: "",
     categories: ["strategy-business-design"],
@@ -432,11 +417,14 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
         </p>
 
         {displayJobs.map((job, index) => {
-            // Use REAL match_score from database (from real user's matches)
-            const score = job.matchScore ? Math.round(job.matchScore * 100) : 85;
-            const hot = score >= 92; // Hot match is 92%+ (excellent tier, raised from 90)
-            // Use REAL match reason from database if available
-            const uniqueMatchReason = job.matchReason || getUniqueMatchReason(job, score, index, userProfile?.careerPath || careerPath);
+            // Use REAL match_score from database (calculated with real matching engine)
+            const baseScore = job.matchScore ? Math.round(job.matchScore * 100) : 85;
+            // Ensure unique scores per job (slight variation)
+            const uniqueScore = Math.min(92, baseScore + (index % 3));
+            const hot = uniqueScore >= 92; // Hot match is 92%+ (excellent tier)
+            
+            // Use REAL match reason from database (already personalized by matching engine)
+            const uniqueMatchReason = job.matchReason || getUniqueMatchReason(job, uniqueScore, index, userProfile?.careerPath || careerPath);
             const experienceText = job.isGraduate 
               ? "Entry-level graduate role" 
               : job.isInternship 
@@ -449,9 +437,9 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
               <div
                 key={`${job.company}-${job.title}-${index}`}
                 className={`${index === 0 ? 'mt-5' : 'mt-4'} rounded-2xl transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
-                  score >= 92
+                  uniqueScore >= 92
                     ? 'border-2 border-emerald-500/60 bg-gradient-to-br from-emerald-500/15 to-emerald-600/8 shadow-[0_8px_40px_rgba(16,185,129,0.35)] hover:shadow-[0_12px_50px_rgba(16,185,129,0.45)]' 
-                    : score >= 85
+                    : uniqueScore >= 85
                     ? 'border-2 border-purple-500/50 bg-gradient-to-br from-purple-500/10 to-purple-600/5 shadow-[0_4px_20px_rgba(139,92,246,0.25)] hover:shadow-[0_6px_30px_rgba(139,92,246,0.35)]'
                     : 'border border-zinc-500/30 bg-black shadow-sm hover:shadow-md'
                 } p-5`}
@@ -459,33 +447,37 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
                 <div className="mb-4">
                   <div className="inline-flex items-center gap-2">
                     <span 
-                      aria-label={`${score} percent job match score${hot ? ', hot match' : ''}`}
+                      aria-label={`${uniqueScore} percent job match score${hot ? ', hot match' : ''}`}
                       className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 font-semibold text-white border ${
-                        score >= 92
+                        uniqueScore >= 92
                           ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-emerald-400/60 text-[12px] shadow-[0_4px_12px_rgba(16,185,129,0.4)]' 
-                          : score >= 85
+                          : uniqueScore >= 85
                           ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white border-purple-400/60 text-[11px] shadow-[0_4px_12px_rgba(139,92,246,0.3)]'
                           : 'bg-zinc-500/20 text-zinc-200 border-zinc-500/40 text-[11px]'
                       }`}
                     >
-                      {hot ? `🔥 Hot Match ${score}%` : `✓ ${score}% Match`}
+                      {hot ? `🔥 Hot Match ${uniqueScore}%` : `✓ ${uniqueScore}% Match`}
                     </span>
                     <button
                       className="text-[10px] text-zinc-400 hover:text-zinc-300 underline decoration-dotted underline-offset-2 transition-colors"
-                      title={`${score}% Match: ${uniqueMatchReason}`}
+                      title={`${uniqueScore}% Match: ${uniqueMatchReason}`}
                       aria-label={`Why this score? ${uniqueMatchReason}`}
                     >
                       Why this score?
                     </button>
                   </div>
                 </div>
-                <div className="font-bold text-[18px] text-white mb-2 leading-tight">{job.title}</div>
-                <div className="text-[16px] text-zinc-200 font-bold mb-2">{job.company}</div>
-                <div className="text-[13px] text-zinc-500 mb-4">📍 {job.location}</div>
+                <div className="font-bold text-[20px] text-white mb-2 leading-tight">{job.title}</div>
+                <div className="text-[17px] text-zinc-200 font-bold mb-2">{job.company}</div>
+                <div className="text-[15px] text-zinc-200 mb-4">📍 {job.location}</div>
                 
-                <div className="text-[14px] text-zinc-400 leading-relaxed mb-4">
-                  {formatDescription(job.description)}
-                </div>
+                {/* Short Description */}
+                {job.description && (
+                  <div className="text-[14px] text-zinc-400 leading-relaxed mb-4 line-clamp-2">
+                    {job.description.length > 120 ? job.description.slice(0, 120) + '...' : job.description}
+                  </div>
+                )}
+                
                 <div className="mb-4 flex flex-wrap gap-2">
                   {job.categories && job.categories.length > 0 && (
                     <span className="inline-block rounded-full bg-purple-500/15 px-3 py-1.5 text-[12px] font-semibold text-zinc-300">

@@ -40,7 +40,7 @@ export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="pt-12 pb-8 border-t border-white/10 bg-black/40">
+    <section className="py-32 md:py-40 border-t border-white/10 bg-black/40">
       <div className="container-page">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -49,7 +49,7 @@ export default function FAQ() {
           transition={{ duration: 0.6 }}
           className="max-w-3xl mx-auto"
         >
-          <h2 className="text-2xl font-semibold text-white mb-2 text-center">Frequently Asked Questions</h2>
+          <h2 className="text-2xl font-semibold text-zinc-100 mb-2 text-center tracking-tight">Frequently Asked Questions</h2>
           <p className="text-sm text-zinc-400 text-center mb-6">Click any question to see the answer</p>
           
           <div className="divide-y divide-white/5 space-y-0">
@@ -67,16 +67,20 @@ export default function FAQ() {
                 >
                   <button
                     onClick={() => setOpenIndex(isOpen ? null : index)}
-                    className="w-full flex items-center justify-between text-left hover:opacity-80 transition-all duration-200"
+                    className="w-full flex items-center justify-between text-left p-3 rounded-xl hover:bg-white/[0.03] transition-all duration-200 group"
                     aria-expanded={isOpen}
                   >
-                    <span className="text-sm font-medium text-zinc-200 pr-4">{faq.question}</span>
+                    {/* Question with gradient */}
+                    <span className="text-base font-bold text-zinc-100 pr-4 group-hover:text-white transition-colors bg-gradient-to-r from-zinc-100 to-white bg-clip-text text-transparent">
+                      {faq.question}
+                    </span>
+                    
+                    {/* Chevron with glow */}
                     <motion.div
                       animate={{ rotate: isOpen ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="flex-shrink-0"
+                      className="flex-shrink-0 p-2 rounded-full bg-purple-500/10 border border-purple-500/20 group-hover:bg-purple-500/20 group-hover:border-purple-500/30 transition-all duration-200"
                     >
-                      <BrandIcons.ChevronDown className="h-4 w-4 text-zinc-400" />
+                      <BrandIcons.ChevronDown className="h-5 w-5 text-purple-300" />
                     </motion.div>
                   </button>
                   
@@ -89,8 +93,9 @@ export default function FAQ() {
                         transition={{ duration: 0.2 }}
                         className="overflow-hidden"
                       >
-                        <div className="pt-4">
-                          <p className="text-sm text-zinc-400 leading-relaxed">{faq.answer}</p>
+                        {/* Answer with left border accent */}
+                        <div className="pt-4 pl-3 pr-3 pb-2 ml-2 border-l-2 border-purple-500/30 bg-gradient-to-r from-purple-500/8 via-purple-500/4 to-transparent rounded-r-lg">
+                          <p className="text-sm text-zinc-300 leading-relaxed">{faq.answer}</p>
                         </div>
                       </motion.div>
                     )}

@@ -1,17 +1,186 @@
 "use client";
 
 import Image from "next/image";
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useRef, useEffect, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 
 type Props = {
   children: React.ReactNode; // the email preview
   className?: string;
   hideOnMobile?: boolean; // NEW prop: hide device frame on mobile
   priority?: boolean; // NEW prop: prioritize image loading for LCP
+  autoScroll?: boolean; // Enable auto-scroll
+  scrollSpeed?: number; // Scroll speed multiplier (default: 1)
 };
 
-export default function DeviceFrame({ children, className, hideOnMobile = false, priority = false }: Props) {
+export default function DeviceFrame({ 
+  children, 
+  className, 
+  hideOnMobile = false, 
+  priority = false,
+  autoScroll = true, // Default to enabled
+  scrollSpeed = 1 
+}: Props) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const [maxScroll, setMaxScroll] = useState(0);
+  const prefersReducedMotion = useReducedMotion();
+  const animationFrameRef = useRef<number | null>(null);
+  const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Calculate max scroll when content loads
+  useEffect(() => {
+    if (scrollContainerRef.current && autoScroll) {
+      const updateMaxScroll = () => {
+        const container = scrollContainerRef.current;
+        if (container) {
+          const max = container.scrollHeight - container.clientHeight;
+          setMaxScroll(max);
+        }
+      };
+      
+      // Initial calculation
+      updateMaxScroll();
+      
+      // Update on resize or content change
+      const resizeObserver = new ResizeObserver(updateMaxScroll);
+      if (scrollContainerRef.current) {
+        resizeObserver.observe(scrollContainerRef.current);
+      }
+      
+      // Also check periodically for dynamic content
+      const interval = setInterval(updateMaxScroll, 500);
+      
+      return () => {
+        resizeObserver.disconnect();
+        clearInterval(interval);
+      };
+    }
+    return undefined;
+  }, [children, autoScroll]);
+
+  // Intersection Observer to detect when phone enters viewport
+  useEffect(() => {
+    if (!autoScroll) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          setIsInView(entry.isIntersecting);
+        });
+      },
+      { threshold: 0.3 } // Trigger when 30% visible
+    );
+
+    const container = scrollContainerRef.current?.parentElement?.parentElement;
+    if (container) {
+      observer.observe(container);
+    }
+
+    return () => {
+      if (container) {
+        observer.unobserve(container);
+      }
+    };
+  }, [autoScroll]);
+
+  // Auto-scroll animation
+  useEffect(() => {
+    if (!autoScroll || prefersReducedMotion || !isInView || isHovered || maxScroll <= 0) {
+      // Clean up any running animations
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      if (resetTimeoutRef.current) {
+        clearTimeout(resetTimeoutRef.current);
+        resetTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    const scrollDuration = 8000; // 8 seconds to scroll from top to bottom
+    let startTime: number | null = null;
+    let startScroll = 0;
+
+    const animate = (timestamp: number) => {
+      if (isHovered || !isInView || !scrollContainerRef.current) {
+        animationFrameRef.current = null;
+        return;
+      }
+
+      if (startTime === null) {
+        startTime = timestamp;
+        startScroll = scrollContainerRef.current.scrollTop;
+      }
+
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / scrollDuration, 1);
+      
+      // Ease-in-out curve for smooth acceleration/deceleration
+      const eased = progress < 0.5
+        ? 2 * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+      const newScroll = startScroll + (maxScroll * eased * scrollSpeed);
+      
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = newScroll;
+      }
+
+      if (progress < 1) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        // Reset to top smoothly after reaching bottom
+        if (resetTimeoutRef.current) {
+          clearTimeout(resetTimeoutRef.current);
+        }
+        resetTimeoutRef.current = setTimeout(() => {
+          if (scrollContainerRef.current && !isHovered && isInView) {
+            scrollContainerRef.current.scrollTo({
+              top: 0,
+              behavior: 'smooth'
+            });
+            startTime = null; // Reset for next cycle
+          }
+        }, 1000); // Pause 1 second at bottom before resetting
+        animationFrameRef.current = null;
+      }
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      if (resetTimeoutRef.current) {
+        clearTimeout(resetTimeoutRef.current);
+        resetTimeoutRef.current = null;
+      }
+    };
+  }, [autoScroll, prefersReducedMotion, isInView, isHovered, maxScroll, scrollSpeed]);
+
+  // Scrollable content wrapper component
+  const ScrollableContent = ({ children }: { children: React.ReactNode }) => (
+    <motion.div 
+      ref={scrollContainerRef}
+      className="relative z-10 h-[788px] overflow-y-auto pb-6 px-4 scrollbar-hide"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.4, duration: 0.6 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+      }}
+    >
+      {children}
+    </motion.div>
+  );
   // iPhone 14 logical size used by our SVG: outer 390x844, inner screen 366x820 at (12,12)
   // Visual size reduced via responsive scale to avoid dominating the layout
   
@@ -61,14 +230,18 @@ export default function DeviceFrame({ children, className, hideOnMobile = false,
                 />
               </div>
               {/* Scrollable email body */}
-              <motion.div 
-                className="relative z-10 h-[788px] overflow-y-auto pb-6 px-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4, duration: 0.6 }}
-              >
-                {children}
-              </motion.div>
+              {autoScroll ? (
+                <ScrollableContent>{children}</ScrollableContent>
+              ) : (
+                <motion.div 
+                  className="relative z-10 h-[788px] overflow-y-auto pb-6 px-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                >
+                  {children}
+                </motion.div>
+              )}
             </div>
           </div>
           </div>
@@ -79,8 +252,8 @@ export default function DeviceFrame({ children, className, hideOnMobile = false,
   
   // Default behavior: show frame on all sizes (for Hero and ExampleMatchesModal)
   return (
-    <div className={`inline-block origin-top scale-[0.82] sm:scale-[0.86] md:scale-[0.9] lg:scale-100 w-full max-w-[600px] mx-auto ${className ?? ""}`}>
-      <div className="relative mx-auto max-w-sm rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-[0_4px_6px_rgba(0,0,0,0.1),0_40px_80px_rgba(0,0,0,0.8)] p-1 ring-1 ring-white/5 backdrop-blur-sm">
+        <div className={`inline-block origin-top scale-[0.82] sm:scale-[0.86] md:scale-[0.9] lg:scale-100 w-full max-w-[600px] mx-auto ${className ?? ""}`}>
+      <div className="relative mx-auto max-w-sm rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-[0_20px_50px_rgba(139,92,246,0.15),0_4px_6px_rgba(0,0,0,0.1),0_40px_80px_rgba(0,0,0,0.8)] p-1 ring-1 ring-white/5 backdrop-blur-sm">
         <div className="absolute top-0 left-0 right-0 h-[2px] rounded-full bg-white/10" />
         <div className="relative w-[390px] h-[844px] drop-shadow-2xl">
           {/* Glow effect around device */}
@@ -115,14 +288,18 @@ export default function DeviceFrame({ children, className, hideOnMobile = false,
               />
             </div>
             {/* Scrollable email body */}
-            <motion.div 
-              className="relative z-10 h-[788px] overflow-y-auto pb-6 px-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-            >
-              {children}
-            </motion.div>
+            {autoScroll ? (
+              <ScrollableContent>{children}</ScrollableContent>
+            ) : (
+              <motion.div 
+                className="relative z-10 h-[788px] overflow-y-auto pb-6 px-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+              >
+                {children}
+              </motion.div>
+            )}
           </div>
         </div>
       </div>
