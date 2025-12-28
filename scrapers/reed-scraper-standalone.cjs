@@ -252,14 +252,19 @@ function generateReedQueries() {
 
 const EARLY_TERMS = generateReedQueries();
 
-// Since Reed has no API limit, use all queries (or allow override)
-const MAX_QUERIES_PER_LOCATION = parseInt(process.env.REED_MAX_QUERIES_PER_LOCATION || `${EARLY_TERMS.length}`, 10);
+// Free tier: 1,000 requests/day, 2 runs/day = 500 per run
+// Reed supports only UK/Ireland (5 cities), so: 5 cities × queries × pages ≤ 500
+// Target: 10 queries × 10 pages = 500 requests (perfect!)
+const MAX_QUERIES_PER_LOCATION = parseInt(process.env.REED_MAX_QUERIES_PER_LOCATION || '10', 10);
 const INCLUDE_REMOTE = String(process.env.INCLUDE_REMOTE || '').toLowerCase() === 'true';
 const scriptStart = Date.now();
 let scrapeErrors = 0;
 
-console.log(`📋 Reed query strategy: ${EARLY_TERMS.length} total queries (${EARLY_TERMS.filter((_, i) => i < 20).length} role-based + ${EARLY_TERMS.length - EARLY_TERMS.filter((_, i) => i < 20).length} generic)`);
-console.log(`🎯 Covering ALL roles from signup form (no API limit, comprehensive coverage)`);
+const queriesToUse = MAX_QUERIES_PER_LOCATION > 0 ? EARLY_TERMS.slice(0, MAX_QUERIES_PER_LOCATION) : EARLY_TERMS;
+const estimatedRequests = LOCATIONS.length * queriesToUse.length * 10; // 10 pages avg
+console.log(`📋 Reed query strategy: Using ${queriesToUse.length} queries per location (from ${EARLY_TERMS.length} total)`);
+console.log(`📊 API Usage: ~${LOCATIONS.length} cities × ${queriesToUse.length} queries × 10 pages = ~${estimatedRequests} calls per run`);
+console.log(`⚠️  Free Tier Limit: 1,000 requests/day (2 runs/day = 500 per run). Current: ~${estimatedRequests} (${estimatedRequests <= 500 ? '✅ SAFE' : '❌ EXCEEDS LIMIT'})`);
 
 function parseTargetCareerPaths() {
   const raw = process.env.TARGET_CAREER_PATHS;
@@ -298,12 +303,16 @@ function getMaxPagesForQuery(query) {
   const genericPattern = /^(internship|graduate|junior|entry level|trainee|intern)$/i;
   const isGeneric = genericPattern.test(query.trim());
   
+  // Reed supports only UK/Ireland (5 cities), so we have more headroom
+  // Free tier: 1,000 requests/day, 2 runs/day = 500 per run
+  // 5 cities × queries × pages ≤ 500
+  // Target: 10 queries × 10 pages = 500 requests (perfect!)
   if (isRoleBased) {
-    return parseInt(process.env.REED_MAX_PAGES_ROLE || '15', 10); // More pages for roles (no API limit)
+    return parseInt(process.env.REED_MAX_PAGES_ROLE || '10', 10); // 10 pages for roles (free tier safe)
   } else if (isGeneric) {
-    return parseInt(process.env.REED_MAX_PAGES_GENERIC || '10', 10); // Fewer pages for generic
+    return parseInt(process.env.REED_MAX_PAGES_GENERIC || '8', 10); // 8 pages for generic (free tier safe)
   }
-  return parseInt(process.env.REED_MAX_PAGES || '12', 10); // Default
+  return parseInt(process.env.REED_MAX_PAGES || '10', 10); // Default: 10 pages (free tier safe)
 }
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -385,8 +394,13 @@ async function scrapeLocation(location) {
                              locationLower.includes('dublin') || locationLower.includes('uk') ||
                              locationLower.includes('ireland') || locationLower.includes('england');
           if (!isUKIreland) continue;
-          // Filter for early-career roles
-          if (!(classifyEarlyCareer(j) || EARLY_TERMS.some(t => j.title.toLowerCase().includes(t)))) continue;
+          // Filter for early-career roles (relaxed - Reed API already filters with graduate:true)
+          // Trust the API filter more, only reject if clearly senior
+          const titleLower = (j.title || '').toLowerCase();
+          const descLower = (j.description || '').toLowerCase();
+          const isSenior = /(senior|lead|principal|director|head of|vp|vice president|architect|manager|specialist)/i.test(titleLower) && 
+                          !/(junior|graduate|intern|trainee|entry|associate)/i.test(titleLower);
+          if (isSenior) continue; // Only reject clearly senior roles
           if (TARGET_CAREER_PATHS.length) {
             const text = `${j.title || ''} ${j.description || ''}`.toLowerCase();
             const matchesCareerPath = TARGET_CAREER_PATHS.some((path) => {
