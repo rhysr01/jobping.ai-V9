@@ -63,20 +63,41 @@ jobs:
       
     - name: Validate required secrets
       run: |
-        if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
-          echo "❌ SUPABASE_URL secret is missing"
+        # Store secrets in variables first to avoid evaluation issues
+        SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
+        SUPABASE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+        
+        # Debug: Check if secrets are accessible (without exposing values)
+        echo "🔍 Checking secrets..."
+        if [ -z "$SUPABASE_URL" ]; then
+          echo "❌ SUPABASE_URL secret is missing or empty"
+          echo "💡 Check: Settings → Secrets and variables → Actions → SUPABASE_URL"
           exit 1
+        else
+          echo "✅ SUPABASE_URL is set (length: ${#SUPABASE_URL} chars)"
         fi
-        if [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
-          echo "❌ SUPABASE_SERVICE_ROLE_KEY secret is missing"
+        
+        if [ -z "$SUPABASE_KEY" ]; then
+          echo "❌ SUPABASE_SERVICE_ROLE_KEY secret is missing or empty"
+          echo "💡 Check: Settings → Secrets and variables → Actions → SUPABASE_SERVICE_ROLE_KEY"
           exit 1
+        else
+          echo "✅ SUPABASE_SERVICE_ROLE_KEY is set (length: ${#SUPABASE_KEY} chars)"
         fi
+        
+        # Optional secrets (warn only)
         if [ -z "${{ secrets.ADZUNA_APP_ID }}" ]; then
-          echo "⚠️  ADZUNA_APP_ID secret is missing (Adzuna scraper will fail)"
+          echo "⚠️  ADZUNA_APP_ID secret is missing (Adzuna scraper will skip)"
+        else
+          echo "✅ ADZUNA_APP_ID is set"
         fi
+        
         if [ -z "${{ secrets.REED_API_KEY }}" ]; then
-          echo "⚠️  REED_API_KEY secret is missing (Reed scraper will fail)"
+          echo "⚠️  REED_API_KEY secret is missing (Reed scraper will skip)"
+        else
+          echo "✅ REED_API_KEY is set"
         fi
+        
         echo "✅ Required secrets validated"
       
     - name: Run scraping
