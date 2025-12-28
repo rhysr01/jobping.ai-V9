@@ -18,9 +18,15 @@ function formatTimeAgo(minutes: number): string {
 }
 
 export default function SocialProofTicker() {
+  const [isMounted, setIsMounted] = useState(false);
   const [currentItem, setCurrentItem] = useState<TickerItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  // Mounting pattern - ensures server and client render same initial state
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const fetchRecentMatches = async () => {
     try {
@@ -46,17 +52,24 @@ export default function SocialProofTicker() {
   };
 
   useEffect(() => {
+    if (!isMounted) return; // Only fetch after mount
     fetchRecentMatches();
     const interval = setInterval(fetchRecentMatches, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
-  }, []);
+  }, [isMounted]);
 
-  if (isLoading && !currentItem) {
+  // Server and client both render this skeleton - no hydration mismatch
+  if (!isMounted || (isLoading && !currentItem)) {
     return (
-      <div className="flex items-center gap-2 text-zinc-500 text-xs">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
+        className="flex items-center gap-2 text-zinc-500 text-xs"
+      >
         <div className="w-1.5 h-1.5 rounded-full bg-zinc-600 animate-pulse" />
         <span className="w-32 h-3 bg-zinc-800 rounded animate-pulse" />
-      </div>
+      </motion.div>
     );
   }
 
@@ -88,7 +101,7 @@ export default function SocialProofTicker() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
         className="flex items-center gap-2 text-zinc-500 text-xs"
       >
         <div className={`w-1.5 h-1.5 rounded-full ${error ? 'bg-zinc-600' : 'bg-emerald-500'} animate-pulse`} />

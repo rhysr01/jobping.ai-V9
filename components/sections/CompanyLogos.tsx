@@ -42,10 +42,25 @@ export default function CompanyLogos() {
       <section className="py-24 md:py-32 bg-black scroll-snap-section relative">
         <div className="container-page">
           <div className="h-[200px] flex items-center justify-center">
-            <div className="space-y-3">
-              <div className="h-6 w-64 bg-white/10 rounded animate-pulse mx-auto" />
-              <div className="h-4 w-48 bg-white/5 rounded animate-pulse mx-auto" />
-            </div>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-3"
+            >
+              <motion.div 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                className="h-6 w-64 bg-white/10 rounded animate-pulse mx-auto" 
+              />
+              <motion.div 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                className="h-4 w-48 bg-white/5 rounded animate-pulse mx-auto" 
+              />
+            </motion.div>
           </div>
         </div>
       </section>
@@ -115,7 +130,11 @@ export default function CompanyLogos() {
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 whileInView={{ opacity: 1, scale: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.03, ease: [0.23, 1, 0.32, 1] }}
+                transition={{ 
+                  duration: 0.5, 
+                  delay: index * 0.05, // Staggered entrance
+                  ease: [0.23, 1, 0.32, 1] 
+                }}
                 whileHover={{ 
                   y: -6,
                   scale: 1.02,

@@ -159,7 +159,7 @@ function PricingCard({ plan, index }: { plan: PlanConfig; index: number }) {
               }
             }}
             aria-label={isPremium ? "Start Premium - Weekly emails" : "Try Free Now - Instant matches"}
-            className={`group relative inline-flex items-center justify-center overflow-hidden h-11 rounded-full px-6 text-sm font-medium transition-all duration-200 sm:text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+            className={`group relative inline-flex items-center justify-center overflow-hidden h-11 rounded-full px-6 text-sm font-medium transition-all duration-200 sm:text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
               isPremium
                 ? 'bg-brand-500 text-white shadow-md shadow-brand-500/40 hover:bg-purple-600 hover:-translate-y-0.5 hover:shadow-feature transition-all'
                 : 'border border-white/15 bg-white/5 text-white hover:border-brand-500/40 hover:bg-white/5 transition-all'

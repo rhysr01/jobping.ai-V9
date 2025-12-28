@@ -308,7 +308,7 @@ export default function SignupFormFree() {
         matchCount: matchCountValue,
       });
 
-      // Trigger confetti animation
+      // Trigger confetti animation with brand colors
       const triggerConfetti = () => {
         const duration = 3000;
         const animationEnd = Date.now() + duration;
@@ -318,6 +318,9 @@ export default function SignupFormFree() {
           return Math.random() * (max - min) + min;
         }
 
+        // Brand colors: Purple (brand), Emerald Green (matches), Zinc White (grounded)
+        const colors = ['#8b5cf6', '#10b981', '#ffffff']; // Purple, Emerald, White
+
         const interval: NodeJS.Timeout = setInterval(function() {
           const timeLeft = animationEnd - Date.now();
 
@@ -326,15 +329,29 @@ export default function SignupFormFree() {
           }
 
           const particleCount = 50 * (timeLeft / duration);
+          
+          // Left burst - Purple and Emerald
           confetti({
             ...defaults,
             particleCount,
+            colors: [colors[0], colors[1]], // Purple and Emerald
             origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
           });
+          
+          // Right burst - Emerald and White
           confetti({
             ...defaults,
             particleCount,
+            colors: [colors[1], colors[2]], // Emerald and White
             origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+          });
+          
+          // Center burst - All brand colors
+          confetti({
+            ...defaults,
+            particleCount: particleCount * 0.5,
+            colors: colors, // All three colors
+            origin: { x: randomInRange(0.4, 0.6), y: Math.random() - 0.2 }
           });
         }, 250);
       };

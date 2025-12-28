@@ -122,6 +122,16 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Prevent double-tap delay on mobile - makes buttons feel instant */
+button,
+a[role="button"],
+[role="button"],
+input[type="submit"],
+input[type="button"],
+a {
+  touch-action: manipulation; /* Removes 300ms tap delay */
+}
+
 /* Prevent iOS zoom on input focus */
 @media (max-width: 768px) {
   input[type="text"],

@@ -25,13 +25,40 @@ export default function CookieBanner() {
   const handleAccept = () => {
     localStorage.setItem('cookie-consent', 'accepted');
     setIsVisible(false);
-    // Enable non-essential cookies/analytics here if needed
+    
+    // Enable PostHog tracking
+    if (typeof window !== 'undefined' && (window as any).posthog) {
+      (window as any).posthog.opt_in_capturing();
+      // Enable session recording if user accepted
+      (window as any).posthog.startSessionRecording();
+    }
+    
+    // Enable Google Analytics
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('consent', 'update', {
+        analytics_storage: 'granted',
+        ad_storage: 'denied', // We don't use ads
+      });
+    }
   };
 
   const handleReject = () => {
     localStorage.setItem('cookie-consent', 'rejected');
     setIsVisible(false);
-    // Disable non-essential cookies/analytics here if needed
+    
+    // Disable PostHog tracking
+    if (typeof window !== 'undefined' && (window as any).posthog) {
+      (window as any).posthog.opt_out_capturing();
+      (window as any).posthog.stopSessionRecording();
+    }
+    
+    // Disable Google Analytics
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('consent', 'update', {
+        analytics_storage: 'denied',
+        ad_storage: 'denied',
+      });
+    }
   };
 
   return (

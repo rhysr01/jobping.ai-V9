@@ -452,7 +452,7 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
                   score >= 92
                     ? 'border-2 border-emerald-500/60 bg-gradient-to-br from-emerald-500/15 to-emerald-600/8 shadow-[0_8px_40px_rgba(16,185,129,0.35)] hover:shadow-[0_12px_50px_rgba(16,185,129,0.45)]' 
                     : score >= 85
-                    ? 'border-2 border-blue-500/50 bg-gradient-to-br from-blue-500/10 to-blue-600/5 shadow-[0_4px_20px_rgba(59,130,246,0.25)] hover:shadow-[0_6px_30px_rgba(59,130,246,0.35)]'
+                    ? 'border-2 border-purple-500/50 bg-gradient-to-br from-purple-500/10 to-purple-600/5 shadow-[0_4px_20px_rgba(139,92,246,0.25)] hover:shadow-[0_6px_30px_rgba(139,92,246,0.35)]'
                     : 'border border-zinc-500/30 bg-black shadow-sm hover:shadow-md'
                 } p-5`}
               >
@@ -464,7 +464,7 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
                         score >= 92
                           ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-emerald-400/60 text-[12px] shadow-[0_4px_12px_rgba(16,185,129,0.4)]' 
                           : score >= 85
-                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400/60 text-[11px] shadow-[0_4px_12px_rgba(59,130,246,0.3)]'
+                          ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white border-purple-400/60 text-[11px] shadow-[0_4px_12px_rgba(139,92,246,0.3)]'
                           : 'bg-zinc-500/20 text-zinc-200 border-zinc-500/40 text-[11px]'
                       }`}
                     >
@@ -488,16 +488,16 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
                 </div>
                 <div className="mb-4 flex flex-wrap gap-2">
                   {job.categories && job.categories.length > 0 && (
-                    <span className="inline-block rounded-full bg-indigo-500/15 px-3 py-1.5 text-[12px] font-semibold text-zinc-300">
+                    <span className="inline-block rounded-full bg-purple-500/15 px-3 py-1.5 text-[12px] font-semibold text-zinc-300">
                       {job.categories[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </span>
                   )}
-                  <span className="inline-block rounded-full bg-indigo-500/15 px-3 py-1.5 text-[12px] font-semibold text-zinc-300">{job.workEnvironment}</span>
+                  <span className="inline-block rounded-full bg-purple-500/15 px-3 py-1.5 text-[12px] font-semibold text-zinc-300">{job.workEnvironment}</span>
                   {job.isInternship && (
-                    <span className="inline-block rounded-full bg-indigo-500/15 px-3 py-1.5 text-[12px] font-semibold text-zinc-300">Internship</span>
+                    <span className="inline-block rounded-full bg-purple-500/15 px-3 py-1.5 text-[12px] font-semibold text-zinc-300">Internship</span>
                   )}
                   {job.isGraduate && (
-                    <span className="inline-block rounded-full bg-indigo-500/15 px-3 py-1.5 text-[12px] font-semibold text-zinc-300">Graduate Programme</span>
+                    <span className="inline-block rounded-full bg-purple-500/15 px-3 py-1.5 text-[12px] font-semibold text-zinc-300">Graduate Programme</span>
                   )}
                 </div>
                 
@@ -555,7 +555,7 @@ export default function SampleInterviewEmail({ day = 'monday', careerPath = 'fin
 
 
         {/* Footer - Sample Preview */}
-        <div className="mt-6 pt-5 border-t border-indigo-500/12 text-center">
+        <div className="mt-6 pt-5 border-t border-purple-500/12 text-center">
           <div className="text-purple-400 font-semibold text-[14px] mb-2">JobPing</div>
           <div className="text-[11px] text-zinc-500">
             This is a sample email preview showing real matches from a real user. Sign up to get your own personalized matches.

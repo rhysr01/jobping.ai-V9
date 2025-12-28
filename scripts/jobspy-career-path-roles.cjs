@@ -199,23 +199,108 @@ function extractSkills(description) {
   return skills;
 }
 
-// Extract language requirements
+// Extract language requirements (comprehensive - includes all visa-seeking languages)
 function extractLanguageRequirements(description) {
   if (!description) return [];
   const desc = description.toLowerCase();
   const languages = [];
+  
+  // Comprehensive language map - includes all visa-seeking languages
   const languageMap = {
-    'english': 'English', 'french': 'French', 'german': 'German', 'spanish': 'Spanish',
-    'italian': 'Italian', 'dutch': 'Dutch', 'portuguese': 'Portuguese',
-    'fluent in english': 'English', 'fluent in french': 'French', 'fluent in german': 'German',
-    'fluent in spanish': 'Spanish', 'native english': 'English', 'native french': 'French', 'native german': 'German'
+    // EU languages
+    'english': 'English', 'anglais': 'English', 'fluent in english': 'English', 'native english': 'English',
+    'english speaker': 'English', 'english speaking': 'English', 'english language': 'English', 'english proficiency': 'English',
+    'french': 'French', 'français': 'French', 'francais': 'French', 'fluent in french': 'French', 'native french': 'French',
+    'french speaker': 'French', 'french speaking': 'French',
+    'german': 'German', 'deutsch': 'German', 'fluent in german': 'German', 'native german': 'German',
+    'german speaker': 'German', 'german speaking': 'German',
+    'spanish': 'Spanish', 'español': 'Spanish', 'espanol': 'Spanish', 'castellano': 'Spanish',
+    'fluent in spanish': 'Spanish', 'native spanish': 'Spanish', 'spanish speaker': 'Spanish', 'spanish speaking': 'Spanish',
+    'italian': 'Italian', 'italiano': 'Italian', 'fluent in italian': 'Italian', 'native italian': 'Italian',
+    'italian speaker': 'Italian', 'italian speaking': 'Italian',
+    'dutch': 'Dutch', 'nederlands': 'Dutch', 'fluent in dutch': 'Dutch', 'native dutch': 'Dutch',
+    'dutch speaker': 'Dutch', 'dutch speaking': 'Dutch',
+    'portuguese': 'Portuguese', 'português': 'Portuguese', 'portugues': 'Portuguese',
+    'fluent in portuguese': 'Portuguese', 'native portuguese': 'Portuguese', 'portuguese speaker': 'Portuguese',
+    'polish': 'Polish', 'polski': 'Polish', 'fluent in polish': 'Polish', 'native polish': 'Polish',
+    'polish speaker': 'Polish', 'polish speaking': 'Polish',
+    'swedish': 'Swedish', 'svenska': 'Swedish', 'fluent in swedish': 'Swedish', 'native swedish': 'Swedish',
+    'swedish speaker': 'Swedish',
+    'danish': 'Danish', 'dansk': 'Danish', 'fluent in danish': 'Danish', 'native danish': 'Danish',
+    'danish speaker': 'Danish',
+    'finnish': 'Finnish', 'suomi': 'Finnish', 'fluent in finnish': 'Finnish', 'native finnish': 'Finnish',
+    'finnish speaker': 'Finnish',
+    'czech': 'Czech', 'čeština': 'Czech', 'fluent in czech': 'Czech', 'native czech': 'Czech',
+    'czech speaker': 'Czech',
+    'romanian': 'Romanian', 'română': 'Romanian', 'romana': 'Romanian',
+    'fluent in romanian': 'Romanian', 'native romanian': 'Romanian', 'romanian speaker': 'Romanian',
+    'hungarian': 'Hungarian', 'magyar': 'Hungarian', 'fluent in hungarian': 'Hungarian', 'native hungarian': 'Hungarian',
+    'hungarian speaker': 'Hungarian',
+    'greek': 'Greek', 'ελληνικά': 'Greek', 'fluent in greek': 'Greek', 'native greek': 'Greek',
+    'greek speaker': 'Greek',
+    'bulgarian': 'Bulgarian', 'български': 'Bulgarian', 'fluent in bulgarian': 'Bulgarian', 'native bulgarian': 'Bulgarian',
+    'bulgarian speaker': 'Bulgarian',
+    'croatian': 'Croatian', 'hrvatski': 'Croatian', 'fluent in croatian': 'Croatian', 'native croatian': 'Croatian',
+    'croatian speaker': 'Croatian',
+    'serbian': 'Serbian', 'српски': 'Serbian', 'fluent in serbian': 'Serbian', 'native serbian': 'Serbian',
+    'serbian speaker': 'Serbian',
+    'russian': 'Russian', 'русский': 'Russian', 'fluent in russian': 'Russian', 'native russian': 'Russian',
+    'russian speaker': 'Russian', 'russian speaking': 'Russian',
+    'ukrainian': 'Ukrainian', 'українська': 'Ukrainian', 'fluent in ukrainian': 'Ukrainian', 'native ukrainian': 'Ukrainian',
+    'ukrainian speaker': 'Ukrainian',
+    // Middle Eastern & Central Asian
+    'arabic': 'Arabic', 'العربية': 'Arabic', 'fluent in arabic': 'Arabic', 'native arabic': 'Arabic',
+    'arabic speaker': 'Arabic', 'arabic speaking': 'Arabic',
+    'turkish': 'Turkish', 'türkçe': 'Turkish', 'turkce': 'Turkish', 'fluent in turkish': 'Turkish', 'native turkish': 'Turkish',
+    'turkish speaker': 'Turkish', 'turkish speaking': 'Turkish',
+    'hebrew': 'Hebrew', 'עברית': 'Hebrew', 'fluent in hebrew': 'Hebrew', 'native hebrew': 'Hebrew',
+    'hebrew speaker': 'Hebrew',
+    'persian': 'Persian', 'farsi': 'Persian', 'فارسی': 'Persian', 'fluent in persian': 'Persian',
+    'fluent in farsi': 'Persian', 'native persian': 'Persian', 'native farsi': 'Persian',
+    'persian speaker': 'Persian', 'farsi speaker': 'Persian',
+    'urdu': 'Urdu', 'اردو': 'Urdu', 'fluent in urdu': 'Urdu', 'native urdu': 'Urdu',
+    'urdu speaker': 'Urdu',
+    // Asian languages
+    'japanese': 'Japanese', '日本語': 'Japanese', 'nihongo': 'Japanese', 'fluent in japanese': 'Japanese',
+    'native japanese': 'Japanese', 'japanese speaker': 'Japanese', 'japanese speaking': 'Japanese',
+    'japanese language': 'Japanese', 'japanese proficiency': 'Japanese',
+    'chinese': 'Chinese', '中文': 'Chinese', 'mandarin': 'Chinese', 'fluent in chinese': 'Chinese',
+    'fluent in mandarin': 'Chinese', 'native chinese': 'Chinese', 'native mandarin': 'Chinese',
+    'chinese speaker': 'Chinese', 'mandarin speaker': 'Chinese', 'chinese speaking': 'Chinese',
+    'mandarin speaking': 'Chinese', 'chinese language': 'Chinese', 'mandarin language': 'Chinese',
+    'chinese proficiency': 'Chinese', 'mandarin proficiency': 'Chinese',
+    'cantonese': 'Cantonese', 'fluent in cantonese': 'Cantonese', 'native cantonese': 'Cantonese',
+    'cantonese speaker': 'Cantonese', 'cantonese speaking': 'Cantonese',
+    'korean': 'Korean', '한국어': 'Korean', 'fluent in korean': 'Korean', 'native korean': 'Korean',
+    'korean speaker': 'Korean', 'korean speaking': 'Korean', 'korean language': 'Korean', 'korean proficiency': 'Korean',
+    'hindi': 'Hindi', 'हिन्दी': 'Hindi', 'fluent in hindi': 'Hindi', 'native hindi': 'Hindi',
+    'hindi speaker': 'Hindi', 'hindi speaking': 'Hindi', 'hindi language': 'Hindi', 'hindi proficiency': 'Hindi',
+    'thai': 'Thai', 'ไทย': 'Thai', 'fluent in thai': 'Thai', 'native thai': 'Thai',
+    'thai speaker': 'Thai', 'thai speaking': 'Thai', 'thai language': 'Thai', 'thai proficiency': 'Thai',
+    'vietnamese': 'Vietnamese', 'tiếng việt': 'Vietnamese', 'fluent in vietnamese': 'Vietnamese',
+    'native vietnamese': 'Vietnamese', 'vietnamese speaker': 'Vietnamese', 'vietnamese speaking': 'Vietnamese',
+    'indonesian': 'Indonesian', 'bahasa indonesia': 'Indonesian', 'fluent in indonesian': 'Indonesian',
+    'native indonesian': 'Indonesian', 'indonesian speaker': 'Indonesian',
+    'tagalog': 'Tagalog', 'filipino': 'Tagalog', 'fluent in tagalog': 'Tagalog', 'fluent in filipino': 'Tagalog',
+    'native tagalog': 'Tagalog', 'native filipino': 'Tagalog', 'tagalog speaker': 'Tagalog', 'filipino speaker': 'Tagalog',
+    'malay': 'Malay', 'bahasa melayu': 'Malay', 'fluent in malay': 'Malay', 'native malay': 'Malay',
+    'malay speaker': 'Malay',
+    'bengali': 'Bengali', 'বাংলা': 'Bengali', 'fluent in bengali': 'Bengali', 'native bengali': 'Bengali',
+    'bengali speaker': 'Bengali',
+    'tamil': 'Tamil', 'தமிழ்': 'Tamil', 'fluent in tamil': 'Tamil', 'native tamil': 'Tamil',
+    'tamil speaker': 'Tamil',
+    'telugu': 'Telugu', 'తెలుగు': 'Telugu', 'fluent in telugu': 'Telugu', 'native telugu': 'Telugu',
+    'telugu speaker': 'Telugu',
   };
+  
   for (const [keyword, lang] of Object.entries(languageMap)) {
     if (desc.includes(keyword) && !languages.includes(lang)) {
       languages.push(lang);
     }
   }
-  return languages;
+  
+  // Remove duplicates and return
+  return [...new Set(languages)];
 }
 
 // Detect visa/sponsorship requirements
