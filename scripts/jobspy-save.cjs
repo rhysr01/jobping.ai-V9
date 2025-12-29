@@ -1017,6 +1017,32 @@ async function main() {
   const PRIORITY_RESULTS_WANTED = parseInt(process.env.JOBSPY_PRIORITY_RESULTS || '100', 10); // More results for priority cities (increased from 75 to 100)
   const JOBSPY_TIMEOUT_MS = parseInt(process.env.JOBSPY_TIMEOUT_MS || '20000', 10);
 
+  // ============================================
+  // DATABASE CLEANUP: Delete jobs older than 30 days
+  // ============================================
+  console.log('\n🧹 Cleaning up old jobs (older than 30 days)...');
+  try {
+    const supabase = getSupabase();
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 30);
+    const cutoffIso = cutoffDate.toISOString();
+    
+    const { data: deletedJobs, error: deleteError } = await supabase
+      .from('jobs')
+      .delete()
+      .lt('created_at', cutoffIso)
+      .select('id');
+    
+    if (deleteError) {
+      console.warn(`⚠️  Failed to delete old jobs: ${deleteError.message}`);
+    } else {
+      const deletedCount = Array.isArray(deletedJobs) ? deletedJobs.length : 0;
+      console.log(`✅ Deleted ${deletedCount} jobs older than 30 days (cutoff: ${cutoffIso})`);
+    }
+  } catch (error) {
+    console.warn(`⚠️  Cleanup error (continuing anyway): ${error.message}`);
+  }
+  
   const collected = [];
   const pythonCmd = pickPythonCommand();
   
@@ -1081,13 +1107,8 @@ async function main() {
     const resultsWanted = isPriority ? PRIORITY_RESULTS_WANTED : RESULTS_WANTED;
     const localized = CITY_LOCAL[city] || [];
     
-    // Combine core + extras + localized, internship/graduate-first prioritization
-    const combined = [...CORE_EN, ...EXTRA_TERMS, ...localized];
-    const prioritized = [
-      ...combined.filter(q => /(intern|internship|placement|stagiaire|prácticas|stage|praktik|graduate(\s+(scheme|program(me)?))?)/i.test(q)),
-      ...combined.filter(q => !/(intern|internship|placement|stagiaire|prácticas|stage|praktik|graduate(\s+(scheme|program(me)?))?)/i.test(q))
-    ];
-    const toRun = prioritized.slice(0, maxQueries);
+    // Note: We now use concept batching (3 batches) instead of individual terms
+    // This reduces API calls from 20+ per city to just 6 (3 Indeed + 3 Google)
     
     // Country mapping for Indeed (lowercase, for country_indeed parameter)
     const country = city === 'London' ? 'united kingdom'
@@ -1137,13 +1158,38 @@ async function main() {
                       : city === 'Warsaw' ? 'Poland'
                       : 'Europe';
     
-    for (const term of toRun) {
-      const priorityLabel = isPriority ? '🎯 [PRIORITY] ' : '';
-      
+    // ============================================
+    // CONCEPT BATCHING: Group terms into 3 "Super-Queries" instead of 20+ individual calls
+    // ============================================
+    const priorityLabel = isPriority ? '🎯 [PRIORITY] ' : '';
+    
+    // Build concept batches with English + local synonyms merged
+    const internshipTerms = ['intern', 'internship', 'placement'];
+    const internshipLocal = localized.filter(t => /(praktik|stage|stagiaire|prácticas|tirocinio|staż)/i.test(t));
+    const internshipBatch = `("${internshipTerms.join('" OR "')}"${internshipLocal.length > 0 ? ` OR "${internshipLocal.join('" OR "')}"` : ''})`;
+    
+    const graduateTerms = ['graduate', 'junior', 'entry level', 'entry-level', 'recent graduate', 'new grad'];
+    const graduateLocal = localized.filter(t => /(absolvent|absolwent|nyexaminerad|nyuddannet|neolaureato|recién graduado|laureato|débutant|beginnend|primo lavoro|nivel inicial)/i.test(t));
+    const graduateBatch = `("${graduateTerms.join('" OR "')}"${graduateLocal.length > 0 ? ` OR "${graduateLocal.join('" OR "')}"` : ''})`;
+    
+    const specializedTerms = ['analyst', 'associate', 'trainee', 'coordinator', 'assistant'];
+    const specializedLocal = localized.filter(t => /(koordinator|coordinat|assistent|asistente|analyst|trainee|praktikant|becario|tirocinio)/i.test(t));
+    const specializedBatch = `("${specializedTerms.join('" OR "')}"${specializedLocal.length > 0 ? ` OR "${specializedLocal.join('" OR "')}"` : ''})`;
+    
+    const batches = {
+      internships: internshipBatch,
+      graduates: graduateBatch,
+      specialized: specializedBatch
+    };
+    
+    console.log(`\n${priorityLabel}📦 Using concept batching for ${city} (3 batches: internships, graduates, specialized)`);
+    
+    // Process each concept batch
+    for (const [batchName, baseQuery] of Object.entries(batches)) {
       // ============================================
-      // PART A: INDEED (Structured Search)
+      // PART A: INDEED (Structured Search) - One call per batch
       // ============================================
-      console.log(`\n${priorityLabel}📡 Indeed: "${term}" in ${city}, ${country}`);
+      console.log(`\n${priorityLabel}📡 Indeed [${batchName}]: "${baseQuery.substring(0, 60)}..." in ${city}, ${country}`);
       
       // Optimize: Skip Glassdoor for cities where it's blocked
       const GLASSDOOR_BLOCKED_CITIES = ['Stockholm', 'Copenhagen', 'Prague', 'Warsaw'];
@@ -1157,7 +1203,7 @@ from jobspy import scrape_jobs
 import pandas as pd
 df = scrape_jobs(
   site_name=${JSON.stringify(indeedSites)},
-  search_term='''${term.replace(/'/g, "''")}''',
+  search_term='''${baseQuery.replace(/'/g, "''")}''',
   location='''${city}''',
   country_indeed='''${country}''',
   results_wanted=${resultsWanted},
@@ -1189,51 +1235,22 @@ cols=[c for c in ['title','company','location','job_url','description','company_
 print(df[cols].to_csv(index=False))
 `;
       
-      const indeedRows = await runJobSpyScraper(indeedPython, 'Indeed');
+      const indeedRows = await runJobSpyScraper(indeedPython, `Indeed [${batchName}]`);
       if (indeedRows > 0) {
-        console.log(`→ Indeed: Collected ${indeedRows} rows`);
+        console.log(`→ Indeed [${batchName}]: Collected ${indeedRows} rows`);
       }
       
       // ============================================
-      // PART B: GOOGLE (Natural Language Search)
+      // PART B: GOOGLE (Natural Language Search) - One call per batch
       // ============================================
-      // Merge English term + local synonyms into one natural language query
-      const termLower = term.toLowerCase();
-      const localSynonyms = localized.filter(localTerm => {
-        // Match local synonyms that are conceptually similar to the English term
-        if (termLower.includes('intern') || termLower.includes('internship')) {
-          return /(praktik|stage|stagiaire|prácticas|tirocinio|staż)/i.test(localTerm);
-        }
-        if (termLower.includes('graduate') || termLower.includes('entry level') || termLower.includes('entry-level')) {
-          return /(absolvent|absolwent|nyexaminerad|nyuddannet|neolaureato|recién graduado|laureato)/i.test(localTerm);
-        }
-        if (termLower.includes('junior')) {
-          return /(junior|débutant|beginnend|primo lavoro|nivel inicial)/i.test(localTerm);
-        }
-        if (termLower.includes('trainee') || termLower.includes('traineeship')) {
-          return /(trainee|praktikant|stagiaire|becario|tirocinio)/i.test(localTerm);
-        }
-        // If term contains coordinator, assistant, analyst, etc., include relevant local terms
-        if (termLower.includes('coordinator') || termLower.includes('assistant') || termLower.includes('analyst')) {
-          return /(koordinator|coordinat|assistent|asistente|analyst)/i.test(localTerm);
-        }
-        return false;
-      });
-      
-      // Build natural language Google query with merged synonyms
-      const englishPart = term;
-      const synonymBlock = localSynonyms.length > 0 
-        ? ` OR "${localSynonyms.join('" OR "')}"` 
-        : '';
-      
-      // Add year filter for better targeting (2025/2026 internships/graduate programs)
-      const yearFilter = (termLower.includes('intern') || termLower.includes('graduate') || termLower.includes('entry level'))
+      // Add year filter for internships and graduates (2025/2026 recruitment cycles)
+      const yearFilter = (batchName === 'internships' || batchName === 'graduates')
         ? ' (2025 OR 2026)'
         : '';
       
-      const googleNaturalString = `"${englishPart}"${synonymBlock}${yearFilter} jobs in ${city}, ${countryName} -senior -lead -manager -director`;
+      const googleNaturalString = `${baseQuery}${yearFilter} jobs in ${city}, ${countryName} -senior -lead -manager -director`;
       
-      console.log(`\n${priorityLabel}🔍 Google: "${googleNaturalString.substring(0, 100)}..." in ${city}`);
+      console.log(`\n${priorityLabel}🔍 Google [${batchName}]: "${googleNaturalString.substring(0, 100)}..." in ${city}`);
       
       const googlePython = `
 from jobspy import scrape_jobs
@@ -1269,9 +1286,9 @@ cols=[c for c in ['title','company','location','job_url','description','company_
 print(df[cols].to_csv(index=False))
 `;
       
-      const googleRows = await runJobSpyScraper(googlePython, 'Google');
+      const googleRows = await runJobSpyScraper(googlePython, `Google [${batchName}]`);
       if (googleRows > 0) {
-        console.log(`→ Google: Collected ${googleRows} rows`);
+        console.log(`→ Google [${batchName}]: Collected ${googleRows} rows`);
       }
       
       // ============================================
