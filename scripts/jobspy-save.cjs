@@ -726,8 +726,15 @@ async function saveJobs(jobs, source) {
         console.error('Sample failed row:', JSON.stringify(slice[0], null, 2));
       }
     } else {
-        console.log(`✅ Saved ${slice.length} jobs (batch ${Math.floor(i/BATCH_SIZE) + 1})`);
-        savedCount += slice.length;
+        const savedCountInBatch = result.data ? result.data.length : slice.length;
+        console.log(`✅ Saved ${savedCountInBatch} jobs (batch ${Math.floor(i/BATCH_SIZE) + 1})`);
+        // Enhanced logging: Show Supabase response for debugging
+        if (result.data) {
+          console.log(`   📊 Supabase response: ${result.data.length} rows inserted/updated`);
+        } else {
+          console.log(`   📊 Supabase response: Success (no data returned, assuming ${slice.length} saved)`);
+        }
+        savedCount += savedCountInBatch;
     }
     } catch (error) {
       console.error(`❌ Fatal upsert error after retries (batch ${Math.floor(i/BATCH_SIZE) + 1}):`, error.message);
@@ -751,6 +758,7 @@ async function saveJobs(jobs, source) {
   }
   
   console.log(`📊 Save summary: ${savedCount} saved, ${failedCount} failed out of ${unique.length} total`);
+  return savedCount; // Return count for tracking
 }
 
 function pickPythonCommand() {
@@ -1043,7 +1051,6 @@ async function main() {
     console.warn(`⚠️  Cleanup error (continuing anyway): ${error.message}`);
   }
   
-  const collected = [];
   const pythonCmd = pickPythonCommand();
   
   // Helper function to execute Python scraper and parse results
@@ -1093,15 +1100,84 @@ async function main() {
     
     if (py && py.status === 0) {
       const rows = parseCsv(py.stdout);
-      if (rows.length > 0) {
-        rows.forEach(r => collected.push(r));
-        return rows.length;
-      }
+      return rows; // Return rows array instead of count
     }
-    return 0;
+    return []; // Return empty array on failure
   }
   
+  // Quality filtering functions (moved here for reuse per city)
+  const hasFields = j => (
+    (j.title||'').trim().length > 3 &&
+    (j.company||'').trim().length > 1 &&
+    (j.location||'').trim().length > 3 &&
+    (j.job_url||j.url||'').trim().startsWith('http')
+  );
+  const titleStr = s => (s||'').toLowerCase();
+  const descStr = s => (s||'').toLowerCase();
+  const includesAny = (s, arr) => arr.some(t => s.includes(t));
+  const excludesAll = (s, arr) => !arr.some(t => s.includes(t));
+  const earlyTerms = [
+    'graduate','entry level','entry-level','junior','associate','trainee','intern','internship',
+    'graduado','becario','prácticas','nivel inicial','asociado',
+    'absolvent','praktikum','werkstudent','einsteiger',
+    'starter','afgestudeerd','stage',
+    'jeune diplômé','stagiaire','alternance','débutant','apprenti',
+    'praktikum','stage','jeune diplômé',
+    'neolaureato','tirocinio','stage','apprendista'
+  ];
+  const bizAxesLoose = ['business','analyst','scheme','program','operations','marketing','sales','finance','account','audit','logistics','supply','chain','consult','strategy','hr','human resources','risk','project','management','data','analytics','product','tech','technology','engineering'];
+  const seniorTerms = ['senior','lead','principal','director','head of','vp','vice president','architect','specialist','manager'];
+  const noisyExclusions = [
+    'nurse','nhs','pharmacist','doctor','veterinary','dental','physiotherap','medical assistant',
+    'biomedical scientist','medical science liaison','medical liaison','clinical',
+    'healthcare assistant','paramedic','radiographer','sonographer',
+    'teacher','chef','cleaner','warehouse','driver','barista','waiter','waitress','hairdresser',
+    'electrician','plumber','mechanic','welder','carpenter','painter','landscap','janitor',
+    'hgv','truck driver','delivery driver','courier','postal',
+    'store assistant','shop assistant','cashier','retail assistant','shelf stacker',
+    'beauty consultant','sales consultant loewe','beauty advisor',
+    'laboratory technician','field technician','acoustic consultant','environmental scientist',
+    'social worker','care worker','support worker'
+  ];
+  const allFormRoles = getAllRoles().map(r => r.toLowerCase());
+  
+  function filterQualityJobs(jobs) {
+    return jobs.filter(j => {
+      if (!hasFields(j)) return false;
+      const t = titleStr(j.title);
+      const d = descStr(j.company_description || j.skills || '');
+      const full = `${t} ${d}`;
+      
+      const hasEarly = includesAny(t, earlyTerms) || includesAny(d, earlyTerms);
+      const titleHasExplicitEarly = includesAny(t, earlyTerms);
+      
+      const matchesFormRole = allFormRoles.some(role => {
+        const roleWords = role.split(' ').filter(w => w.length > 3);
+        return roleWords.length > 0 && roleWords.every(word => t.includes(word));
+      });
+      
+      const isLikelyEarlyCareer = matchesFormRole || hasEarly || titleHasExplicitEarly;
+      
+      const bizOk = isLikelyEarlyCareer 
+        ? true
+        : includesAny(full, bizAxesLoose);
+      if (!bizOk) return false;
+      
+      if (!titleHasExplicitEarly && !matchesFormRole && includesAny(t, seniorTerms)) return false;
+      
+      if (!excludesAll(full, noisyExclusions)) return false;
+      
+      return true;
+    });
+  }
+  
+  // Track total saved across all cities
+  let totalSaved = 0;
+  
   for (const city of cities) {
+    // ✅ CRITICAL: Create a fresh bucket for THIS city (save-as-you-go)
+    let cityResults = [];
+    
     const isPriority = PRIORITY_CITIES.includes(city);
     const maxQueries = isPriority ? PRIORITY_MAX_Q : MAX_Q_PER_CITY;
     const resultsWanted = isPriority ? PRIORITY_RESULTS_WANTED : RESULTS_WANTED;
@@ -1236,8 +1312,10 @@ print(df[cols].to_csv(index=False))
 `;
       
       const indeedRows = await runJobSpyScraper(indeedPython, `Indeed [${batchName}]`);
-      if (indeedRows > 0) {
-        console.log(`→ Indeed [${batchName}]: Collected ${indeedRows} rows`);
+      if (indeedRows && indeedRows.length > 0) {
+        console.log(`→ Indeed [${batchName}]: Collected ${indeedRows.length} rows`);
+        // Immediately add to city bucket
+        indeedRows.forEach(r => cityResults.push(r));
       }
       
       // ============================================
@@ -1287,8 +1365,10 @@ print(df[cols].to_csv(index=False))
 `;
       
       const googleRows = await runJobSpyScraper(googlePython, `Google [${batchName}]`);
-      if (googleRows > 0) {
-        console.log(`→ Google [${batchName}]: Collected ${googleRows} rows`);
+      if (googleRows && googleRows.length > 0) {
+        console.log(`→ Google [${batchName}]: Collected ${googleRows.length} rows`);
+        // Immediately add to city bucket
+        googleRows.forEach(r => cityResults.push(r));
       }
       
       // ============================================
@@ -1298,140 +1378,45 @@ print(df[cols].to_csv(index=False))
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
     
+    // ============================================
+    // ✅ CRITICAL: Save after EACH city (save-as-you-go)
+    // ============================================
+    // This prevents data loss if script crashes on a later city
+    if (cityResults.length > 0) {
+      console.log(`\n💾 Processing ${cityResults.length} jobs for ${city}...`);
+      
+      // Apply quality filtering
+      const qualityFiltered = filterQualityJobs(cityResults);
+      console.log(`   ✅ ${qualityFiltered.length}/${cityResults.length} jobs passed quality gate`);
+      
+      if (qualityFiltered.length > 0) {
+        console.log(`💾 Saving ${qualityFiltered.length} quality jobs for ${city} to Supabase...`);
+        try {
+          const saved = await saveJobs(qualityFiltered, 'jobspy-indeed');
+          totalSaved += saved || qualityFiltered.length;
+          console.log(`✅ ${city}: Saved ${qualityFiltered.length} jobs (total so far: ${totalSaved})`);
+        } catch (error) {
+          console.error(`❌ ${city}: Failed to save jobs:`, error.message);
+          // Continue to next city even if save fails
+        }
+      } else {
+        console.log(`⚠️  ${city}: No jobs passed quality gate`);
+      }
+    } else {
+      console.log(`⚠️  ${city}: No jobs collected`);
+    }
+    
     // Optional: Brief pause between cities
     if (cities.indexOf(city) < cities.length - 1) {
       console.log(`⏸️  Brief pause before next city...`);
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
-
-  // Quality gate: required fields and description length
-  const hasFields = j => (
-    (j.title||'').trim().length > 3 &&
-    (j.company||'').trim().length > 1 &&
-    (j.location||'').trim().length > 3 &&
-    (j.job_url||j.url||'').trim().startsWith('http')
-  );
-  const titleStr = s => (s||'').toLowerCase();
-  const descStr = s => (s||'').toLowerCase();
-  const includesAny = (s, arr) => arr.some(t => s.includes(t));
-  const excludesAll = (s, arr) => !arr.some(t => s.includes(t));
-  const earlyTerms = [
-    // English
-    'graduate','entry level','entry-level','junior','associate','trainee','intern','internship',
-    // Spanish
-    'graduado','becario','prácticas','nivel inicial','asociado',
-    // German
-    'absolvent','praktikum','werkstudent','einsteiger',
-    // Dutch
-    'starter','afgestudeerd','stage',
-    // French
-    'jeune diplômé','stagiaire','alternance','débutant','apprenti',
-    // Swiss (mix of DE/FR)
-    'praktikum','stage','jeune diplômé',
-    // Italian
-    'neolaureato','tirocinio','stage','apprendista'
-  ];
-  const bizAxesStrict = ['consult','sales','business analyst','strategy','operations','logistic','supply chain','finance','account','audit','marketing','brand','commercial','product','data','ai'];
-  const bizAxesLoose = ['business','analyst','scheme','program','operations','marketing','sales','finance','account','audit','logistics','supply','chain','consult','strategy','hr','human resources','risk','project','management','data','analytics','product','tech','technology','engineering'];
-  const seniorTerms = ['senior','lead','principal','director','head of','vp','vice president','architect','specialist','manager'];
-  const noisyExclusions = [
-    // Healthcare & Medical (strict!)
-    'nurse','nhs','pharmacist','doctor','veterinary','dental','physiotherap','medical assistant',
-    'biomedical scientist','medical science liaison','medical liaison','clinical',
-    'healthcare assistant','paramedic','radiographer','sonographer',
-    'tecnico elettromedicale','quality assurance analyst ii - medical',
-    'molecular technician','pharmasource technician',
-    // Trades & Manual Labor
-    'teacher','chef','cleaner','warehouse','driver','barista','waiter','waitress','hairdresser',
-    'electrician','plumber','mechanic','welder','carpenter','painter','landscap','janitor',
-    'hgv','truck driver','delivery driver','courier','postal',
-    'heating technician','motor technician','service technician','power station',
-    'deskside technician','service desk','wardrobe technician','projections technician',
-    // Retail & Service (non-graduate) - but KEEP "delivery consultant" (consulting role)
-    'store assistant','shop assistant','cashier','retail assistant','shelf stacker',
-    'beauty consultant','sales consultant loewe','beauty advisor',
-    // Other Irrelevant
-    'laboratory technician','field technician','acoustic consultant','environmental scientist',
-    'social worker','care worker','support worker'
-  ];
-  // Additional exclusion: overly generic consultant roles
-  const consultantExclusion = [' consultant '];
-  // Get all role names from signup form for matching (already imported above)
-  const allFormRoles = getAllRoles().map(r => r.toLowerCase());
   
-  const qualityFiltered = collected.filter(j => {
-    if (!hasFields(j)) return false;
-    const t = titleStr(j.title);
-    const d = descStr(j.company_description || j.skills || '');
-    const full = `${t} ${d}`;
-    
-    // Check if title or description has early-career terms
-    const hasEarly = includesAny(t, earlyTerms) || includesAny(d, earlyTerms);
-    const titleHasExplicitEarly = includesAny(t, earlyTerms);
-    
-    // Check if title matches any role from signup form (these are all early-career roles)
-    const matchesFormRole = allFormRoles.some(role => {
-      // Check if title contains the role name (flexible matching)
-      const roleWords = role.split(' ').filter(w => w.length > 3); // Skip short words like "sdr"
-      return roleWords.length > 0 && roleWords.every(word => t.includes(word));
-    });
-    
-    // RELAXED: Trust search results more - we're searching with early-career terms and form roles
-    // If it matches a form role OR has early terms, it's likely valid
-    const isLikelyEarlyCareer = matchesFormRole || hasEarly || titleHasExplicitEarly;
-    
-    // Business axis check - more lenient if it's a form role or has early terms
-    const bizOk = isLikelyEarlyCareer 
-      ? true  // Trust form roles and early-career terms
-      : includesAny(full, bizAxesLoose); // Otherwise check business keywords
-    if (!bizOk) return false;
-    
-    // Only reject if DEFINITELY senior (and no early terms/form role match in title)
-    if (!titleHasExplicitEarly && !matchesFormRole && includesAny(t, seniorTerms)) return false;
-    
-    // Always reject noise
-    if (!excludesAll(full, noisyExclusions)) return false;
-    
-    return true;
-  });
-  // No per-city cap - collect all quality jobs
-  const capped = qualityFiltered;
-  console.log(`\n🧾 Total collected: ${collected.length}`);
-  console.log(`✅ Passing quality gate (fields + biz/early terms, no senior/noise): ${qualityFiltered.length}`);
-  console.log(`🎚️ All quality jobs included (no cap): ${capped.length}`);
-  
-  // Debug: show sample titles that failed
-  if (collected.length > 0 && qualityFiltered.length === 0) {
-    console.log('\n🔍 Sample titles that failed quality gate:');
-    collected.slice(0, 5).forEach((j, i) => {
-      const t = (j.title||'').toLowerCase();
-      const d = (j.company_description || j.skills || '').toLowerCase();
-      const full = `${t} ${d}`;
-      const hasEarly = earlyTerms.some(term => t.includes(term) || d.includes(term));
-      const titleHasExplicitEarly = earlyTerms.some(term => t.includes(term));
-      const matchesFormRole = allFormRoles.some(role => {
-        const roleWords = role.split(' ').filter(w => w.length > 3);
-        return roleWords.length > 0 && roleWords.every(word => t.includes(word));
-      });
-      const hasBizKeywords = includesAny(full, bizAxesLoose);
-      const hasSeniorTerms = includesAny(t, seniorTerms);
-      const hasNoise = !excludesAll(full, noisyExclusions);
-      const hasFields = (
-        (j.title||'').trim().length > 3 &&
-        (j.company||'').trim().length > 1 &&
-        (j.location||'').trim().length > 3 &&
-        (j.job_url||j.url||'').trim().startsWith('http')
-      );
-      console.log(`${i+1}. "${j.title}" (${j.company})`);
-      console.log(`   - hasFields: ${hasFields}, hasEarly: ${hasEarly}, matchesFormRole: ${matchesFormRole}`);
-      console.log(`   - hasBizKeywords: ${hasBizKeywords}, hasSeniorTerms: ${hasSeniorTerms}, hasNoise: ${hasNoise}`);
-      console.log(`   - REJECTED: ${!hasFields ? 'missing fields' : !hasBizKeywords && !matchesFormRole && !hasEarly ? 'no biz/role/early match' : hasSeniorTerms && !matchesFormRole && !titleHasExplicitEarly ? 'senior term' : hasNoise ? 'noise' : 'unknown'}`);
-    });
-  }
-  await saveJobs(capped, 'jobspy-indeed');
-  console.log(`✅ JobSpy: total_saved=${capped.length}`);
-  console.log('🎉 Done');
+  // Final summary
+  console.log(`\n🎉 Scraping complete!`);
+  console.log(`📊 Total jobs saved across all cities: ${totalSaved}`);
+  console.log('✅ Done');
 }
 
 main().catch(e => { console.error('Fatal:', e); process.exit(1); });
