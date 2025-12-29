@@ -16,7 +16,6 @@ interface EmailPhoneShowcaseProps {
 export default function EmailPhoneShowcase({ day = 'monday', careerPath = 'finance' }: EmailPhoneShowcaseProps) {
   const prefersReduced = useReducedMotion();
   const [preloadedJobs, setPreloadedJobs] = useState<any[]>([]);
-  const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
   const pointIcons = [BrandIcons.Check, BrandIcons.Shield, BrandIcons.Mail];
   const dayLabel = day === 'wednesday' ? 'Wednesday' : 'Monday';
 
@@ -59,54 +58,9 @@ export default function EmailPhoneShowcase({ day = 'monday', careerPath = 'finan
         </span>
       </motion.div>
 
-      {/* Single phone centered with dynamic backlight */}
-      <div 
-        className="relative flex items-center justify-center"
-        onMouseMove={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          setMousePosition({
-            x: ((e.clientX - rect.left) / rect.width) * 100,
-            y: ((e.clientY - rect.top) / rect.height) * 100,
-          });
-        }}
-        onMouseLeave={() => setMousePosition({ x: 50, y: 50 })}
-      >
-        {/* Dynamic backlight following cursor - smooth radial gradient fade */}
-        <motion.div
-          animate={{
-            x: `${mousePosition.x}%`,
-            y: `${mousePosition.y}%`,
-          }}
-          transition={{ type: 'spring', stiffness: 40, damping: 25 }}
-          className="absolute pointer-events-none -translate-x-1/2 -translate-y-1/2"
-          style={{
-            width: '600px',
-            height: '600px',
-            background: 'radial-gradient(circle, rgba(139,92,246,0.35) 0%, rgba(139,92,246,0.18) 30%, rgba(139,92,246,0.08) 50%, transparent 70%)',
-            filter: 'blur(70px)',
-            opacity: 0.75,
-          }}
-        />
-        
-        {/* Static glow layers - radial gradients for smooth fade */}
-        <div 
-          className="absolute -inset-8 pointer-events-none"
-          style={{
-            background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, rgba(139,92,246,0.08) 40%, transparent 70%)',
-            filter: 'blur(60px)',
-            opacity: 0.6,
-          }}
-        />
-        <div 
-          className="absolute -inset-6 pointer-events-none"
-          style={{
-            background: 'radial-gradient(circle, rgba(168,85,247,0.1) 0%, rgba(168,85,247,0.05) 40%, transparent 70%)',
-            filter: 'blur(50px)',
-            opacity: 0.5,
-          }}
-        />
-        
-        {/* Floating shadow - smooth radial fade */}
+      {/* Single phone centered - static (no dynamic backlight) */}
+      <div className="relative flex items-center justify-center">
+        {/* Floating shadow - essential for depth, static */}
         <div 
           className="absolute inset-0 translate-y-20 pointer-events-none -z-20 scale-110"
           style={{

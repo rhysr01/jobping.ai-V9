@@ -144,16 +144,6 @@ export default async function RootLayout({
         />
       </head>
       <body className="text-white premium-bg custom-scrollbar relative bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-purple-900/10 via-zinc-950 to-zinc-950">
-        {/* Cursor follower radial gradient - desktop only */}
-        <div 
-          id="cursor-follower"
-          className="fixed pointer-events-none z-0 w-[600px] h-[600px] rounded-full opacity-0 transition-opacity duration-300 hidden md:block"
-          style={{
-            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.03), transparent 70%)',
-            transform: 'translate(-50%, -50%)',
-            willChange: 'transform',
-          }}
-        />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3
@@ -165,37 +155,6 @@ export default async function RootLayout({
         <ErrorBoundary>{children}</ErrorBoundary>
         <Toaster />
         <CookieBanner />
-        {/* Cursor follower script - desktop only */}
-        <Script id="cursor-follower" strategy="afterInteractive">
-          {`
-            if (window.matchMedia('(min-width: 768px)').matches) {
-              const follower = document.getElementById('cursor-follower');
-              if (follower) {
-                let mouseX = 0, mouseY = 0;
-                let followerX = 0, followerY = 0;
-                
-                document.addEventListener('mousemove', (e) => {
-                  mouseX = e.clientX;
-                  mouseY = e.clientY;
-                  follower.style.opacity = '1';
-                });
-                
-                function animate() {
-                  followerX += (mouseX - followerX) * 0.1;
-                  followerY += (mouseY - followerY) * 0.1;
-                  follower.style.left = followerX + 'px';
-                  follower.style.top = followerY + 'px';
-                  requestAnimationFrame(animate);
-                }
-                animate();
-                
-                document.addEventListener('mouseleave', () => {
-                  follower.style.opacity = '0';
-                });
-              }
-            }
-          `}
-        </Script>
         {/* Google Analytics - inline script will work with CSP nonce via Next.js */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-G40ZHDYNL6"

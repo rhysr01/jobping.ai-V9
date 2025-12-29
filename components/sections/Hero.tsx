@@ -2,10 +2,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
-import { useReducedMotion } from "@/components/ui/useReducedMotion";
-import { shouldThrottleAnimations } from "@/lib/performance";
-import * as Copy from "@/lib/copy";
-import { CTA_GET_MY_5_FREE_MATCHES, CTA_GET_MY_5_FREE_MATCHES_ARIA, TRUST_TEXT_INSTANT_SETUP } from "@/lib/copy";
+import { CTA_GET_MY_5_FREE_MATCHES, CTA_GET_MY_5_FREE_MATCHES_ARIA } from "@/lib/copy";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 import HeroBackgroundAura from "@/components/ui/HeroBackgroundAura";
 import DeviceFrame from "@/components/marketing/DeviceFrame";
@@ -15,13 +12,7 @@ import TrustBadges from "@/components/sections/TrustBadges";
 import { useStats } from "@/hooks/useStats";
 
 export default function Hero() {
-  const [offset, setOffset] = useState(0);
-  const [enableMotion, setEnableMotion] = useState(true);
-  const [shouldLoadAnimations, setShouldLoadAnimations] = useState(false);
   const [preloadedJobs, setPreloadedJobs] = useState<any[]>([]);
-  const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
-  const prefersReduced = useReducedMotion();
-  const shouldThrottle = shouldThrottleAnimations();
   const { stats } = useStats();
 
   // Pre-fetch jobs immediately on mount (before component renders)
@@ -48,46 +39,15 @@ export default function Hero() {
     fetchJobs();
   }, []);
 
-  // Lazy load animations after initial paint
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShouldLoadAnimations(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Check for reduced motion preference
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (mq.matches) setEnableMotion(false);
-  }, []);
-
-  // Scroll parallax for aura
-  useEffect(() => {
-    if (!enableMotion || prefersReduced || shouldThrottle) return;
-    const onScroll = () => setOffset(window.scrollY * 0.03);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [enableMotion, prefersReduced, shouldThrottle]);
-
   return (
     <section
       data-testid="hero-section"
       className="section-padding-hero pt-16 pb-20 md:pt-20 md:pb-24 relative overflow-hidden min-h-[60vh] md:min-h-[65vh] flex items-center bg-black"
     >
-      {/* Enhanced cinematic background with richer gradients */}
+      {/* Simplified static background */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-zinc-950 via-black to-zinc-950" />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-brand-500/3 via-transparent to-brand-600/3" />
+      <HeroBackgroundAura />
       
-      {/* Background animations */}
-      <HeroBackgroundAura offset={enableMotion ? offset : 0} enableMotion={enableMotion} />
-      
-      {/* Additional depth layers */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-500/5 rounded-full blur-3xl opacity-50 animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-brand-600/5 rounded-full blur-3xl opacity-40" />
-      </div>
-
       {/* Scroll momentum fade */}
       <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
       
@@ -97,7 +57,6 @@ export default function Hero() {
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center mt-4 md:mt-8">
           
           {/* LEFT SIDE - Content */}
-          {/* CRITICAL: Text container must be 100% transparent - no background colors */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -105,16 +64,6 @@ export default function Hero() {
             className="text-left space-y-6 relative"
             style={{ backgroundColor: 'transparent' }}
           >
-            {/* Ethereal radial gradient glow behind text - separate absolute div (NOT on text container) */}
-            <div 
-              className="absolute -inset-20 pointer-events-none"
-              style={{
-                background: 'radial-gradient(circle at 30% 50%, rgba(139,92,246,0.15) 0%, rgba(139,92,246,0) 70%)',
-                filter: 'blur(80px)',
-                zIndex: -10,
-              }}
-            />
-            
             {/* Headline - "Silver Silk" gradient */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
@@ -127,7 +76,7 @@ export default function Hero() {
                 className="relative bg-clip-text text-transparent"
                 style={{
                   backgroundImage: 'linear-gradient(to right, rgba(168,85,247,0.8) 0%, rgba(168,85,247,0.8) 20%, rgb(244,244,245) 50%, rgba(168,85,247,0.8) 80%, rgba(168,85,247,0.8) 100%)',
-                WebkitBackgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                 }}
@@ -172,10 +121,24 @@ export default function Hero() {
                 }}
                 variant="gradient"
                 size="lg"
-                className="w-full sm:w-auto sm:max-w-xs px-8 py-4 md:py-5 text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)] transition-all duration-200"
+                className="w-full sm:w-auto sm:max-w-xs px-8 py-4 md:py-5 text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)] transition-all duration-200 relative overflow-hidden"
                 aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
               >
-                <span className="flex items-center justify-center gap-2">
+                {/* Subtle shimmer effect - only on primary CTA button */}
+                <motion.span
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                  animate={{
+                    x: ['-100%', '100%'],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    repeatDelay: 2,
+                    ease: 'easeInOut',
+                  }}
+                  aria-hidden="true"
+                />
+                <span className="relative flex items-center justify-center gap-2">
                   {CTA_GET_MY_5_FREE_MATCHES}
                   <BrandIcons.ArrowRight className="h-5 w-5" />
                 </span>
@@ -239,65 +202,22 @@ export default function Hero() {
                   </>
                 ) : (
                   <div className="space-y-2">
-                    <div className="h-5 w-48 bg-white/5 rounded animate-pulse" />
-                    <div className="h-3 w-32 bg-white/5 rounded animate-pulse" />
+                    <div className="h-5 w-48 bg-white/5 rounded" />
+                    <div className="h-3 w-32 bg-white/5 rounded" />
                   </div>
                 )}
               </motion.div>
             </motion.div>
           </motion.div>
 
-          {/* RIGHT SIDE - iPhone Mockup with Dynamic Backlight */}
+          {/* RIGHT SIDE - iPhone Mockup (Static - No Dynamic Backlight) */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            onMouseMove={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setMousePosition({
-                x: ((e.clientX - rect.left) / rect.width) * 100,
-                y: ((e.clientY - rect.top) / rect.height) * 100,
-              });
-            }}
-            onMouseLeave={() => setMousePosition({ x: 50, y: 50 })}
             className="relative flex justify-center lg:justify-end items-start"
           >
-            {/* Dynamic backlight that follows cursor - smooth radial gradient fade */}
-            <motion.div
-              animate={{
-                x: `${mousePosition.x}%`,
-                y: `${mousePosition.y}%`,
-              }}
-              transition={{ type: 'spring', stiffness: 40, damping: 25 }}
-              className="absolute pointer-events-none -translate-x-1/2 -translate-y-1/2"
-              style={{
-                width: '500px',
-                height: '500px',
-                background: 'radial-gradient(circle, rgba(139,92,246,0.3) 0%, rgba(139,92,246,0.15) 30%, rgba(139,92,246,0.05) 50%, transparent 70%)',
-                filter: 'blur(60px)',
-                opacity: 0.7,
-              }}
-            />
-            
-            {/* Secondary static glow layers - radial gradients for smooth fade */}
-            <div 
-              className="absolute -inset-8 pointer-events-none"
-              style={{
-                background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, rgba(139,92,246,0.06) 40%, transparent 70%)',
-                filter: 'blur(50px)',
-                opacity: 0.5,
-              }}
-            />
-            <div 
-              className="absolute -inset-6 pointer-events-none"
-              style={{
-                background: 'radial-gradient(circle, rgba(168,85,247,0.08) 0%, rgba(168,85,247,0.04) 40%, transparent 70%)',
-                filter: 'blur(40px)',
-                opacity: 0.4,
-              }}
-            />
-            
-            {/* Floating shadow - smooth radial fade */}
+            {/* Floating shadow - essential for depth, static */}
             <div 
               className="absolute inset-0 translate-y-16 pointer-events-none -z-20 scale-110"
               style={{
@@ -306,7 +226,7 @@ export default function Hero() {
               }}
             />
             
-            {/* iPhone Mockup with enhanced glow */}
+            {/* iPhone Mockup with static glow */}
             <div className="scale-90 md:scale-95 lg:scale-100 origin-top lg:origin-top-left relative z-10 lg:-mr-8"
               style={{
                 filter: 'drop-shadow(0 20px 50px rgba(139,92,246,0.15))',
