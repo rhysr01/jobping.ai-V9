@@ -11,11 +11,45 @@ import {
 import { buildPreferencesLink } from '../preferences/links';
 import { getVisaConfidenceLabel, getVisaConfidenceStyle, calculateVisaConfidence, getVisaProTip } from '../../Utils/matching/visa-confidence';
 import { issueSecureToken } from '../auth/secureTokens';
-import { CAREER_PATH_LABELS, mapDatabaseToForm } from '../../Utils/matching/categoryMapper';
 
-// Helper function to get career path label (inline to avoid Turbopack module resolution issues)
+// Inline constants and functions to avoid Turbopack module resolution issues
+// These are copied from Utils/matching/categoryMapper.ts to avoid import problems
+const CAREER_PATH_LABELS: Record<string, string> = {
+  'strategy': 'Strategy & Business Design',
+  'data': 'Data & Analytics',
+  'sales': 'Sales & Client Success',
+  'marketing': 'Marketing & Growth',
+  'finance': 'Finance & Investment',
+  'operations': 'Operations & Supply Chain',
+  'product': 'Product & Innovation',
+  'tech': 'Tech & Transformation',
+  'sustainability': 'Sustainability & ESG',
+  'unsure': 'Not Sure Yet / General'
+};
+
+const DATABASE_TO_FORM_MAPPING: Record<string, string> = {
+  'strategy-business-design': 'strategy',
+  'finance-investment': 'finance',
+  'sales-client-success': 'sales', 
+  'marketing-growth': 'marketing',
+  'data-analytics': 'data',
+  'operations-supply-chain': 'operations',
+  'product-innovation': 'product',
+  'tech-transformation': 'tech',
+  'sustainability-esg': 'sustainability',
+  'retail-luxury': 'retail-luxury',
+  'entrepreneurship': 'entrepreneurship',
+  'technology': 'tech'
+};
+
+// Helper function to get career path label
 const getCareerPathLabel = (value: string): string => {
   return CAREER_PATH_LABELS[value] || value;
+};
+
+// Helper function to map database category to form value
+const mapDatabaseToForm = (databaseCategory: string): string => {
+  return DATABASE_TO_FORM_MAPPING[databaseCategory] || databaseCategory;
 };
 
 const COLORS = {
