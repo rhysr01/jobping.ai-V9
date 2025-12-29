@@ -109,15 +109,25 @@ Tip: add hello@getjobping.com to your contacts so nothing hits spam. Need to twe
   }
 }
 
-// Job matches email sender using production templates
-export async function sendMatchedJobsEmail(args: {
+// Type for sendMatchedJobsEmail arguments
+export interface SendMatchedJobsEmailArgs {
   to: string;
   jobs: any[];
   userName?: string;
   subscriptionTier?: 'free' | 'premium';
   isSignupEmail?: boolean;
   subjectOverride?: string;
-}) {
+  userPreferences?: {
+    career_path?: string | string[];
+    target_cities?: string[];
+    visa_status?: string;
+    entry_level_preference?: string;
+    work_environment?: string | string[];
+  };
+}
+
+// Job matches email sender using production templates
+export async function sendMatchedJobsEmail(args: SendMatchedJobsEmailArgs) {
   const startTime = Date.now();
   
   apiLogger.info('sendMatchedJobsEmail called', { 
@@ -204,7 +214,8 @@ export async function sendMatchedJobsEmail(args: {
       args.userName,
       args.subscriptionTier || 'free',
       args.isSignupEmail || false,
-      args.to // Pass user email explicitly for links
+      args.to, // Pass user email explicitly for links
+      args.userPreferences // Pass user preferences for profile section
     );
     
     const textContent = `Hi ${args.userName || 'there'},\n\nHere are your latest job matches:\n\n${args.jobs.map((job, i) => `${i + 1}. ${job.title} at ${job.company}`).join('\n')}`;
