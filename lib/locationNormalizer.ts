@@ -8,7 +8,7 @@ import { getCountryFromCity, CITY_TO_COUNTRY } from './countryFlags';
 /**
  * Map of country codes and variations to standardized full country names
  */
-const COUNTRY_NORMALIZATION_MAP: Record<string, string> = {
+export const COUNTRY_NORMALIZATION_MAP: Record<string, string> = {
   // United Kingdom variations
   'gb': 'United Kingdom',
   'uk': 'United Kingdom',
@@ -134,7 +134,7 @@ export function normalizeCountry(country: string | null | undefined): string {
  * Map of city name variations to canonical city names
  * CRITICAL: This prevents city name fragmentation in the database
  */
-const CITY_NORMALIZATION_MAP: Record<string, string> = {
+export const CITY_NORMALIZATION_MAP: Record<string, string> = {
   // German city variations
   'münchen': 'Munich',
   'garching bei münchen': 'Munich',
