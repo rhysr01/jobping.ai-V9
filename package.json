@@ -27,6 +27,7 @@
     "check:performance": "tsx scripts/check-performance.ts",
     "generate-secrets": "tsx scripts/generate-secrets.ts",
     "clean": "rm -rf .next out coverage test-results",
+    "pre-push": "npm run build",
     "postinstall": "next telemetry disable"
   },
   "dependencies": {
