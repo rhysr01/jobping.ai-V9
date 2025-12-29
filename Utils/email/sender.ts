@@ -210,13 +210,14 @@ export async function sendMatchedJobsEmail(args: SendMatchedJobsEmailArgs) {
     
     // Use production template
     // Note: createJobMatchesEmail accepts 6 parameters: jobCards, userName, subscriptionTier, isSignupEmail, userEmail, userPreferences
+    // Pass all parameters explicitly to ensure TypeScript recognizes all 6 parameters
     const htmlContent = createJobMatchesEmail(
       jobCards,
-      args.userName,
-      args.subscriptionTier || 'free',
-      args.isSignupEmail || false,
-      args.to, // userEmail parameter
-      args.userPreferences // userPreferences parameter
+      args.userName ?? undefined,
+      args.subscriptionTier ?? 'free',
+      args.isSignupEmail ?? false,
+      args.to ?? undefined,
+      args.userPreferences ?? undefined
     );
     
     const textContent = `Hi ${args.userName || 'there'},\n\nHere are your latest job matches:\n\n${args.jobs.map((job, i) => `${i + 1}. ${job.title} at ${job.company}`).join('\n')}`;
