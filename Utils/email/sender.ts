@@ -209,13 +209,14 @@ export async function sendMatchedJobsEmail(args: SendMatchedJobsEmailArgs) {
     const subject = args.subjectOverride || `Your ${args.jobs.length} New Job Matches - JobPing`;
     
     // Use production template
+    // Note: createJobMatchesEmail accepts 6 parameters: jobCards, userName, subscriptionTier, isSignupEmail, userEmail, userPreferences
     const htmlContent = createJobMatchesEmail(
       jobCards,
       args.userName,
       args.subscriptionTier || 'free',
       args.isSignupEmail || false,
-      args.to, // Pass user email explicitly for links
-      args.userPreferences // Pass user preferences for profile section
+      args.to, // userEmail parameter
+      args.userPreferences // userPreferences parameter
     );
     
     const textContent = `Hi ${args.userName || 'there'},\n\nHere are your latest job matches:\n\n${args.jobs.map((job, i) => `${i + 1}. ${job.title} at ${job.company}`).join('\n')}`;
