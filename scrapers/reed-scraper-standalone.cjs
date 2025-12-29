@@ -159,7 +159,7 @@ const QUERY_SETS = {
     'business analyst', 'financial analyst', 'data analyst', 'operations analyst',
     'junior analyst', 'associate consultant', 'graduate analyst',
     'marketing assistant', 'brand assistant', 'product assistant',
-    'sales development representative', 'sdr', 'bdr', 'account executive',
+    'sales development representative', 'sdr', 'bdr', 'junior account executive',
     'customer success associate', 'hr assistant'
   ],
   SET_C: [
@@ -168,8 +168,8 @@ const QUERY_SETS = {
     'early careers program', 'rotational graduate program',
     'software engineer intern', 'data engineer intern', 'cloud engineer intern',
     'associate product manager', 'apm', 'product analyst',
-    'fulfilment specialist', 'technical specialist', 'hr specialist',
-    'ux intern', 'product designer', 'design intern',
+    'junior fulfilment specialist', 'entry level technical specialist', 'graduate hr specialist',
+    'ux intern', 'junior product designer', 'design intern',
     'esg intern', 'sustainability analyst', 'climate analyst'
   ]
 };
@@ -442,34 +442,24 @@ async function saveJobsToDB(jobs) {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
   const supabase = createClient(url, key);
   
-  const dbJobs = jobs.map(convertToDatabaseFormat);
+  const dbJobs = jobs.map(convertToDatabaseFormat).filter(job => job !== null);
   
-  // Validate jobs before saving
-  const validatedRows = dbJobs.filter(row => {
-    // CRITICAL: Ensure all required fields are present
-    if (!row.title || !row.company || !row.location || !row.job_hash) {
-      console.warn(`⚠️ Skipping invalid job: missing required fields`, {
-        hasTitle: !!row.title,
-        hasCompany: !!row.company,
-        hasLocation: !!row.location,
-        hasHash: !!row.job_hash
-      });
-      return false;
+  // CRITICAL: Use comprehensive validator (consolidates all validation logic)
+  const { validateJobs } = require('./shared/jobValidator.cjs');
+  const validationResult = validateJobs(dbJobs);
+  
+  // Log validation stats
+  console.log(`📊 Validation: ${validationResult.stats.total} total, ${validationResult.stats.valid} valid, ${validationResult.stats.invalid} invalid, ${validationResult.stats.autoFixed} auto-fixed`);
+  if (validationResult.stats.invalid > 0) {
+    console.warn(`⚠️ Invalid jobs:`, validationResult.stats.errors);
+  }
+  
+  // CRITICAL: Ensure company_name is set for all valid jobs
+  const validatedRows = validationResult.valid.map(row => {
+    if (!row.company_name && row.company) {
+      row.company_name = row.company;
     }
-    
-    // Ensure categories array is never null/empty
-    if (!row.categories || !Array.isArray(row.categories) || row.categories.length === 0) {
-      console.warn(`⚠️ Job missing categories, adding default`, { job_hash: row.job_hash });
-      row.categories = ['early-career'];
-    }
-    
-    // Ensure work_environment is never null
-    if (!row.work_environment) {
-      console.warn(`⚠️ Job missing work_environment, defaulting to on-site`, { job_hash: row.job_hash });
-      row.work_environment = 'on-site';
-    }
-    
-    return true;
+    return row;
   });
   
   const unique = Array.from(new Map(validatedRows.map(r => [r.job_hash, r])).values());

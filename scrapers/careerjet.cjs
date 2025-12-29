@@ -93,7 +93,7 @@ const QUERY_SETS = {
     'associate consultant', 'graduate analyst', 'junior analyst', 'entry level analyst',
     'marketing assistant', 'brand assistant', 'product assistant', 'finance assistant',
     'operations assistant', 'sales development representative', 'sdr', 'bdr',
-    'account executive', 'customer success associate', 'hr assistant',
+    'junior account executive', 'customer success associate', 'hr assistant',
     'associate finance', 'graduate associate', 'junior consultant',
     'associate product manager', 'apm', 'entry level consultant'
   ],
@@ -105,8 +105,8 @@ const QUERY_SETS = {
     'software engineer intern', 'data engineer intern', 'cloud engineer intern',
     'frontend engineer intern', 'backend engineer intern', 'associate product manager',
     'apm', 'product analyst', 'junior product manager', 'entry level product',
-    'fulfilment specialist', 'technical specialist', 'hr specialist', 'marketing specialist',
-    'product designer', 'ux intern', 'ux designer', 'design intern', 'junior designer',
+    'junior fulfilment specialist', 'entry level technical specialist', 'graduate hr specialist', 'junior marketing specialist',
+    'junior product designer', 'ux intern', 'junior ux designer', 'design intern', 'junior designer',
     'graduate designer', 'entry level designer', 'junior engineer', 'graduate engineer',
     'entry level engineer', 'junior specialist', 'graduate specialist', 'entry level specialist',
     'esg intern', 'sustainability analyst', 'climate analyst'
@@ -385,6 +385,11 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
           defaultCountry: city.country,
         });
 
+        // CRITICAL: Skip if processor rejected (e.g., job board company)
+        if (!processed) {
+          continue;
+        }
+
         // Generate job_hash
         const job_hash = makeJobHash({
           title: processed.title,
@@ -404,8 +409,16 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
           ...(salary ? { salary_range: salary } : {}),
         };
 
+        // CRITICAL: Validate before saving
+        const { validateJob } = require('./shared/jobValidator.cjs');
+        const validation = validateJob(jobRecord);
+        if (!validation.valid) {
+          console.warn(`[CareerJet] Skipping invalid job: ${validation.errors.join(', ')}`);
+          continue;
+        }
+
         // Upsert to database
-        const { error } = await supabase.from('jobs').upsert(jobRecord, {
+        const { error } = await supabase.from('jobs').upsert(validation.job, {
           onConflict: 'job_hash',
           ignoreDuplicates: false,
         });

@@ -7,48 +7,102 @@ const { processIncomingJob } = require('./shared/processor.cjs');
 
 const BASE_URL = 'https://www.arbeitnow.com/api/job-board-api';
 
-// Main German cities (matching signup form)
+// DACH region cities (Germany, Austria, Switzerland) - expanded coverage
 const CITIES = [
+  // Germany (major cities)
   { name: 'Berlin', country: 'de' },
   { name: 'Hamburg', country: 'de' },
   { name: 'Munich', country: 'de' },
+  { name: 'Frankfurt', country: 'de' },
+  { name: 'Stuttgart', country: 'de' },
+  { name: 'Cologne', country: 'de' },
+  { name: 'Düsseldorf', country: 'de' },
+  { name: 'Dresden', country: 'de' },
+  { name: 'Leipzig', country: 'de' },
+  { name: 'Hannover', country: 'de' },
+  // Austria
+  { name: 'Vienna', country: 'at' },
+  { name: 'Graz', country: 'at' },
+  { name: 'Salzburg', country: 'at' },
+  // Switzerland
+  { name: 'Zurich', country: 'ch' },
+  { name: 'Bern', country: 'ch' },
+  { name: 'Geneva', country: 'ch' },
+  { name: 'Basel', country: 'ch' },
 ];
 
 /**
  * Query rotation system - 3 sets that rotate every 8 hours
- * EXPANDED to cover all role types: coordinator, assistant, representative, engineer, specialist, manager, designer, HR, legal, sustainability
- * German + English terms for comprehensive coverage
+ * EXPANDED DACH-FOCUSED queries covering all role types
+ * German, Austrian, and Swiss terms for comprehensive DACH coverage
  */
 const QUERY_SETS = {
   SET_A: [
-    // Focus: Internships, graduate programs, and coordinator roles (German + English)
+    // Focus: Internships, graduate programs, and coordinator roles (DACH-focused)
+    // German terms
     'praktikum', 'werkstudent', 'absolventenprogramm', 'traineeprogramm',
+    'praktikant', 'praktikantin', 'praktikumsplatz', 'praktikumsstelle',
+    'absolvent', 'absolventin', 'berufseinsteiger', 'berufseinsteigerin',
+    'ausbildung', 'duales studium', 'dualer student', 'duale ausbildung',
+    'einstiegsprogramm', 'nachwuchsprogramm', 'trainee', 'traineeprogramm',
+    'koordinator', 'koordinatorin', 'projektkoordinator', 'marketing koordinator',
+    'operations koordinator', 'hr koordinator', 'sales koordinator',
+    // Austrian terms
+    'praktikum wien', 'praktikant wien', 'absolventenprogramm österreich',
+    'traineeprogramm österreich', 'duales studium wien',
+    // Swiss terms
+    'praktikum zürich', 'praktikant schweiz', 'absolventenprogramm schweiz',
+    'traineeprogramm schweiz', 'lehre', 'lehrstelle',
+    // English fallback
     'internship', 'intern', 'graduate programme', 'graduate scheme',
-    'koordinator', 'coordinateur', 'coordinador', 'coordinatore', 'coördinator',
     'marketing coordinator', 'operations coordinator', 'product coordinator',
     'hr coordinator', 'project coordinator', 'sales coordinator'
   ],
   SET_B: [
-    // Focus: Analyst, associate, assistant, and representative roles (German + English)
+    // Focus: Analyst, associate, assistant, and representative roles (DACH-focused)
+    // German terms
     'business analyst', 'financial analyst', 'data analyst', 'operations analyst',
-    'absolvent', 'berufseinsteiger', 'junior analyst', 'graduate analyst',
-    'assistent', 'assistant', 'asistente', 'assistente',
+    'junior analyst', 'graduate analyst', 'absolvent analyst', 'einsteiger analyst',
+    'assistent', 'assistentin', 'marketing assistent', 'brand assistent',
+    'product assistent', 'hr assistent', 'finance assistent',
+    'vertreter', 'vertreterin', 'sales vertreter', 'kundenbetreuer',
+    'junior account executive', 'customer success associate',
+    // Austrian terms
+    'analyst wien', 'assistent wien', 'praktikant analyst',
+    'absolvent analyst österreich', 'einsteiger analyst wien',
+    // Swiss terms
+    'analyst zürich', 'assistent schweiz', 'praktikant analyst schweiz',
+    'absolvent analyst schweiz', 'einsteiger analyst zürich',
+    // English fallback
+    'business analyst', 'financial analyst', 'data analyst', 'operations analyst',
+    'associate consultant', 'graduate analyst', 'junior analyst',
     'marketing assistant', 'brand assistant', 'product assistant', 'hr assistant',
-    'vertreter', 'représentant', 'representante', 'rappresentante',
-    'sales development representative', 'sdr', 'bdr', 'account executive',
-    'customer success associate'
+    'sales development representative', 'sdr', 'bdr'
   ],
   SET_C: [
-    // Focus: Entry-level, junior, engineer, specialist, manager, designer, and program roles (German + English)
-    'entry level', 'junior', 'trainee', 'ausbildung', 'duales studium',
-    'einstiegsprogramm', 'nachwuchsprogramm', 'graduate trainee',
-    'ingenieur', 'ingénieur', 'ingeniero', 'ingegnere', 'ingenieur',
+    // Focus: Entry-level, junior, engineer, specialist, manager, designer roles (DACH-focused)
+    // German terms
+    'entry level', 'junior', 'einsteiger', 'einsteigerin', 'berufseinsteiger',
+    'junior ingenieur', 'ingenieur einsteiger', 'absolvent ingenieur',
     'software engineer intern', 'data engineer intern', 'cloud engineer intern',
-    'spezialist', 'spécialiste', 'especialista', 'specialista',
-    'fulfilment specialist', 'technical specialist', 'hr specialist',
+    'junior spezialist', 'spezialist einsteiger', 'absolvent spezialist',
+    'junior designer', 'designer einsteiger', 'absolvent designer',
     'associate product manager', 'apm', 'product analyst',
-    'designer', 'designer intern', 'ux intern', 'product designer',
-    'esg intern', 'sustainability analyst', 'climate analyst', 'nachhaltigkeit'
+    'junior product manager', 'product manager einsteiger',
+    'nachhaltigkeit', 'esg praktikum', 'sustainability analyst', 'climate analyst',
+    // Austrian terms
+    'ingenieur wien', 'spezialist wien', 'designer wien',
+    'junior ingenieur österreich', 'absolvent ingenieur wien',
+    'praktikum nachhaltigkeit wien', 'esg praktikum österreich',
+    // Swiss terms
+    'ingenieur zürich', 'spezialist schweiz', 'designer schweiz',
+    'junior ingenieur schweiz', 'absolvent ingenieur zürich',
+    'praktikum nachhaltigkeit schweiz', 'esg praktikum zürich',
+    // English fallback
+    'entry level', 'junior', 'graduate', 'recent graduate',
+    'early careers program', 'rotational graduate program',
+    'junior fulfilment specialist', 'entry level technical specialist', 'graduate hr specialist',
+    'junior product designer', 'designer intern', 'ux intern'
   ]
 };
 
@@ -85,11 +139,11 @@ function generateSearchQueries() {
   baseQueries.forEach(term => queries.add(term.toLowerCase()));
   
   // Priority 1: Early-career roles (intern, graduate, junior, trainee)
-  // Rotate which roles we prioritize based on query set
+  // EXPANDED: More roles per set for better DACH coverage
   const earlyCareerRoles = getEarlyCareerRoles();
-  const roleSlice = currentSet === 'SET_A' ? earlyCareerRoles.slice(0, 8) :
-                     currentSet === 'SET_B' ? earlyCareerRoles.slice(8, 16) :
-                     earlyCareerRoles.slice(16, 24);
+  const roleSlice = currentSet === 'SET_A' ? earlyCareerRoles.slice(0, 15) :
+                     currentSet === 'SET_B' ? earlyCareerRoles.slice(15, 30) :
+                     earlyCareerRoles.slice(30, 45);
   
   roleSlice.forEach(role => {
     const cleaned = cleanRoleForSearch(role);
@@ -101,10 +155,11 @@ function generateSearchQueries() {
   });
   
   // Priority 2: All roles from signup form (rotated subset)
+  // EXPANDED: More roles per set for better DACH coverage
   const allRoles = getAllRoles();
-  const allRolesSlice = currentSet === 'SET_A' ? allRoles.slice(0, 10) :
-                        currentSet === 'SET_B' ? allRoles.slice(10, 20) :
-                        allRoles.slice(20, 30);
+  const allRolesSlice = currentSet === 'SET_A' ? allRoles.slice(0, 20) :
+                        currentSet === 'SET_B' ? allRoles.slice(20, 40) :
+                        allRoles.slice(40, 60);
   
   allRolesSlice.forEach(role => {
     const cleaned = cleanRoleForSearch(role);
@@ -115,13 +170,28 @@ function generateSearchQueries() {
     });
   });
   
-  // Priority 3: German-specific early-career program terms (ALWAYS INCLUDED)
-  const germanProgramTerms = [
+  // Priority 3: DACH-specific early-career program terms (ALWAYS INCLUDED - EXPANDED)
+  const dachProgramTerms = [
+    // German terms
     'absolventenprogramm', 'traineeprogramm', 'praktikum', 'werkstudent',
-    'absolvent', 'berufseinsteiger', 'ausbildung', 'duales studium',
-    'einstiegsprogramm', 'nachwuchsprogramm', 'praktikant', 'einsteiger'
+    'absolvent', 'absolventin', 'berufseinsteiger', 'berufseinsteigerin',
+    'ausbildung', 'duales studium', 'dualer student', 'duale ausbildung',
+    'einstiegsprogramm', 'nachwuchsprogramm', 'praktikant', 'praktikantin',
+    'einsteiger', 'einsteigerin', 'praktikumsplatz', 'praktikumsstelle',
+    'lehre', 'lehrstelle', 'auszubildender', 'azubi',
+    'bachelor abschluss', 'master abschluss', 'studienabschluss',
+    'karrierestart', 'berufseinstieg', 'karrierestarter',
+    // Austrian-specific terms
+    'praktikum wien', 'praktikant wien', 'absolventenprogramm österreich',
+    'traineeprogramm österreich', 'duales studium wien', 'lehre wien',
+    'ausbildung wien', 'berufseinsteiger wien', 'einsteiger wien',
+    // Swiss-specific terms
+    'praktikum zürich', 'praktikant schweiz', 'absolventenprogramm schweiz',
+    'traineeprogramm schweiz', 'lehre zürich', 'lehre schweiz',
+    'ausbildung schweiz', 'berufseinsteiger schweiz', 'einsteiger zürich',
+    'lehre zürich', 'lehrstelle schweiz', 'auszubildender schweiz'
   ];
-  germanProgramTerms.forEach(term => queries.add(term.toLowerCase()));
+  dachProgramTerms.forEach(term => queries.add(term.toLowerCase()));
   
   // Priority 4: English early-career terms (rotated)
   const englishProgramTerms = currentSet === 'SET_A' ? [
@@ -286,6 +356,11 @@ async function scrapeArbeitnowQuery(keyword, location, supabase) {
           defaultCountry: country,
         });
 
+        // CRITICAL: Skip if processor rejected (e.g., job board company)
+        if (!processed) {
+          continue;
+        }
+
         // Generate job_hash
         const job_hash = makeJobHash({
           title: processed.title,
@@ -303,8 +378,16 @@ async function scrapeArbeitnowQuery(keyword, location, supabase) {
           categories, // Override with Arbeitnow-specific categories
         };
 
+        // CRITICAL: Validate before saving
+        const { validateJob } = require('./shared/jobValidator.cjs');
+        const validation = validateJob(jobRecord);
+        if (!validation.valid) {
+          console.warn(`[Arbeitnow] Skipping invalid job: ${validation.errors.join(', ')}`);
+          continue;
+        }
+
         // Upsert to database
-        const { error } = await supabase.from('jobs').upsert(jobRecord, {
+        const { error } = await supabase.from('jobs').upsert(validation.job, {
           onConflict: 'job_hash',
           ignoreDuplicates: false,
         });
@@ -346,9 +429,10 @@ async function scrapeArbeitnow() {
   
   const queries = generateSearchQueries();
   
-  // Limit queries to respect free tier (100 req/hour = ~1.6/min)
-  // 10 cities × 15 keywords = 150 requests = ~1.5 hours
-  const limitedQueries = queries.slice(0, 15);
+  // EXPANDED: More queries for comprehensive DACH coverage
+  // 17 cities × 25 keywords = 425 requests (within free tier limits)
+  // Rate limiting: 2s between requests = ~14 minutes total
+  const limitedQueries = queries.slice(0, 25);
   
   let totalSaved = 0;
   let errors = 0;

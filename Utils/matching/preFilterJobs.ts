@@ -123,85 +123,24 @@ export async function preFilterJobsByUserPreferencesEnhanced(
 
   /**
    * Enhanced location matching with multiple fallback levels
+   * ENHANCED: Now uses robust location matcher that handles all variations
    * Matches city names with word boundaries to avoid false positives
    * e.g., "London" matches "London, UK" but NOT "New London"
+   * Handles variations: "München" matches "Munich", "Deutschland" matches "Germany"
    * OPTIMIZED: Early exits for performance
    */
   const matchesLocationStrict = (job: ScrapersJob & { freshnessTier: string }, targetCity: string): boolean => {
-    const city = targetCity.toLowerCase().trim();
-    
-    // OPTIMIZED: Check structured city field first (most accurate, fastest)
-    if ((job as any).city) {
-      const jobCity = String((job as any).city).toLowerCase().trim();
-      if (jobCity === city || jobCity.includes(city) || city.includes(jobCity)) {
-        return true; // Early exit - exact match found
-      }
-    }
-    
-    // OPTIMIZED: Check for remote/hybrid early (common case, fast check)
-    const jobLocation = (job.location || '').toLowerCase();
-    if (jobLocation.includes('remote') || jobLocation.includes('hybrid') || 
-        jobLocation.includes('work from home') || jobLocation.includes('flexible location')) {
-      return true; // Early exit - remote/hybrid always acceptable
-    }
-    
-    const jobLoc = jobLocation.trim();
-    
-    // OPTIMIZED: Check structured country field for country-level matches
-    if ((job as any).country) {
-      const jobCountry = String((job as any).country).toLowerCase();
-      const countries = CITY_COUNTRY_MAP[city];
-      if (countries && countries.some(c => jobCountry.includes(c))) {
-        return true; // Early exit - country-level match found
-      }
-    }
-    
-    // Use word boundary matching for location string
-    // Match patterns like: "London", "London, UK", "Greater London", but NOT "New London"
-    // Escape special regex characters in city name
-    const escapedCity = city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const patterns = [
-      new RegExp(`\\b${escapedCity}\\b`, 'i'), // Exact word match
-      new RegExp(`^${escapedCity}[,\\s]`, 'i'), // Starts with city name
-      new RegExp(`[,\\s]${escapedCity}[,\\s]`, 'i'), // City in middle
-      new RegExp(`[,\\s]${escapedCity}$`, 'i'), // City at end
-    ];
-    
-    // Check if any pattern matches
-    if (patterns.some(pattern => pattern.test(jobLoc))) {
-      return true;
-    }
-    
-    // Check for country-level matches in location string
-    const countries = CITY_COUNTRY_MAP[city];
-    if (countries) {
-      if (countries.some(country => jobLoc.includes(country))) {
-        return true; // Country-level match in location string
-      }
-    }
-    
-    // Handle special cases (Greater London, etc.)
-    const specialCases: Record<string, string[]> = {
-      'london': ['greater london', 'central london', 'north london', 'south london', 'east london', 'west london', 'london area', 'greater london area'],
-      'paris': ['greater paris', 'paris region', 'île-de-france', 'ile-de-france'],
-      'berlin': ['greater berlin', 'brandenburg'],
-      'madrid': ['greater madrid', 'comunidad de madrid', 'madrid region'],
-      'barcelona': ['greater barcelona', 'catalonia', 'catalunya', 'barcelona area'],
-      'amsterdam': ['greater amsterdam', 'amsterdam area', 'noord-holland'],
-      'milan': ['greater milan', 'milan area', 'lombardy', 'lombardia'],
-      'rome': ['greater rome', 'rome area', 'lazio'],
-    };
-    
-    if (specialCases[city]) {
-      return specialCases[city].some(variant => jobLoc.includes(variant));
-    }
-    
-    // Allow remote/hybrid if user hasn't explicitly excluded it
-    if (jobLoc.includes('remote') || jobLoc.includes('hybrid') || jobLoc.includes('work from home') || jobLoc.includes('flexible location')) {
-      return true; // Remote/hybrid is always acceptable
-    }
-    
-    return false;
+    // Use enhanced location matcher for robust variation handling
+    const { matchesLocation } = require('./locationMatcher');
+    const matchResult = matchesLocation(
+      {
+        city: (job as any).city,
+        country: (job as any).country,
+        location: job.location,
+      },
+      [targetCity]
+    );
+    return matchResult.matches;
   };
 
   /**

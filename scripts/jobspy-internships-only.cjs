@@ -333,8 +333,19 @@ async function saveJobs(jobs, source) {
       is_early_career: false, // Mutually exclusive (this is internship, not entry-level)
       experience_required: 'internship',
     };
-  });
-  const unique = Array.from(new Map(rows.map(r=>[r.job_hash,r])).values());
+  }).filter(Boolean); // Filter out nulls from rejected jobs
+  
+  // CRITICAL: Validate jobs before saving (consolidates all validation logic)
+  const { validateJobs } = require('../scrapers/shared/jobValidator.cjs');
+  const validationResult = validateJobs(rows);
+  
+  // Log validation stats
+  console.log(`📊 Validation: ${validationResult.stats.total} total, ${validationResult.stats.valid} valid, ${validationResult.stats.invalid} invalid, ${validationResult.stats.autoFixed} auto-fixed`);
+  if (validationResult.stats.invalid > 0) {
+    console.warn(`⚠️ Invalid jobs:`, validationResult.stats.errors);
+  }
+  
+  const unique = Array.from(new Map(validationResult.valid.map(r=>[r.job_hash,r])).values());
   let savedCount = 0;
   let failedCount = 0;
   

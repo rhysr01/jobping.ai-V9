@@ -137,6 +137,7 @@ export function validateJobAge(job: Job): {
 
 /**
  * Validate location compatibility
+ * ENHANCED: Now uses robust location matcher that handles all variations
  */
 export function validateLocationCompatibility(
   jobLocations: string[],
@@ -148,74 +149,20 @@ export function validateLocationCompatibility(
   matchScore: number;
   reasons: string[];
 } {
-  if (!userTargetCities || userTargetCities.length === 0) {
-    return { compatible: false, matchScore: 0, reasons: ['No target cities specified'] };
-  }
-
-  if (!jobLocations || jobLocations.length === 0) {
-    return { compatible: false, matchScore: 0, reasons: ['Job has no location'] };
-  }
-
-  const reasons: string[] = [];
-  let matchScore = 0;
-  let hasMatch = false;
-
-  // Enhanced matching using structured city/country data
-  if (jobCity && userTargetCities.some(userCity =>
-    jobCity.toLowerCase().includes(userCity.toLowerCase()) ||
-    userCity.toLowerCase().includes(jobCity.toLowerCase())
-  )) {
-    hasMatch = true;
-    matchScore = Math.max(matchScore, 100);
-    reasons.push(`City match: ${jobCity} matches user target city`);
-  }
-
-  // Check for country matches (useful for students open to cities within countries)
-  if (jobCountry && userTargetCities.some(userCity => {
-    // Handle cases like "Berlin, Germany" where user might specify just "Berlin"
-    const cityCountryPattern = new RegExp(`${userCity.toLowerCase()}.*${jobCountry?.toLowerCase()}|${jobCountry?.toLowerCase()}.*${userCity.toLowerCase()}`);
-    return jobCountry.toLowerCase().includes(userCity.toLowerCase()) ||
-           userCity.toLowerCase().includes(jobCountry.toLowerCase()) ||
-           cityCountryPattern.test(userCity.toLowerCase());
-  })) {
-    hasMatch = true;
-    matchScore = Math.max(matchScore, 80);
-    reasons.push(`Country match: ${jobCountry} matches user target area`);
-  }
-
-  // Fallback to string matching in location field
-  if (!hasMatch) {
-    for (const jobLocation of jobLocations) {
-      for (const userCity of userTargetCities) {
-        if (jobLocation.toLowerCase().includes(userCity.toLowerCase()) ||
-            userCity.toLowerCase().includes(jobLocation.toLowerCase())) {
-          hasMatch = true;
-          matchScore = Math.max(matchScore, 100);
-          reasons.push(`Location string match: ${jobLocation} matches ${userCity}`);
-        }
-      }
-    }
-  }
-
-  // Check for remote/hybrid work (always compatible if user has location preferences)
-  if (!hasMatch) {
-    for (const jobLocation of jobLocations) {
-      if (jobLocation.toLowerCase().includes('remote') ||
-          jobLocation.toLowerCase().includes('hybrid') ||
-          jobLocation.toLowerCase().includes('work from home') ||
-          jobLocation.toLowerCase().includes('flexible')) {
-        hasMatch = true;
-        matchScore = Math.max(matchScore, 60);
-        reasons.push(`Remote/hybrid work available: ${jobLocation}`);
-      }
-    }
-  }
-
-  return {
-    compatible: hasMatch,
-    matchScore,
-    reasons: reasons.length > 0 ? reasons : ['No location compatibility found']
-  };
+  // Use enhanced location matcher for robust variation handling
+  const { validateLocationCompatibilityEnhanced } = require('./locationMatcher');
+  
+  // Convert jobLocations array to single location string for compatibility
+  const jobLocation = jobLocations && jobLocations.length > 0 ? jobLocations[0] : null;
+  
+  return validateLocationCompatibilityEnhanced(
+    {
+      city: jobCity,
+      country: jobCountry,
+      location: jobLocation,
+    },
+    userTargetCities
+  );
 }
 
 /**

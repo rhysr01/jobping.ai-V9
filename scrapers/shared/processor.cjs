@@ -359,17 +359,71 @@ function processIncomingJob(job, options = {}) {
     experienceRequired = 'graduate';
   }
   
+  // CRITICAL: Validate and prevent data quality issues
+  
+  // 1. Reject job board companies
+  const jobBoards = ['reed', 'indeed', 'linkedin', 'adzuna', 'totaljobs', 
+                     'monster', 'ziprecruiter', 'jobspy', 'google', 'glassdoor',
+                     'careerjet', 'jooble', 'arbeitnow'];
+  const isJobBoard = jobBoards.some(board => 
+    company.toLowerCase().includes(board) || 
+    rawCompany.toLowerCase().includes(board)
+  );
+  
+  if (isJobBoard) {
+    // Return null to signal this job should be filtered
+    return null;
+  }
+  
+  // 2. Ensure company_name is set (CRITICAL FIX)
+  const company_name = company || rawCompany || '';
+  
+  // 3. Ensure city is set - try to extract from location if missing
+  let finalCity = locationData.city;
+  if (!finalCity && rawLocation) {
+    const parts = rawLocation.split(',').map(p => p.trim()).filter(Boolean);
+    if (parts.length > 0) {
+      finalCity = parts[0];
+    }
+  }
+  
+  // 4. Ensure country is set - try to extract from location if missing
+  let finalCountry = locationData.country;
+  if (!finalCountry && rawLocation) {
+    const parts = rawLocation.split(',').map(p => p.trim()).filter(Boolean);
+    if (parts.length > 1) {
+      finalCountry = parts[parts.length - 1];
+    }
+  }
+  
+  // 5. Ensure description is adequate (minimum 20 chars)
+  let finalDescription = description;
+  if (!finalDescription || finalDescription.length < 20) {
+    // Try to build from title and company
+    finalDescription = `${title} at ${company_name}`.trim();
+    if (finalDescription.length < 20) {
+      finalDescription = title || 'Job opportunity';
+    }
+  }
+  
+  // 6. Ensure posted_at is not in the future
+  let finalPostedAt = postedAt;
+  if (finalPostedAt && new Date(finalPostedAt) > new Date()) {
+    finalPostedAt = nowIso; // Use current time if future date
+  }
+  
   // Return standardized job object
   return {
     title,
     company,
-    location: locationData.location,
-    city: locationData.city,
-    country: locationData.country,
-    description,
+    company_name, // CRITICAL: Always set company_name
+    location: locationData.location || rawLocation,
+    city: finalCity,
+    country: finalCountry,
+    description: finalDescription,
     job_url: jobUrl,
     source,
-    posted_at: postedAt,
+    posted_at: finalPostedAt,
     original_posted_date: originalPostedDate,
     last_seen_at: nowIso,
     categories,

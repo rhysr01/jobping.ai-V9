@@ -613,32 +613,26 @@ async function saveJobs(jobs, source) {
       ...(salary ? { salary_range: salary } : {}),
     };
   });
-  // Validate jobs before saving
-  const validatedRows = rows.filter(row => {
-    // CRITICAL: Ensure all required fields are present
-    if (!row.title || !row.company || !row.location || !row.job_hash) {
-      console.warn(`⚠️ Skipping invalid job: missing required fields`, {
-        hasTitle: !!row.title,
-        hasCompany: !!row.company,
-        hasLocation: !!row.location,
-        hasHash: !!row.job_hash
-      });
-      return false;
+  // CRITICAL: Use comprehensive validator to prevent data quality issues
+  const { validateJobs } = require('../scrapers/shared/jobValidator.cjs');
+  const validationResult = validateJobs(rows);
+  
+  // Log validation stats
+  console.log(`📊 Validation: ${validationResult.stats.total} total, ${validationResult.stats.valid} valid, ${validationResult.stats.invalid} invalid, ${validationResult.stats.autoFixed} auto-fixed`);
+  if (validationResult.stats.invalid > 0) {
+    console.warn(`⚠️ Invalid jobs:`, validationResult.stats.errors);
+  }
+  if (validationResult.stats.autoFixed > 0) {
+    console.log(`✅ Auto-fixed issues:`, validationResult.stats.warnings);
+  }
+  
+  // CRITICAL: Ensure company_name is set for all valid jobs
+  const validatedRows = validationResult.valid.map(row => {
+    // Ensure company_name is always set from company
+    if (!row.company_name && row.company) {
+      row.company_name = row.company;
     }
-    
-    // Ensure categories array is never null/empty
-    if (!row.categories || !Array.isArray(row.categories) || row.categories.length === 0) {
-      console.warn(`⚠️ Job missing categories, adding default`, { job_hash: row.job_hash });
-      row.categories = ['early-career'];
-    }
-    
-    // Ensure work_environment is never null
-    if (!row.work_environment) {
-      console.warn(`⚠️ Job missing work_environment, defaulting to on-site`, { job_hash: row.job_hash });
-      row.work_environment = 'on-site';
-    }
-    
-    return true;
+    return row;
   });
   
   const unique = Array.from(new Map(validatedRows.map(r=>[r.job_hash,r])).values());
@@ -882,15 +876,15 @@ async function main() {
       cleanRole('Cloud Engineer Intern'),        // ✅ NEW: Cloud engineer intern
       cleanRole('Frontend Engineer Intern'),     // ✅ NEW: Frontend intern
       cleanRole('Backend Engineer Intern'),      // ✅ NEW: Backend intern
-      cleanRole('Associate Product Manager (APM)'), // ✅ Manager role
+      cleanRole('Associate Product Manager (APM)'), // ✅ Manager role (associate = early career)
       cleanRole('Product Analyst'),               // ✅ Exact role from form (cleaned)
-      cleanRole('Fulfilment Specialist'),         // ✅ Specialist role
-      cleanRole('Technical Specialist'),         // ✅ Specialist role
-      cleanRole('HR Specialist'),                // ✅ NEW: HR specialist
-      cleanRole('Marketing Specialist'),         // ✅ NEW: Marketing specialist
-      cleanRole('Product Designer'),              // ✅ Designer role
+      cleanRole('Fulfilment Specialist'),         // ✅ Specialist role (from signup form, already early-career)
+      cleanRole('Technical Specialist'),         // ✅ Specialist role (from signup form, already early-career)
+      cleanRole('HR Specialist'),                // ✅ NEW: HR specialist (from signup form, already early-career)
+      cleanRole('Marketing Specialist'),         // ✅ NEW: Marketing specialist (from signup form, already early-career)
+      cleanRole('Product Designer'),              // ✅ Designer role (from signup form, already early-career)
       cleanRole('UX Intern'),                    // ✅ Designer role
-      cleanRole('UX Designer'),                  // ✅ NEW: UX designer
+      cleanRole('UX Designer'),                  // ✅ NEW: UX designer (from signup form, already early-career)
       cleanRole('Design Intern'),                // ✅ NEW: Design intern
       cleanRole('ESG Intern'),                   // ✅ Sustainability role
       cleanRole('Sustainability Analyst'),        // ✅ Sustainability role
@@ -1321,12 +1315,9 @@ print(df[cols].to_csv(index=False))
       // ============================================
       // PART B: GOOGLE (Natural Language Search) - One call per batch
       // ============================================
-      // Add year filter for internships and graduates (2025/2026 recruitment cycles)
-      const yearFilter = (batchName === 'internships' || batchName === 'graduates')
-        ? ' (2025 OR 2026)'
-        : '';
-      
-      const googleNaturalString = `${baseQuery}${yearFilter} jobs in ${city}, ${countryName} -senior -lead -manager -director`;
+      // Removed year filter (2025/2026) as it can match senior roles
+      // Early-career terms in baseQuery are sufficient
+      const googleNaturalString = `${baseQuery} jobs in ${city}, ${countryName} -senior -lead -manager -director`;
       
       console.log(`\n${priorityLabel}🔍 Google [${batchName}]: "${googleNaturalString.substring(0, 100)}..." in ${city}`);
       

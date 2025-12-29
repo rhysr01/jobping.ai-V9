@@ -106,8 +106,18 @@ async function main() {
       .map(job => convertToDatabaseFormat(job))
       .filter(job => job !== null);
     
+    // CRITICAL: Validate jobs before saving (consolidates all validation logic)
+    const { validateJobs } = require('../shared/jobValidator.cjs');
+    const validationResult = validateJobs(dbJobs);
+    
+    // Log validation stats
+    console.log(`📊 Validation: ${validationResult.stats.total} total, ${validationResult.stats.valid} valid, ${validationResult.stats.invalid} invalid, ${validationResult.stats.autoFixed} auto-fixed`);
+    if (validationResult.stats.invalid > 0) {
+      console.warn(`⚠️ Invalid jobs:`, validationResult.stats.errors);
+    }
+    
     // Deduplicate by job_hash
-    const uniqueJobs = dbJobs.reduce((acc, job) => {
+    const uniqueJobs = validationResult.valid.reduce((acc, job) => {
       if (!acc.has(job.job_hash)) {
         acc.set(job.job_hash, job);
       }

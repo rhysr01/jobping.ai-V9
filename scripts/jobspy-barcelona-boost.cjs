@@ -113,21 +113,46 @@ print(df[cols].to_csv(index=False))
 
   // Save to database
   const supabase = getSupabase();
-  const nowIso = new Date().toISOString();
-  const rows = collected.map(j => ({
-    job_hash: hashJob(j.title, j.company, j.location),
-    title: (j.title||'').trim(),
-    company: (j.company||'').trim(),
-    location: (j.location||'').trim(),
-    description: (j.company_description||'').trim(),
-    job_url: (j.job_url||'').trim(),
-    source: 'jobspy-indeed',
-    categories: ['early-career'],
-    is_active: true,
-    created_at: nowIso
-  })).filter(j => j.title && j.company && j.job_url);
-
-  const unique = Array.from(new Map(rows.map(r=>[r.job_hash,r])).values());
+  const { processIncomingJob } = require('../scrapers/shared/processor.cjs');
+  const { validateJobs } = require('../scrapers/shared/jobValidator.cjs');
+  const { makeJobHash } = require('../scrapers/shared/helpers.cjs');
+  
+  // Process jobs through standardization pipe
+  const processed = collected.map(j => {
+    const processed = processIncomingJob({
+      title: j.title,
+      company: j.company,
+      location: j.location,
+      description: j.company_description || '',
+      url: j.job_url,
+    }, {
+      source: 'jobspy-indeed',
+    });
+    
+    // Skip if processor rejected (e.g., job board company)
+    if (!processed) return null;
+    
+    // Generate job_hash
+    const job_hash = makeJobHash({
+      title: processed.title,
+      company: processed.company,
+      location: processed.location,
+    });
+    
+    return {
+      ...processed,
+      job_hash,
+    };
+  }).filter(Boolean);
+  
+  // CRITICAL: Validate jobs before saving
+  const validationResult = validateJobs(processed);
+  console.log(`📊 Validation: ${validationResult.stats.total} total, ${validationResult.stats.valid} valid, ${validationResult.stats.invalid} invalid, ${validationResult.stats.autoFixed} auto-fixed`);
+  if (validationResult.stats.invalid > 0) {
+    console.warn(`⚠️ Invalid jobs:`, validationResult.stats.errors);
+  }
+  
+  const unique = Array.from(new Map(validationResult.valid.map(r=>[r.job_hash,r])).values());
   console.log(`📊 Unique jobs: ${unique.length}`);
   
   for (let i=0;i<unique.length;i+=150){

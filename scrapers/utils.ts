@@ -245,10 +245,14 @@ export function convertToDatabaseFormat(job: IngestJob) {
   //  Log early career classification for debugging
   console.log(`� Early Career: "${job.title}" - ${isEarlyCareer ? 'YES' : 'NO'}`);
   
+  // CRITICAL: Always set company_name from company
+  const companyName = job.company.trim();
+  
   return {
     job_hash: jobHash,
     title: job.title.trim(),
-    company: job.company.trim(),
+    company: companyName,
+    company_name: companyName, // CRITICAL: Always set company_name
     location: job.location.trim(),
     description: job.description.trim(),
     job_url: job.url.trim(),
