@@ -81,7 +81,7 @@ const schema = z.object({
   ADZUNA_TIMEOUT_MS: z.coerce.number().min(1000).max(60000).default(15000),
   ADZUNA_MAX_PAGES: z.coerce.number().min(1).max(10).default(3),
   ADZUNA_MAX_QUERIES_PER_CITY: z.coerce.number().min(1).max(100).default(15),
-  SCRAPER_CYCLE_JOB_TARGET: z.coerce.number().min(10).max(2000).default(300),
+  SCRAPER_CYCLE_JOB_TARGET: z.coerce.number().min(10).max(10000).default(300),
   ENABLE_SCRAPER_TELEMETRY: z.enum(['true', 'false']).default('false'),
   
   // Cleanup Configuration
