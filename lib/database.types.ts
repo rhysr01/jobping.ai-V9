@@ -242,6 +242,7 @@ export type Database = {
           roles_selected: string[] | null
           start_date: string | null
           subscription_active: boolean | null
+          subscription_tier: string | null
           target_cities: string[]
           target_employment_start_date: string | null
           updated_at: string | null
@@ -277,6 +278,7 @@ export type Database = {
           roles_selected?: string[] | null
           start_date?: string | null
           subscription_active?: boolean | null
+          subscription_tier?: string | null
           target_cities?: string[]
           target_employment_start_date?: string | null
           updated_at?: string | null
