@@ -11,7 +11,12 @@ import {
 import { buildPreferencesLink } from '../preferences/links';
 import { getVisaConfidenceLabel, getVisaConfidenceStyle, calculateVisaConfidence, getVisaProTip } from '../../Utils/matching/visa-confidence';
 import { issueSecureToken } from '../auth/secureTokens';
-import { getCareerPathLabel, mapDatabaseToForm } from '@/Utils/matching/categoryMapper';
+import { CAREER_PATH_LABELS, mapDatabaseToForm } from '@/Utils/matching/categoryMapper';
+
+// Helper function to get career path label (inline to avoid Turbopack module resolution issues)
+const getCareerPathLabel = (value: string): string => {
+  return CAREER_PATH_LABELS[value] || value;
+};
 
 const COLORS = {
   bg: '#0a0a0a',
