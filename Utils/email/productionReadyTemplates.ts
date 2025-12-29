@@ -11,7 +11,7 @@ import {
 import { buildPreferencesLink } from '../preferences/links';
 import { getVisaConfidenceLabel, getVisaConfidenceStyle, calculateVisaConfidence, getVisaProTip } from '../../Utils/matching/visa-confidence';
 import { issueSecureToken } from '../auth/secureTokens';
-import { getCareerPathLabel, mapDatabaseToForm } from '../matching/categoryMapper';
+import { getCareerPathLabel, mapDatabaseToForm } from '../../Utils/matching/categoryMapper';
 
 const COLORS = {
   bg: '#0a0a0a',
