@@ -45,12 +45,12 @@ async function handleSendScheduledEmails(req: NextRequest) {
     
     apiLogger.info('Starting scheduled email send', { today, currentWeek });
 
-    // Check if today is a send day for either tier
-    const isFreeSendDay = isSendDay('free');
+    // Check if today is a send day for premium users only
+    // Free users get instant matches via /matches page, no emails sent
     const isPremiumSendDay = isSendDay('premium');
 
-    if (!isFreeSendDay && !isPremiumSendDay) {
-      apiLogger.info('Not a send day for any tier', { today });
+    if (!isPremiumSendDay) {
+      apiLogger.info('Not a send day for premium tier', { today });
       return NextResponse.json({
         success: true,
         message: 'Not a send day',
@@ -59,52 +59,23 @@ async function handleSendScheduledEmails(req: NextRequest) {
       });
     }
 
-    // Build query for eligible users
+    // Build query for eligible PREMIUM users only
+    // Free users get instant matches on /matches page, not emails
     let userQuery = supabase
       .from('users')
       .select('*')
       .eq('active', true)
+      .eq('subscription_tier', 'premium') // Only premium users get emails
       .is('delivery_paused', false)
       .order('created_at', { ascending: false });
 
-    // Filter by tier based on send day
-    if (isFreeSendDay && isPremiumSendDay) {
-      // Both tiers send today - get all users
-      // No additional filter needed
-    } else if (isFreeSendDay) {
-      userQuery = userQuery.eq('subscription_tier', 'free');
-    } else if (isPremiumSendDay) {
-      userQuery = userQuery.eq('subscription_tier', 'premium');
-    }
-
-    // Get users who haven't received an email this week
-    // Check last_email_sent to avoid duplicate sends
-    // For free users on Thursday, check if they received email this week
-    // For premium users, check if they received email on this specific day
-    const weekStartDate = new Date(currentWeek);
-    const weekStartISO = weekStartDate.toISOString();
-    
-    // More precise filtering: free users check weekly, premium users check per-send-day
-    if (isFreeSendDay && !isPremiumSendDay) {
-      // Free users: only send if they haven't received email this week
-      userQuery = userQuery.or(
-        `last_email_sent.is.null,last_email_sent.lt.${weekStartISO}`
-      );
-    } else if (isPremiumSendDay && !isFreeSendDay) {
-      // Premium users: check if they received email today (to avoid duplicate sends on same day)
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const todayISO = todayStart.toISOString();
-      userQuery = userQuery.or(
-        `last_email_sent.is.null,last_email_sent.lt.${todayISO}`
-      );
-    } else {
-      // Both tiers send today - use weekly check for free, daily check for premium
-      // This is complex, so we'll handle it in the loop
-      userQuery = userQuery.or(
-        `last_email_sent.is.null,last_email_sent.lt.${weekStartISO}`
-      );
-    }
+    // Premium users: check if they received email today (to avoid duplicate sends on same day)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayISO = todayStart.toISOString();
+    userQuery = userQuery.or(
+      `last_email_sent.is.null,last_email_sent.lt.${todayISO}`
+    );
 
     const { data: users, error: usersError } = await userQuery.limit(100);
 
@@ -125,8 +96,7 @@ async function handleSendScheduledEmails(req: NextRequest) {
       });
     }
 
-    apiLogger.info(`Found ${users.length} eligible users for scheduled send`, {
-      freeSendDay: isFreeSendDay,
+    apiLogger.info(`Found ${users.length} eligible premium users for scheduled send`, {
       premiumSendDay: isPremiumSendDay,
       userCount: users.length
     });
@@ -161,13 +131,13 @@ async function handleSendScheduledEmails(req: NextRequest) {
       try {
         const userTier = (user.subscription_tier || 'free') as 'free' | 'premium';
         
-        // Skip free users entirely - they don't get emails
-        if (userTier === 'free') {
+        // Only process premium users - free users get instant matches on /matches page, not emails
+        if (userTier !== 'premium') {
           continue;
         }
         
-        // Skip if not a send day for this user's tier
-        if (userTier === 'premium' && !isPremiumSendDay) continue;
+        // Skip if not a send day for premium
+        if (!isPremiumSendDay) continue;
         
         // Additional check: for premium users, verify they haven't received email today
         if (userTier === 'premium' && user.last_email_sent) {
@@ -216,51 +186,60 @@ async function handleSendScheduledEmails(req: NextRequest) {
               match_reason: match.match_reason || 'AI-matched'
             };
           })
-          .filter(j => j !== null)
-          .slice(0, jobsPerSend);
+          .filter(j => j !== null);
 
-        // DIGEST BATCHING: If user has >10 matches, send top 10 and queue the rest
-        const MAX_JOBS_PER_EMAIL = 10;
+        // CRITICAL: Always limit to 5 jobs per email (per SEND_PLAN configuration)
+        const MAX_JOBS_PER_EMAIL = 5; // Changed from 10 to 5 - maximum 5 jobs per email
         const hasExcessMatches = matchedJobs.length > MAX_JOBS_PER_EMAIL;
         
-        if (hasExcessMatches) {
-          // Sort by match score and take top 10
-          const sortedJobs = [...matchedJobs].sort((a, b) => 
-            (b.match_score || 0) - (a.match_score || 0)
-          );
-          const topJobs = sortedJobs.slice(0, MAX_JOBS_PER_EMAIL);
+        // Sort by match score to get best matches first
+        const sortedJobs = [...matchedJobs].sort((a, b) => 
+          (b.match_score || 0) - (a.match_score || 0)
+        );
+        
+        // Always take only top 5 for the email
+        const jobsForEmail = sortedJobs.slice(0, MAX_JOBS_PER_EMAIL);
+        
+        // Extract work environment preferences
+        let targetWorkEnvironments: string[] = [];
+        if (user.preferences.work_environment) {
+          if (Array.isArray(user.preferences.work_environment)) {
+            targetWorkEnvironments = user.preferences.work_environment;
+          } else if (typeof user.preferences.work_environment === 'string') {
+            targetWorkEnvironments = user.preferences.work_environment.split(',').map(env => env.trim()).filter(Boolean);
+          }
+        }
+
+        // Apply job distribution for diversity (max 5 jobs)
+        const distributedJobs = distributeJobsWithDiversity(jobsForEmail as any[], {
+          targetCount: MAX_JOBS_PER_EMAIL,
+          targetCities: user.preferences.target_cities || [],
+          maxPerSource: Math.ceil(MAX_JOBS_PER_EMAIL / 3),
+          ensureCityBalance: true,
+          targetWorkEnvironments: targetWorkEnvironments,
+          ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0
+        });
+
+        // Send email with maximum 5 jobs - include user preferences for personalization
+        await sendMatchedJobsEmail({
+          to: user.email || '',
+          jobs: distributedJobs,
+          userName: user.full_name || undefined,
+          subscriptionTier: userTier,
+          isSignupEmail: false,
+          userPreferences: {
+            career_path: user.preferences.career_path,
+            target_cities: user.preferences.target_cities,
+            visa_status: user.preferences.visa_status,
+            entry_level_preference: user.preferences.entry_level_preference,
+            work_environment: user.preferences.work_environment,
+          },
+        });
+
+        // If there are excess matches, queue them for digest email (48 hours later)
+        if (hasExcessMatches && sortedJobs.length > MAX_JOBS_PER_EMAIL) {
           const remainingJobs = sortedJobs.slice(MAX_JOBS_PER_EMAIL);
           
-          // Extract work environment preferences
-          let targetWorkEnvironments: string[] = [];
-          if (user.preferences.work_environment) {
-            if (Array.isArray(user.preferences.work_environment)) {
-              targetWorkEnvironments = user.preferences.work_environment;
-            } else if (typeof user.preferences.work_environment === 'string') {
-              targetWorkEnvironments = user.preferences.work_environment.split(',').map(env => env.trim()).filter(Boolean);
-            }
-          }
-
-          // Apply job distribution for diversity
-          const distributedJobs = distributeJobsWithDiversity(topJobs as any[], {
-            targetCount: MAX_JOBS_PER_EMAIL,
-            targetCities: user.preferences.target_cities || [],
-            maxPerSource: Math.ceil(MAX_JOBS_PER_EMAIL / 3),
-            ensureCityBalance: true,
-            targetWorkEnvironments: targetWorkEnvironments,
-            ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0
-          });
-
-          // Send first digest immediately
-          await sendMatchedJobsEmail({
-            to: user.email || '',
-            jobs: distributedJobs,
-            userName: user.full_name || undefined,
-            subscriptionTier: userTier,
-            isSignupEmail: false
-          });
-
-          // Queue remaining matches for 48 hours later
           if (remainingJobs.length > 0) {
             const scheduledFor = new Date();
             scheduledFor.setHours(scheduledFor.getHours() + 48);
@@ -300,13 +279,15 @@ async function handleSendScheduledEmails(req: NextRequest) {
 
           emailsSent++;
         } else {
-          // User has <= 10 matches, send all at once (normal flow)
-          if (matchedJobs.length < jobsPerSend) {
+          // User has <= 5 matches, send all at once (normal flow)
+          // CRITICAL: Still limit to MAX_JOBS_PER_EMAIL (5) even if they have fewer matches
+          const jobsToSend = Math.min(sortedJobs.length, MAX_JOBS_PER_EMAIL);
+          
+          if (jobsToSend < 1) {
             usersWithoutMatches++;
-            apiLogger.debug('Insufficient matches for user', {
+            apiLogger.debug('No matches for user', {
               email: user.email,
-              found: matchedJobs.length,
-              required: jobsPerSend
+              matchesFound: sortedJobs.length
             });
             continue;
           }
@@ -322,11 +303,11 @@ async function handleSendScheduledEmails(req: NextRequest) {
             }
           }
 
-          // Apply job distribution for diversity (cities AND work environments)
-          const distributedJobs = distributeJobsWithDiversity(matchedJobs as any[], {
-            targetCount: jobsPerSend,
+          // Apply job distribution for diversity (max 5 jobs)
+          const distributedJobs = distributeJobsWithDiversity(sortedJobs.slice(0, jobsToSend) as any[], {
+            targetCount: jobsToSend,
             targetCities: user.preferences.target_cities || [],
-            maxPerSource: Math.ceil(jobsPerSend / 3),
+            maxPerSource: Math.ceil(MAX_JOBS_PER_EMAIL / 3),
             ensureCityBalance: true,
             targetWorkEnvironments: targetWorkEnvironments,
             ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0
@@ -338,7 +319,14 @@ async function handleSendScheduledEmails(req: NextRequest) {
             jobs: distributedJobs,
             userName: user.full_name || undefined,
             subscriptionTier: userTier,
-            isSignupEmail: false
+            isSignupEmail: false,
+            userPreferences: {
+              career_path: user.preferences.career_path,
+              target_cities: user.preferences.target_cities,
+              visa_status: user.preferences.visa_status,
+              entry_level_preference: user.preferences.entry_level_preference,
+              work_environment: user.preferences.work_environment,
+            },
           });
 
           // Update user's last_email_sent

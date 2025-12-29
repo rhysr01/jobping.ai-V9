@@ -86,9 +86,11 @@ export function transformUsers(users: UserRow[]): TransformedUser[] {
       visa_sponsorship: user.visa_status && !user.visa_status.toLowerCase().includes('eu-citizen') && !user.visa_status.toLowerCase().includes('citizen'),
       graduate_scheme: false,
       internship: false,
-      work_authorization: user.visa_status || 'any'
+      work_authorization: user.visa_status || 'any',
+      // TIER-AWARE: Pass subscription_tier to preferences for matching engine
+      subscription_tier: (user.subscription_tier === 'premium' ? 'premium' : 'free') as 'free' | 'premium'
     } as UserPreferences,
-    subscription_tier: (user.subscription_active ? 'premium' : 'free') as 'free' | 'premium',
+    subscription_tier: (user.subscription_tier === 'premium' ? 'premium' : 'free') as 'free' | 'premium',
     created_at: user.created_at,
     last_email_sent: user.last_email_sent,
     is_active: user.active

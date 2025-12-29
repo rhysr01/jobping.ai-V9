@@ -283,6 +283,12 @@ export async function POST(req: NextRequest) {
         work_environment: userData.work_environment,
         visa_status: userData.visa_status,
         company_types: userData.company_types || [],
+        // Extended preferences from premium signup form
+        industries: userData.industries || [],
+        company_size_preference: userData.company_size_preference || 'any',
+        skills: userData.skills || [],
+        career_keywords: userData.career_keywords || undefined,
+        subscription_tier: 'premium' as const, // TIER-AWARE: Mark as premium tier
       };
       
       // Pass all jobs to matching engine - it handles hard gates and pre-ranking
@@ -556,6 +562,13 @@ export async function POST(req: NextRequest) {
               subscriptionTier: 'premium',
               isSignupEmail: true,
               subjectOverride: ` Welcome to JobPing - Your First ${matchesCount} Matches!`,
+              userPreferences: {
+                career_path: userData.career_path,
+                target_cities: userData.target_cities,
+                visa_status: userData.visa_status,
+                entry_level_preference: userData.entry_level_preference,
+                work_environment: userData.work_environment,
+              },
             });
 
             // Update user tracking fields after successful email send

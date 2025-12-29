@@ -13,7 +13,9 @@ import { apiLogger } from '@/lib/api-logger';
 import { withRedis } from '@/lib/redis-client';
 import { getDatabaseClient } from '@/Utils/databasePool';
 // Simple configuration - no complex config module needed
-const JOBS_TO_ANALYZE = 50;
+// TIER-AWARE: Premium gets larger pool (use GPT-4o-mini savings)
+const JOBS_TO_ANALYZE_FREE = 50;
+const JOBS_TO_ANALYZE_PREMIUM = 100; // Premium: 100 jobs (deeper, more exhaustive)
 const CACHE_TTL_HOURS = 48;
 const AI_TIMEOUT_MS = 20000;
 const MAX_CACHE_SIZE = 1000;
@@ -257,9 +259,19 @@ export class ConsolidatedMatchingEngine {
     
     const level = userPrefs.entry_level_preference || 'entry';
     
-    // User segment: e.g., "finance_dublin+london_entry"
-    // Only users with EXACT SAME cities + career + level share cache
-    const userSegment = `${careerPath}_${cities}_${level}`.toLowerCase().replace(/[^a-z0-9_+]/g, '');
+    // Normalize work_environment for consistent cache key generation
+    // Handle both 'unclear' and null/undefined as 'any' to prevent cache key mismatches
+    const workEnv = userPrefs.work_environment 
+      ? (userPrefs.work_environment === 'unclear' ? 'any' : userPrefs.work_environment)
+      : 'any';
+    
+    const tier = userPrefs.subscription_tier || 'free';
+    
+    // User segment: e.g., "finance_dublin+london_entry_hybrid_premium"
+    // FIXED: Include work_environment and subscription_tier in cache key
+    // This ensures users with different work preferences or tiers don't share cache
+    // Normalized: 'unclear' and null/undefined both become 'any' for consistency
+    const userSegment = `${careerPath}_${cities}_${level}_${workEnv}_${tier}`.toLowerCase().replace(/[^a-z0-9_+]/g, '');
     
     // Job pool version (changes daily, not per-job)
     // This means ALL users with same profile on same day share cache! 60% hit rate!
@@ -363,15 +375,18 @@ export class ConsolidatedMatchingEngine {
     // STAGE 3: Pre-rank by rule-based scoring (ensures AI sees most relevant, not just recent)
     const scoredJobs = await this.preRankJobsByScore(eligibleJobs, userPrefs);
     
-    // STAGE 4: Send top 50 highest-scoring jobs to AI (not most recent)
-    const top50Jobs = scoredJobs.slice(0, 50).map(item => item.job);
+    // STAGE 4: Send tier-aware number of highest-scoring jobs to AI
+    // TIER-AWARE: Premium gets larger pool (100 jobs) for deeper matching
+    const isPremiumTier = userPrefs.subscription_tier === 'premium';
+    const jobsToAnalyze = isPremiumTier ? JOBS_TO_ANALYZE_PREMIUM : JOBS_TO_ANALYZE_FREE;
+    const topJobs = scoredJobs.slice(0, jobsToAnalyze).map(item => item.job);
 
     // Try AI matching with timeout and retry
     try {
-      const aiMatches = await this.performAIMatchingWithRetry(top50Jobs, userPrefs);
+      const aiMatches = await this.performAIMatchingWithRetry(topJobs, userPrefs);
       if (aiMatches && aiMatches.length > 0) {
         // Validation is now minimal since hard gates already applied
-        const validatedMatches = this.validateAIMatches(aiMatches, top50Jobs, userPrefs);
+        const validatedMatches = this.validateAIMatches(aiMatches, topJobs, userPrefs);
         
         if (validatedMatches.length === 0) {
           // If all AI matches were filtered out, fall back to rules from pre-ranked jobs
@@ -402,8 +417,43 @@ export class ConsolidatedMatchingEngine {
         
         // Note: Cost tracking now done in callOpenAIAPI, lastAIMetadata stores it
         
+        // EVIDENCE VERIFICATION: Auto-downgrade scores when word count is too low
+        // High score but weak evidence = downgrade (BS detector)
+        validatedMatches.forEach(match => {
+          const reason = match.match_reason || '';
+          const wordCount = reason.trim().split(/\s+/).filter(w => w.length > 0).length;
+          
+          // EVIDENCE VERIFICATION: High score but weak evidence = downgrade
+          if (match.match_score >= 90 && wordCount < 20) {
+            const originalScore = match.match_score;
+            match.match_score = Math.max(65, match.match_score - 10); // Downgrade by 10, min 65
+            apiLogger.warn('Match score downgraded due to weak evidence', {
+              originalScore,
+              newScore: match.match_score,
+              wordCount,
+              jobHash: match.job_hash,
+              email: userPrefs.email || 'unknown'
+            });
+          }
+          
+          // For scores > 85, require at least 30 words (evidence density)
+          // 30-50 words needed to link specific skill to specific job requirement
+          if (match.match_score > 85 && wordCount < 30) {
+            const originalScore = match.match_score;
+            match.match_score = Math.max(70, match.match_score - 5); // Smaller downgrade
+            apiLogger.warn('Match score downgraded - insufficient evidence density', {
+              originalScore,
+              newScore: match.match_score,
+              wordCount,
+              required: 30,
+              jobHash: match.job_hash,
+              email: userPrefs.email || 'unknown'
+            });
+          }
+        });
+        
         // Log match quality metrics
-        const matchQuality = this.calculateMatchQualityMetrics(validatedMatches, top50Jobs, userPrefs);
+        const matchQuality = this.calculateMatchQualityMetrics(validatedMatches, topJobs, userPrefs);
         
         // EVIDENCE VERIFICATION: Log match reason lengths to detect weak evidence
         const reasonLengths = validatedMatches.map(m => {
@@ -416,6 +466,7 @@ export class ConsolidatedMatchingEngine {
           : 0;
         const minReasonLength = reasonLengths.length > 0 ? Math.min(...reasonLengths) : 0;
         const shortReasons = reasonLengths.filter(len => len < 20).length;
+        const insufficientEvidence = reasonLengths.filter(len => len < 30).length;
         
         apiLogger.info('Match quality metrics', {
           email: userPrefs.email || 'unknown',
@@ -426,14 +477,16 @@ export class ConsolidatedMatchingEngine {
           method: 'ai_success',
           matchCount: validatedMatches.length,
           eligibleJobsAfterHardGates: eligibleJobs.length,
-          top50PreRanked: top50Jobs.length,
+          topJobsPreRanked: topJobs.length,
           // Evidence verification metrics
           matchReasonLengths: {
             average: avgReasonLength,
             minimum: minReasonLength,
             all: reasonLengths,
             shortReasonsCount: shortReasons, // Reasons <20 words (weak evidence indicator)
-            hasWeakEvidence: shortReasons > 0 // Flag if any reasons are too short
+            insufficientEvidenceCount: insufficientEvidence, // Reasons <30 words (needs more evidence)
+            hasWeakEvidence: shortReasons > 0, // Flag if any reasons are too short
+            hasInsufficientEvidence: insufficientEvidence > 0 // Flag if any high-score matches lack evidence
           }
         });
         
@@ -713,10 +766,15 @@ Keep match reasons 2-3 sentences max. Make every word count with evidence.`
 
   /**
    * Enhanced prompt that uses full user profile for world-class matching
+   * TIER-AWARE: Different prompt strategies for free vs premium users
    */
   private buildStablePrompt(jobs: Job[], userPrefs: UserPreferences): string {
     // CRITICAL FIX: Capture jobs parameter in const immediately to avoid TDZ errors
     const jobsArray = Array.isArray(jobs) ? jobs : [];
+    
+    // TIER-AWARE: Different matching strategies
+    const isFreeTier = userPrefs.subscription_tier === 'free' || !userPrefs.subscription_tier;
+    const isPremiumTier = userPrefs.subscription_tier === 'premium';
     
     // Extract all user preferences
     const userCities = Array.isArray(userPrefs.target_cities) 
@@ -739,10 +797,27 @@ Keep match reasons 2-3 sentences max. Make every word count with evidence.`
       : '';
     
     const workEnv = userPrefs.work_environment || '';
+    
+    // Premium-only extended preferences
+    const industries = isPremiumTier && Array.isArray(userPrefs.industries) && userPrefs.industries.length > 0
+      ? userPrefs.industries.join(', ')
+      : '';
+    
+    const skills = isPremiumTier && Array.isArray(userPrefs.skills) && userPrefs.skills.length > 0
+      ? userPrefs.skills.join(', ')
+      : '';
+    
+    const careerKeywords = isPremiumTier && userPrefs.career_keywords
+      ? userPrefs.career_keywords
+      : '';
 
-    // SMART APPROACH: Send top N jobs to AI for accurate matching
+    // SMART APPROACH: Send tier-aware number of jobs to AI for accurate matching
     // Pre-filtering already ranked these by relevance score
-    const jobsToAnalyze = jobsArray.slice(0, JOBS_TO_ANALYZE);
+    // TIER-AWARE: Premium gets larger pool (100 jobs) for deeper matching
+    // Note: isPremiumTier already declared above, reuse it
+    const jobsToAnalyze = isPremiumTier 
+      ? jobsArray.slice(0, JOBS_TO_ANALYZE_PREMIUM)  // Premium: 100 jobs
+      : jobsArray.slice(0, JOBS_TO_ANALYZE_FREE);     // Free: 50 jobs
     
     // Ultra-compact format (no descriptions) to save ~31% tokens
     // Title + Company + Location is enough for good matching
@@ -755,7 +830,12 @@ Keep match reasons 2-3 sentences max. Make every word count with evidence.`
     const jobList = jobListParts.join('\n');
     
 
-    return `You are a career matching expert. Analyze these jobs and match them to the user's profile.
+    // TIER-AWARE: Different prompt structure for free vs premium
+    const tierContext = isFreeTier 
+      ? `\nNOTE: This is a FREE tier user with limited preferences. Be more flexible with matching - prioritize basic requirements (location, career path) over advanced preferences.`
+      : `\nNOTE: This is a PREMIUM tier user with detailed preferences. Use ALL available preferences for precise matching.`;
+    
+    return `You are a career matching expert. Analyze these jobs and match them to the user's profile.${tierContext}
 
 USER PROFILE:
 - Experience Level: ${userLevel}
@@ -765,11 +845,33 @@ ${languages ? `- Languages: ${languages}` : ''}
 ${roles ? `- Target Roles: ${roles}` : ''}
 ${careerPaths ? `- Career Paths: ${careerPaths}` : ''}
 ${workEnv ? `- Work Environment Preference: ${workEnv}` : ''}
+${industries ? `- Preferred Industries: ${industries}` : ''}
+${skills ? `- Skills: ${skills}` : ''}
+${careerKeywords ? `- Career Keywords: ${careerKeywords}` : ''}
 
 AVAILABLE JOBS:
 ${jobList}
 
-CRITICAL REQUIREMENTS (MUST BE MET):
+${isFreeTier ? `CRITICAL REQUIREMENTS (FREE TIER - More Lenient):
+1. **LOCATION MATCH**: Jobs should be in these cities: ${userCities}
+   - Exact city match preferred, but same country is acceptable
+   - Remote/hybrid jobs are acceptable
+   - Be flexible with location matching
+${careerPaths ? `2. **CAREER PATH ALIGNMENT**: Jobs should relate to: ${careerPaths}
+   - Prefer jobs that align with career path, but be flexible
+   - Don't exclude jobs that are tangentially related` : ''}
+${languages ? `3. **LANGUAGE**: User speaks: ${languages}
+   - Prefer jobs where user speaks required languages
+   - If job requires non-English languages and user only speaks English, still consider if job likely accepts English speakers` : ''}
+
+INSTRUCTIONS (FREE TIER - Broader Matching):
+Analyze each job and prioritize jobs that meet basic requirements (location, career path).
+Be more flexible - include jobs that are good fits even if not perfect matches.
+Rank by:
+1. Location match (exact city > same country > remote/hybrid)
+2. Career path alignment
+3. Experience level fit
+4. Overall relevance` : `CRITICAL REQUIREMENTS (PREMIUM TIER - Strict Matching):
 1. **LOCATION MATCH IS REQUIRED**: Jobs MUST be in one of these cities: ${userCities}
    - Exact city match required (e.g., "London" matches "London, UK" but NOT "New London")
    - Remote/hybrid jobs are acceptable if location preference allows
@@ -784,8 +886,14 @@ ${languages ? `4. **LANGUAGE REQUIREMENTS ARE CRITICAL**: User speaks: ${languag
    - DO NOT recommend jobs that require languages the user doesn't speak
    - If job requires "Japanese speaker", "Chinese speaker", "Mandarin speaker", "Korean speaker", etc., and user doesn't speak that language, EXCLUDE the job
    - Only recommend jobs where user speaks at least one required language` : ''}
+${industries ? `5. **INDUSTRY PREFERENCE**: User prefers: ${industries}
+   - Prioritize jobs in these industries
+   - Still consider other industries if strong match otherwise` : ''}
+${skills ? `6. **SKILLS MATCH**: User has these skills: ${skills}
+   - Prioritize jobs that require or prefer these skills
+   - Stronger matches if job explicitly mentions these skills` : ''}
 
-INSTRUCTIONS:
+INSTRUCTIONS (PREMIUM TIER - Precise Matching):
 Analyze each job carefully and return ONLY jobs that meet ALL critical requirements above.
 ${languages ? `**CRITICAL**: If a job requires languages the user doesn't speak (e.g., "Japanese speaker" but user doesn't speak Japanese), EXCLUDE it immediately.` : ''}
 Then rank by:
@@ -793,7 +901,9 @@ Then rank by:
 2. Experience level fit (entry-level, graduate, junior keywords)
 3. Role alignment strength with career path and expertise
 ${languages ? `4. Language match (user must speak at least one required language)` : '4. Language requirements (if specified)'}
-5. Company type and culture fit
+5. Industry preference match${industries ? ` (prioritize ${industries})` : ''}
+6. Skills alignment${skills ? ` (prioritize jobs requiring: ${skills})` : ''}
+7. Company type and culture fit`}
 
 MATCH REASON GUIDELINES (Evidence-Based):
 - BE SPECIFIC: Link user's stated skills/experience to job requirements
@@ -805,6 +915,14 @@ MATCH REASON GUIDELINES (Evidence-Based):
 - AVOID: Emotional hype ("This is the startup you'll tell your friends about")
 - AVOID: Confidence claims about outcomes ("easy interview", "guaranteed fit")
 - AVOID: Generic statements ("Good match for your skills", "Aligns with preferences")
+
+${isPremiumTier ? `EVIDENCE REQUIREMENT (PREMIUM TIER):
+- For match scores > 85, you MUST provide at least TWO distinct points of evidence from the job description
+- Each evidence point should reference specific job requirements or user skills
+- Minimum 30 words required for high-confidence matches (>85%)
+- Example: "Your React experience matches their 'frontend framework' requirement, AND your TypeScript skills align with their 'strongly-typed codebase' preference"
+- If you cannot provide at least two distinct evidence points, lower the match score to 80 or below
+` : ''}
 
 DIVERSITY REQUIREMENT:
 When selecting your top 5 matches, prioritize variety:
@@ -995,40 +1113,44 @@ Requirements:
       }
       
       // Validate location match
+      // CRITICAL FIX: Prioritize job.city (normalized) over job.location
       if (targetCities.length > 0) {
-        const jobLocation = (job.location || '').toLowerCase();
         const jobCity = (job as any).city ? String((job as any).city).toLowerCase() : '';
+        const jobLocation = (job.location || '').toLowerCase();
         
         let locationMatches = false;
         for (let k = 0; k < targetCities.length; k++) {
           const city = targetCities[k];
           const cityLower = city.toLowerCase();
           
-          // Check structured city field first
-          if (jobCity && (jobCity === cityLower || jobCity.includes(cityLower) || cityLower.includes(jobCity))) {
+          // PRIORITY 1: Check normalized city field first (most reliable)
+          if (jobCity && jobCity === cityLower) {
             locationMatches = true;
             break;
           }
           
-          // Use word boundary matching
-          const escapedCity = cityLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const patterns = [
-            new RegExp(`\\b${escapedCity}\\b`, 'i'),
-            new RegExp(`^${escapedCity}[,\\s]`, 'i'),
-            new RegExp(`[,\\s]${escapedCity}[,\\s]`, 'i'),
-            new RegExp(`[,\\s]${escapedCity}$`, 'i'),
-          ];
-          
-          for (let p = 0; p < patterns.length; p++) {
-            if (patterns[p].test(jobLocation)) {
-              locationMatches = true;
-              break;
+          // PRIORITY 2: Fallback to location field if city is missing
+          if (!jobCity) {
+            // Use word boundary matching on location field
+            const escapedCity = cityLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const patterns = [
+              new RegExp(`\\b${escapedCity}\\b`, 'i'),
+              new RegExp(`^${escapedCity}[,\\s]`, 'i'),
+              new RegExp(`[,\\s]${escapedCity}[,\\s]`, 'i'),
+              new RegExp(`[,\\s]${escapedCity}$`, 'i'),
+            ];
+            
+            for (let p = 0; p < patterns.length; p++) {
+              if (patterns[p].test(jobLocation)) {
+                locationMatches = true;
+                break;
+              }
             }
           }
           
           if (locationMatches) break;
           
-          // Allow remote/hybrid
+          // PRIORITY 3: Allow remote/hybrid
           if (jobLocation.includes('remote') || jobLocation.includes('hybrid')) {
             locationMatches = true;
             break;
@@ -1285,7 +1407,13 @@ Requirements:
     userCareer: string,
     userCareerPaths: string[]
   ): Promise<{ score: number; reasons: string[] }> {
-    let score = 55; // Base score (increased for better match %s)
+    // TIER-AWARE: Different base scores and weights
+    const isFreeTier = userPrefs.subscription_tier === 'free' || !userPrefs.subscription_tier;
+    const isPremiumTier = userPrefs.subscription_tier === 'premium';
+    
+    // FREE TIER: Higher base score (more lenient), focus on basic factors
+    // PREMIUM TIER: Lower base score (stricter), focus on advanced factors
+    let score = isFreeTier ? 60 : 50; // Free: 60 base, Premium: 50 base
     const reasons: string[] = [];
     
     const title = job.title?.toLowerCase() || '';
@@ -1294,39 +1422,94 @@ Requirements:
     const location = (job.location || '').toLowerCase();
     const jobText = `${title} ${description}`.toLowerCase();
 
-    // 0. Cold-start boost for new users (15 pts max)
+    // 0. Cold-start boost for new users
+    // FREE TIER: Higher boost (20 pts max) - helps free users get matches
+    // PREMIUM TIER: Lower boost (15 pts max) - premium users have more preferences
     const coldStartScore = this.calculateColdStartScore(jobText, title, userPrefs);
-    score += coldStartScore.points;
+    const coldStartMultiplier = isFreeTier ? 1.3 : 1.0; // Free users get 30% more boost
+    score += coldStartScore.points * coldStartMultiplier;
     if (coldStartScore.points > 0) {
       reasons.push(coldStartScore.reason);
     }
 
-    // 1. Role Type Match (25 pts max) - Internship vs Graduate vs Junior
+    // 1. Role Type Match
+    // FREE TIER: Higher weight (30 pts max) - critical for free users
+    // PREMIUM TIER: Standard weight (25 pts max)
     const earlyCareerScore = this.calculateEarlyCareerScore(jobText, title, job, userPrefs);
-    score += earlyCareerScore.points;
+    const roleMatchMultiplier = isFreeTier ? 1.2 : 1.0; // Free: 20% more weight
+    score += earlyCareerScore.points * roleMatchMultiplier;
     if (earlyCareerScore.points > 0) {
       reasons.push(earlyCareerScore.reason);
     }
 
-    // 2. Location Match (20 pts max) - Target city > EU location
+    // 2. Location Match
+    // FREE TIER: Higher weight (25 pts max) - location is key for free users
+    // PREMIUM TIER: Standard weight (20 pts max)
     const euLocationScore = this.calculateEULocationScore(location, userCities);
-    score += euLocationScore.points;
+    const locationMatchMultiplier = isFreeTier ? 1.25 : 1.0; // Free: 25% more weight
+    score += euLocationScore.points * locationMatchMultiplier;
     if (euLocationScore.points > 0) {
       reasons.push(euLocationScore.reason);
     }
 
-    // 3. Career Path/Skills (18 pts max) - Finance, Consulting, Tech, etc.
+    // 3. Career Path/Skills
+    // FREE TIER: Lower weight (15 pts max) - free users have less skill data
+    // PREMIUM TIER: Higher weight (22 pts max) - premium users have more skill data
     const skillScore = this.calculateSkillOverlapScore(jobText, userCareer, userCareerPaths);
-    score += skillScore.points;
+    const skillMatchMultiplier = isPremiumTier ? 1.22 : 0.83; // Premium: 22% more, Free: 17% less
+    score += skillScore.points * skillMatchMultiplier;
     if (skillScore.points > 0) {
       reasons.push(skillScore.reason);
     }
 
-    // 4. Company Tier (12 pts max) - Famous brands get +2 bonus, unknown get baseline
+    // 4. Company Tier
+    // FREE TIER: Lower weight (8 pts max) - less important for free users
+    // PREMIUM TIER: Higher weight (15 pts max) - premium users care more about brand
     const companyScore = this.calculateCompanyTierScore(company, jobText);
-    score += companyScore.points;
+    const companyMatchMultiplier = isPremiumTier ? 1.25 : 0.67; // Premium: 25% more, Free: 33% less
+    score += companyScore.points * companyMatchMultiplier;
     if (companyScore.points > 0) {
       reasons.push(companyScore.reason);
+    }
+    
+    // 5. Extended preferences (Premium only)
+    // FREE TIER: Skip (no extended preferences)
+    // PREMIUM TIER: Add bonus for industries, skills, company size, etc.
+    if (isPremiumTier) {
+      // Industries match bonus (5 pts max)
+      if (userPrefs.industries && userPrefs.industries.length > 0) {
+        const jobIndustry = (job as any).industry || '';
+        const matchesIndustry = userPrefs.industries.some(industry => 
+          jobIndustry.toLowerCase().includes(industry.toLowerCase()) ||
+          jobText.includes(industry.toLowerCase())
+        );
+        if (matchesIndustry) {
+          score += 5;
+          reasons.push('Matches preferred industry');
+        }
+      }
+      
+      // Skills match bonus (5 pts max)
+      if (userPrefs.skills && userPrefs.skills.length > 0) {
+        const skillMatches = userPrefs.skills.filter(skill => 
+          jobText.includes(skill.toLowerCase())
+        ).length;
+        if (skillMatches > 0) {
+          const skillBonus = Math.min(5, skillMatches * 1.5);
+          score += skillBonus;
+          reasons.push(`Matches ${skillMatches} preferred skill(s)`);
+        }
+      }
+      
+      // Company size preference bonus (3 pts max)
+      if (userPrefs.company_size_preference && userPrefs.company_size_preference !== 'any') {
+        const companySize = (job as any).company_size || '';
+        const matchesSize = companySize.toLowerCase().includes(userPrefs.company_size_preference.toLowerCase());
+        if (matchesSize) {
+          score += 3;
+          reasons.push('Matches company size preference');
+        }
+      }
     }
 
     // Freshness removed: All jobs filtered to 60 days, so they're all fresh!

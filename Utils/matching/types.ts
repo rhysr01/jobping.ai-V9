@@ -89,6 +89,8 @@ export interface UserPreferences {
   company_size_preference?: string;
   skills?: string[];
   career_keywords?: string;
+  // Tier-aware matching
+  subscription_tier?: 'free' | 'premium';
 }
 
 // ================================

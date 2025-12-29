@@ -23,6 +23,10 @@ import { getScoringWeights } from '../config/matching';
 export function applyHardGates(job: Job, userPrefs: UserPreferences): { passed: boolean; reason: string } {
   const categories = normalizeToString(job.categories);
   const tags = cats(categories);
+  
+  // TIER-AWARE: Free users get more lenient matching
+  const isFreeTier = userPrefs.subscription_tier === 'free' || !userPrefs.subscription_tier;
+  const isPremiumTier = userPrefs.subscription_tier === 'premium';
 
   // Check if job is eligible for early career
   if (!hasEligibility(categories)) {
@@ -30,6 +34,8 @@ export function applyHardGates(job: Job, userPrefs: UserPreferences): { passed: 
   }
 
   // Check location compatibility with intelligent fallback
+  // FREE TIER: More lenient - allow jobs in same country or nearby cities
+  // PREMIUM TIER: Stricter - must match exact cities or remote/hybrid
   if (userPrefs.target_cities && userPrefs.target_cities.length > 0) {
     // Enhanced location matching using structured data
     const locationValidation = validateLocationCompatibility(
@@ -44,12 +50,49 @@ export function applyHardGates(job: Job, userPrefs: UserPreferences): { passed: 
                             (job.location || '').toLowerCase().includes('hybrid') ||
                             (job.location || '').toLowerCase().includes('work from home');
 
-    if (!locationValidation.compatible && !isRemoteOrHybrid) {
-      return { passed: false, reason: `Location mismatch: ${locationValidation.reasons[0]}` };
+    // FREE TIER: More lenient - allow jobs in same country even if not exact city match
+    if (isFreeTier) {
+      // For free users, allow jobs in same country as target cities
+      const jobCountry = job.country || '';
+      const userCountries = userPrefs.target_cities.map(city => {
+        // Extract country from city (simplified - could be enhanced)
+        if (city.includes('London') || city.includes('Manchester') || city.includes('Birmingham') || city.includes('Belfast')) return 'UK';
+        if (city.includes('Dublin')) return 'Ireland';
+        if (city.includes('Paris')) return 'France';
+        if (city.includes('Amsterdam')) return 'Netherlands';
+        if (city.includes('Berlin') || city.includes('Munich') || city.includes('Hamburg')) return 'Germany';
+        if (city.includes('Madrid') || city.includes('Barcelona')) return 'Spain';
+        if (city.includes('Milan') || city.includes('Rome')) return 'Italy';
+        if (city.includes('Stockholm')) return 'Sweden';
+        if (city.includes('Copenhagen')) return 'Denmark';
+        if (city.includes('Vienna')) return 'Austria';
+        if (city.includes('Prague')) return 'Czech Republic';
+        if (city.includes('Warsaw')) return 'Poland';
+        if (city.includes('Zurich')) return 'Switzerland';
+        if (city.includes('Brussels')) return 'Belgium';
+        return '';
+      }).filter(Boolean);
+      
+      const isInSameCountry = jobCountry && userCountries.some(country => 
+        jobCountry.toLowerCase().includes(country.toLowerCase()) || 
+        country.toLowerCase().includes(jobCountry.toLowerCase())
+      );
+      
+      // Free tier: Pass if location matches OR is in same country OR is remote/hybrid
+      if (!locationValidation.compatible && !isRemoteOrHybrid && !isInSameCountry) {
+        return { passed: false, reason: `Location mismatch: ${locationValidation.reasons[0]}` };
+      }
+    } else {
+      // PREMIUM TIER: Stricter - must match exact cities or be remote/hybrid
+      if (!locationValidation.compatible && !isRemoteOrHybrid) {
+        return { passed: false, reason: `Location mismatch: ${locationValidation.reasons[0]}` };
+      }
     }
   }
 
-  // Check work environment preference (more flexible)
+  // Check work environment preference (more flexible for free users)
+  // FREE TIER: More lenient - accept any work environment if not specified
+  // PREMIUM TIER: Stricter - must match user's preference
   if (userPrefs.work_environment && userPrefs.work_environment !== 'unclear') {
     const jobWorkEnv = job.work_environment?.toLowerCase() || (job.location || '').toLowerCase();
     const userWorkEnv = userPrefs.work_environment.toLowerCase();
@@ -63,8 +106,23 @@ export function applyHardGates(job: Job, userPrefs: UserPreferences): { passed: 
       const isJobHybrid = jobWorkEnv.includes('hybrid');
       const isJobOnSite = !isJobRemote && !isJobHybrid;
       
-      if (userWorkEnv === 'remote' && isJobOnSite) {
-        return { passed: false, reason: 'Work environment mismatch: user wants remote but job is on-site' };
+      // FREE TIER: More lenient - only reject if user explicitly wants remote and job is strictly on-site
+      // PREMIUM TIER: Stricter - must match preference more closely
+      if (isFreeTier) {
+        // Free users: Only reject if they want remote and job is strictly on-site
+        if (userWorkEnv === 'remote' && isJobOnSite) {
+          return { passed: false, reason: 'Work environment mismatch: user wants remote but job is on-site' };
+        }
+        // Otherwise, accept hybrid/remote/on-site for free users (more flexible)
+      } else {
+        // Premium users: Stricter matching
+        if (userWorkEnv === 'remote' && isJobOnSite) {
+          return { passed: false, reason: 'Work environment mismatch: user wants remote but job is on-site' };
+        }
+        // Premium users can also reject if they want on-site but job is remote (optional - can be removed if too strict)
+        // if (userWorkEnv === 'on-site' && isJobRemote && !isJobHybrid) {
+        //   return { passed: false, reason: 'Work environment mismatch: user wants on-site but job is remote' };
+        // }
       }
       // Hybrid and remote are compatible with each other
       // On-site is acceptable if user didn't specify remote preference
@@ -72,6 +130,8 @@ export function applyHardGates(job: Job, userPrefs: UserPreferences): { passed: 
   }
 
   // Check visa sponsorship requirement (CRITICAL HARD GATE)
+  // FREE TIER: More lenient - allow jobs that might offer visa (weaker detection)
+  // PREMIUM TIER: Stricter - must have clear visa sponsorship indicators
   if (userPrefs.visa_status) {
     const visaStatus = userPrefs.visa_status.toLowerCase();
     // Explicit check for sponsorship requirement
@@ -108,14 +168,33 @@ export function applyHardGates(job: Job, userPrefs: UserPreferences): { passed: 
       const jobVisaFriendly = (job as any).visa_friendly === true || 
                               (job as any).visa_sponsorship === true;
       
-      if (!offersVisaSponsorship && !jobVisaFriendly) {
-        return { passed: false, reason: 'Job does not offer visa sponsorship (required for user)' };
+      // FREE TIER: More lenient - also check for international/global company indicators
+      if (isFreeTier) {
+        // For free users, also check for international company indicators
+        const internationalIndicators = [
+          'international', 'global', 'multinational', 'worldwide', 'cross-border',
+          'relocation', 'relocate', 'international candidates welcome'
+        ];
+        const hasInternationalIndicator = internationalIndicators.some(indicator => 
+          jobText.includes(indicator)
+        );
+        
+        // Free tier: Pass if visa keywords found OR structured field OR international indicators
+        if (!offersVisaSponsorship && !jobVisaFriendly && !hasInternationalIndicator) {
+          return { passed: false, reason: 'Job does not offer visa sponsorship (required for user)' };
+        }
+      } else {
+        // PREMIUM TIER: Stricter - must have clear visa sponsorship
+        if (!offersVisaSponsorship && !jobVisaFriendly) {
+          return { passed: false, reason: 'Job does not offer visa sponsorship (required for user)' };
+        }
       }
     }
   }
 
   // Check language requirements (CRITICAL HARD GATE)
-  // Default to English if no languages specified (for free users)
+  // FREE TIER: More lenient - default to English, allow jobs with no explicit language requirement
+  // PREMIUM TIER: Stricter - must match user's specified languages
   const userLanguages = (userPrefs.languages_spoken && Array.isArray(userPrefs.languages_spoken) && userPrefs.languages_spoken.length > 0)
     ? userPrefs.languages_spoken
     : ['English']; // Default free users to English only
@@ -180,15 +259,38 @@ export function applyHardGates(job: Job, userPrefs: UserPreferences): { passed: 
         )
       );
       
+      // FREE TIER: More lenient - if user speaks English, allow jobs even if they require other languages (many EU jobs are multilingual)
+      // PREMIUM TIER: Stricter - must match at least one required language
       if (!hasMatchingLanguage) {
-        return { 
-          passed: false, 
-          reason: `Job requires languages user doesn't speak: ${jobLanguages.join(', ')}` 
-        };
+        if (isFreeTier && userLanguagesLower.includes('english')) {
+          // Free users with English: Allow if job doesn't explicitly require non-English languages
+          // Many EU jobs accept English speakers even if they list other languages
+          const requiresOnlyNonEnglish = jobLanguagesLower.every((jobLang: string) => 
+            !jobLang.includes('english') && !jobLang.includes('eng')
+          );
+          
+          // If job requires only non-English languages, still reject for free users
+          // But if job mentions English OR doesn't have explicit requirements, allow
+          if (requiresOnlyNonEnglish) {
+            return { 
+              passed: false, 
+              reason: `Job requires languages user doesn't speak: ${jobLanguages.join(', ')}` 
+            };
+          }
+          // Otherwise, allow (job likely accepts English speakers)
+        } else {
+          // Premium tier or free user without English: Must match
+          return { 
+            passed: false, 
+            reason: `Job requires languages user doesn't speak: ${jobLanguages.join(', ')}` 
+          };
+        }
       }
     }
     
     // Also check description for language requirements (fallback)
+    // FREE TIER: More lenient - only reject if job explicitly requires non-English languages
+    // PREMIUM TIER: Stricter - must match language requirements found in description
     const jobDesc = (job.description || '').toLowerCase();
     const jobTitle = (job.title || '').toLowerCase();
     const jobText = `${jobDesc} ${jobTitle}`.toLowerCase();

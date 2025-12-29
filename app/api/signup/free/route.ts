@@ -364,6 +364,7 @@ export async function POST(request: NextRequest) {
       company_types: userData.company_types || [],
       visa_status: userData.visa_status,
       professional_expertise: userData.career_path || '',
+      subscription_tier: 'free' as const, // TIER-AWARE: Mark as free tier
     };
 
     // Pass all jobs to matching engine - it handles hard gates and pre-ranking
