@@ -30,14 +30,28 @@ export default function Hero() {
 
 				const response = await fetch(
 					`/api/sample-jobs?day=monday&tier=free&week=${weekNumber}`,
+					{
+						signal: AbortSignal.timeout(8000), // 8 second timeout for hero
+					},
 				);
+
+				if (!response.ok) {
+					throw new Error(
+						`HTTP ${response.status}: Failed to fetch sample jobs`,
+					);
+				}
+
 				const data = await response.json();
 
 				if (data.jobs && data.jobs.length > 0) {
 					setPreloadedJobs(data.jobs);
 				}
 			} catch (error) {
-				console.error("Failed to pre-fetch jobs:", error);
+				if (process.env.NODE_ENV === "development") {
+					console.error("Failed to pre-fetch jobs:", error);
+				}
+				// Silently fail - hero will use fallback data
+				// This is intentional as hero should always render
 			}
 		}
 
@@ -81,7 +95,7 @@ export default function Hero() {
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ delay: 0.2, duration: 0.6 }}
-							className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3 max-w-[540px] relative"
+							className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3 max-w-[540px] relative"
 						>
 							{/* Silver Silk gradient: purple-500/80 (20%) → zinc-100 (50%) → purple-500/80 (80%) */}
 							<span
@@ -108,8 +122,8 @@ export default function Hero() {
 							>
 								job matches
 							</span>{" "}
-							<span className="text-white whitespace-nowrap">
-								instantly <span className="text-zinc-400">- free</span>
+							<span className="text-white">
+								instantly <span className="text-zinc-300">- free</span>
 							</span>
 						</motion.h1>
 
@@ -136,7 +150,7 @@ export default function Hero() {
 								onClick={() => {
 									trackEvent("cta_clicked", { type: "free", location: "hero" });
 								}}
-								className="inline-flex h-12 animate-shimmer items-center justify-center rounded-full border border-zinc-800 bg-[linear-gradient(110deg,#000,45%,#27272a,55%,#000)] bg-[length:200%_100%] px-8 font-medium text-zinc-400 transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2 focus:ring-offset-black hover:text-zinc-300 hover:border-zinc-700 w-full sm:w-auto sm:max-w-xs text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)]"
+								className="inline-flex min-h-[44px] h-12 animate-shimmer items-center justify-center rounded-full border border-zinc-800 bg-[linear-gradient(110deg,#000,45%,#27272a,55%,#000)] bg-[length:200%_100%] px-8 font-medium text-zinc-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black hover:text-zinc-200 hover:border-zinc-700 w-full sm:w-auto sm:max-w-xs text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)]"
 								aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
 							>
 								<span className="flex items-center justify-center gap-2">
@@ -231,7 +245,8 @@ export default function Hero() {
 									? {
 											title: preloadedJobs[0].title,
 											company: preloadedJobs[0].company,
-											salary: preloadedJobs[0].salaryRange || "$180k - $240k",
+											salary:
+												preloadedJobs[0].salaryRange || "€35k - €50k/year",
 											location: preloadedJobs[0].location,
 											score: preloadedJobs[0].matchScore
 												? Math.round(preloadedJobs[0].matchScore * 100)

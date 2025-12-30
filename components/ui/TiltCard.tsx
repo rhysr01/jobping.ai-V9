@@ -42,12 +42,15 @@ export const TiltCard = ({ children }: { children: React.ReactNode }) => {
 			ref={targetRef}
 			onMouseMove={handleMouseMove}
 			onMouseLeave={handleMouseLeave}
+			role="article"
+			aria-label="Interactive job match preview card"
+			tabIndex={0}
 			style={{
 				rotateY,
 				rotateX,
 				transformStyle: "preserve-3d",
 			}}
-			className="relative h-full w-full"
+			className="relative h-full w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-2xl"
 		>
 			<div
 				style={{

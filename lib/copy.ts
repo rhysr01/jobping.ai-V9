@@ -23,7 +23,7 @@ export const HERO_TITLE = "JobPing";
 export const HERO_HEADLINE =
 	"Get hand-picked early-career jobs across Europe without wasting hours searching";
 export const HERO_SUBLINE =
-	"We scan 1,000+ EU companies daily and send you only roles you're qualified for - filtered by location, visa status, and experience.";
+	"We scan 4,000+ EU companies daily and send you only roles you're qualified for - filtered by location, visa status, and experience.";
 export const HERO_SUBLINE_MICRO =
 	"No dashboards. No job boards. Just roles you can actually apply for.";
 export const HERO_SUBTITLE = "";
@@ -43,7 +43,7 @@ export const HOW_IT_WORKS_STEPS = [
 			"Choose your cities, career path, and visa status. We'll only show roles you qualify for - no time wasters. Only junior-friendly roles: internships, graduate programmes, and entry-level positions.",
 	},
 	{
-		title: "2. We search 1,000+ companies daily",
+		title: "2. We search 4,000+ companies daily",
 		description:
 			"Our AI scans job boards and career pages across Europe - you get the best matches in your inbox. Every email includes salary hints, visa notes, and why the role fits you.",
 	},
@@ -66,7 +66,7 @@ export const WHAT_HAPPENS_NEXT_STEPS = [
 		title: "We hand-pick jobs for you",
 		time: "Daily",
 		description:
-			"Our AI scans 1,000+ companies and matches roles to your profile.",
+			"Our AI scans 4,000+ companies and matches roles to your profile.",
 	},
 	{
 		title: "Get matches instantly (Free) or weekly (Premium)",
@@ -170,7 +170,7 @@ export const INLINE_FAQ_ITEMS = [
 		icon: "🔍",
 		question: "How do you find these jobs?",
 		answer:
-			"We scan LinkedIn, company career pages, and 50+ EU job boards daily.",
+			"We scan company career pages and 7+ EU job boards daily, including Indeed, Adzuna, Reed, and more.",
 	},
 	{
 		icon: "✖️",

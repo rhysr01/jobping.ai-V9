@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 	title:
 		"JobPing → EU early-career roles. Free: instant matches. Premium: 3x per week.",
 	description:
-		"EU early-career roles. Free: Get 5 instant matches. Premium: 15 jobs per week via email (3x per week: Mon/Wed/Fri). We monitor 1,000+ companies across Europe and send you hand-picked internships, graduate schemes, and entry-level roles - matched to your city, skills, and goals.",
+		"EU early-career roles. Free: Get 5 instant matches. Premium: 15 jobs per week via email (3x per week: Mon/Wed/Fri). We monitor 4,000+ companies across Europe and send you hand-picked internships, graduate schemes, and entry-level roles - matched to your city, skills, and goals.",
 	keywords: [
 		"graduate jobs",
 		"internships Europe",

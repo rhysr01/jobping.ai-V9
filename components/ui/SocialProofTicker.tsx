@@ -37,7 +37,9 @@ export default function SocialProofTicker() {
 			const data = await response.json();
 			setCurrentItem(data);
 		} catch (err) {
-			console.error("Failed to fetch recent matches:", err);
+			if (process.env.NODE_ENV === "development") {
+				console.error("Failed to fetch recent matches:", err);
+			}
 			setError(true);
 			// Fallback: show scanning message
 			setCurrentItem({
@@ -88,7 +90,7 @@ export default function SocialProofTicker() {
 					className="flex items-center gap-2 text-zinc-400 text-xs"
 				>
 					<div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-					Scanning 50+ new sources for today's matches...
+					Scanning 7+ job sources for today's matches...
 				</motion.span>
 			</AnimatePresence>
 		);

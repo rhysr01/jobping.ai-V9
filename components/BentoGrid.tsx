@@ -40,8 +40,10 @@ const FeatureCard = ({
 	return (
 		<div
 			ref={cardRef}
+			role="article"
+			aria-label={`${title} - ${description}`}
 			className={cn(
-				"group relative overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 p-6 transition-all hover:border-zinc-700",
+				"group relative overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 p-6 transition-all hover:border-zinc-700 focus-within:ring-2 focus-within:ring-purple-500 focus-within:ring-offset-2 focus-within:ring-offset-black",
 				className
 			)}
 		>
@@ -80,27 +82,36 @@ export default function HowItWorksBento() {
 						icon={FileJson}
 						className="md:col-span-1"
 					>
-						<div className="mt-4 space-y-2">
-							<div className="relative h-2 bg-zinc-900 rounded-full overflow-hidden border border-white/5">
-								{/* The Scanning Effect */}
+						<div className="mt-4 space-y-4">
+							<div className="relative h-28 w-full rounded-xl bg-zinc-900/50 border border-white/5 overflow-hidden">
+								{/* Vertical Scanning Line */}
 								<motion.div
-									animate={{ x: ["-100%", "100%"] }}
+									animate={{ top: ["-10%", "110%"] }}
 									transition={{
 										repeat: Infinity,
 										duration: 2,
 										ease: "linear",
 									}}
-									className="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-50"
+									className="absolute left-0 right-0 h-[1px] bg-purple-400 shadow-[0_0_15px_#a855f7] z-20"
 								/>
-								{/* The Actual Progress */}
-								<div className="h-full bg-purple-600 w-[75%] shadow-[0_0_15px_rgba(168,85,247,0.4)]" />
-							</div>
-							{/* Status Label */}
-							<div className="mt-2 flex items-center gap-2">
-								<div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
-								<span className="text-[10px] font-mono text-purple-400 uppercase">
-									Extracting Tech Stack...
-								</span>
+
+								{/* Scanning UI Labels */}
+								<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+									<span className="text-xs font-mono text-purple-300 bg-black/60 px-3 py-1.5 rounded-md border border-purple-500/20 uppercase tracking-widest">
+										Extracting Tech Stack...
+									</span>
+									<div className="flex gap-1">
+										{[1, 2, 3].map((i) => (
+											<div
+												key={i}
+												className="w-1 h-1 rounded-full bg-purple-500/40 animate-bounce"
+												style={{
+													animationDelay: `${i * 0.2}s`,
+												}}
+											/>
+										))}
+									</div>
+								</div>
 							</div>
 						</div>
 					</FeatureCard>
@@ -108,7 +119,7 @@ export default function HowItWorksBento() {
 					{/* Card 2: The Brain (Large Card) */}
 					<FeatureCard
 						title="The Matching Engine"
-						description="We scan thousands of daily listings across the web, comparing every line of the JD against your specific profile requirements."
+						description="We scan 1,400+ daily listings across the web, comparing every line of the JD against your specific profile requirements."
 						icon={Cpu}
 						className="md:col-span-2"
 					>
@@ -117,9 +128,9 @@ export default function HowItWorksBento() {
 								(tag) => (
 									<span
 										key={tag}
-										className="flex items-center gap-1 rounded-md bg-purple-500/10 px-2 py-1 text-[10px] text-purple-400 border border-purple-500/20"
+										className="flex items-center gap-1.5 rounded-md bg-purple-500/10 px-2.5 py-1.5 text-xs font-medium text-purple-300 border border-purple-500/20"
 									>
-										<CheckCircle2 size={10} /> {tag}
+										<CheckCircle2 size={13} className="shrink-0" /> {tag}
 									</span>
 								)
 							)}
@@ -136,11 +147,11 @@ export default function HowItWorksBento() {
 						<div className="mt-8 relative h-32 w-full flex items-center justify-center overflow-hidden">
 							{/* Visualizing the "Matching" Process */}
 							<div className="flex items-center gap-8 z-10">
-								<div className="px-3 py-1.5 rounded-lg border border-zinc-700 bg-zinc-800 text-[10px] text-zinc-300">
+								<div className="px-3 py-1.5 rounded-lg border border-zinc-700 bg-zinc-800 text-xs text-zinc-200">
 									Your Resume
 								</div>
 								<div className="h-px w-12 bg-gradient-to-r from-purple-500 to-emerald-500 animate-pulse" />
-								<div className="px-3 py-1.5 rounded-lg border border-zinc-700 bg-zinc-800 text-[10px] text-zinc-300">
+								<div className="px-3 py-1.5 rounded-lg border border-zinc-700 bg-zinc-800 text-xs text-zinc-200">
 									Job Requirements
 								</div>
 							</div>

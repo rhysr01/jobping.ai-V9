@@ -69,7 +69,7 @@ export default function Pricing() {
 					<h2 className="text-3xl md:text-4xl font-bold text-white mt-4 mb-4">
 						Simple, Transparent Pricing
 					</h2>
-					<p className="text-zinc-400 text-lg">
+					<p className="text-zinc-300 text-lg">
 						Free for everyone. Specialized for those who want an edge.
 					</p>
 				</motion.div>
@@ -92,7 +92,7 @@ export default function Pricing() {
 									}`}
 								>
 									{tier.popular && (
-										<div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-600 px-4 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-widest z-20">
+										<div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-600 px-5 py-2 rounded-full text-xs font-black text-white uppercase tracking-[0.15em] z-20 shadow-[0_0_20px_rgba(168,85,247,0.4)] border border-purple-400/50">
 											Most Popular
 										</div>
 									)}
@@ -101,14 +101,14 @@ export default function Pricing() {
 										<h3 className="text-xl font-bold text-white">
 											{tier.name}
 										</h3>
-										<p className="text-zinc-500 text-sm mt-2">
+										<p className="text-zinc-400 text-sm mt-2">
 											{tier.description}
 										</p>
 										<div className="mt-6 flex items-baseline gap-1">
 											<span className="text-4xl font-bold text-white">
 												€{tier.price}
 											</span>
-											<span className="text-zinc-500 text-sm">/month</span>
+											<span className="text-zinc-400 text-sm">/month</span>
 										</div>
 									</div>
 
@@ -116,7 +116,7 @@ export default function Pricing() {
 										{tier.features.map((feature) => (
 											<li
 												key={feature}
-												className="flex items-start gap-3 text-sm text-zinc-400"
+												className="flex items-start gap-3 text-sm text-zinc-300"
 											>
 												<Check
 													size={18}
@@ -158,7 +158,7 @@ export default function Pricing() {
 					<ErrorBoundary fallback={null}>
 						<div className="space-y-4">
 							{stats && stats.totalUsers > 0 && (
-								<p className="text-sm text-zinc-500">
+								<p className="text-sm text-zinc-400">
 									Join{" "}
 									<span className="text-white font-bold">
 										{stats.totalUsers.toLocaleString()}+
@@ -169,7 +169,7 @@ export default function Pricing() {
 							<SocialProofTicker />
 						</div>
 					</ErrorBoundary>
-					<p className="text-zinc-600 text-[10px] uppercase tracking-[0.2em] mt-8">
+					<p className="text-xs text-zinc-300 font-medium uppercase tracking-[0.2em] mt-10">
 						Secure payment via Stripe • Cancel anytime
 					</p>
 				</div>

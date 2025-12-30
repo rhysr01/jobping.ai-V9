@@ -9,6 +9,7 @@ import Footer from "@/components/sections/Footer";
 import Hero from "@/components/sections/Hero";
 import HowItWorksBento from "@/components/BentoGrid";
 import { PremiumEmailShowcase } from "@/components/marketing/PremiumEmailShowcase";
+import { EUJobStats } from "@/components/marketing/EUJobStats";
 import Pricing from "@/components/sections/Pricing";
 import SocialProofRow from "@/components/sections/SocialProofRow";
 import ExitIntentPopup from "@/components/ui/ExitIntentPopup";
@@ -31,6 +32,9 @@ export default function Page() {
 			>
 				<ErrorBoundary>
 					<Hero />
+				</ErrorBoundary>
+				<ErrorBoundary>
+					<EUJobStats />
 				</ErrorBoundary>
 				<ErrorBoundary>
 					<CompanyLogos />
@@ -75,7 +79,8 @@ export default function Page() {
 								>
 									<a
 										href="/signup/free"
-										className="inline-flex items-center gap-2 px-6 py-3 bg-brand-500 text-white rounded-full text-sm font-semibold hover:bg-brand-500/90 transition-colors shadow-lg shadow-brand-500/30"
+										aria-label="Get my 5 free job matches - start free signup"
+										className="inline-flex min-h-[44px] items-center gap-2 px-6 py-3 bg-brand-500 text-white rounded-full text-sm font-semibold hover:bg-brand-500/90 transition-colors shadow-lg shadow-brand-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
 									>
 										Get My 5 Free Matches
 										<svg

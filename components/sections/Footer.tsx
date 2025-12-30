@@ -53,6 +53,12 @@ export default function Footer() {
 									{link.label}
 								</Link>
 							))}
+							<a
+								href="mailto:support@jobping.com"
+								className="text-xs text-zinc-400 transition-all duration-200 hover:text-zinc-300"
+							>
+								Support
+							</a>
 						</nav>
 					</div>
 				</motion.div>
