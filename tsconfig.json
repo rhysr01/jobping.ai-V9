@@ -1,60 +1,54 @@
 {
-  "compilerOptions": {
-    "target": "ES2020",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": false,
-    "skipLibCheck": true,
-    "strict": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "noUnusedLocals": false, // Temporarily disabled - will re-enable after cleanup
-    "noUnusedParameters": false, // Temporarily disabled - will re-enable after cleanup
-    // Note: These should be true in production, but disabled temporarily to allow build
-    // TODO: Clean up unused variables and re-enable these checks
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "react-jsx",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "paths": {
-      "@/*": [
-        "./*"
-      ]
-    }
-  },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "**/*.cjs",
-    "**/*.js",
-    "automation/**",
-    "scrapers/**",
-    "scripts/**/*.cjs",
-    "**/__tests__/**",
-    "**/*.test.ts",
-    "**/*.spec.ts",
-    "tests/**",
-    "**/__mocks__/**"
-  ]
+	"compilerOptions": {
+		"target": "ES2020",
+		"lib": ["dom", "dom.iterable", "esnext"],
+		"allowJs": false,
+		"skipLibCheck": true,
+		"strict": true,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"noUnusedLocals": false, // Temporarily disabled - will re-enable after cleanup
+		"noUnusedParameters": false, // Temporarily disabled - will re-enable after cleanup
+		// Note: These should be true in production, but disabled temporarily to allow build
+		// TODO: Clean up unused variables and re-enable these checks
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"forceConsistentCasingInFileNames": true,
+		"noEmit": true,
+		"esModuleInterop": true,
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"jsx": "react-jsx",
+		"incremental": true,
+		"plugins": [
+			{
+				"name": "next"
+			}
+		],
+		"paths": {
+			"@/*": ["./*"]
+		}
+	},
+	"include": [
+		"next-env.d.ts",
+		"**/*.ts",
+		"**/*.tsx",
+		".next/types/**/*.ts",
+		".next/dev/types/**/*.ts"
+	],
+	"exclude": [
+		"node_modules",
+		"**/*.cjs",
+		"**/*.js",
+		"automation/**",
+		"scrapers/**",
+		"scripts/**/*.cjs",
+		"**/__tests__/**",
+		"**/*.test.ts",
+		"**/*.spec.ts",
+		"tests/**",
+		"**/__mocks__/**"
+	]
 }

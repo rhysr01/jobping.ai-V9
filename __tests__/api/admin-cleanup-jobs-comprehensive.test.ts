@@ -3,13 +3,13 @@
  * Tests job cleanup functionality (118 statements)
  */
 
-import { POST } from '@/app/api/admin/cleanup-jobs/route';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { POST } from "@/app/api/admin/cleanup-jobs/route";
 
-jest.mock('@supabase/supabase-js');
+jest.mock("@supabase/supabase-js");
 // Sentry removed - using Axiom for error tracking
 
-describe('Admin Cleanup Jobs API Route', () => {
+describe("Admin Cleanup Jobs API Route", () => {
   let mockRequest: NextRequest;
   let mockSupabase: any;
 
@@ -17,11 +17,11 @@ describe('Admin Cleanup Jobs API Route', () => {
     jest.clearAllMocks();
 
     mockRequest = {
-      method: 'POST',
+      method: "POST",
       headers: new Headers({
-        'x-admin-api-key': 'test-admin-key'
+        "x-admin-api-key": "test-admin-key",
       }),
-      json: jest.fn()
+      json: jest.fn(),
     } as any;
 
     mockSupabase = {
@@ -35,36 +35,36 @@ describe('Admin Cleanup Jobs API Route', () => {
       limit: jest.fn().mockResolvedValue({
         data: [],
         error: null,
-        count: 0
+        count: 0,
       }),
       in: jest.fn().mockResolvedValue({
         data: [],
-        error: null
-      })
+        error: null,
+      }),
     };
 
-    const { createClient } = require('@supabase/supabase-js');
+    const { createClient } = require("@supabase/supabase-js");
     createClient.mockReturnValue(mockSupabase);
 
-    process.env.ADMIN_API_KEY = 'test-admin-key';
-    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
-    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
+    process.env.ADMIN_API_KEY = "test-admin-key";
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
   });
 
-  describe('POST /api/admin/cleanup-jobs', () => {
-    it('should perform cleanup in dry run mode', async () => {
+  describe("POST /api/admin/cleanup-jobs", () => {
+    it("should perform cleanup in dry run mode", async () => {
       mockRequest.json.mockResolvedValue({
         dryRun: true,
-        maxAge: 90
+        maxAge: 90,
       });
 
       mockSupabase.limit.mockResolvedValue({
         data: [
-          { id: '1', created_at: '2023-01-01' },
-          { id: '2', created_at: '2023-02-01' }
+          { id: "1", created_at: "2023-01-01" },
+          { id: "2", created_at: "2023-02-01" },
         ],
         error: null,
-        count: 1000
+        count: 1000,
       });
 
       const response = await POST(mockRequest);
@@ -75,17 +75,17 @@ describe('Admin Cleanup Jobs API Route', () => {
       expect(data.metrics).toBeDefined();
     });
 
-    it('should require admin authentication', async () => {
-      mockRequest.headers.delete('x-admin-api-key');
+    it("should require admin authentication", async () => {
+      mockRequest.headers.delete("x-admin-api-key");
 
       const response = await POST(mockRequest);
 
       expect(response.status).toBe(401);
     });
 
-    it('should validate maxAge parameter', async () => {
+    it("should validate maxAge parameter", async () => {
       mockRequest.json.mockResolvedValue({
-        maxAge: 5 // Too low
+        maxAge: 5, // Too low
       });
 
       const response = await POST(mockRequest);
@@ -93,9 +93,9 @@ describe('Admin Cleanup Jobs API Route', () => {
       expect(response.status).toBeGreaterThanOrEqual(400);
     });
 
-    it('should validate batchSize parameter', async () => {
+    it("should validate batchSize parameter", async () => {
       mockRequest.json.mockResolvedValue({
-        batchSize: 5 // Too low
+        batchSize: 5, // Too low
       });
 
       const response = await POST(mockRequest);
@@ -103,17 +103,17 @@ describe('Admin Cleanup Jobs API Route', () => {
       expect(response.status).toBeGreaterThanOrEqual(400);
     });
 
-    it('should enforce safety threshold', async () => {
+    it("should enforce safety threshold", async () => {
       mockRequest.json.mockResolvedValue({
         dryRun: false,
         maxAge: 90,
-        force: false
+        force: false,
       });
 
       mockSupabase.limit.mockResolvedValue({
         data: Array.from({ length: 2000 }, (_, i) => ({ id: `${i}` })),
         error: null,
-        count: 10000
+        count: 10000,
       });
 
       // Mock that 20% would be deleted (exceeds 15% threshold)
@@ -122,22 +122,22 @@ describe('Admin Cleanup Jobs API Route', () => {
       expect(response.status).toBeGreaterThanOrEqual(400);
     });
 
-    it('should allow force override', async () => {
+    it("should allow force override", async () => {
       mockRequest.json.mockResolvedValue({
         dryRun: false,
         maxAge: 90,
-        force: true
+        force: true,
       });
 
       mockSupabase.limit.mockResolvedValue({
         data: Array.from({ length: 100 }, (_, i) => ({ id: `${i}` })),
         error: null,
-        count: 1000
+        count: 1000,
       });
 
       mockSupabase.in.mockResolvedValue({
         data: [],
-        error: null
+        error: null,
       });
 
       const response = await POST(mockRequest);
@@ -145,24 +145,24 @@ describe('Admin Cleanup Jobs API Route', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should process jobs in batches', async () => {
+    it("should process jobs in batches", async () => {
       mockRequest.json.mockResolvedValue({
         dryRun: false,
         maxAge: 90,
         batchSize: 50,
-        force: true
+        force: true,
       });
 
       const jobs = Array.from({ length: 150 }, (_, i) => ({ id: `${i}` }));
       mockSupabase.limit.mockResolvedValue({
         data: jobs,
         error: null,
-        count: 1000
+        count: 1000,
       });
 
       mockSupabase.in.mockResolvedValue({
         data: [],
-        error: null
+        error: null,
       });
 
       await POST(mockRequest);
@@ -171,16 +171,16 @@ describe('Admin Cleanup Jobs API Route', () => {
       expect(mockSupabase.in.mock.calls.length).toBeGreaterThan(1);
     });
 
-    it('should handle database errors', async () => {
+    it("should handle database errors", async () => {
       mockRequest.json.mockResolvedValue({
         dryRun: true,
-        maxAge: 90
+        maxAge: 90,
       });
 
       mockSupabase.limit.mockResolvedValue({
         data: null,
-        error: { message: 'Database error' },
-        count: 0
+        error: { message: "Database error" },
+        count: 0,
       });
 
       const response = await POST(mockRequest);
@@ -188,26 +188,25 @@ describe('Admin Cleanup Jobs API Route', () => {
       expect(response.status).toBeGreaterThanOrEqual(500);
     });
 
-    it('should return cleanup metrics', async () => {
+    it("should return cleanup metrics", async () => {
       mockRequest.json.mockResolvedValue({
         dryRun: true,
-        maxAge: 90
+        maxAge: 90,
       });
 
       mockSupabase.limit.mockResolvedValue({
-        data: [{ id: '1' }],
+        data: [{ id: "1" }],
         error: null,
-        count: 1000
+        count: 1000,
       });
 
       const response = await POST(mockRequest);
       const data = await response.json();
 
-      expect(data.metrics).toHaveProperty('totalJobs');
-      expect(data.metrics).toHaveProperty('eligibleForDeletion');
-      expect(data.metrics).toHaveProperty('actuallyDeleted');
-      expect(data.metrics).toHaveProperty('duration');
+      expect(data.metrics).toHaveProperty("totalJobs");
+      expect(data.metrics).toHaveProperty("eligibleForDeletion");
+      expect(data.metrics).toHaveProperty("actuallyDeleted");
+      expect(data.metrics).toHaveProperty("duration");
     });
   });
 });
-

@@ -1,7 +1,7 @@
-import { POST } from '@/app/api/admin/verify/route';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { POST } from "@/app/api/admin/verify/route";
 
-jest.mock('@/Utils/databasePool', () => ({
+jest.mock("@/Utils/databasePool", () => ({
   getDatabaseClient: jest.fn(() => ({
     from: jest.fn(() => ({
       select: jest.fn(() => ({
@@ -14,15 +14,15 @@ jest.mock('@/Utils/databasePool', () => ({
   })),
 }));
 
-jest.mock('@/Utils/auth/hmac', () => ({
+jest.mock("@/Utils/auth/hmac", () => ({
   verifyHMAC: jest.fn().mockReturnValue({ isValid: true }),
 }));
 
-describe('POST /api/admin/verify', () => {
-  it('should handle verification request', async () => {
+describe("POST /api/admin/verify", () => {
+  it("should handle verification request", async () => {
     const req = {
       json: async () => ({
-        email: 'test@example.com',
+        email: "test@example.com",
       }),
       headers: new Headers(),
     } as NextRequest;
@@ -31,7 +31,7 @@ describe('POST /api/admin/verify', () => {
     expect(response.status).toBeGreaterThanOrEqual(200);
   });
 
-  it('should require email', async () => {
+  it("should require email", async () => {
     const req = {
       json: async () => ({}),
       headers: new Headers(),
@@ -41,4 +41,3 @@ describe('POST /api/admin/verify', () => {
     expect(response.status).toBeGreaterThanOrEqual(400);
   });
 });
-

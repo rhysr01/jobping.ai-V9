@@ -1,72 +1,79 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { asyncHandler, ValidationError, AppError } from '@/lib/errors';
-import { getProductionRateLimiter } from '@/Utils/productionRateLimiter';
-import { ENV } from '@/lib/constants';
-import { markUserVerified, verifyVerificationToken } from '@/Utils/emailVerification';
-import { getBaseUrl } from '@/Utils/url-helpers';
+import { type NextRequest, NextResponse } from "next/server";
+import { ENV } from "@/lib/constants";
+import { asyncHandler, ValidationError } from "@/lib/errors";
+import {
+	markUserVerified,
+	verifyVerificationToken,
+} from "@/Utils/emailVerification";
+import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
+import { getBaseUrl } from "@/Utils/url-helpers";
 
 // Test mode helper - using professional pattern
 const isTestMode = () => ENV.isTest();
 
 export const POST = asyncHandler(async (request: NextRequest) => {
-  // PRODUCTION: Rate limiting for email verification (prevent abuse)
-  // Skip rate limiting in test mode
-  if (!isTestMode()) {
-    const rateLimitResult = await getProductionRateLimiter().middleware(request, 'default', {
-      windowMs: 5 * 60 * 1000, // 5 minutes
-      maxRequests: 10 // 10 verification attempts per 5 minutes
-    });
-    if (rateLimitResult) {
-      return rateLimitResult;
-    }
-  }
+	// PRODUCTION: Rate limiting for email verification (prevent abuse)
+	// Skip rate limiting in test mode
+	if (!isTestMode()) {
+		const rateLimitResult = await getProductionRateLimiter().middleware(
+			request,
+			"default",
+			{
+				windowMs: 5 * 60 * 1000, // 5 minutes
+				maxRequests: 10, // 10 verification attempts per 5 minutes
+			},
+		);
+		if (rateLimitResult) {
+			return rateLimitResult;
+		}
+	}
 
-  const { token, email } = await request.json();
+	const { token, email } = await request.json();
 
-  if (!token || !email) {
-    throw new ValidationError('Email and verification token required');
-  }
+	if (!token || !email) {
+		throw new ValidationError("Email and verification token required");
+	}
 
-  const verification = await verifyVerificationToken(email, token);
-  if (!verification.valid) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Invalid or expired token',
-        reason: verification.reason,
-      },
-      { status: 400 }
-    );
-  }
+	const verification = await verifyVerificationToken(email, token);
+	if (!verification.valid) {
+		return NextResponse.json(
+			{
+				success: false,
+				error: "Invalid or expired token",
+				reason: verification.reason,
+			},
+			{ status: 400 },
+		);
+	}
 
-  await markUserVerified(email);
+	await markUserVerified(email);
 
-  return NextResponse.json({ success: true }, { status: 200 });
+	return NextResponse.json({ success: true }, { status: 200 });
 });
 
 export const GET = asyncHandler(async (req: NextRequest) => {
-  const { searchParams } = new URL(req.url);
-  const token = searchParams.get('token');
-  const email = searchParams.get('email');
+	const { searchParams } = new URL(req.url);
+	const token = searchParams.get("token");
+	const email = searchParams.get("email");
 
-  if (!token || !email) {
-    throw new ValidationError('Missing email or token');
-  }
+	if (!token || !email) {
+		throw new ValidationError("Missing email or token");
+	}
 
-  const verification = await verifyVerificationToken(email, token);
-  const baseUrl = getBaseUrl();
-  
-  if (!verification.valid) {
-    // Redirect to signup success page with error message
-    return NextResponse.redirect(
-      `${baseUrl}/signup/success?verified=false&error=${encodeURIComponent(verification.reason || 'Invalid or expired token')}&email=${encodeURIComponent(email)}`
-    );
-  }
+	const verification = await verifyVerificationToken(email, token);
+	const baseUrl = getBaseUrl();
 
-  await markUserVerified(email);
+	if (!verification.valid) {
+		// Redirect to signup success page with error message
+		return NextResponse.redirect(
+			`${baseUrl}/signup/success?verified=false&error=${encodeURIComponent(verification.reason || "Invalid or expired token")}&email=${encodeURIComponent(email)}`,
+		);
+	}
 
-  // Redirect to signup success page with success message
-  return NextResponse.redirect(
-    `${baseUrl}/signup/success?verified=true&email=${encodeURIComponent(email)}`
-  );
+	await markUserVerified(email);
+
+	// Redirect to signup success page with success message
+	return NextResponse.redirect(
+		`${baseUrl}/signup/success?verified=true&email=${encodeURIComponent(email)}`,
+	);
 });

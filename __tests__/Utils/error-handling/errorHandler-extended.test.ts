@@ -4,21 +4,21 @@
  */
 
 import {
-  handleError,
   formatError,
-  logError
-} from '@/Utils/error-handling/errorHandler';
+  handleError,
+  logError,
+} from "@/Utils/error-handling/errorHandler";
 
 // Sentry removed - using Axiom for error tracking
 
-describe('Error Handler', () => {
+describe("Error Handler", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('handleError', () => {
-    it('should handle errors', () => {
-      const error = new Error('Test error');
+  describe("handleError", () => {
+    it("should handle errors", () => {
+      const error = new Error("Test error");
 
       const result = handleError(error);
 
@@ -28,25 +28,24 @@ describe('Error Handler', () => {
     // Sentry removed - error logging now handled by Axiom
   });
 
-  describe('formatError', () => {
-    it('should format error', () => {
-      const error = new Error('Test error');
+  describe("formatError", () => {
+    it("should format error", () => {
+      const error = new Error("Test error");
 
       const formatted = formatError(error);
 
       expect(formatted).toBeDefined();
-      expect(formatted.message).toBe('Test error');
+      expect(formatted.message).toBe("Test error");
     });
   });
 
-  describe('logError', () => {
-    it('should log error', () => {
-      const error = new Error('Test error');
+  describe("logError", () => {
+    it("should log error", () => {
+      const error = new Error("Test error");
 
-      logError(error, { context: 'test' });
+      logError(error, { context: "test" });
 
       expect(true).toBe(true);
     });
   });
 });
-

@@ -3,15 +3,15 @@
  * Tests user match retrieval endpoint
  */
 
-import { GET } from '@/app/api/user-matches/route';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { GET } from "@/app/api/user-matches/route";
 
-jest.mock('@/Utils/databasePool');
-jest.mock('@/Utils/productionRateLimiter');
-jest.mock('@/Utils/auth/hmac');
+jest.mock("@/Utils/databasePool");
+jest.mock("@/Utils/productionRateLimiter");
+jest.mock("@/Utils/auth/hmac");
 // Sentry removed - using Axiom for error tracking
 
-describe('User Matches API Route', () => {
+describe("User Matches API Route", () => {
   let mockRequest: NextRequest;
   let mockSupabase: any;
 
@@ -19,9 +19,9 @@ describe('User Matches API Route', () => {
     jest.clearAllMocks();
 
     mockRequest = {
-      method: 'GET',
-      url: 'https://example.com/api/user-matches?email=user@example.com&limit=10&signature=test&timestamp=1234567890',
-      headers: new Headers()
+      method: "GET",
+      url: "https://example.com/api/user-matches?email=user@example.com&limit=10&signature=test&timestamp=1234567890",
+      headers: new Headers(),
     } as any;
 
     mockSupabase = {
@@ -36,29 +36,31 @@ describe('User Matches API Route', () => {
             match_score: 85,
             jobs: {
               id: 1,
-              title: 'Software Engineer',
-              company: 'Tech Corp'
-            }
-          }
+              title: "Software Engineer",
+              company: "Tech Corp",
+            },
+          },
         ],
-        error: null
-      })
+        error: null,
+      }),
     };
 
-    const { getDatabaseClient } = require('@/Utils/databasePool');
+    const { getDatabaseClient } = require("@/Utils/databasePool");
     getDatabaseClient.mockReturnValue(mockSupabase);
 
-    const { getProductionRateLimiter } = require('@/Utils/productionRateLimiter');
+    const {
+      getProductionRateLimiter,
+    } = require("@/Utils/productionRateLimiter");
     getProductionRateLimiter.mockReturnValue({
-      middleware: jest.fn().mockResolvedValue(null)
+      middleware: jest.fn().mockResolvedValue(null),
     });
 
-    const { verifyHMAC } = require('@/Utils/auth/hmac');
+    const { verifyHMAC } = require("@/Utils/auth/hmac");
     verifyHMAC.mockReturnValue({ isValid: true });
   });
 
-  describe('GET /api/user-matches', () => {
-    it('should return user matches', async () => {
+  describe("GET /api/user-matches", () => {
+    it("should return user matches", async () => {
       const response = await GET(mockRequest);
       const data = await response.json();
 
@@ -67,27 +69,29 @@ describe('User Matches API Route', () => {
       expect(data.matches).toBeDefined();
     });
 
-    it('should return 400 for invalid email', async () => {
-      mockRequest.url = 'https://example.com/api/user-matches?email=invalid&signature=test&timestamp=1234567890';
+    it("should return 400 for invalid email", async () => {
+      mockRequest.url =
+        "https://example.com/api/user-matches?email=invalid&signature=test&timestamp=1234567890";
 
       const response = await GET(mockRequest);
 
       expect(response.status).toBe(400);
     });
 
-    it('should return 400 for missing signature', async () => {
-      mockRequest.url = 'https://example.com/api/user-matches?email=user@example.com&timestamp=1234567890';
+    it("should return 400 for missing signature", async () => {
+      mockRequest.url =
+        "https://example.com/api/user-matches?email=user@example.com&timestamp=1234567890";
 
       const response = await GET(mockRequest);
 
       expect(response.status).toBe(400);
     });
 
-    it('should return 401 for invalid HMAC signature', async () => {
-      const { verifyHMAC } = require('@/Utils/auth/hmac');
+    it("should return 401 for invalid HMAC signature", async () => {
+      const { verifyHMAC } = require("@/Utils/auth/hmac");
       verifyHMAC.mockReturnValue({
         isValid: false,
-        error: 'Invalid signature'
+        error: "Invalid signature",
       });
 
       const response = await GET(mockRequest);
@@ -95,26 +99,28 @@ describe('User Matches API Route', () => {
       expect(response.status).toBe(401);
     });
 
-    it('should respect limit parameter', async () => {
-      mockRequest.url = 'https://example.com/api/user-matches?email=user@example.com&limit=5&signature=test&timestamp=1234567890';
+    it("should respect limit parameter", async () => {
+      mockRequest.url =
+        "https://example.com/api/user-matches?email=user@example.com&limit=5&signature=test&timestamp=1234567890";
 
       await GET(mockRequest);
 
       expect(mockSupabase.limit).toHaveBeenCalledWith(5);
     });
 
-    it('should respect minScore parameter', async () => {
-      mockRequest.url = 'https://example.com/api/user-matches?email=user@example.com&minScore=80&signature=test&timestamp=1234567890';
+    it("should respect minScore parameter", async () => {
+      mockRequest.url =
+        "https://example.com/api/user-matches?email=user@example.com&minScore=80&signature=test&timestamp=1234567890";
 
       await GET(mockRequest);
 
-      expect(mockSupabase.gte).toHaveBeenCalledWith('match_score', 80);
+      expect(mockSupabase.gte).toHaveBeenCalledWith("match_score", 80);
     });
 
-    it('should handle database errors', async () => {
+    it("should handle database errors", async () => {
       mockSupabase.limit.mockResolvedValue({
         data: null,
-        error: { message: 'Database error' }
+        error: { message: "Database error" },
       });
 
       const response = await GET(mockRequest);
@@ -122,10 +128,10 @@ describe('User Matches API Route', () => {
       expect(response.status).toBeGreaterThanOrEqual(500);
     });
 
-    it('should handle query timeout', async () => {
+    it("should handle query timeout", async () => {
       jest.useFakeTimers();
       mockSupabase.limit.mockImplementation(
-        () => new Promise(resolve => setTimeout(resolve, 15000))
+        () => new Promise((resolve) => setTimeout(resolve, 15000)),
       );
 
       const promise = GET(mockRequest);
@@ -137,4 +143,3 @@ describe('User Matches API Route', () => {
     });
   });
 });
-

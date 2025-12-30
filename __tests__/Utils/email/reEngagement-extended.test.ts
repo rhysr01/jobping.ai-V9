@@ -3,15 +3,19 @@
  * Tests email sending, candidate retrieval, stats
  */
 
-import { sendReEngagementEmails, getReEngagementStats, shouldRunReEngagement } from '@/Utils/email/reEngagementService';
+import {
+  getReEngagementStats,
+  sendReEngagementEmails,
+  shouldRunReEngagement,
+} from "@/Utils/email/reEngagementService";
 
-jest.mock('@/Utils/engagementTracker');
-jest.mock('@/Utils/email/clients');
-jest.mock('@/Utils/url-helpers', () => ({
-  getUnsubscribeUrl: jest.fn(() => 'https://getjobping.com/unsubscribe')
+jest.mock("@/Utils/engagementTracker");
+jest.mock("@/Utils/email/clients");
+jest.mock("@/Utils/url-helpers", () => ({
+  getUnsubscribeUrl: jest.fn(() => "https://getjobping.com/unsubscribe"),
 }));
 
-describe('Re-Engagement Service', () => {
+describe("Re-Engagement Service", () => {
   let mockResend: any;
 
   beforeEach(() => {
@@ -19,24 +23,31 @@ describe('Re-Engagement Service', () => {
 
     mockResend = {
       emails: {
-        send: jest.fn().mockResolvedValue({ data: { id: 'email_123' }, error: null })
-      }
+        send: jest
+          .fn()
+          .mockResolvedValue({ data: { id: "email_123" }, error: null }),
+      },
     };
 
-    const { getResendClient } = require('@/Utils/email/clients');
+    const { getResendClient } = require("@/Utils/email/clients");
     getResendClient.mockReturnValue(mockResend);
-    require('@/Utils/email/clients').EMAIL_CONFIG = { from: 'JobPing <noreply@getjobping.com>' };
+    require("@/Utils/email/clients").EMAIL_CONFIG = {
+      from: "JobPing <noreply@getjobping.com>",
+    };
 
-    const { getReEngagementCandidates, markReEngagementSent } = require('@/Utils/engagementTracker');
+    const {
+      getReEngagementCandidates,
+      markReEngagementSent,
+    } = require("@/Utils/engagementTracker");
     getReEngagementCandidates.mockResolvedValue([
-      { email: 'user1@example.com', full_name: 'User One' },
-      { email: 'user2@example.com', full_name: null }
+      { email: "user1@example.com", full_name: "User One" },
+      { email: "user2@example.com", full_name: null },
     ]);
     markReEngagementSent.mockResolvedValue(undefined);
   });
 
-  describe('sendReEngagementEmails', () => {
-    it('should send re-engagement emails', async () => {
+  describe("sendReEngagementEmails", () => {
+    it("should send re-engagement emails", async () => {
       const result = await sendReEngagementEmails();
 
       expect(result.success).toBe(true);
@@ -44,8 +55,10 @@ describe('Re-Engagement Service', () => {
       expect(mockResend.emails.send).toHaveBeenCalledTimes(2);
     });
 
-    it('should handle no candidates', async () => {
-      const { getReEngagementCandidates } = require('@/Utils/engagementTracker');
+    it("should handle no candidates", async () => {
+      const {
+        getReEngagementCandidates,
+      } = require("@/Utils/engagementTracker");
       getReEngagementCandidates.mockResolvedValue([]);
 
       const result = await sendReEngagementEmails();
@@ -54,8 +67,8 @@ describe('Re-Engagement Service', () => {
       expect(mockResend.emails.send).not.toHaveBeenCalled();
     });
 
-    it('should handle send errors', async () => {
-      mockResend.emails.send.mockRejectedValue(new Error('Send failed'));
+    it("should handle send errors", async () => {
+      mockResend.emails.send.mockRejectedValue(new Error("Send failed"));
 
       const result = await sendReEngagementEmails();
 
@@ -63,8 +76,8 @@ describe('Re-Engagement Service', () => {
       expect(result.errors.length).toBeGreaterThan(0);
     });
 
-    it('should mark emails as sent', async () => {
-      const { markReEngagementSent } = require('@/Utils/engagementTracker');
+    it("should mark emails as sent", async () => {
+      const { markReEngagementSent } = require("@/Utils/engagementTracker");
 
       await sendReEngagementEmails();
 
@@ -72,8 +85,8 @@ describe('Re-Engagement Service', () => {
     });
   });
 
-  describe('getReEngagementStats', () => {
-    it('should get re-engagement statistics', async () => {
+  describe("getReEngagementStats", () => {
+    it("should get re-engagement statistics", async () => {
       const stats = await getReEngagementStats();
 
       expect(stats).toBeDefined();
@@ -81,12 +94,11 @@ describe('Re-Engagement Service', () => {
     });
   });
 
-  describe('shouldRunReEngagement', () => {
-    it('should determine if re-engagement should run', async () => {
+  describe("shouldRunReEngagement", () => {
+    it("should determine if re-engagement should run", async () => {
       const shouldRun = await shouldRunReEngagement();
 
-      expect(typeof shouldRun).toBe('boolean');
+      expect(typeof shouldRun).toBe("boolean");
     });
   });
 });
-

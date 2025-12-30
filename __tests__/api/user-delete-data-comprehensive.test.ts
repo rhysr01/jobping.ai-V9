@@ -3,21 +3,21 @@
  * Tests GDPR-compliant user data deletion
  */
 
-import { POST, GET } from '@/app/api/user/delete-data/route';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { GET, POST } from "@/app/api/user/delete-data/route";
 
-jest.mock('@/Utils/supabase');
-jest.mock('@/lib/errors', () => ({
+jest.mock("@/Utils/supabase");
+jest.mock("@/lib/errors", () => ({
   asyncHandler: (fn: any) => fn,
   ValidationError: class extends Error {
     constructor(message: string) {
       super(message);
-      this.name = 'ValidationError';
+      this.name = "ValidationError";
     }
-  }
+  },
 }));
 
-describe('User Delete Data API Route', () => {
+describe("User Delete Data API Route", () => {
   let mockRequest: NextRequest;
   let mockSupabase: any;
 
@@ -25,9 +25,9 @@ describe('User Delete Data API Route', () => {
     jest.clearAllMocks();
 
     mockRequest = {
-      method: 'POST',
+      method: "POST",
       json: jest.fn(),
-      headers: new Headers()
+      headers: new Headers(),
     } as any;
 
     mockSupabase = {
@@ -35,18 +35,18 @@ describe('User Delete Data API Route', () => {
       delete: jest.fn().mockReturnThis(),
       eq: jest.fn().mockResolvedValue({
         data: [{ id: 1 }],
-        error: null
-      })
+        error: null,
+      }),
     };
 
-    const { getSupabaseClient } = require('@/Utils/supabase');
+    const { getSupabaseClient } = require("@/Utils/supabase");
     getSupabaseClient.mockReturnValue(mockSupabase);
   });
 
-  describe('POST /api/user/delete-data', () => {
-    it('should delete user data from all tables', async () => {
+  describe("POST /api/user/delete-data", () => {
+    it("should delete user data from all tables", async () => {
       mockRequest.json.mockResolvedValue({
-        email: 'user@example.com'
+        email: "user@example.com",
       });
 
       const response = await POST(mockRequest);
@@ -56,57 +56,57 @@ describe('User Delete Data API Route', () => {
       expect(data.success).toBe(true);
       expect(data.summary).toBeDefined();
       expect(data.summary.totalTables).toBe(8);
-      
+
       // Should delete from all tables
       expect(mockSupabase.from).toHaveBeenCalledTimes(8);
     });
 
-    it('should require email', async () => {
+    it("should require email", async () => {
       mockRequest.json.mockResolvedValue({});
 
       await expect(POST(mockRequest)).rejects.toThrow();
     });
 
-    it('should delete from user_matches table', async () => {
+    it("should delete from user_matches table", async () => {
       mockRequest.json.mockResolvedValue({
-        email: 'user@example.com'
+        email: "user@example.com",
       });
 
       await POST(mockRequest);
 
-      expect(mockSupabase.from).toHaveBeenCalledWith('user_matches');
+      expect(mockSupabase.from).toHaveBeenCalledWith("user_matches");
     });
 
-    it('should delete from user_feedback table', async () => {
+    it("should delete from user_feedback table", async () => {
       mockRequest.json.mockResolvedValue({
-        email: 'user@example.com'
+        email: "user@example.com",
       });
 
       await POST(mockRequest);
 
-      expect(mockSupabase.from).toHaveBeenCalledWith('user_feedback');
+      expect(mockSupabase.from).toHaveBeenCalledWith("user_feedback");
     });
 
-    it('should delete from users table last', async () => {
+    it("should delete from users table last", async () => {
       mockRequest.json.mockResolvedValue({
-        email: 'user@example.com'
+        email: "user@example.com",
       });
 
       await POST(mockRequest);
 
       const calls = mockSupabase.from.mock.calls;
-      expect(calls[calls.length - 1][0]).toBe('users');
+      expect(calls[calls.length - 1][0]).toBe("users");
     });
 
-    it('should handle partial deletion failures', async () => {
+    it("should handle partial deletion failures", async () => {
       mockRequest.json.mockResolvedValue({
-        email: 'user@example.com'
+        email: "user@example.com",
       });
 
       // Some deletions succeed, some fail
       mockSupabase.eq
         .mockResolvedValueOnce({ data: [{ id: 1 }], error: null })
-        .mockResolvedValueOnce({ data: null, error: { message: 'Error' } })
+        .mockResolvedValueOnce({ data: null, error: { message: "Error" } })
         .mockResolvedValue({ data: [{ id: 1 }], error: null });
 
       const response = await POST(mockRequest);
@@ -117,9 +117,9 @@ describe('User Delete Data API Route', () => {
       expect(data.summary.successful).toBeLessThan(8);
     });
 
-    it('should return deletion summary', async () => {
+    it("should return deletion summary", async () => {
       mockRequest.json.mockResolvedValue({
-        email: 'user@example.com'
+        email: "user@example.com",
       });
 
       const response = await POST(mockRequest);
@@ -130,12 +130,12 @@ describe('User Delete Data API Route', () => {
     });
   });
 
-  describe('GET /api/user/delete-data', () => {
+  describe("GET /api/user/delete-data", () => {
     beforeEach(() => {
-      mockRequest.method = 'GET';
+      mockRequest.method = "GET";
     });
 
-    it('should return endpoint information', async () => {
+    it("should return endpoint information", async () => {
       const response = await GET();
       const data = await response.json();
 
@@ -145,4 +145,3 @@ describe('User Delete Data API Route', () => {
     });
   });
 });
-

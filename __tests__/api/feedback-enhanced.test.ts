@@ -1,8 +1,8 @@
-import { POST } from '@/app/api/feedback/enhanced/route';
-import { NextRequest } from 'next/server';
-import { getDatabaseClient } from '@/Utils/databasePool';
+import type { NextRequest } from "next/server";
+import { POST } from "@/app/api/feedback/enhanced/route";
+import { getDatabaseClient } from "@/Utils/databasePool";
 
-jest.mock('@/Utils/databasePool', () => ({
+jest.mock("@/Utils/databasePool", () => ({
   getDatabaseClient: jest.fn(() => ({
     from: jest.fn(() => ({
       insert: jest.fn(() => ({
@@ -13,13 +13,13 @@ jest.mock('@/Utils/databasePool', () => ({
   })),
 }));
 
-describe('POST /api/feedback/enhanced', () => {
-  it('should handle feedback submission', async () => {
+describe("POST /api/feedback/enhanced", () => {
+  it("should handle feedback submission", async () => {
     const req = {
       json: async () => ({
-        email: 'test@example.com',
-        jobHash: 'hash123',
-        action: 'positive',
+        email: "test@example.com",
+        jobHash: "hash123",
+        action: "positive",
         score: 5,
       }),
     } as NextRequest;
@@ -28,11 +28,11 @@ describe('POST /api/feedback/enhanced', () => {
     expect(response.status).toBeGreaterThanOrEqual(200);
   });
 
-  it('should require email', async () => {
+  it("should require email", async () => {
     const req = {
       json: async () => ({
-        jobHash: 'hash123',
-        action: 'positive',
+        jobHash: "hash123",
+        action: "positive",
       }),
     } as NextRequest;
 
@@ -40,12 +40,12 @@ describe('POST /api/feedback/enhanced', () => {
     expect(response.status).toBeGreaterThanOrEqual(400);
   });
 
-  it('should call getDatabaseClient', async () => {
+  it("should call getDatabaseClient", async () => {
     const req = {
       json: async () => ({
-        email: 'test@example.com',
-        jobHash: 'hash123',
-        action: 'positive',
+        email: "test@example.com",
+        jobHash: "hash123",
+        action: "positive",
       }),
     } as NextRequest;
 
@@ -53,4 +53,3 @@ describe('POST /api/feedback/enhanced', () => {
     expect(getDatabaseClient).toHaveBeenCalled();
   });
 });
-

@@ -3,12 +3,12 @@
  * Tests enhanced feedback collection (73 statements)
  */
 
-import { POST, GET } from '@/app/api/feedback/enhanced/route';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { GET, POST } from "@/app/api/feedback/enhanced/route";
 
-jest.mock('@/Utils/supabase');
+jest.mock("@/Utils/supabase");
 
-describe('Feedback Enhanced API Route', () => {
+describe("Feedback Enhanced API Route", () => {
   let mockRequest: NextRequest;
   let mockSupabase: any;
 
@@ -16,9 +16,9 @@ describe('Feedback Enhanced API Route', () => {
     jest.clearAllMocks();
 
     mockRequest = {
-      method: 'POST',
+      method: "POST",
       json: jest.fn(),
-      headers: new Headers()
+      headers: new Headers(),
     } as any;
 
     mockSupabase = {
@@ -29,27 +29,27 @@ describe('Feedback Enhanced API Route', () => {
       order: jest.fn().mockReturnThis(),
       limit: jest.fn().mockResolvedValue({
         data: [],
-        error: null
+        error: null,
       }),
       single: jest.fn().mockResolvedValue({
-        data: { id: 1, title: 'Job' },
-        error: null
-      })
+        data: { id: 1, title: "Job" },
+        error: null,
+      }),
     };
 
-    const { getSupabaseClient } = require('@/Utils/supabase');
+    const { getSupabaseClient } = require("@/Utils/supabase");
     getSupabaseClient.mockReturnValue(mockSupabase);
   });
 
-  describe('POST /api/feedback/enhanced', () => {
-    it('should record enhanced feedback', async () => {
+  describe("POST /api/feedback/enhanced", () => {
+    it("should record enhanced feedback", async () => {
       mockRequest.json.mockResolvedValue({
-        jobHash: 'hash123',
-        email: 'user@example.com',
-        feedbackType: 'thumbs_up',
-        verdict: 'positive',
+        jobHash: "hash123",
+        email: "user@example.com",
+        feedbackType: "thumbs_up",
+        verdict: "positive",
         relevanceScore: 5,
-        source: 'web'
+        source: "web",
       });
 
       mockSupabase.insert.mockResolvedValue({ error: null });
@@ -61,9 +61,9 @@ describe('Feedback Enhanced API Route', () => {
       expect(data.success).toBe(true);
     });
 
-    it('should validate required fields', async () => {
+    it("should validate required fields", async () => {
       mockRequest.json.mockResolvedValue({
-        email: 'user@example.com'
+        email: "user@example.com",
         // Missing jobHash and feedbackType
       });
 
@@ -72,11 +72,11 @@ describe('Feedback Enhanced API Route', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should validate feedback type', async () => {
+    it("should validate feedback type", async () => {
       mockRequest.json.mockResolvedValue({
-        jobHash: 'hash123',
-        email: 'user@example.com',
-        feedbackType: 'invalid_type'
+        jobHash: "hash123",
+        email: "user@example.com",
+        feedbackType: "invalid_type",
       });
 
       const response = await POST(mockRequest);
@@ -84,11 +84,11 @@ describe('Feedback Enhanced API Route', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should infer verdict from feedback type', async () => {
+    it("should infer verdict from feedback type", async () => {
       mockRequest.json.mockResolvedValue({
-        jobHash: 'hash123',
-        email: 'user@example.com',
-        feedbackType: 'save'
+        jobHash: "hash123",
+        email: "user@example.com",
+        feedbackType: "save",
         // No verdict provided
       });
 
@@ -99,12 +99,12 @@ describe('Feedback Enhanced API Route', () => {
       expect(response.status).toBe(200);
     });
 
-    it('should record dwell time', async () => {
+    it("should record dwell time", async () => {
       mockRequest.json.mockResolvedValue({
-        jobHash: 'hash123',
-        email: 'user@example.com',
-        feedbackType: 'dwell',
-        dwellTimeMs: 5000
+        jobHash: "hash123",
+        email: "user@example.com",
+        feedbackType: "dwell",
+        dwellTimeMs: 5000,
       });
 
       mockSupabase.insert.mockResolvedValue({ error: null });
@@ -114,15 +114,15 @@ describe('Feedback Enhanced API Route', () => {
       expect(response.status).toBe(200);
     });
 
-    it('should handle database errors', async () => {
+    it("should handle database errors", async () => {
       mockRequest.json.mockResolvedValue({
-        jobHash: 'hash123',
-        email: 'user@example.com',
-        feedbackType: 'thumbs_up'
+        jobHash: "hash123",
+        email: "user@example.com",
+        feedbackType: "thumbs_up",
       });
 
       mockSupabase.insert.mockResolvedValue({
-        error: { message: 'Database error' }
+        error: { message: "Database error" },
       });
 
       const response = await POST(mockRequest);
@@ -131,23 +131,24 @@ describe('Feedback Enhanced API Route', () => {
     });
   });
 
-  describe('GET /api/feedback/enhanced', () => {
+  describe("GET /api/feedback/enhanced", () => {
     beforeEach(() => {
-      mockRequest.method = 'GET';
-      mockRequest.url = 'https://example.com/api/feedback/enhanced?email=user@example.com&limit=50';
+      mockRequest.method = "GET";
+      mockRequest.url =
+        "https://example.com/api/feedback/enhanced?email=user@example.com&limit=50";
     });
 
-    it('should retrieve user feedback history', async () => {
+    it("should retrieve user feedback history", async () => {
       mockSupabase.limit.mockResolvedValue({
         data: [
           {
             id: 1,
-            user_email: 'user@example.com',
-            job_hash: 'hash123',
-            feedback_type: 'thumbs_up'
-          }
+            user_email: "user@example.com",
+            job_hash: "hash123",
+            feedback_type: "thumbs_up",
+          },
         ],
-        error: null
+        error: null,
       });
 
       const response = await GET(mockRequest);
@@ -158,16 +159,17 @@ describe('Feedback Enhanced API Route', () => {
       expect(data.feedback).toBeDefined();
     });
 
-    it('should require email parameter', async () => {
-      mockRequest.url = 'https://example.com/api/feedback/enhanced';
+    it("should require email parameter", async () => {
+      mockRequest.url = "https://example.com/api/feedback/enhanced";
 
       const response = await GET(mockRequest);
 
       expect(response.status).toBe(400);
     });
 
-    it('should respect limit parameter', async () => {
-      mockRequest.url = 'https://example.com/api/feedback/enhanced?email=user@example.com&limit=25';
+    it("should respect limit parameter", async () => {
+      mockRequest.url =
+        "https://example.com/api/feedback/enhanced?email=user@example.com&limit=25";
 
       await GET(mockRequest);
 
@@ -175,4 +177,3 @@ describe('Feedback Enhanced API Route', () => {
     });
   });
 });
-

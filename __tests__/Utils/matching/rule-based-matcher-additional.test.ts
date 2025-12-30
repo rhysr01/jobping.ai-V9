@@ -1,23 +1,27 @@
+import type { Job } from "@/scrapers/types";
 import {
-  getMatchQuality,
-  generateMatchExplanation,
   categorizeMatches,
-  performRobustMatching,
+  generateMatchExplanation,
   generateRobustFallbackMatches,
-} from '@/Utils/matching/rule-based-matcher.service';
-import type { Job } from '@/scrapers/types';
-import type { UserPreferences, MatchResult, MatchScore } from '@/Utils/matching/types';
+  getMatchQuality,
+  performRobustMatching,
+} from "@/Utils/matching/rule-based-matcher.service";
+import type {
+  MatchResult,
+  MatchScore,
+  UserPreferences,
+} from "@/Utils/matching/types";
 
-describe('rule-based-matcher additional functions', () => {
+describe("rule-based-matcher additional functions", () => {
   const mockJob: Job = {
-    job_hash: 'test-hash',
-    title: 'Software Engineer',
-    company: 'Test Company',
-    location: 'London, UK',
-    description: 'Looking for a junior developer',
-    job_url: 'https://example.com/job',
-    source: 'test',
-    categories: ['early-career', 'software'],
+    job_hash: "test-hash",
+    title: "Software Engineer",
+    company: "Test Company",
+    location: "London, UK",
+    description: "Looking for a junior developer",
+    job_url: "https://example.com/job",
+    source: "test",
+    categories: ["early-career", "software"],
     is_active: true,
     is_graduate: false,
     is_internship: false,
@@ -26,14 +30,14 @@ describe('rule-based-matcher additional functions', () => {
     original_posted_date: new Date().toISOString(),
     last_seen_at: new Date().toISOString(),
     scrape_timestamp: new Date().toISOString(),
-    experience_required: '',
-    work_environment: 'remote',
+    experience_required: "",
+    work_environment: "remote",
   };
 
   const mockUser: UserPreferences = {
-    email: 'test@example.com',
-    career_path: ['tech'],
-    target_cities: ['London'],
+    email: "test@example.com",
+    career_path: ["tech"],
+    target_cities: ["London"],
   };
 
   const mockScore: MatchScore = {
@@ -46,66 +50,78 @@ describe('rule-based-matcher additional functions', () => {
     timing: 75,
   };
 
-  describe('getMatchQuality', () => {
-    it('should return excellent for high scores', () => {
-      expect(getMatchQuality(90)).toBe('excellent');
-      expect(getMatchQuality(100)).toBe('excellent');
+  describe("getMatchQuality", () => {
+    it("should return excellent for high scores", () => {
+      expect(getMatchQuality(90)).toBe("excellent");
+      expect(getMatchQuality(100)).toBe("excellent");
     });
 
-    it('should return good for medium-high scores', () => {
-      expect(getMatchQuality(75)).toBe('good');
-      expect(getMatchQuality(80)).toBe('good');
+    it("should return good for medium-high scores", () => {
+      expect(getMatchQuality(75)).toBe("good");
+      expect(getMatchQuality(80)).toBe("good");
     });
 
-    it('should return fair for medium scores', () => {
-      expect(getMatchQuality(60)).toBe('fair');
-      expect(getMatchQuality(65)).toBe('fair');
+    it("should return fair for medium scores", () => {
+      expect(getMatchQuality(60)).toBe("fair");
+      expect(getMatchQuality(65)).toBe("fair");
     });
 
-    it('should return low for low scores', () => {
-      expect(getMatchQuality(40)).toBe('low');
-      expect(getMatchQuality(30)).toBe('low');
+    it("should return low for low scores", () => {
+      expect(getMatchQuality(40)).toBe("low");
+      expect(getMatchQuality(30)).toBe("low");
     });
   });
 
-  describe('generateMatchExplanation', () => {
-    it('should generate explanation with reasons', () => {
-      const explanation = generateMatchExplanation(mockJob, mockScore, mockUser);
+  describe("generateMatchExplanation", () => {
+    it("should generate explanation with reasons", () => {
+      const explanation = generateMatchExplanation(
+        mockJob,
+        mockScore,
+        mockUser,
+      );
       expect(explanation.reason).toBeDefined();
       expect(explanation.tags).toBeDefined();
-      expect(typeof explanation.reason).toBe('string');
-      expect(typeof explanation.tags).toBe('string');
+      expect(typeof explanation.reason).toBe("string");
+      expect(typeof explanation.tags).toBe("string");
     });
 
-    it('should include location match in explanation when applicable', () => {
+    it("should include location match in explanation when applicable", () => {
       const londonJob = {
         ...mockJob,
-        location: 'London, UK',
-        city: 'London',
+        location: "London, UK",
+        city: "London",
       };
-      const explanation = generateMatchExplanation(londonJob, mockScore, mockUser);
+      const explanation = generateMatchExplanation(
+        londonJob,
+        mockScore,
+        mockUser,
+      );
       expect(explanation.reason).toBeDefined();
       expect(explanation.reason.length).toBeGreaterThan(0);
     });
 
-    it('should generate explanation for any job', () => {
-      const explanation = generateMatchExplanation(mockJob, mockScore, mockUser);
+    it("should generate explanation for any job", () => {
+      const explanation = generateMatchExplanation(
+        mockJob,
+        mockScore,
+        mockUser,
+      );
       expect(explanation.reason).toBeDefined();
       expect(explanation.reason.length).toBeGreaterThan(0);
     });
   });
 
-  describe('categorizeMatches', () => {
-    it('should categorize confident matches', () => {
+  describe("categorizeMatches", () => {
+    it("should categorize confident matches", () => {
       const matches: MatchResult[] = [
         {
           job: mockJob,
           match_score: 85,
-          match_reason: 'Good match',
+          match_reason: "Good match",
           confidence_score: 0.8,
-          match_quality: 'good',
+          match_quality: "good",
           score_breakdown: mockScore,
-          provenance: { match_algorithm: 'rules' },
+          provenance: { match_algorithm: "rules" },
         },
       ];
       const categorized = categorizeMatches(matches);
@@ -113,16 +129,16 @@ describe('rule-based-matcher additional functions', () => {
       expect(categorized.promising).toHaveLength(0);
     });
 
-    it('should categorize promising matches', () => {
+    it("should categorize promising matches", () => {
       const matches: MatchResult[] = [
         {
           job: mockJob,
           match_score: 65,
-          match_reason: 'Fair match',
+          match_reason: "Fair match",
           confidence_score: 0.6,
-          match_quality: 'fair',
+          match_quality: "fair",
           score_breakdown: mockScore,
-          provenance: { match_algorithm: 'rules' },
+          provenance: { match_algorithm: "rules" },
         },
       ];
       const categorized = categorizeMatches(matches);
@@ -130,16 +146,16 @@ describe('rule-based-matcher additional functions', () => {
       expect(categorized.promising).toHaveLength(1);
     });
 
-    it('should exclude low-scoring matches', () => {
+    it("should exclude low-scoring matches", () => {
       const matches: MatchResult[] = [
         {
           job: mockJob,
           match_score: 50,
-          match_reason: 'Low match',
+          match_reason: "Low match",
           confidence_score: 0.5,
-          match_quality: 'low',
+          match_quality: "low",
           score_breakdown: mockScore,
-          provenance: { match_algorithm: 'rules' },
+          provenance: { match_algorithm: "rules" },
         },
       ];
       const categorized = categorizeMatches(matches);
@@ -147,25 +163,25 @@ describe('rule-based-matcher additional functions', () => {
       expect(categorized.promising).toHaveLength(0);
     });
 
-    it('should handle mixed matches', () => {
+    it("should handle mixed matches", () => {
       const matches: MatchResult[] = [
         {
           job: mockJob,
           match_score: 85,
-          match_reason: 'Good',
+          match_reason: "Good",
           confidence_score: 0.8,
-          match_quality: 'good',
+          match_quality: "good",
           score_breakdown: mockScore,
-          provenance: { match_algorithm: 'rules' },
+          provenance: { match_algorithm: "rules" },
         },
         {
           job: mockJob,
           match_score: 65,
-          match_reason: 'Fair',
+          match_reason: "Fair",
           confidence_score: 0.6,
-          match_quality: 'fair',
+          match_quality: "fair",
           score_breakdown: mockScore,
-          provenance: { match_algorithm: 'rules' },
+          provenance: { match_algorithm: "rules" },
         },
       ];
       const categorized = categorizeMatches(matches);
@@ -174,19 +190,19 @@ describe('rule-based-matcher additional functions', () => {
     });
   });
 
-  describe('performRobustMatching', () => {
-    it('should perform matching and return results', () => {
+  describe("performRobustMatching", () => {
+    it("should perform matching and return results", () => {
       const jobs: Job[] = [
         {
           ...mockJob,
-          categories: ['early-career', 'software', 'career:tech', 'loc:london'],
+          categories: ["early-career", "software", "career:tech", "loc:london"],
         },
       ];
       const matches = performRobustMatching(jobs, mockUser);
       expect(Array.isArray(matches)).toBe(true);
     });
 
-    it('should filter out jobs that fail hard gates', () => {
+    it("should filter out jobs that fail hard gates", () => {
       const jobs: Job[] = [
         {
           ...mockJob,
@@ -197,64 +213,67 @@ describe('rule-based-matcher additional functions', () => {
       expect(matches).toHaveLength(0);
     });
 
-    it('should sort matches by score', () => {
+    it("should sort matches by score", () => {
       const jobs: Job[] = [
         {
           ...mockJob,
-          categories: ['early-career', 'software'],
-          job_hash: 'hash1',
+          categories: ["early-career", "software"],
+          job_hash: "hash1",
         },
         {
           ...mockJob,
-          categories: ['early-career', 'software'],
-          job_hash: 'hash2',
+          categories: ["early-career", "software"],
+          job_hash: "hash2",
         },
       ];
       const matches = performRobustMatching(jobs, mockUser);
       if (matches.length > 1) {
-        expect(matches[0].match_score).toBeGreaterThanOrEqual(matches[1].match_score);
+        expect(matches[0].match_score).toBeGreaterThanOrEqual(
+          matches[1].match_score,
+        );
       }
     });
 
-    it('should include provenance', () => {
+    it("should include provenance", () => {
       const jobs: Job[] = [
         {
           ...mockJob,
-          categories: ['early-career', 'software'],
+          categories: ["early-career", "software"],
         },
       ];
       const matches = performRobustMatching(jobs, mockUser);
       if (matches.length > 0) {
-        expect(matches[0].provenance.match_algorithm).toBe('rules');
+        expect(matches[0].provenance.match_algorithm).toBe("rules");
       }
     });
   });
 
-  describe('generateRobustFallbackMatches', () => {
-    it('should call performRobustMatching', () => {
+  describe("generateRobustFallbackMatches", () => {
+    it("should call performRobustMatching", () => {
       const jobs: Job[] = [
         {
           ...mockJob,
-          categories: ['early-career', 'software'],
+          categories: ["early-career", "software"],
         },
       ];
       const matches = generateRobustFallbackMatches(jobs, mockUser);
       expect(Array.isArray(matches)).toBe(true);
     });
 
-    it('should return matches with rule-based provenance', () => {
+    it("should return matches with rule-based provenance", () => {
       const jobs: Job[] = [
         {
           ...mockJob,
-          categories: ['early-career', 'software'],
+          categories: ["early-career", "software"],
         },
       ];
       const matches = generateRobustFallbackMatches(jobs, mockUser);
       if (matches.length > 0) {
-        expect(matches[0].provenance.match_algorithm).toBe('rules');
-        expect(matches[0].provenance.fallback_reason).toBe('Rule-based matching');
+        expect(matches[0].provenance.match_algorithm).toBe("rules");
+        expect(matches[0].provenance.fallback_reason).toBe(
+          "Rule-based matching",
+        );
       }
     });
   });
 });
-

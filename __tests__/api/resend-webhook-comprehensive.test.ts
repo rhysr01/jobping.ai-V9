@@ -3,31 +3,31 @@
  * Tests Resend webhook event handling
  */
 
-import { POST } from '@/app/api/resend-webhook/route';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { POST } from "@/app/api/resend-webhook/route";
 
-describe('Resend Webhook API Route', () => {
+describe("Resend Webhook API Route", () => {
   let mockRequest: NextRequest;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     mockRequest = {
-      method: 'POST',
+      method: "POST",
       json: jest.fn(),
-      headers: new Headers()
+      headers: new Headers(),
     } as any;
   });
 
-  describe('POST /api/resend-webhook', () => {
-    it('should process webhook event', async () => {
+  describe("POST /api/resend-webhook", () => {
+    it("should process webhook event", async () => {
       const event = {
-        type: 'email.delivered',
-        id: 'evt_test123',
+        type: "email.delivered",
+        id: "evt_test123",
         data: {
-          email: 'user@example.com',
-          timestamp: new Date().toISOString()
-        }
+          email: "user@example.com",
+          timestamp: new Date().toISOString(),
+        },
       };
 
       mockRequest.json.mockResolvedValue(event);
@@ -39,13 +39,13 @@ describe('Resend Webhook API Route', () => {
       expect(data.ok).toBe(true);
     });
 
-    it('should handle email.bounced event', async () => {
+    it("should handle email.bounced event", async () => {
       const event = {
-        type: 'email.bounced',
-        id: 'evt_bounce123',
+        type: "email.bounced",
+        id: "evt_bounce123",
         data: {
-          email: 'bounced@example.com'
-        }
+          email: "bounced@example.com",
+        },
       };
 
       mockRequest.json.mockResolvedValue(event);
@@ -55,13 +55,13 @@ describe('Resend Webhook API Route', () => {
       expect(response.status).toBe(200);
     });
 
-    it('should handle email.complained event', async () => {
+    it("should handle email.complained event", async () => {
       const event = {
-        type: 'email.complained',
-        id: 'evt_complaint123',
+        type: "email.complained",
+        id: "evt_complaint123",
         data: {
-          email: 'complaint@example.com'
-        }
+          email: "complaint@example.com",
+        },
       };
 
       mockRequest.json.mockResolvedValue(event);
@@ -71,8 +71,8 @@ describe('Resend Webhook API Route', () => {
       expect(response.status).toBe(200);
     });
 
-    it('should handle errors gracefully', async () => {
-      mockRequest.json.mockRejectedValue(new Error('Parse error'));
+    it("should handle errors gracefully", async () => {
+      mockRequest.json.mockRejectedValue(new Error("Parse error"));
 
       const response = await POST(mockRequest);
       const data = await response.json();
@@ -81,13 +81,13 @@ describe('Resend Webhook API Route', () => {
       expect(data.error).toBeDefined();
     });
 
-    it('should log webhook events', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+    it("should log webhook events", async () => {
+      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
 
       const event = {
-        type: 'email.delivered',
-        id: 'evt_test123',
-        data: {}
+        type: "email.delivered",
+        id: "evt_test123",
+        data: {},
       };
 
       mockRequest.json.mockResolvedValue(event);
@@ -95,15 +95,14 @@ describe('Resend Webhook API Route', () => {
       await POST(mockRequest);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        '[RESEND_WEBHOOK]',
+        "[RESEND_WEBHOOK]",
         expect.objectContaining({
-          type: 'email.delivered',
-          id: 'evt_test123'
-        })
+          type: "email.delivered",
+          id: "evt_test123",
+        }),
       );
 
       consoleSpy.mockRestore();
     });
   });
 });
-

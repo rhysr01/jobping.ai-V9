@@ -3,28 +3,28 @@
  * Tests scrape endpoint
  */
 
-import { POST, GET } from '@/app/api/scrape/route';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { GET, POST } from "@/app/api/scrape/route";
 
-jest.mock('@/Utils/errorResponse');
+jest.mock("@/Utils/errorResponse");
 
-describe('Scrape API Route', () => {
+describe("Scrape API Route", () => {
   let mockRequest: NextRequest;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     mockRequest = {
-      method: 'POST',
+      method: "POST",
       json: jest.fn(),
-      headers: new Headers()
+      headers: new Headers(),
     } as any;
   });
 
-  describe('POST /api/scrape', () => {
-    it('should return automation message', async () => {
+  describe("POST /api/scrape", () => {
+    it("should return automation message", async () => {
       mockRequest.json.mockResolvedValue({
-        platforms: ['all']
+        platforms: ["all"],
       });
 
       const response = await POST(mockRequest);
@@ -32,31 +32,31 @@ describe('Scrape API Route', () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
-      expect(data.message).toContain('automated');
+      expect(data.message).toContain("automated");
     });
 
-    it('should accept platform parameter', async () => {
+    it("should accept platform parameter", async () => {
       mockRequest.json.mockResolvedValue({
-        platforms: ['reed', 'adzuna']
+        platforms: ["reed", "adzuna"],
       });
 
       const response = await POST(mockRequest);
       const data = await response.json();
 
-      expect(data.platforms).toEqual(['reed', 'adzuna']);
+      expect(data.platforms).toEqual(["reed", "adzuna"]);
     });
 
-    it('should use default platforms if not provided', async () => {
+    it("should use default platforms if not provided", async () => {
       mockRequest.json.mockResolvedValue({});
 
       const response = await POST(mockRequest);
       const data = await response.json();
 
-      expect(data.platforms).toEqual(['all']);
+      expect(data.platforms).toEqual(["all"]);
     });
 
-    it('should handle errors', async () => {
-      mockRequest.json.mockRejectedValue(new Error('Parse error'));
+    it("should handle errors", async () => {
+      mockRequest.json.mockRejectedValue(new Error("Parse error"));
 
       const response = await POST(mockRequest);
 
@@ -64,12 +64,12 @@ describe('Scrape API Route', () => {
     });
   });
 
-  describe('GET /api/scrape', () => {
+  describe("GET /api/scrape", () => {
     beforeEach(() => {
-      mockRequest.method = 'GET';
+      mockRequest.method = "GET";
     });
 
-    it('should return endpoint information', async () => {
+    it("should return endpoint information", async () => {
       const response = await GET();
       const data = await response.json();
 
@@ -79,4 +79,3 @@ describe('Scrape API Route', () => {
     });
   });
 });
-

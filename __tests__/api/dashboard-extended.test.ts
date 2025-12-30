@@ -3,13 +3,13 @@
  * Tests admin dashboard data retrieval
  */
 
-import { GET } from '@/app/api/dashboard/route';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { GET } from "@/app/api/dashboard/route";
 
-jest.mock('@/Utils/databasePool');
-jest.mock('@/Utils/auth/withAuth');
+jest.mock("@/Utils/databasePool");
+jest.mock("@/Utils/auth/withAuth");
 
-describe('Dashboard API Route', () => {
+describe("Dashboard API Route", () => {
   let mockRequest: NextRequest;
   let mockSupabase: any;
 
@@ -17,8 +17,8 @@ describe('Dashboard API Route', () => {
     jest.clearAllMocks();
 
     mockRequest = {
-      method: 'GET',
-      headers: new Headers()
+      method: "GET",
+      headers: new Headers(),
     } as any;
 
     mockSupabase = {
@@ -26,15 +26,15 @@ describe('Dashboard API Route', () => {
       select: jest.fn().mockReturnThis(),
       count: jest.fn().mockResolvedValue({ count: 100, error: null }),
       eq: jest.fn().mockReturnThis(),
-      single: jest.fn()
+      single: jest.fn(),
     };
 
-    const { getDatabaseClient } = require('@/Utils/databasePool');
+    const { getDatabaseClient } = require("@/Utils/databasePool");
     getDatabaseClient.mockReturnValue(mockSupabase);
   });
 
-  describe('GET /api/dashboard', () => {
-    it('should return dashboard statistics', async () => {
+  describe("GET /api/dashboard", () => {
+    it("should return dashboard statistics", async () => {
       const response = await GET(mockRequest);
       const data = await response.json();
 
@@ -42,8 +42,8 @@ describe('Dashboard API Route', () => {
       expect(data).toBeDefined();
     });
 
-    it('should handle database errors', async () => {
-      mockSupabase.count.mockRejectedValue(new Error('DB error'));
+    it("should handle database errors", async () => {
+      mockSupabase.count.mockRejectedValue(new Error("DB error"));
 
       const response = await GET(mockRequest);
 
@@ -51,4 +51,3 @@ describe('Dashboard API Route', () => {
     });
   });
 });
-

@@ -1,20 +1,20 @@
 import {
-  recordMatchMetrics,
   getMatchMetricsSummary,
-  resetMatchMetrics,
   type MatchMetrics,
-} from '@/Utils/matching/metrics.service';
+  recordMatchMetrics,
+  resetMatchMetrics,
+} from "@/Utils/matching/metrics.service";
 
-describe('metrics.service', () => {
+describe("metrics.service", () => {
   beforeEach(() => {
     resetMatchMetrics();
   });
 
-  describe('recordMatchMetrics', () => {
-    it('should record metrics', () => {
+  describe("recordMatchMetrics", () => {
+    it("should record metrics", () => {
       const metrics: MatchMetrics = {
-        userEmail: 'test@example.com',
-        matchType: 'ai_success',
+        userEmail: "test@example.com",
+        matchType: "ai_success",
         matchesGenerated: 5,
         processingTimeMs: 1000,
         aiCostUsd: 0.01,
@@ -25,16 +25,16 @@ describe('metrics.service', () => {
       expect(summary.totalMatches).toBeGreaterThanOrEqual(0);
     });
 
-    it('should accumulate metrics', () => {
+    it("should accumulate metrics", () => {
       recordMatchMetrics({
-        userEmail: 'test1@example.com',
-        matchType: 'ai_success',
+        userEmail: "test1@example.com",
+        matchType: "ai_success",
         matchesGenerated: 5,
         processingTimeMs: 1000,
       });
       recordMatchMetrics({
-        userEmail: 'test2@example.com',
-        matchType: 'ai_success',
+        userEmail: "test2@example.com",
+        matchType: "ai_success",
         matchesGenerated: 3,
         processingTimeMs: 800,
       });
@@ -42,16 +42,16 @@ describe('metrics.service', () => {
       expect(summary.totalMatches).toBeGreaterThanOrEqual(0);
     });
 
-    it('should track different match types', () => {
+    it("should track different match types", () => {
       recordMatchMetrics({
-        userEmail: 'test@example.com',
-        matchType: 'ai_success',
+        userEmail: "test@example.com",
+        matchType: "ai_success",
         matchesGenerated: 5,
         processingTimeMs: 1000,
       });
       recordMatchMetrics({
-        userEmail: 'test@example.com',
-        matchType: 'fallback',
+        userEmail: "test@example.com",
+        matchType: "fallback",
         matchesGenerated: 3,
         processingTimeMs: 500,
       });
@@ -59,10 +59,10 @@ describe('metrics.service', () => {
       expect(summary).toBeDefined();
     });
 
-    it('should handle optional fields', () => {
+    it("should handle optional fields", () => {
       recordMatchMetrics({
-        userEmail: 'test@example.com',
-        matchType: 'ai_success',
+        userEmail: "test@example.com",
+        matchType: "ai_success",
         matchesGenerated: 5,
       });
       const summary = getMatchMetricsSummary();
@@ -70,17 +70,17 @@ describe('metrics.service', () => {
     });
   });
 
-  describe('getMatchMetricsSummary', () => {
-    it('should return metrics summary', () => {
+  describe("getMatchMetricsSummary", () => {
+    it("should return metrics summary", () => {
       const summary = getMatchMetricsSummary();
       expect(summary).toBeDefined();
-      expect(summary).toHaveProperty('totalMatches');
-      expect(summary).toHaveProperty('totalUsers');
-      expect(summary).toHaveProperty('averageMatches');
-      expect(summary).toHaveProperty('averageProcessingTime');
+      expect(summary).toHaveProperty("totalMatches");
+      expect(summary).toHaveProperty("totalUsers");
+      expect(summary).toHaveProperty("averageMatches");
+      expect(summary).toHaveProperty("averageProcessingTime");
     });
 
-    it('should return zero for empty metrics', () => {
+    it("should return zero for empty metrics", () => {
       resetMatchMetrics();
       const summary = getMatchMetricsSummary();
       expect(summary.totalMatches).toBe(0);
@@ -88,16 +88,16 @@ describe('metrics.service', () => {
       expect(summary.averageMatches).toBe(0);
     });
 
-    it('should calculate averages correctly', () => {
+    it("should calculate averages correctly", () => {
       recordMatchMetrics({
-        userEmail: 'test1@example.com',
-        matchType: 'ai_success',
+        userEmail: "test1@example.com",
+        matchType: "ai_success",
         matchesGenerated: 5,
         processingTimeMs: 1000,
       });
       recordMatchMetrics({
-        userEmail: 'test2@example.com',
-        matchType: 'ai_success',
+        userEmail: "test2@example.com",
+        matchType: "ai_success",
         matchesGenerated: 3,
         processingTimeMs: 800,
       });
@@ -107,11 +107,11 @@ describe('metrics.service', () => {
     });
   });
 
-  describe('resetMatchMetrics', () => {
-    it('should reset metrics', () => {
+  describe("resetMatchMetrics", () => {
+    it("should reset metrics", () => {
       recordMatchMetrics({
-        userEmail: 'test@example.com',
-        matchType: 'ai_success',
+        userEmail: "test@example.com",
+        matchType: "ai_success",
         matchesGenerated: 5,
         processingTimeMs: 1000,
       });

@@ -4,22 +4,22 @@
  */
 
 import {
-  validateEmailDeliverability,
   addToBounceSuppressionList,
+  getBounceSuppressionListSize,
+  getComplaintRate,
   isInBounceSuppressionList,
   unsubscribeUser,
-  getBounceSuppressionListSize,
-  getComplaintRate
-} from '@/Utils/email/deliverability';
+  validateEmailDeliverability,
+} from "@/Utils/email/deliverability";
 
-jest.mock('@/Utils/databasePool');
-jest.mock('dns', () => ({
+jest.mock("@/Utils/databasePool");
+jest.mock("dns", () => ({
   promises: {
-    resolveTxt: jest.fn()
-  }
+    resolveTxt: jest.fn(),
+  },
 }));
 
-describe('Email Deliverability', () => {
+describe("Email Deliverability", () => {
   let mockSupabase: any;
 
   beforeEach(() => {
@@ -32,19 +32,21 @@ describe('Email Deliverability', () => {
       single: jest.fn(),
       insert: jest.fn().mockResolvedValue({ error: null }),
       update: jest.fn().mockResolvedValue({ error: null }),
-      upsert: jest.fn().mockResolvedValue({ error: null })
+      upsert: jest.fn().mockResolvedValue({ error: null }),
     };
 
-    const { getDatabaseClient } = require('@/Utils/databasePool');
+    const { getDatabaseClient } = require("@/Utils/databasePool");
     getDatabaseClient.mockReturnValue(mockSupabase);
 
-    process.env.EMAIL_DOMAIN = 'getjobping.com';
+    process.env.EMAIL_DOMAIN = "getjobping.com";
   });
 
-  describe('validateEmailDeliverability', () => {
-    it('should validate SPF record', async () => {
-      const dns = require('dns').promises;
-      dns.resolveTxt.mockResolvedValue([['v=spf1 include:_spf.resend.com ~all']]);
+  describe("validateEmailDeliverability", () => {
+    it("should validate SPF record", async () => {
+      const dns = require("dns").promises;
+      dns.resolveTxt.mockResolvedValue([
+        ["v=spf1 include:_spf.resend.com ~all"],
+      ]);
 
       const result = await validateEmailDeliverability();
 
@@ -53,32 +55,32 @@ describe('Email Deliverability', () => {
       expect(result.recommendations).toBeDefined();
     });
 
-    it('should detect missing SPF record', async () => {
-      const dns = require('dns').promises;
-      dns.resolveTxt.mockRejectedValue(new Error('Not found'));
+    it("should detect missing SPF record", async () => {
+      const dns = require("dns").promises;
+      dns.resolveTxt.mockRejectedValue(new Error("Not found"));
 
       const result = await validateEmailDeliverability();
 
-      expect(result.issues.some(i => i.includes('SPF'))).toBe(true);
+      expect(result.issues.some((i) => i.includes("SPF"))).toBe(true);
     });
 
-    it('should validate DKIM record', async () => {
-      const dns = require('dns').promises;
+    it("should validate DKIM record", async () => {
+      const dns = require("dns").promises;
       dns.resolveTxt
         .mockResolvedValueOnce([]) // SPF
-        .mockResolvedValueOnce([['v=DKIM1 k=rsa p=...']]); // DKIM
+        .mockResolvedValueOnce([["v=DKIM1 k=rsa p=..."]]); // DKIM
 
       const result = await validateEmailDeliverability();
 
       expect(result).toBeDefined();
     });
 
-    it('should validate DMARC record', async () => {
-      const dns = require('dns').promises;
+    it("should validate DMARC record", async () => {
+      const dns = require("dns").promises;
       dns.resolveTxt
         .mockResolvedValueOnce([]) // SPF
         .mockResolvedValueOnce([]) // DKIM
-        .mockResolvedValueOnce([['v=DMARC1; p=quarantine']]); // DMARC
+        .mockResolvedValueOnce([["v=DMARC1; p=quarantine"]]); // DMARC
 
       const result = await validateEmailDeliverability();
 
@@ -86,112 +88,118 @@ describe('Email Deliverability', () => {
     });
   });
 
-  describe('addToBounceSuppressionList', () => {
-    it('should add email to suppression list', async () => {
+  describe("addToBounceSuppressionList", () => {
+    it("should add email to suppression list", async () => {
       mockSupabase.single.mockResolvedValue({ data: null, error: null });
 
       const result = await addToBounceSuppressionList(
-        'bounced@example.com',
-        'hard',
-        'Invalid recipient'
+        "bounced@example.com",
+        "hard",
+        "Invalid recipient",
       );
 
       expect(result).toBe(true);
       expect(mockSupabase.insert).toHaveBeenCalled();
     });
 
-    it('should update existing suppression record', async () => {
+    it("should update existing suppression record", async () => {
       mockSupabase.single.mockResolvedValue({
-        data: { email: 'bounced@example.com', retry_count: 1 },
-        error: null
+        data: { email: "bounced@example.com", retry_count: 1 },
+        error: null,
       });
 
       const result = await addToBounceSuppressionList(
-        'bounced@example.com',
-        'hard',
-        'Invalid recipient'
+        "bounced@example.com",
+        "hard",
+        "Invalid recipient",
       );
 
       expect(result).toBe(true);
       expect(mockSupabase.update).toHaveBeenCalled();
     });
 
-    it('should unsubscribe on hard bounce', async () => {
+    it("should unsubscribe on hard bounce", async () => {
       mockSupabase.single.mockResolvedValue({ data: null, error: null });
       mockSupabase.eq.mockReturnThis();
 
       await addToBounceSuppressionList(
-        'bounced@example.com',
-        'hard',
-        'Invalid recipient'
+        "bounced@example.com",
+        "hard",
+        "Invalid recipient",
       );
 
-      expect(mockSupabase.from).toHaveBeenCalledWith('users');
+      expect(mockSupabase.from).toHaveBeenCalledWith("users");
     });
   });
 
-  describe('isInBounceSuppressionList', () => {
-    it('should return true for hard bounce', async () => {
+  describe("isInBounceSuppressionList", () => {
+    it("should return true for hard bounce", async () => {
       mockSupabase.single.mockResolvedValue({
         data: {
-          email: 'bounced@example.com',
-          bounce_type: 'hard',
-          retry_count: 1
+          email: "bounced@example.com",
+          bounce_type: "hard",
+          retry_count: 1,
         },
-        error: null
+        error: null,
       });
 
-      const result = await isInBounceSuppressionList('bounced@example.com');
+      const result = await isInBounceSuppressionList("bounced@example.com");
 
       expect(result).toBe(true);
     });
 
-    it('should return true for soft bounce with high retry count', async () => {
+    it("should return true for soft bounce with high retry count", async () => {
       mockSupabase.single.mockResolvedValue({
         data: {
-          email: 'bounced@example.com',
-          bounce_type: 'soft',
-          retry_count: 3
+          email: "bounced@example.com",
+          bounce_type: "soft",
+          retry_count: 3,
         },
-        error: null
+        error: null,
       });
 
-      const result = await isInBounceSuppressionList('bounced@example.com');
+      const result = await isInBounceSuppressionList("bounced@example.com");
 
       expect(result).toBe(true);
     });
 
-    it('should return false for email not in list', async () => {
+    it("should return false for email not in list", async () => {
       mockSupabase.single.mockResolvedValue({ data: null, error: null });
 
-      const result = await isInBounceSuppressionList('test@example.com');
+      const result = await isInBounceSuppressionList("test@example.com");
 
       expect(result).toBe(false);
     });
   });
 
-  describe('unsubscribeUser', () => {
-    it('should unsubscribe user', async () => {
+  describe("unsubscribeUser", () => {
+    it("should unsubscribe user", async () => {
       mockSupabase.eq.mockReturnThis();
 
-      const result = await unsubscribeUser('user@example.com', 'User requested');
+      const result = await unsubscribeUser(
+        "user@example.com",
+        "User requested",
+      );
 
       expect(result).toBe(true);
       expect(mockSupabase.update).toHaveBeenCalled();
     });
 
-    it('should record unsubscribe', async () => {
+    it("should record unsubscribe", async () => {
       mockSupabase.eq.mockReturnThis();
 
-      await unsubscribeUser('user@example.com');
+      await unsubscribeUser("user@example.com");
 
       expect(mockSupabase.insert).toHaveBeenCalled();
     });
   });
 
-  describe('getBounceSuppressionListSize', () => {
-    it('should return suppression list size', async () => {
-      mockSupabase.select.mockResolvedValue({ data: [{}, {}, {}], error: null });
+  describe("getBounceSuppressionListSize", () => {
+    it("should return suppression list size", async () => {
+      mockSupabase.select.mockResolvedValue({
+        data: [{}, {}, {}],
+        error: null,
+      });
 
       const size = await getBounceSuppressionListSize();
 
@@ -199,8 +207,8 @@ describe('Email Deliverability', () => {
     });
   });
 
-  describe('getComplaintRate', () => {
-    it('should calculate complaint rate', async () => {
+  describe("getComplaintRate", () => {
+    it("should calculate complaint rate", async () => {
       mockSupabase.select
         .mockResolvedValueOnce({ data: Array(100), error: null }) // Total emails
         .mockResolvedValueOnce({ data: Array(5), error: null }); // Complaints
@@ -212,4 +220,3 @@ describe('Email Deliverability', () => {
     });
   });
 });
-

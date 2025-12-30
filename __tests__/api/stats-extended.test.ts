@@ -3,12 +3,12 @@
  * Tests statistics endpoint
  */
 
-import { GET } from '@/app/api/stats/route';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { GET } from "@/app/api/stats/route";
 
-jest.mock('@/Utils/databasePool');
+jest.mock("@/Utils/databasePool");
 
-describe('Stats API Route', () => {
+describe("Stats API Route", () => {
   let mockRequest: NextRequest;
   let mockSupabase: any;
 
@@ -16,22 +16,22 @@ describe('Stats API Route', () => {
     jest.clearAllMocks();
 
     mockRequest = {
-      method: 'GET',
-      headers: new Headers()
+      method: "GET",
+      headers: new Headers(),
     } as any;
 
     mockSupabase = {
       from: jest.fn().mockReturnThis(),
       select: jest.fn().mockReturnThis(),
-      count: jest.fn().mockResolvedValue({ count: 50, error: null })
+      count: jest.fn().mockResolvedValue({ count: 50, error: null }),
     };
 
-    const { getDatabaseClient } = require('@/Utils/databasePool');
+    const { getDatabaseClient } = require("@/Utils/databasePool");
     getDatabaseClient.mockReturnValue(mockSupabase);
   });
 
-  describe('GET /api/stats', () => {
-    it('should return statistics', async () => {
+  describe("GET /api/stats", () => {
+    it("should return statistics", async () => {
       const response = await GET(mockRequest);
       const data = await response.json();
 
@@ -39,19 +39,18 @@ describe('Stats API Route', () => {
       expect(data).toBeDefined();
     });
 
-    it('should include user statistics', async () => {
+    it("should include user statistics", async () => {
       const response = await GET(mockRequest);
       const data = await response.json();
 
-      expect(data).toHaveProperty('users');
+      expect(data).toHaveProperty("users");
     });
 
-    it('should include job statistics', async () => {
+    it("should include job statistics", async () => {
       const response = await GET(mockRequest);
       const data = await response.json();
 
-      expect(data).toHaveProperty('jobs');
+      expect(data).toHaveProperty("jobs");
     });
   });
 });
-

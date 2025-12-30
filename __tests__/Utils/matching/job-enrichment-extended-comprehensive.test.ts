@@ -5,30 +5,30 @@
 
 import {
   enrichJobData,
+  getJobMetadata,
   normalizeJobData,
-  getJobMetadata
-} from '@/Utils/matching/job-enrichment.service';
+} from "@/Utils/matching/job-enrichment.service";
 
-describe('Job Enrichment Service', () => {
-  describe('enrichJobData', () => {
-    it('should enrich job data', () => {
+describe("Job Enrichment Service", () => {
+  describe("enrichJobData", () => {
+    it("should enrich job data", () => {
       const job = {
-        id: 'job1',
-        title: 'Software Engineer',
-        company: 'Tech Corp',
-        location: 'London'
+        id: "job1",
+        title: "Software Engineer",
+        company: "Tech Corp",
+        location: "London",
       };
 
       const enriched = enrichJobData(job as any);
 
       expect(enriched).toBeDefined();
-      expect(enriched.title).toBe('Software Engineer');
+      expect(enriched.title).toBe("Software Engineer");
     });
 
-    it('should add metadata', () => {
+    it("should add metadata", () => {
       const job = {
-        id: 'job1',
-        title: 'Engineer'
+        id: "job1",
+        title: "Engineer",
       };
 
       const enriched = enrichJobData(job as any);
@@ -37,26 +37,26 @@ describe('Job Enrichment Service', () => {
     });
   });
 
-  describe('normalizeJobData', () => {
-    it('should normalize job data', () => {
+  describe("normalizeJobData", () => {
+    it("should normalize job data", () => {
       const job = {
-        title: '  Software Engineer  ',
-        company: 'Tech Corp',
-        location: 'London, UK'
+        title: "  Software Engineer  ",
+        company: "Tech Corp",
+        location: "London, UK",
       };
 
       const normalized = normalizeJobData(job as any);
 
-      expect(normalized.title).toBe('Software Engineer');
+      expect(normalized.title).toBe("Software Engineer");
     });
   });
 
-  describe('getJobMetadata', () => {
-    it('should extract job metadata', () => {
+  describe("getJobMetadata", () => {
+    it("should extract job metadata", () => {
       const job = {
-        id: 'job1',
-        title: 'Engineer',
-        description: 'Great opportunity'
+        id: "job1",
+        title: "Engineer",
+        description: "Great opportunity",
       };
 
       const metadata = getJobMetadata(job as any);
@@ -65,4 +65,3 @@ describe('Job Enrichment Service', () => {
     });
   });
 });
-

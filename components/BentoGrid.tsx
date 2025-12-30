@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { FileJson, Cpu, Brain, CheckCircle2 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 
 const FeatureCard = ({
 	title,
@@ -79,13 +80,28 @@ export default function HowItWorksBento() {
 						icon={FileJson}
 						className="md:col-span-1"
 					>
-						<div className="mt-4 flex items-center gap-2 rounded-full bg-zinc-900/50 p-2 border border-zinc-800/50">
-							<div className="h-2 w-full rounded-full bg-zinc-800 overflow-hidden">
-								<div className="h-full w-[70%] bg-purple-500 animate-pulse" />
+						<div className="mt-4 space-y-2">
+							<div className="relative h-2 bg-zinc-900 rounded-full overflow-hidden border border-white/5">
+								{/* The Scanning Effect */}
+								<motion.div
+									animate={{ x: ["-100%", "100%"] }}
+									transition={{
+										repeat: Infinity,
+										duration: 2,
+										ease: "linear",
+									}}
+									className="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-50"
+								/>
+								{/* The Actual Progress */}
+								<div className="h-full bg-purple-600 w-[75%] shadow-[0_0_15px_rgba(168,85,247,0.4)]" />
 							</div>
-							<span className="text-[10px] text-zinc-500 font-mono">
-								PARSING...
-							</span>
+							{/* Status Label */}
+							<div className="mt-2 flex items-center gap-2">
+								<div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+								<span className="text-[10px] font-mono text-purple-400 uppercase">
+									Extracting Tech Stack...
+								</span>
+							</div>
 						</div>
 					</FeatureCard>
 

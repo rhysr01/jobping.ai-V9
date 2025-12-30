@@ -3,111 +3,110 @@
  * Processes jobs in batches and stores embeddings
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getDatabaseClient } from '@/Utils/databasePool';
-import { embeddingService } from '@/Utils/matching/embedding.service';
-import { verifyHMAC } from '@/Utils/auth/hmac';
+import { type NextRequest, NextResponse } from "next/server";
+import { withAxiom } from "next-axiom";
+import { verifyHMAC } from "@/Utils/auth/hmac";
+import { getDatabaseClient } from "@/Utils/databasePool";
+import { embeddingService } from "@/Utils/matching/embedding.service";
 
-export async function POST(req: NextRequest) {
-  try {
-    // Verify HMAC signature
-    const signature = req.headers.get('x-jobping-signature');
-    const timestamp = req.headers.get('x-jobping-timestamp');
-    
-    if (!signature || !timestamp) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
+export const POST = withAxiom(async function POST(req: NextRequest) {
+	try {
+		// Verify HMAC signature
+		const signature = req.headers.get("x-jobping-signature");
+		const timestamp = req.headers.get("x-jobping-timestamp");
 
-    const bodyText = await req.text();
-    const hmacResult = verifyHMAC(
-      bodyText,
-      signature,
-      parseInt(timestamp)
-    );
-    
-    if (!hmacResult.isValid) {
-      return NextResponse.json(
-        { error: 'Invalid HMAC signature' },
-        { status: 401 }
-      );
-    }
+		if (!signature || !timestamp) {
+			return NextResponse.json(
+				{ error: "Authentication required" },
+				{ status: 401 },
+			);
+		}
 
-    const body = JSON.parse(bodyText);
-    const { jobLimit = 1000 } = body;
-    // batchSize is reserved for future use
+		const bodyText = await req.text();
+		const hmacResult = verifyHMAC(bodyText, signature, parseInt(timestamp, 10));
 
-    const supabase = getDatabaseClient();
+		if (!hmacResult.isValid) {
+			return NextResponse.json(
+				{ error: "Invalid HMAC signature" },
+				{ status: 401 },
+			);
+		}
 
-    // Get jobs without embeddings
-    const { data: jobs, error: fetchError } = await supabase
-      .from('jobs')
-      .select('*')
-      .eq('is_active', true)
-      .is('embedding', null)
-      .limit(jobLimit);
+		const body = JSON.parse(bodyText);
+		const { jobLimit = 1000 } = body;
+		// batchSize is reserved for future use
 
-    if (fetchError) {
-      return NextResponse.json(
-        { error: 'Failed to fetch jobs', details: fetchError },
-        { status: 500 }
-      );
-    }
+		const supabase = getDatabaseClient();
 
-    if (!jobs || jobs.length === 0) {
-      return NextResponse.json({
-        message: 'No jobs need embeddings',
-        processed: 0
-      });
-    }
+		// Get jobs without embeddings
+		const { data: jobs, error: fetchError } = await supabase
+			.from("jobs")
+			.select("*")
+			.eq("is_active", true)
+			.is("embedding", null)
+			.limit(jobLimit);
 
-    console.log(`Generating embeddings for ${jobs.length} jobs`);
+		if (fetchError) {
+			return NextResponse.json(
+				{ error: "Failed to fetch jobs", details: fetchError },
+				{ status: 500 },
+			);
+		}
 
-    // Generate embeddings in batches (logs token count and cost)
-    const embeddings = await embeddingService.batchGenerateJobEmbeddings(
-      jobs as any[]
-    );
+		if (!jobs || jobs.length === 0) {
+			return NextResponse.json({
+				message: "No jobs need embeddings",
+				processed: 0,
+			});
+		}
 
-    // Store embeddings
-    await embeddingService.storeJobEmbeddings(embeddings);
+		console.log(`Generating embeddings for ${jobs.length} jobs`);
 
-    // Get coverage stats
-    const coverage = await embeddingService.checkEmbeddingCoverage();
+		// Generate embeddings in batches (logs token count and cost)
+		const embeddings = await embeddingService.batchGenerateJobEmbeddings(
+			jobs as any[],
+		);
 
-    return NextResponse.json({
-      message: 'Embeddings generated successfully',
-      processed: embeddings.size,
-      totalJobs: coverage.total,
-      withEmbeddings: coverage.withEmbeddings,
-      coverage: `${(coverage.coverage * 100).toFixed(1)}%`
-      // Token count and cost logged by embeddingService.batchGenerateJobEmbeddings
-    });
-  } catch (error) {
-    console.error('Embedding generation error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate embeddings', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
-  }
-}
+		// Store embeddings
+		await embeddingService.storeJobEmbeddings(embeddings);
 
-export async function GET(_req: NextRequest) {
-  try {
-    const coverage = await embeddingService.checkEmbeddingCoverage();
+		// Get coverage stats
+		const coverage = await embeddingService.checkEmbeddingCoverage();
 
-    return NextResponse.json({
-      total: coverage.total,
-      withEmbeddings: coverage.withEmbeddings,
-      coverage: `${(coverage.coverage * 100).toFixed(1)}%`,
-      needsEmbeddings: coverage.total - coverage.withEmbeddings
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to check coverage' },
-      { status: 500 }
-    );
-  }
-}
+		return NextResponse.json({
+			message: "Embeddings generated successfully",
+			processed: embeddings.size,
+			totalJobs: coverage.total,
+			withEmbeddings: coverage.withEmbeddings,
+			coverage: `${(coverage.coverage * 100).toFixed(1)}%`,
+			// Token count and cost logged by embeddingService.batchGenerateJobEmbeddings
+		});
+	} catch (error) {
+		console.error("Embedding generation error:", error);
+		return NextResponse.json(
+			{
+				error: "Failed to generate embeddings",
+				details: error instanceof Error ? error.message : "Unknown error",
+			},
+			{ status: 500 },
+		);
+	}
+});
 
+export const GET = withAxiom(async function GET(_req: NextRequest) {
+	try {
+		const coverage = await embeddingService.checkEmbeddingCoverage();
+
+		return NextResponse.json({
+			total: coverage.total,
+			withEmbeddings: coverage.withEmbeddings,
+			coverage: `${(coverage.coverage * 100).toFixed(1)}%`,
+			needsEmbeddings: coverage.total - coverage.withEmbeddings,
+		});
+	} catch (_error) {
+		return NextResponse.json(
+			{ error: "Failed to check coverage" },
+			{ status: 500 },
+		);
+	}
+});

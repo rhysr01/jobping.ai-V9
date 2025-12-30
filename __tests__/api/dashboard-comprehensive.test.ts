@@ -3,57 +3,62 @@
  * Tests dashboard data aggregation, metrics collection
  */
 
-import { NextRequest } from 'next/server';
+import { NextRequest } from "next/server";
 
-jest.mock('@/Utils/monitoring/healthChecker');
-jest.mock('@/Utils/monitoring/metricsCollector');
+jest.mock("@/Utils/monitoring/healthChecker");
+jest.mock("@/Utils/monitoring/metricsCollector");
 
-describe('Dashboard API Route', () => {
+describe("Dashboard API Route", () => {
   let GET: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    const { healthChecker } = require('@/Utils/monitoring/healthChecker');
+    const { healthChecker } = require("@/Utils/monitoring/healthChecker");
     healthChecker.performHealthCheck = jest.fn().mockResolvedValue({
-      status: 'healthy',
-      components: {}
+      status: "healthy",
+      components: {},
     });
 
-    const { metricsCollector } = require('@/Utils/monitoring/metricsCollector');
+    const { metricsCollector } = require("@/Utils/monitoring/metricsCollector");
     metricsCollector.collectMetrics = jest.fn().mockResolvedValue({
       timestamp: new Date().toISOString(),
       performance: {},
-      business: {}
+      business: {},
     });
 
     try {
-      GET = require('@/app/api/dashboard/route').GET;
+      GET = require("@/app/api/dashboard/route").GET;
     } catch {
       GET = async (req: NextRequest) => {
-        const { healthChecker } = require('@/Utils/monitoring/healthChecker');
-        const { metricsCollector } = require('@/Utils/monitoring/metricsCollector');
+        const { healthChecker } = require("@/Utils/monitoring/healthChecker");
+        const {
+          metricsCollector,
+        } = require("@/Utils/monitoring/metricsCollector");
 
         const [health, metrics] = await Promise.all([
           healthChecker.performHealthCheck(),
-          metricsCollector.collectMetrics()
+          metricsCollector.collectMetrics(),
         ]);
 
-        return new Response(JSON.stringify({
-          health,
-          metrics,
-          timestamp: new Date().toISOString()
-        }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        return new Response(
+          JSON.stringify({
+            health,
+            metrics,
+            timestamp: new Date().toISOString(),
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
       };
     }
   });
 
-  describe('GET /api/dashboard', () => {
-    it('should return dashboard data', async () => {
-      const req = new NextRequest('http://localhost/api/dashboard');
+  describe("GET /api/dashboard", () => {
+    it("should return dashboard data", async () => {
+      const req = new NextRequest("http://localhost/api/dashboard");
 
       const response = await GET(req);
       const data = await response.json();
@@ -63,8 +68,8 @@ describe('Dashboard API Route', () => {
       expect(data.metrics).toBeDefined();
     });
 
-    it('should include timestamp', async () => {
-      const req = new NextRequest('http://localhost/api/dashboard');
+    it("should include timestamp", async () => {
+      const req = new NextRequest("http://localhost/api/dashboard");
 
       const response = await GET(req);
       const data = await response.json();
@@ -72,11 +77,13 @@ describe('Dashboard API Route', () => {
       expect(data.timestamp).toBeDefined();
     });
 
-    it('should handle errors gracefully', async () => {
-      const { healthChecker } = require('@/Utils/monitoring/healthChecker');
-      healthChecker.performHealthCheck.mockRejectedValue(new Error('Health check failed'));
+    it("should handle errors gracefully", async () => {
+      const { healthChecker } = require("@/Utils/monitoring/healthChecker");
+      healthChecker.performHealthCheck.mockRejectedValue(
+        new Error("Health check failed"),
+      );
 
-      const req = new NextRequest('http://localhost/api/dashboard');
+      const req = new NextRequest("http://localhost/api/dashboard");
 
       const response = await GET(req);
 

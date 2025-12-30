@@ -4,31 +4,31 @@
  */
 
 import {
-  normalizeToString,
+  careerSlugs,
   cats,
   hasEligibility,
-  careerSlugs,
-  locTag
-} from '@/Utils/matching/normalizers';
+  locTag,
+  normalizeToString,
+} from "@/Utils/matching/normalizers";
 
-describe('Normalizers', () => {
-  describe('normalizeToString', () => {
-    it('should normalize array to string', () => {
-      const result = normalizeToString(['tag1', 'tag2']);
+describe("Normalizers", () => {
+  describe("normalizeToString", () => {
+    it("should normalize array to string", () => {
+      const result = normalizeToString(["tag1", "tag2"]);
 
-      expect(typeof result).toBe('string');
+      expect(typeof result).toBe("string");
     });
 
-    it('should handle string input', () => {
-      const result = normalizeToString('test');
+    it("should handle string input", () => {
+      const result = normalizeToString("test");
 
-      expect(result).toBe('test');
+      expect(result).toBe("test");
     });
   });
 
-  describe('cats', () => {
-    it('should extract categories', () => {
-      const categories = 'early-career,strategy-business-design';
+  describe("cats", () => {
+    it("should extract categories", () => {
+      const categories = "early-career,strategy-business-design";
 
       const tags = cats(categories);
 
@@ -36,19 +36,19 @@ describe('Normalizers', () => {
     });
   });
 
-  describe('hasEligibility', () => {
-    it('should check eligibility', () => {
-      const categories = 'early-career,strategy';
+  describe("hasEligibility", () => {
+    it("should check eligibility", () => {
+      const categories = "early-career,strategy";
 
       const hasElig = hasEligibility(categories);
 
-      expect(typeof hasElig).toBe('boolean');
+      expect(typeof hasElig).toBe("boolean");
     });
   });
 
-  describe('careerSlugs', () => {
-    it('should extract career slugs', () => {
-      const categories = 'strategy-business-design,finance-investment';
+  describe("careerSlugs", () => {
+    it("should extract career slugs", () => {
+      const categories = "strategy-business-design,finance-investment";
 
       const slugs = careerSlugs(categories);
 
@@ -56,9 +56,9 @@ describe('Normalizers', () => {
     });
   });
 
-  describe('locTag', () => {
-    it('should extract location tag', () => {
-      const location = 'London, UK';
+  describe("locTag", () => {
+    it("should extract location tag", () => {
+      const location = "London, UK";
 
       const tag = locTag(location);
 
@@ -66,4 +66,3 @@ describe('Normalizers', () => {
     });
   });
 });
-
