@@ -77,11 +77,11 @@ export default function FAQ() {
 								>
 									<button
 										onClick={() => setOpenIndex(isOpen ? null : index)}
-										className="w-full flex items-center justify-between text-left p-3 rounded-xl hover:bg-white/[0.03] transition-all duration-200 group"
+										className="w-full flex items-center justify-between text-left p-3 rounded-xl glass-card elevation-1 hover:elevation-2 transition-all duration-200 group"
 										aria-expanded={isOpen}
 									>
 										{/* Question with gradient */}
-										<span className="text-base font-bold text-zinc-100 pr-4 group-hover:text-white transition-colors bg-gradient-to-r from-zinc-100 to-white bg-clip-text text-transparent">
+										<span className="text-base font-bold text-zinc-100 pr-4 group-hover:text-white transition-colors">
 											{faq.question}
 										</span>
 
@@ -104,7 +104,7 @@ export default function FAQ() {
 												className="overflow-hidden"
 											>
 												{/* Answer with left border accent */}
-												<div className="pt-4 pl-3 pr-3 pb-2 ml-2 border-l-2 border-purple-500/30 bg-gradient-to-r from-purple-500/8 via-purple-500/4 to-transparent rounded-r-lg">
+												<div className="pt-4 pl-3 pr-3 pb-2 ml-2 glass-card elevation-1 border-l-2 border-purple-500/30 rounded-r-lg">
 													<p className="text-sm text-zinc-300 leading-relaxed">
 														{faq.answer}
 													</p>

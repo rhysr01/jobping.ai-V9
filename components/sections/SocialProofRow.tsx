@@ -61,7 +61,7 @@ export default function SocialProofRow() {
 					</h3>
 				</motion.div>
 				<div className="mt-8 md:mt-10">
-					<div className="mx-auto max-w-6xl rounded-2xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl relative shadow-feature">
+					<div className="mx-auto max-w-6xl rounded-2xl glass-card elevation-2 p-6 relative">
 						<motion.div
 							initial={{ opacity: 0, y: 16 }}
 							whileInView={{ opacity: 1, y: 0 }}
@@ -80,10 +80,8 @@ export default function SocialProofRow() {
 										y: -4,
 										transition: { type: "spring", stiffness: 300, damping: 20 },
 									}}
-									className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-900/60 via-zinc-900/40 to-zinc-900/60 backdrop-blur-md border-light-source px-6 py-6 transition-all duration-300 hover:border-purple-500/30 hover:shadow-[0_12px_40px_rgba(139,92,246,0.15)] hover:scale-[1.02] active:scale-[0.98]"
+									className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl glass-card elevation-2 px-6 py-6 transition-all duration-300 hover:elevation-3 hover:border-purple-500/30 hover:scale-[1.02] active:scale-[0.98]"
 								>
-									{/* Glass overlay */}
-									<div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent pointer-events-none rounded-2xl" />
 
 									{/* Glowing divider */}
 									{index < items.length - 1 && (

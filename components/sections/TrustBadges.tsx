@@ -39,7 +39,7 @@ export default function TrustBadges() {
 						whileInView={{ opacity: 1, scale: 1 }}
 						viewport={{ once: true }}
 						transition={{ duration: 0.4, delay: index * 0.1 }}
-						className="flex items-center gap-3 px-5 py-3 rounded-xl border border-white/20 bg-white/[0.1] backdrop-blur-md hover:bg-white/[0.15] hover:border-white/30 transition-all duration-200 shadow-lg hover:shadow-xl"
+						className="flex items-center gap-3 px-5 py-3 rounded-xl glass-card elevation-1 hover:elevation-2 transition-all duration-200"
 					>
 						<div className="flex-shrink-0 w-8 h-8 rounded-lg bg-brand-500/20 flex items-center justify-center border border-brand-500/30">
 							<Icon className="h-4 w-4 text-brand-300" />
@@ -48,7 +48,7 @@ export default function TrustBadges() {
 							<span className="text-xs font-bold text-white leading-tight">
 								{badge.label}
 							</span>
-							<span className="text-[10px] text-zinc-400 leading-tight">
+							<span className="text-[10px] text-zinc-300 leading-tight">
 								{badge.description}
 							</span>
 						</div>

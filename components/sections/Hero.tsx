@@ -176,7 +176,7 @@ export default function Hero() {
 								initial={{ opacity: 0 }}
 								animate={{ opacity: 1 }}
 								transition={{ delay: 0.42, duration: 0.6 }}
-								className="mt-3 p-3 rounded-lg bg-white/[0.03] border border-white/10 backdrop-blur-sm"
+								className="mt-3 p-3 rounded-lg glass-card elevation-1"
 							>
 								<p className="text-xs font-semibold text-zinc-300 mb-2.5">
 									Here's what we'll ask:

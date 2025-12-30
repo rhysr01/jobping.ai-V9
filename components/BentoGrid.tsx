@@ -43,7 +43,7 @@ const FeatureCard = ({
 			role="article"
 			aria-label={`${title} - ${description}`}
 			className={cn(
-				"group relative overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 p-6 transition-all hover:border-zinc-700 focus-within:ring-2 focus-within:ring-purple-500 focus-within:ring-offset-2 focus-within:ring-offset-black",
+				"group relative overflow-hidden rounded-3xl glass-card elevation-1 p-6 transition-all hover:elevation-2 hover:border-purple-500/30 focus-within:ring-2 focus-within:ring-purple-500 focus-within:ring-offset-2 focus-within:ring-offset-black",
 				className
 			)}
 		>
@@ -52,7 +52,7 @@ const FeatureCard = ({
 
 			<div className="relative z-10 flex h-full flex-col justify-between">
 				<div>
-					<div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 border border-zinc-800 text-purple-500">
+					<div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg glass-card elevation-1 text-purple-500">
 						<Icon size={20} />
 					</div>
 					<h3 className="text-lg font-semibold text-zinc-100">{title}</h3>
@@ -75,10 +75,10 @@ export default function HowItWorksBento() {
 				</h2>
 
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[280px]">
-					{/* Card 1: Resume Sync */}
+					{/* Card 1: Quick Setup */}
 					<FeatureCard
-						title="Smart Sync"
-						description="Upload once. Our AI parses your skills, experience, and 'hidden' strengths in seconds."
+						title="Instant Setup"
+						description="Tell us your career path and preferred cities. No resume upload needed—just simple preferences that power our AI matching in seconds."
 						icon={FileJson}
 						className="md:col-span-1"
 					>
@@ -98,7 +98,7 @@ export default function HowItWorksBento() {
 								{/* Scanning UI Labels */}
 								<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
 									<span className="text-xs font-mono text-purple-300 bg-black/60 px-3 py-1.5 rounded-md border border-purple-500/20 uppercase tracking-widest">
-										Extracting Tech Stack...
+										Processing Preferences...
 									</span>
 									<div className="flex gap-1">
 										{[1, 2, 3].map((i) => (
@@ -116,15 +116,15 @@ export default function HowItWorksBento() {
 						</div>
 					</FeatureCard>
 
-					{/* Card 2: The Brain (Large Card) */}
+					{/* Card 2: The Matching Engine */}
 					<FeatureCard
-						title="The Matching Engine"
-						description="We scan 1,400+ daily listings across the web, comparing every line of the JD against your specific profile requirements."
+						title="AI-Powered Matching"
+						description="We scan thousands of daily listings across multiple job boards. Our AI analyzes each job description against your career path and location preferences to find your perfect entry-level matches."
 						icon={Cpu}
 						className="md:col-span-2"
 					>
 						<div className="mt-auto flex flex-wrap gap-2 pt-4">
-							{["Location Check", "Salary Fit", "Tech Stack", "Seniority"].map(
+							{["Career Path", "Location Match", "Entry Level", "Work Environment", "Role Fit"].map(
 								(tag) => (
 									<span
 										key={tag}
@@ -139,26 +139,30 @@ export default function HowItWorksBento() {
 
 					{/* Card 3: Match Intelligence (Wide Card) */}
 					<FeatureCard
-						title="Match Intelligence"
-						description="Our engine calculates fit across 20+ data points including tech stack, seniority, and salary bands."
+						title="Smart Scoring System"
+						description="Every job is scored across 8 factors: career path alignment (most important), location match, work environment, role fit, experience level, company culture, skills alignment, and job freshness. We then ensure diversity across job sources and cities for balanced, high-quality matches."
 						icon={Brain}
 						className="md:col-span-3 h-auto"
 					>
 						<div className="mt-8 relative h-32 w-full flex items-center justify-center overflow-hidden">
 							{/* Visualizing the "Matching" Process */}
-							<div className="flex items-center gap-8 z-10">
-								<div className="px-3 py-1.5 rounded-lg border border-zinc-700 bg-zinc-800 text-xs text-zinc-200">
-									Your Resume
+							<div className="flex items-center gap-6 z-10 flex-wrap justify-center">
+								<div className="px-3 py-1.5 rounded-lg glass-card elevation-1 text-xs text-zinc-200">
+									Your Preferences
 								</div>
-								<div className="h-px w-12 bg-gradient-to-r from-purple-500 to-emerald-500 animate-pulse" />
-								<div className="px-3 py-1.5 rounded-lg border border-zinc-700 bg-zinc-800 text-xs text-zinc-200">
-									Job Requirements
+								<div className="h-px w-8 bg-gradient-to-r from-purple-500 to-emerald-500 animate-pulse" />
+								<div className="px-3 py-1.5 rounded-lg border border-emerald-700 bg-emerald-900/20 text-xs text-emerald-200">
+									AI Analysis
+								</div>
+								<div className="h-px w-8 bg-gradient-to-r from-emerald-500 to-purple-500 animate-pulse" />
+								<div className="px-3 py-1.5 rounded-lg glass-card elevation-1 text-xs text-zinc-200">
+									Job Listings
 								</div>
 							</div>
 
 							{/* Background Decorative "Data Points" */}
-							<div className="absolute inset-0 opacity-20 grid grid-cols-6 gap-2 pointer-events-none">
-								{[...Array(12)].map((_, i) => (
+							<div className="absolute inset-0 opacity-20 grid grid-cols-8 gap-2 pointer-events-none">
+								{[...Array(16)].map((_, i) => (
 									<div
 										key={i}
 										className="h-1 w-1 bg-zinc-500 rounded-full"

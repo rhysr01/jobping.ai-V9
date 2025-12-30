@@ -211,7 +211,7 @@ export default function CompanyLogos() {
 								}}
 								className="flex-shrink-0 snap-start"
 							>
-								<div className="relative h-[180px] w-[200px] flex items-center justify-center rounded-2xl bg-gradient-to-br from-white/[0.18] via-white/[0.12] to-white/[0.18] backdrop-blur-xl border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.3)] p-6 transition-all duration-300 ease-out hover:border-purple-500/50 hover:shadow-[0_12px_48px_rgba(139,92,246,0.3),inset_0_1px_0_rgba(255,255,255,0.35)] group overflow-hidden">
+								<div className="relative h-[180px] w-[200px] flex items-center justify-center rounded-2xl glass-card elevation-2 p-6 transition-all duration-300 ease-out hover:elevation-3 hover:border-purple-500/50 group overflow-hidden">
 									{/* Animated shimmer sweep */}
 									<motion.div
 										initial={{ x: "-100%" }}
@@ -228,14 +228,14 @@ export default function CompanyLogos() {
 									{/* Inner glow with light source */}
 									<div className="absolute inset-[1px] bg-gradient-to-br from-white/[0.12] via-transparent to-white/[0.04] rounded-2xl pointer-events-none" />
 
-									{/* Logo with stronger contrast */}
+									{/* Logo with full color by default */}
 									<div className="relative z-10 flex items-center justify-center">
 										<Image
 											src={company.logoPath}
 											alt={`${company.name} company logo`}
 											width={140}
 											height={140}
-											className="object-contain h-[140px] w-auto opacity-70 grayscale transition-all duration-500 ease-out group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-125 filter drop-shadow-[0_4px_12px_rgba(139,92,246,0.4)]"
+											className="object-contain h-[140px] w-auto opacity-90 transition-all duration-500 ease-out group-hover:opacity-100 group-hover:scale-125 filter drop-shadow-[0_4px_12px_rgba(139,92,246,0.4)]"
 											onError={(e) => {
 												console.error(
 													`Failed to load logo: ${company.logoPath}`,
