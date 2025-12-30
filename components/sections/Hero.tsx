@@ -1,248 +1,248 @@
 "use client";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import Button from "@/components/ui/Button";
-import { CTA_GET_MY_5_FREE_MATCHES, CTA_GET_MY_5_FREE_MATCHES_ARIA } from "@/lib/copy";
+import { HeroMobileMockup } from "@/components/marketing/HeroMobileMockup";
+import TrustBadges from "@/components/sections/TrustBadges";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 import HeroBackgroundAura from "@/components/ui/HeroBackgroundAura";
-import DeviceFrame from "@/components/marketing/DeviceFrame";
-import SampleJobMatches from "@/components/marketing/SampleJobMatches";
-import { trackEvent } from "@/lib/analytics";
-import TrustBadges from "@/components/sections/TrustBadges";
 import { useStats } from "@/hooks/useStats";
+import { trackEvent } from "@/lib/analytics";
+import {
+	CTA_GET_MY_5_FREE_MATCHES,
+	CTA_GET_MY_5_FREE_MATCHES_ARIA,
+} from "@/lib/copy";
 
 export default function Hero() {
-  const [preloadedJobs, setPreloadedJobs] = useState<any[]>([]);
-  const { stats } = useStats();
+	const [preloadedJobs, setPreloadedJobs] = useState<any[]>([]);
+	const { stats } = useStats();
 
-  // Pre-fetch jobs immediately on mount (before component renders)
-  useEffect(() => {
-    async function fetchJobs() {
-      try {
-        // Calculate week number for rotation
-        const now = new Date();
-        const start = new Date(now.getFullYear(), 0, 1);
-        const days = Math.floor((now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
-        const weekNumber = Math.ceil((days + start.getDay() + 1) / 7);
-        
-        const response = await fetch(`/api/sample-jobs?day=monday&tier=free&week=${weekNumber}`);
-        const data = await response.json();
-        
-        if (data.jobs && data.jobs.length > 0) {
-          setPreloadedJobs(data.jobs);
-        }
-      } catch (error) {
-        console.error('Failed to pre-fetch jobs:', error);
-      }
-    }
-    
-    fetchJobs();
-  }, []);
+	// Pre-fetch jobs immediately on mount (before component renders)
+	useEffect(() => {
+		async function fetchJobs() {
+			try {
+				// Calculate week number for rotation
+				const now = new Date();
+				const start = new Date(now.getFullYear(), 0, 1);
+				const days = Math.floor(
+					(now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000),
+				);
+				const weekNumber = Math.ceil((days + start.getDay() + 1) / 7);
 
-  return (
-    <section
-      data-testid="hero-section"
-      className="section-padding-hero pt-16 pb-20 md:pt-20 md:pb-24 relative overflow-hidden min-h-[60vh] md:min-h-[65vh] flex items-center bg-black"
-    >
-      {/* Simplified static background */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-zinc-950 via-black to-zinc-950" />
-      <HeroBackgroundAura />
-      
-      {/* Scroll momentum fade */}
-      <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
-      
-      {/* Main container - Split Layout */}
-      <div className="container-page relative z-10 mx-auto max-w-7xl">
-        {/* Split Grid Layout: Content Left, Mockup Right */}
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center mt-4 md:mt-8">
-          
-          {/* LEFT SIDE - Content */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-left space-y-6 relative"
-            style={{ backgroundColor: 'transparent' }}
-          >
-            {/* Headline - "Silver Silk" gradient */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.6 }}
-              className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3 max-w-[540px] relative"
-            >
-              {/* Silver Silk gradient: purple-500/80 (20%) → zinc-100 (50%) → purple-500/80 (80%) */}
-              <span 
-                className="relative bg-clip-text text-transparent"
-                style={{
-                  backgroundImage: 'linear-gradient(to right, rgba(168,85,247,0.8) 0%, rgba(168,85,247,0.8) 20%, rgb(244,244,245) 50%, rgba(168,85,247,0.8) 80%, rgba(168,85,247,0.8) 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
-              >
-                Get 5 early-career
-              </span>{' '}
-              <span 
-                className="relative bg-clip-text text-transparent"
-                style={{
-                  backgroundImage: 'linear-gradient(to right, rgba(168,85,247,0.8) 0%, rgba(168,85,247,0.8) 20%, rgb(244,244,245) 50%, rgba(168,85,247,0.8) 80%, rgba(168,85,247,0.8) 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
-              >
-                job matches
-              </span>{' '}
-              <span className="text-white whitespace-nowrap">instantly <span className="text-zinc-400">- free</span></span>
-            </motion.h1>
+				const response = await fetch(
+					`/api/sample-jobs?day=monday&tier=free&week=${weekNumber}`,
+				);
+				const data = await response.json();
 
-            {/* Subheadline - HIGH-STAKES - Clear value prop */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25, duration: 0.6 }}
-              className="text-lg md:text-xl text-zinc-300 leading-relaxed max-w-xl mb-4 mt-6"
-            >
-              Stop guessing about visa status. Get curated graduate roles matched to your city and career path in under 2 minutes.
-            </motion.p>
+				if (data.jobs && data.jobs.length > 0) {
+					setPreloadedJobs(data.jobs);
+				}
+			} catch (error) {
+				console.error("Failed to pre-fetch jobs:", error);
+			}
+		}
 
-            {/* CTAs */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-              className="flex flex-col gap-3 pt-2"
-            >
-              <Button
-                href="/signup/free"
-                onClick={() => {
-                  trackEvent('cta_clicked', { type: 'free', location: 'hero' });
-                }}
-                variant="gradient"
-                size="lg"
-                className="w-full sm:w-auto sm:max-w-xs px-8 py-4 md:py-5 text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)] transition-all duration-200 relative overflow-hidden"
-                aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
-              >
-                {/* Subtle shimmer effect - only on primary CTA button */}
-                <motion.span
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                  animate={{
-                    x: ['-100%', '100%'],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    repeatDelay: 2,
-                    ease: 'easeInOut',
-                  }}
-                  aria-hidden="true"
-                />
-                <span className="relative flex items-center justify-center gap-2">
-                  {CTA_GET_MY_5_FREE_MATCHES}
-                  <BrandIcons.ArrowRight className="h-5 w-5" />
-                </span>
-              </Button>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.35, duration: 0.6 }}
-                className="space-y-2 mt-3"
-              >
-                <p className="text-[11px] text-zinc-400">
-                  100% free to start • Real entry-level roles • No spam
-                </p>
-              </motion.div>
-              
-              <TrustBadges />
-              
-              {/* Onboarding Preview - What we'll ask */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.42, duration: 0.6 }}
-                className="mt-3 p-3 rounded-lg bg-white/[0.03] border border-white/10 backdrop-blur-sm"
-              >
-                <p className="text-xs font-semibold text-zinc-300 mb-2.5">Here's what we'll ask:</p>
-                <div className="flex flex-wrap gap-1.5 text-xs">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">
-                    <BrandIcons.Target className="h-3 w-3" />
-                    Cities
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">
-                    <BrandIcons.Briefcase className="h-3 w-3" />
-                    Career path
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">
-                    <BrandIcons.Shield className="h-3 w-3" />
-                    Visa status
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">
-                    <BrandIcons.Star className="h-3 w-3" />
-                    Experience
-                  </span>
-                </div>
-              </motion.div>
-              
-              {/* Social Proof Stats */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4, duration: 0.6 }}
-                className="pt-3"
-              >
-                {stats ? (
-                  <>
-                    <p className="text-base font-semibold text-zinc-300 mb-1">
-                      Join {stats.totalUsers > 0 ? `${stats.totalUsers.toLocaleString('en-US')}+` : '1,500+'} job seekers finding roles
-                    </p>
-                    <p className="text-xs text-zinc-400">
-                      Trusted by students across Europe
-                    </p>
-                  </>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="h-5 w-48 bg-white/5 rounded" />
-                    <div className="h-3 w-32 bg-white/5 rounded" />
-                  </div>
-                )}
-              </motion.div>
-            </motion.div>
-          </motion.div>
+		fetchJobs();
+	}, []);
 
-          {/* RIGHT SIDE - iPhone Mockup (Static - No Dynamic Backlight) */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="relative flex justify-center lg:justify-end items-start"
-          >
-            {/* Floating shadow - essential for depth, static */}
-            <div 
-              className="absolute inset-0 translate-y-16 pointer-events-none -z-20 scale-110"
-              style={{
-                background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 50%, transparent 80%)',
-                filter: 'blur(60px)',
-              }}
-            />
-            
-            {/* iPhone Mockup with static glow */}
-            <div className="scale-90 md:scale-95 lg:scale-100 origin-top lg:origin-top-left relative z-10 lg:-mr-8"
-              style={{
-                filter: 'drop-shadow(0 20px 50px rgba(139,92,246,0.15))',
-              }}
-            >
-              <DeviceFrame priority={true} autoScroll={true} scrollSpeed={1.2}>
-                <SampleJobMatches preloadedJobs={preloadedJobs} />
-              </DeviceFrame>
-            </div>
-            {/* Gradient bleed effect - bottom of phone bleeds off */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none -z-0" />
-          </motion.div>
-        </div>
+	return (
+		<section
+			data-testid="hero-section"
+			className="section-padding-hero pt-16 pb-20 md:pt-20 md:pb-24 relative isolate overflow-hidden min-h-[60vh] md:min-h-[65vh] flex items-center bg-black"
+		>
+			{/* Layer 1: The Dot Grid (The Foundation) */}
+			<div
+				className="absolute inset-0 -z-20 h-full w-full bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:32px_32px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_60%,transparent_100%)]"
+				aria-hidden="true"
+			/>
 
-      </div>
+			{/* Layer 2: Gradient Background + HeroBackgroundAura (The Mood) */}
+			<div className="absolute inset-0 -z-10 bg-gradient-to-b from-zinc-950 via-black to-zinc-950" />
+			<div className="absolute inset-0 -z-10">
+				<HeroBackgroundAura />
+			</div>
 
-    </section>
-  );
+			{/* Scroll momentum fade */}
+			<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
+
+			{/* Main container - Split Layout */}
+			<div className="container-page relative z-10 mx-auto max-w-7xl">
+				{/* Split Grid Layout: Content Left, Mockup Right */}
+				<div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center mt-4 md:mt-8">
+					{/* LEFT SIDE - Content */}
+					<motion.div
+						initial={{ opacity: 0, x: -20 }}
+						animate={{ opacity: 1, x: 0 }}
+						transition={{ duration: 0.6 }}
+						className="text-left space-y-6 relative"
+						style={{ backgroundColor: "transparent" }}
+					>
+						{/* Headline - "Silver Silk" gradient */}
+						<motion.h1
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ delay: 0.2, duration: 0.6 }}
+							className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3 max-w-[540px] relative"
+						>
+							{/* Silver Silk gradient: purple-500/80 (20%) → zinc-100 (50%) → purple-500/80 (80%) */}
+							<span
+								className="relative bg-clip-text text-transparent"
+								style={{
+									backgroundImage:
+										"linear-gradient(to right, rgba(168,85,247,0.8) 0%, rgba(168,85,247,0.8) 20%, rgb(244,244,245) 50%, rgba(168,85,247,0.8) 80%, rgba(168,85,247,0.8) 100%)",
+									WebkitBackgroundClip: "text",
+									WebkitTextFillColor: "transparent",
+									backgroundClip: "text",
+								}}
+							>
+								Get 5 early-career
+							</span>{" "}
+							<span
+								className="relative bg-clip-text text-transparent"
+								style={{
+									backgroundImage:
+										"linear-gradient(to right, rgba(168,85,247,0.8) 0%, rgba(168,85,247,0.8) 20%, rgb(244,244,245) 50%, rgba(168,85,247,0.8) 80%, rgba(168,85,247,0.8) 100%)",
+									WebkitBackgroundClip: "text",
+									WebkitTextFillColor: "transparent",
+									backgroundClip: "text",
+								}}
+							>
+								job matches
+							</span>{" "}
+							<span className="text-white whitespace-nowrap">
+								instantly <span className="text-zinc-400">- free</span>
+							</span>
+						</motion.h1>
+
+						{/* Subheadline - HIGH-STAKES - Clear value prop */}
+						<motion.p
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ delay: 0.25, duration: 0.6 }}
+							className="text-lg md:text-xl text-zinc-300 leading-relaxed max-w-xl mb-4 mt-6"
+						>
+							Stop guessing about visa status. Get curated graduate roles
+							matched to your city and career path in under 2 minutes.
+						</motion.p>
+
+						{/* CTAs */}
+						<motion.div
+							initial={{ opacity: 0, y: 16 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ delay: 0.3, duration: 0.6 }}
+							className="flex flex-col gap-3 pt-2"
+						>
+							<a
+								href="/signup/free"
+								onClick={() => {
+									trackEvent("cta_clicked", { type: "free", location: "hero" });
+								}}
+								className="inline-flex h-12 animate-shimmer items-center justify-center rounded-full border border-zinc-800 bg-[linear-gradient(110deg,#000,45%,#27272a,55%,#000)] bg-[length:200%_100%] px-8 font-medium text-zinc-400 transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2 focus:ring-offset-black hover:text-zinc-300 hover:border-zinc-700 w-full sm:w-auto sm:max-w-xs text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)]"
+								aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
+							>
+								<span className="flex items-center justify-center gap-2">
+									{CTA_GET_MY_5_FREE_MATCHES}
+									<BrandIcons.ArrowRight className="h-5 w-5" />
+								</span>
+							</a>
+							<motion.div
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								transition={{ delay: 0.35, duration: 0.6 }}
+								className="space-y-2 mt-3"
+							>
+								<p className="text-[11px] text-zinc-400">
+									100% free to start • Real entry-level roles • No spam
+								</p>
+							</motion.div>
+
+							<TrustBadges />
+
+							{/* Onboarding Preview - What we'll ask */}
+							<motion.div
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								transition={{ delay: 0.42, duration: 0.6 }}
+								className="mt-3 p-3 rounded-lg bg-white/[0.03] border border-white/10 backdrop-blur-sm"
+							>
+								<p className="text-xs font-semibold text-zinc-300 mb-2.5">
+									Here's what we'll ask:
+								</p>
+								<div className="flex flex-wrap gap-1.5 text-xs">
+									<span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">
+										<BrandIcons.Target className="h-3 w-3" />
+										Cities
+									</span>
+									<span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">
+										<BrandIcons.Briefcase className="h-3 w-3" />
+										Career path
+									</span>
+									<span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">
+										<BrandIcons.Shield className="h-3 w-3" />
+										Visa status
+									</span>
+									<span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">
+										<BrandIcons.Star className="h-3 w-3" />
+										Experience
+									</span>
+								</div>
+							</motion.div>
+
+							{/* Social Proof Stats */}
+							<motion.div
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								transition={{ delay: 0.4, duration: 0.6 }}
+								className="pt-3"
+							>
+								{stats ? (
+									<>
+										<p className="text-base font-semibold text-zinc-300 mb-1">
+											Join{" "}
+											{stats.totalUsers > 0
+												? `${stats.totalUsers.toLocaleString("en-US")}+`
+												: "1,500+"}{" "}
+											job seekers finding roles
+										</p>
+										<p className="text-xs text-zinc-400">
+											Trusted by students across Europe
+										</p>
+									</>
+								) : (
+									<div className="space-y-2">
+										<div className="h-5 w-48 bg-white/5 rounded" />
+										<div className="h-3 w-32 bg-white/5 rounded" />
+									</div>
+								)}
+							</motion.div>
+						</motion.div>
+					</motion.div>
+
+					{/* RIGHT SIDE - Mobile Mockup (3D Interactive) */}
+					<motion.div
+						initial={{ opacity: 0, x: 20 }}
+						animate={{ opacity: 1, x: 0 }}
+						transition={{ duration: 0.6, delay: 0.2 }}
+						className="relative flex justify-center lg:justify-end items-start"
+					>
+						<HeroMobileMockup
+							stats={stats ? { totalUsers: stats.totalUsers } : undefined}
+							topMatch={
+								preloadedJobs && preloadedJobs.length > 0
+									? {
+											title: preloadedJobs[0].title,
+											company: preloadedJobs[0].company,
+											salary: preloadedJobs[0].salaryRange || "$180k - $240k",
+											location: preloadedJobs[0].location,
+											score: preloadedJobs[0].matchScore
+												? Math.round(preloadedJobs[0].matchScore * 100)
+												: 98,
+										}
+									: undefined
+							}
+						/>
+					</motion.div>
+				</div>
+			</div>
+		</section>
+	);
 }
