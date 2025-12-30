@@ -131,6 +131,19 @@ const nextConfig: NextConfig = {
 			}),
 		);
 
+		// Ignore _tools_archive directory completely
+		config.plugins.push(
+			new webpack.IgnorePlugin({
+				resourceRegExp: /^\.\.\/_tools_archive/,
+				contextRegExp: /_tools_archive/,
+			}),
+		);
+
+		// Exclude _tools_archive from module resolution
+		config.resolve = config.resolve || {};
+		config.resolve.alias = config.resolve.alias || {};
+		config.resolve.alias["_tools_archive"] = false;
+
 		return config;
 	},
 };
