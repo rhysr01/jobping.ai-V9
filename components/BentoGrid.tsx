@@ -52,11 +52,11 @@ const FeatureCard = ({
 
 			<div className="relative z-10 flex h-full flex-col justify-between">
 				<div>
-					<div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg glass-card elevation-1 text-purple-500">
-						<Icon size={20} />
+					<div className="mb-4 inline-flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-lg glass-card elevation-1 text-purple-500">
+						<Icon size={24} className="md:w-7 md:h-7" />
 					</div>
-					<h3 className="text-lg font-semibold text-zinc-100">{title}</h3>
-					<p className="mt-2 text-sm text-zinc-400 leading-relaxed">
+					<h3 className="text-xl md:text-2xl font-bold text-zinc-100 mb-3">{title}</h3>
+					<p className="mt-2 text-base md:text-lg text-zinc-300 leading-relaxed">
 						{description}
 					</p>
 				</div>
@@ -70,7 +70,7 @@ export default function HowItWorksBento() {
 	return (
 		<section className="py-24 px-6 bg-black">
 			<div className="mx-auto max-w-6xl">
-				<h2 className="mb-12 text-center text-3xl font-bold tracking-tight text-white sm:text-4xl">
+				<h2 className="mb-12 text-center text-4xl md:text-5xl font-bold tracking-tight text-white">
 					Matching at the speed of AI
 				</h2>
 
@@ -123,14 +123,14 @@ export default function HowItWorksBento() {
 						icon={Cpu}
 						className="md:col-span-2"
 					>
-						<div className="mt-auto flex flex-wrap gap-2 pt-4">
+						<div className="mt-auto flex flex-wrap gap-2.5 pt-4">
 							{["Career Path", "Location Match", "Entry Level", "Work Environment", "Role Fit"].map(
 								(tag) => (
 									<span
 										key={tag}
-										className="flex items-center gap-1.5 rounded-md bg-purple-500/10 px-2.5 py-1.5 text-xs font-medium text-purple-300 border border-purple-500/20"
+										className="flex items-center gap-2 rounded-md bg-purple-500/10 px-3 py-2 text-sm font-semibold text-purple-300 border border-purple-500/20"
 									>
-										<CheckCircle2 size={13} className="shrink-0" /> {tag}
+										<CheckCircle2 size={16} className="shrink-0" /> {tag}
 									</span>
 								)
 							)}
@@ -144,18 +144,18 @@ export default function HowItWorksBento() {
 						icon={Brain}
 						className="md:col-span-3 h-auto"
 					>
-						<div className="mt-8 relative h-32 w-full flex items-center justify-center overflow-hidden">
+						<div className="mt-8 relative h-40 md:h-48 w-full flex items-center justify-center overflow-hidden">
 							{/* Visualizing the "Matching" Process */}
-							<div className="flex items-center gap-6 z-10 flex-wrap justify-center">
-								<div className="px-3 py-1.5 rounded-lg glass-card elevation-1 text-xs text-zinc-200">
+							<div className="flex items-center gap-6 md:gap-8 z-10 flex-wrap justify-center">
+								<div className="px-5 py-3 md:px-6 md:py-4 rounded-xl glass-card elevation-2 text-base md:text-lg font-bold text-white shadow-lg shadow-purple-500/20">
 									Your Preferences
 								</div>
-								<div className="h-px w-8 bg-gradient-to-r from-purple-500 to-emerald-500 animate-pulse" />
-								<div className="px-3 py-1.5 rounded-lg border border-emerald-700 bg-emerald-900/20 text-xs text-emerald-200">
+								<div className="h-1 w-12 md:w-16 bg-gradient-to-r from-purple-500 to-emerald-500 animate-pulse shadow-lg shadow-purple-500/30" />
+								<div className="px-5 py-3 md:px-6 md:py-4 rounded-xl border-2 border-emerald-500/50 bg-emerald-500/20 text-base md:text-lg font-bold text-emerald-200 shadow-lg shadow-emerald-500/30">
 									AI Analysis
 								</div>
-								<div className="h-px w-8 bg-gradient-to-r from-emerald-500 to-purple-500 animate-pulse" />
-								<div className="px-3 py-1.5 rounded-lg glass-card elevation-1 text-xs text-zinc-200">
+								<div className="h-1 w-12 md:w-16 bg-gradient-to-r from-emerald-500 to-purple-500 animate-pulse shadow-lg shadow-emerald-500/30" />
+								<div className="px-5 py-3 md:px-6 md:py-4 rounded-xl glass-card elevation-2 text-base md:text-lg font-bold text-white shadow-lg shadow-purple-500/20">
 									Job Listings
 								</div>
 							</div>
