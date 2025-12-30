@@ -77,10 +77,10 @@ export function FormFieldHelper({
 
 	return (
 		<div className="mt-2 flex items-center justify-between">
-			{helper && <p className="text-xs text-zinc-400">{helper}</p>}
+			{helper && <p className="text-xs text-content-muted">{helper}</p>}
 			{characterCount !== undefined && maxLength && (
 				<p
-					className={`text-xs ${characterCount > maxLength * 0.9 ? "text-yellow-400" : "text-zinc-400"}`}
+					className={`text-xs ${characterCount > maxLength * 0.9 ? "text-yellow-400" : "text-content-muted"}`}
 				>
 					{characterCount}/{maxLength}
 				</p>

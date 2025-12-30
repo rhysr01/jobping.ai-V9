@@ -37,7 +37,7 @@ export default function LanguageSelector({
 						className={`relative px-4 py-3.5 rounded-2xl border-2 transition-all font-semibold text-sm overflow-hidden group ${
 							isSelected
 								? "border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/10 text-white shadow-glow-subtle"
-								: "border-zinc-700 bg-zinc-900/40 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-900/60"
+								: "border-zinc-700 bg-surface-elevated/40 text-content-secondary hover:border-zinc-600 hover:bg-surface-elevated/60"
 						}`}
 					>
 						{/* Background glow on select */}
@@ -55,7 +55,7 @@ export default function LanguageSelector({
 								className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-black tracking-tight transition-shadow ${
 									isSelected
 										? "bg-gradient-to-br from-brand-500 via-purple-500 to-brand-400 text-white shadow-[0_0_18px_rgba(154,106,255,0.5)]"
-										: "bg-zinc-800/80 text-zinc-200"
+										: "bg-zinc-800/80 text-content-heading"
 								}`}
 								aria-hidden="true"
 							>

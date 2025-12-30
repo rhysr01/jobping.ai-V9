@@ -69,7 +69,7 @@ export default function Pricing() {
 					<h2 className="text-3xl md:text-4xl font-bold text-white mt-4 mb-4">
 						Simple, Transparent Pricing
 					</h2>
-					<p className="text-zinc-300 text-lg">
+					<p className="text-content-secondary text-lg">
 						Free for everyone. Specialized for those who want an edge.
 					</p>
 				</motion.div>
@@ -87,8 +87,8 @@ export default function Pricing() {
 								<div
 									className={`relative flex flex-col h-full rounded-3xl border p-8 transition-all ${
 										tier.popular
-											? "border-purple-500/50 bg-zinc-900/40 shadow-[0_0_30px_rgba(139,92,246,0.1)]"
-											: "border-zinc-800 bg-zinc-950"
+											? "border-purple-500/50 bg-surface-elevated/40 shadow-[0_0_30px_rgba(139,92,246,0.1)]"
+											: "border-border-subtle bg-surface-base"
 									}`}
 								>
 									{tier.popular && (
@@ -101,14 +101,14 @@ export default function Pricing() {
 										<h3 className="text-xl font-bold text-white">
 											{tier.name}
 										</h3>
-										<p className="text-zinc-400 text-sm mt-2">
+										<p className="text-content-muted text-sm mt-2">
 											{tier.description}
 										</p>
 										<div className="mt-6 flex items-baseline gap-1">
 											<span className="text-4xl font-bold text-white">
 												€{tier.price}
 											</span>
-											<span className="text-zinc-400 text-sm">/month</span>
+											<span className="text-content-muted text-sm">/month</span>
 										</div>
 									</div>
 
@@ -116,14 +116,14 @@ export default function Pricing() {
 										{tier.features.map((feature) => (
 											<li
 												key={feature}
-												className="flex items-start gap-3 text-sm text-zinc-300"
+												className="flex items-start gap-3 text-sm text-content-secondary"
 											>
 												<Check
 													size={18}
 													className={
 														tier.popular
 															? "text-purple-500"
-															: "text-zinc-600"
+															: "text-content-disabled"
 													}
 												/>
 												<span>{feature}</span>
@@ -158,7 +158,7 @@ export default function Pricing() {
 					<ErrorBoundary fallback={null}>
 						<div className="space-y-4">
 							{stats && stats.totalUsers > 0 && (
-								<p className="text-sm text-zinc-400">
+								<p className="text-sm text-content-muted">
 									Join{" "}
 									<span className="text-white font-bold">
 										{stats.totalUsers.toLocaleString()}+
@@ -169,7 +169,7 @@ export default function Pricing() {
 							<SocialProofTicker />
 						</div>
 					</ErrorBoundary>
-					<p className="text-xs text-zinc-300 font-medium uppercase tracking-[0.2em] mt-10">
+					<p className="text-xs text-content-secondary font-medium uppercase tracking-[0.2em] mt-10">
 						Secure payment via Stripe • Cancel anytime
 					</p>
 				</div>

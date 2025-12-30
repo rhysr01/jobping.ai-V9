@@ -76,15 +76,18 @@ export const GET = asyncHandler(async (_req: NextRequest) => {
 	}
 
 	// Filter jobs to only include our 21 cities (case-insensitive matching)
-	const filteredJobs = jobs?.filter((job) => {
-		if (!job.city) return false;
-		const normalizedJobCity = job.city.toLowerCase().trim();
-		return normalizedCities.includes(normalizedJobCity);
-	}) || [];
+	const filteredJobs =
+		jobs?.filter((job) => {
+			if (!job.city) return false;
+			const normalizedJobCity = job.city.toLowerCase().trim();
+			return normalizedCities.includes(normalizedJobCity);
+		}) || [];
 
 	// Calculate counts
-	const internships = filteredJobs.filter((j) => j.is_internship === true).length || 0;
-	const graduateRoles = filteredJobs.filter((j) => j.is_graduate === true).length || 0;
+	const internships =
+		filteredJobs.filter((j) => j.is_internship === true).length || 0;
+	const graduateRoles =
+		filteredJobs.filter((j) => j.is_graduate === true).length || 0;
 	const earlyCareer =
 		filteredJobs.filter(
 			(j) =>
@@ -95,7 +98,8 @@ export const GET = asyncHandler(async (_req: NextRequest) => {
 	const total = filteredJobs.length || 0;
 
 	// Get unique city count (use original city names from filtered jobs)
-	const uniqueCities = new Set(filteredJobs.map((j) => j.city).filter(Boolean)).size;
+	const uniqueCities = new Set(filteredJobs.map((j) => j.city).filter(Boolean))
+		.size;
 
 	const stats = {
 		internships,
@@ -107,4 +111,3 @@ export const GET = asyncHandler(async (_req: NextRequest) => {
 
 	return NextResponse.json(createSuccessResponse(stats));
 });
-

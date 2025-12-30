@@ -2,14 +2,14 @@
 
 import { motion } from "framer-motion";
 import { useEffect } from "react";
+import HowItWorksBento from "@/components/BentoGrid";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { EUJobStats } from "@/components/marketing/EUJobStats";
+import { PremiumEmailShowcase } from "@/components/marketing/PremiumEmailShowcase";
 import CompanyLogos from "@/components/sections/CompanyLogos";
 import FAQ from "@/components/sections/FAQ";
 import Footer from "@/components/sections/Footer";
 import Hero from "@/components/sections/Hero";
-import HowItWorksBento from "@/components/BentoGrid";
-import { PremiumEmailShowcase } from "@/components/marketing/PremiumEmailShowcase";
-import { EUJobStats } from "@/components/marketing/EUJobStats";
 import Pricing from "@/components/sections/Pricing";
 import SocialProofRow from "@/components/sections/SocialProofRow";
 import ExitIntentPopup from "@/components/ui/ExitIntentPopup";
@@ -30,14 +30,25 @@ export default function Page() {
 				className="scroll-snap-type-y-proximity pb-32"
 				style={{ scrollSnapType: "y proximity" }}
 			>
+				{/* Conversion-Optimized Section Order:
+					1. Hero - The hook
+					2. CompanyLogos - Trust signal (Big Tech association)
+					3. EUJobStats - The "Why Now" (creates urgency)
+					4. HowItWorksBento - The logic (explains AI matching)
+					5. PremiumEmailShowcase - The "Aha!" moment (visual proof of value)
+					6. Pricing - The decision point (immediately after showing value, €5 feels smaller)
+					7. SocialProofRow - FOMO (others are using this)
+					8. FAQ - Objection killer (addresses Visa/Cancellation fears)
+					9. Final CTA - Safety net for scrollers
+				*/}
 				<ErrorBoundary>
 					<Hero />
 				</ErrorBoundary>
 				<ErrorBoundary>
-					<EUJobStats />
+					<CompanyLogos />
 				</ErrorBoundary>
 				<ErrorBoundary>
-					<CompanyLogos />
+					<EUJobStats />
 				</ErrorBoundary>
 				<ErrorBoundary>
 					<HowItWorksBento />

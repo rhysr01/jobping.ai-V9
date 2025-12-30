@@ -66,9 +66,9 @@ export async function fetchUsersAndJobs(
 		jobCap,
 		transformedUsers,
 	);
-	jobs = fetchedJobs.map(job => ({
+	jobs = fetchedJobs.map((job) => ({
 		...job,
-		location: job.location ?? 'Remote' // Ensures location is never null
+		location: job.location ?? "Remote", // Ensures location is never null
 	})) as ScrapersJob[];
 
 	// Augment with semantic candidates

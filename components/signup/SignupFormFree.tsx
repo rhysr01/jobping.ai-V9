@@ -35,7 +35,7 @@ const EuropeMap = dynamic(() => import("@/components/ui/EuropeMap"), {
 		<div className="w-full h-[420px] sm:h-[480px] md:h-[540px] lg:h-[600px] rounded-2xl border-2 border-brand-500/30 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 flex items-center justify-center">
 			<div className="text-center">
 				<div className="w-12 h-12 border-4 border-brand-500/30 border-t-brand-500 rounded-full animate-spin mx-auto mb-4" />
-				<p className="text-zinc-300 text-sm">Loading map...</p>
+				<p className="text-content-secondary text-sm">Loading map...</p>
 			</div>
 		</div>
 	),
@@ -518,12 +518,12 @@ export default function SignupFormFree() {
 					<h1 className="mt-2 text-3xl sm:text-4xl md:text-5xl font-bold leading-tight text-white">
 						See 5 Perfect Matches Instantly
 					</h1>
-					<p className="mt-3 text-base sm:text-lg font-medium text-zinc-300 px-2">
+					<p className="mt-3 text-base sm:text-lg font-medium text-content-secondary px-2">
 						No email spam. No commitment. Just great jobs.
 					</p>
 
 					{/* Quick Stats - Simplified */}
-					<div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm font-medium text-zinc-300">
+					<div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm font-medium text-content-secondary">
 						<span className="inline-flex items-center gap-2">
 							<BrandIcons.Zap className="h-4 w-4 text-brand-400" />
 							Instant results
@@ -546,7 +546,7 @@ export default function SignupFormFree() {
 							className="mt-6 max-w-md mx-auto"
 						>
 							<div className="flex items-center justify-between mb-2">
-								<span className="text-xs font-medium text-zinc-400">
+								<span className="text-xs font-medium text-content-muted">
 									Progress
 								</span>
 								<span className="text-xs font-semibold text-brand-300">
@@ -604,7 +604,7 @@ export default function SignupFormFree() {
 								<label className="block text-lg font-bold text-white mb-3">
 									Do you require visa sponsorship to work in the EU? *
 								</label>
-								<p className="text-sm text-zinc-300 mb-4">
+								<p className="text-sm text-content-secondary mb-4">
 									90% of graduate applications from international students are
 									rejected because of visa issues.
 								</p>
@@ -619,8 +619,8 @@ export default function SignupFormFree() {
 											formData.visaSponsorship === "yes"
 												? "border-emerald-500 bg-emerald-500/20 shadow-lg shadow-emerald-500/20 ring-2 ring-emerald-500/30"
 												: formData.visaSponsorship === "no"
-													? "opacity-50 border-zinc-700 bg-zinc-900/40"
-													: "border-zinc-700 bg-zinc-900/40 hover:border-zinc-600"
+													? "opacity-50 border-border-default bg-surface-elevated/40"
+													: "border-border-default bg-surface-elevated/40 hover:border-border-default"
 										}`}
 									>
 										{/* Inner glow effect when selected */}
@@ -634,7 +634,7 @@ export default function SignupFormFree() {
 													Yes, I need a visa
 												</span>
 											</div>
-											<p className="text-sm text-zinc-300 relative">
+											<p className="text-sm text-content-secondary relative">
 												Tier 2, Blue Card, or work permit
 											</p>
 										</div>
@@ -649,8 +649,8 @@ export default function SignupFormFree() {
 											formData.visaSponsorship === "no"
 												? "border-brand-500 bg-brand-500/20 shadow-lg shadow-brand-500/20 ring-2 ring-brand-500/30"
 												: formData.visaSponsorship === "yes"
-													? "opacity-50 border-zinc-700 bg-zinc-900/40"
-													: "border-zinc-700 bg-zinc-900/40 hover:border-zinc-600"
+													? "opacity-50 border-border-default bg-surface-elevated/40"
+													: "border-border-default bg-surface-elevated/40 hover:border-border-default"
 										}`}
 									>
 										{/* Inner glow effect when selected */}
@@ -664,7 +664,7 @@ export default function SignupFormFree() {
 													No, I have EU citizenship
 												</span>
 											</div>
-											<p className="text-sm text-zinc-300 relative">
+											<p className="text-sm text-content-secondary relative">
 												EU/EEA citizen or permanent residency
 											</p>
 										</div>
@@ -691,11 +691,11 @@ export default function SignupFormFree() {
 									className="block text-base font-bold text-white mb-3"
 								>
 									Preferred Cities *{" "}
-									<span className="text-zinc-300 font-normal text-sm">
+									<span className="text-content-secondary font-normal text-sm">
 										(Select up to 3)
 									</span>
 								</label>
-								<p className="text-sm text-zinc-300 mb-3">
+								<p className="text-sm text-content-secondary mb-3">
 									Choose up to 3 cities where you'd like to work. Click on the
 									map to select.
 								</p>
@@ -722,7 +722,7 @@ export default function SignupFormFree() {
 														className="w-12 h-12 border-4 border-brand-500/30 border-t-brand-500 rounded-full animate-spin mx-auto mb-4"
 														aria-hidden="true"
 													/>
-													<p className="text-zinc-300 text-sm">
+													<p className="text-content-secondary text-sm">
 														Loading map...
 													</p>
 												</div>
@@ -758,14 +758,14 @@ export default function SignupFormFree() {
 													isSelected
 														? "border-brand-500 bg-brand-500/15 text-white"
 														: isDisabled || isSubmitting
-															? "border-zinc-800 bg-zinc-900/40 text-zinc-300 cursor-not-allowed"
-															: "border-zinc-700 bg-zinc-900/40 text-zinc-200 hover:border-zinc-600"
+															? "border-border-subtle bg-surface-elevated/40 text-content-secondary cursor-not-allowed"
+															: "border-border-default bg-surface-elevated/40 text-content-heading hover:border-border-default"
 												}`}
 												disabled={isDisabled || isSubmitting}
 											>
 												<span>{city}</span>
 												<span
-													className={`text-xs font-semibold ${isSelected ? "text-brand-200" : "text-zinc-300"}`}
+													className={`text-xs font-semibold ${isSelected ? "text-brand-200" : "text-content-secondary"}`}
 												>
 													{isSelected ? "Selected" : "Tap"}
 												</span>
@@ -775,7 +775,7 @@ export default function SignupFormFree() {
 								</div>
 
 								<div className="mt-2 flex items-center justify-between">
-									<p className="text-xs text-zinc-300">
+									<p className="text-xs text-content-secondary">
 										{formData.cities.length}/3 selected
 									</p>
 									{formData.cities.length > 0 && citiesValidation.isValid && (
@@ -813,7 +813,7 @@ export default function SignupFormFree() {
 											className={`p-3 rounded-xl border-2 transition-all text-left ${
 												formData.careerPath === path.value
 													? "border-brand-500 bg-brand-500/12 shadow-[0_0_20px_rgba(109,90,143,0.2)]"
-													: "border-zinc-700 bg-zinc-900/40 hover:border-zinc-600"
+													: "border-border-default bg-surface-elevated/40 hover:border-border-default"
 											} disabled:opacity-50 disabled:cursor-not-allowed`}
 										>
 											<span className="font-medium text-xs text-white">
@@ -845,7 +845,7 @@ export default function SignupFormFree() {
 											<AriaLiveRegion level="polite">
 												Checking available jobs in selected cities
 											</AriaLiveRegion>
-											<p className="text-sm text-zinc-300">
+											<p className="text-sm text-content-secondary">
 												<span
 													className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-brand-400 border-t-transparent mr-2"
 													aria-hidden="true"
@@ -860,7 +860,7 @@ export default function SignupFormFree() {
 												{jobCount === 1 ? "job" : "jobs"} in{" "}
 												{formData.cities.join(" and ")}
 											</AriaLiveRegion>
-											<p className="text-sm text-zinc-300">
+											<p className="text-sm text-content-secondary">
 												Based on your selections, we found{" "}
 												<span className="text-brand-400 font-semibold">
 													{jobCount.toLocaleString()}
@@ -890,9 +890,9 @@ export default function SignupFormFree() {
 										value={formData.email}
 										onChange={handleEmailChange}
 										placeholder="you@example.com"
-										className="w-full px-4 py-4 bg-black/50 border-2 rounded-xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-base font-medium backdrop-blur-sm border-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
+										className="w-full px-4 py-4 bg-black/50 border-2 rounded-xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-base font-medium backdrop-blur-sm border-border-default disabled:opacity-50 disabled:cursor-not-allowed"
 									/>
-									<p className="text-xs text-zinc-300 mt-2">
+									<p className="text-xs text-content-secondary mt-2">
 										We won't email you. Ever.
 									</p>
 									{shouldShowError(
@@ -922,7 +922,7 @@ export default function SignupFormFree() {
 										value={formData.fullName}
 										onChange={handleNameChange}
 										placeholder="Jane Doe"
-										className="w-full px-4 py-4 bg-black/50 border-2 rounded-xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-base font-medium backdrop-blur-sm border-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
+										className="w-full px-4 py-4 bg-black/50 border-2 rounded-xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-base font-medium backdrop-blur-sm border-border-default disabled:opacity-50 disabled:cursor-not-allowed"
 									/>
 									{shouldShowError(
 										"fullName",
@@ -952,7 +952,7 @@ export default function SignupFormFree() {
 										: "Show Me My 5 Matches →"}
 								</Button>
 
-								<p className="text-xs text-center text-zinc-300 mt-4">
+								<p className="text-xs text-center text-content-secondary mt-4">
 									<span className="text-brand-400 font-semibold">
 										Quick & Free
 									</span>{" "}
@@ -997,7 +997,7 @@ export default function SignupFormFree() {
 									initial={{ opacity: 0, y: 10 }}
 									animate={{ opacity: 1, y: 0 }}
 									transition={{ delay: 0.3 }}
-									className="text-zinc-400"
+									className="text-content-muted"
 								>
 									We're matching your preferences with the best opportunities...
 								</motion.p>
@@ -1058,7 +1058,7 @@ export default function SignupFormFree() {
 										initial={{ opacity: 0, y: 10 }}
 										animate={{ opacity: 1, y: 0 }}
 										transition={{ delay: 0.4 }}
-										className="text-center text-zinc-300 mb-6"
+										className="text-center text-content-secondary mb-6"
 									>
 										Found {matchCount} perfect matches for you
 									</motion.p>
@@ -1068,7 +1068,7 @@ export default function SignupFormFree() {
 										initial={{ opacity: 0 }}
 										animate={{ opacity: 1 }}
 										transition={{ delay: 0.5 }}
-										className="flex items-center justify-center gap-3 text-sm text-zinc-400 mb-8"
+										className="flex items-center justify-center gap-3 text-sm text-content-muted mb-8"
 									>
 										<motion.div
 											animate={{ rotate: 360 }}
@@ -1087,16 +1087,18 @@ export default function SignupFormFree() {
 										initial={{ opacity: 0, y: 10 }}
 										animate={{ opacity: 1, y: 0 }}
 										transition={{ delay: 0.6 }}
-										className="rounded-xl bg-zinc-900/50 border border-white/10 p-4 text-center"
+										className="rounded-xl bg-surface-elevated/50 border border-white/10 p-4 text-center"
 									>
-										<p className="text-sm text-zinc-300 mb-2">
+										<p className="text-sm text-content-secondary mb-2">
 											<span className="font-semibold text-white">
 												Check your inbox in 60 seconds
 											</span>
 										</p>
-										<p className="text-xs text-zinc-500">
+										<p className="text-xs text-content-disabled">
 											We're sending your matches to{" "}
-											<span className="text-zinc-300">{formData.email}</span>
+											<span className="text-content-secondary">
+												{formData.email}
+											</span>
 										</p>
 									</motion.div>
 
@@ -1105,7 +1107,7 @@ export default function SignupFormFree() {
 										<motion.p
 											initial={{ opacity: 0 }}
 											animate={{ opacity: 1 }}
-											className="text-center text-xs text-zinc-500 mt-4"
+											className="text-center text-xs text-content-disabled mt-4"
 										>
 											Redirecting to your matches in {countdown}...
 										</motion.p>

@@ -26,12 +26,14 @@ const CLEANUP_SECRET = process.env.CLEANUP_SECRET;
 
 // Cleanup configuration with environment overrides
 const CONFIG = {
-	MAX_AGE_DAYS: parseInt(process.env.CLEANUP_MAX_AGE_DAYS!, 10) || 90,
-	BATCH_SIZE: parseInt(process.env.CLEANUP_BATCH_SIZE!, 10) || 500,
-	MAX_DELETIONS_PER_RUN:
-		parseInt(process.env.CLEANUP_MAX_DELETIONS!, 10) || 10000,
-	SAFETY_THRESHOLD: parseFloat(process.env.CLEANUP_SAFETY_THRESHOLD!) || 0.15,
-	BATCH_DELAY_MS: parseInt(process.env.CLEANUP_BATCH_DELAY_MS!, 10) || 250,
+	MAX_AGE_DAYS: parseInt(process.env.CLEANUP_MAX_AGE_DAYS ?? "90", 10),
+	BATCH_SIZE: parseInt(process.env.CLEANUP_BATCH_SIZE ?? "500", 10),
+	MAX_DELETIONS_PER_RUN: parseInt(
+		process.env.CLEANUP_MAX_DELETIONS ?? "10000",
+		10,
+	),
+	SAFETY_THRESHOLD: parseFloat(process.env.CLEANUP_SAFETY_THRESHOLD ?? "0.15"),
+	BATCH_DELAY_MS: parseInt(process.env.CLEANUP_BATCH_DELAY_MS ?? "250", 10),
 };
 
 interface CleanupMetrics {

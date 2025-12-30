@@ -2,11 +2,6 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createSuccessResponse } from "@/lib/api-types";
 import { asyncHandler } from "@/lib/errors";
 
-// import { withAuth } from '../../../lib/auth';
-// import { getMemoryStats, getMemoryReport, isMemoryUsageHigh } from '../../../Utils/performance/memoryOptimizer';
-// import { queryOptimizer } from '../../../Utils/performance/queryOptimizer';
-// import { responseOptimizer } from '../../../Utils/performance/responseOptimizer';
-
 // Helper to get requestId from request
 function getRequestId(req: NextRequest): string {
 	const headerVal = req.headers.get("x-request-id");

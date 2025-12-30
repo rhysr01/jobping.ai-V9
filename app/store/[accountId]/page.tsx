@@ -2,7 +2,7 @@
 
 import { Loader2, Package, ShoppingCart } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 
 interface Product {
@@ -27,7 +27,7 @@ export default function StorePage() {
 	const [error, setError] = useState<string>("");
 	const [processing, setProcessing] = useState<string | null>(null);
 
-	const loadProducts = async () => {
+	const loadProducts = useCallback(async () => {
 		try {
 			setLoading(true);
 			const res = await fetch(
@@ -46,7 +46,7 @@ export default function StorePage() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [accountId]);
 
 	useEffect(() => {
 		if (accountId) {

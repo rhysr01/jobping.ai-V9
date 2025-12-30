@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { HeroMobileMockup } from "@/components/marketing/HeroMobileMockup";
 import TrustBadges from "@/components/sections/TrustBadges";
 import { BrandIcons } from "@/components/ui/BrandIcons";
+import GradientText from "@/components/ui/GradientText";
 import HeroBackgroundAura from "@/components/ui/HeroBackgroundAura";
 import { useStats } from "@/hooks/useStats";
 import { trackEvent } from "@/lib/analytics";
@@ -70,7 +71,7 @@ export default function Hero() {
 			/>
 
 			{/* Layer 2: Gradient Background + HeroBackgroundAura (The Mood) */}
-			<div className="absolute inset-0 -z-10 bg-gradient-to-b from-zinc-950 via-black to-zinc-950" />
+			<div className="absolute inset-0 -z-10 bg-gradient-to-b from-surface-base via-black to-surface-base" />
 			<div className="absolute inset-0 -z-10">
 				<HeroBackgroundAura />
 			</div>
@@ -98,32 +99,10 @@ export default function Hero() {
 							className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3 max-w-[540px] relative"
 						>
 							{/* Silver Silk gradient: purple-500/80 (20%) → zinc-100 (50%) → purple-500/80 (80%) */}
-							<span
-								className="relative bg-clip-text text-transparent"
-								style={{
-									backgroundImage:
-										"linear-gradient(to right, rgba(168,85,247,0.8) 0%, rgba(168,85,247,0.8) 20%, rgb(244,244,245) 50%, rgba(168,85,247,0.8) 80%, rgba(168,85,247,0.8) 100%)",
-									WebkitBackgroundClip: "text",
-									WebkitTextFillColor: "transparent",
-									backgroundClip: "text",
-								}}
-							>
-								Get 5 early-career
-							</span>{" "}
-							<span
-								className="relative bg-clip-text text-transparent"
-								style={{
-									backgroundImage:
-										"linear-gradient(to right, rgba(168,85,247,0.8) 0%, rgba(168,85,247,0.8) 20%, rgb(244,244,245) 50%, rgba(168,85,247,0.8) 80%, rgba(168,85,247,0.8) 100%)",
-									WebkitBackgroundClip: "text",
-									WebkitTextFillColor: "transparent",
-									backgroundClip: "text",
-								}}
-							>
-								job matches
-							</span>{" "}
-							<span className="text-white">
-								instantly <span className="text-zinc-300">- free</span>
+							<GradientText variant="brand">Get 5 early-career</GradientText>{" "}
+							<GradientText variant="brand">job matches</GradientText>{" "}
+							<span className="text-content-primary">
+								instantly <span className="text-content-secondary">- free</span>
 							</span>
 						</motion.h1>
 
@@ -132,7 +111,7 @@ export default function Hero() {
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ delay: 0.25, duration: 0.6 }}
-							className="text-lg md:text-xl text-zinc-300 leading-relaxed max-w-xl mb-4 mt-6"
+							className="text-lg md:text-xl text-content-secondary leading-relaxed max-w-xl mb-4 mt-6"
 						>
 							Stop guessing about visa status. Get curated graduate roles
 							matched to your city and career path in under 2 minutes.
@@ -150,7 +129,7 @@ export default function Hero() {
 								onClick={() => {
 									trackEvent("cta_clicked", { type: "free", location: "hero" });
 								}}
-								className="inline-flex min-h-[44px] h-12 animate-shimmer items-center justify-center rounded-full border border-zinc-800 bg-[linear-gradient(110deg,#000,45%,#27272a,55%,#000)] bg-[length:200%_100%] px-8 font-medium text-zinc-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black hover:text-zinc-200 hover:border-zinc-700 w-full sm:w-auto sm:max-w-xs text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)]"
+								className="inline-flex min-h-[44px] h-12 animate-shimmer items-center justify-center rounded-full border border-border-subtle bg-[linear-gradient(110deg,#000,45%,#27272a,55%,#000)] bg-[length:200%_100%] px-8 font-medium text-content-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black hover:text-content-heading hover:border-border-default w-full sm:w-auto sm:max-w-xs text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)]"
 								aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
 							>
 								<span className="flex items-center justify-center gap-2">
@@ -164,7 +143,7 @@ export default function Hero() {
 								transition={{ delay: 0.35, duration: 0.6 }}
 								className="space-y-2 mt-3"
 							>
-								<p className="text-[11px] text-zinc-400">
+								<p className="text-[11px] text-content-muted">
 									100% free to start • Real entry-level roles • No spam
 								</p>
 							</motion.div>
@@ -178,7 +157,7 @@ export default function Hero() {
 								transition={{ delay: 0.42, duration: 0.6 }}
 								className="mt-3 p-3 rounded-lg glass-card elevation-1"
 							>
-								<p className="text-xs font-semibold text-zinc-300 mb-2.5">
+								<p className="text-xs font-semibold text-content-secondary mb-2.5">
 									Here's what we'll ask:
 								</p>
 								<div className="flex flex-wrap gap-1.5 text-xs">
@@ -210,14 +189,14 @@ export default function Hero() {
 							>
 								{stats ? (
 									<>
-										<p className="text-base font-semibold text-zinc-300 mb-1">
+										<p className="text-base font-semibold text-content-secondary mb-1">
 											Join{" "}
 											{stats.totalUsers > 0
 												? `${stats.totalUsers.toLocaleString("en-US")}+`
 												: "1,500+"}{" "}
 											job seekers finding roles
 										</p>
-										<p className="text-xs text-zinc-400">
+										<p className="text-xs text-content-muted">
 											Trusted by students across Europe
 										</p>
 									</>

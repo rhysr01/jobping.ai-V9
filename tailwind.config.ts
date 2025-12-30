@@ -56,6 +56,23 @@ export default {
 					900: "#171717",
 					950: "#0a0a0a",
 				},
+				// Semantic text colors (using "content" to avoid double "text" in class names)
+				// Usage: text-content-primary, text-content-secondary, etc.
+				content: {
+					primary: "#ffffff", // White - main headings
+					secondary: "#d4d4d8", // zinc-300 - body text
+					muted: "#a1a1aa", // zinc-400 - secondary text
+					disabled: "#71717a", // zinc-500 - disabled/muted
+					heading: "#f4f4f5", // zinc-100 - section headings
+					accent: "#c4b5fd", // brand-300 - accents
+				},
+				// Semantic surface colors
+				surface: {
+					base: "#09090b", // zinc-950 - base background
+					elevated: "#18181b", // zinc-900 - elevated surfaces
+					card: "rgba(255, 255, 255, 0.05)", // glass cards
+					hover: "rgba(255, 255, 255, 0.08)", // hover states
+				},
 				// Glass morphism tokens
 				glass: {
 					subtle: "rgba(255, 255, 255, 0.03)",
@@ -70,6 +87,7 @@ export default {
 			},
 			borderRadius: {
 				frame: "28px",
+				card: "1rem", // 16px - standardized card radius (use rounded-card)
 			},
 			keyframes: {
 				float: {
@@ -131,6 +149,21 @@ export default {
 				"glass-elevated":
 					"linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.06) 100%)",
 				"gradient-radial": "radial-gradient(circle, var(--tw-gradient-stops))",
+				// Standardized brand gradients (accessibility-checked for contrast)
+				// Primary brand gradient - high contrast for hero text/CTAs
+				"gradient-brand":
+					"linear-gradient(to right, rgba(139,92,246,0.9) 0%, rgba(244,244,245,1) 50%, rgba(139,92,246,0.9) 100%)",
+				// Subtle glass gradient - for cards and backgrounds
+				"gradient-glass":
+					"linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)",
+				// Accent gradient - use sparingly for highlights (purple to emerald)
+				"gradient-accent":
+					"linear-gradient(to right, rgba(139,92,246,0.7), rgba(16,185,129,0.7))",
+			},
+			// Standardized spacing scale
+			spacing: {
+				section: "5rem", // py-section for section padding (80px)
+				container: "1.5rem", // px-container for container padding (24px)
 			},
 		},
 	},

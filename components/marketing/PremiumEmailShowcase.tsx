@@ -231,7 +231,7 @@ const getVisaStyle = (confidence: string) => {
 		default:
 			return {
 				bg: "bg-zinc-500/20",
-				text: "text-zinc-400",
+				text: "text-content-muted",
 				border: "border-zinc-500/30",
 				label: "Check Visa",
 			};
@@ -240,13 +240,13 @@ const getVisaStyle = (confidence: string) => {
 
 export function PremiumEmailShowcase() {
 	return (
-		<section className="py-24 bg-black border-t border-zinc-900">
+		<section className="py-24 bg-black border-t border-border-subtle">
 			<div className="max-w-6xl mx-auto px-6">
 				<div className="text-center mb-16">
 					<h2 className="text-3xl font-bold text-white mb-4">
 						The Premium Rhythm
 					</h2>
-					<p className="text-zinc-300 max-w-2xl mx-auto italic">
+					<p className="text-content-secondary max-w-2xl mx-auto italic">
 						"The closest thing to having a personal headhunter."
 					</p>
 				</div>
@@ -269,20 +269,20 @@ export function PremiumEmailShowcase() {
 											<div className="w-2 h-2 rounded-full bg-yellow-500/20" />
 											<div className="w-2 h-2 rounded-full bg-green-500/20" />
 										</div>
-										<span className="text-xs font-mono text-zinc-400 uppercase tracking-[0.2em]">
+										<span className="text-xs font-mono text-content-muted uppercase tracking-[0.2em]">
 											{email.day} @ {email.time}
 										</span>
 									</div>
 
 									{/* Email Headers */}
-									<div className="px-5 py-4 border-b border-white/5 bg-zinc-900/20 shrink-0">
-										<div className="text-xs text-zinc-400 mb-1">
+									<div className="px-5 py-4 border-b border-white/5 bg-surface-elevated/20 shrink-0">
+										<div className="text-xs text-content-muted mb-1">
 											From:{" "}
 											<span className="text-purple-400 font-medium tracking-wide">
 												{email.from}
 											</span>
 										</div>
-										<div className="text-xs text-zinc-400">
+										<div className="text-xs text-content-muted">
 											Subject:{" "}
 											<span className="text-white font-semibold tracking-tight">
 												{email.subject}
@@ -305,7 +305,7 @@ export function PremiumEmailShowcase() {
 										</h1>
 
 										{/* Intro Text */}
-										<p className="text-sm text-zinc-300 mb-4 leading-relaxed shrink-0">
+										<p className="text-sm text-content-secondary mb-4 leading-relaxed shrink-0">
 											here's what our matcher surfaced for you today. Every role
 											below cleared the filters you set - location, career path,
 											visa, and early-career fit.
@@ -313,28 +313,28 @@ export function PremiumEmailShowcase() {
 
 										{/* Profile Section - SAME FOR ALL EMAILS */}
 										<div className="mb-4 rounded-lg bg-indigo-500/10 border border-indigo-500/30 p-3 shrink-0">
-											<div className="text-xs font-semibold text-zinc-200 mb-2">
+											<div className="text-xs font-semibold text-content-heading mb-2">
 												📋 Your Profile
 											</div>
-											<div className="space-y-1 text-xs text-zinc-400">
+											<div className="space-y-1 text-xs text-content-muted">
 												<div>
-													<strong className="text-zinc-300">Career Path:</strong>{" "}
+													<strong className="text-content-secondary">Career Path:</strong>{" "}
 													{USER_PROFILE.careerPath}
 												</div>
 												<div>
-													<strong className="text-zinc-300">Cities:</strong>{" "}
+													<strong className="text-content-secondary">Cities:</strong>{" "}
 													{USER_PROFILE.cities.join(", ")}
 												</div>
 												<div>
-													<strong className="text-zinc-300">Visa:</strong>{" "}
+													<strong className="text-content-secondary">Visa:</strong>{" "}
 													{USER_PROFILE.visa}
 												</div>
 												<div>
-													<strong className="text-zinc-300">Level:</strong>{" "}
+													<strong className="text-content-secondary">Level:</strong>{" "}
 													{USER_PROFILE.level}
 												</div>
 												<div>
-													<strong className="text-zinc-300">Work Style:</strong>{" "}
+													<strong className="text-content-secondary">Work Style:</strong>{" "}
 													{USER_PROFILE.workStyle}
 												</div>
 											</div>
@@ -354,7 +354,7 @@ export function PremiumEmailShowcase() {
 													{featuredJob.score >= 92 ? "🔥 " : ""}
 													{featuredJob.score}% Match
 												</span>
-												<div className="text-sm font-semibold text-zinc-200">
+												<div className="text-sm font-semibold text-content-heading">
 													{featuredJob.company}
 												</div>
 											</div>
@@ -365,7 +365,7 @@ export function PremiumEmailShowcase() {
 											</h3>
 
 											{/* Location */}
-											<div className="flex items-center gap-1.5 text-xs text-zinc-300 mb-3">
+											<div className="flex items-center gap-1.5 text-xs text-content-secondary mb-3">
 												<MapPin size={12} className="shrink-0" />
 												{featuredJob.location}
 											</div>
@@ -375,13 +375,13 @@ export function PremiumEmailShowcase() {
 												<div className="text-xs font-semibold text-purple-400 uppercase tracking-wider mb-1.5">
 													🤖 Why This Matches
 												</div>
-												<p className="text-sm text-zinc-200 leading-relaxed">
+												<p className="text-sm text-content-heading leading-relaxed">
 													{featuredJob.matchReason}
 												</p>
 											</div>
 
 											{/* Description */}
-											<p className="text-xs text-zinc-400 mb-3 leading-relaxed line-clamp-2">
+											<p className="text-xs text-content-muted mb-3 leading-relaxed line-clamp-2">
 												{featuredJob.description}
 											</p>
 
@@ -390,7 +390,7 @@ export function PremiumEmailShowcase() {
 												{featuredJob.tags.map((tag) => (
 													<span
 														key={tag}
-														className="px-2 py-0.5 rounded bg-purple-500/15 text-zinc-300 text-[10px] font-semibold"
+														className="px-2 py-0.5 rounded bg-purple-500/15 text-content-secondary text-[10px] font-semibold"
 													>
 														{tag}
 													</span>
@@ -422,7 +422,7 @@ export function PremiumEmailShowcase() {
 
 										{/* +4 more matches indicator */}
 										<div className="text-center pt-3 border-t border-white/5 shrink-0">
-											<p className="text-xs text-zinc-300 font-semibold">
+											<p className="text-xs text-content-secondary font-semibold">
 												+{remainingCount} more matches in this email
 											</p>
 										</div>

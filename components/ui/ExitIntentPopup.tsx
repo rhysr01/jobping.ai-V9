@@ -89,7 +89,7 @@ export default function ExitIntentPopup() {
 					>
 						<button
 							onClick={() => setShowPopup(false)}
-							className="absolute top-4 right-4 text-zinc-300 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+							className="absolute top-4 right-4 text-content-secondary hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
 							aria-label="Close popup"
 						>
 							<svg
@@ -119,7 +119,7 @@ export default function ExitIntentPopup() {
 							>
 								{CTA_GET_MY_5_FREE_MATCHES}
 							</h3>
-							<p id="exit-popup-description" className="text-zinc-200 mb-4">
+							<p id="exit-popup-description" className="text-content-heading mb-4">
 								See <strong className="text-white">5 hand-picked jobs</strong>{" "}
 								matched to your city, visa status, and career path. Instant
 								results - no credit card needed.

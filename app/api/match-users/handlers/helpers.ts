@@ -58,11 +58,13 @@ export function distributeJobs(
 				categoryMatchB = b.categories?.includes(userDatabaseCategory) ? 1 : 0;
 			} else if (userPrefersAllCategories) {
 				categoryMatchA =
-					a.categories?.filter((cat: string) => WORK_TYPE_CATEGORIES.includes(cat))
-						.length || 0;
+					a.categories?.filter((cat: string) =>
+						WORK_TYPE_CATEGORIES.includes(cat),
+					).length || 0;
 				categoryMatchB =
-					b.categories?.filter((cat: string) => WORK_TYPE_CATEGORIES.includes(cat))
-						.length || 0;
+					b.categories?.filter((cat: string) =>
+						WORK_TYPE_CATEGORIES.includes(cat),
+					).length || 0;
 			}
 
 			if (categoryMatchA !== categoryMatchB) {

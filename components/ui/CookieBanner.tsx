@@ -81,11 +81,11 @@ export default function CookieBanner() {
 									<p className="text-sm sm:text-base text-white font-medium leading-relaxed">
 										We use cookies to improve your experience and analyze site
 										usage.{" "}
-										<span className="text-zinc-300">
+										<span className="text-content-secondary">
 											Essential cookies are always active.
 										</span>
 									</p>
-									<p className="text-xs sm:text-sm text-zinc-400">
+									<p className="text-xs sm:text-sm text-content-muted">
 										Learn more in our{" "}
 										<Link
 											href="/legal/privacy"

@@ -114,7 +114,7 @@ export default function WorkEnvironmentSelector({
 						className={`relative rounded-2xl border-2 transition-all overflow-hidden group ${
 							isSelected
 								? "border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/10 shadow-glow-subtle"
-								: "border-zinc-700 bg-zinc-900/40 hover:border-zinc-600 hover:bg-zinc-900/60"
+								: "border-zinc-700 bg-surface-elevated/40 hover:border-zinc-600 hover:bg-surface-elevated/60"
 						}`}
 					>
 						{/* Background gradient on hover/select */}
@@ -142,7 +142,7 @@ export default function WorkEnvironmentSelector({
 									className={`w-8 h-8 sm:w-10 sm:h-10 ${
 										isSelected
 											? "text-brand-400"
-											: "text-zinc-400 group-hover:text-zinc-300"
+											: "text-content-muted group-hover:text-content-secondary"
 									}`}
 								/>
 							</motion.div>
@@ -151,14 +151,14 @@ export default function WorkEnvironmentSelector({
 							<div>
 								<div
 									className={`text-lg sm:text-xl font-bold mb-1 ${
-										isSelected ? "text-white" : "text-zinc-300"
+										isSelected ? "text-white" : "text-content-secondary"
 									}`}
 								>
 									{env.label}
 								</div>
 								<div
 									className={`text-xs sm:text-sm ${
-										isSelected ? "text-zinc-300" : "text-zinc-400"
+										isSelected ? "text-content-secondary" : "text-content-muted"
 									}`}
 								>
 									{env.description}

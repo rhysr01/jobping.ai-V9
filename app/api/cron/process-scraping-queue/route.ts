@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { withAxiom } from "next-axiom";
-// import { withAuth } from '../../../../lib/auth';
 import { AppError, asyncHandler } from "@/lib/errors";
 import { getDatabaseClient } from "@/Utils/databasePool";
 
@@ -71,7 +70,7 @@ const processScrapingQueueHandler = asyncHandler(
 				const { companies, scraperType } = job.payload;
 
 				// Import scraper dynamically based on type
-				let scraperResult;
+				let scraperResult: { jobsScraped: number; companiesProcessed: number } | null = null;
 				switch (scraperType) {
 					case "adzuna":
 						scraperResult = await processAdzunaScraper(companies);

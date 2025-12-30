@@ -89,16 +89,16 @@ export default function CalendarPicker({
 				onClick={() => setIsOpen(!isOpen)}
 				whileHover={{ scale: 1.01 }}
 				whileTap={{ scale: 0.99 }}
-				className="w-full px-5 py-4 bg-zinc-900/40 border-2 border-zinc-700 rounded-2xl text-white focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/20 transition-all text-lg flex items-center justify-between group hover:border-zinc-600 hover:bg-zinc-900/60"
+				className="w-full px-5 py-4 bg-surface-elevated/40 border-2 border-zinc-700 rounded-2xl text-white focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/20 transition-all text-lg flex items-center justify-between group hover:border-zinc-600 hover:bg-surface-elevated/60"
 			>
 				<div className="flex items-center gap-3">
-					<BrandIcons.Clock className="w-5 h-5 text-zinc-400 group-hover:text-brand-400 transition-colors" />
-					<span className={value ? "text-white" : "text-zinc-400"}>
+					<BrandIcons.Clock className="w-5 h-5 text-content-muted group-hover:text-brand-400 transition-colors" />
+					<span className={value ? "text-white" : "text-content-muted"}>
 						{formatDisplayDate()}
 					</span>
 				</div>
 				<svg
-					className="w-5 h-5 text-zinc-400 group-hover:text-brand-400 transition-colors"
+					className="w-5 h-5 text-content-muted group-hover:text-brand-400 transition-colors"
 					fill="none"
 					viewBox="0 0 24 24"
 					stroke="currentColor"
@@ -126,17 +126,17 @@ export default function CalendarPicker({
 						initial={{ opacity: 0, y: -10, scale: 0.95 }}
 						animate={{ opacity: 1, y: 0, scale: 1 }}
 						exit={{ opacity: 0, y: -10, scale: 0.95 }}
-						className="absolute z-50 mt-2 w-full bg-zinc-900 border-2 border-brand-500/30 rounded-2xl shadow-glow-strong overflow-hidden"
+						className="absolute z-50 mt-2 w-full bg-surface-elevated border-2 border-brand-500/30 rounded-2xl shadow-glow-strong overflow-hidden"
 					>
 						{/* Header */}
-						<div className="p-4 bg-gradient-to-r from-brand-500/10 via-purple-600/10 to-brand-500/10 border-b border-zinc-800">
+						<div className="p-4 bg-gradient-to-r from-brand-500/10 via-purple-600/10 to-brand-500/10 border-b border-border-subtle">
 							<div className="flex items-center justify-between mb-4">
 								<motion.button
 									type="button"
 									onClick={() => navigateMonth(-1)}
 									whileHover={{ scale: 1.1 }}
 									whileTap={{ scale: 0.9 }}
-									className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+									className="p-2 rounded-lg hover:bg-zinc-800 text-content-muted hover:text-white transition-colors"
 								>
 									<svg
 										className="w-5 h-5"
@@ -162,7 +162,7 @@ export default function CalendarPicker({
 									onClick={() => navigateMonth(1)}
 									whileHover={{ scale: 1.1 }}
 									whileTap={{ scale: 0.9 }}
-									className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+									className="p-2 rounded-lg hover:bg-zinc-800 text-content-muted hover:text-white transition-colors"
 								>
 									<svg
 										className="w-5 h-5"
@@ -182,11 +182,11 @@ export default function CalendarPicker({
 						</div>
 
 						{/* Day names */}
-						<div className="grid grid-cols-7 gap-1 p-2 bg-zinc-900/50">
+						<div className="grid grid-cols-7 gap-1 p-2 bg-surface-elevated/50">
 							{dayNames.map((day) => (
 								<div
 									key={day}
-									className="text-center text-xs font-semibold text-zinc-400 py-2"
+									className="text-center text-xs font-semibold text-content-muted py-2"
 								>
 									{day}
 								</div>
@@ -218,12 +218,12 @@ export default function CalendarPicker({
 										whileTap={!disabled ? { scale: 0.9 } : {}}
 										className={`aspect-square rounded-lg text-sm font-semibold transition-all relative ${
 											disabled
-												? "text-zinc-700 cursor-not-allowed"
+												? "text-content-disabled cursor-not-allowed"
 												: selected
 													? "bg-gradient-to-br from-brand-500 to-purple-600 text-white shadow-glow-subtle"
 													: isToday
 														? "bg-brand-500/20 text-brand-400 border border-brand-500/30"
-														: "text-zinc-300 hover:bg-zinc-800 hover:text-white"
+														: "text-content-secondary hover:bg-zinc-800 hover:text-white"
 										}`}
 									>
 										{day}
@@ -242,8 +242,8 @@ export default function CalendarPicker({
 						</div>
 
 						{/* Footer */}
-						<div className="p-3 border-t border-zinc-800 bg-zinc-900/50">
-							<div className="flex items-center justify-between text-xs text-zinc-400">
+						<div className="p-3 border-t border-border-subtle bg-surface-elevated/50">
+							<div className="flex items-center justify-between text-xs text-content-muted">
 								<div className="flex items-center gap-2">
 									<div className="w-2 h-2 rounded-full bg-brand-500"></div>
 									<span>Selected</span>

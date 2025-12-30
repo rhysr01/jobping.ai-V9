@@ -57,6 +57,7 @@ function SuccessContent() {
 								stroke="currentColor"
 								strokeWidth="3"
 							>
+								<title>Success Icon</title>
 								<path
 									strokeLinecap="round"
 									strokeLinejoin="round"

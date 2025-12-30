@@ -1,56 +1,70 @@
+"use client";
+
+import { cva, type VariantProps } from "class-variance-authority";
 import { type MotionProps, motion } from "framer-motion";
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
-interface GlassCardProps extends Omit<MotionProps, "children"> {
+const glassCardVariants = cva(
+	"glass-card rounded-card border transition-all duration-300 backdrop-blur-sm",
+	{
+		variants: {
+			intent: {
+				subtle: "bg-surface-card border-border-subtle elevation-1",
+				default: "bg-surface-card border-border-default elevation-2",
+				elevated: "bg-surface-card border-border-elevated elevation-3",
+			},
+			hover: {
+				none: "",
+				lift: "hover:-translate-y-1",
+				scale: "hover:scale-[1.02]",
+			},
+		},
+		defaultVariants: {
+			intent: "subtle",
+			hover: "lift",
+		},
+	}
+);
+
+export interface GlassCardProps
+	extends Omit<MotionProps, "children">,
+		VariantProps<typeof glassCardVariants> {
 	children: ReactNode;
 	className?: string;
-	variant?: "default" | "elevated" | "subtle";
-	hover?: boolean | "lift" | "scale";
 }
 
 /**
- * Reusable glass morphism card component with consistent hover effects
- * Supports both static and animated (motion) variants
+ * Reusable glass morphism card component with CVA variants
+ * Replaces long cn() class strings with clean variant props
+ * 
+ * @example
+ * <GlassCard intent="subtle" hover="lift">Content</GlassCard>
+ * <GlassCard intent="elevated" hover="scale">Premium Content</GlassCard>
  */
 export default function GlassCard({
 	children,
 	className = "",
-	variant = "subtle",
-	hover = true,
+	intent,
+	hover,
 	...motionProps
 }: GlassCardProps) {
-	const baseClasses =
-		"glass-card rounded-2xl border transition-all duration-300 backdrop-blur-sm";
-
-	const variants = {
-		subtle: "bg-glass-subtle border-border-subtle elevation-1",
-		default: "bg-glass-default border-border-default elevation-2",
-		elevated: "bg-glass-elevated border-border-elevated elevation-3",
-	};
-
-	const hoverEffects = {
-		lift: { y: -2 },
-		scale: { scale: 1.01 },
-		true: { y: -2 },
-	};
-
-	const hoverProps = hover
-		? {
-				whileHover:
-					hoverEffects[hover === true ? "true" : hover] || hoverEffects.true,
-				transition: { duration: 0.2, ease: "easeOut" as const },
-			}
-		: {};
-
-	const Component = motion.div;
+	const hoverProps =
+		hover !== "none" && hover
+			? {
+					whileHover:
+						hover === "lift" ? { y: -2 } : hover === "scale" ? { scale: 1.01 } : {},
+					transition: { duration: 0.2, ease: "easeOut" as const },
+				}
+			: {};
 
 	return (
-		<Component
-			className={`${baseClasses} ${variants[variant]} ${className}`}
+		<motion.div
+			className={cn(glassCardVariants({ intent, hover }), className)}
 			{...hoverProps}
 			{...motionProps}
 		>
 			{children}
-		</Component>
+		</motion.div>
 	);
 }

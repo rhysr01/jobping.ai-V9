@@ -82,7 +82,7 @@ export default function Header() {
 			<header
 				className={`sticky top-0 left-0 right-0 z-50 transition-all duration-200 ${
 					scrolled
-						? "bg-zinc-950/70 backdrop-blur-md border-b border-white/5 shadow-lg"
+						? "bg-surface-base/70 backdrop-blur-md border-b border-white/5 shadow-lg"
 						: "bg-transparent border-b border-transparent"
 				}`}
 			>
@@ -117,7 +117,7 @@ export default function Header() {
 										className={`text-sm font-semibold transition-all duration-200 relative ${
 											activeSection === link.href
 												? "text-white"
-												: "text-zinc-300 hover:text-white"
+												: "text-content-secondary hover:text-white"
 										}`}
 									>
 										{link.label}
@@ -160,7 +160,7 @@ export default function Header() {
 						{/* Mobile Menu Button */}
 						<button
 							onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-							className="md:hidden p-2 text-zinc-300 hover:text-white transition-all duration-200"
+							className="md:hidden p-2 text-content-secondary hover:text-white transition-all duration-200"
 							aria-label="Toggle menu"
 							aria-expanded={mobileMenuOpen}
 						>
@@ -199,7 +199,7 @@ export default function Header() {
 									<LogoWordmark />
 									<button
 										onClick={() => setMobileMenuOpen(false)}
-										className="p-2 text-zinc-300 hover:text-white transition-all duration-200"
+										className="p-2 text-content-secondary hover:text-white transition-all duration-200"
 										aria-label="Close menu"
 									>
 										<BrandIcons.X className="h-6 w-6" />
@@ -214,7 +214,7 @@ export default function Header() {
 											className={`text-lg font-medium transition-all duration-200 py-2 ${
 												activeSection === link.href
 													? "text-white"
-													: "text-zinc-500 hover:text-white"
+													: "text-content-disabled hover:text-white"
 											}`}
 										>
 											{link.label}

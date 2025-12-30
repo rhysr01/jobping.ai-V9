@@ -28,7 +28,7 @@ export default function Footer() {
 						<div className="scale-60 md:scale-80 origin-left">
 							<LogoWordmark />
 						</div>
-						<p className="text-xs text-zinc-400 max-w-md">
+						<p className="text-xs text-content-muted max-w-md">
 							AI-powered job matching for early-career roles across Europe. Get
 							personalized matches delivered to your inbox.
 						</p>
@@ -38,7 +38,7 @@ export default function Footer() {
 					<div className="flex flex-col items-start md:items-end gap-4">
 						<div className="flex items-center gap-2">
 							<div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-							<span className="text-xs text-zinc-400">
+							<span className="text-xs text-content-muted">
 								Status: All Systems Operational
 							</span>
 						</div>
@@ -48,14 +48,14 @@ export default function Footer() {
 								<Link
 									key={link.href}
 									href={link.href}
-									className="text-xs text-zinc-400 transition-all duration-200 hover:text-zinc-300"
+									className="text-xs text-content-muted transition-all duration-200 hover:text-content-secondary"
 								>
 									{link.label}
 								</Link>
 							))}
 							<a
 								href="mailto:support@jobping.com"
-								className="text-xs text-zinc-400 transition-all duration-200 hover:text-zinc-300"
+								className="text-xs text-content-muted transition-all duration-200 hover:text-content-secondary"
 							>
 								Support
 							</a>
@@ -70,7 +70,7 @@ export default function Footer() {
 					transition={{ duration: 0.6, delay: 0.2 }}
 					className="mt-8 pt-8 border-t border-white/5 text-center"
 				>
-					<p className="text-xs text-zinc-400">
+					<p className="text-xs text-content-muted">
 						© {new Date().getFullYear()} JobPing. All rights reserved.
 					</p>
 				</motion.div>

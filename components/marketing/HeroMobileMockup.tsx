@@ -2,6 +2,16 @@
 
 import React from "react";
 import { TiltCard } from "@/components/ui/TiltCard";
+import { BrandIcons } from "@/components/ui/BrandIcons";
+import { trackEvent } from "@/lib/analytics";
+import {
+	CTA_GET_MY_5_FREE_MATCHES,
+	CTA_GET_MY_5_FREE_MATCHES_ARIA,
+} from "@/lib/copy";
+import {
+	getVisaConfidenceLabel,
+	getVisaConfidenceStyle,
+} from "@/Utils/matching/visa-confidence";
 
 interface HeroMockupProps {
 	stats?: { totalUsers: number };
@@ -43,65 +53,15 @@ const SAMPLE_JOBS = [
 		visa_confidence: "likely",
 		description: "Develop quantitative models and trading systems. Python, SQL, and financial markets knowledge required.",
 	},
-	{
-		id: 4,
-		title: "Associate - Risk Analytics",
-		company: "Barclays",
-		location: "London, UK",
-		work_environment: "hybrid",
-		match_score: 0.88,
-		match_reason: "Excellent match for your finance background. Located in London, visa sponsorship available.",
-		visa_confidence: "likely",
-		description: "Build risk models and analytics dashboards. Work with Python, SQL, and financial data.",
-	},
-	{
-		id: 5,
-		title: "Junior FinTech Developer",
-		company: "Revolut",
-		location: "London, UK",
-		work_environment: "hybrid",
-		match_score: 0.85,
-		match_reason: "Perfect for your interest in finance and technology. Located in London, EU-friendly.",
-		visa_confidence: "verified",
-		description: "Build financial products that millions use. React, Python, and modern fintech tooling.",
-	},
 ];
 
 export function HeroMobileMockup({ stats, topMatch }: HeroMockupProps) {
-	const userCount = stats?.totalUsers
-		? stats.totalUsers.toLocaleString()
-		: "10,000+";
-
 	// Use topMatch for first job if provided, otherwise use sample
+	// Only show 3 jobs in hero mockup for better spacing
 	const jobs = topMatch 
-		? [{ ...SAMPLE_JOBS[0], ...topMatch, match_score: topMatch.matchScore ? topMatch.matchScore / 100 : 0.86 }, ...SAMPLE_JOBS.slice(1)]
-		: SAMPLE_JOBS;
+		? [{ ...SAMPLE_JOBS[0], ...topMatch, match_score: topMatch.matchScore ? topMatch.matchScore / 100 : 0.86 }, ...SAMPLE_JOBS.slice(1, 3)]
+		: SAMPLE_JOBS.slice(0, 3);
 
-	const getVisaStyle = (confidence: string) => {
-		switch (confidence) {
-			case "verified":
-				return {
-					bg: "bg-emerald-500/20",
-					text: "text-emerald-400",
-					dot: "bg-emerald-400",
-					label: "Verified Visa",
-				};
-			case "likely":
-				return {
-					bg: "bg-blue-500/20",
-					text: "text-blue-400",
-					dot: "bg-blue-400",
-					label: "Likely Visa",
-				};
-			default:
-				return {
-					bg: "bg-zinc-500/20",
-					text: "text-zinc-400",
-					dot: "bg-zinc-400",
-					label: "Check Visa",
-				};
-		}
-	};
 
 	const workEnvEmoji = (env: string) => {
 		const map: Record<string, string> = {
@@ -116,106 +76,104 @@ export function HeroMobileMockup({ stats, topMatch }: HeroMockupProps) {
 		<div className="relative mx-auto w-full max-w-[320px] lg:max-w-[380px]">
 			<TiltCard>
 				<div 
-					className="relative aspect-[9/19] w-full overflow-hidden rounded-[2.5rem] border-[6px] border-zinc-800 bg-black shadow-2xl"
-					aria-label="Free tier job matches preview - showing 5 matched jobs"
+					className="relative aspect-[9/19] w-full overflow-hidden rounded-[2.5rem] border-[6px] border-border-subtle bg-black shadow-2xl"
+					aria-label="Free tier job matches preview - showing 3 matched jobs"
 				>
 					{/* Header - Free Plan Indicator (matches real design) */}
-					<div className="flex h-14 w-full items-center justify-center border-b border-zinc-900 bg-zinc-950 px-4">
+					<div className="flex h-14 w-full items-center justify-center border-b border-border-subtle bg-surface-base px-4">
 						<div className="flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1.5">
 							<span className="w-2 h-2 bg-brand-400 rounded-full"></span>
 							<span className="text-[11px] font-medium text-brand-200">
-								Free Plan · Viewing 5/5 matches
+								Free Plan · Viewing 3/5 matches
 							</span>
 						</div>
 					</div>
 
 					{/* Scrollable Job Cards Container */}
-					<div className="flex flex-col gap-3 p-3 overflow-y-auto h-[calc(100%-3.5rem)] bg-black">
+					<div className="flex flex-col gap-3 p-4 overflow-y-auto h-[calc(100%-3.5rem)] bg-black">
 						{jobs.map((job, index) => {
 							const matchScore = job.match_score 
 								? Math.round(job.match_score * 100)
 								: 86 - index * 2;
-							const visaStyle = getVisaStyle(job.visa_confidence || "likely");
-							const isFirst = index === 0;
 							
 							return (
 								<article
 									key={job.id}
-									className={`glass-card elevation-2 p-3.5 hover:elevation-3 transition-all duration-300 ${
-										!isFirst ? "opacity-90" : ""
-									}`}
+									className="glass-card elevation-2 p-5 hover:elevation-3 transition-all duration-300"
 									role="listitem"
 								>
 									{/* Top Row: Job Number + Match Score + Visa Confidence */}
-									<div className="flex items-center gap-1.5 mb-2.5 flex-wrap">
-										<span className="text-[10px] font-bold text-brand-400 bg-brand-500/20 px-2 py-0.5 rounded-full">
+									<div className="flex items-center gap-2 mb-3 flex-wrap">
+										<span className="text-xs font-bold text-brand-400 bg-brand-500/20 px-2.5 py-1 rounded-full">
 											#{index + 1}
 										</span>
-										<span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-											matchScore >= 92
+										<span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+											(job.match_score && job.match_score >= 0.92) || matchScore >= 92
 												? "text-emerald-400 bg-emerald-500/20"
-												: matchScore >= 85
-												? "text-green-400 bg-green-500/20"
-												: "text-yellow-400 bg-yellow-500/20"
+												: "text-green-400 bg-green-500/20"
 										}`}>
 											{matchScore}% Match
 										</span>
-										{job.visa_confidence && job.visa_confidence !== "unknown" && (
-											<span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] ${visaStyle.bg} ${visaStyle.text} border border-white/5 font-medium`}>
-												<span className={`w-1 h-1 rounded-full ${visaStyle.dot} opacity-80`} aria-hidden="true"></span>
-												{visaStyle.label}
-											</span>
-										)}
+										{job.visa_confidence && job.visa_confidence !== "unknown" && (() => {
+											const style = getVisaConfidenceStyle(job.visa_confidence);
+											const label = getVisaConfidenceLabel(job.visa_confidence);
+											return (
+												<span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border border-white/5 ${style.bgColor} ${style.textColor} font-medium`}>
+													<span className={`w-1.5 h-1.5 rounded-full ${style.dotColor} opacity-80`} aria-hidden="true"></span>
+													{label}
+												</span>
+											);
+										})()}
 									</div>
 
-									{/* Job Title */}
-									<h3 className="text-sm font-bold mb-1 text-zinc-100 break-words tracking-tight line-clamp-1">
+									{/* Job Title - Larger, more prominent */}
+									<h3 className="text-xl font-bold mb-1.5 text-content-heading break-words tracking-tight">
 										{job.title}
 									</h3>
 
 									{/* Company - Brand color */}
-									<p className="text-brand-300 font-medium mb-2 text-xs">
+									<p className="text-brand-300 font-medium mb-2 break-words">
 										{job.company}
 									</p>
 
 									{/* Location + Work Environment */}
-									<div className="flex flex-wrap gap-1.5 mb-2.5">
-										<span className="inline-flex items-center px-2 py-0.5 rounded-full bg-zinc-800/50 text-[10px] text-zinc-300">
+									<div className="flex flex-wrap gap-2 mb-3">
+										<span className="inline-flex items-center px-2.5 py-1 rounded-full bg-zinc-800/50 text-sm text-content-secondary">
 											📍 {job.location}
 										</span>
 										{job.work_environment && (
-											<span className="inline-flex items-center px-2 py-0.5 rounded-full bg-zinc-800/50 text-[10px] capitalize text-zinc-300">
+											<span className="inline-flex items-center px-2.5 py-1 rounded-full bg-zinc-800/50 text-sm capitalize text-content-secondary">
 												{workEnvEmoji(job.work_environment)} {job.work_environment}
 											</span>
 										)}
 									</div>
 
-									{/* Match Reason - Only show for first 2 jobs to save space */}
-									{job.match_reason && index < 2 && (
-										<div className="mb-2.5 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
-											<p className="text-[9px] font-semibold text-emerald-400 mb-1 flex items-center gap-1">
+									{/* Match Reason - Show for all jobs (like real page) */}
+									{job.match_reason && (
+										<div className="mb-3 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+											<p className="text-xs font-semibold text-emerald-400 mb-1.5 flex items-center gap-1.5">
 												<span>💡</span>
 												Why this match?
 											</p>
-											<p className="text-[10px] text-zinc-200 leading-relaxed line-clamp-2">
+											<p className="text-sm text-content-heading leading-relaxed">
 												{job.match_reason}
 											</p>
 										</div>
 									)}
 
-									{/* Description - Truncated (only first job) */}
-									{index === 0 && job.description && (
-										<p className="text-zinc-400 text-[10px] mb-2.5 line-clamp-2 leading-relaxed">
-											{job.description}
+									{/* Description - Show for all jobs (like real page) */}
+									{job.description && (
+										<p className="text-content-muted text-sm mb-4 line-clamp-3 leading-relaxed">
+											{job.description.substring(0, 200)}...
 										</p>
 									)}
 
 									{/* Action Buttons */}
-									<div className="flex gap-1.5">
-										<button className="flex-1 bg-emerald-500 text-zinc-950 font-bold px-2.5 py-1.5 rounded-lg text-[10px] hover:bg-emerald-400 transition-all">
+									<div className="flex gap-3">
+										<button className="flex-1 bg-emerald-500 text-content-primary font-bold px-6 py-2.5 rounded-lg text-sm hover:bg-emerald-400 transition-all">
 											Apply Now →
 										</button>
-										<button className="px-2.5 py-1.5 rounded-lg border border-zinc-700 bg-zinc-900/40 text-zinc-400 hover:text-zinc-300 text-[10px] font-medium">
+										<button className="px-4 py-2.5 rounded-lg border border-border-default bg-surface-elevated/40 text-content-muted hover:text-content-secondary text-sm font-medium">
 											👎
 										</button>
 									</div>
@@ -224,13 +182,21 @@ export function HeroMobileMockup({ stats, topMatch }: HeroMockupProps) {
 						})}
 					</div>
 
-					{/* CTA Overlay - Dynamic user count */}
-					<div className="absolute bottom-6 left-0 w-full px-4">
-						<div className="rounded-xl bg-white p-3 text-center shadow-2xl">
-							<span className="text-[11px] font-extrabold text-black uppercase tracking-tight">
-								JOIN {userCount} ENGINEERS
+					{/* CTA Overlay - Shimmer Button (matches Hero design) */}
+					<div className="absolute bottom-3 left-0 w-full px-4 z-20">
+						<a
+							href="/signup/free"
+							onClick={() => {
+								trackEvent("cta_clicked", { type: "free", location: "hero_mockup" });
+							}}
+							className="inline-flex min-h-[44px] h-12 w-full animate-shimmer items-center justify-center rounded-full border border-border-subtle bg-[linear-gradient(110deg,#000,45%,#27272a,55%,#000)] bg-[length:200%_100%] px-6 font-medium text-content-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black hover:text-content-heading hover:border-border-default text-sm md:text-base shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)]"
+							aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
+						>
+							<span className="flex items-center justify-center gap-2">
+								{CTA_GET_MY_5_FREE_MATCHES}
+								<BrandIcons.ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
 							</span>
-						</div>
+						</a>
 					</div>
 				</div>
 			</TiltCard>

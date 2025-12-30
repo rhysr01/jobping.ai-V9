@@ -778,7 +778,7 @@ const EuropeMap = memo(
 									/>
 								)}
 							</div>
-							<div className="text-zinc-300 text-xs mt-1 font-medium">
+							<div className="text-content-secondary text-xs mt-1 font-medium">
 								{CITY_COORDINATES[tooltip.city]?.country}
 							</div>
 							{selectedCities.includes(tooltip.city) && (
@@ -830,7 +830,7 @@ const EuropeMap = memo(
 								className="w-5 h-5 rounded-full bg-zinc-700 border-2 border-zinc-600/60 shadow-inner"
 								aria-hidden="true"
 							></div>
-							<span className="text-zinc-300 text-sm font-medium">
+							<span className="text-content-secondary text-sm font-medium">
 								Available
 							</span>
 						</div>
@@ -839,11 +839,11 @@ const EuropeMap = memo(
 						<span className="text-brand-200 font-black text-base tabular-nums">
 							{selectedCities.length}
 						</span>
-						<span className="text-zinc-400 font-semibold text-sm">/</span>
+						<span className="text-content-muted font-semibold text-sm">/</span>
 						<span className="text-white font-bold text-base tabular-nums">
 							{maxSelections}
 						</span>
-						<span className="text-zinc-300 text-xs font-medium ml-1">
+						<span className="text-content-secondary text-xs font-medium ml-1">
 							selected
 						</span>
 					</div>

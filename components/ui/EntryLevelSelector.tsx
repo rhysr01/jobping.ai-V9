@@ -105,7 +105,7 @@ export default function EntryLevelSelector({
 						className={`relative rounded-2xl border-2 transition-all overflow-hidden group ${
 							isSelected
 								? "border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/10 shadow-glow-subtle"
-								: "border-zinc-700 bg-zinc-900/40 hover:border-zinc-600 hover:bg-zinc-900/60"
+								: "border-zinc-700 bg-surface-elevated/40 hover:border-zinc-600 hover:bg-surface-elevated/60"
 						}`}
 					>
 						{/* Background gradient */}
@@ -133,7 +133,7 @@ export default function EntryLevelSelector({
 									className={`w-[7.8px] h-[7.8px] ${
 										isSelected
 											? "text-brand-400"
-											: "text-zinc-400 group-hover:text-zinc-300"
+											: "text-content-muted group-hover:text-content-secondary"
 									}`}
 								/>
 							</motion.div>
@@ -142,14 +142,14 @@ export default function EntryLevelSelector({
 							<div className="flex-1 text-left">
 								<div
 									className={`font-bold mb-0.5 ${
-										isSelected ? "text-white" : "text-zinc-300"
+										isSelected ? "text-white" : "text-content-secondary"
 									}`}
 								>
 									{option.label}
 								</div>
 								<div
 									className={`text-xs ${
-										isSelected ? "text-zinc-300" : "text-zinc-400"
+										isSelected ? "text-content-secondary" : "text-content-muted"
 									}`}
 								>
 									{option.description}

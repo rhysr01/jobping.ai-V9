@@ -743,6 +743,23 @@ BEGIN
   END IF;
 
   -- ============================================================================
+  -- STEP 15.5: FALLBACK - Ensure ALL jobs have one of: internship, graduate, or early-career
+  -- This ensures no job is left uncategorized
+  -- ============================================================================
+  IF NEW.is_active = true THEN
+    IF NEW.is_internship != true AND NEW.is_graduate != true THEN
+      -- If job doesn't have 'early-career' category, add it as fallback
+      IF NOT ('early-career' = ANY(job_categories)) THEN
+        job_categories := array_append(job_categories, 'early-career');
+      END IF;
+      -- Ensure is_early_career flag is set
+      IF NEW.is_early_career IS NULL OR NEW.is_early_career = false THEN
+        NEW.is_early_career := true;
+      END IF;
+    END IF;
+  END IF;
+
+  -- ============================================================================
   -- STEP 16: Update categories and timestamp
   -- ============================================================================
   NEW.categories := job_categories;

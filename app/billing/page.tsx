@@ -509,7 +509,7 @@ export default function BillingPage({
 							animate={{ opacity: 1 }}
 							exit={{ opacity: 0 }}
 						>
-							<GlassCard variant="subtle" className="p-12">
+							<GlassCard intent="subtle" className="p-12">
 								<div className="text-center">
 									<Skeleton className="h-12 w-12 mx-auto mb-4 rounded-full" />
 									<SkeletonText lines={2} className="max-w-md mx-auto" />
@@ -526,7 +526,7 @@ export default function BillingPage({
 							exit={{ opacity: 0 }}
 						>
 							<GlassCard
-								variant="subtle"
+								intent="subtle"
 								className="p-6 border border-red-500/50"
 							>
 								<div className="flex items-center gap-3 text-red-400">

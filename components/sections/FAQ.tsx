@@ -55,10 +55,10 @@ export default function FAQ() {
 					transition={{ duration: 0.6 }}
 					className="max-w-3xl mx-auto"
 				>
-					<h2 className="text-2xl font-semibold text-zinc-100 mb-2 text-center tracking-tight">
+					<h2 className="text-2xl font-semibold text-content-heading mb-2 text-center tracking-tight">
 						Frequently Asked Questions
 					</h2>
-					<p className="text-sm text-zinc-400 text-center mb-6">
+					<p className="text-sm text-content-muted text-center mb-6">
 						Click any question to see the answer
 					</p>
 
@@ -81,7 +81,7 @@ export default function FAQ() {
 										aria-expanded={isOpen}
 									>
 										{/* Question with gradient */}
-										<span className="text-base font-bold text-zinc-100 pr-4 group-hover:text-white transition-colors">
+										<span className="text-base font-bold text-content-heading pr-4 group-hover:text-white transition-colors">
 											{faq.question}
 										</span>
 
@@ -105,7 +105,7 @@ export default function FAQ() {
 											>
 												{/* Answer with left border accent */}
 												<div className="pt-4 pl-3 pr-3 pb-2 ml-2 glass-card elevation-1 border-l-2 border-purple-500/30 rounded-r-lg">
-													<p className="text-sm text-zinc-300 leading-relaxed">
+													<p className="text-sm text-content-secondary leading-relaxed">
 														{faq.answer}
 													</p>
 												</div>

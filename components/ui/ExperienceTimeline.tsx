@@ -179,7 +179,7 @@ export default function ExperienceTimeline({
 										className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all ${
 											isSelected
 												? "border-brand-400 bg-gradient-to-br from-brand-500 via-purple-500 to-brand-400 shadow-[0_0_14px_rgba(154,106,255,0.4)] text-white"
-												: "border-zinc-600 bg-zinc-900 text-brand-200"
+												: "border-zinc-600 bg-surface-elevated text-brand-200"
 										}`}
 										aria-hidden="true"
 									>
@@ -187,7 +187,7 @@ export default function ExperienceTimeline({
 									</span>
 									<div
 										className={`text-xs font-semibold uppercase tracking-wide ${
-											isSelected ? "text-brand-300" : "text-zinc-400"
+											isSelected ? "text-brand-300" : "text-content-muted"
 										}`}
 									>
 										{exp.label}
@@ -214,7 +214,7 @@ export default function ExperienceTimeline({
 							<div className="text-sm font-semibold text-white">
 								{selectedLevel.label} experience
 							</div>
-							<div className="text-xs text-zinc-400">
+							<div className="text-xs text-content-muted">
 								{selectedLevel.description}
 							</div>
 						</div>

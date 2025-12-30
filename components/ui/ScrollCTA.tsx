@@ -82,14 +82,14 @@ export default function ScrollCTA() {
 					<motion.div
 						initial={{ scale: 0.9 }}
 						animate={{ scale: 1 }}
-						className="bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl"
+						className="bg-surface-elevated/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl"
 					>
 						<div className="flex items-center gap-4">
 							<div className="flex-1">
 								<p className="text-sm font-semibold text-white mb-1">
 									{CTA_GET_MY_5_FREE_MATCHES}
 								</p>
-								<p className="text-xs text-zinc-400 hidden md:flex">
+								<p className="text-xs text-content-muted hidden md:flex">
 									{TRUST_TEXT_NO_CARD_SETUP}
 								</p>
 							</div>
@@ -109,7 +109,7 @@ export default function ScrollCTA() {
 							</Link>
 							<button
 								onClick={() => setIsVisible(false)}
-								className="p-2 text-zinc-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+								className="p-2 text-content-muted hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
 								aria-label="Close"
 							>
 								<BrandIcons.X className="h-4 w-4" />

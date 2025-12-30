@@ -3,6 +3,9 @@
 import { motion } from "framer-motion";
 import { Briefcase, Globe, GraduationCap, Rocket } from "lucide-react";
 import { useEffect, useState } from "react";
+import GlassCard from "@/components/ui/GlassCard";
+import GradientText from "@/components/ui/GradientText";
+import Heading from "@/components/ui/Heading";
 import { cn } from "@/lib/utils";
 
 interface JobStats {
@@ -61,7 +64,7 @@ export function EUJobStats() {
 		return (
 			<section
 				className={cn(
-					"py-16 bg-gradient-to-b from-black via-zinc-950 to-black border-y border-zinc-900",
+					"py-16 bg-gradient-to-b from-black via-zinc-950 to-black border-y border-border-subtle",
 					"relative overflow-hidden",
 					"before:absolute before:inset-0 before:bg-gradient-to-b before:from-purple-900/5 before:via-transparent before:to-emerald-900/5 before:pointer-events-none",
 				)}
@@ -122,7 +125,7 @@ export function EUJobStats() {
 	return (
 		<section
 			className={cn(
-				"py-20 bg-gradient-to-b from-black via-zinc-950 to-black border-y border-zinc-900",
+				"py-section bg-gradient-to-b from-black via-zinc-950 to-black border-y border-border-subtle",
 				"relative overflow-hidden",
 				"before:absolute before:inset-0 before:bg-gradient-to-b before:from-purple-900/5 before:via-transparent before:to-emerald-900/5 before:pointer-events-none",
 			)}
@@ -135,21 +138,15 @@ export function EUJobStats() {
 					transition={{ duration: 0.6 }}
 					className="text-center mb-12"
 				>
-					<h2
-						className={cn(
-							"text-3xl md:text-4xl lg:text-5xl font-bold mb-4",
-							"bg-gradient-to-r from-white via-purple-200 to-emerald-200 bg-clip-text text-transparent",
-							"drop-shadow-[0_4px_12px_rgba(139,92,246,0.3)]",
-						)}
+					<Heading
+						level="h2"
+						color="gradient"
+						align="center"
+						className="mb-4 drop-shadow-[0_4px_12px_rgba(139,92,246,0.3)]"
 					>
 						Live EU Job Market Data
-					</h2>
-					<p
-						className={cn(
-							"text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto",
-							"leading-relaxed",
-						)}
-					>
+					</Heading>
+					<p className="text-lg md:text-xl text-content-secondary max-w-2xl mx-auto leading-relaxed">
 						Real-time insights into early-career opportunities across Europe
 					</p>
 				</motion.div>
@@ -192,7 +189,7 @@ export function EUJobStats() {
 								iconBg:
 									"bg-gradient-to-br from-zinc-500/20 via-zinc-500/10 to-transparent",
 								iconBorder: "border-zinc-500/40",
-								iconText: "text-zinc-300",
+								iconText: "text-content-secondary",
 								iconShadow: "shadow-[0_4px_16px_rgba(113,113,122,0.2)]",
 								cardHover:
 									"hover:border-zinc-500/50 hover:shadow-[0_8px_32px_rgba(113,113,122,0.15)]",
@@ -214,83 +211,77 @@ export function EUJobStats() {
 									ease: "easeOut",
 								}}
 								whileHover={{ y: -4, transition: { duration: 0.2 } }}
-								className={cn(
-									"group relative rounded-2xl glass-card elevation-1 p-6",
-									"bg-gradient-to-br from-zinc-950/90 via-zinc-950/95 to-zinc-900/90",
-									"backdrop-blur-sm transition-all duration-300",
-									colors.cardHover,
-									"overflow-hidden",
-								)}
 							>
-								{/* Glow effect on hover */}
-								<div
+								<GlassCard
+									intent="subtle"
+									hover="none"
 									className={cn(
-										"pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500",
-										"bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_70%)]",
-										"group-hover:opacity-100",
-										colors.glow,
+										"group relative p-6 overflow-hidden",
+										colors.cardHover,
 									)}
-								/>
-
-								{/* Inner gradient overlay */}
-								<div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-								<div className="relative z-10">
-									<motion.div
-										whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
-										transition={{ duration: 0.3 }}
+								>
+									{/* Glow effect on hover */}
+									<div
 										className={cn(
-											"inline-flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-xl border mb-4",
-											colors.iconBg,
-											colors.iconBorder,
-											colors.iconText,
-											colors.iconShadow,
-											"group-hover:shadow-[0_8px_24px_rgba(139,92,246,0.4)]",
-											"transition-all duration-300",
+											"pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500",
+											"bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_70%)]",
+											"group-hover:opacity-100",
+											colors.glow,
 										)}
-									>
-										<Icon size={28} className="md:w-8 md:h-8" />
-									</motion.div>
+									/>
 
-									<div className="mb-3">
-										<motion.p
-											initial={{ opacity: 0 }}
-											whileInView={{ opacity: 1 }}
-											viewport={{ once: true }}
-											transition={{ delay: index * 0.1 + 0.2, duration: 0.5 }}
+									{/* Inner gradient overlay */}
+									<div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+									<div className="relative z-10">
+										<motion.div
+											whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
+											transition={{ duration: 0.3 }}
 											className={cn(
-												"text-4xl md:text-5xl font-bold mb-1",
-												"bg-gradient-to-r from-white via-white to-zinc-200 bg-clip-text text-transparent",
-												"group-hover:from-white group-hover:via-purple-200 group-hover:to-emerald-200",
+												"inline-flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-xl border mb-4",
+												colors.iconBg,
+												colors.iconBorder,
+												colors.iconText,
+												colors.iconShadow,
+												"group-hover:shadow-[0_8px_24px_rgba(139,92,246,0.4)]",
 												"transition-all duration-300",
 											)}
 										>
-											{stat.value}
-										</motion.p>
-									</div>
+											<Icon size={28} className="md:w-8 md:h-8" />
+										</motion.div>
 
-									<p
-										className={cn(
-											"text-sm font-semibold uppercase tracking-wider mb-2",
-											"text-zinc-300 group-hover:text-zinc-200",
-											"transition-colors duration-300",
-										)}
-									>
-										{stat.label}
-									</p>
+										<div className="mb-3">
+											<motion.div
+												initial={{ opacity: 0 }}
+												whileInView={{ opacity: 1 }}
+												viewport={{ once: true }}
+												transition={{ delay: index * 0.1 + 0.2, duration: 0.5 }}
+											>
+												<Heading
+													level="h4"
+													className={cn(
+														"text-4xl md:text-5xl mb-1",
+														"bg-gradient-to-r from-white via-white to-zinc-200 bg-clip-text text-transparent",
+														"group-hover:from-white group-hover:via-purple-200 group-hover:to-emerald-200",
+														"transition-all duration-300",
+													)}
+												>
+													{stat.value}
+												</Heading>
+											</motion.div>
+										</div>
 
-									{stat.subtext && (
-										<p
-											className={cn(
-												"text-xs text-zinc-400 mt-2",
-												"group-hover:text-zinc-300",
-												"transition-colors duration-300",
-											)}
-										>
-											{stat.subtext}
+										<p className="text-sm font-semibold uppercase tracking-wider mb-2 text-content-secondary group-hover:text-content-heading transition-colors duration-300">
+											{stat.label}
 										</p>
-									)}
-								</div>
+
+										{stat.subtext && (
+											<p className="text-xs text-content-muted mt-2 group-hover:text-content-secondary transition-colors duration-300">
+												{stat.subtext}
+											</p>
+										)}
+									</div>
+								</GlassCard>
 							</motion.div>
 						);
 					})}
@@ -303,34 +294,19 @@ export function EUJobStats() {
 					transition={{ delay: 0.5, duration: 0.6 }}
 					className="mt-12 text-center"
 				>
-					<p
-						className={cn(
-							"text-sm md:text-base text-zinc-300",
-							"leading-relaxed",
-						)}
-					>
+					<p className="text-sm md:text-base text-content-secondary leading-relaxed">
 						Updated daily •{" "}
-						<span
-							className={cn(
-								"text-white font-semibold",
-								"bg-gradient-to-r from-purple-400 to-emerald-400 bg-clip-text text-transparent",
-							)}
-						>
+						<GradientText variant="accent" className="font-semibold">
 							{displayStats.total.toLocaleString()}+ roles
-						</span>{" "}
+						</GradientText>{" "}
 						from{" "}
-						<span
-							className={cn(
-								"text-white font-semibold",
-								"bg-gradient-to-r from-emerald-400 to-purple-400 bg-clip-text text-transparent",
-							)}
-						>
+						<GradientText variant="accent" className="font-semibold">
 							{displayStats.cities} cities
-						</span>{" "}
+						</GradientText>{" "}
 						across Europe
 					</p>
 					{hasError && (
-						<p className={cn("text-xs text-zinc-400 mt-2", "italic")}>
+						<p className="text-xs text-content-muted mt-2 italic">
 							Showing cached data • Last updated: Today
 						</p>
 					)}

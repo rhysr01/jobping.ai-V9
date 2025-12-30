@@ -217,7 +217,9 @@ export async function POST(request: NextRequest) {
 					targetCountries.add(country);
 					// Get all variations for this country (IE, Ireland, DUBLIN, etc.)
 					const variations = getCountryVariations(country);
-					variations.forEach((v) => targetCountryVariations.add(v));
+					variations.forEach((v) => {
+						targetCountryVariations.add(v);
+					});
 				}
 			});
 		}

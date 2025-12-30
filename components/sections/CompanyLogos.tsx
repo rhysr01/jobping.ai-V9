@@ -185,10 +185,10 @@ export default function CompanyLogos() {
 						<BrandIcons.Briefcase className="h-4 w-4 text-brand-300" />
 						Featured Companies
 					</motion.span>
-					<h2 className="section-title mt-4 mb-3 text-zinc-100">
+					<h2 className="section-title mt-4 mb-3 text-content-heading">
 						Jobs from companies like:
 					</h2>
-					<p className="text-xl text-zinc-200 md:text-2xl leading-relaxed">
+					<p className="text-xl text-content-heading md:text-2xl leading-relaxed">
 						We've matched roles from these companies (and 400+ more)
 					</p>
 				</motion.div>
@@ -290,7 +290,7 @@ export default function CompanyLogos() {
 					transition={{ delay: 0.3 }}
 					className="text-center mt-8"
 				>
-					<p className="text-xs text-zinc-400">
+					<p className="text-xs text-content-muted">
 						JobPing is not affiliated to these companies, we match you with
 						their public job listings
 					</p>

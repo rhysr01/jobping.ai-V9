@@ -54,7 +54,7 @@ export function SuccessAnimation({
 				<h2 id="success-title" className="text-2xl font-bold text-white mb-2">
 					{message}
 				</h2>
-				<p className="text-zinc-400 text-sm">Redirecting you now...</p>
+				<p className="text-content-muted text-sm">Redirecting you now...</p>
 				{onComplete && (
 					<motion.button
 						onClick={onComplete}

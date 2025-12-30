@@ -48,7 +48,7 @@ export default function TrustBadges() {
 							<span className="text-xs font-bold text-white leading-tight">
 								{badge.label}
 							</span>
-							<span className="text-[10px] text-zinc-300 leading-tight">
+							<span className="text-[10px] text-content-secondary leading-tight">
 								{badge.description}
 							</span>
 						</div>

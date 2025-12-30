@@ -67,7 +67,7 @@ export default function SocialProofTicker() {
 				initial={{ opacity: 0 }}
 				animate={{ opacity: 1 }}
 				transition={{ duration: 0.2 }}
-				className="flex items-center gap-2 text-zinc-500 text-xs"
+				className="flex items-center gap-2 text-content-disabled text-xs"
 			>
 				<div className="w-1.5 h-1.5 rounded-full bg-zinc-600 animate-pulse" />
 				<span className="w-32 h-3 bg-zinc-800 rounded animate-pulse" />
@@ -87,7 +87,7 @@ export default function SocialProofTicker() {
 					animate={{ opacity: 1, y: 0 }}
 					exit={{ opacity: 0, y: -10 }}
 					transition={{ duration: 0.3 }}
-					className="flex items-center gap-2 text-zinc-400 text-xs"
+					className="flex items-center gap-2 text-content-muted text-xs"
 				>
 					<div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
 					Scanning 7+ job sources for today's matches...
@@ -104,7 +104,7 @@ export default function SocialProofTicker() {
 				animate={{ opacity: 1, y: 0 }}
 				exit={{ opacity: 0, y: -10 }}
 				transition={{ duration: 0.4, ease: "easeOut" }}
-				className="flex items-center gap-2 text-zinc-500 text-xs"
+				className="flex items-center gap-2 text-content-disabled text-xs"
 			>
 				<div
 					className={`w-1.5 h-1.5 rounded-full ${error ? "bg-zinc-600" : "bg-emerald-500"} animate-pulse`}

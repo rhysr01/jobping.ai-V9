@@ -8,7 +8,7 @@ export default function GlobalError({
 	reset: () => void;
 }) {
 	return (
-		<html>
+		<html lang="en">
 			<body
 				style={{
 					margin: 0,

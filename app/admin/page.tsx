@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface PilotMetrics {
 	users: {
@@ -30,7 +30,7 @@ export default function PilotAdminDashboard() {
 	const [metrics, setMetrics] = useState<PilotMetrics | null>(null);
 	const [loading, setLoading] = useState(true);
 
-	const fetchMetrics = async () => {
+	const fetchMetrics = useCallback(async () => {
 		try {
 			// Mock data for now - replace with actual API when available
 			const mockData = {
@@ -45,7 +45,7 @@ export default function PilotAdminDashboard() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		fetchMetrics();
@@ -195,14 +195,14 @@ function SystemHealth({ metrics }: { metrics: PilotMetrics | null }) {
 		Array<{ message: string; timestamp: string }>
 	>([]);
 
-	const fetchRecentErrors = async () => {
+	const fetchRecentErrors = useCallback(async () => {
 		try {
 			// Mock data for now - replace with actual API when available
 			setRecentErrors([]);
 		} catch (error) {
 			console.error("Failed to fetch errors:", error);
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		fetchRecentErrors();

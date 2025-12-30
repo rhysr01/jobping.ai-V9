@@ -100,16 +100,16 @@ export default function SocialProofRow() {
 
 									<div className="space-y-2 relative z-10">
 										{item.eyebrow && (
-											<p className="text-xs uppercase tracking-[0.16em] text-zinc-300 mb-2">
+											<p className="text-xs uppercase tracking-[0.16em] text-content-secondary mb-2">
 												{item.eyebrow}
 											</p>
 										)}
 										{/* Title with subtle gradient */}
-										<h3 className="text-xl font-bold text-zinc-100 mb-2 bg-gradient-to-r from-white to-zinc-200 bg-clip-text text-transparent">
+										<h3 className="text-xl font-bold text-content-heading mb-2 bg-gradient-to-r from-white to-zinc-200 bg-clip-text text-transparent">
 											{item.title}
 										</h3>
 										{item.description && (
-											<p className="text-sm text-zinc-300 transition-all duration-200 group-hover:text-zinc-200">
+											<p className="text-sm text-content-secondary transition-all duration-200 group-hover:text-content-heading">
 												{item.description}
 											</p>
 										)}
