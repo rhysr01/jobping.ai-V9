@@ -96,6 +96,37 @@ export const COMPANY_LOGOS: CompanyLogo[] = [
 		logoPath: "/logos/companies/accenture.svg",
 		domain: "accenture.com",
 	},
+	// Consulting & Professional Services
+	{
+		name: "McKinsey",
+		logoPath: "/logos/companies/mckinsey.svg",
+		domain: "mckinsey.com",
+	},
+	{
+		name: "Deloitte",
+		logoPath: "/logos/companies/deloitte.svg",
+		domain: "deloitte.com",
+	},
+	{
+		name: "PwC",
+		logoPath: "/logos/companies/pwc.svg",
+		domain: "pwc.com",
+	},
+	{
+		name: "BCG",
+		logoPath: "/logos/companies/bostonconsultinggroup.svg",
+		domain: "bcg.com",
+	},
+	{
+		name: "EY",
+		logoPath: "/logos/companies/ernstandyoung.svg",
+		domain: "ey.com",
+	},
+	{
+		name: "KPMG",
+		logoPath: "/logos/companies/kpmg.svg",
+		domain: "kpmg.com",
+	},
 	// EU Companies
 	{
 		name: "Klarna",

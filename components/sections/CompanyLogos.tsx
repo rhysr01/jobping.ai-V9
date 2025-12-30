@@ -17,7 +17,6 @@ export default function CompanyLogos() {
 	const [error, setError] = useState(false);
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 	const [isHovered, setIsHovered] = useState(false);
-	const animationFrameRef = useRef<number | null>(null);
 
 	useEffect(() => {
 		async function fetchCompanies() {
@@ -42,63 +41,80 @@ export default function CompanyLogos() {
 		fetchCompanies();
 	}, []);
 
-	// Auto-scroll logos slowly to the right
+	// Auto-scroll logos slowly to the right with infinite loop
 	useEffect(() => {
-		if (!scrollContainerRef.current || companies.length === 0 || isHovered) {
-			if (animationFrameRef.current) {
-				cancelAnimationFrame(animationFrameRef.current);
-				animationFrameRef.current = null;
-			}
+		if (!scrollContainerRef.current || companies.length === 0) {
 			return;
 		}
 
-		let lastTimestamp: number | null = null;
-		const scrollSpeed = 0.3; // Pixels per millisecond (very slow)
+		let startDelay: NodeJS.Timeout;
+		let animationFrameId: number | null = null;
 
-		const animate = (timestamp: number) => {
-			if (!scrollContainerRef.current || isHovered) {
-				animationFrameRef.current = null;
-				return;
-			}
-
-			if (lastTimestamp === null) {
-				lastTimestamp = timestamp;
-			}
-
-			const deltaTime = timestamp - lastTimestamp;
-			lastTimestamp = timestamp;
+		const startAutoScroll = () => {
+			if (!scrollContainerRef.current || isHovered) return;
 
 			const container = scrollContainerRef.current;
-			const maxScroll = container.scrollWidth - container.clientWidth;
-			const currentScroll = container.scrollLeft;
-
-			// If we've reached the end, smoothly reset to start
-			if (currentScroll >= maxScroll - 1) {
-				container.scrollTo({
-					left: 0,
-					behavior: "smooth",
-				});
-				// Wait a moment before restarting
-				setTimeout(() => {
-					lastTimestamp = null;
-					animationFrameRef.current = requestAnimationFrame(animate);
-				}, 2000);
+			const containerWidth = container.clientWidth;
+			const contentWidth = container.scrollWidth;
+			const maxScroll = contentWidth - containerWidth;
+			
+			// Only start auto-scroll if there's actually scrollable content
+			if (maxScroll <= 0) {
 				return;
 			}
 
-			// Scroll slowly to the right
-			const newScroll = currentScroll + scrollSpeed * deltaTime;
-			container.scrollLeft = Math.min(newScroll, maxScroll);
+			// Calculate the width of one full set of companies (half of total since we duplicated)
+			const singleSetWidth = contentWidth / 2;
 
-			animationFrameRef.current = requestAnimationFrame(animate);
+			let lastTimestamp: number | null = null;
+			const scrollSpeed = 0.8; // Pixels per millisecond (smooth rightward scroll)
+
+			const animate = (timestamp: number) => {
+				if (!scrollContainerRef.current || isHovered) {
+					animationFrameId = null;
+					return;
+				}
+
+				if (lastTimestamp === null) {
+					lastTimestamp = timestamp;
+				}
+
+				const deltaTime = timestamp - lastTimestamp;
+				lastTimestamp = timestamp;
+
+				const currentContainer = scrollContainerRef.current;
+				const currentScroll = currentContainer.scrollLeft;
+
+				// If we've scrolled past the first set of logos, reset to start for seamless loop
+				// Since we duplicated the array, reset when we've scrolled one full set width
+				if (currentScroll >= singleSetWidth - 10) {
+					currentContainer.scrollLeft = 0;
+					lastTimestamp = null;
+					animationFrameId = requestAnimationFrame(animate);
+					return;
+				}
+
+				// Scroll slowly to the right
+				const newScroll = currentScroll + scrollSpeed * deltaTime;
+				currentContainer.scrollLeft = newScroll;
+
+				animationFrameId = requestAnimationFrame(animate);
+			};
+
+			// Start the animation
+			animationFrameId = requestAnimationFrame(animate);
 		};
 
-		animationFrameRef.current = requestAnimationFrame(animate);
+		// Wait for images to load and DOM to be ready, then start auto-scroll
+		startDelay = setTimeout(() => {
+			startAutoScroll();
+		}, 500); // Delay to ensure images are loaded and layout is calculated
 
 		return () => {
-			if (animationFrameRef.current) {
-				cancelAnimationFrame(animationFrameRef.current);
-				animationFrameRef.current = null;
+			clearTimeout(startDelay);
+			if (animationFrameId !== null) {
+				cancelAnimationFrame(animationFrameId);
+				animationFrameId = null;
 			}
 		};
 	}, [companies, isHovered]);
@@ -186,14 +202,17 @@ export default function CompanyLogos() {
 						ref={scrollContainerRef}
 						onMouseEnter={() => setIsHovered(true)}
 						onMouseLeave={() => setIsHovered(false)}
-						className="flex gap-8 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-8 px-8 [mask-image:linear-gradient(to_right,transparent_0%,white_10%,white_90%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,transparent_0%,white_10%,white_90%,transparent_100%)] will-change-transform"
+						className="flex gap-8 overflow-x-auto scrollbar-hide py-8 px-8 [mask-image:linear-gradient(to_right,transparent_0%,white_10%,white_90%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,transparent_0%,white_10%,white_90%,transparent_100%)]"
 						style={{
 							scrollbarWidth: "none",
 							msOverflowStyle: "none",
 							WebkitOverflowScrolling: "touch",
+							scrollBehavior: "auto", // Disable smooth scroll for programmatic scrolling
+							overflowY: "hidden", // Ensure only horizontal scroll
 						}}
 					>
-						{companies.map((company, index) => (
+						{/* Duplicate logos for seamless infinite scroll */}
+						{[...companies, ...companies].map((company, index) => (
 							<motion.div
 								key={`${company.name}-${index}`}
 								initial={{ opacity: 0, scale: 0.9, y: 20 }}
