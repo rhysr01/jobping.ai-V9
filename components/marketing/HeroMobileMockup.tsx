@@ -2,6 +2,7 @@
 
 import React from "react";
 import { TiltCard } from "@/components/ui/TiltCard";
+import { IPhoneShell } from "@/components/ui/IPhoneShell";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 import { trackEvent } from "@/lib/analytics";
 import {
@@ -75,22 +76,24 @@ export function HeroMobileMockup({ stats, topMatch }: HeroMockupProps) {
 	return (
 		<div className="relative mx-auto w-full max-w-[320px] lg:max-w-[380px]">
 			<TiltCard>
-				<div 
-					className="relative aspect-[9/19] w-full overflow-hidden rounded-[2.5rem] border-[6px] border-border-subtle bg-black shadow-2xl"
-					aria-label="Free tier job matches preview - showing 3 matched jobs"
-				>
-					{/* Header - Free Plan Indicator (matches real design) */}
-					<div className="flex h-14 w-full items-center justify-center border-b border-border-subtle bg-surface-base px-4">
-						<div className="flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1.5">
-							<span className="w-2 h-2 bg-brand-400 rounded-full"></span>
-							<span className="text-[11px] font-medium text-brand-200">
-								Free Plan · Viewing 3/5 matches
-							</span>
+				{/* Screen Glow Container */}
+				<div className="relative">
+					{/* Glow behind the phone */}
+					<div className="absolute -inset-10 -z-10 bg-purple-500/20 blur-[80px] opacity-40" />
+					
+					<IPhoneShell aria-label="Free tier job matches preview - showing 3 matched jobs">
+						{/* Header - Free Plan Indicator (matches real design) */}
+						<div className="flex h-14 w-full items-center justify-center border-b border-border-subtle bg-surface-base px-4 pt-4">
+							<div className="flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1.5">
+								<span className="w-2 h-2 bg-brand-400 rounded-full"></span>
+								<span className="text-[11px] font-medium text-brand-200">
+									Free Plan · Viewing 3/5 matches
+								</span>
+							</div>
 						</div>
-					</div>
 
-					{/* Scrollable Job Cards Container */}
-					<div className="flex flex-col gap-3 p-4 overflow-y-auto h-[calc(100%-3.5rem)] bg-black">
+						{/* Scrollable Job Cards Container */}
+						<div className="flex flex-col gap-3 p-4 pt-6 overflow-y-auto bg-black">
 						{jobs.map((job, index) => {
 							const matchScore = job.match_score 
 								? Math.round(job.match_score * 100)
@@ -138,11 +141,11 @@ export function HeroMobileMockup({ stats, topMatch }: HeroMockupProps) {
 
 									{/* Location + Work Environment */}
 									<div className="flex flex-wrap gap-2 mb-3">
-										<span className="inline-flex items-center px-2.5 py-1 rounded-full bg-zinc-800/50 text-sm text-content-secondary">
+										<span className="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-elevated/50 text-sm text-content-secondary">
 											📍 {job.location}
 										</span>
 										{job.work_environment && (
-											<span className="inline-flex items-center px-2.5 py-1 rounded-full bg-zinc-800/50 text-sm capitalize text-content-secondary">
+											<span className="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-elevated/50 text-sm capitalize text-content-secondary">
 												{workEnvEmoji(job.work_environment)} {job.work_environment}
 											</span>
 										)}
@@ -182,27 +185,25 @@ export function HeroMobileMockup({ stats, topMatch }: HeroMockupProps) {
 						})}
 					</div>
 
-					{/* CTA Overlay - Shimmer Button (matches Hero design) */}
-					<div className="absolute bottom-3 left-0 w-full px-4 z-20">
-						<a
-							href="/signup/free"
-							onClick={() => {
-								trackEvent("cta_clicked", { type: "free", location: "hero_mockup" });
-							}}
-							className="inline-flex min-h-[44px] h-12 w-full animate-shimmer items-center justify-center rounded-full border border-border-subtle bg-[linear-gradient(110deg,#000,45%,#27272a,55%,#000)] bg-[length:200%_100%] px-6 font-medium text-content-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black hover:text-content-heading hover:border-border-default text-sm md:text-base shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)]"
-							aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
-						>
-							<span className="flex items-center justify-center gap-2">
-								{CTA_GET_MY_5_FREE_MATCHES}
-								<BrandIcons.ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
-							</span>
-						</a>
-					</div>
+						{/* CTA Overlay - Shimmer Button (matches Hero design) */}
+						<div className="absolute bottom-3 left-0 w-full px-4 z-20">
+							<a
+								href="/signup/free"
+								onClick={() => {
+									trackEvent("cta_clicked", { type: "free", location: "hero_mockup" });
+								}}
+								className="inline-flex min-h-[44px] h-12 w-full animate-shimmer items-center justify-center rounded-full border border-border-subtle bg-[linear-gradient(110deg,#000,45%,#27272a,55%,#000)] bg-[length:200%_100%] px-6 font-medium text-content-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black hover:text-content-heading hover:border-border-default text-sm md:text-base shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)]"
+								aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
+							>
+								<span className="flex items-center justify-center gap-2">
+									{CTA_GET_MY_5_FREE_MATCHES}
+									<BrandIcons.ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
+								</span>
+							</a>
+						</div>
+					</IPhoneShell>
 				</div>
 			</TiltCard>
-
-			{/* Glow behind the phone */}
-			<div className="absolute -inset-10 -z-10 bg-purple-500/20 blur-[80px] opacity-40" />
 		</div>
 	);
 }

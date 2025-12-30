@@ -2,6 +2,7 @@
 
 import React from "react";
 import { TiltCard } from "@/components/ui/TiltCard";
+import { IPhoneShell } from "@/components/ui/IPhoneShell";
 import { MapPin } from "lucide-react";
 
 // Same profile across all three emails (Monday, Wednesday, Friday)
@@ -261,22 +262,10 @@ export function PremiumEmailShowcase() {
 
 						return (
 							<TiltCard key={email.day}>
-								<div
-									className="relative flex flex-col min-h-[600px] h-full w-full rounded-2xl border border-white/5 bg-[#0A0A0A] overflow-hidden shadow-2xl transition-all hover:border-purple-500/30 focus-within:ring-2 focus-within:ring-purple-500 focus-within:ring-offset-2 focus-within:ring-offset-black"
+								<IPhoneShell
+									showMailHeader={true}
 									aria-label={`Premium email preview for ${email.day} - ${featuredJob.title} at ${featuredJob.company}`}
 								>
-									{/* macOS-style Window Controls */}
-									<div className="bg-[#111] px-4 py-3 border-b border-white/5 flex items-center justify-between shrink-0">
-										<div className="flex gap-1.5">
-											<div className="w-2 h-2 rounded-full bg-red-500/20" />
-											<div className="w-2 h-2 rounded-full bg-yellow-500/20" />
-											<div className="w-2 h-2 rounded-full bg-green-500/20" />
-										</div>
-										<span className="text-xs font-mono text-content-muted uppercase tracking-[0.2em]">
-											{email.day} @ {email.time}
-										</span>
-									</div>
-
 									{/* Email Headers */}
 									<div className="px-5 py-4 border-b border-white/5 bg-surface-elevated/20 shrink-0">
 										<div className="text-xs text-content-muted mb-1">
@@ -294,7 +283,7 @@ export function PremiumEmailShowcase() {
 									</div>
 
 									{/* Email Content - Scrollable */}
-									<div className="p-5 flex flex-col flex-1 overflow-y-auto">
+									<div className="p-5 flex flex-col flex-1 overflow-y-auto bg-zinc-950">
 										{/* Premium Badge */}
 										<div className="mb-4 shrink-0">
 											<span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/10 px-3 py-1 text-xs font-bold text-purple-400 border border-purple-500/20">
@@ -430,7 +419,7 @@ export function PremiumEmailShowcase() {
 											</p>
 										</div>
 									</div>
-								</div>
+								</IPhoneShell>
 							</TiltCard>
 						);
 					})}
