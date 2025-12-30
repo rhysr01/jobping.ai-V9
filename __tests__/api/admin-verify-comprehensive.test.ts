@@ -3,10 +3,10 @@
  * Tests Basic auth verification
  */
 
-import { GET } from '@/app/api/admin/verify/route';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { GET } from "@/app/api/admin/verify/route";
 
-describe('Admin Verify API Route', () => {
+describe("Admin Verify API Route", () => {
   let mockRequest: NextRequest;
 
   beforeEach(() => {
@@ -15,11 +15,11 @@ describe('Admin Verify API Route', () => {
     delete process.env.ADMIN_BASIC_PASS;
   });
 
-  describe('GET /api/admin/verify', () => {
-    it('should return 403 if credentials not configured', async () => {
+  describe("GET /api/admin/verify", () => {
+    it("should return 403 if credentials not configured", async () => {
       mockRequest = {
-        method: 'GET',
-        headers: new Headers()
+        method: "GET",
+        headers: new Headers(),
       } as any;
 
       const response = await GET(mockRequest);
@@ -29,13 +29,13 @@ describe('Admin Verify API Route', () => {
       expect(data.ok).toBe(false);
     });
 
-    it('should return 401 if no authorization header', async () => {
-      process.env.ADMIN_BASIC_USER = 'admin';
-      process.env.ADMIN_BASIC_PASS = 'password';
+    it("should return 401 if no authorization header", async () => {
+      process.env.ADMIN_BASIC_USER = "admin";
+      process.env.ADMIN_BASIC_PASS = "password";
 
       mockRequest = {
-        method: 'GET',
-        headers: new Headers()
+        method: "GET",
+        headers: new Headers(),
       } as any;
 
       const response = await GET(mockRequest);
@@ -45,16 +45,16 @@ describe('Admin Verify API Route', () => {
       expect(data.ok).toBe(false);
     });
 
-    it('should return 401 if invalid credentials', async () => {
-      process.env.ADMIN_BASIC_USER = 'admin';
-      process.env.ADMIN_BASIC_PASS = 'password';
+    it("should return 401 if invalid credentials", async () => {
+      process.env.ADMIN_BASIC_USER = "admin";
+      process.env.ADMIN_BASIC_PASS = "password";
 
-      const credentials = Buffer.from('wrong:password').toString('base64');
+      const credentials = Buffer.from("wrong:password").toString("base64");
       mockRequest = {
-        method: 'GET',
+        method: "GET",
         headers: new Headers({
-          'authorization': `Basic ${credentials}`
-        })
+          authorization: `Basic ${credentials}`,
+        }),
       } as any;
 
       const response = await GET(mockRequest);
@@ -64,16 +64,16 @@ describe('Admin Verify API Route', () => {
       expect(data.ok).toBe(false);
     });
 
-    it('should return 200 with valid credentials', async () => {
-      process.env.ADMIN_BASIC_USER = 'admin';
-      process.env.ADMIN_BASIC_PASS = 'password';
+    it("should return 200 with valid credentials", async () => {
+      process.env.ADMIN_BASIC_USER = "admin";
+      process.env.ADMIN_BASIC_PASS = "password";
 
-      const credentials = Buffer.from('admin:password').toString('base64');
+      const credentials = Buffer.from("admin:password").toString("base64");
       mockRequest = {
-        method: 'GET',
+        method: "GET",
         headers: new Headers({
-          'authorization': `Basic ${credentials}`
-        })
+          authorization: `Basic ${credentials}`,
+        }),
       } as any;
 
       const response = await GET(mockRequest);
@@ -83,15 +83,15 @@ describe('Admin Verify API Route', () => {
       expect(data.ok).toBe(true);
     });
 
-    it('should handle malformed authorization header', async () => {
-      process.env.ADMIN_BASIC_USER = 'admin';
-      process.env.ADMIN_BASIC_PASS = 'password';
+    it("should handle malformed authorization header", async () => {
+      process.env.ADMIN_BASIC_USER = "admin";
+      process.env.ADMIN_BASIC_PASS = "password";
 
       mockRequest = {
-        method: 'GET',
+        method: "GET",
         headers: new Headers({
-          'authorization': 'Invalid'
-        })
+          authorization: "Invalid",
+        }),
       } as any;
 
       const response = await GET(mockRequest);
@@ -102,4 +102,3 @@ describe('Admin Verify API Route', () => {
     });
   });
 });
-

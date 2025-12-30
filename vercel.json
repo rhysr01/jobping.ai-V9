@@ -1,105 +1,105 @@
 {
-  "functions": {
-    "app/api/**/*.ts": {
-      "maxDuration": 60
-    },
-    "app/api/signup/free/route.ts": {
-      "maxDuration": 90
-    },
-    "app/api/match-users/route.ts": {
-      "maxDuration": 300
-    },
-    "app/api/send-scheduled-emails/route.ts": {
-      "maxDuration": 300
-    },
-    "app/api/cron/process-scraping-queue/route.ts": {
-      "maxDuration": 300
-    },
-    "app/api/process-embedding-queue/route.ts": {
-      "maxDuration": 300
-    },
-    "app/api/cron/process-digests/route.ts": {
-      "maxDuration": 300
-    }
-  },
-  "crons": [
-    {
-      "path": "/api/process-embedding-queue",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/send-scheduled-emails",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/process-digests",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/cleanup-free-users",
-      "schedule": "0 2 * * *"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Strict-Transport-Security",
-          "value": "max-age=31536000; includeSubDomains; preload"
-        },
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.supabase.co https://cdn.jsdelivr.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.openai.com https://api.resend.com https://www.google-analytics.com https://www.googletagmanager.com; font-src 'self' https://fonts.gstatic.com https://api.fontshare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        },
-        {
-          "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(), geolocation=(), payment=(self)"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        }
-      ]
-    },
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, OPTIONS"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, x-system-api-key"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/health",
-      "destination": "/api/health"
-    },
-    {
-      "source": "/metrics",
-      "destination": "/api/metrics"
-    }
-  ]
+	"functions": {
+		"app/api/**/*.ts": {
+			"maxDuration": 60
+		},
+		"app/api/signup/free/route.ts": {
+			"maxDuration": 90
+		},
+		"app/api/match-users/route.ts": {
+			"maxDuration": 300
+		},
+		"app/api/send-scheduled-emails/route.ts": {
+			"maxDuration": 300
+		},
+		"app/api/cron/process-scraping-queue/route.ts": {
+			"maxDuration": 300
+		},
+		"app/api/process-embedding-queue/route.ts": {
+			"maxDuration": 300
+		},
+		"app/api/cron/process-digests/route.ts": {
+			"maxDuration": 300
+		}
+	},
+	"crons": [
+		{
+			"path": "/api/process-embedding-queue",
+			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/send-scheduled-emails",
+			"schedule": "0 9 * * *"
+		},
+		{
+			"path": "/api/cron/process-digests",
+			"schedule": "0 * * * *"
+		},
+		{
+			"path": "/api/cron/cleanup-free-users",
+			"schedule": "0 2 * * *"
+		}
+	],
+	"headers": [
+		{
+			"source": "/(.*)",
+			"headers": [
+				{
+					"key": "Strict-Transport-Security",
+					"value": "max-age=31536000; includeSubDomains; preload"
+				},
+				{
+					"key": "Content-Security-Policy",
+					"value": "default-src 'self'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.supabase.co https://cdn.jsdelivr.net https://challenges.cloudflare.com https://*.sentry.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.openai.com https://api.resend.com https://www.google-analytics.com https://www.googletagmanager.com https://*.sentry.io; font-src 'self' https://fonts.gstatic.com https://api.fontshare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+				},
+				{
+					"key": "Referrer-Policy",
+					"value": "strict-origin-when-cross-origin"
+				},
+				{
+					"key": "Permissions-Policy",
+					"value": "camera=(), microphone=(), geolocation=(), payment=(self)"
+				},
+				{
+					"key": "X-Content-Type-Options",
+					"value": "nosniff"
+				},
+				{
+					"key": "X-Frame-Options",
+					"value": "DENY"
+				},
+				{
+					"key": "X-XSS-Protection",
+					"value": "1; mode=block"
+				}
+			]
+		},
+		{
+			"source": "/api/(.*)",
+			"headers": [
+				{
+					"key": "Access-Control-Allow-Origin",
+					"value": "*"
+				},
+				{
+					"key": "Access-Control-Allow-Methods",
+					"value": "GET, POST, PUT, DELETE, OPTIONS"
+				},
+				{
+					"key": "Access-Control-Allow-Headers",
+					"value": "Content-Type, Authorization, x-system-api-key"
+				}
+			]
+		}
+	],
+	"rewrites": [
+		{
+			"source": "/health",
+			"destination": "/api/health"
+		},
+		{
+			"source": "/metrics",
+			"destination": "/api/metrics"
+		}
+	]
 }

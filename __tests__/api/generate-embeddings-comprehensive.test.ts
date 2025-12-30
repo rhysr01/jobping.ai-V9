@@ -3,14 +3,14 @@
  * Tests job embedding generation with HMAC auth
  */
 
-import { POST, GET } from '@/app/api/generate-embeddings/route';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { GET, POST } from "@/app/api/generate-embeddings/route";
 
-jest.mock('@/Utils/databasePool');
-jest.mock('@/Utils/matching/embedding.service');
-jest.mock('@/Utils/auth/hmac');
+jest.mock("@/Utils/databasePool");
+jest.mock("@/Utils/matching/embedding.service");
+jest.mock("@/Utils/auth/hmac");
 
-describe('Generate Embeddings API Route', () => {
+describe("Generate Embeddings API Route", () => {
   let mockRequest: NextRequest;
   let mockSupabase: any;
 
@@ -18,12 +18,12 @@ describe('Generate Embeddings API Route', () => {
     jest.clearAllMocks();
 
     mockRequest = {
-      method: 'POST',
+      method: "POST",
       text: jest.fn(),
       headers: new Headers({
-        'x-jobping-signature': 'test-signature',
-        'x-jobping-timestamp': Date.now().toString()
-      })
+        "x-jobping-signature": "test-signature",
+        "x-jobping-timestamp": Date.now().toString(),
+      }),
     } as any;
 
     mockSupabase = {
@@ -33,74 +33,80 @@ describe('Generate Embeddings API Route', () => {
       is: jest.fn().mockReturnThis(),
       limit: jest.fn().mockResolvedValue({
         data: [],
-        error: null
-      })
+        error: null,
+      }),
     };
 
-    const { getDatabaseClient } = require('@/Utils/databasePool');
+    const { getDatabaseClient } = require("@/Utils/databasePool");
     getDatabaseClient.mockReturnValue(mockSupabase);
 
-    const { verifyHMAC } = require('@/Utils/auth/hmac');
+    const { verifyHMAC } = require("@/Utils/auth/hmac");
     verifyHMAC.mockReturnValue({ isValid: true });
 
-    const { embeddingService } = require('@/Utils/matching/embedding.service');
+    const { embeddingService } = require("@/Utils/matching/embedding.service");
     embeddingService.batchGenerateJobEmbeddings.mockResolvedValue(new Map());
     embeddingService.storeJobEmbeddings.mockResolvedValue(undefined);
     embeddingService.checkEmbeddingCoverage.mockResolvedValue({
       total: 1000,
       withEmbeddings: 500,
-      coverage: 0.5
+      coverage: 0.5,
     });
   });
 
-  describe('POST /api/generate-embeddings', () => {
-    it('should generate embeddings for jobs', async () => {
-      mockRequest.text.mockResolvedValue(JSON.stringify({ batchSize: 100, jobLimit: 1000 }));
+  describe("POST /api/generate-embeddings", () => {
+    it("should generate embeddings for jobs", async () => {
+      mockRequest.text.mockResolvedValue(
+        JSON.stringify({ batchSize: 100, jobLimit: 1000 }),
+      );
 
       mockSupabase.limit.mockResolvedValue({
         data: [
-          { id: 1, title: 'Job 1' },
-          { id: 2, title: 'Job 2' }
+          { id: 1, title: "Job 1" },
+          { id: 2, title: "Job 2" },
         ],
-        error: null
+        error: null,
       });
 
-      const { embeddingService } = require('@/Utils/matching/embedding.service');
+      const {
+        embeddingService,
+      } = require("@/Utils/matching/embedding.service");
       const mockEmbeddings = new Map([
-        ['hash1', [0.1, 0.2, 0.3]],
-        ['hash2', [0.4, 0.5, 0.6]]
+        ["hash1", [0.1, 0.2, 0.3]],
+        ["hash2", [0.4, 0.5, 0.6]],
       ]);
-      embeddingService.batchGenerateJobEmbeddings.mockResolvedValue(mockEmbeddings);
+      embeddingService.batchGenerateJobEmbeddings.mockResolvedValue(
+        mockEmbeddings,
+      );
 
       const response = await POST(mockRequest);
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data.message).toContain('successfully');
+      expect(data.message).toContain("successfully");
       expect(data.processed).toBe(2);
       expect(embeddingService.storeJobEmbeddings).toHaveBeenCalled();
     });
 
-    it('should require HMAC signature', async () => {
-      mockRequest.headers.delete('x-jobping-signature');
+    it("should require HMAC signature", async () => {
+      mockRequest.headers.delete("x-jobping-signature");
 
       const response = await POST(mockRequest);
 
       expect(response.status).toBe(401);
     });
 
-    it('should require timestamp', async () => {
-      mockRequest.headers.delete('x-jobping-timestamp');
+    it("should require timestamp", async () => {
+      mockRequest.headers.delete("x-jobping-timestamp");
 
       const response = await POST(mockRequest);
 
       expect(response.status).toBe(401);
     });
 
-    it('should validate HMAC signature', async () => {
+    it("should validate HMAC signature", async () => {
       mockRequest.text.mockResolvedValue(JSON.stringify({}));
 
-      const { verifyHMAC } = require('@/Utils/auth/hmac');
+      const { verifyHMAC } = require("@/Utils/auth/hmac");
       verifyHMAC.mockReturnValue({ isValid: false });
 
       const response = await POST(mockRequest);
@@ -108,12 +114,12 @@ describe('Generate Embeddings API Route', () => {
       expect(response.status).toBe(401);
     });
 
-    it('should handle no jobs needing embeddings', async () => {
+    it("should handle no jobs needing embeddings", async () => {
       mockRequest.text.mockResolvedValue(JSON.stringify({}));
 
       mockSupabase.limit.mockResolvedValue({
         data: [],
-        error: null
+        error: null,
       });
 
       const response = await POST(mockRequest);
@@ -123,16 +129,18 @@ describe('Generate Embeddings API Route', () => {
       expect(data.processed).toBe(0);
     });
 
-    it('should use default batchSize and jobLimit', async () => {
+    it("should use default batchSize and jobLimit", async () => {
       mockRequest.text.mockResolvedValue(JSON.stringify({}));
 
       await POST(mockRequest);
 
-      const { embeddingService } = require('@/Utils/matching/embedding.service');
+      const {
+        embeddingService,
+      } = require("@/Utils/matching/embedding.service");
       expect(embeddingService.batchGenerateJobEmbeddings).toHaveBeenCalled();
     });
 
-    it('should return coverage statistics', async () => {
+    it("should return coverage statistics", async () => {
       mockRequest.text.mockResolvedValue(JSON.stringify({}));
 
       const response = await POST(mockRequest);
@@ -144,12 +152,12 @@ describe('Generate Embeddings API Route', () => {
     });
   });
 
-  describe('GET /api/generate-embeddings', () => {
+  describe("GET /api/generate-embeddings", () => {
     beforeEach(() => {
-      mockRequest.method = 'GET';
+      mockRequest.method = "GET";
     });
 
-    it('should return embedding coverage', async () => {
+    it("should return embedding coverage", async () => {
       const response = await GET(mockRequest);
       const data = await response.json();
 
@@ -159,9 +167,13 @@ describe('Generate Embeddings API Route', () => {
       expect(data.needsEmbeddings).toBeDefined();
     });
 
-    it('should handle coverage check errors', async () => {
-      const { embeddingService } = require('@/Utils/matching/embedding.service');
-      embeddingService.checkEmbeddingCoverage.mockRejectedValue(new Error('Database error'));
+    it("should handle coverage check errors", async () => {
+      const {
+        embeddingService,
+      } = require("@/Utils/matching/embedding.service");
+      embeddingService.checkEmbeddingCoverage.mockRejectedValue(
+        new Error("Database error"),
+      );
 
       const response = await GET(mockRequest);
 
@@ -169,4 +181,3 @@ describe('Generate Embeddings API Route', () => {
     });
   });
 });
-

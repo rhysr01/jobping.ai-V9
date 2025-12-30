@@ -1,111 +1,111 @@
+import { type NextRequest, NextResponse } from "next/server";
 import {
   AppError,
-  ValidationError,
-  NotFoundError,
-  UnauthorizedError,
-  RateLimitError,
-  handleError,
   asyncHandler,
-} from '@/lib/errors';
-import { NextRequest, NextResponse } from 'next/server';
+  handleError,
+  NotFoundError,
+  RateLimitError,
+  UnauthorizedError,
+  ValidationError,
+} from "@/lib/errors";
 
-describe('errors', () => {
-  describe('AppError', () => {
-    it('should create error with message', () => {
-      const error = new AppError('Test error');
-      expect(error.message).toBe('Test error');
+describe("errors", () => {
+  describe("AppError", () => {
+    it("should create error with message", () => {
+      const error = new AppError("Test error");
+      expect(error.message).toBe("Test error");
       expect(error.statusCode).toBe(500);
     });
 
-    it('should create error with custom status code', () => {
-      const error = new AppError('Not found', 404);
+    it("should create error with custom status code", () => {
+      const error = new AppError("Not found", 404);
       expect(error.statusCode).toBe(404);
     });
 
-    it('should create error with code', () => {
-      const error = new AppError('Test', 400, 'TEST_CODE');
-      expect(error.code).toBe('TEST_CODE');
+    it("should create error with code", () => {
+      const error = new AppError("Test", 400, "TEST_CODE");
+      expect(error.code).toBe("TEST_CODE");
     });
 
-    it('should create error with details', () => {
-      const details = { field: 'email' };
-      const error = new AppError('Test', 400, 'TEST', details);
+    it("should create error with details", () => {
+      const details = { field: "email" };
+      const error = new AppError("Test", 400, "TEST", details);
       expect(error.details).toEqual(details);
     });
   });
 
-  describe('ValidationError', () => {
-    it('should create validation error', () => {
-      const error = new ValidationError('Invalid input');
-      expect(error.message).toBe('Invalid input');
+  describe("ValidationError", () => {
+    it("should create validation error", () => {
+      const error = new ValidationError("Invalid input");
+      expect(error.message).toBe("Invalid input");
       expect(error.statusCode).toBe(400);
-      expect(error.code).toBe('VALIDATION_ERROR');
+      expect(error.code).toBe("VALIDATION_ERROR");
     });
 
-    it('should include details', () => {
-      const error = new ValidationError('Invalid', { field: 'email' });
-      expect(error.details).toEqual({ field: 'email' });
+    it("should include details", () => {
+      const error = new ValidationError("Invalid", { field: "email" });
+      expect(error.details).toEqual({ field: "email" });
     });
   });
 
-  describe('NotFoundError', () => {
-    it('should create not found error', () => {
-      const error = new NotFoundError('User');
-      expect(error.message).toBe('User not found');
+  describe("NotFoundError", () => {
+    it("should create not found error", () => {
+      const error = new NotFoundError("User");
+      expect(error.message).toBe("User not found");
       expect(error.statusCode).toBe(404);
-      expect(error.code).toBe('NOT_FOUND');
+      expect(error.code).toBe("NOT_FOUND");
     });
   });
 
-  describe('UnauthorizedError', () => {
-    it('should create unauthorized error', () => {
+  describe("UnauthorizedError", () => {
+    it("should create unauthorized error", () => {
       const error = new UnauthorizedError();
-      expect(error.message).toBe('Unauthorized');
+      expect(error.message).toBe("Unauthorized");
       expect(error.statusCode).toBe(401);
-      expect(error.code).toBe('UNAUTHORIZED');
+      expect(error.code).toBe("UNAUTHORIZED");
     });
 
-    it('should accept custom message', () => {
-      const error = new UnauthorizedError('Custom message');
-      expect(error.message).toBe('Custom message');
+    it("should accept custom message", () => {
+      const error = new UnauthorizedError("Custom message");
+      expect(error.message).toBe("Custom message");
     });
   });
 
-  describe('RateLimitError', () => {
-    it('should create rate limit error', () => {
+  describe("RateLimitError", () => {
+    it("should create rate limit error", () => {
       const error = new RateLimitError();
-      expect(error.message).toBe('Rate limit exceeded');
+      expect(error.message).toBe("Rate limit exceeded");
       expect(error.statusCode).toBe(429);
-      expect(error.code).toBe('RATE_LIMIT');
+      expect(error.code).toBe("RATE_LIMIT");
     });
 
-    it('should include retry after', () => {
+    it("should include retry after", () => {
       const error = new RateLimitError(60);
       expect(error.details).toEqual({ retryAfter: 60 });
     });
   });
 
-  describe('handleError', () => {
-    it('should handle AppError', () => {
-      const error = new ValidationError('Invalid input');
+  describe("handleError", () => {
+    it("should handle AppError", () => {
+      const error = new ValidationError("Invalid input");
       const response = handleError(error);
       expect(response).toBeInstanceOf(NextResponse);
     });
 
-    it('should handle unknown errors', () => {
-      const error = new Error('Unknown error');
+    it("should handle unknown errors", () => {
+      const error = new Error("Unknown error");
       const response = handleError(error);
       expect(response).toBeInstanceOf(NextResponse);
     });
 
-    it('should handle non-Error objects', () => {
-      const response = handleError('String error');
+    it("should handle non-Error objects", () => {
+      const response = handleError("String error");
       expect(response).toBeInstanceOf(NextResponse);
     });
   });
 
-  describe('asyncHandler', () => {
-    it('should execute handler successfully', async () => {
+  describe("asyncHandler", () => {
+    it("should execute handler successfully", async () => {
       const handler = asyncHandler(async (req: NextRequest) => {
         return NextResponse.json({ success: true });
       });
@@ -116,9 +116,9 @@ describe('errors', () => {
       expect(data.success).toBe(true);
     });
 
-    it('should catch and handle errors', async () => {
+    it("should catch and handle errors", async () => {
       const handler = asyncHandler(async (req: NextRequest) => {
-        throw new ValidationError('Test error');
+        throw new ValidationError("Test error");
       });
 
       const mockReq = {} as NextRequest;
@@ -126,9 +126,9 @@ describe('errors', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should handle thrown errors', async () => {
+    it("should handle thrown errors", async () => {
       const handler = asyncHandler(async (req: NextRequest) => {
-        throw new Error('Thrown error');
+        throw new Error("Thrown error");
       });
 
       const mockReq = {} as NextRequest;
@@ -137,4 +137,3 @@ describe('errors', () => {
     });
   });
 });
-

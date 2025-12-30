@@ -1,8 +1,8 @@
-import { POST } from '@/app/api/webhooks/resend/route';
-import { NextRequest } from 'next/server';
-import { getDatabaseClient } from '@/Utils/databasePool';
+import type { NextRequest } from "next/server";
+import { POST } from "@/app/api/webhooks/resend/route";
+import { getDatabaseClient } from "@/Utils/databasePool";
 
-jest.mock('@/Utils/databasePool', () => ({
+jest.mock("@/Utils/databasePool", () => ({
   getDatabaseClient: jest.fn(() => ({
     from: jest.fn(() => ({
       update: jest.fn(() => ({
@@ -19,17 +19,17 @@ jest.mock('@/Utils/databasePool', () => ({
   })),
 }));
 
-jest.mock('@/Utils/auth/hmac', () => ({
+jest.mock("@/Utils/auth/hmac", () => ({
   verifyHMAC: jest.fn().mockReturnValue({ isValid: true }),
 }));
 
-describe('POST /api/webhooks/resend', () => {
-  it('should handle webhook request', async () => {
+describe("POST /api/webhooks/resend", () => {
+  it("should handle webhook request", async () => {
     const req = {
       json: async () => ({
-        type: 'email.opened',
+        type: "email.opened",
         data: {
-          email: 'test@example.com',
+          email: "test@example.com",
         },
       }),
       headers: new Headers(),
@@ -39,10 +39,10 @@ describe('POST /api/webhooks/resend', () => {
     expect(response.status).toBeGreaterThanOrEqual(200);
   });
 
-  it('should call getDatabaseClient', async () => {
+  it("should call getDatabaseClient", async () => {
     const req = {
       json: async () => ({
-        type: 'email.opened',
+        type: "email.opened",
         data: {},
       }),
       headers: new Headers(),
@@ -52,4 +52,3 @@ describe('POST /api/webhooks/resend', () => {
     expect(getDatabaseClient).toHaveBeenCalled();
   });
 });
-

@@ -3,16 +3,16 @@
  * Tests component health checks, overall status determination
  */
 
-import { HealthChecker } from '@/Utils/monitoring/healthChecker';
+import { HealthChecker } from "@/Utils/monitoring/healthChecker";
 
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn()
+jest.mock("@supabase/supabase-js", () => ({
+  createClient: jest.fn(),
 }));
-jest.mock('resend', () => ({
-  Resend: jest.fn()
+jest.mock("resend", () => ({
+  Resend: jest.fn(),
 }));
 
-describe('Health Checker', () => {
+describe("Health Checker", () => {
   let checker: HealthChecker;
   let mockSupabase: any;
   let mockResend: any;
@@ -20,16 +20,22 @@ describe('Health Checker', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
-    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
-    process.env.RESEND_API_KEY = 're_test_key';
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
+    process.env.RESEND_API_KEY = "re_test_key";
 
     const isoNow = new Date().toISOString();
     const queryResponses: Record<string, { data: any[]; error: any }> = {
       users: { data: [{ count: 1 }], error: null },
       jobs: { data: [{ created_at: isoNow }], error: null },
-      email_send_ledger: { data: [{ sent_at: isoNow, status: 'sent' }], error: null },
-      job_queue: { data: [{ status: 'completed', created_at: isoNow }], error: null }
+      email_send_ledger: {
+        data: [{ sent_at: isoNow, status: "sent" }],
+        error: null,
+      },
+      job_queue: {
+        data: [{ status: "completed", created_at: isoNow }],
+        error: null,
+      },
     };
 
     const createQueryObject = (table: string) => {
@@ -39,7 +45,7 @@ describe('Health Checker', () => {
         select: jest.fn(() => obj),
         limit: jest.fn(() => Promise.resolve(response)),
         gte: jest.fn(() => obj),
-        eq: jest.fn(() => obj)
+        eq: jest.fn(() => obj),
       };
       return obj;
     };
@@ -47,16 +53,18 @@ describe('Health Checker', () => {
     mockSupabase = {
       from: jest.fn((table: string) => createQueryObject(table)),
       storage: {
-        listBuckets: jest.fn().mockResolvedValue({ data: ['public'], error: null })
-      }
+        listBuckets: jest
+          .fn()
+          .mockResolvedValue({ data: ["public"], error: null }),
+      },
     };
 
     mockResend = {};
 
-    const { createClient } = require('@supabase/supabase-js');
+    const { createClient } = require("@supabase/supabase-js");
     createClient.mockReturnValue(mockSupabase);
 
-    const { Resend } = require('resend');
+    const { Resend } = require("resend");
     Resend.mockImplementation(() => mockResend);
 
     global.fetch = jest.fn().mockResolvedValue({ ok: true });
@@ -69,8 +77,8 @@ describe('Health Checker', () => {
     delete process.env.RESEND_API_KEY;
   });
 
-  describe('performHealthCheck', () => {
-    it('should perform comprehensive health check', async () => {
+  describe("performHealthCheck", () => {
+    it("should perform comprehensive health check", async () => {
       const result = await checker.performHealthCheck();
 
       expect(result.status).toBeDefined();
@@ -79,19 +87,19 @@ describe('Health Checker', () => {
       expect(result.components.email).toBeDefined();
     });
 
-    it('should check database health', async () => {
+    it("should check database health", async () => {
       const result = await checker.performHealthCheck();
 
       expect(result.components.database.status).toBeDefined();
     });
 
-    it('should check email service health', async () => {
+    it("should check email service health", async () => {
       const result = await checker.performHealthCheck();
 
       expect(result.components.email.status).toBeDefined();
     });
 
-    it('should include metrics', async () => {
+    it("should include metrics", async () => {
       const result = await checker.performHealthCheck();
 
       expect(result.metrics).toBeDefined();
@@ -101,12 +109,11 @@ describe('Health Checker', () => {
     });
   });
 
-  describe('determineOverallStatus', () => {
-    it('should return healthy when all components healthy', async () => {
+  describe("determineOverallStatus", () => {
+    it("should return healthy when all components healthy", async () => {
       const result = await checker.performHealthCheck();
 
-      expect(result.status).toBe('healthy');
+      expect(result.status).toBe("healthy");
     });
   });
 });
-

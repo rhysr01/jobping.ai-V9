@@ -3,15 +3,15 @@
  * Tests Resend API key validation, test email sending
  */
 
-import { NextRequest } from 'next/server';
+import { NextRequest } from "next/server";
 
-jest.mock('@/Utils/email/clients', () => ({
+jest.mock("@/Utils/email/clients", () => ({
   getResendClient: jest.fn(),
-  EMAIL_CONFIG: { from: 'JobPing <noreply@getjobping.com>' },
-  assertValidFrom: jest.fn()
+  EMAIL_CONFIG: { from: "JobPing <noreply@getjobping.com>" },
+  assertValidFrom: jest.fn(),
 }));
 
-describe('Test Resend API Route', () => {
+describe("Test Resend API Route", () => {
   let GET: any;
   let mockResend: any;
 
@@ -20,35 +20,37 @@ describe('Test Resend API Route', () => {
 
     mockResend = {
       domains: {
-        list: jest.fn().mockResolvedValue({ data: [] })
+        list: jest.fn().mockResolvedValue({ data: [] }),
       },
       emails: {
-        send: jest.fn().mockResolvedValue({ data: { id: 'test_email_123' }, error: null })
-      }
+        send: jest
+          .fn()
+          .mockResolvedValue({ data: { id: "test_email_123" }, error: null }),
+      },
     };
 
-    const { getResendClient } = require('@/Utils/email/clients');
+    const { getResendClient } = require("@/Utils/email/clients");
     getResendClient.mockReturnValue(mockResend);
 
-    GET = require('@/app/api/test-resend/route').GET;
+    GET = require("@/app/api/test-resend/route").GET;
   });
 
-  describe('GET /api/test-resend', () => {
-    it('should report configuration error when API key missing', async () => {
+  describe("GET /api/test-resend", () => {
+    it("should report configuration error when API key missing", async () => {
       delete process.env.RESEND_API_KEY;
 
-      const req = new NextRequest('http://localhost/api/test-resend');
+      const req = new NextRequest("http://localhost/api/test-resend");
       const response = await GET(req);
       const data = await response.json();
 
       expect(response.status).toBe(500);
-      expect(data.error).toBe('RESEND_API_KEY not configured');
+      expect(data.error).toBe("RESEND_API_KEY not configured");
     });
 
-    it('should send diagnostics when configured', async () => {
-      process.env.RESEND_API_KEY = 're_test_key';
+    it("should send diagnostics when configured", async () => {
+      process.env.RESEND_API_KEY = "re_test_key";
 
-      const req = new NextRequest('http://localhost/api/test-resend');
+      const req = new NextRequest("http://localhost/api/test-resend");
       const response = await GET(req);
       const data = await response.json();
 

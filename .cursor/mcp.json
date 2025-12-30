@@ -1,26 +1,29 @@
 {
-  "mcpServers": {
-    "supabase-prod": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@supabase/mcp-server-supabase@latest",
-        "--read-only",
-        "--project-ref",
-        "kpecjbjtdjzgkzywylhn"
-      ],
-      "env": { "SUPABASE_ACCESS_TOKEN": "sbp_0ed56e2ec01980f8e1d26938af6f22ba9aefbf54" }
-    },
-    "supabase-dev": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@supabase/mcp-server-supabase@latest",
-        "--project-ref",
-        "kpecjbjtdjzgkzywylhn"
-      ],
-      "env": { "SUPABASE_ACCESS_TOKEN": "sbp_0ed56e2ec01980f8e1d26938af6f22ba9aefbf54" }
-    }
-  }
+	"mcpServers": {
+		"supabase-prod": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@supabase/mcp-server-supabase@latest",
+				"--read-only",
+				"--project-ref",
+				"kpecjbjtdjzgkzywylhn"
+			],
+			"env": {
+				"SUPABASE_ACCESS_TOKEN": "sbp_0ed56e2ec01980f8e1d26938af6f22ba9aefbf54"
+			}
+		},
+		"supabase-dev": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@supabase/mcp-server-supabase@latest",
+				"--project-ref",
+				"kpecjbjtdjzgkzywylhn"
+			],
+			"env": {
+				"SUPABASE_ACCESS_TOKEN": "sbp_0ed56e2ec01980f8e1d26938af6f22ba9aefbf54"
+			}
+		}
+	}
 }
-

@@ -1,7 +1,7 @@
-import { GET } from '@/app/api/cleanup-jobs/route';
-import { getDatabaseClient } from '@/Utils/databasePool';
+import { GET } from "@/app/api/cleanup-jobs/route";
+import { getDatabaseClient } from "@/Utils/databasePool";
 
-jest.mock('@/Utils/databasePool', () => ({
+jest.mock("@/Utils/databasePool", () => ({
   getDatabaseClient: jest.fn(() => ({
     from: jest.fn(() => ({
       delete: jest.fn(() => ({
@@ -20,13 +20,13 @@ jest.mock('@/Utils/databasePool', () => ({
   })),
 }));
 
-jest.mock('@/Utils/auth/hmac', () => ({
+jest.mock("@/Utils/auth/hmac", () => ({
   verifyHMAC: jest.fn().mockReturnValue({ isValid: true }),
   isHMACRequired: jest.fn().mockReturnValue(false),
 }));
 
-describe('GET /api/cleanup-jobs', () => {
-  it('should return cleanup status', async () => {
+describe("GET /api/cleanup-jobs", () => {
+  it("should return cleanup status", async () => {
     const req = {
       headers: new Headers(),
       nextUrl: {
@@ -40,7 +40,7 @@ describe('GET /api/cleanup-jobs', () => {
     expect(response.status).toBeGreaterThanOrEqual(200);
   });
 
-  it('should call getDatabaseClient', async () => {
+  it("should call getDatabaseClient", async () => {
     const req = {
       headers: new Headers(),
       nextUrl: {
@@ -54,4 +54,3 @@ describe('GET /api/cleanup-jobs', () => {
     expect(getDatabaseClient).toHaveBeenCalled();
   });
 });
-

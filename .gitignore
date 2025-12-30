@@ -48,3 +48,12 @@ next-env.d.ts
 .env.local.clean
 .env*.backup
 .env*.local
+
+# Ignore SQL backups
+*.sql
+!migrations/*.sql
+!supabase/migrations/*.sql
+
+# Ignore AI/Log junk
+*.log
+.cursor/

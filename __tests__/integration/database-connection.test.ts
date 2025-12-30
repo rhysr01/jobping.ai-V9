@@ -3,41 +3,41 @@
  * Tests critical database connection handling
  */
 
-describe('Critical Business Logic - Database Connection', () => {
-  it(' Database connection has required credentials', () => {
+describe("Critical Business Logic - Database Connection", () => {
+  it(" Database connection has required credentials", () => {
     const connection = {
       url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-      key: process.env.SUPABASE_SERVICE_ROLE_KEY
+      key: process.env.SUPABASE_SERVICE_ROLE_KEY,
     };
 
-    expect(typeof connection.url).toBe('string');
-    expect(typeof connection.key).toBe('string');
+    expect(typeof connection.url).toBe("string");
+    expect(typeof connection.key).toBe("string");
   });
 
-  it(' Database connection validates URL format', () => {
-    const validUrl = 'https://example.supabase.co';
-    const invalidUrl = 'not-a-url';
+  it(" Database connection validates URL format", () => {
+    const validUrl = "https://example.supabase.co";
+    const invalidUrl = "not-a-url";
 
     expect(validUrl).toMatch(/^https?:\/\//);
     expect(invalidUrl).not.toMatch(/^https?:\/\//);
   });
 
-  it(' Database query handles errors gracefully', () => {
-    const error = new Error('Connection failed');
+  it(" Database query handles errors gracefully", () => {
+    const error = new Error("Connection failed");
     const result = { data: null, error };
 
     expect(result.error).toBeDefined();
     expect(result.data).toBeNull();
   });
 
-  it(' Database query returns data on success', () => {
+  it(" Database query returns data on success", () => {
     const result = { data: [{ id: 1 }], error: null };
 
     expect(result.data).toBeDefined();
     expect(result.error).toBeNull();
   });
 
-  it(' Database handles connection pool limits', () => {
+  it(" Database handles connection pool limits", () => {
     const maxConnections = 10;
     const currentConnections = 5;
 
@@ -46,7 +46,7 @@ describe('Critical Business Logic - Database Connection', () => {
     expect(hasCapacity).toBe(true);
   });
 
-  it(' Database retries on transient errors', () => {
+  it(" Database retries on transient errors", () => {
     const maxRetries = 3;
     const attempt = 1;
 
@@ -55,14 +55,14 @@ describe('Critical Business Logic - Database Connection', () => {
     expect(shouldRetry).toBe(true);
   });
 
-  it(' Database timeout is configured', () => {
+  it(" Database timeout is configured", () => {
     const timeoutMs = 30000; // 30 seconds
     const maxTimeout = 60000;
 
     expect(timeoutMs).toBeLessThan(maxTimeout);
   });
 
-  it(' Database prevents SQL injection', () => {
+  it(" Database prevents SQL injection", () => {
     const userInput = "'; DROP TABLE users--";
     const parameterized = true;
 
@@ -70,19 +70,19 @@ describe('Critical Business Logic - Database Connection', () => {
     expect(parameterized).toBe(true);
   });
 
-  it(' Database validates required fields', () => {
+  it(" Database validates required fields", () => {
     const record = {
-      email: 'user@example.com',
-      created_at: new Date().toISOString()
+      email: "user@example.com",
+      created_at: new Date().toISOString(),
     };
 
     expect(record.email).toBeTruthy();
     expect(record.created_at).toBeTruthy();
   });
 
-  it(' Database enforces unique constraints', () => {
-    const existingEmails = new Set(['user1@example.com']);
-    const newEmail = 'user1@example.com';
+  it(" Database enforces unique constraints", () => {
+    const existingEmails = new Set(["user1@example.com"]);
+    const newEmail = "user1@example.com";
 
     const isDuplicate = existingEmails.has(newEmail);
 
@@ -90,22 +90,22 @@ describe('Critical Business Logic - Database Connection', () => {
   });
 });
 
-describe('Critical Business Logic - Transaction Handling', () => {
-  it(' Transaction commits on success', () => {
+describe("Critical Business Logic - Transaction Handling", () => {
+  it(" Transaction commits on success", () => {
     const success = true;
-    const action = success ? 'commit' : 'rollback';
+    const action = success ? "commit" : "rollback";
 
-    expect(action).toBe('commit');
+    expect(action).toBe("commit");
   });
 
-  it(' Transaction rolls back on error', () => {
+  it(" Transaction rolls back on error", () => {
     const error = true;
-    const action = error ? 'rollback' : 'commit';
+    const action = error ? "rollback" : "commit";
 
-    expect(action).toBe('rollback');
+    expect(action).toBe("rollback");
   });
 
-  it(' Transaction maintains data consistency', () => {
+  it(" Transaction maintains data consistency", () => {
     const balance = 100;
     const debit = 30;
     const credit = 30;
@@ -115,7 +115,7 @@ describe('Critical Business Logic - Transaction Handling', () => {
     expect(finalBalance).toBe(100);
   });
 
-  it(' Transaction handles concurrent updates', () => {
+  it(" Transaction handles concurrent updates", () => {
     const version = 1;
     const expectedVersion = 1;
 
@@ -125,21 +125,21 @@ describe('Critical Business Logic - Transaction Handling', () => {
   });
 });
 
-describe('Critical Business Logic - Query Optimization', () => {
-  it(' Query uses indexes on frequently searched fields', () => {
-    const indexedFields = ['email', 'created_at', 'job_hash'];
+describe("Critical Business Logic - Query Optimization", () => {
+  it(" Query uses indexes on frequently searched fields", () => {
+    const indexedFields = ["email", "created_at", "job_hash"];
 
-    expect(indexedFields).toContain('email');
+    expect(indexedFields).toContain("email");
   });
 
-  it(' Query limits result size', () => {
+  it(" Query limits result size", () => {
     const limit = 100;
     const maxLimit = 1000;
 
     expect(limit).toBeLessThanOrEqual(maxLimit);
   });
 
-  it(' Query uses pagination for large datasets', () => {
+  it(" Query uses pagination for large datasets", () => {
     const pageSize = 50;
     const page = 1;
     const offset = (page - 1) * pageSize;
@@ -147,11 +147,10 @@ describe('Critical Business Logic - Query Optimization', () => {
     expect(offset).toBe(0);
   });
 
-  it(' Query selects only required fields', () => {
-    const selectedFields = ['id', 'email', 'name'];
-    const allFields = ['id', 'email', 'name', 'password_hash', 'internal_data'];
+  it(" Query selects only required fields", () => {
+    const selectedFields = ["id", "email", "name"];
+    const allFields = ["id", "email", "name", "password_hash", "internal_data"];
 
     expect(selectedFields.length).toBeLessThan(allFields.length);
   });
 });
-

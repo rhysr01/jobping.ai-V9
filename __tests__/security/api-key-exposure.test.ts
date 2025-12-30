@@ -3,9 +3,9 @@
  * CI/CD test to ensure no secrets leak to client-side code
  */
 
-import { execSync } from 'child_process';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { execSync } from "child_process";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 // Patterns that should NEVER appear in client bundle
 const SECRET_PATTERNS = [
@@ -21,31 +21,34 @@ const ALLOWED_PATTERNS = [
   /pk_test_/, // Test keys are OK
 ];
 
-describe('Security: API Key Exposure', () => {
-  it('should not expose API keys in client bundle', () => {
+describe("Security: API Key Exposure", () => {
+  it("should not expose API keys in client bundle", () => {
     // Find all client-side files (.tsx, .ts files in app/ and components/)
     const clientFiles = [
-      ...globSync('app/**/*.{ts,tsx}').filter(f => !f.includes('/api/')),
-      ...globSync('components/**/*.{ts,tsx}'),
+      ...globSync("app/**/*.{ts,tsx}").filter((f) => !f.includes("/api/")),
+      ...globSync("components/**/*.{ts,tsx}"),
     ];
 
-    const violations: Array<{ file: string; line: number; pattern: string }> = [];
+    const violations: Array<{ file: string; line: number; pattern: string }> =
+      [];
 
-    clientFiles.forEach(file => {
+    clientFiles.forEach((file) => {
       try {
-        const content = readFileSync(file, 'utf-8');
-        const lines = content.split('\n');
+        const content = readFileSync(file, "utf-8");
+        const lines = content.split("\n");
 
         lines.forEach((line, index) => {
-          SECRET_PATTERNS.forEach(pattern => {
+          SECRET_PATTERNS.forEach((pattern) => {
             if (pattern.test(line)) {
               // Check if it's an allowed pattern
-              const isAllowed = ALLOWED_PATTERNS.some(allowed => allowed.test(line));
+              const isAllowed = ALLOWED_PATTERNS.some((allowed) =>
+                allowed.test(line),
+              );
               if (!isAllowed) {
                 violations.push({
                   file,
                   line: index + 1,
-                  pattern: pattern.toString()
+                  pattern: pattern.toString(),
                 });
               }
             }
@@ -57,24 +60,24 @@ describe('Security: API Key Exposure', () => {
     });
 
     if (violations.length > 0) {
-      const violationReport = violations.map(v => 
-        `  ${v.file}:${v.line} - Pattern: ${v.pattern}`
-      ).join('\n');
-      
+      const violationReport = violations
+        .map((v) => `  ${v.file}:${v.line} - Pattern: ${v.pattern}`)
+        .join("\n");
+
       throw new Error(
         `Found ${violations.length} potential API key exposure(s):\n${violationReport}\n\n` +
-        'These patterns should not appear in client-side code. Move to server-side only.'
+          "These patterns should not appear in client-side code. Move to server-side only.",
       );
     }
   });
 
-  it('should not expose secrets in build output', () => {
+  it("should not expose secrets in build output", () => {
     // This test should run after build
     if (process.env.CI && !process.env.BUILD_OUTPUT_CHECKED) {
       return; // Skip if build output not available
     }
 
-    const buildDir = join(process.cwd(), '.next');
+    const buildDir = join(process.cwd(), ".next");
     const checkBuildFiles = (dir: string) => {
       // Implementation would check .next/static files
       // For now, just ensure the test exists
@@ -84,7 +87,6 @@ describe('Security: API Key Exposure', () => {
 
 // Helper to find files
 function globSync(pattern: string): string[] {
-  const { sync } = require('glob');
+  const { sync } = require("glob");
   return sync(pattern);
 }
-

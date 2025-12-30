@@ -1,24 +1,20 @@
 //  OPTIMIZED EMAIL MODULE EXPORTS - PRODUCTION READY
 
-// Types
-export * from './types';
-
-// Core functions - OPTIMIZED VERSION
-export { 
-  sendWelcomeEmail, 
-  sendMatchedJobsEmail, 
-  sendBatchEmails,
-  EMAIL_PERFORMANCE_METRICS 
-} from './sender';
-
-// Production-ready templates (brand aligned + VML fallbacks)
-export { 
-  createWelcomeEmail, 
-  createJobMatchesEmail 
-} from './productionReadyTemplates';
-
 // Clients (if needed externally)
-export { getResendClient, getSupabaseClient, EMAIL_CONFIG } from './clients';
-
+export { EMAIL_CONFIG, getResendClient, getSupabaseClient } from "./clients";
+// Production-ready templates (brand aligned + VML fallbacks)
+export {
+	createJobMatchesEmail,
+	createWelcomeEmail,
+} from "./productionReadyTemplates";
+// Core functions - OPTIMIZED VERSION
 // Performance monitoring
-export { EMAIL_PERFORMANCE_METRICS as performanceMetrics } from './sender';
+export {
+	EMAIL_PERFORMANCE_METRICS,
+	EMAIL_PERFORMANCE_METRICS as performanceMetrics,
+	sendBatchEmails,
+	sendMatchedJobsEmail,
+	sendWelcomeEmail,
+} from "./sender";
+// Types
+export * from "./types";

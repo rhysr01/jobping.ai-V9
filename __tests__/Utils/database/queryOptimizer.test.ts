@@ -3,9 +3,9 @@
  * Tests optimized database queries with caching (120 statements)
  */
 
-import { DatabaseQueryOptimizer } from '@/Utils/database/queryOptimizer';
+import { DatabaseQueryOptimizer } from "@/Utils/database/queryOptimizer";
 
-describe('Database Query Optimizer', () => {
+describe("Database Query Optimizer", () => {
   let optimizer: DatabaseQueryOptimizer;
   let mockSupabase: any;
 
@@ -24,26 +24,26 @@ describe('Database Query Optimizer', () => {
       limit: jest.fn().mockResolvedValue({
         data: [],
         error: null,
-        count: 0
+        count: 0,
       }),
-      insert: jest.fn().mockResolvedValue({ error: null })
+      insert: jest.fn().mockResolvedValue({ error: null }),
     };
 
     optimizer = new DatabaseQueryOptimizer(mockSupabase);
   });
 
-  describe('getOptimizedJobs', () => {
-    it('should fetch jobs with default config', async () => {
+  describe("getOptimizedJobs", () => {
+    it("should fetch jobs with default config", async () => {
       const result = await optimizer.getOptimizedJobs();
 
-      expect(result).toHaveProperty('data');
-      expect(result).toHaveProperty('count');
-      expect(result).toHaveProperty('executionTime');
-      expect(result).toHaveProperty('cacheHit');
-      expect(mockSupabase.from).toHaveBeenCalledWith('jobs');
+      expect(result).toHaveProperty("data");
+      expect(result).toHaveProperty("count");
+      expect(result).toHaveProperty("executionTime");
+      expect(result).toHaveProperty("cacheHit");
+      expect(mockSupabase.from).toHaveBeenCalledWith("jobs");
     });
 
-    it('should use cache when available', async () => {
+    it("should use cache when available", async () => {
       // First call - populate cache
       await optimizer.getOptimizedJobs({ useCache: true });
 
@@ -53,53 +53,61 @@ describe('Database Query Optimizer', () => {
       expect(result.cacheHit).toBe(true);
     });
 
-    it('should filter by categories', async () => {
+    it("should filter by categories", async () => {
       await optimizer.getOptimizedJobs({
-        categories: ['strategy', 'finance']
+        categories: ["strategy", "finance"],
       });
 
-      expect(mockSupabase.overlaps).toHaveBeenCalledWith('categories', ['strategy', 'finance']);
+      expect(mockSupabase.overlaps).toHaveBeenCalledWith("categories", [
+        "strategy",
+        "finance",
+      ]);
     });
 
-    it('should filter by locations', async () => {
+    it("should filter by locations", async () => {
       await optimizer.getOptimizedJobs({
-        locations: ['London', 'Paris']
+        locations: ["London", "Paris"],
       });
 
-      expect(mockSupabase.in).toHaveBeenCalledWith('location', ['London', 'Paris']);
+      expect(mockSupabase.in).toHaveBeenCalledWith("location", [
+        "London",
+        "Paris",
+      ]);
     });
 
-    it('should exclude sent jobs when requested', async () => {
+    it("should exclude sent jobs when requested", async () => {
       await optimizer.getOptimizedJobs({
-        excludeSent: true
+        excludeSent: true,
       });
 
-      expect(mockSupabase.eq).toHaveBeenCalledWith('is_sent', false);
+      expect(mockSupabase.eq).toHaveBeenCalledWith("is_sent", false);
     });
 
-    it('should respect limit parameter', async () => {
+    it("should respect limit parameter", async () => {
       await optimizer.getOptimizedJobs({
-        limit: 50
+        limit: 50,
       });
 
       expect(mockSupabase.limit).toHaveBeenCalledWith(50);
     });
 
-    it('should handle database errors', async () => {
+    it("should handle database errors", async () => {
       mockSupabase.limit.mockResolvedValue({
         data: null,
-        error: { message: 'Database error' },
-        count: 0
+        error: { message: "Database error" },
+        count: 0,
       });
 
-      await expect(optimizer.getOptimizedJobs()).rejects.toThrow('Database query failed');
+      await expect(optimizer.getOptimizedJobs()).rejects.toThrow(
+        "Database query failed",
+      );
     });
 
-    it('should cache results when useCache is true', async () => {
+    it("should cache results when useCache is true", async () => {
       mockSupabase.limit.mockResolvedValue({
-        data: [{ id: 1, title: 'Job 1' }],
+        data: [{ id: 1, title: "Job 1" }],
         error: null,
-        count: 1
+        count: 1,
       });
 
       await optimizer.getOptimizedJobs({ useCache: true });
@@ -109,7 +117,7 @@ describe('Database Query Optimizer', () => {
       expect(result.cacheHit).toBe(true);
     });
 
-    it('should skip cache when useCache is false', async () => {
+    it("should skip cache when useCache is false", async () => {
       await optimizer.getOptimizedJobs({ useCache: false });
       await optimizer.getOptimizedJobs({ useCache: false });
 
@@ -118,40 +126,40 @@ describe('Database Query Optimizer', () => {
     });
   });
 
-  describe('getOptimizedUsers', () => {
-    it('should fetch users with default config', async () => {
+  describe("getOptimizedUsers", () => {
+    it("should fetch users with default config", async () => {
       const result = await optimizer.getOptimizedUsers();
 
-      expect(result).toHaveProperty('data');
-      expect(mockSupabase.from).toHaveBeenCalledWith('users');
+      expect(result).toHaveProperty("data");
+      expect(mockSupabase.from).toHaveBeenCalledWith("users");
     });
 
-    it('should filter by isActive', async () => {
+    it("should filter by isActive", async () => {
       await optimizer.getOptimizedUsers({
-        isActive: true
+        isActive: true,
       });
 
-      expect(mockSupabase.eq).toHaveBeenCalledWith('is_active', true);
+      expect(mockSupabase.eq).toHaveBeenCalledWith("is_active", true);
     });
 
-    it('should filter by isPremium', async () => {
+    it("should filter by isPremium", async () => {
       await optimizer.getOptimizedUsers({
-        isPremium: true
+        isPremium: true,
       });
 
-      expect(mockSupabase.eq).toHaveBeenCalledWith('is_premium', true);
+      expect(mockSupabase.eq).toHaveBeenCalledWith("is_premium", true);
     });
 
-    it('should filter by lastMatchedBefore', async () => {
-      const date = '2024-01-01';
+    it("should filter by lastMatchedBefore", async () => {
+      const date = "2024-01-01";
       await optimizer.getOptimizedUsers({
-        lastMatchedBefore: date
+        lastMatchedBefore: date,
       });
 
-      expect(mockSupabase.lt).toHaveBeenCalledWith('last_matched_at', date);
+      expect(mockSupabase.lt).toHaveBeenCalledWith("last_matched_at", date);
     });
 
-    it('should use cache for users', async () => {
+    it("should use cache for users", async () => {
       await optimizer.getOptimizedUsers({ useCache: true });
       const result = await optimizer.getOptimizedUsers({ useCache: true });
 
@@ -159,39 +167,42 @@ describe('Database Query Optimizer', () => {
     });
   });
 
-  describe('getOptimizedMatches', () => {
-    it('should fetch matches with default config', async () => {
+  describe("getOptimizedMatches", () => {
+    it("should fetch matches with default config", async () => {
       const result = await optimizer.getOptimizedMatches();
 
-      expect(result).toHaveProperty('data');
-      expect(mockSupabase.from).toHaveBeenCalledWith('matches');
+      expect(result).toHaveProperty("data");
+      expect(mockSupabase.from).toHaveBeenCalledWith("matches");
     });
 
-    it('should filter by userEmail', async () => {
+    it("should filter by userEmail", async () => {
       await optimizer.getOptimizedMatches({
-        userEmail: 'user@example.com'
+        userEmail: "user@example.com",
       });
 
-      expect(mockSupabase.eq).toHaveBeenCalledWith('user_email', 'user@example.com');
+      expect(mockSupabase.eq).toHaveBeenCalledWith(
+        "user_email",
+        "user@example.com",
+      );
     });
 
-    it('should filter by jobHash', async () => {
+    it("should filter by jobHash", async () => {
       await optimizer.getOptimizedMatches({
-        jobHash: 'hash123'
+        jobHash: "hash123",
       });
 
-      expect(mockSupabase.eq).toHaveBeenCalledWith('job_hash', 'hash123');
+      expect(mockSupabase.eq).toHaveBeenCalledWith("job_hash", "hash123");
     });
 
-    it('should filter by minScore', async () => {
+    it("should filter by minScore", async () => {
       await optimizer.getOptimizedMatches({
-        minScore: 80
+        minScore: 80,
       });
 
-      expect(mockSupabase.gte).toHaveBeenCalledWith('match_score', 80);
+      expect(mockSupabase.gte).toHaveBeenCalledWith("match_score", 80);
     });
 
-    it('should use cache for matches', async () => {
+    it("should use cache for matches", async () => {
       await optimizer.getOptimizedMatches({ useCache: true });
       const result = await optimizer.getOptimizedMatches({ useCache: true });
 
@@ -199,46 +210,46 @@ describe('Database Query Optimizer', () => {
     });
   });
 
-  describe('batchInsert', () => {
-    it('should batch insert data', async () => {
+  describe("batchInsert", () => {
+    it("should batch insert data", async () => {
       const data = [
-        { id: 1, name: 'Item 1' },
-        { id: 2, name: 'Item 2' }
+        { id: 1, name: "Item 1" },
+        { id: 2, name: "Item 2" },
       ];
 
-      await optimizer.batchInsert('test_table', data);
+      await optimizer.batchInsert("test_table", data);
 
       expect(mockSupabase.insert).toHaveBeenCalled();
     });
 
-    it('should respect batchSize', async () => {
+    it("should respect batchSize", async () => {
       const data = Array.from({ length: 100 }, (_, i) => ({ id: i }));
-      
-      await optimizer.batchInsert('test_table', data, { batchSize: 10 });
+
+      await optimizer.batchInsert("test_table", data, { batchSize: 10 });
 
       // Should be called multiple times for batches
       expect(mockSupabase.insert.mock.calls.length).toBeGreaterThan(1);
     });
 
-    it('should handle insert errors', async () => {
+    it("should handle insert errors", async () => {
       mockSupabase.insert.mockResolvedValue({
-        error: { message: 'Insert failed' }
+        error: { message: "Insert failed" },
       });
 
       await expect(
-        optimizer.batchInsert('test_table', [{ id: 1 }])
+        optimizer.batchInsert("test_table", [{ id: 1 }]),
       ).rejects.toThrow();
     });
   });
 
-  describe('cache management', () => {
-    it('should expire cache entries after TTL', async () => {
+  describe("cache management", () => {
+    it("should expire cache entries after TTL", async () => {
       jest.useFakeTimers();
 
       mockSupabase.limit.mockResolvedValue({
         data: [{ id: 1 }],
         error: null,
-        count: 1
+        count: 1,
       });
 
       await optimizer.getOptimizedJobs({ useCache: true });
@@ -253,7 +264,7 @@ describe('Database Query Optimizer', () => {
       jest.useRealTimers();
     });
 
-    it('should clear cache', () => {
+    it("should clear cache", () => {
       optimizer.clearCache();
       // Cache should be empty
       const result = optimizer.getOptimizedJobs({ useCache: true });
@@ -261,4 +272,3 @@ describe('Database Query Optimizer', () => {
     });
   });
 });
-

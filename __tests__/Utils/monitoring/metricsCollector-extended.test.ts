@@ -3,21 +3,21 @@
  * Tests metric collection, caching, business metrics
  */
 
-import { MetricsCollector } from '@/Utils/monitoring/metricsCollector';
+import { MetricsCollector } from "@/Utils/monitoring/metricsCollector";
 
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn()
+jest.mock("@supabase/supabase-js", () => ({
+  createClient: jest.fn(),
 }));
 
-describe('Metrics Collector', () => {
+describe("Metrics Collector", () => {
   let collector: MetricsCollector;
   let mockSupabase: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
-    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
 
     mockSupabase = {
       from: jest.fn().mockReturnThis(),
@@ -25,17 +25,17 @@ describe('Metrics Collector', () => {
       count: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       gte: jest.fn().mockReturnThis(),
-      head: true
+      head: true,
     };
 
-    const { createClient } = require('@supabase/supabase-js');
+    const { createClient } = require("@supabase/supabase-js");
     createClient.mockReturnValue(mockSupabase);
 
     collector = new MetricsCollector();
   });
 
-  describe('collectMetrics', () => {
-    it('should collect system metrics', async () => {
+  describe("collectMetrics", () => {
+    it("should collect system metrics", async () => {
       mockSupabase.select.mockResolvedValue({ count: 100 });
 
       const metrics = await collector.collectMetrics();
@@ -47,7 +47,7 @@ describe('Metrics Collector', () => {
       expect(metrics.errors).toBeDefined();
     });
 
-    it('should include performance metrics', async () => {
+    it("should include performance metrics", async () => {
       const metrics = await collector.collectMetrics();
 
       expect(metrics.performance.response_time).toBeDefined();
@@ -55,7 +55,7 @@ describe('Metrics Collector', () => {
       expect(metrics.performance.uptime).toBeDefined();
     });
 
-    it('should collect business metrics', async () => {
+    it("should collect business metrics", async () => {
       mockSupabase.select.mockResolvedValue({ count: 50 });
 
       const metrics = await collector.collectMetrics();
@@ -65,8 +65,12 @@ describe('Metrics Collector', () => {
       expect(metrics.business.total_jobs).toBeDefined();
     });
 
-    it('should handle errors gracefully', async () => {
-      mockSupabase.select.mockResolvedValue({ data: null, error: new Error('Query failed'), count: 0 });
+    it("should handle errors gracefully", async () => {
+      mockSupabase.select.mockResolvedValue({
+        data: null,
+        error: new Error("Query failed"),
+        count: 0,
+      });
 
       const metrics = await collector.collectMetrics();
 
@@ -75,8 +79,8 @@ describe('Metrics Collector', () => {
     });
   });
 
-  describe('collectBusinessMetrics', () => {
-    it('should cache metrics', async () => {
+  describe("collectBusinessMetrics", () => {
+    it("should cache metrics", async () => {
       mockSupabase.select.mockResolvedValue({ count: 100 });
 
       await collector.collectMetrics();
@@ -87,12 +91,11 @@ describe('Metrics Collector', () => {
     });
   });
 
-  describe('getMetricsHistory', () => {
-    it('should get historical metrics', async () => {
+  describe("getMetricsHistory", () => {
+    it("should get historical metrics", async () => {
       const history = await collector.getMetricsHistory(24);
 
       expect(Array.isArray(history)).toBe(true);
     });
   });
 });
-

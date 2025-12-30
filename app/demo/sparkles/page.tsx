@@ -1,12 +1,15 @@
-import { SparklesPreview, SparklesPreviewDark, SparklesPreviewColorful } from "@/components/ui/sparkles-demo";
+import {
+	SparklesPreview,
+	SparklesPreviewColorful,
+	SparklesPreviewDark,
+} from "@/components/ui/sparkles-demo";
 
 export default function SparklesDemoPage() {
-  return (
-    <div className="space-y-8">
-      <SparklesPreview />
-      <SparklesPreviewDark />
-      <SparklesPreviewColorful />
-    </div>
-  );
+	return (
+		<div className="space-y-8">
+			<SparklesPreview />
+			<SparklesPreviewDark />
+			<SparklesPreviewColorful />
+		</div>
+	);
 }
-

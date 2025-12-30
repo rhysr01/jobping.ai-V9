@@ -3,20 +3,20 @@
  * Tests the massive match-users endpoint (494 statements!)
  */
 
-import { POST } from '@/app/api/match-users/route';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { POST } from "@/app/api/match-users/route";
 
-jest.mock('@/Utils/productionRateLimiter');
-jest.mock('@/Utils/databasePool');
-jest.mock('@/Utils/auth/hmac');
-jest.mock('@/Utils/consolidatedMatchingV2');
-jest.mock('@/Utils/matching/semanticRetrieval');
-jest.mock('@/Utils/matching/integrated-matching.service');
-jest.mock('@/Utils/matching/batch-processor.service');
-jest.mock('@/Utils/matching/logging.service');
+jest.mock("@/Utils/productionRateLimiter");
+jest.mock("@/Utils/databasePool");
+jest.mock("@/Utils/auth/hmac");
+jest.mock("@/Utils/consolidatedMatchingV2");
+jest.mock("@/Utils/matching/semanticRetrieval");
+jest.mock("@/Utils/matching/integrated-matching.service");
+jest.mock("@/Utils/matching/batch-processor.service");
+jest.mock("@/Utils/matching/logging.service");
 // Sentry removed - using Axiom for error tracking
 
-describe('Match Users API Route - Comprehensive', () => {
+describe("Match Users API Route - Comprehensive", () => {
   let mockRequest: NextRequest;
   let mockSupabase: any;
 
@@ -24,9 +24,9 @@ describe('Match Users API Route - Comprehensive', () => {
     jest.clearAllMocks();
 
     mockRequest = {
-      method: 'POST',
+      method: "POST",
       json: jest.fn(),
-      headers: new Headers()
+      headers: new Headers(),
     } as any;
 
     mockSupabase = {
@@ -44,60 +44,64 @@ describe('Match Users API Route - Comprehensive', () => {
       limit: jest.fn().mockResolvedValue({
         data: [],
         error: null,
-        count: 0
+        count: 0,
       }),
       single: jest.fn(),
-      rpc: jest.fn().mockResolvedValue({ data: [], error: null })
+      rpc: jest.fn().mockResolvedValue({ data: [], error: null }),
     };
 
-    const { getDatabaseClient } = require('@/Utils/databasePool');
+    const { getDatabaseClient } = require("@/Utils/databasePool");
     getDatabaseClient.mockReturnValue(mockSupabase);
 
-    const { getProductionRateLimiter } = require('@/Utils/productionRateLimiter');
+    const {
+      getProductionRateLimiter,
+    } = require("@/Utils/productionRateLimiter");
     getProductionRateLimiter.mockReturnValue({
       middleware: jest.fn().mockResolvedValue(null),
       initializeRedis: jest.fn().mockResolvedValue(undefined),
       redisClient: {
-        set: jest.fn().mockResolvedValue('OK'),
+        set: jest.fn().mockResolvedValue("OK"),
         get: jest.fn().mockResolvedValue(null),
-        del: jest.fn().mockResolvedValue(1)
-      }
+        del: jest.fn().mockResolvedValue(1),
+      },
     });
 
-    const { verifyHMAC, isHMACRequired } = require('@/Utils/auth/hmac');
+    const { verifyHMAC, isHMACRequired } = require("@/Utils/auth/hmac");
     verifyHMAC.mockReturnValue({ isValid: true });
     isHMACRequired.mockReturnValue(false);
 
-    process.env.NODE_ENV = 'test';
+    process.env.NODE_ENV = "test";
   });
 
-  describe('POST /api/match-users', () => {
-    it('should process match users request successfully', async () => {
+  describe("POST /api/match-users", () => {
+    it("should process match users request successfully", async () => {
       mockRequest.json.mockResolvedValue({
         userLimit: 10,
         jobLimit: 1000,
         forceRun: false,
-        dryRun: false
+        dryRun: false,
       });
 
       mockSupabase.limit.mockResolvedValue({
         data: [
           {
-            id: 'user1',
-            email: 'user1@example.com',
-            subscription_tier: 'free',
-            email_verified: true
-          }
+            id: "user1",
+            email: "user1@example.com",
+            subscription_tier: "free",
+            email_verified: true,
+          },
         ],
-        error: null
+        error: null,
       });
 
-      const { createConsolidatedMatcher } = require('@/Utils/consolidatedMatchingV2');
+      const {
+        createConsolidatedMatcher,
+      } = require("@/Utils/consolidatedMatchingV2");
       createConsolidatedMatcher.mockReturnValue({
         match: jest.fn().mockResolvedValue({
           matches: [],
-          method: 'ai_success'
-        })
+          method: "ai_success",
+        }),
       });
 
       const response = await POST(mockRequest);
@@ -107,10 +111,10 @@ describe('Match Users API Route - Comprehensive', () => {
       expect(data).toBeDefined();
     });
 
-    it('should validate request schema', async () => {
+    it("should validate request schema", async () => {
       mockRequest.json.mockResolvedValue({
         userLimit: 200, // Exceeds max
-        jobLimit: 1000
+        jobLimit: 1000,
       });
 
       const response = await POST(mockRequest);
@@ -118,31 +122,38 @@ describe('Match Users API Route - Comprehensive', () => {
       expect(response.status).toBeGreaterThanOrEqual(400);
     });
 
-    it('should handle HMAC authentication when required', async () => {
-      const { isHMACRequired } = require('@/Utils/auth/hmac');
+    it("should handle HMAC authentication when required", async () => {
+      const { isHMACRequired } = require("@/Utils/auth/hmac");
       isHMACRequired.mockReturnValue(true);
 
       mockRequest.json.mockResolvedValue({
         userLimit: 10,
         jobLimit: 1000,
-        signature: 'invalid',
-        timestamp: Date.now()
+        signature: "invalid",
+        timestamp: Date.now(),
       });
 
-      const { verifyHMAC } = require('@/Utils/auth/hmac');
-      verifyHMAC.mockReturnValue({ isValid: false, error: 'Invalid signature' });
+      const { verifyHMAC } = require("@/Utils/auth/hmac");
+      verifyHMAC.mockReturnValue({
+        isValid: false,
+        error: "Invalid signature",
+      });
 
       const response = await POST(mockRequest);
 
       expect(response.status).toBe(401);
     });
 
-    it('should handle rate limiting', async () => {
-      const { getProductionRateLimiter } = require('@/Utils/productionRateLimiter');
+    it("should handle rate limiting", async () => {
+      const {
+        getProductionRateLimiter,
+      } = require("@/Utils/productionRateLimiter");
       getProductionRateLimiter.mockReturnValue({
-        middleware: jest.fn().mockResolvedValue(
-          NextResponse.json({ error: 'Rate limited' }, { status: 429 })
-        )
+        middleware: jest
+          .fn()
+          .mockResolvedValue(
+            NextResponse.json({ error: "Rate limited" }, { status: 429 }),
+          ),
       });
 
       const response = await POST(mockRequest);
@@ -150,15 +161,15 @@ describe('Match Users API Route - Comprehensive', () => {
       expect(response.status).toBe(429);
     });
 
-    it('should handle database errors gracefully', async () => {
+    it("should handle database errors gracefully", async () => {
       mockRequest.json.mockResolvedValue({
         userLimit: 10,
-        jobLimit: 1000
+        jobLimit: 1000,
       });
 
       mockSupabase.limit.mockResolvedValue({
         data: null,
-        error: { message: 'Database error' }
+        error: { message: "Database error" },
       });
 
       const response = await POST(mockRequest);
@@ -166,16 +177,16 @@ describe('Match Users API Route - Comprehensive', () => {
       expect(response.status).toBeGreaterThanOrEqual(500);
     });
 
-    it('should handle dry run mode', async () => {
+    it("should handle dry run mode", async () => {
       mockRequest.json.mockResolvedValue({
         userLimit: 10,
         jobLimit: 1000,
-        dryRun: true
+        dryRun: true,
       });
 
       mockSupabase.limit.mockResolvedValue({
-        data: [{ id: 'user1', email: 'user1@example.com' }],
-        error: null
+        data: [{ id: "user1", email: "user1@example.com" }],
+        error: null,
       });
 
       const response = await POST(mockRequest);
@@ -185,16 +196,16 @@ describe('Match Users API Route - Comprehensive', () => {
       expect(data.dryRun).toBe(true);
     });
 
-    it('should handle force run mode', async () => {
+    it("should handle force run mode", async () => {
       mockRequest.json.mockResolvedValue({
         userLimit: 10,
         jobLimit: 1000,
-        forceRun: true
+        forceRun: true,
       });
 
       mockSupabase.limit.mockResolvedValue({
-        data: [{ id: 'user1', email: 'user1@example.com' }],
-        error: null
+        data: [{ id: "user1", email: "user1@example.com" }],
+        error: null,
       });
 
       const response = await POST(mockRequest);
@@ -202,28 +213,30 @@ describe('Match Users API Route - Comprehensive', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should process users in batches', async () => {
+    it("should process users in batches", async () => {
       mockRequest.json.mockResolvedValue({
         userLimit: 50,
-        jobLimit: 1000
+        jobLimit: 1000,
       });
 
       const users = Array.from({ length: 50 }, (_, i) => ({
         id: `user${i}`,
         email: `user${i}@example.com`,
-        subscription_tier: 'free',
-        email_verified: true
+        subscription_tier: "free",
+        email_verified: true,
       }));
 
       mockSupabase.limit.mockResolvedValue({
         data: users,
-        error: null
+        error: null,
       });
 
-      const { batchMatchingProcessor } = require('@/Utils/matching/batch-processor.service');
+      const {
+        batchMatchingProcessor,
+      } = require("@/Utils/matching/batch-processor.service");
       batchMatchingProcessor.processBatch = jest.fn().mockResolvedValue({
         success: true,
-        processed: 50
+        processed: 50,
       });
 
       const response = await POST(mockRequest);
@@ -231,21 +244,23 @@ describe('Match Users API Route - Comprehensive', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should handle Redis lock acquisition failure', async () => {
+    it("should handle Redis lock acquisition failure", async () => {
       mockRequest.json.mockResolvedValue({
         userLimit: 10,
-        jobLimit: 1000
+        jobLimit: 1000,
       });
 
-      const { getProductionRateLimiter } = require('@/Utils/productionRateLimiter');
+      const {
+        getProductionRateLimiter,
+      } = require("@/Utils/productionRateLimiter");
       const mockLimiter = {
         middleware: jest.fn().mockResolvedValue(null),
         initializeRedis: jest.fn().mockResolvedValue(undefined),
         redisClient: {
           set: jest.fn().mockResolvedValue(null), // Lock already held
-          get: jest.fn().mockResolvedValue('existing-token'),
-          del: jest.fn().mockResolvedValue(1)
-        }
+          get: jest.fn().mockResolvedValue("existing-token"),
+          del: jest.fn().mockResolvedValue(1),
+        },
       };
       getProductionRateLimiter.mockReturnValue(mockLimiter);
 
@@ -256,21 +271,21 @@ describe('Match Users API Route - Comprehensive', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should validate database schema', async () => {
+    it("should validate database schema", async () => {
       mockRequest.json.mockResolvedValue({
         userLimit: 10,
-        jobLimit: 1000
+        jobLimit: 1000,
       });
 
       mockSupabase.limit.mockResolvedValue({
-        data: [{ id: 'user1' }],
-        error: null
+        data: [{ id: "user1" }],
+        error: null,
       });
 
       // Mock schema validation failure
       mockSupabase.select.mockResolvedValueOnce({
         data: null,
-        error: { message: 'column "status" does not exist' }
+        error: { message: 'column "status" does not exist' },
       });
 
       const response = await POST(mockRequest);
@@ -279,20 +294,22 @@ describe('Match Users API Route - Comprehensive', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should handle matching service errors', async () => {
+    it("should handle matching service errors", async () => {
       mockRequest.json.mockResolvedValue({
         userLimit: 10,
-        jobLimit: 1000
+        jobLimit: 1000,
       });
 
       mockSupabase.limit.mockResolvedValue({
-        data: [{ id: 'user1', email: 'user1@example.com' }],
-        error: null
+        data: [{ id: "user1", email: "user1@example.com" }],
+        error: null,
       });
 
-      const { createConsolidatedMatcher } = require('@/Utils/consolidatedMatchingV2');
+      const {
+        createConsolidatedMatcher,
+      } = require("@/Utils/consolidatedMatchingV2");
       createConsolidatedMatcher.mockReturnValue({
-        match: jest.fn().mockRejectedValue(new Error('Matching failed'))
+        match: jest.fn().mockRejectedValue(new Error("Matching failed")),
       });
 
       const response = await POST(mockRequest);
@@ -301,4 +318,3 @@ describe('Match Users API Route - Comprehensive', () => {
     });
   });
 });
-

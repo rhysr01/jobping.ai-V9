@@ -2,28 +2,30 @@
 
 import React from "react";
 import { TiltCard } from "@/components/ui/TiltCard";
-import { Mail, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 const PREMIUM_DAYS = [
 	{
 		day: "Monday",
-		subject: "Your Weekly Kickoff: 5 New Matches",
-		featuredJob: "Software Engineering Intern @ Spotify (Stockholm)",
+		time: "09:00 AM",
+		company: "Spotify",
+		jobTitle: "Software Engineering Intern",
 		matchReason: "Perfect for your React & TypeScript skills in a music-tech environment.",
 		stats: { skills: 95, salary: 90, tech: 100 },
 	},
 	{
 		day: "Wednesday",
-		subject: "Mid-week Pulse: Top 5 High-Growth Roles",
-		featuredJob: "Graduate Frontend Developer @ Monzo (London)",
+		time: "09:00 AM",
+		company: "Monzo",
+		jobTitle: "Graduate Frontend Developer",
 		matchReason: "Matches your fintech interest and early-career focus.",
 		stats: { skills: 92, salary: 98, tech: 85 },
 	},
 	{
 		day: "Friday",
-		subject: "The Weekend Update: 5 Remote Matches",
-		featuredJob: "AI Research Intern @ Mistral (Paris)",
+		time: "09:00 AM",
+		company: "Mistral",
+		jobTitle: "AI Research Intern",
 		matchReason: "Aligns with your machine learning coursework and EU visa status.",
 		stats: { skills: 100, salary: 85, tech: 95 },
 	},
@@ -45,53 +47,75 @@ export function PremiumEmailShowcase() {
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 					{PREMIUM_DAYS.map((item) => (
 						<TiltCard key={item.day}>
-							<div className="group relative flex flex-col h-full rounded-2xl border border-zinc-800 bg-zinc-950 p-5 transition-all hover:border-purple-500/50">
-								{/* Email Header */}
-								<div className="flex items-center gap-2 mb-4 border-b border-zinc-900 pb-3">
-									<div className="flex h-6 w-6 items-center justify-center rounded bg-purple-600 text-[10px] font-bold italic text-white">
-										JP
+							<div className="group relative bg-[#0D0D0D] rounded-2xl border border-white/5 overflow-hidden shadow-2xl transition-all hover:border-purple-500/30">
+								{/* Browser/Email Header */}
+								<div className="bg-[#161616] px-4 py-3 border-b border-white/5 flex items-center justify-between">
+									<div className="flex gap-1.5">
+										<div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+										<div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+										<div className="w-2.5 h-2.5 rounded-full bg-white/10" />
 									</div>
-									<div className="flex-1 min-w-0">
-										<p className="text-[10px] font-bold text-zinc-300 uppercase tracking-tighter">
-											{item.day} Delivery
-										</p>
-									</div>
-									<Mail size={14} className="text-zinc-700" />
-								</div>
-
-								{/* Match Evidence with Animated Bars */}
-								<div className="mb-4 rounded-xl bg-zinc-900/50 p-4 border border-zinc-800">
-									<h4 className="text-xs font-bold text-white mb-3">
-										{item.featuredJob}
-									</h4>
-									<div className="space-y-3">
-										{Object.entries(item.stats).map(([label, val]) => (
-											<div key={label}>
-												<div className="flex justify-between text-[8px] uppercase text-zinc-500 mb-1">
-													<span>{label}</span>
-													<span>{val}%</span>
-												</div>
-												<div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
-													<motion.div
-														initial={{ width: 0 }}
-														whileInView={{ width: `${val}%` }}
-														viewport={{ once: true }}
-														transition={{ duration: 1, delay: 0.2 }}
-														className="h-full bg-purple-500"
-													/>
-												</div>
-											</div>
-										))}
+									<div className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
+										{item.day} @ {item.time}
 									</div>
 								</div>
 
-								<p className="text-[11px] text-zinc-400 leading-relaxed italic mb-6">
-									"{item.matchReason}"
-								</p>
+								<div className="p-6">
+									{/* From/To Logic */}
+									<div className="flex flex-col gap-1 mb-6 border-b border-white/5 pb-4">
+										<div className="text-xs text-zinc-500">
+											From:{" "}
+											<span className="text-purple-400">
+												JobPing Intelligence
+											</span>
+										</div>
+										<div className="text-xs text-zinc-500">
+											Subject:{" "}
+											<span className="text-white font-medium">
+												100% Match: {item.company}
+											</span>
+										</div>
+									</div>
 
-								<div className="mt-auto flex items-center justify-between pt-4 border-t border-zinc-900 text-zinc-600 text-[10px] font-bold uppercase">
-									<span>+4 more matches</span>
-									<ArrowRight size={14} />
+									{/* The Job Detail */}
+									<div className="space-y-4">
+										<div className="flex justify-between items-start">
+											<h3 className="text-lg font-bold text-white leading-tight">
+												{item.jobTitle}
+											</h3>
+											<span className="bg-purple-500/10 text-purple-400 text-[10px] font-bold px-2 py-1 rounded uppercase">
+												98% Fit
+											</span>
+										</div>
+
+										{/* Match Reason as an "Internal Memo" */}
+										<div className="bg-zinc-900/50 rounded-lg p-3 border-l-2 border-purple-500">
+											<p className="text-[13px] text-zinc-300 italic leading-relaxed">
+												"{item.matchReason}"
+											</p>
+										</div>
+
+										{/* The "Evidence" Progress Bars - Styled more like a dashboard */}
+										<div className="space-y-3 pt-2">
+											{Object.entries(item.stats).map(([label, val]) => (
+												<div key={label} className="space-y-1">
+													<div className="flex justify-between text-[10px] uppercase text-zinc-500 font-bold">
+														<span>{label}</span>
+														<span>{val}%</span>
+													</div>
+													<div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+														<motion.div
+															initial={{ width: 0 }}
+															whileInView={{ width: `${val}%` }}
+															viewport={{ once: true }}
+															transition={{ duration: 1, delay: 0.2 }}
+															className="h-full bg-purple-500 shadow-[0_0_10px_#a855f7]"
+														/>
+													</div>
+												</div>
+											))}
+										</div>
+									</div>
 								</div>
 							</div>
 						</TiltCard>

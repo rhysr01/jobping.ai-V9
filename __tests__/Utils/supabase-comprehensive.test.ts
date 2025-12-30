@@ -4,18 +4,18 @@
  */
 
 import {
-  getSupabaseClient,
+  checkDatabaseHealth,
   createSupabaseClient,
-  wrapDatabaseResponse,
   executeWithRetry,
-  checkDatabaseHealth
-} from '@/Utils/supabase';
+  getSupabaseClient,
+  wrapDatabaseResponse,
+} from "@/Utils/supabase";
 
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn()
+jest.mock("@supabase/supabase-js", () => ({
+  createClient: jest.fn(),
 }));
 
-describe('Supabase Utilities - Comprehensive', () => {
+describe("Supabase Utilities - Comprehensive", () => {
   const originalEnv = process.env;
   let mockCreateClient: any;
   let mockSupabase: any;
@@ -23,19 +23,19 @@ describe('Supabase Utilities - Comprehensive', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env = { ...originalEnv };
-    
+
     mockSupabase = {
       from: jest.fn().mockReturnThis(),
       select: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue({ data: [], error: null })
+      limit: jest.fn().mockResolvedValue({ data: [], error: null }),
     };
 
-    const { createClient } = require('@supabase/supabase-js');
+    const { createClient } = require("@supabase/supabase-js");
     mockCreateClient = createClient;
     mockCreateClient.mockReturnValue(mockSupabase);
 
-    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
-    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
   });
 
   afterEach(() => {
@@ -43,15 +43,15 @@ describe('Supabase Utilities - Comprehensive', () => {
     jest.restoreAllMocks();
   });
 
-  describe('getSupabaseClient', () => {
-    it('should create and return Supabase client', () => {
+  describe("getSupabaseClient", () => {
+    it("should create and return Supabase client", () => {
       const client = getSupabaseClient();
 
       expect(client).toBeDefined();
       expect(mockCreateClient).toHaveBeenCalled();
     });
 
-    it('should return cached client on subsequent calls', () => {
+    it("should return cached client on subsequent calls", () => {
       const client1 = getSupabaseClient();
       const client2 = getSupabaseClient();
 
@@ -59,84 +59,84 @@ describe('Supabase Utilities - Comprehensive', () => {
       expect(mockCreateClient).toHaveBeenCalledTimes(1);
     });
 
-    it('should use NEXT_PUBLIC_SUPABASE_URL when SUPABASE_URL not set', () => {
+    it("should use NEXT_PUBLIC_SUPABASE_URL when SUPABASE_URL not set", () => {
       delete process.env.SUPABASE_URL;
-      process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
+      process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
 
       getSupabaseClient();
 
       expect(mockCreateClient).toHaveBeenCalledWith(
-        'https://test.supabase.co',
+        "https://test.supabase.co",
         expect.any(String),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
-    it('should use SUPABASE_SERVICE_ROLE_KEY when available', () => {
-      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key';
+    it("should use SUPABASE_SERVICE_ROLE_KEY when available", () => {
+      process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
 
       getSupabaseClient();
 
       expect(mockCreateClient).toHaveBeenCalledWith(
         expect.any(String),
-        'service-key',
-        expect.any(Object)
+        "service-key",
+        expect.any(Object),
       );
     });
 
-    it('should fallback to SUPABASE_KEY when SERVICE_ROLE_KEY not set', () => {
+    it("should fallback to SUPABASE_KEY when SERVICE_ROLE_KEY not set", () => {
       delete process.env.SUPABASE_SERVICE_ROLE_KEY;
-      process.env.SUPABASE_KEY = 'fallback-key';
+      process.env.SUPABASE_KEY = "fallback-key";
 
       getSupabaseClient();
 
       expect(mockCreateClient).toHaveBeenCalledWith(
         expect.any(String),
-        'fallback-key',
-        expect.any(Object)
+        "fallback-key",
+        expect.any(Object),
       );
     });
 
-    it('should throw error when URL is missing', () => {
+    it("should throw error when URL is missing", () => {
       delete process.env.SUPABASE_URL;
       delete process.env.NEXT_PUBLIC_SUPABASE_URL;
 
       expect(() => {
         getSupabaseClient();
-      }).toThrow('Missing required Supabase environment variables');
+      }).toThrow("Missing required Supabase environment variables");
     });
 
-    it('should throw error when key is missing', () => {
+    it("should throw error when key is missing", () => {
       delete process.env.SUPABASE_SERVICE_ROLE_KEY;
       delete process.env.SUPABASE_KEY;
       delete process.env.SUPABASE_ANON_KEY;
 
       expect(() => {
         getSupabaseClient();
-      }).toThrow('Missing required Supabase environment variables');
+      }).toThrow("Missing required Supabase environment variables");
     });
 
-    it('should throw error in browser environment', () => {
+    it("should throw error in browser environment", () => {
       const originalWindow = global.window;
       (global as any).window = {};
 
       expect(() => {
         getSupabaseClient();
-      }).toThrow('Supabase client should only be used server-side');
+      }).toThrow("Supabase client should only be used server-side");
 
       global.window = originalWindow;
     });
   });
 
-  describe('createSupabaseClient', () => {
-    it('should create new client instance', () => {
+  describe("createSupabaseClient", () => {
+    it("should create new client instance", () => {
       const client = createSupabaseClient();
 
       expect(client).toBeDefined();
       expect(mockCreateClient).toHaveBeenCalled();
     });
 
-    it('should create different instances on each call', () => {
+    it("should create different instances on each call", () => {
       const client1 = createSupabaseClient();
       const client2 = createSupabaseClient();
 
@@ -144,20 +144,20 @@ describe('Supabase Utilities - Comprehensive', () => {
       expect(mockCreateClient).toHaveBeenCalledTimes(2);
     });
 
-    it('should throw error in browser environment', () => {
+    it("should throw error in browser environment", () => {
       const originalWindow = global.window;
       (global as any).window = {};
 
       expect(() => {
         createSupabaseClient();
-      }).toThrow('Supabase client should only be used server-side');
+      }).toThrow("Supabase client should only be used server-side");
 
       global.window = originalWindow;
     });
   });
 
-  describe('wrapDatabaseResponse', () => {
-    it('should wrap successful response', () => {
+  describe("wrapDatabaseResponse", () => {
+    it("should wrap successful response", () => {
       const response = { data: { id: 1 }, error: null };
       const wrapped = wrapDatabaseResponse(response);
 
@@ -166,26 +166,26 @@ describe('Supabase Utilities - Comprehensive', () => {
       expect(wrapped.error).toBeNull();
     });
 
-    it('should wrap error response', () => {
-      const response = { data: null, error: { message: 'Database error' } };
+    it("should wrap error response", () => {
+      const response = { data: null, error: { message: "Database error" } };
       const wrapped = wrapDatabaseResponse(response);
 
       expect(wrapped.success).toBe(false);
       expect(wrapped.data).toBeNull();
       expect(wrapped.error).toBeInstanceOf(Error);
-      expect(wrapped.error?.message).toBe('Database error');
+      expect(wrapped.error?.message).toBe("Database error");
     });
 
-    it('should handle error without message', () => {
+    it("should handle error without message", () => {
       const response = { data: null, error: {} };
       const wrapped = wrapDatabaseResponse(response);
 
       expect(wrapped.success).toBe(false);
       expect(wrapped.error).toBeInstanceOf(Error);
-      expect(wrapped.error?.message).toBe('Database error');
+      expect(wrapped.error?.message).toBe("Database error");
     });
 
-    it('should handle null data with no error', () => {
+    it("should handle null data with no error", () => {
       const response = { data: null, error: null };
       const wrapped = wrapDatabaseResponse(response);
 
@@ -195,9 +195,11 @@ describe('Supabase Utilities - Comprehensive', () => {
     });
   });
 
-  describe('executeWithRetry', () => {
-    it('should execute operation successfully on first attempt', async () => {
-      const operation = jest.fn().mockResolvedValue({ data: { id: 1 }, error: null });
+  describe("executeWithRetry", () => {
+    it("should execute operation successfully on first attempt", async () => {
+      const operation = jest
+        .fn()
+        .mockResolvedValue({ data: { id: 1 }, error: null });
 
       const result = await executeWithRetry(operation);
 
@@ -206,47 +208,59 @@ describe('Supabase Utilities - Comprehensive', () => {
       expect(operation).toHaveBeenCalledTimes(1);
     });
 
-    it('should retry on failure', async () => {
-      const operation = jest.fn()
-        .mockRejectedValueOnce(new Error('Temporary error'))
+    it("should retry on failure", async () => {
+      const operation = jest
+        .fn()
+        .mockRejectedValueOnce(new Error("Temporary error"))
         .mockResolvedValueOnce({ data: { id: 1 }, error: null });
 
-      const result = await executeWithRetry(operation, { maxRetries: 2, retryDelay: 10 });
+      const result = await executeWithRetry(operation, {
+        maxRetries: 2,
+        retryDelay: 10,
+      });
 
       expect(result.success).toBe(true);
       expect(operation).toHaveBeenCalledTimes(2);
     });
 
-    it('should fail after max retries', async () => {
-      const operation = jest.fn().mockRejectedValue(new Error('Persistent error'));
+    it("should fail after max retries", async () => {
+      const operation = jest
+        .fn()
+        .mockRejectedValue(new Error("Persistent error"));
 
-      const result = await executeWithRetry(operation, { maxRetries: 2, retryDelay: 10 });
+      const result = await executeWithRetry(operation, {
+        maxRetries: 2,
+        retryDelay: 10,
+      });
 
       expect(result.success).toBe(false);
       expect(result.error).toBeInstanceOf(Error);
       expect(operation).toHaveBeenCalledTimes(2);
     });
 
-    it('should respect timeout', async () => {
-      const operation = jest.fn(() => 
-        new Promise(() => {}) // Never resolves
+    it("should respect timeout", async () => {
+      const operation = jest.fn(
+        () => new Promise(() => {}), // Never resolves
       );
 
-      const promise = executeWithRetry(operation, { timeout: 100, maxRetries: 1 });
+      const promise = executeWithRetry(operation, {
+        timeout: 100,
+        maxRetries: 1,
+      });
 
       // Wait for timeout
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
       const result = await promise;
 
       expect(result.success).toBe(false);
-      expect(result.error?.message).toBe('Database operation timeout');
+      expect(result.error?.message).toBe("Database operation timeout");
     });
 
-    it('should not retry non-retryable errors', async () => {
+    it("should not retry non-retryable errors", async () => {
       const operation = jest.fn().mockResolvedValue({
         data: null,
-        error: { code: 'PGRST116' } // Not found - non-retryable
+        error: { code: "PGRST116" }, // Not found - non-retryable
       });
 
       const result = await executeWithRetry(operation, { maxRetries: 3 });
@@ -255,8 +269,10 @@ describe('Supabase Utilities - Comprehensive', () => {
       expect(operation).toHaveBeenCalledTimes(1);
     });
 
-    it('should use default retry options', async () => {
-      const operation = jest.fn().mockResolvedValue({ data: { id: 1 }, error: null });
+    it("should use default retry options", async () => {
+      const operation = jest
+        .fn()
+        .mockResolvedValue({ data: { id: 1 }, error: null });
 
       const result = await executeWithRetry(operation);
 
@@ -264,10 +280,10 @@ describe('Supabase Utilities - Comprehensive', () => {
       expect(operation).toHaveBeenCalledTimes(1);
     });
 
-    it('should handle operation with error field', async () => {
+    it("should handle operation with error field", async () => {
       const operation = jest.fn().mockResolvedValue({
         data: null,
-        error: { message: 'Database error' }
+        error: { message: "Database error" },
       });
 
       const result = await executeWithRetry(operation, { maxRetries: 1 });
@@ -277,8 +293,8 @@ describe('Supabase Utilities - Comprehensive', () => {
     });
   });
 
-  describe('checkDatabaseHealth', () => {
-    it('should return healthy when database is accessible', async () => {
+  describe("checkDatabaseHealth", () => {
+    it("should return healthy when database is accessible", async () => {
       mockSupabase.from.mockReturnThis();
       mockSupabase.select.mockReturnThis();
       mockSupabase.limit.mockResolvedValue({ data: [], error: null });
@@ -286,45 +302,48 @@ describe('Supabase Utilities - Comprehensive', () => {
       const health = await checkDatabaseHealth();
 
       expect(health.healthy).toBe(true);
-      expect(health.message).toBe('Database connection OK');
+      expect(health.message).toBe("Database connection OK");
     });
 
-    it('should return unhealthy when database has error', async () => {
+    it("should return unhealthy when database has error", async () => {
       mockSupabase.from.mockReturnThis();
       mockSupabase.select.mockReturnThis();
-      mockSupabase.limit.mockResolvedValue({ data: null, error: { message: 'Connection failed' } });
-
-      const health = await checkDatabaseHealth();
-
-      expect(health.healthy).toBe(false);
-      expect(health.message).toBe('Database connection failed');
-    });
-
-    it('should return unhealthy when exception thrown', async () => {
-      mockSupabase.from.mockImplementation(() => {
-        throw new Error('Connection error');
+      mockSupabase.limit.mockResolvedValue({
+        data: null,
+        error: { message: "Connection failed" },
       });
 
       const health = await checkDatabaseHealth();
 
       expect(health.healthy).toBe(false);
-      expect(health.message).toBe('Connection error');
+      expect(health.message).toBe("Database connection failed");
     });
 
-    it('should handle unknown error types', async () => {
+    it("should return unhealthy when exception thrown", async () => {
       mockSupabase.from.mockImplementation(() => {
-        throw 'String error';
+        throw new Error("Connection error");
       });
 
       const health = await checkDatabaseHealth();
 
       expect(health.healthy).toBe(false);
-      expect(health.message).toBe('Unknown database error');
+      expect(health.message).toBe("Connection error");
+    });
+
+    it("should handle unknown error types", async () => {
+      mockSupabase.from.mockImplementation(() => {
+        throw "String error";
+      });
+
+      const health = await checkDatabaseHealth();
+
+      expect(health.healthy).toBe(false);
+      expect(health.message).toBe("Unknown database error");
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle empty environment variables', () => {
+  describe("Edge Cases", () => {
+    it("should handle empty environment variables", () => {
       delete process.env.SUPABASE_URL;
       delete process.env.NEXT_PUBLIC_SUPABASE_URL;
       delete process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -336,10 +355,10 @@ describe('Supabase Utilities - Comprehensive', () => {
       }).toThrow();
     });
 
-    it('should handle operation that returns string error', async () => {
+    it("should handle operation that returns string error", async () => {
       const operation = jest.fn().mockResolvedValue({
         data: null,
-        error: 'String error'
+        error: "String error",
       });
 
       const result = await executeWithRetry(operation, { maxRetries: 1 });
@@ -349,4 +368,3 @@ describe('Supabase Utilities - Comprehensive', () => {
     });
   });
 });
-

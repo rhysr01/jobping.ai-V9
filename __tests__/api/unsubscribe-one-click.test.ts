@@ -1,8 +1,8 @@
-import { GET } from '@/app/api/unsubscribe/one-click/route';
-import { NextRequest } from 'next/server';
-import { getDatabaseClient } from '@/Utils/databasePool';
+import type { NextRequest } from "next/server";
+import { GET } from "@/app/api/unsubscribe/one-click/route";
+import { getDatabaseClient } from "@/Utils/databasePool";
 
-jest.mock('@/Utils/databasePool', () => ({
+jest.mock("@/Utils/databasePool", () => ({
   getDatabaseClient: jest.fn(() => ({
     from: jest.fn(() => ({
       update: jest.fn(() => ({
@@ -19,8 +19,8 @@ jest.mock('@/Utils/databasePool', () => ({
   })),
 }));
 
-describe('GET /api/unsubscribe/one-click', () => {
-  it('should require email parameter', async () => {
+describe("GET /api/unsubscribe/one-click", () => {
+  it("should require email parameter", async () => {
     const req = {
       nextUrl: {
         searchParams: {
@@ -33,12 +33,12 @@ describe('GET /api/unsubscribe/one-click', () => {
     expect(response.status).toBeGreaterThanOrEqual(400);
   });
 
-  it('should unsubscribe user with valid email', async () => {
+  it("should unsubscribe user with valid email", async () => {
     const req = {
       nextUrl: {
         searchParams: {
           get: jest.fn((key: string) => {
-            if (key === 'email') return 'test@example.com';
+            if (key === "email") return "test@example.com";
             return null;
           }),
         },
@@ -49,12 +49,12 @@ describe('GET /api/unsubscribe/one-click', () => {
     expect(response.status).toBeGreaterThanOrEqual(200);
   });
 
-  it('should update database on unsubscribe', async () => {
+  it("should update database on unsubscribe", async () => {
     const req = {
       nextUrl: {
         searchParams: {
           get: jest.fn((key: string) => {
-            if (key === 'email') return 'test@example.com';
+            if (key === "email") return "test@example.com";
             return null;
           }),
         },
@@ -65,4 +65,3 @@ describe('GET /api/unsubscribe/one-click', () => {
     expect(getDatabaseClient).toHaveBeenCalled();
   });
 });
-

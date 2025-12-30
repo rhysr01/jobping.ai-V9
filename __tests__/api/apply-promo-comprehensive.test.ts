@@ -3,30 +3,30 @@
  * Tests promo code application
  */
 
-import { POST } from '@/app/api/apply-promo/route';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { POST } from "@/app/api/apply-promo/route";
 
-jest.mock('@/Utils/databasePool');
-jest.mock('@/lib/errors', () => ({
+jest.mock("@/Utils/databasePool");
+jest.mock("@/lib/errors", () => ({
   asyncHandler: (fn: any) => fn,
   ValidationError: class extends Error {
     constructor(message: string) {
       super(message);
-      this.name = 'ValidationError';
+      this.name = "ValidationError";
     }
   },
   AppError: class extends Error {
     constructor(message: string, status: number, code: string, details?: any) {
       super(message);
-      this.name = 'AppError';
+      this.name = "AppError";
       this.status = status;
       this.code = code;
       this.details = details;
     }
-  }
+  },
 }));
 
-describe('Apply Promo API Route', () => {
+describe("Apply Promo API Route", () => {
   let mockRequest: NextRequest;
   let mockSupabase: any;
 
@@ -34,9 +34,9 @@ describe('Apply Promo API Route', () => {
     jest.clearAllMocks();
 
     mockRequest = {
-      method: 'POST',
+      method: "POST",
       json: jest.fn(),
-      headers: new Headers()
+      headers: new Headers(),
     } as any;
 
     mockSupabase = {
@@ -47,24 +47,28 @@ describe('Apply Promo API Route', () => {
       eq: jest.fn().mockReturnThis(),
       single: jest.fn().mockResolvedValue({
         data: null,
-        error: { code: 'PGRST116' }
-      })
+        error: { code: "PGRST116" },
+      }),
     };
 
-    const { getDatabaseClient } = require('@/Utils/databasePool');
+    const { getDatabaseClient } = require("@/Utils/databasePool");
     getDatabaseClient.mockReturnValue(mockSupabase);
   });
 
-  describe('POST /api/apply-promo', () => {
-    it('should upgrade existing user to premium', async () => {
+  describe("POST /api/apply-promo", () => {
+    it("should upgrade existing user to premium", async () => {
       mockRequest.json.mockResolvedValue({
-        email: 'user@example.com',
-        promoCode: 'rhys'
+        email: "user@example.com",
+        promoCode: "rhys",
       });
 
       mockSupabase.single.mockResolvedValue({
-        data: { id: '1', email: 'user@example.com', subscription_active: false },
-        error: null
+        data: {
+          id: "1",
+          email: "user@example.com",
+          subscription_active: false,
+        },
+        error: null,
       });
 
       const response = await POST(mockRequest);
@@ -76,15 +80,15 @@ describe('Apply Promo API Route', () => {
       expect(mockSupabase.update).toHaveBeenCalled();
     });
 
-    it('should store promo for new user', async () => {
+    it("should store promo for new user", async () => {
       mockRequest.json.mockResolvedValue({
-        email: 'newuser@example.com',
-        promoCode: 'rhys'
+        email: "newuser@example.com",
+        promoCode: "rhys",
       });
 
       mockSupabase.single.mockResolvedValue({
         data: null,
-        error: { code: 'PGRST116' }
+        error: { code: "PGRST116" },
       });
 
       const response = await POST(mockRequest);
@@ -93,37 +97,37 @@ describe('Apply Promo API Route', () => {
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.existingUser).toBe(false);
-      expect(data.redirectUrl).toContain('/signup');
+      expect(data.redirectUrl).toContain("/signup");
       expect(mockSupabase.upsert).toHaveBeenCalled();
     });
 
-    it('should require email and promo code', async () => {
+    it("should require email and promo code", async () => {
       mockRequest.json.mockResolvedValue({
-        email: 'user@example.com'
+        email: "user@example.com",
         // Missing promoCode
       });
 
       await expect(POST(mockRequest)).rejects.toThrow();
     });
 
-    it('should validate promo code', async () => {
+    it("should validate promo code", async () => {
       mockRequest.json.mockResolvedValue({
-        email: 'user@example.com',
-        promoCode: 'invalid'
+        email: "user@example.com",
+        promoCode: "invalid",
       });
 
-      await expect(POST(mockRequest)).rejects.toThrow('Invalid promo code');
+      await expect(POST(mockRequest)).rejects.toThrow("Invalid promo code");
     });
 
-    it('should be case insensitive for promo code', async () => {
+    it("should be case insensitive for promo code", async () => {
       mockRequest.json.mockResolvedValue({
-        email: 'user@example.com',
-        promoCode: 'RHYs'
+        email: "user@example.com",
+        promoCode: "RHYs",
       });
 
       mockSupabase.single.mockResolvedValue({
-        data: { id: '1', subscription_active: false },
-        error: null
+        data: { id: "1", subscription_active: false },
+        error: null,
       });
 
       const response = await POST(mockRequest);
@@ -131,23 +135,22 @@ describe('Apply Promo API Route', () => {
       expect(response.status).toBe(200);
     });
 
-    it('should handle database update errors', async () => {
+    it("should handle database update errors", async () => {
       mockRequest.json.mockResolvedValue({
-        email: 'user@example.com',
-        promoCode: 'rhys'
+        email: "user@example.com",
+        promoCode: "rhys",
       });
 
       mockSupabase.single.mockResolvedValue({
-        data: { id: '1' },
-        error: null
+        data: { id: "1" },
+        error: null,
       });
 
       mockSupabase.update.mockResolvedValue({
-        error: { message: 'Update failed' }
+        error: { message: "Update failed" },
       });
 
       await expect(POST(mockRequest)).rejects.toThrow();
     });
   });
 });
-
