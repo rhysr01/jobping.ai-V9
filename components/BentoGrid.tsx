@@ -97,10 +97,13 @@ const FeatureCard = ({
 export default function HowItWorksBento() {
 	return (
 		<section className={cn(
-			"py-24 px-6 bg-black relative overflow-hidden",
+			"py-32 md:py-40 bg-black relative overflow-hidden scroll-snap-section",
 			"before:absolute before:inset-0 before:bg-gradient-to-b before:from-purple-900/5 before:via-transparent before:to-emerald-900/5 before:pointer-events-none"
 		)}>
-			<div className="mx-auto max-w-6xl relative z-10">
+			{/* Scroll momentum fade */}
+			<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
+			
+			<div className="container-page relative z-10">
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
 					whileInView={{ opacity: 1, y: 0 }}

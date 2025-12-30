@@ -14,6 +14,7 @@ interface FilterBuilder {
   lt(column: string, value: any): FilterBuilder;
   in(column: string, values: any[]): FilterBuilder;
   is(column: string, value: any): FilterBuilder;
+  not(column: string, operator: string, value: any): FilterBuilder;
   order(column: string, options?: { ascending?: boolean }): FilterBuilder;
   limit(count: number): Promise<MockResponse>;
   single(): Promise<MockResponse>;
@@ -115,7 +116,7 @@ if (!global.__SB_MOCK__) {
 
 class MockFilterBuilder implements FilterBuilder {
   private table: string;
-  private filters: Array<{ type: string; column: string; value: any }> = [];
+  private filters: Array<{ type: string; column: string; value?: any; operator?: string }> = [];
   private selectedColumns: string = "*";
   private orderBy?: { column: string; ascending: boolean };
   private limitCount?: number;
@@ -163,6 +164,11 @@ class MockFilterBuilder implements FilterBuilder {
 
   is(column: string, value: any): FilterBuilder {
     this.filters.push({ type: "is", column, value });
+    return this;
+  }
+
+  not(column: string, operator: string, value: any): FilterBuilder {
+    this.filters.push({ type: "not", column, operator, value });
     return this;
   }
 
@@ -239,6 +245,15 @@ class MockFilterBuilder implements FilterBuilder {
             );
           case "is":
             return itemValue === filter.value;
+          case "not":
+            // Handle .not() with operators like "is", "eq"
+            if (filter.operator === "is" && filter.value === null) {
+              return itemValue !== null;
+            }
+            if (filter.operator === "eq") {
+              return itemValue !== filter.value;
+            }
+            return true; // Default: don't filter out
           default:
             return true;
         }

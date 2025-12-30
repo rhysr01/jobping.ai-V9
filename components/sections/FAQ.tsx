@@ -46,8 +46,11 @@ export default function FAQ() {
 	const [openIndex, setOpenIndex] = useState<number | null>(0);
 
 	return (
-		<section className="py-20 border-t border-white/10 bg-black/40">
-			<div className="container-page">
+		<section className="py-32 md:py-40 border-t border-white/10 bg-black scroll-snap-section relative">
+			{/* Scroll momentum fade */}
+			<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
+			
+			<div className="container-page relative z-10">
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
 					whileInView={{ opacity: 1, y: 0 }}
