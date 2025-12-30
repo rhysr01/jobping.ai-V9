@@ -648,9 +648,9 @@ async function scrapeArbeitnow() {
 	const queries = generateSearchQueries();
 
 	// EXPANDED: More queries for comprehensive DACH coverage
-	// 17 cities × 25 keywords = 425 requests (within free tier limits)
-	// Rate limiting: 2s between requests = ~14 minutes total
-	const limitedQueries = queries.slice(0, 25);
+	// 17 cities × 30 keywords = 510 requests (within free tier limits)
+	// Rate limiting: 2s between requests = ~17 minutes total
+	const limitedQueries = queries.slice(0, 30); // Increased from 25 to maximize coverage
 
 	let totalSaved = 0;
 	let errors = 0;

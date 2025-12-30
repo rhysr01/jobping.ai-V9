@@ -27,8 +27,8 @@ jobs:
   scrape:
     runs-on: ubuntu-latest
     timeout-minutes: 120 # Prevent hanging runs
-    # Note: JobSpy with 21 cities × ~8 queries × 5s Google cooldown = ~14min idle time
-    # Plus scraping time (~15-20min) = Total ~30-45min. 120min timeout is safe.
+    # Estimated total time: JobSpy (~20min) + Adzuna (~15min) + Reed (~10min) + CareerJet (~15min) + Arbeitnow (~17min) = ~77min
+    # 120min timeout provides comfortable buffer. Google Jobs removed due to 429 rate limiting.
     
     steps:
     - name: Checkout code

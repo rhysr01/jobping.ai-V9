@@ -1272,9 +1272,9 @@ async function main() {
 	const cities = targetCities.length > 0 ? targetCities : defaultCities;
 
 	const RESULTS_WANTED = parseInt(
-		process.env.JOBSPY_RESULTS_WANTED || "15",
+		process.env.JOBSPY_RESULTS_WANTED || "25",
 		10,
-	);
+	); // Increased from 15 to maximize job collection
 	const PRIORITY_RESULTS_WANTED = parseInt(
 		process.env.JOBSPY_PRIORITY_RESULTS || "25",
 		10,
@@ -1381,7 +1381,7 @@ async function main() {
 					"Prague",
 					"Warsaw",
 				];
-				const sites = ["indeed", "google", "zip_recruiter"];
+				const sites = ["indeed", "zip_recruiter"];
 				if (!GLASSDOOR_BLOCKED_CITIES.includes(city)) {
 					sites.push("glassdoor");
 				}
@@ -1459,14 +1459,23 @@ print(df[cols].to_csv(index=False))
 		}
 	}
 
-	// Quality filter similar to jobspy-save.cjs
+	// Quality filter: must have basic fields AND be early-career (internship, graduate, or entry-level)
+	const { classifyEarlyCareer } = require("../scrapers/shared/helpers.cjs");
 	const hasFields = (j) =>
 		(j.title || "").trim().length > 3 &&
 		(j.company || "").trim().length > 1 &&
 		(j.location || "").trim().length > 3 &&
 		(j.job_url || j.url || "").trim().startsWith("http");
 
-	const qualityFiltered = collected.filter((j) => hasFields(j));
+	const qualityFiltered = collected.filter((j) => {
+		if (!hasFields(j)) return false;
+		// CRITICAL: Only accept early-career jobs (internships, graduate programs, entry-level)
+		const normalizedJob = {
+			title: j.title || "",
+			description: j.company_description || j.skills || "",
+		};
+		return classifyEarlyCareer(normalizedJob);
+	});
 
 	console.log(`\n📊 Total collected: ${collected.length}`);
 	console.log(`✅ Passing quality gate: ${qualityFiltered.length}`);

@@ -541,18 +541,15 @@ async function scrapeLocation(location) {
 						locationLower.includes("ireland") ||
 						locationLower.includes("england");
 					if (!isUKIreland) continue;
-					// Filter for early-career roles (relaxed - Reed API already filters with graduate:true)
-					// Trust the API filter more, only reject if clearly senior
-					const titleLower = (j.title || "").toLowerCase();
-					const _descLower = (j.description || "").toLowerCase();
-					const isSenior =
-						/(senior|lead|principal|director|head of|vp|vice president|architect|manager|specialist)/i.test(
-							titleLower,
-						) &&
-						!/(junior|graduate|intern|trainee|entry|associate)/i.test(
-							titleLower,
-						);
-					if (isSenior) continue; // Only reject clearly senior roles
+					// Filter for early-career roles using strict classification
+					const normalizedJob = {
+						title: j.title || "",
+						description: j.description || "",
+					};
+					const isEarlyCareer = classifyEarlyCareer(normalizedJob);
+					if (!isEarlyCareer) {
+						continue; // Skip non-early-career jobs (internships, graduate, entry-level only)
+					}
 					if (TARGET_CAREER_PATHS.length) {
 						const text =
 							`${j.title || ""} ${j.description || ""}`.toLowerCase();

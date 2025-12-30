@@ -967,7 +967,7 @@ async function main() {
 				"Prague",
 				"Warsaw",
 			];
-			const sites = ["indeed", "google", "zip_recruiter"];
+			const sites = ["indeed", "zip_recruiter"];
 			if (!GLASSDOOR_BLOCKED_CITIES.includes(city)) {
 				sites.push("glassdoor");
 			}

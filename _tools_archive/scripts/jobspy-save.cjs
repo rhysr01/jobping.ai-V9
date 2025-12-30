@@ -1734,40 +1734,7 @@ async function main() {
 	const descStr = (s) => (s || "").toLowerCase();
 	const includesAny = (s, arr) => arr.some((t) => s.includes(t));
 	const excludesAll = (s, arr) => !arr.some((t) => s.includes(t));
-	const earlyTerms = [
-		"graduate",
-		"entry level",
-		"entry-level",
-		"junior",
-		"associate",
-		"trainee",
-		"intern",
-		"internship",
-		"graduado",
-		"becario",
-		"prácticas",
-		"nivel inicial",
-		"asociado",
-		"absolvent",
-		"praktikum",
-		"werkstudent",
-		"einsteiger",
-		"starter",
-		"afgestudeerd",
-		"stage",
-		"jeune diplômé",
-		"stagiaire",
-		"alternance",
-		"débutant",
-		"apprenti",
-		"praktikum",
-		"stage",
-		"jeune diplômé",
-		"neolaureato",
-		"tirocinio",
-		"stage",
-		"apprendista",
-	];
+	// Note: early-career detection now handled by classifyEarlyCareer() - no need for earlyTerms
 	const bizAxesLoose = [
 		"business",
 		"analyst",
@@ -1796,18 +1763,7 @@ async function main() {
 		"technology",
 		"engineering",
 	];
-	const seniorTerms = [
-		"senior",
-		"lead",
-		"principal",
-		"director",
-		"head of",
-		"vp",
-		"vice president",
-		"architect",
-		"specialist",
-		"manager",
-	];
+	// Note: senior role detection now handled by classifyEarlyCareer() - no need for seniorTerms
 	const noisyExclusions = [
 		"nurse",
 		"nhs",
@@ -1866,15 +1822,14 @@ async function main() {
 	const allFormRoles = getAllRoles().map((r) => r.toLowerCase());
 
 	function filterQualityJobs(jobs) {
+		const { classifyEarlyCareer } = require("../scrapers/shared/helpers.cjs");
 		return jobs.filter((j) => {
 			if (!hasFields(j)) return false;
 			const t = titleStr(j.title);
 			const d = descStr(j.company_description || j.skills || "");
 			const full = `${t} ${d}`;
 
-			const hasEarly = includesAny(t, earlyTerms) || includesAny(d, earlyTerms);
-			const titleHasExplicitEarly = includesAny(t, earlyTerms);
-
+			// Check if title matches any role from signup form (all form roles are early-career)
 			const matchesFormRole = allFormRoles.some((role) => {
 				const roleWords = role.split(" ").filter((w) => w.length > 3);
 				return (
@@ -1882,21 +1837,27 @@ async function main() {
 				);
 			});
 
-			const isLikelyEarlyCareer =
-				matchesFormRole || hasEarly || titleHasExplicitEarly;
+			// PRIMARY: Use standardized early-career classification (handles all early-career detection)
+			const normalizedJob = {
+				title: j.title || "",
+				description: j.company_description || j.skills || "",
+			};
+			const isEarlyCareer = classifyEarlyCareer(normalizedJob);
 
-			const bizOk = isLikelyEarlyCareer
-				? true
-				: includesAny(full, bizAxesLoose);
+			// Reject if not early-career AND doesn't match form role
+			// (Form roles are all early-career, so allow them as exception)
+			if (!isEarlyCareer && !matchesFormRole) {
+				return false;
+			}
+
+			// Business axis check (still needed for relevance)
+			const bizOk =
+				isEarlyCareer || matchesFormRole
+					? true // Early-career jobs are automatically business-relevant
+					: includesAny(full, bizAxesLoose);
 			if (!bizOk) return false;
 
-			if (
-				!titleHasExplicitEarly &&
-				!matchesFormRole &&
-				includesAny(t, seniorTerms)
-			)
-				return false;
-
+			// Noisy exclusions (still needed to filter out non-relevant roles)
 			if (!excludesAll(full, noisyExclusions)) return false;
 
 			return true;
@@ -2132,69 +2093,10 @@ print(df[cols].to_csv(index=False))
 			}
 
 			// ============================================
-			// PART B: GOOGLE (Natural Language Search) - One call per batch
+			// GOOGLE JOBS REMOVED: Temporarily disabled due to 429 rate limiting
+			// Google's anti-bot systems detect GitHub Actions IPs and block requests
+			// Focus on high-trust sources: Indeed, LinkedIn, ZipRecruiter
 			// ============================================
-			// Removed year filter (2025/2026) as it can match senior roles
-			// Early-career terms in baseQuery are sufficient
-			const googleNaturalString = `${baseQuery} jobs in ${city}, ${countryName} -senior -lead -manager -director`;
-
-			console.log(
-				`\n${priorityLabel}🔍 Google [${batchName}]: "${googleNaturalString.substring(0, 100)}..." in ${city}`,
-			);
-
-			const googlePython = `
-from jobspy import scrape_jobs
-import pandas as pd
-df = scrape_jobs(
-  site_name=['google'],
-  google_search_term='''${googleNaturalString.replace(/'/g, "''")}''',
-  results_wanted=${resultsWanted},
-  hours_old=720
-)
-import sys
-print('Available columns:', list(df.columns), file=sys.stderr)
-desc_cols = ['description', 'job_description', 'full_description', 'job_details', 'details']
-desc_col = None
-for col in desc_cols:
-    if col in df.columns:
-        desc_col = col
-        break
-if desc_col is None:
-    df['description'] = df.apply(lambda x: ' '.join(filter(None, [
-        str(x.get('company_description', '') or ''),
-        str(x.get('skills', '') or ''),
-        str(x.get('job_function', '') or ''),
-        str(x.get('job_type', '') or '')
-    ])), axis=1)
-else:
-    df['description'] = df.apply(lambda x: (
-        str(x.get(desc_col, '') or '') or 
-        str(x.get('company_description', '') or '') or
-        str(x.get('skills', '') or '')
-    ), axis=1)
-cols=[c for c in ['title','company','location','job_url','description','company_description','skills'] if c in df.columns]
-print(df[cols].to_csv(index=False))
-`;
-
-			const googleRows = await runJobSpyScraper(
-				googlePython,
-				`Google [${batchName}]`,
-			);
-			if (googleRows && googleRows.length > 0) {
-				console.log(
-					`→ Google [${batchName}]: Collected ${googleRows.length} rows`,
-				);
-				// Immediately add to city bucket
-				googleRows.forEach((r) => cityResults.push(r));
-			}
-
-			// ============================================
-			// RATE LIMIT PROTECTION: 5s cooldown after Google
-			// ============================================
-			console.log(
-				`⏳ Cooldown: 5s delay to protect IP from Google rate limits...`,
-			);
-			await new Promise((resolve) => setTimeout(resolve, 5000));
 		}
 
 		// ============================================
