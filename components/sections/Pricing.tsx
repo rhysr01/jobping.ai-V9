@@ -50,7 +50,7 @@ export default function Pricing() {
 	return (
 		<section
 			id="pricing"
-			className="py-24 md:py-32 relative overflow-hidden bg-black"
+			className="py-32 md:py-40 relative overflow-hidden bg-black scroll-snap-section"
 		>
 			{/* Visual Depth Gradients */}
 			<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />

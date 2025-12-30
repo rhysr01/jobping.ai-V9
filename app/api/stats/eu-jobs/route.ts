@@ -3,30 +3,6 @@ import { createSuccessResponse } from "@/lib/api-types";
 import { AppError, asyncHandler } from "@/lib/errors";
 import { getDatabaseClient } from "@/Utils/databasePool";
 
-const EU_21_CITIES = [
-	"London",
-	"Berlin",
-	"Paris",
-	"Madrid",
-	"Barcelona",
-	"Amsterdam",
-	"Munich",
-	"Hamburg",
-	"Dublin",
-	"Zurich",
-	"Vienna",
-	"Brussels",
-	"Stockholm",
-	"Copenhagen",
-	"Warsaw",
-	"Milan",
-	"Rome",
-	"Lisbon",
-	"Prague",
-	"Helsinki",
-	"Athens",
-];
-
 const EU_COUNTRIES = [
 	"United Kingdom",
 	"Germany",
@@ -54,59 +30,108 @@ export const revalidate = 3600; // 1 hour
 export const GET = asyncHandler(async (_req: NextRequest) => {
 	const supabase = getDatabaseClient();
 
-	// Normalize city names for case-insensitive matching
-	const normalizedCities = EU_21_CITIES.map((city) => city.toLowerCase());
+	// Get ALL jobs from EU countries - use count queries for efficiency
+	// This avoids fetching all job data and is much faster
 
-	// Get ALL jobs from EU countries (remove default 1000 limit by using a high limit)
-	// We need to fetch all to get accurate counts
-	const { data: jobs, error } = await supabase
+	// Count internships
+	const { count: internships, error: internshipsError } = await supabase
 		.from("jobs")
-		.select("is_internship, is_graduate, is_early_career, city")
+		.select("*", { count: "exact", head: true })
 		.eq("is_active", true)
-		.in("country", EU_COUNTRIES)
-		.limit(50000); // High limit to ensure we get all jobs
+		.eq("is_internship", true)
+		.in("country", EU_COUNTRIES);
 
-	if (error) {
+	if (internshipsError) {
 		throw new AppError(
-			"Failed to fetch EU job stats",
+			"Failed to fetch internship stats",
 			500,
 			"DATABASE_ERROR",
-			error,
+			internshipsError,
 		);
 	}
 
-	// Filter jobs to only include our 21 cities (case-insensitive matching)
-	const filteredJobs =
-		jobs?.filter((job) => {
-			if (!job.city) return false;
-			const normalizedJobCity = job.city.toLowerCase().trim();
-			return normalizedCities.includes(normalizedJobCity);
-		}) || [];
+	// Count graduate roles
+	const { count: graduateRoles, error: graduateError } = await supabase
+		.from("jobs")
+		.select("*", { count: "exact", head: true })
+		.eq("is_active", true)
+		.eq("is_graduate", true)
+		.in("country", EU_COUNTRIES);
 
-	// Calculate counts
-	const internships =
-		filteredJobs.filter((j) => j.is_internship === true).length || 0;
-	const graduateRoles =
-		filteredJobs.filter((j) => j.is_graduate === true).length || 0;
-	const earlyCareer =
-		filteredJobs.filter(
-			(j) =>
-				j.is_early_career === true &&
-				j.is_internship === false &&
-				j.is_graduate === false,
-		).length || 0;
-	const total = filteredJobs.length || 0;
+	if (graduateError) {
+		throw new AppError(
+			"Failed to fetch graduate stats",
+			500,
+			"DATABASE_ERROR",
+			graduateError,
+		);
+	}
 
-	// Get unique city count (use original city names from filtered jobs)
-	const uniqueCities = new Set(filteredJobs.map((j) => j.city).filter(Boolean))
-		.size;
+	// Count early career (entry-level roles that aren't internships or graduate programs)
+	// Using categories array for consistency with main stats route
+	const { count: earlyCareer, error: earlyCareerError } = await supabase
+		.from("jobs")
+		.select("*", { count: "exact", head: true })
+		.eq("is_active", true)
+		.contains("categories", ["early-career"])
+		.eq("is_internship", false)
+		.eq("is_graduate", false)
+		.in("country", EU_COUNTRIES);
+
+	if (earlyCareerError) {
+		throw new AppError(
+			"Failed to fetch early career stats",
+			500,
+			"DATABASE_ERROR",
+			earlyCareerError,
+		);
+	}
+
+	// Count total active jobs from EU countries
+	const { count: total, error: totalError } = await supabase
+		.from("jobs")
+		.select("*", { count: "exact", head: true })
+		.eq("is_active", true)
+		.in("country", EU_COUNTRIES);
+
+	if (totalError) {
+		throw new AppError(
+			"Failed to fetch total job stats",
+			500,
+			"DATABASE_ERROR",
+			totalError,
+		);
+	}
+
+	// Get unique city count from all EU jobs (not just the 21 cities)
+	// We need to fetch city data for this, but we can limit to just distinct cities
+	const { data: citiesData, error: citiesError } = await supabase
+		.from("jobs")
+		.select("city")
+		.eq("is_active", true)
+		.in("country", EU_COUNTRIES)
+		.not("city", "is", null);
+
+	if (citiesError) {
+		throw new AppError(
+			"Failed to fetch city stats",
+			500,
+			"DATABASE_ERROR",
+			citiesError,
+		);
+	}
+
+	// Count unique cities
+	const uniqueCities = new Set(
+		(citiesData || []).map((j) => j.city?.toLowerCase().trim()).filter(Boolean),
+	).size;
 
 	const stats = {
-		internships,
-		graduateRoles,
-		earlyCareer,
-		total,
-		cities: uniqueCities || 21, // Fallback to 21 if count fails
+		internships: internships || 0,
+		graduateRoles: graduateRoles || 0,
+		earlyCareer: earlyCareer || 0,
+		total: total || 0,
+		cities: uniqueCities || 0,
 	};
 
 	return NextResponse.json(createSuccessResponse(stats));

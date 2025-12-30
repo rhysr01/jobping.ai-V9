@@ -2,22 +2,22 @@ import {
   checkDatabaseHealth,
   type DatabaseResponse,
   executeWithRetry,
-  getSupabaseClient,
   wrapDatabaseResponse,
 } from "@/Utils/supabase";
 
-jest.mock("@/Utils/supabase", () => {
-  const actual = jest.requireActual("@/Utils/supabase");
-  return {
-    ...actual,
-    getSupabaseClient: jest.fn(() => ({
-      from: jest.fn(() => ({
-        select: jest.fn(() => ({
+jest.mock("@/Utils/databasePool", () => {
+  const mockSupabase = {
+    from: jest.fn(() => ({
+      select: jest.fn(() => ({
+        limit: jest.fn().mockResolvedValue({
           data: [{ id: 1 }],
           error: null,
-        })),
+        }),
       })),
     })),
+  };
+  return {
+    getDatabaseClient: jest.fn(() => mockSupabase),
   };
 });
 
@@ -54,25 +54,29 @@ describe("supabase utilities", () => {
 
   describe("executeWithRetry", () => {
     it("should execute function successfully", async () => {
-      const fn = jest.fn().mockResolvedValue("success");
-      const result = await executeWithRetry(fn, 3);
-      expect(result).toBe("success");
+      const fn = jest.fn().mockResolvedValue({ data: "success", error: null });
+      const result = await executeWithRetry(fn, { maxRetries: 3 });
+      expect(result.success).toBe(true);
+      expect(result.data).toBe("success");
       expect(fn).toHaveBeenCalledTimes(1);
     });
 
     it("should retry on failure", async () => {
       const fn = jest
         .fn()
-        .mockRejectedValueOnce(new Error("fail"))
-        .mockResolvedValueOnce("success");
-      const result = await executeWithRetry(fn, 3);
-      expect(result).toBe("success");
+        .mockResolvedValueOnce({ data: null, error: new Error("fail") })
+        .mockResolvedValueOnce({ data: "success", error: null });
+      const result = await executeWithRetry(fn, { maxRetries: 3, retryDelay: 10 });
+      expect(result.success).toBe(true);
+      expect(result.data).toBe("success");
       expect(fn).toHaveBeenCalledTimes(2);
     });
 
     it("should fail after max retries", async () => {
-      const fn = jest.fn().mockRejectedValue(new Error("fail"));
-      await expect(executeWithRetry(fn, 2)).rejects.toThrow();
+      const fn = jest.fn().mockResolvedValue({ data: null, error: new Error("fail") });
+      const result = await executeWithRetry(fn, { maxRetries: 2, retryDelay: 10 });
+      expect(result.success).toBe(false);
+      expect(result.error).toBeInstanceOf(Error);
       expect(fn).toHaveBeenCalledTimes(2);
     });
 
@@ -81,10 +85,17 @@ describe("supabase utilities", () => {
         .fn()
         .mockImplementation(
           () =>
-            new Promise((resolve) => setTimeout(() => resolve("slow"), 10000)),
+            new Promise((resolve) => {
+              // Never resolve - should timeout
+              setTimeout(() => resolve({ data: "slow", error: null }), 10000);
+            }),
         );
-      await expect(executeWithRetry(fn, 1, 100)).rejects.toThrow();
-    });
+      const result = await executeWithRetry(fn, { maxRetries: 1, timeout: 100, retryDelay: 10 });
+      // Wait for timeout to occur
+      await new Promise(resolve => setTimeout(resolve, 150));
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toContain("timeout");
+    }, 10000);
   });
 
   describe("checkDatabaseHealth", () => {
@@ -96,9 +107,10 @@ describe("supabase utilities", () => {
       expect(typeof health.healthy).toBe("boolean");
     });
 
-    it("should call getSupabaseClient", async () => {
+    it("should call getDatabaseClient", async () => {
+      const { getDatabaseClient } = require("@/Utils/databasePool");
       await checkDatabaseHealth();
-      expect(getSupabaseClient).toHaveBeenCalled();
+      expect(getDatabaseClient).toHaveBeenCalled();
     });
   });
 });
