@@ -164,6 +164,15 @@ a {
   }
 }
 
+/* Form input keyboard handling - replaces JS scrollIntoView */
+form input,
+form textarea,
+form select {
+  font-size: 16px !important; /* Prevents iOS auto-zoom */
+  scroll-margin-top: 5rem;      /* Space above when focused (accounts for header) */
+  scroll-margin-bottom: 20rem; /* Ensures input isn't stuck at bottom */
+}
+
 /* Hover Leak Prevention - Only apply hover styles on devices with pointer */
 @media (hover: hover) and (pointer: fine) {
   /* Hover styles will only apply on devices that support hover */

@@ -502,6 +502,48 @@ function SignupForm() {
 	);
 
 	const handleSubmit = useCallback(async () => {
+		// Validate form before submitting
+		if (
+			!formData.fullName.trim() ||
+			!formData.email.trim() ||
+			!emailValidation.isValid ||
+			formData.cities.length === 0 ||
+			formData.languages.length === 0 ||
+			!formData.gdprConsent ||
+			(step === 2 &&
+				(!formData.visaStatus ||
+					formData.entryLevelPreferences.length === 0)) ||
+			(step === 3 && (!formData.careerPath || formData.roles.length === 0))
+		) {
+			// Find first invalid field and focus it
+			const firstErrorField = !formData.fullName.trim()
+				? formRefs.fullName.current
+				: !formData.email.trim() || !emailValidation.isValid
+					? formRefs.email.current
+					: formData.cities.length === 0
+						? document.getElementById("cities-field")
+						: formData.languages.length === 0
+							? document.getElementById("languages-field")
+							: !formData.gdprConsent
+								? document.getElementById("gdpr-consent")
+								: step === 2 && !formData.visaStatus
+									? document.getElementById("visa-field")
+									: step === 2 && formData.entryLevelPreferences.length === 0
+										? document.getElementById("entry-level-field")
+										: step === 3 && !formData.careerPath
+											? document.getElementById("career-path-field")
+											: step === 3 && formData.roles.length === 0
+												? document.getElementById("roles-field")
+												: null;
+
+			if (firstErrorField) {
+				firstErrorField.focus();
+				// Fallback scrollIntoView for browsers that don't support scroll-margin
+				firstErrorField.scrollIntoView({ behavior: "smooth", block: "center" });
+			}
+			return;
+		}
+
 		setLoading(true);
 		setError("");
 		setFieldErrors({});
@@ -559,7 +601,15 @@ function SignupForm() {
 		} finally {
 			setLoading(false);
 		}
-	}, [formData, router, announce, formRefs.email, formRefs.fullName]);
+	}, [
+		formData,
+		router,
+		announce,
+		formRefs.email,
+		formRefs.fullName,
+		emailValidation.isValid,
+		step,
+	]);
 
 	// Keyboard shortcuts for power users
 	useEffect(() => {
@@ -588,6 +638,24 @@ function SignupForm() {
 			announce(emailValidation.error, "assertive");
 		}
 	}, [emailValidation.error, announce]);
+
+	// Hardware back button handling - prevent users from leaving form
+	useEffect(() => {
+		const handleBackButton = (e: PopStateEvent) => {
+			if (step > 1) {
+				e.preventDefault();
+				setStep((s) => s - 1);
+				// Re-push state so they stay on the page
+				window.history.pushState(null, "", window.location.pathname);
+			}
+		};
+
+		// Push initial state
+		window.history.pushState(null, "", window.location.pathname);
+
+		window.addEventListener("popstate", handleBackButton);
+		return () => window.removeEventListener("popstate", handleBackButton);
+	}, [step]);
 
 	const toggleArray = (arr: string[], value: string) => {
 		return arr.includes(value)
@@ -645,7 +713,7 @@ function SignupForm() {
 	};
 
 	return (
-		<div className="min-h-screen bg-black relative overflow-hidden pb-safe">
+		<div className="min-h-screen bg-black relative overflow-hidden pb-[max(1.5rem,env(safe-area-inset-bottom))]">
 			{/* Background Effects */}
 			<div
 				className="absolute inset-0 enhanced-grid opacity-30"
@@ -672,7 +740,7 @@ function SignupForm() {
 				aria-hidden="true"
 			/>
 
-			<div className="relative z-10 container-page max-w-5xl py-8 px-4 sm:py-16 sm:px-6 md:py-24">
+			<div className="relative z-10 container-page max-w-5xl py-4 px-4 sm:py-8 sm:px-6 md:py-16">
 				{/* Header */}
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
@@ -732,8 +800,24 @@ function SignupForm() {
 					</div>
 				</motion.div>
 
-				{/* Progress Indicator */}
-				<div className="mb-10 sm:mb-16">
+				{/* Sticky Progress Bar - iOS Safari Compatible */}
+				<div className="sticky top-[-1px] z-40 bg-black/80 backdrop-blur-sm border-b border-white/10 mb-6">
+					<div className="h-1 bg-zinc-800">
+						<motion.div
+							className="h-full bg-gradient-to-r from-brand-500 via-purple-600 to-purple-500"
+							initial={{ width: 0 }}
+							animate={{ width: `${(step / 4) * 100}%` }}
+							transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+						/>
+					</div>
+					<div className="flex items-center justify-between px-4 py-2 text-sm text-zinc-400">
+						<span>Step {step} of 4</span>
+						<span>{Math.round((step / 4) * 100)}%</span>
+					</div>
+				</div>
+
+				{/* Desktop Progress Indicator - Hidden on mobile */}
+				<div className="mb-10 sm:mb-16 hidden sm:block">
 					<div className="flex justify-between mb-3 sm:mb-4 px-1 sm:px-2">
 						{[1, 2, 3, 4].map((i) => (
 							<div key={i} className="flex items-center gap-1 sm:gap-3">
@@ -872,7 +956,7 @@ function SignupForm() {
 													new Set(prev).add("gdprConsent"),
 												)
 											}
-											className="mt-1 w-6 h-6 sm:w-5 sm:h-5 rounded border-2 border-zinc-600 bg-zinc-800 checked:bg-brand-500 checked:border-brand-500 cursor-pointer touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0"
+											className="mt-1 w-6 h-6 sm:w-5 sm:h-5 rounded border-2 border-zinc-600 bg-zinc-800 checked:bg-brand-500 checked:border-brand-500 cursor-pointer touch-manipulation min-w-[48px] min-h-[48px] sm:min-w-0 sm:min-h-0"
 											required
 											aria-required="true"
 											aria-describedby={
@@ -946,17 +1030,6 @@ function SignupForm() {
 												return next;
 											});
 										}}
-										onFocus={(e) => {
-											// Scroll input into view on mobile to prevent keyboard covering
-											if (window.innerWidth < 768) {
-												setTimeout(() => {
-													e.target.scrollIntoView({
-														behavior: "smooth",
-														block: "center",
-													});
-												}, 300);
-											}
-										}}
 										onBlur={() => {
 											setTouchedFields((prev) => new Set(prev).add("fullName"));
 											if (
@@ -979,6 +1052,8 @@ function SignupForm() {
 										}`}
 										placeholder="John Smith"
 										autoComplete="name"
+										autoCorrect="off"
+										autoCapitalize="words"
 										aria-invalid={
 											(formData.fullName.length > 0 &&
 												!nameValidation.isValid) ||
@@ -1014,7 +1089,7 @@ function SignupForm() {
 									>
 										Email *
 									</label>
-									<p className="text-xs sm:text-sm font-medium text-zinc-300 mb-3 sm:mb-4">
+									<p className="text-sm font-medium text-zinc-300 mb-3 sm:mb-4">
 										Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then
 										curated drops 3x per week (Mon/Wed/Fri).
 									</p>
@@ -1030,17 +1105,6 @@ function SignupForm() {
 												delete next.email;
 												return next;
 											});
-										}}
-										onFocus={(e) => {
-											// Scroll input into view on mobile to prevent keyboard covering
-											if (window.innerWidth < 768) {
-												setTimeout(() => {
-													e.target.scrollIntoView({
-														behavior: "smooth",
-														block: "center",
-													});
-												}, 300);
-											}
 										}}
 										onBlur={() => {
 											setTouchedFields((prev) => new Set(prev).add("email"));
@@ -1064,6 +1128,7 @@ function SignupForm() {
 										}`}
 										placeholder="you@example.com"
 										autoComplete="email"
+										inputMode="email"
 										aria-invalid={
 											(formData.email.length > 0 && !emailValidation.isValid) ||
 											!!fieldErrors.email
@@ -1106,7 +1171,7 @@ function SignupForm() {
 										Choose up to 3 cities where you'd like to work. You can
 										click on the map or use the buttons below.
 									</p>
-									<p className="text-xs text-zinc-500 mb-4">
+									<p className="text-sm text-zinc-500 mb-4">
 										💡 We'll only show jobs in these cities. You can add more
 										later in your preferences.
 									</p>
@@ -1169,9 +1234,9 @@ function SignupForm() {
 										/>
 									</motion.div>
 
-									{/* Mobile-friendly city chips */}
+									{/* Mobile-friendly city chips - Horizontal scrolling */}
 									<div
-										className="grid grid-cols-2 gap-2 sm:hidden"
+										className="flex overflow-x-auto pb-4 gap-2 scrollbar-hide -mx-4 px-4 snap-x snap-mandatory sm:hidden"
 										role="group"
 										aria-labelledby="cities-label"
 									>
@@ -1184,6 +1249,10 @@ function SignupForm() {
 													key={city}
 													type="button"
 													onClick={() => {
+														// Trigger haptic feedback (if supported)
+														if ("vibrate" in navigator) {
+															navigator.vibrate(10); // 10ms subtle pulse
+														}
 														if (isDisabled) {
 															announce(
 																"Maximum cities selected. Deselect one to choose another.",
@@ -1212,27 +1281,22 @@ function SignupForm() {
 														}
 													}}
 													whileTap={{ scale: 0.97 }}
-													className={`flex items-center justify-between rounded-xl border px-3 sm:px-4 py-3 sm:py-4 text-left text-sm font-medium transition-colors touch-manipulation min-h-[44px] ${
+													className={`flex-none snap-start min-h-[48px] px-6 bg-zinc-900 border border-zinc-800 rounded-full whitespace-nowrap text-sm font-medium transition-colors touch-manipulation ${
 														isSelected
 															? "border-brand-500 bg-brand-500/15 text-white shadow-glow-subtle"
 															: isDisabled
 																? "border-zinc-800 bg-zinc-900/40 text-zinc-500 cursor-not-allowed"
-																: "border-zinc-700 bg-zinc-900/40 text-zinc-200 hover:border-zinc-500"
+																: "border-zinc-700 bg-zinc-900/40 text-zinc-200"
 													}`}
 													disabled={isDisabled}
 												>
-													<span>{city}</span>
-													<span
-														className={`text-xs font-semibold ${isSelected ? "text-brand-200" : "text-zinc-500"}`}
-													>
-														{isSelected ? "Selected" : "Tap"}
-													</span>
+													{city}
 												</motion.button>
 											);
 										})}
 									</div>
 									{formData.cities.length >= 3 && (
-										<p className="mt-2 text-xs text-amber-400 sm:hidden">
+										<p className="mt-2 text-sm text-amber-400 sm:hidden">
 											Maximum 3 cities selected. Deselect one to choose another.
 										</p>
 									)}
@@ -1240,7 +1304,7 @@ function SignupForm() {
 									{/* City Buttons Grid - REMOVED (redundant with map) */}
 									{/* Map is sufficient for city selection */}
 									<div className="mt-2 flex items-center justify-between">
-										<p className="text-xs text-zinc-400">
+										<p className="text-sm text-zinc-400">
 											{formData.cities.length}/3 selected
 										</p>
 										{formData.cities.length > 0 && citiesValidation.isValid && (
@@ -1251,7 +1315,7 @@ function SignupForm() {
 										)}
 									</div>
 									{formData.cities.length > 0 && (
-										<p className="mt-1 text-xs text-zinc-300">
+										<p className="mt-1 text-sm text-zinc-300">
 											{formData.cities.join(", ")}
 										</p>
 									)}
@@ -1266,7 +1330,7 @@ function SignupForm() {
 										/>
 									)}
 									{formData.cities.length >= 3 && (
-										<p className="text-xs text-amber-400 mt-1 hidden sm:block">
+										<p className="text-sm text-amber-400 mt-1 hidden sm:block">
 											Maximum 3 cities selected. Deselect one to choose another.
 										</p>
 									)}
@@ -1283,7 +1347,7 @@ function SignupForm() {
 									<p className="text-sm text-zinc-400 mb-2">
 										Select languages you can use professionally
 									</p>
-									<p className="text-xs text-zinc-500 mb-4">
+									<p className="text-sm text-zinc-500 mb-4">
 										💡 We'll prioritize jobs that match your language skills.
 									</p>
 									<div
@@ -1344,22 +1408,54 @@ function SignupForm() {
 									)}
 								</div>
 
-								<motion.button
-									onClick={() => setStep(2)}
-									disabled={
-										!formData.fullName.trim() ||
-										!formData.email.trim() ||
-										!emailValidation.isValid ||
-										formData.cities.length === 0 ||
-										formData.languages.length === 0 ||
-										!formData.gdprConsent
-									}
-									whileHover={{ scale: 1.02 }}
-									whileTap={{ scale: 0.98 }}
-									className="w-full bg-gradient-to-r from-brand-500 via-purple-500 to-brand-500 text-white font-bold text-base sm:text-lg md:text-xl py-4 sm:py-5 md:py-6 rounded-xl sm:rounded-2xl shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-[0_20px_50px_rgba(99,102,241,0.4)] touch-manipulation min-h-[48px] sm:min-h-[56px]"
-								>
-									{getDisabledMessage(1)}
-								</motion.button>
+								{/* Spacer for sticky button */}
+								<div className="h-32 sm:h-0" aria-hidden="true" />
+
+								{/* Sticky Submit Button */}
+								<div className="sticky bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
+									<motion.button
+										onClick={() => setStep(2)}
+										disabled={
+											loading ||
+											!formData.fullName.trim() ||
+											!formData.email.trim() ||
+											!emailValidation.isValid ||
+											formData.cities.length === 0 ||
+											formData.languages.length === 0 ||
+											!formData.gdprConsent
+										}
+										whileHover={{ scale: loading ? 1 : 1.02 }}
+										whileTap={{ scale: loading ? 1 : 0.98 }}
+										className="w-full bg-gradient-to-r from-brand-500 via-purple-500 to-brand-500 text-white font-bold text-base sm:text-lg md:text-xl py-4 sm:py-5 md:py-6 rounded-xl sm:rounded-2xl shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-[0_20px_50px_rgba(99,102,241,0.4)] touch-manipulation min-h-[56px]"
+									>
+										{loading ? (
+											<span className="flex items-center justify-center gap-2">
+												<svg
+													className="w-5 h-5 animate-spin"
+													viewBox="0 0 24 24"
+													fill="none"
+												>
+													<circle
+														className="opacity-25"
+														cx="12"
+														cy="12"
+														r="10"
+														stroke="currentColor"
+														strokeWidth="4"
+													/>
+													<path
+														className="opacity-75"
+														fill="currentColor"
+														d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+													/>
+												</svg>
+												Loading...
+											</span>
+										) : (
+											getDisabledMessage(1)
+										)}
+									</motion.button>
+								</div>
 							</motion.div>
 						)}
 
@@ -1385,7 +1481,7 @@ function SignupForm() {
 											<p className="text-base sm:text-lg font-medium text-zinc-100">
 												Help us match you perfectly
 											</p>
-											<p className="text-xs sm:text-sm font-medium text-zinc-300 mt-2">
+											<p className="text-sm font-medium text-zinc-300 mt-2">
 												These fields improve the quality of your first 5 jobs.
 											</p>
 
@@ -1617,32 +1713,65 @@ function SignupForm() {
 											</div>
 										</div>
 
-										<div className="flex gap-3 sm:gap-4 pt-4 sm:pt-6">
-											<motion.button
-												onClick={() => setStep(1)}
-												whileHover={{ scale: 1.02 }}
-												whileTap={{ scale: 0.98 }}
-												className="flex-1 py-4 sm:py-5 text-base sm:text-lg font-bold border-2 border-white/25 bg-white/[0.08] text-white rounded-xl sm:rounded-2xl hover:border-brand-500/50 hover:bg-white/12 transition-all touch-manipulation min-h-[48px] sm:min-h-[56px]"
-											>
-												← Back
-											</motion.button>
-											<motion.button
-												onClick={() => setStep(3)}
-												disabled={
-													!formData.visaStatus ||
-													formData.entryLevelPreferences.length === 0
-												}
-												whileHover={{ scale: 1.02 }}
-												className={`relative flex-1 py-4 sm:py-6 md:py-7 text-base sm:text-xl md:text-2xl font-black uppercase tracking-wide rounded-xl sm:rounded-2xl overflow-hidden transition-all touch-manipulation min-h-[48px] sm:min-h-[56px] md:min-h-[64px] ${
-													!formData.visaStatus ||
-													formData.entryLevelPreferences.length === 0
-														? "opacity-40 cursor-not-allowed bg-zinc-700 text-zinc-400"
-														: "bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] hover:scale-105"
-												}`}
-												whileTap={{ scale: 0.98 }}
-											>
-												{getDisabledMessage(2)}
-											</motion.button>
+										{/* Spacer for sticky button */}
+										<div className="h-32 sm:h-0" aria-hidden="true" />
+
+										{/* Sticky Submit Button */}
+										<div className="sticky bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
+											<div className="flex gap-3 sm:gap-4">
+												<motion.button
+													onClick={() => setStep(1)}
+													whileHover={{ scale: 1.02 }}
+													whileTap={{ scale: 0.98 }}
+													className="flex-1 py-4 sm:py-5 text-base sm:text-lg font-bold border-2 border-white/25 bg-white/[0.08] text-white rounded-xl sm:rounded-2xl hover:border-brand-500/50 hover:bg-white/12 transition-all touch-manipulation min-h-[56px]"
+												>
+													← Back
+												</motion.button>
+												<motion.button
+													onClick={() => setStep(3)}
+													disabled={
+														loading ||
+														!formData.visaStatus ||
+														formData.entryLevelPreferences.length === 0
+													}
+													whileHover={{ scale: loading ? 1 : 1.02 }}
+													whileTap={{ scale: loading ? 1 : 0.98 }}
+													className={`relative flex-1 py-4 sm:py-6 md:py-7 text-base sm:text-xl md:text-2xl font-black uppercase tracking-wide rounded-xl sm:rounded-2xl overflow-hidden transition-all touch-manipulation min-h-[56px] ${
+														loading ||
+														!formData.visaStatus ||
+														formData.entryLevelPreferences.length === 0
+															? "opacity-40 cursor-not-allowed bg-zinc-700 text-zinc-400"
+															: "bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] hover:scale-105"
+													}`}
+												>
+													{loading ? (
+														<span className="flex items-center justify-center gap-2">
+															<svg
+																className="w-5 h-5 animate-spin"
+																viewBox="0 0 24 24"
+																fill="none"
+															>
+																<circle
+																	className="opacity-25"
+																	cx="12"
+																	cy="12"
+																	r="10"
+																	stroke="currentColor"
+																	strokeWidth="4"
+																/>
+																<path
+																	className="opacity-75"
+																	fill="currentColor"
+																	d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+																/>
+															</svg>
+															Loading...
+														</span>
+													) : (
+														getDisabledMessage(2)
+													)}
+												</motion.button>
+											</div>
 										</div>
 									</div>
 								</div>
@@ -1870,7 +1999,7 @@ function SignupForm() {
 															}
 															whileHover={{ scale: 1.02 }}
 															whileTap={{ scale: 0.98 }}
-															className="px-4 py-3 sm:py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-glow-subtle hover:shadow-glow-medium touch-manipulation min-h-[44px]"
+															className="px-4 py-3 sm:py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-glow-subtle hover:shadow-glow-medium touch-manipulation min-h-[48px]"
 															title={`Select all ${selectedCareer.roles.length} roles in ${selectedCareer.label}`}
 														>
 															Select All {selectedCareer.roles.length} Roles
@@ -1880,7 +2009,7 @@ function SignupForm() {
 															onClick={clearAllRoles}
 															whileHover={{ scale: 1.02 }}
 															whileTap={{ scale: 0.98 }}
-															className="px-4 py-3 sm:py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 text-sm font-semibold rounded-lg transition-colors touch-manipulation min-h-[44px]"
+															className="px-4 py-3 sm:py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 text-sm font-semibold rounded-lg transition-colors touch-manipulation min-h-[48px]"
 															title="Clear all selected roles"
 														>
 															Clear All
@@ -1929,7 +2058,7 @@ function SignupForm() {
 																		transition={{ delay: idx * 0.02 }}
 																		whileHover={{ scale: 1.02, x: 2 }}
 																		whileTap={{ scale: 0.98 }}
-																		className={`px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl border-2 transition-all font-semibold text-left text-xs sm:text-sm relative overflow-hidden touch-manipulation min-h-[44px] ${
+																		className={`px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl border-2 transition-all font-semibold text-left text-sm relative overflow-hidden touch-manipulation min-h-[48px] ${
 																			formData.roles.includes(role)
 																				? "border-brand-500 bg-gradient-to-r from-brand-500/20 to-purple-600/15 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]"
 																				: "border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80"
@@ -1987,90 +2116,98 @@ function SignupForm() {
 											);
 										})()}
 
-										<div className="flex gap-3 sm:gap-4 pt-4 sm:pt-6">
-											<motion.button
-												onClick={() => setStep(2)}
-												whileHover={{ scale: 1.02 }}
-												whileTap={{ scale: 0.98 }}
-												className="btn-secondary flex-1 py-4 sm:py-5 text-base sm:text-lg touch-manipulation min-h-[48px] sm:min-h-[56px]"
-												disabled={loading}
-											>
-												← Back
-											</motion.button>
-											<motion.button
-												onClick={() => setStep(4)}
-												disabled={
-													!formData.careerPath || formData.roles.length === 0
-												}
-												whileHover={{ scale: loading ? 1 : 1.03 }}
-												whileTap={{ scale: loading ? 1 : 0.97 }}
-												className="relative flex-1 py-4 sm:py-6 md:py-7 text-base sm:text-xl md:text-2xl font-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 uppercase tracking-wide rounded-xl sm:rounded-2xl overflow-hidden touch-manipulation min-h-[48px] sm:min-h-[56px] md:min-h-[64px]"
-												style={{
-													background: loading
-														? "linear-gradient(to right, #6366F1, #7C3AED, #8B5CF6)"
-														: "linear-gradient(135deg, #6366F1 0%, #7C3AED 50%, #8B5CF6 100%)",
-													boxShadow:
-														"0 0 60px rgba(99,102,241,0.8), 0 20px 60px -18px rgba(99,102,241,0.9), inset 0 1px 0 rgba(255,255,255,0.3)",
-													textShadow: "0 2px 8px rgba(0,0,0,0.4)",
-													transition: "all 0.3s ease",
-												}}
-											>
-												{!loading && (
-													<motion.div
-														className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-														animate={{
-															x: ["-200%", "200%"],
-														}}
-														transition={{
-															duration: 2,
-															repeat: Infinity,
-															repeatDelay: 1,
-															ease: "easeInOut",
-														}}
-													/>
-												)}
-												<span className="relative z-10 text-white flex items-center justify-center gap-3">
-													{loading ? (
-														<>
-															<svg
-																className="w-6 h-6 animate-spin"
-																viewBox="0 0 24 24"
-																fill="none"
-															>
-																<circle
-																	className="opacity-25"
-																	cx="12"
-																	cy="12"
-																	r="10"
-																	stroke="currentColor"
-																	strokeWidth="4"
-																></circle>
-																<path
-																	className="opacity-75"
-																	fill="currentColor"
-																	d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-																></path>
-															</svg>
-															<span>Finding Matches...</span>
-														</>
-													) : (
-														<>
-															<span>→</span>
-															<span>{getDisabledMessage(3)}</span>
-															<motion.span
-																animate={{ x: [0, 4, 0] }}
-																transition={{
-																	duration: 1,
-																	repeat: Infinity,
-																	repeatDelay: 0.5,
-																}}
-															>
-																→
-															</motion.span>
-														</>
+										{/* Spacer for sticky button */}
+										<div className="h-32 sm:h-0" aria-hidden="true" />
+
+										{/* Sticky Submit Button */}
+										<div className="sticky bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
+											<div className="flex gap-3 sm:gap-4">
+												<motion.button
+													onClick={() => setStep(2)}
+													whileHover={{ scale: 1.02 }}
+													whileTap={{ scale: 0.98 }}
+													className="btn-secondary flex-1 py-4 sm:py-5 text-base sm:text-lg touch-manipulation min-h-[56px]"
+													disabled={loading}
+												>
+													← Back
+												</motion.button>
+												<motion.button
+													onClick={() => setStep(4)}
+													disabled={
+														loading ||
+														!formData.careerPath ||
+														formData.roles.length === 0
+													}
+													whileHover={{ scale: loading ? 1 : 1.03 }}
+													whileTap={{ scale: loading ? 1 : 0.97 }}
+													className="relative flex-1 py-4 sm:py-6 md:py-7 text-base sm:text-xl md:text-2xl font-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 uppercase tracking-wide rounded-xl sm:rounded-2xl overflow-hidden touch-manipulation min-h-[56px]"
+													style={{
+														background: loading
+															? "linear-gradient(to right, #6366F1, #7C3AED, #8B5CF6)"
+															: "linear-gradient(135deg, #6366F1 0%, #7C3AED 50%, #8B5CF6 100%)",
+														boxShadow:
+															"0 0 60px rgba(99,102,241,0.8), 0 20px 60px -18px rgba(99,102,241,0.9), inset 0 1px 0 rgba(255,255,255,0.3)",
+														textShadow: "0 2px 8px rgba(0,0,0,0.4)",
+														transition: "all 0.3s ease",
+													}}
+												>
+													{!loading && (
+														<motion.div
+															className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+															animate={{
+																x: ["-200%", "200%"],
+															}}
+															transition={{
+																duration: 2,
+																repeat: Infinity,
+																repeatDelay: 1,
+																ease: "easeInOut",
+															}}
+														/>
 													)}
-												</span>
-											</motion.button>
+													<span className="relative z-10 text-white flex items-center justify-center gap-3">
+														{loading ? (
+															<>
+																<svg
+																	className="w-6 h-6 animate-spin"
+																	viewBox="0 0 24 24"
+																	fill="none"
+																>
+																	<circle
+																		className="opacity-25"
+																		cx="12"
+																		cy="12"
+																		r="10"
+																		stroke="currentColor"
+																		strokeWidth="4"
+																	></circle>
+																	<path
+																		className="opacity-75"
+																		fill="currentColor"
+																		d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+																	></path>
+																</svg>
+																<span>Finding Matches...</span>
+															</>
+														) : (
+															<>
+																<span>→</span>
+																<span>{getDisabledMessage(3)}</span>
+																<motion.span
+																	animate={{ x: [0, 4, 0] }}
+																	transition={{
+																		duration: 1,
+																		repeat: Infinity,
+																		repeatDelay: 0.5,
+																	}}
+																>
+																	→
+																</motion.span>
+															</>
+														)}
+													</span>
+												</motion.button>
+											</div>
 										</div>
 									</div>
 								</div>
@@ -2211,7 +2348,7 @@ function SignupForm() {
 												Describe what you're looking for in your own words
 												(optional)
 											</p>
-											<p className="text-xs text-zinc-400">
+											<p className="text-sm text-zinc-400">
 												Examples: "customer-facing", "data-driven", "creative
 												problem-solving", "client interaction", "analytical
 												work"
@@ -2274,7 +2411,7 @@ function SignupForm() {
 														}
 														whileHover={{ scale: 1.02 }}
 														whileTap={{ scale: 0.98 }}
-														className={`px-3 py-2 rounded-lg border-2 transition-all font-medium text-xs ${
+														className={`px-3 py-2 rounded-lg border-2 transition-all font-medium text-sm ${
 															formData.skills.includes(skill)
 																? "border-brand-500 bg-gradient-to-r from-brand-500/20 to-purple-600/10 text-white"
 																: "border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80"
@@ -2294,71 +2431,77 @@ function SignupForm() {
 											)}
 										</div>
 
-										<div className="flex gap-3 sm:gap-4 pt-4 sm:pt-6">
-											<motion.button
-												onClick={() => setStep(3)}
-												whileHover={{ scale: 1.02 }}
-												whileTap={{ scale: 0.98 }}
-												className="btn-secondary flex-1 py-4 sm:py-5 text-base sm:text-lg touch-manipulation min-h-[48px] sm:min-h-[56px]"
-											>
-												← Back
-											</motion.button>
-											<motion.button
-												onClick={handleSubmit}
-												disabled={loading}
-												whileHover={{ scale: loading ? 1 : 1.03 }}
-												whileTap={{ scale: loading ? 1 : 0.97 }}
-												className="relative flex-1 py-4 sm:py-6 md:py-7 text-base sm:text-xl md:text-2xl font-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 uppercase tracking-wide rounded-xl sm:rounded-2xl overflow-hidden touch-manipulation min-h-[48px] sm:min-h-[56px] md:min-h-[64px]"
-												style={{
-													background: loading
-														? "linear-gradient(to right, #6366F1, #7C3AED, #8B5CF6)"
-														: "linear-gradient(135deg, #6366F1 0%, #7C3AED 50%, #8B5CF6 100%)",
-													boxShadow:
-														"0 0 60px rgba(99,102,241,0.8), 0 20px 60px -18px rgba(99,102,241,0.9), inset 0 1px 0 rgba(255,255,255,0.3)",
-													textShadow: "0 2px 8px rgba(0,0,0,0.4)",
-													transition: "all 0.3s ease",
-												}}
-											>
-												{loading ? (
-													<>
-														<svg
-															className="w-6 h-6 animate-spin"
-															viewBox="0 0 24 24"
-															fill="none"
-														>
-															<circle
-																className="opacity-25"
-																cx="12"
-																cy="12"
-																r="10"
-																stroke="currentColor"
-																strokeWidth="4"
-															></circle>
-															<path
-																className="opacity-75"
-																fill="currentColor"
-																d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-															></path>
-														</svg>
-														<span>Finding Matches...</span>
-													</>
-												) : (
-													<>
-														<span>→</span>
-														<span>Find my matches</span>
-														<motion.span
-															animate={{ x: [0, 4, 0] }}
-															transition={{
-																duration: 1,
-																repeat: Infinity,
-																repeatDelay: 0.5,
-															}}
-														>
-															→
-														</motion.span>
-													</>
-												)}
-											</motion.button>
+										{/* Spacer for sticky button */}
+										<div className="h-32 sm:h-0" aria-hidden="true" />
+
+										{/* Sticky Submit Button */}
+										<div className="sticky bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
+											<div className="flex gap-3 sm:gap-4">
+												<motion.button
+													onClick={() => setStep(3)}
+													whileHover={{ scale: 1.02 }}
+													whileTap={{ scale: 0.98 }}
+													className="btn-secondary flex-1 py-4 sm:py-5 text-base sm:text-lg touch-manipulation min-h-[56px]"
+												>
+													← Back
+												</motion.button>
+												<motion.button
+													onClick={handleSubmit}
+													disabled={loading}
+													whileHover={{ scale: loading ? 1 : 1.03 }}
+													whileTap={{ scale: loading ? 1 : 0.97 }}
+													className="relative flex-1 py-4 sm:py-6 md:py-7 text-base sm:text-xl md:text-2xl font-black disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 uppercase tracking-wide rounded-xl sm:rounded-2xl overflow-hidden touch-manipulation min-h-[56px]"
+													style={{
+														background: loading
+															? "linear-gradient(to right, #6366F1, #7C3AED, #8B5CF6)"
+															: "linear-gradient(135deg, #6366F1 0%, #7C3AED 50%, #8B5CF6 100%)",
+														boxShadow:
+															"0 0 60px rgba(99,102,241,0.8), 0 20px 60px -18px rgba(99,102,241,0.9), inset 0 1px 0 rgba(255,255,255,0.3)",
+														textShadow: "0 2px 8px rgba(0,0,0,0.4)",
+														transition: "all 0.3s ease",
+													}}
+												>
+													{loading ? (
+														<>
+															<svg
+																className="w-6 h-6 animate-spin"
+																viewBox="0 0 24 24"
+																fill="none"
+															>
+																<circle
+																	className="opacity-25"
+																	cx="12"
+																	cy="12"
+																	r="10"
+																	stroke="currentColor"
+																	strokeWidth="4"
+																></circle>
+																<path
+																	className="opacity-75"
+																	fill="currentColor"
+																	d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+																></path>
+															</svg>
+															<span>Finding Matches...</span>
+														</>
+													) : (
+														<>
+															<span>→</span>
+															<span>Find my matches</span>
+															<motion.span
+																animate={{ x: [0, 4, 0] }}
+																transition={{
+																	duration: 1,
+																	repeat: Infinity,
+																	repeatDelay: 0.5,
+																}}
+															>
+																→
+															</motion.span>
+														</>
+													)}
+												</motion.button>
+											</div>
 										</div>
 									</div>
 								</div>
