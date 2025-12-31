@@ -281,6 +281,10 @@ export default function SignupFormFree() {
 
 	const handleCityToggle = useCallback(
 		(city: string) => {
+			// Trigger haptic feedback (if supported)
+			if ("vibrate" in navigator) {
+				navigator.vibrate(10); // 10ms subtle pulse
+			}
 			setFormData((prev) => {
 				const isDisabled =
 					!prev.cities.includes(city) && prev.cities.length >= 3;
@@ -324,6 +328,31 @@ export default function SignupFormFree() {
 						"visaSponsorship",
 					]),
 				);
+				// Find first invalid field and focus it
+				const firstErrorField = !formData.visaSponsorship
+					? document.querySelector<HTMLElement>(
+							'button[type="button"][onclick*="visaSponsorship"]',
+						) || document.getElementById("visa-field")
+					: formData.cities.length === 0
+						? document.getElementById("cities-field")
+						: !formData.careerPath
+							? document.querySelector<HTMLElement>(
+									'button[type="button"][onclick*="careerPath"]',
+								)
+							: !formData.email.trim() || !emailValidation.isValid
+								? document.getElementById("email")
+								: !formData.fullName.trim()
+									? document.getElementById("fullName")
+									: null;
+
+				if (firstErrorField) {
+					firstErrorField.focus();
+					// Fallback scrollIntoView for browsers that don't support scroll-margin
+					firstErrorField.scrollIntoView({
+						behavior: "smooth",
+						block: "center",
+					});
+				}
 				return;
 			}
 
@@ -482,11 +511,11 @@ export default function SignupFormFree() {
 				setIsSubmitting(false); // Always reset submission state
 			}
 		},
-		[isFormValid, formData, router, isSubmitting],
+		[isFormValid, formData, router, isSubmitting, emailValidation.isValid],
 	);
 
 	return (
-		<div className="min-h-screen bg-black relative overflow-hidden pb-safe">
+		<div className="min-h-screen bg-black relative overflow-hidden pb-[max(1.5rem,env(safe-area-inset-bottom))]">
 			{/* Simplified Background Effects */}
 			<div
 				className="absolute inset-0 enhanced-grid opacity-20"
@@ -503,7 +532,7 @@ export default function SignupFormFree() {
 				aria-hidden="true"
 			/>
 
-			<div className="relative z-10 container-page max-w-4xl py-8 px-4 sm:py-12 sm:px-6 md:py-16">
+			<div className="relative z-10 container-page max-w-4xl py-4 px-4 sm:py-8 sm:px-6 md:py-16">
 				{/* Simplified Header - Quick Signup Focus */}
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
@@ -738,9 +767,9 @@ export default function SignupFormFree() {
 									</Suspense>
 								</motion.div>
 
-								{/* Mobile-friendly city chips */}
+								{/* Mobile-friendly city chips - Horizontal scrolling */}
 								<div
-									className="grid grid-cols-2 gap-2 sm:hidden"
+									className="flex overflow-x-auto pb-4 gap-2 scrollbar-hide -mx-4 px-4 snap-x snap-mandatory sm:hidden"
 									role="group"
 									aria-labelledby="cities-label"
 								>
@@ -754,28 +783,23 @@ export default function SignupFormFree() {
 												type="button"
 												onClick={() => handleCityToggle(city)}
 												whileTap={{ scale: 0.97 }}
-												className={`flex items-center justify-between rounded-xl border px-3 py-3 text-left text-sm font-medium transition-colors touch-manipulation min-h-[44px] ${
+												className={`flex-none snap-start min-h-[48px] px-6 bg-zinc-900 border border-zinc-800 rounded-full whitespace-nowrap text-sm font-medium transition-colors touch-manipulation ${
 													isSelected
 														? "border-brand-500 bg-brand-500/15 text-white"
 														: isDisabled || isSubmitting
 															? "border-border-subtle bg-surface-elevated/40 text-content-secondary cursor-not-allowed"
-															: "border-border-default bg-surface-elevated/40 text-content-heading hover:border-border-default"
+															: "border-border-default bg-surface-elevated/40 text-content-heading"
 												}`}
 												disabled={isDisabled || isSubmitting}
 											>
-												<span>{city}</span>
-												<span
-													className={`text-xs font-semibold ${isSelected ? "text-brand-200" : "text-content-secondary"}`}
-												>
-													{isSelected ? "Selected" : "Tap"}
-												</span>
+												{city}
 											</motion.button>
 										);
 									})}
 								</div>
 
 								<div className="mt-2 flex items-center justify-between">
-									<p className="text-xs text-content-secondary">
+									<p className="text-sm text-content-secondary">
 										{formData.cities.length}/3 selected
 									</p>
 									{formData.cities.length > 0 && citiesValidation.isValid && (
@@ -816,7 +840,7 @@ export default function SignupFormFree() {
 													: "border-border-default bg-surface-elevated/40 hover:border-border-default"
 											} disabled:opacity-50 disabled:cursor-not-allowed`}
 										>
-											<span className="font-medium text-xs text-white">
+											<span className="font-medium text-sm text-white">
 												{path.label}
 											</span>
 										</motion.button>
@@ -890,9 +914,11 @@ export default function SignupFormFree() {
 										value={formData.email}
 										onChange={handleEmailChange}
 										placeholder="you@example.com"
+										autoComplete="email"
+										inputMode="email"
 										className="w-full px-4 py-4 bg-black/50 border-2 rounded-xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-base font-medium backdrop-blur-sm border-border-default disabled:opacity-50 disabled:cursor-not-allowed"
 									/>
-									<p className="text-xs text-content-secondary mt-2">
+									<p className="text-sm text-content-secondary mt-2">
 										We won't email you. Ever.
 									</p>
 									{shouldShowError(
@@ -922,6 +948,9 @@ export default function SignupFormFree() {
 										value={formData.fullName}
 										onChange={handleNameChange}
 										placeholder="Jane Doe"
+										autoComplete="name"
+										autoCorrect="off"
+										autoCapitalize="words"
 										className="w-full px-4 py-4 bg-black/50 border-2 rounded-xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 transition-all text-base font-medium backdrop-blur-sm border-border-default disabled:opacity-50 disabled:cursor-not-allowed"
 									/>
 									{shouldShowError(
@@ -937,13 +966,16 @@ export default function SignupFormFree() {
 								</div>
 							</div>
 
-							{/* Submit Button */}
-							<div className="pt-4">
+							{/* Spacer for sticky button */}
+							<div className="h-32 sm:h-0" aria-hidden="true" />
+
+							{/* Sticky Submit Button */}
+							<div className="sticky bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
 								<Button
 									type="submit"
 									variant="primary"
 									size="lg"
-									className="w-full"
+									className="w-full min-h-[56px]"
 									disabled={isSubmitting || !isFormValid}
 									isLoading={isSubmitting}
 								>
@@ -952,7 +984,7 @@ export default function SignupFormFree() {
 										: "Show Me My 5 Matches →"}
 								</Button>
 
-								<p className="text-xs text-center text-content-secondary mt-4">
+								<p className="text-sm text-center text-content-secondary mt-4">
 									<span className="text-brand-400 font-semibold">
 										Quick & Free
 									</span>{" "}
