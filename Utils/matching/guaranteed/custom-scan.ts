@@ -1,6 +1,6 @@
 /**
  * Custom Scan Trigger System
- * 
+ *
  * Replace Level 7 "Emergency" with "Custom Scan Trigger"
  * Instead of showing irrelevant jobs, trigger a priority scrape
  */
@@ -84,16 +84,14 @@ export async function triggerCustomScan(
 
 		// Upsert into scraping_priorities
 		for (const crit of criteriaList) {
-			const { error } = await supabase
-				.from("scraping_priorities")
-				.upsert(
-					{
-						criteria: crit,
-						demand_count: priorityScore,
-						last_updated: new Date().toISOString(),
-					},
-					{ onConflict: "criteria" },
-				);
+			const { error } = await supabase.from("scraping_priorities").upsert(
+				{
+					criteria: crit,
+					demand_count: priorityScore,
+					last_updated: new Date().toISOString(),
+				},
+				{ onConflict: "criteria" },
+			);
 
 			if (error) {
 				apiLogger.warn("Failed to upsert scraping priority", {
@@ -109,16 +107,14 @@ export async function triggerCustomScan(
 			Date.now() + 2 * 60 * 60 * 1000,
 		).toISOString(); // 2 hours
 
-		const { error: insertError } = await supabase
-			.from("custom_scans")
-			.insert({
-				id: scanId,
-				user_email: userPrefs.email,
-				criteria: missingCriteria as any,
-				status: "pending",
-				created_at: new Date().toISOString(),
-				estimated_completion: estimatedCompletion,
-			});
+		const { error: insertError } = await supabase.from("custom_scans").insert({
+			id: scanId,
+			user_email: userPrefs.email,
+			criteria: missingCriteria as any,
+			status: "pending",
+			created_at: new Date().toISOString(),
+			estimated_completion: estimatedCompletion,
+		});
 
 		if (insertError) {
 			apiLogger.error("Failed to create custom scan record", insertError, {
@@ -146,4 +142,3 @@ export async function triggerCustomScan(
 		};
 	}
 }
-

@@ -18,416 +18,482 @@ jest.mock("@/Utils/matching/logging.service");
 jest.mock("@/Utils/locks");
 jest.mock("@/app/api/match-users/handlers/orchestration");
 jest.mock("@/app/api/match-users/handlers/validation", () => ({
-  ...jest.requireActual("@/app/api/match-users/handlers/validation"),
-  verifyHMACAuth: jest.fn(),
-  verifyHMACFromParams: jest.fn(),
-  // validateDatabaseSchema already returns { valid: true } in test mode (NODE_ENV === "test")
-  // So we don't need to mock it
+	...jest.requireActual("@/app/api/match-users/handlers/validation"),
+	verifyHMACAuth: jest.fn(),
+	verifyHMACFromParams: jest.fn(),
+	// validateDatabaseSchema already returns { valid: true } in test mode (NODE_ENV === "test")
+	// So we don't need to mock it
 }));
 
 import { POST } from "@/app/api/match-users/route";
+
 // Sentry removed - using Axiom for error tracking
 
 describe("Match Users API Route - Comprehensive", () => {
-  let mockRequest: NextRequest;
-  let mockSupabase: any;
+	let mockRequest: NextRequest;
+	let mockSupabase: any;
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+	beforeEach(() => {
+		jest.clearAllMocks();
 
-    mockRequest = {
-      method: "POST",
-      json: jest.fn(),
-      text: jest.fn().mockResolvedValue(""),
-      headers: new Headers({
-        "x-forwarded-for": "127.0.0.1",
-        "user-agent": "jest-test",
-      }),
-      url: "http://localhost:3000/api/match-users",
-      nextUrl: new URL("http://localhost:3000/api/match-users"),
-    } as any;
+		mockRequest = {
+			method: "POST",
+			json: jest.fn(),
+			text: jest.fn().mockResolvedValue(""),
+			headers: new Headers({
+				"x-forwarded-for": "127.0.0.1",
+				"user-agent": "jest-test",
+			}),
+			url: "http://localhost:3000/api/match-users",
+			nextUrl: new URL("http://localhost:3000/api/match-users"),
+		} as any;
 
-    mockSupabase = {
-      from: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lte: jest.fn().mockReturnThis(),
-      in: jest.fn().mockReturnThis(),
-      not: jest.fn().mockReturnThis(),
-      is: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue({
-        data: [],
-        error: null,
-        count: 0,
-      }),
-      single: jest.fn(),
-      rpc: jest.fn().mockResolvedValue({ data: [], error: null }),
-    };
+		mockSupabase = {
+			from: jest.fn().mockReturnThis(),
+			select: jest.fn().mockReturnThis(),
+			update: jest.fn().mockReturnThis(),
+			insert: jest.fn().mockReturnThis(),
+			eq: jest.fn().mockReturnThis(),
+			gte: jest.fn().mockReturnThis(),
+			lte: jest.fn().mockReturnThis(),
+			in: jest.fn().mockReturnThis(),
+			not: jest.fn().mockReturnThis(),
+			is: jest.fn().mockReturnThis(),
+			order: jest.fn().mockReturnThis(),
+			limit: jest.fn().mockResolvedValue({
+				data: [],
+				error: null,
+				count: 0,
+			}),
+			single: jest.fn(),
+			rpc: jest.fn().mockResolvedValue({ data: [], error: null }),
+		};
 
-    const { getDatabaseClient } = require("@/Utils/databasePool");
-    getDatabaseClient.mockReturnValue(mockSupabase);
+		const { getDatabaseClient } = require("@/Utils/databasePool");
+		getDatabaseClient.mockReturnValue(mockSupabase);
 
-    const {
-      getProductionRateLimiter,
-    } = require("@/Utils/productionRateLimiter");
-    getProductionRateLimiter.mockReturnValue({
-      middleware: jest.fn().mockResolvedValue(null),
-      initializeRedis: jest.fn().mockResolvedValue(undefined),
-      redisClient: {
-        set: jest.fn().mockResolvedValue("OK"),
-        get: jest.fn().mockResolvedValue(null),
-        del: jest.fn().mockResolvedValue(1),
-      },
-    });
+		const {
+			getProductionRateLimiter,
+		} = require("@/Utils/productionRateLimiter");
+		getProductionRateLimiter.mockReturnValue({
+			middleware: jest.fn().mockResolvedValue(null),
+			initializeRedis: jest.fn().mockResolvedValue(undefined),
+			redisClient: {
+				set: jest.fn().mockResolvedValue("OK"),
+				get: jest.fn().mockResolvedValue(null),
+				del: jest.fn().mockResolvedValue(1),
+			},
+		});
 
-    const { verifyHMAC, isHMACRequired } = require("@/Utils/auth/hmac");
-    verifyHMAC.mockReturnValue({ isValid: true });
-    isHMACRequired.mockReturnValue(false);
+		const { verifyHMAC, isHMACRequired } = require("@/Utils/auth/hmac");
+		verifyHMAC.mockReturnValue({ isValid: true });
+		isHMACRequired.mockReturnValue(false);
 
-    // Mock validation functions
-    const { verifyHMACAuth, verifyHMACFromParams } = require("@/app/api/match-users/handlers/validation");
-    verifyHMACAuth.mockReturnValue({ isValid: true });
-    verifyHMACFromParams.mockReturnValue({ isValid: true });
+		// Mock validation functions
+		const {
+			verifyHMACAuth,
+			verifyHMACFromParams,
+		} = require("@/app/api/match-users/handlers/validation");
+		verifyHMACAuth.mockReturnValue({ isValid: true });
+		verifyHMACFromParams.mockReturnValue({ isValid: true });
 
-    // Mock withRedisLock
-    const { withRedisLock } = require("@/Utils/locks");
-    withRedisLock.mockImplementation((_key: string, _ttl: number, fn: () => Promise<any>) => fn());
+		// Mock withRedisLock
+		const { withRedisLock } = require("@/Utils/locks");
+		withRedisLock.mockImplementation(
+			(_key: string, _ttl: number, fn: () => Promise<any>) => fn(),
+		);
 
-    // Mock orchestration functions
-    const { fetchUsersAndJobs, processUsers } = require("@/app/api/match-users/handlers/orchestration");
-    fetchUsersAndJobs.mockResolvedValue({
-      users: [{ id: "user1", email: "user1@example.com", subscription_tier: "free", email_verified: true }],
-      transformedUsers: [{ email: "user1@example.com", preferences: {
-        target_cities: ["London"],
-        career_path: ["tech"],
-        languages_spoken: ["English"],
-      } }],
-      jobs: [{ id: "job1", job_hash: "hash1", title: "Engineer", company: "Tech Corp", location: "London" }],
-      isSemanticAvailable: false,
-    });
-    processUsers.mockResolvedValue([{
-      user: "user1@example.com",
-      success: true,
-      matches: 0,
-    }]);
+		// Mock orchestration functions
+		const {
+			fetchUsersAndJobs,
+			processUsers,
+		} = require("@/app/api/match-users/handlers/orchestration");
+		fetchUsersAndJobs.mockResolvedValue({
+			users: [
+				{
+					id: "user1",
+					email: "user1@example.com",
+					subscription_tier: "free",
+					email_verified: true,
+				},
+			],
+			transformedUsers: [
+				{
+					email: "user1@example.com",
+					preferences: {
+						target_cities: ["London"],
+						career_path: ["tech"],
+						languages_spoken: ["English"],
+					},
+				},
+			],
+			jobs: [
+				{
+					id: "job1",
+					job_hash: "hash1",
+					title: "Engineer",
+					company: "Tech Corp",
+					location: "London",
+				},
+			],
+			isSemanticAvailable: false,
+		});
+		processUsers.mockResolvedValue([
+			{
+				user: "user1@example.com",
+				success: true,
+				matches: 0,
+			},
+		]);
 
-    // Note: validateDatabaseSchema returns { valid: true } automatically in test mode
-    // No need to mock it for success cases
-  });
+		// Note: validateDatabaseSchema returns { valid: true } automatically in test mode
+		// No need to mock it for success cases
+	});
 
+	describe("POST /api/match-users", () => {
+		it("should process match users request successfully", async () => {
+			// Mock request body
+			const requestBody = {
+				userLimit: 10,
+				jobLimit: 1000,
+				forceRun: false,
+				dryRun: false,
+			};
+			mockRequest.json.mockResolvedValue(requestBody);
+			mockRequest.text.mockResolvedValue(JSON.stringify(requestBody));
 
-  describe("POST /api/match-users", () => {
-    it("should process match users request successfully", async () => {
-      // Mock request body
-      const requestBody = {
-        userLimit: 10,
-        jobLimit: 1000,
-        forceRun: false,
-        dryRun: false,
-      };
-      mockRequest.json.mockResolvedValue(requestBody);
-      mockRequest.text.mockResolvedValue(JSON.stringify(requestBody));
+			// Ensure orchestration mocks return valid data
+			const {
+				fetchUsersAndJobs,
+				processUsers,
+			} = require("@/app/api/match-users/handlers/orchestration");
+			fetchUsersAndJobs.mockResolvedValue({
+				users: [
+					{
+						id: "user1",
+						email: "user1@example.com",
+						subscription_tier: "free",
+						email_verified: true,
+					},
+				],
+				transformedUsers: [
+					{
+						email: "user1@example.com",
+						preferences: { target_cities: ["London"] },
+					},
+				],
+				jobs: [{ id: "job1", job_hash: "hash1", title: "Engineer" }],
+				isSemanticAvailable: false,
+			});
+			processUsers.mockResolvedValue([
+				{
+					user: "user1@example.com",
+					success: true,
+					matches: 5,
+				},
+			]);
 
-      // Ensure orchestration mocks return valid data
-      const { fetchUsersAndJobs, processUsers } = require("@/app/api/match-users/handlers/orchestration");
-      fetchUsersAndJobs.mockResolvedValue({
-        users: [{ id: "user1", email: "user1@example.com", subscription_tier: "free", email_verified: true }],
-        transformedUsers: [{ email: "user1@example.com", preferences: { target_cities: ["London"] } }],
-        jobs: [{ id: "job1", job_hash: "hash1", title: "Engineer" }],
-        isSemanticAvailable: false,
-      });
-      processUsers.mockResolvedValue([{
-        user: "user1@example.com",
-        success: true,
-        matches: 5,
-      }]);
+			const response = await POST(mockRequest);
 
-      const response = await POST(mockRequest);
-      
-      // Behavior: Should successfully process and return results
-      expect(response.status).toBe(200);
-      
-      const data = await response.json();
-      // Response structure varies - check that it's a valid response
-      expect(data).toBeDefined();
-      // ✅ Tests outcome (successful response), not implementation details
-    });
+			// Behavior: Should successfully process and return results
+			expect(response.status).toBe(200);
 
-    it("should validate request schema", async () => {
-      mockRequest.json.mockResolvedValue({
-        userLimit: 200, // Exceeds max
-        jobLimit: 1000,
-      });
+			const data = await response.json();
+			// Response structure varies - check that it's a valid response
+			expect(data).toBeDefined();
+			// ✅ Tests outcome (successful response), not implementation details
+		});
 
-      const response = await POST(mockRequest);
+		it("should validate request schema", async () => {
+			mockRequest.json.mockResolvedValue({
+				userLimit: 200, // Exceeds max
+				jobLimit: 1000,
+			});
 
-      expect(response.status).toBeGreaterThanOrEqual(400);
-    });
+			const response = await POST(mockRequest);
 
-    // TODO: Fix HMAC mock setup - complex withAxiom/header handling
-    it.skip("should handle HMAC authentication when required", async () => {
-      // Set HMAC secret to trigger HMAC check in handler
-      const originalSecret = process.env.INTERNAL_API_HMAC_SECRET;
-      process.env.INTERNAL_API_HMAC_SECRET = "test-secret";
-      
-      const requestBody = {
-        userLimit: 10,
-        jobLimit: 1000,
-      };
-      mockRequest.json.mockResolvedValue(requestBody);
-      const bodyText = JSON.stringify(requestBody);
-      mockRequest.text.mockResolvedValue(bodyText);
-      mockRequest.headers.set("x-jobping-signature", "invalid-signature");
-      mockRequest.headers.set("x-jobping-timestamp", Date.now().toString());
+			expect(response.status).toBeGreaterThanOrEqual(400);
+		});
 
-      // Mock verifyHMACAuth to return invalid
-      const { verifyHMACAuth } = require("@/app/api/match-users/handlers/validation");
-      verifyHMACAuth.mockReturnValue({
-        isValid: false,
-        error: "Invalid signature",
-      });
+		// TODO: Fix HMAC mock setup - complex withAxiom/header handling
+		it.skip("should handle HMAC authentication when required", async () => {
+			// Set HMAC secret to trigger HMAC check in handler
+			const originalSecret = process.env.INTERNAL_API_HMAC_SECRET;
+			process.env.INTERNAL_API_HMAC_SECRET = "test-secret";
 
-      const response = await POST(mockRequest);
-      const data = await response.json();
+			const requestBody = {
+				userLimit: 10,
+				jobLimit: 1000,
+			};
+			mockRequest.json.mockResolvedValue(requestBody);
+			const bodyText = JSON.stringify(requestBody);
+			mockRequest.text.mockResolvedValue(bodyText);
+			mockRequest.headers.set("x-jobping-signature", "invalid-signature");
+			mockRequest.headers.set("x-jobping-timestamp", Date.now().toString());
 
-      // Behavior: Should reject invalid HMAC
-      expect(response.status).toBe(401);
-      expect(data.error).toBeDefined();
-      // ✅ Tests outcome, not implementation
-      
-      // Cleanup
-      if (originalSecret) {
-        process.env.INTERNAL_API_HMAC_SECRET = originalSecret;
-      } else {
-        delete process.env.INTERNAL_API_HMAC_SECRET;
-      }
-    });
+			// Mock verifyHMACAuth to return invalid
+			const {
+				verifyHMACAuth,
+			} = require("@/app/api/match-users/handlers/validation");
+			verifyHMACAuth.mockReturnValue({
+				isValid: false,
+				error: "Invalid signature",
+			});
 
-    // TODO: Fix rate limiter mock - middleware return value needs adjustment
-    it.skip("should handle rate limiting", async () => {
-      const {
-        getProductionRateLimiter,
-      } = require("@/Utils/productionRateLimiter");
-      
-      // Mock rate limiter middleware to return a 429 response
-      const rateLimitResponse = NextResponse.json({ error: "Rate limited" }, { status: 429 });
-      getProductionRateLimiter.mockReturnValue({
-        middleware: jest.fn().mockReturnValue(rateLimitResponse), // Return synchronously, not resolved
-        initializeRedis: jest.fn().mockResolvedValue(undefined),
-        redisClient: {
-          set: jest.fn().mockResolvedValue("OK"),
-          get: jest.fn().mockResolvedValue(null),
-          del: jest.fn().mockResolvedValue(1),
-        },
-      });
+			const response = await POST(mockRequest);
+			const data = await response.json();
 
-      const requestBody = { userLimit: 10, jobLimit: 1000 };
-      mockRequest.json.mockResolvedValue(requestBody);
-      mockRequest.text.mockResolvedValue(JSON.stringify(requestBody));
+			// Behavior: Should reject invalid HMAC
+			expect(response.status).toBe(401);
+			expect(data.error).toBeDefined();
+			// ✅ Tests outcome, not implementation
 
-      const response = await POST(mockRequest);
+			// Cleanup
+			if (originalSecret) {
+				process.env.INTERNAL_API_HMAC_SECRET = originalSecret;
+			} else {
+				delete process.env.INTERNAL_API_HMAC_SECRET;
+			}
+		});
 
-      // Behavior: Should return 429 when rate limited
-      // Note: Rate limiter is checked before handler runs, so if middleware returns a response, that's returned
-      expect(response.status).toBe(429);
-      // ✅ Tests outcome, not implementation
-    });
+		// TODO: Fix rate limiter mock - middleware return value needs adjustment
+		it.skip("should handle rate limiting", async () => {
+			const {
+				getProductionRateLimiter,
+			} = require("@/Utils/productionRateLimiter");
 
-    // TODO: Fix orchestration error mocking
-    it.skip("should handle database errors gracefully", async () => {
-      mockRequest.json.mockResolvedValue({
-        userLimit: 10,
-        jobLimit: 1000,
-      });
+			// Mock rate limiter middleware to return a 429 response
+			const rateLimitResponse = NextResponse.json(
+				{ error: "Rate limited" },
+				{ status: 429 },
+			);
+			getProductionRateLimiter.mockReturnValue({
+				middleware: jest.fn().mockReturnValue(rateLimitResponse), // Return synchronously, not resolved
+				initializeRedis: jest.fn().mockResolvedValue(undefined),
+				redisClient: {
+					set: jest.fn().mockResolvedValue("OK"),
+					get: jest.fn().mockResolvedValue(null),
+					del: jest.fn().mockResolvedValue(1),
+				},
+			});
 
-      mockSupabase.limit.mockResolvedValue({
-        data: null,
-        error: { message: "Database error" },
-      });
+			const requestBody = { userLimit: 10, jobLimit: 1000 };
+			mockRequest.json.mockResolvedValue(requestBody);
+			mockRequest.text.mockResolvedValue(JSON.stringify(requestBody));
 
-      const response = await POST(mockRequest);
+			const response = await POST(mockRequest);
 
-      expect(response.status).toBeGreaterThanOrEqual(500);
-    });
+			// Behavior: Should return 429 when rate limited
+			// Note: Rate limiter is checked before handler runs, so if middleware returns a response, that's returned
+			expect(response.status).toBe(429);
+			// ✅ Tests outcome, not implementation
+		});
 
-    it("should handle dry run mode", async () => {
-      const requestBody = {
-        userLimit: 10,
-        jobLimit: 1000,
-        dryRun: true,
-      };
-      mockRequest.json.mockResolvedValue(requestBody);
-      mockRequest.text.mockResolvedValue(JSON.stringify(requestBody));
+		// TODO: Fix orchestration error mocking
+		it.skip("should handle database errors gracefully", async () => {
+			mockRequest.json.mockResolvedValue({
+				userLimit: 10,
+				jobLimit: 1000,
+			});
 
-      // Mock orchestration to return valid data
-      const { fetchUsersAndJobs, processUsers } = require("@/app/api/match-users/handlers/orchestration");
-      fetchUsersAndJobs.mockResolvedValue({
-        users: [{ id: "user1", email: "user1@example.com" }],
-        transformedUsers: [{ email: "user1@example.com", preferences: {} }],
-        jobs: [],
-        isSemanticAvailable: false,
-      });
-      processUsers.mockResolvedValue([{
-        user: "user1@example.com",
-        success: true,
-        matches: 0,
-      }]);
+			mockSupabase.limit.mockResolvedValue({
+				data: null,
+				error: { message: "Database error" },
+			});
 
-      const response = await POST(mockRequest);
-      const data = await response.json();
+			const response = await POST(mockRequest);
 
-      // Behavior: Should process in dry run mode
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      // ✅ Tests outcome, not implementation (dryRun flag may not be in response)
-    });
+			expect(response.status).toBeGreaterThanOrEqual(500);
+		});
 
-    it("should handle force run mode", async () => {
-      const requestBody = {
-        userLimit: 10,
-        jobLimit: 1000,
-        forceRun: true,
-      };
-      mockRequest.json.mockResolvedValue(requestBody);
-      mockRequest.text.mockResolvedValue(JSON.stringify(requestBody));
+		it("should handle dry run mode", async () => {
+			const requestBody = {
+				userLimit: 10,
+				jobLimit: 1000,
+				dryRun: true,
+			};
+			mockRequest.json.mockResolvedValue(requestBody);
+			mockRequest.text.mockResolvedValue(JSON.stringify(requestBody));
 
-      // Mock orchestration
-      const { fetchUsersAndJobs, processUsers } = require("@/app/api/match-users/handlers/orchestration");
-      fetchUsersAndJobs.mockResolvedValue({
-        users: [{ id: "user1", email: "user1@example.com" }],
-        transformedUsers: [{ email: "user1@example.com", preferences: {} }],
-        jobs: [],
-        isSemanticAvailable: false,
-      });
-      processUsers.mockResolvedValue([{
-        user: "user1@example.com",
-        success: true,
-        matches: 0,
-      }]);
+			// Mock orchestration to return valid data
+			const {
+				fetchUsersAndJobs,
+				processUsers,
+			} = require("@/app/api/match-users/handlers/orchestration");
+			fetchUsersAndJobs.mockResolvedValue({
+				users: [{ id: "user1", email: "user1@example.com" }],
+				transformedUsers: [{ email: "user1@example.com", preferences: {} }],
+				jobs: [],
+				isSemanticAvailable: false,
+			});
+			processUsers.mockResolvedValue([
+				{
+					user: "user1@example.com",
+					success: true,
+					matches: 0,
+				},
+			]);
 
-      const response = await POST(mockRequest);
+			const response = await POST(mockRequest);
+			const data = await response.json();
 
-      // Behavior: Should successfully process in force run mode
-      expect(response.status).toBe(200);
-      // ✅ Tests outcome, not implementation
-    });
+			// Behavior: Should process in dry run mode
+			expect(response.status).toBe(200);
+			expect(data.success).toBe(true);
+			// ✅ Tests outcome, not implementation (dryRun flag may not be in response)
+		});
 
-    it("should process users in batches", async () => {
-      mockRequest.json.mockResolvedValue({
-        userLimit: 50,
-        jobLimit: 1000,
-      });
+		it("should handle force run mode", async () => {
+			const requestBody = {
+				userLimit: 10,
+				jobLimit: 1000,
+				forceRun: true,
+			};
+			mockRequest.json.mockResolvedValue(requestBody);
+			mockRequest.text.mockResolvedValue(JSON.stringify(requestBody));
 
-      const users = Array.from({ length: 50 }, (_, i) => ({
-        id: `user${i}`,
-        email: `user${i}@example.com`,
-        subscription_tier: "free",
-        email_verified: true,
-      }));
+			// Mock orchestration
+			const {
+				fetchUsersAndJobs,
+				processUsers,
+			} = require("@/app/api/match-users/handlers/orchestration");
+			fetchUsersAndJobs.mockResolvedValue({
+				users: [{ id: "user1", email: "user1@example.com" }],
+				transformedUsers: [{ email: "user1@example.com", preferences: {} }],
+				jobs: [],
+				isSemanticAvailable: false,
+			});
+			processUsers.mockResolvedValue([
+				{
+					user: "user1@example.com",
+					success: true,
+					matches: 0,
+				},
+			]);
 
-      mockSupabase.limit.mockResolvedValue({
-        data: users,
-        error: null,
-      });
+			const response = await POST(mockRequest);
 
-      const {
-        batchMatchingProcessor,
-      } = require("@/Utils/matching/batch-processor.service");
-      batchMatchingProcessor.processBatch = jest.fn().mockResolvedValue({
-        success: true,
-        processed: 50,
-      });
+			// Behavior: Should successfully process in force run mode
+			expect(response.status).toBe(200);
+			// ✅ Tests outcome, not implementation
+		});
 
-      const response = await POST(mockRequest);
+		it("should process users in batches", async () => {
+			mockRequest.json.mockResolvedValue({
+				userLimit: 50,
+				jobLimit: 1000,
+			});
 
-      expect(response.status).toBeLessThan(500);
-    });
+			const users = Array.from({ length: 50 }, (_, i) => ({
+				id: `user${i}`,
+				email: `user${i}@example.com`,
+				subscription_tier: "free",
+				email_verified: true,
+			}));
 
-    it("should handle Redis lock acquisition failure", async () => {
-      mockRequest.json.mockResolvedValue({
-        userLimit: 10,
-        jobLimit: 1000,
-      });
+			mockSupabase.limit.mockResolvedValue({
+				data: users,
+				error: null,
+			});
 
-      const {
-        getProductionRateLimiter,
-      } = require("@/Utils/productionRateLimiter");
-      const mockLimiter = {
-        middleware: jest.fn().mockResolvedValue(null),
-        initializeRedis: jest.fn().mockResolvedValue(undefined),
-        redisClient: {
-          set: jest.fn().mockResolvedValue(null), // Lock already held
-          get: jest.fn().mockResolvedValue("existing-token"),
-          del: jest.fn().mockResolvedValue(1),
-        },
-      };
-      getProductionRateLimiter.mockReturnValue(mockLimiter);
+			const {
+				batchMatchingProcessor,
+			} = require("@/Utils/matching/batch-processor.service");
+			batchMatchingProcessor.processBatch = jest.fn().mockResolvedValue({
+				success: true,
+				processed: 50,
+			});
 
-      const requestBody = { userLimit: 10, jobLimit: 1000 };
-      mockRequest.json.mockResolvedValue(requestBody);
-      mockRequest.text.mockResolvedValue(JSON.stringify(requestBody));
+			const response = await POST(mockRequest);
 
-      // Mock withRedisLock to return null (lock acquisition failed)
-      const { withRedisLock } = require("@/Utils/locks");
-      withRedisLock.mockResolvedValue(null);
+			expect(response.status).toBeLessThan(500);
+		});
 
-      const response = await POST(mockRequest);
-      const data = await response.json();
+		it("should handle Redis lock acquisition failure", async () => {
+			mockRequest.json.mockResolvedValue({
+				userLimit: 10,
+				jobLimit: 1000,
+			});
 
-      // Behavior: Should return 409 when lock acquisition fails
-      expect(response.status).toBe(409);
-      expect(data.code).toBe("PROCESSING_IN_PROGRESS");
-      // ✅ Tests outcome, not implementation
-    });
+			const {
+				getProductionRateLimiter,
+			} = require("@/Utils/productionRateLimiter");
+			const mockLimiter = {
+				middleware: jest.fn().mockResolvedValue(null),
+				initializeRedis: jest.fn().mockResolvedValue(undefined),
+				redisClient: {
+					set: jest.fn().mockResolvedValue(null), // Lock already held
+					get: jest.fn().mockResolvedValue("existing-token"),
+					del: jest.fn().mockResolvedValue(1),
+				},
+			};
+			getProductionRateLimiter.mockReturnValue(mockLimiter);
 
-    // TODO: Fix schema validation mock - needs proper override
-    it.skip("should validate database schema", async () => {
-      const requestBody = { userLimit: 10, jobLimit: 1000 };
-      mockRequest.json.mockResolvedValue(requestBody);
-      mockRequest.text.mockResolvedValue(JSON.stringify(requestBody));
+			const requestBody = { userLimit: 10, jobLimit: 1000 };
+			mockRequest.json.mockResolvedValue(requestBody);
+			mockRequest.text.mockResolvedValue(JSON.stringify(requestBody));
 
-      // Mock schema validation to fail
-      const { validateDatabaseSchema } = require("@/app/api/match-users/handlers/validation");
-      if (jest.isMockFunction(validateDatabaseSchema)) {
-        validateDatabaseSchema.mockResolvedValue({
-          valid: false,
-          missingColumns: ["status"],
-        });
-      }
+			// Mock withRedisLock to return null (lock acquisition failed)
+			const { withRedisLock } = require("@/Utils/locks");
+			withRedisLock.mockResolvedValue(null);
 
-      const response = await POST(mockRequest);
-      const data = await response.json();
+			const response = await POST(mockRequest);
+			const data = await response.json();
 
-      // Behavior: Should return 500 when schema validation fails
-      expect(response.status).toBe(500);
-      expect(data.error).toBeDefined();
-      // ✅ Tests outcome, not implementation
-    });
+			// Behavior: Should return 409 when lock acquisition fails
+			expect(response.status).toBe(409);
+			expect(data.code).toBe("PROCESSING_IN_PROGRESS");
+			// ✅ Tests outcome, not implementation
+		});
 
-    // TODO: Fix matching service error mocking
-    it.skip("should handle matching service errors", async () => {
-      const requestBody = { userLimit: 10, jobLimit: 1000 };
-      mockRequest.json.mockResolvedValue(requestBody);
-      mockRequest.text.mockResolvedValue(JSON.stringify(requestBody));
+		// TODO: Fix schema validation mock - needs proper override
+		it.skip("should validate database schema", async () => {
+			const requestBody = { userLimit: 10, jobLimit: 1000 };
+			mockRequest.json.mockResolvedValue(requestBody);
+			mockRequest.text.mockResolvedValue(JSON.stringify(requestBody));
 
-      // Mock orchestration to throw error during processing
-      const { processUsers } = require("@/app/api/match-users/handlers/orchestration");
-      processUsers.mockRejectedValue(new Error("Matching service failed"));
+			// Mock schema validation to fail
+			const {
+				validateDatabaseSchema,
+			} = require("@/app/api/match-users/handlers/validation");
+			if (jest.isMockFunction(validateDatabaseSchema)) {
+				validateDatabaseSchema.mockResolvedValue({
+					valid: false,
+					missingColumns: ["status"],
+				});
+			}
 
-      const response = await POST(mockRequest);
-      const data = await response.json();
+			const response = await POST(mockRequest);
+			const data = await response.json();
 
-      // Behavior: Should handle matching service errors gracefully
-      expect(response.status).toBeGreaterThanOrEqual(500);
-      expect(data.error).toBeDefined();
-      // ✅ Tests outcome, not implementation
+			// Behavior: Should return 500 when schema validation fails
+			expect(response.status).toBe(500);
+			expect(data.error).toBeDefined();
+			// ✅ Tests outcome, not implementation
+		});
 
-      // Should handle matching service errors gracefully (may return 500)
-      expect(response.status).toBeGreaterThanOrEqual(400);
-    });
-  });
+		// TODO: Fix matching service error mocking
+		it.skip("should handle matching service errors", async () => {
+			const requestBody = { userLimit: 10, jobLimit: 1000 };
+			mockRequest.json.mockResolvedValue(requestBody);
+			mockRequest.text.mockResolvedValue(JSON.stringify(requestBody));
+
+			// Mock orchestration to throw error during processing
+			const {
+				processUsers,
+			} = require("@/app/api/match-users/handlers/orchestration");
+			processUsers.mockRejectedValue(new Error("Matching service failed"));
+
+			const response = await POST(mockRequest);
+			const data = await response.json();
+
+			// Behavior: Should handle matching service errors gracefully
+			expect(response.status).toBeGreaterThanOrEqual(500);
+			expect(data.error).toBeDefined();
+			// ✅ Tests outcome, not implementation
+
+			// Should handle matching service errors gracefully (may return 500)
+			expect(response.status).toBeGreaterThanOrEqual(400);
+		});
+	});
 });

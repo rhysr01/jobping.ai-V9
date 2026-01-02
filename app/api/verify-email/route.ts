@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { ENV } from "@/lib/env";
+import { isTest } from "@/lib/env";
 import { asyncHandler, ValidationError } from "@/lib/errors";
 import {
 	markUserVerified,
@@ -9,7 +9,7 @@ import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
 import { getBaseUrl } from "@/Utils/url-helpers";
 
 // Test mode helper - using professional pattern
-const isTestMode = () => ENV.isTest();
+const isTestMode = () => isTest();
 
 export const POST = asyncHandler(async (request: NextRequest) => {
 	// PRODUCTION: Rate limiting for email verification (prevent abuse)

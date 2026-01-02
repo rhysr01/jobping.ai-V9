@@ -2,7 +2,7 @@
 
 import { CheckCircle, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 
 function OnboardContent() {
@@ -14,7 +14,7 @@ function OnboardContent() {
 	const refresh = searchParams.get("refresh") === "true";
 	const accountId = searchParams.get("accountId");
 
-	const checkOnboardingStatus = async () => {
+	const checkOnboardingStatus = useCallback(async () => {
 		try {
 			const res = await fetch(
 				`/api/stripe-connect/get-account?accountId=${accountId}`,
@@ -40,7 +40,7 @@ function OnboardContent() {
 			setError(err.message);
 			setLoading(false);
 		}
-	};
+	}, [accountId, router, searchParams]);
 
 	useEffect(() => {
 		if (refresh && accountId) {
@@ -49,11 +49,7 @@ function OnboardContent() {
 		} else {
 			setLoading(false);
 		}
-	}, [
-		refresh,
-		accountId, // User was redirected back, check if onboarding is complete
-		checkOnboardingStatus,
-	]);
+	}, [refresh, accountId, checkOnboardingStatus]);
 
 	if (loading) {
 		return (

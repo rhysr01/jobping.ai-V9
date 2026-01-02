@@ -15,7 +15,7 @@ export function FreeSuccessOverlay({
 	onDismiss,
 }: FreeSuccessOverlayProps) {
 	const [countdown, setCountdown] = useState(3);
-	const [showConfetti, setShowConfetti] = useState(true);
+	const [_showConfetti, setShowConfetti] = useState(true);
 
 	useEffect(() => {
 		// Trigger confetti on mount
@@ -136,7 +136,8 @@ export function FreeSuccessOverlay({
 						Success!
 					</h2>
 					<p className="text-zinc-400 mb-6 text-base sm:text-lg">
-						Found <span className="text-brand-400 font-semibold">{matchCount}</span>{" "}
+						Found{" "}
+						<span className="text-brand-400 font-semibold">{matchCount}</span>{" "}
 						{matchCount === 1 ? "match" : "matches"} for you.
 					</p>
 
@@ -165,4 +166,3 @@ export function FreeSuccessOverlay({
 		</AnimatePresence>
 	);
 }
-

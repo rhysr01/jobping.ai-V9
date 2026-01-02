@@ -1,12 +1,12 @@
 /**
  * Match Accuracy Score Calculator
  * Converts relaxation level to a user-friendly percentage score
- * 
+ *
  * Formula: S = max(70, 100 - (R × 3))
  * - Relaxation 0 → 100% (Perfect match)
  * - Relaxation 5 → 85% (Good match with minor expansion)
  * - Relaxation 10 → 70% (Minimum score, significant expansion)
- * 
+ *
  * This makes the premium tier's AI matching visible and valuable.
  */
 
@@ -26,7 +26,11 @@ export function calculateMatchAccuracy(
 	relaxationLevel: number | null | undefined,
 ): MatchAccuracyResult {
 	// Default to 100% if no relaxation (perfect match)
-	if (relaxationLevel === null || relaxationLevel === undefined || relaxationLevel === 0) {
+	if (
+		relaxationLevel === null ||
+		relaxationLevel === undefined ||
+		relaxationLevel === 0
+	) {
 		return {
 			score: 100,
 			percentage: "100%",
@@ -58,7 +62,8 @@ export function calculateMatchAccuracy(
 		description = "Good match - expanded search to find quality roles";
 	} else {
 		label = "fair";
-		description = "Fair match - broader search to ensure you get quality options";
+		description =
+			"Fair match - broader search to ensure you get quality options";
 	}
 
 	return {
@@ -90,4 +95,3 @@ export function getMatchAccuracyColor(
 			return "bg-zinc-500/20 border-zinc-500/50 text-zinc-300";
 	}
 }
-

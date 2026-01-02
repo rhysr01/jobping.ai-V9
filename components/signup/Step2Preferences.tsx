@@ -99,7 +99,10 @@ export function Step2Preferences({
 					</div>
 
 					<div>
-						<label htmlFor="work-environment-field" className="block text-base font-bold text-white mb-3">
+						<label
+							htmlFor="work-environment-field"
+							className="block text-base font-bold text-white mb-3"
+						>
 							Work Environment
 						</label>
 						<p className="text-sm text-zinc-200 mb-4">
@@ -264,10 +267,16 @@ export function Step2Preferences({
 					</div>
 
 					<div>
-						<label htmlFor="target-companies-field" className="block text-base font-bold text-white mb-3">
+						<label
+							htmlFor="target-companies-field"
+							className="block text-base font-bold text-white mb-3"
+						>
 							Target Companies
 						</label>
-						<div id="target-companies-field" className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+						<div
+							id="target-companies-field"
+							className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+						>
 							{COMPANIES.map((company) => (
 								<motion.button
 									key={company}

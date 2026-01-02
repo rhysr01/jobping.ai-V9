@@ -13,17 +13,6 @@ export type { Job } from "../../scrapers/types";
 export type UserRow = Tables<"users">;
 export type JobRow = Tables<"jobs">;
 
-// MatchRow type - matches table structure (not in generated types yet)
-export type MatchRow = {
-	id: number;
-	user_email: string;
-	job_hash: string;
-	match_score: number;
-	match_reason: string | null;
-	created_at: string;
-	provenance?: unknown;
-};
-
 // ================================
 // CORE INTERFACES
 // ================================
@@ -185,55 +174,4 @@ export interface EnrichedJob extends Job {
 	locationScore: number;
 	timingScore: number;
 	overallScore: number;
-}
-
-// ================================
-// MARKET DATA
-// ================================
-
-export interface CityMarketData {
-	city: string;
-	demandScore: number;
-	salaryMultiplier: number;
-	competitionLevel: number;
-	visaFriendliness: number;
-	techHub: boolean;
-	startupEcosystem: boolean;
-	corporatePresence: boolean;
-}
-
-export interface CompanyProfile {
-	name: string;
-	size: "startup" | "scaleup" | "enterprise";
-	industry: string;
-	culture: string[];
-	benefits: string[];
-	growthStage: "early" | "growth" | "mature";
-	remotePolicy: "remote-first" | "hybrid" | "office-first";
-	visaSponsorship: boolean;
-	diversityScore: number;
-	workLifeBalance: number;
-}
-
-export interface SkillDemand {
-	skill: string;
-	demandLevel: "high" | "medium" | "low";
-	growthTrend: "rising" | "stable" | "declining";
-	marketValue: number;
-	futureRelevance: number;
-}
-
-// ================================
-// UTILITY TYPES
-// ================================
-
-export type UnknownObj = Record<string, unknown>;
-
-export interface MatchingConfig {
-	minMatchScore: number;
-	maxResults: number;
-	enableAI: boolean;
-	enableFallback: boolean;
-	cacheEnabled: boolean;
-	timeoutMs: number;
 }

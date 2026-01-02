@@ -1926,7 +1926,7 @@ async function main() {
 																								: "europe";
 
 		// Country name for Google (capitalized, full name - baked into search string)
-		const countryName =
+		const _countryName =
 			city === "London"
 				? "United Kingdom"
 				: city === "Manchester"

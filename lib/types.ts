@@ -4,27 +4,6 @@
  */
 
 // ================================
-// API Response Types
-// ================================
-
-export interface ApiResponse<T = unknown> {
-	success: boolean;
-	data?: T;
-	error?: string;
-	message?: string;
-	timestamp: string;
-}
-
-export interface PaginatedResponse<T> extends ApiResponse<T[]> {
-	pagination: {
-		page: number;
-		limit: number;
-		total: number;
-		totalPages: number;
-	};
-}
-
-// ================================
 // Database Query Types
 // ================================
 
@@ -32,11 +11,6 @@ export interface DatabaseResponse<T> {
 	data: T | null;
 	error: any;
 	success: boolean;
-}
-
-export interface QueryWithTimeoutOptions {
-	timeoutMs?: number;
-	retries?: number;
 }
 
 // ================================
@@ -133,47 +107,8 @@ export interface CleanupMetrics {
 }
 
 // ================================
-// Monitoring & Analytics Types
-// ================================
-
-export interface HistoricalMetrics {
-	timestamp: string;
-	activeUsers: number;
-	jobsScraped: number;
-	matchesGenerated: number;
-	emailsSent: number;
-	errorRate: number;
-	averageResponseTime: number;
-	// Additional properties to match SystemMetrics
-	totalUsers?: number;
-	recentJobs?: number;
-	recentMatches?: number;
-	failedEmails?: number;
-	pendingJobs?: number;
-	processingJobs?: number;
-	failedJobs?: number;
-	completedJobsToday?: number;
-}
-
-export interface PerformanceMetrics {
-	endpoint: string;
-	method: string;
-	responseTime: number;
-	statusCode: number;
-	timestamp: string;
-	userId?: string;
-	errorMessage?: string;
-}
-
-// ================================
 // Utility Types
 // ================================
-
-export interface ValidationResult<T> {
-	success: boolean;
-	data?: T;
-	errors: string[];
-}
 
 export interface CacheEntry<T> {
 	data: T;
@@ -183,27 +118,8 @@ export interface CacheEntry<T> {
 }
 
 // ================================
-// Legacy Support Types
-// ================================
-
-/**
- * @deprecated Use specific interfaces instead of 'any'
- * This type is provided for gradual migration
- */
-export type LegacyAny = Record<string, unknown>;
-
-// ================================
 // Type Guards
 // ================================
-
-export function isApiResponse<T>(obj: unknown): obj is ApiResponse<T> {
-	return (
-		typeof obj === "object" &&
-		obj !== null &&
-		"success" in obj &&
-		typeof (obj as ApiResponse).success === "boolean"
-	);
-}
 
 export function isMatchMetrics(obj: unknown): obj is MatchMetrics {
 	return (

@@ -1,6 +1,6 @@
 /**
  * Enhanced Visa Confidence with Data-Driven Provenance
- * 
+ *
  * Uses historical match data to prove sponsorship likelihood
  */
 
@@ -64,9 +64,7 @@ export async function calculateVisaConfidenceWithProvenance(
 		if (!error && companyHistory) {
 			const companyMatches = companyHistory.filter((h) => {
 				const snapshot = h.job_snapshot as any;
-				return (
-					snapshot?.company?.toLowerCase() === job.company?.toLowerCase()
-				);
+				return snapshot?.company?.toLowerCase() === job.company?.toLowerCase();
 			});
 
 			if (companyMatches.length > 0) {
@@ -87,7 +85,7 @@ export async function calculateVisaConfidenceWithProvenance(
 				if (visaSponsorMatches.length >= 5) {
 					// Company has sponsored 5+ roles in last 12 months
 					return {
-						confidence: "high_potential",
+						confidence: "likely",
 						reason: `This company has sponsored ${visaSponsorMatches.length} similar roles in the last 12 months`,
 						keywordsFound: [],
 						confidencePercentage: 75,
@@ -113,7 +111,7 @@ export async function calculateVisaConfidenceWithProvenance(
 
 	if (isKnownSponsor) {
 		return {
-			confidence: "high_potential",
+			confidence: "likely",
 			reason: "Company is known to sponsor visas for similar roles",
 			keywordsFound: [],
 			confidencePercentage: 70,
@@ -177,4 +175,3 @@ function isKnownSponsorCompany(company?: string | null): boolean {
 
 	return knownSponsors.some((sponsor) => companyLower.includes(sponsor));
 }
-

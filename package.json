@@ -29,6 +29,7 @@
 		"automation:embeddings": "node automation/embedding-refresh.cjs",
 		"check:performance": "tsx scripts/check-performance.ts",
 		"generate-secrets": "tsx scripts/generate-secrets.ts",
+		"verify:env": "tsx scripts/verify-env-services.ts",
 		"clean": "rm -rf .next out coverage test-results",
 		"pre-push": "npm run build",
 		"postinstall": "next telemetry disable"

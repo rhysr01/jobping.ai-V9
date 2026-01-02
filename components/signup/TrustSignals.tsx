@@ -7,7 +7,10 @@ interface TrustSignalsProps {
 	isLoadingStats: boolean;
 }
 
-export function TrustSignals({ activeJobs, isLoadingStats }: TrustSignalsProps) {
+export function TrustSignals({
+	activeJobs,
+	isLoadingStats,
+}: TrustSignalsProps) {
 	return (
 		<motion.div
 			initial={{ opacity: 0, y: 20 }}
@@ -65,4 +68,3 @@ export function TrustSignals({ activeJobs, isLoadingStats }: TrustSignalsProps) 
 		</motion.div>
 	);
 }
-

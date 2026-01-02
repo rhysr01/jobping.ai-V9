@@ -14,7 +14,7 @@ interface GhostMatchesProps {
 export function GhostMatches({ onUpgradeClick }: GhostMatchesProps) {
 	const [ghostMatchCount, setGhostMatchCount] = useState<number | null>(null);
 	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	const [_error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
 		// Fetch ghost matches count
@@ -27,7 +27,7 @@ export function GhostMatches({ onUpgradeClick }: GhostMatchesProps) {
 
 				if (response.ok && data.ghostMatchCount > 0) {
 					setGhostMatchCount(data.ghostMatchCount);
-					
+
 					// Track ghost matches shown (A/B test metric)
 					trackEvent("ghost_matches_shown", {
 						count: data.ghostMatchCount,
@@ -53,8 +53,8 @@ export function GhostMatches({ onUpgradeClick }: GhostMatchesProps) {
 		// Only fetch if user has free matches (delay to avoid blocking main content)
 		const timeoutId = setTimeout(() => {
 			fetchGhostMatches();
-		}, TIMING.GHOST_MATCHES_DELAY_MS);
-		
+		}, 2000); // 2 second delay for ghost matches
+
 		return () => clearTimeout(timeoutId);
 	}, []);
 
@@ -109,7 +109,7 @@ export function GhostMatches({ onUpgradeClick }: GhostMatchesProps) {
 						{/* Blur overlay */}
 						<div className="absolute inset-0 bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 backdrop-blur-md z-10 flex items-center justify-center">
 							<div className="text-center">
-								<BrandIcons.Lock className="h-8 w-8 mx-auto mb-2 text-brand-400" />
+								<BrandIcons.Clock className="h-8 w-8 mx-auto mb-2 text-brand-400" />
 								<p className="text-sm font-semibold text-brand-300">
 									Premium Match
 								</p>
@@ -160,4 +160,3 @@ export function GhostMatches({ onUpgradeClick }: GhostMatchesProps) {
 		</motion.div>
 	);
 }
-

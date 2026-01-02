@@ -24,7 +24,7 @@ const glassCardVariants = cva(
 			intent: "subtle",
 			hover: "lift",
 		},
-	}
+	},
 );
 
 export interface GlassCardProps
@@ -37,7 +37,7 @@ export interface GlassCardProps
 /**
  * Reusable glass morphism card component with CVA variants
  * Replaces long cn() class strings with clean variant props
- * 
+ *
  * @example
  * <GlassCard intent="subtle" hover="lift">Content</GlassCard>
  * <GlassCard intent="elevated" hover="scale">Premium Content</GlassCard>
@@ -53,7 +53,11 @@ export default function GlassCard({
 		hover !== "none" && hover
 			? {
 					whileHover:
-						hover === "lift" ? { y: -2 } : hover === "scale" ? { scale: 1.01 } : {},
+						hover === "lift"
+							? { y: -2 }
+							: hover === "scale"
+								? { scale: 1.01 }
+								: {},
 					transition: { duration: 0.2, ease: "easeOut" as const },
 				}
 			: {};

@@ -724,11 +724,9 @@ class RealJobRunner {
 			}
 			console.log("✅ CareerJet API key present");
 
-			const {
-				scrapeCareerJet,
-			} = require("../_tools_archive/scrapers/careerjet.cjs");
+			const { scrapeCareerJet } = require("../scrapers/careerjet.cjs");
 			const { stdout, stderr } = await execAsync(
-				"node _tools_archive/scrapers/careerjet.cjs",
+				"node scrapers/careerjet.cjs",
 				{
 					cwd: process.cwd(),
 					timeout: 600000, // 10 minutes timeout
@@ -817,11 +815,9 @@ class RealJobRunner {
 		try {
 			console.log("🔄 Running Arbeitnow scraper...");
 
-			const {
-				scrapeArbeitnow,
-			} = require("../_tools_archive/scrapers/arbeitnow.cjs");
+			const { scrapeArbeitnow } = require("../scrapers/arbeitnow.cjs");
 			const { stdout, stderr } = await execAsync(
-				"node _tools_archive/scrapers/arbeitnow.cjs",
+				"node scrapers/arbeitnow.cjs",
 				{
 					cwd: process.cwd(),
 					timeout: 600000, // 10 minutes timeout

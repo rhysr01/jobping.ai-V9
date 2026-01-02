@@ -1,16 +1,14 @@
 /**
  * Single-Pass Penalty Scoring System
- * 
+ *
  * CRITICAL: No recursive loops - all penalties calculated in ONE pass
  * Formula: TotalScore = (BaseMatch × Weight) - Σ(RelaxationPenalties)
  */
 
-import { apiLogger } from "@/lib/api-logger";
 import type { Job } from "@/scrapers/types";
-import type { UserPreferences } from "../types";
-import { calculateMatchScore } from "../rule-based-matcher.service";
-import { calculateVisaConfidence } from "../visa-confidence";
 import { CITY_COUNTRY_MAP } from "../prefilter/location";
+import type { UserPreferences } from "../types";
+import { calculateVisaConfidence } from "../visa-confidence";
 
 export interface RelaxationPenalties {
 	locationMismatch: number; // -10% if city wrong but country right
@@ -124,11 +122,11 @@ function checkRoleMatch(
 
 	// Check related roles (simplified - can be enhanced with semantic matching)
 	const relatedRoleMap: Record<string, string[]> = {
-		"frontend": ["react", "vue", "angular", "javascript", "typescript", "ui"],
-		"backend": ["api", "server", "database", "node", "python", "java"],
+		frontend: ["react", "vue", "angular", "javascript", "typescript", "ui"],
+		backend: ["api", "server", "database", "node", "python", "java"],
 		"full stack": ["fullstack", "full-stack", "react", "node", "api"],
-		"data": ["analyst", "scientist", "engineer", "sql", "python"],
-		"product": ["manager", "owner", "designer", "ux"],
+		data: ["analyst", "scientist", "engineer", "sql", "python"],
+		product: ["manager", "owner", "designer", "ux"],
 		"software engineer": ["developer", "programmer", "coder", "engineer"],
 	};
 
@@ -183,11 +181,11 @@ function checkCareerPathMatch(
 
 	// Check adjacent career paths (simplified)
 	const adjacentMap: Record<string, string[]> = {
-		"tech": ["software", "engineering", "developer", "programming"],
-		"finance": ["banking", "investment", "accounting", "consulting"],
-		"consulting": ["strategy", "management", "advisory", "finance"],
-		"marketing": ["growth", "product", "brand", "content"],
-		"product": ["design", "ux", "ui", "marketing"],
+		tech: ["software", "engineering", "developer", "programming"],
+		finance: ["banking", "investment", "accounting", "consulting"],
+		consulting: ["strategy", "management", "advisory", "finance"],
+		marketing: ["growth", "product", "brand", "content"],
+		product: ["design", "ux", "ui", "marketing"],
 	};
 
 	for (const path of userCareerPaths) {
@@ -222,7 +220,8 @@ function checkWorkEnvironmentMatch(
 	}
 
 	const jobLocation = (job.location || "").toLowerCase();
-	const isRemote = jobLocation.includes("remote") || jobLocation.includes("work from home");
+	const isRemote =
+		jobLocation.includes("remote") || jobLocation.includes("work from home");
 	const isHybrid = jobLocation.includes("hybrid");
 	const isOnSite = !isRemote && !isHybrid;
 
@@ -323,7 +322,7 @@ export function calculateGuaranteedMatchScore(
 	// Penalty 1: Location Mismatch (-10%)
 	const targetCities = userPrefs.target_cities || [];
 	const locationMatch = checkLocationMatch(job, targetCities);
-	if (locationMatch.level === "country" && locationMatch.level !== "exact") {
+	if (locationMatch.level === "country") {
 		penalties.locationMismatch = 10;
 		relaxationLevel = Math.max(relaxationLevel, 1);
 		relaxationReasons.push("Same country, different city");
@@ -436,4 +435,3 @@ export function countRelaxationLevels(
 	});
 	return counts;
 }
-

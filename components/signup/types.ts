@@ -15,4 +15,3 @@ export interface SignupFormData {
 	careerKeywords: string;
 	gdprConsent: boolean;
 }
-

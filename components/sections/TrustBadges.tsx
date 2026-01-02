@@ -17,10 +17,10 @@ export default function TrustBadges() {
 				<p className="text-sm font-medium text-white leading-relaxed tracking-tight">
 					100% free to start • Real entry-level roles • No spam
 				</p>
-				
+
 				{/* Divider */}
 				<div className="w-full h-px bg-white/10" />
-				
+
 				{/* Trust badges grid - with improved spacing for small screens */}
 				<div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs text-content-secondary leading-relaxed tracking-tight">
 					<span className="flex items-center gap-1.5">

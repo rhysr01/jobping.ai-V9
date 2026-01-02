@@ -4,55 +4,55 @@
  */
 
 import {
-  cacheResponse,
-  getCachedResponse,
-  optimizeResponse,
+	cacheResponse,
+	getCachedResponse,
+	optimizeResponse,
 } from "@/Utils/performance/responseOptimizer";
 
 jest.mock("@/Utils/databasePool");
 
 describe("Response Optimizer", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+	beforeEach(() => {
+		jest.clearAllMocks();
+	});
 
-  describe("optimizeResponse", () => {
-    it("should optimize response", async () => {
-      const response = new Response(JSON.stringify({ data: "test" }));
+	describe("optimizeResponse", () => {
+		it("should optimize response", async () => {
+			const response = new Response(JSON.stringify({ data: "test" }));
 
-      const optimized = await optimizeResponse(response);
+			const optimized = await optimizeResponse(response);
 
-      expect(optimized).toBeDefined();
-    });
+			expect(optimized).toBeDefined();
+		});
 
-    it("should add cache headers", async () => {
-      const response = new Response(JSON.stringify({ data: "test" }));
+		it("should add cache headers", async () => {
+			const response = new Response(JSON.stringify({ data: "test" }));
 
-      const optimized = await optimizeResponse(response, { cacheTTL: 3600 });
+			const optimized = await optimizeResponse(response, { cacheTTL: 3600 });
 
-      expect(optimized.headers.get("Cache-Control")).toBeDefined();
-    });
-  });
+			expect(optimized.headers.get("Cache-Control")).toBeDefined();
+		});
+	});
 
-  describe("cacheResponse", () => {
-    it("should cache response", async () => {
-      const key = "test-key";
-      const data = { test: "data" };
+	describe("cacheResponse", () => {
+		it("should cache response", async () => {
+			const key = "test-key";
+			const data = { test: "data" };
 
-      await cacheResponse(key, data, 3600);
+			await cacheResponse(key, data, 3600);
 
-      // Cache should be set
-      expect(true).toBe(true);
-    });
-  });
+			// Cache should be set
+			expect(true).toBe(true);
+		});
+	});
 
-  describe("getCachedResponse", () => {
-    it("should retrieve cached response", async () => {
-      const key = "test-key";
+	describe("getCachedResponse", () => {
+		it("should retrieve cached response", async () => {
+			const key = "test-key";
 
-      const cached = await getCachedResponse(key);
+			const cached = await getCachedResponse(key);
 
-      expect(cached).toBeDefined();
-    });
-  });
+			expect(cached).toBeDefined();
+		});
+	});
 });

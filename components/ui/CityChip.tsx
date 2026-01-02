@@ -30,12 +30,13 @@ export function CityChip({
         relative flex items-center snap-center shrink-0 
         min-h-[48px] px-6 rounded-full border-2 
         transition-all touch-manipulation
-        ${isSelected 
-				? "bg-brand-500/20 border-brand-500 text-white pr-12" 
-				: isDisabled
-					? "bg-zinc-900/40 border-zinc-800 text-zinc-500 cursor-not-allowed"
-					: "bg-zinc-900 border-zinc-700 text-zinc-200 hover:border-zinc-600"
-			}
+        ${
+					isSelected
+						? "bg-brand-500/20 border-brand-500 text-white pr-12"
+						: isDisabled
+							? "bg-zinc-900/40 border-zinc-800 text-zinc-500 cursor-not-allowed"
+							: "bg-zinc-900 border-zinc-700 text-zinc-200 hover:border-zinc-600"
+				}
         ${className}
       `}
 			aria-label={`${city}${isSelected ? " (selected)" : ""}`}
@@ -61,4 +62,3 @@ export function CityChip({
 		</motion.button>
 	);
 }
-

@@ -117,7 +117,10 @@ export function BackgroundPaths({
 					</h1>
 
 					<div className="inline-block group relative bg-gradient-to-b from-brand-500/15 to-purple-600/15 p-px rounded-2xl backdrop-blur-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border border-white/15">
-						<button type="button" className="rounded-2xl px-8 py-6 text-lg font-semibold backdrop-blur-md bg-white/[0.08] hover:bg-white/[0.12] text-white transition-all duration-300 group-hover:-translate-y-0.5 border border-white/15 hover:border-brand-500/40 hover:shadow-md hover:shadow-brand-500/30 inline-flex items-center justify-center">
+						<button
+							type="button"
+							className="rounded-2xl px-8 py-6 text-lg font-semibold backdrop-blur-md bg-white/[0.08] hover:bg-white/[0.12] text-white transition-all duration-300 group-hover:-translate-y-0.5 border border-white/15 hover:border-brand-500/40 hover:shadow-md hover:shadow-brand-500/30 inline-flex items-center justify-center"
+						>
 							<span className="opacity-90 group-hover:opacity-100 transition-opacity">
 								Discover Excellence
 							</span>

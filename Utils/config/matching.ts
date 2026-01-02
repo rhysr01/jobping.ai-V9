@@ -210,9 +210,7 @@ export function getMatchingConfig() {
 	return MATCHING_CONFIG;
 }
 
-export function validateMatchingConfig(
-	config?: MatchingConfig,
-): boolean {
+export function validateMatchingConfig(_config?: MatchingConfig): boolean {
 	const result = validateConfig();
 	return result.valid;
 }

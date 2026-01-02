@@ -3,7 +3,7 @@
  * Weekly job distribution with per-send caps
  */
 
-export interface SendPlan {
+interface SendPlan {
 	days: string[]; // Days of week to send
 	perSend: number; // Max jobs per send
 	pullsPerWeek: number; // How many sends per week
@@ -11,7 +11,7 @@ export interface SendPlan {
 	earlyAccessHours?: number; // Hours early access to fresh jobs
 }
 
-export interface MatchRules {
+interface MatchRules {
 	minScore: number; // Minimum match score
 	lookbackDays: number; // How far back to look for jobs
 	maxPerCompanyPerSend: number; // Max jobs per company per send
@@ -51,14 +51,6 @@ export interface SendLedgerEntry {
 	sends_used: number;
 	jobs_sent: number;
 	last_send_date?: string;
-}
-
-// Seen jobs tracking
-export interface SeenJobEntry {
-	user_id: string;
-	job_hash: string;
-	seen_date: string;
-	tier: "free" | "premium";
 }
 
 /**

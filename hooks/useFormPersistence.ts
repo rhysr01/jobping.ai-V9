@@ -57,7 +57,10 @@ export function useFormPersistence(
 			try {
 				parsed = JSON.parse(saved);
 			} catch (parseError) {
-				console.error("Failed to parse form persistence data (corrupted localStorage):", parseError);
+				console.error(
+					"Failed to parse form persistence data (corrupted localStorage):",
+					parseError,
+				);
 				// Clear corrupted data
 				try {
 					localStorage.removeItem(STORAGE_KEY);
@@ -67,7 +70,12 @@ export function useFormPersistence(
 				return;
 			}
 
-			const { version, step: savedStep, formData: savedData, timestamp } = parsed;
+			const {
+				version,
+				step: savedStep,
+				formData: savedData,
+				timestamp,
+			} = parsed;
 
 			// Check version compatibility - prevent "Zombie Data" bug
 			if (version !== STORAGE_VERSION) {
@@ -94,7 +102,7 @@ export function useFormPersistence(
 			// Only restore if user was past step 1
 			if (savedStep > 1 && savedData) {
 				// Show toast notification
-				showToast.info(
+				showToast.error(
 					`Welcome back! Resume from Step ${savedStep}?`,
 					{
 						label: "Resume",
@@ -104,7 +112,6 @@ export function useFormPersistence(
 							showToast.success(`Resumed from Step ${savedStep}`);
 						},
 					},
-					TIMING.FORM_PERSISTENCE_SHOW_MS,
 				);
 			}
 		} catch (error) {
@@ -129,4 +136,3 @@ export function useFormPersistence(
 
 	return { clearProgress };
 }
-

@@ -74,4 +74,3 @@ export function ProgressBar({ step }: ProgressBarProps) {
 		</>
 	);
 }
-

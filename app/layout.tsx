@@ -120,6 +120,7 @@ export default async function RootLayout({
 					href="https://api.fontshare.com/v2/css?f[]=satoshi@1,900,700,500,400&display=swap"
 					as="style"
 				/>
+				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: Internal font-face declaration */}
 				<style
 					dangerouslySetInnerHTML={{
 						__html: `
@@ -132,6 +133,7 @@ export default async function RootLayout({
 				/>
 				<StructuredData nonce={nonce} />
 				<FAQSchema nonce={nonce} />
+				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: Schema.org structured data */}
 				<script
 					type="application/ld+json"
 					nonce={nonce}
@@ -185,6 +187,7 @@ export default async function RootLayout({
 				</Script>
 				{/* PostHog Analytics - Session Replay & Feature Flags */}
 				{process.env.NEXT_PUBLIC_POSTHOG_KEY && (
+					/* biome-ignore lint/security/noDangerouslySetInnerHtml: Internal tracking script */
 					<Script
 						id="posthog"
 						strategy="afterInteractive"

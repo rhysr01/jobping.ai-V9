@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 
 const DEFAULT_BOUNDS = {
 	lonMin: -11,
@@ -31,8 +31,10 @@ export function useMapProjection(config: MapProjectionConfig = {}) {
 
 	const unproject = useCallback(
 		(x: number, y: number) => {
-			const lon = (x / view.w) * (bounds.lonMax - bounds.lonMin) + bounds.lonMin;
-			const lat = bounds.latMax - (y / view.h) * (bounds.latMax - bounds.latMin);
+			const lon =
+				(x / view.w) * (bounds.lonMax - bounds.lonMin) + bounds.lonMin;
+			const lat =
+				bounds.latMax - (y / view.h) * (bounds.latMax - bounds.latMin);
 			return { lat, lon };
 		},
 		[bounds, view],
@@ -40,4 +42,3 @@ export function useMapProjection(config: MapProjectionConfig = {}) {
 
 	return { project, unproject, bounds, view };
 }
-

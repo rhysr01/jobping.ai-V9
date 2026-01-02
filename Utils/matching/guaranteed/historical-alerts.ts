@@ -1,6 +1,6 @@
 /**
  * Historical Matches as Target Companies
- * 
+ *
  * CRITICAL: Historical matches are NOT active jobs - they're "Target Companies"
  * Show as alert signup, not as clickable matches
  */
@@ -116,10 +116,13 @@ export async function getTargetCompaniesFromHistory(
 				"We haven't seen roles for your niche in 48 hours, but we've matched students to these companies recently.",
 		};
 	} catch (error) {
-		apiLogger.error("Error getting target companies from history", error as Error, {
-			email: userPrefs.email,
-		});
+		apiLogger.error(
+			"Error getting target companies from history",
+			error as Error,
+			{
+				email: userPrefs.email,
+			},
+		);
 		return { targetCompanies: [], message: "" };
 	}
 }
-

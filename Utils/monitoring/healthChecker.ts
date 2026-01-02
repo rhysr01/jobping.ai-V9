@@ -34,6 +34,7 @@ export interface ComponentHealth {
 
 export class HealthChecker {
 	private supabase: any;
+	private resend: Resend;
 
 	constructor() {
 		const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

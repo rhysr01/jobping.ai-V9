@@ -375,11 +375,7 @@ export class PerformanceMonitor {
 
 // Business metrics tracking - using object instead of class for better tree-shaking
 export const BusinessMetrics = {
-	recordJobCleanup(
-		deleted: number,
-		total: number,
-		duration: number,
-	): void {
+	recordJobCleanup(deleted: number, total: number, duration: number): void {
 		logger.metric("jobs.cleanup.deleted", deleted, "count", {
 			operation: "job-cleanup",
 			component: "database",
@@ -401,11 +397,7 @@ export const BusinessMetrics = {
 		});
 	},
 
-	recordEmailSent(
-		emails: number,
-		success: number,
-		duration: number,
-	): void {
+	recordEmailSent(emails: number, success: number, duration: number): void {
 		logger.metric("emails.sent", emails, "count", {
 			operation: "email-sending",
 			component: "email-service",

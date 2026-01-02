@@ -88,13 +88,15 @@ const EuropeMap = memo(
 
 		// Detect if device supports hover (prevents sticky hover on mobile)
 		useEffect(() => {
-			const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+			const mediaQuery = window.matchMedia(
+				"(hover: hover) and (pointer: fine)",
+			);
 			setSupportsHover(mediaQuery.matches);
-			
+
 			const handleChange = (e: MediaQueryListEvent) => {
 				setSupportsHover(e.matches);
 			};
-			
+
 			mediaQuery.addEventListener("change", handleChange);
 			return () => mediaQuery.removeEventListener("change", handleChange);
 		}, []);
@@ -679,7 +681,11 @@ const EuropeMap = memo(
 													: undefined
 										}
 										style={{ willChange: "transform, opacity" }}
-										whileHover={!disabled && supportsHover ? { scale: 1.4, strokeWidth: 4 } : {}}
+										whileHover={
+											!disabled && supportsHover
+												? { scale: 1.4, strokeWidth: 4 }
+												: {}
+										}
 										whileTap={!disabled ? { scale: 0.9 } : {}}
 										onClick={() => {
 											if (disabled) {
@@ -764,7 +770,6 @@ const EuropeMap = memo(
 																"0 0 6px rgba(243,232,255,0.3), 0 0 3px rgba(194,168,255,0.2)",
 														}),
 											}}
-											aria-hidden="true"
 										>
 											{city}
 										</motion.text>

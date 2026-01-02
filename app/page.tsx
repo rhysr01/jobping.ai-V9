@@ -99,6 +99,8 @@ export default function Page() {
 											fill="none"
 											stroke="currentColor"
 											viewBox="0 0 24 24"
+											role="img"
+											aria-label="Arrow right"
 										>
 											<path
 												strokeLinecap="round"

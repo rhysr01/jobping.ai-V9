@@ -5,19 +5,19 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { BrandIcons } from "@/components/ui/BrandIcons";
+import CustomScanTrigger from "@/components/ui/CustomScanTrigger";
 import { SuccessAnimation } from "@/components/ui/SuccessAnimation";
+import TargetCompaniesAlert from "@/components/ui/TargetCompaniesAlert";
 import { ApiError, apiCall } from "@/lib/api-client";
+import {
+	calculateMatchAccuracy,
+	getMatchAccuracyColor,
+} from "@/lib/matchAccuracy";
 import {
 	PREMIUM_ROLES_PER_WEEK,
 	PREMIUM_SEND_DAYS_LABEL,
 	PREMIUM_SENDS_PER_WEEK,
 } from "@/lib/productMetrics";
-import {
-	calculateMatchAccuracy,
-	getMatchAccuracyColor,
-} from "@/lib/matchAccuracy";
-import CustomScanTrigger from "@/components/ui/CustomScanTrigger";
-import TargetCompaniesAlert from "@/components/ui/TargetCompaniesAlert";
 
 function SignupSuccessContent() {
 	const [showSuccess, setShowSuccess] = useState(true);
@@ -281,23 +281,26 @@ function SignupSuccessContent() {
 									/>
 								)}
 
-								{metadata?.targetCompanies && metadata.targetCompanies.length > 0 && (
-									<TargetCompaniesAlert
-										companies={metadata.targetCompanies}
-										message="We've also matched students to these companies recently. Set alerts to be notified when new roles appear."
-										onSetAlert={handleSetAlert}
-									/>
-								)}
+								{metadata?.targetCompanies &&
+									metadata.targetCompanies.length > 0 && (
+										<TargetCompaniesAlert
+											companies={metadata.targetCompanies}
+											message="We've also matched students to these companies recently. Set alerts to be notified when new roles appear."
+											onSetAlert={handleSetAlert}
+										/>
+									)}
 
 								{/* Match Accuracy Score Badge */}
 								{metadata?.relaxationLevel !== null &&
-									metadata.relaxationLevel !== undefined && (
+									metadata?.relaxationLevel !== undefined && (
 										<div className="mb-6">
 											{(() => {
 												const accuracy = calculateMatchAccuracy(
 													metadata.relaxationLevel,
 												);
-												const colorClass = getMatchAccuracyColor(accuracy.label);
+												const colorClass = getMatchAccuracyColor(
+													accuracy.label,
+												);
 												return (
 													<motion.div
 														initial={{ opacity: 0, y: 10 }}

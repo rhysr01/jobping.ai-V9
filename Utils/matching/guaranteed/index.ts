@@ -1,6 +1,6 @@
 /**
  * Guaranteed Match Engine - Main Orchestrator
- * 
+ *
  * SINGLE-PASS architecture: No recursive loops, all penalties calculated in one pass
  * Ensures users never hit zero results, but maintains quality through transparent penalties
  */
@@ -8,19 +8,19 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { apiLogger } from "@/lib/api-logger";
 import type { Job } from "@/scrapers/types";
-import type { MatchResult, UserPreferences } from "../types";
 import { calculateMatchScore } from "../rule-based-matcher.service";
+import type { MatchResult, UserPreferences } from "../types";
 import {
-	calculateGuaranteedMatchScore,
-	generateMatchReason,
-	countRelaxationLevels,
-} from "./single-pass-scoring";
+	type CustomScanResult,
+	extractMissingCriteria,
+	triggerCustomScan,
+} from "./custom-scan";
 import { getTargetCompaniesFromHistory } from "./historical-alerts";
 import {
-	triggerCustomScan,
-	extractMissingCriteria,
-	type CustomScanResult,
-} from "./custom-scan";
+	calculateGuaranteedMatchScore,
+	countRelaxationLevels,
+	generateMatchReason,
+} from "./single-pass-scoring";
 
 export interface GuaranteedMatchResult {
 	matches: MatchResult[];
@@ -47,7 +47,9 @@ async function getGuaranteedMatchesSinglePass(
 	userPrefs: UserPreferences,
 	minMatches: number,
 ): Promise<{
-	matches: Array<MatchResult & { relaxationLevel: number; relaxationReason: string }>;
+	matches: Array<
+		MatchResult & { relaxationLevel: number; relaxationReason: string }
+	>;
 	metadata: {
 		totalScored: number;
 		relaxationLevels: Record<number, number>;
@@ -106,7 +108,12 @@ async function getGuaranteedMatchesSinglePass(
 			scored.relaxationReason,
 		),
 		confidence_score: scored.baseScore / 100, // Normalize to 0-1
-		match_quality: scored.finalScore >= 80 ? "high" : scored.finalScore >= 65 ? "medium" : "low",
+		match_quality:
+			scored.finalScore >= 80
+				? "high"
+				: scored.finalScore >= 65
+					? "medium"
+					: "low",
 		score_breakdown: scored.scoreBreakdown,
 		provenance: {
 			match_algorithm: "guaranteed_single_pass",
@@ -202,13 +209,17 @@ export async function getGuaranteedMatches(
 		apiLogger.info("Guaranteed matches found", {
 			email: userPrefs.email,
 			matchesFound: result.matches.length,
-			relaxationLevel: Math.max(...result.matches.map((m) => m.relaxationLevel)),
+			relaxationLevel: Math.max(
+				...result.matches.map((m) => m.relaxationLevel),
+			),
 		});
 
 		return {
 			matches: result.matches,
 			metadata: {
-				relaxationLevel: Math.max(...result.matches.map((m) => m.relaxationLevel)),
+				relaxationLevel: Math.max(
+					...result.matches.map((m) => m.relaxationLevel),
+				),
 				usedHistorical: false,
 				usedVisaRelaxation: result.matches.some((m) => m.relaxationLevel >= 5),
 				totalScored: result.metadata.totalScored,
@@ -225,7 +236,11 @@ export async function getGuaranteedMatches(
 	// If still < minMatches after historical, trigger custom scan
 	if (result.matches.length < minMatches) {
 		const missingCriteria = extractMissingCriteria(userPrefs, result.matches);
-		const customScan = await triggerCustomScan(supabase, userPrefs, missingCriteria);
+		const customScan = await triggerCustomScan(
+			supabase,
+			userPrefs,
+			missingCriteria,
+		);
 
 		// Track fallback event
 		await trackFallbackMatch(supabase, {
@@ -263,11 +278,12 @@ export async function getGuaranteedMatches(
 		matches: result.matches,
 		targetCompanies: targetCompanies.targetCompanies,
 		metadata: {
-			relaxationLevel: Math.max(...result.matches.map((m) => m.relaxationLevel)),
+			relaxationLevel: Math.max(
+				...result.matches.map((m) => m.relaxationLevel),
+			),
 			usedHistorical: targetCompanies.targetCompanies.length > 0,
 			usedVisaRelaxation: result.matches.some((m) => m.relaxationLevel >= 5),
 			totalScored: result.metadata.totalScored,
 		},
 	};
 }
-

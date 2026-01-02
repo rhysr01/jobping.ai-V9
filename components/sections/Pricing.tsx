@@ -1,15 +1,13 @@
 "use client";
 
-import React from "react";
-import { Check } from "lucide-react";
-import { TiltCard } from "@/components/ui/TiltCard";
 import { motion } from "framer-motion";
+import { Check } from "lucide-react";
 import Link from "next/link";
-import { trackEvent } from "@/lib/analytics";
-import { useStats } from "@/hooks/useStats";
-import SocialProofTicker from "@/components/ui/SocialProofTicker";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { BrandIcons } from "@/components/ui/BrandIcons";
+import SocialProofTicker from "@/components/ui/SocialProofTicker";
+import { TiltCard } from "@/components/ui/TiltCard";
+import { useStats } from "@/hooks/useStats";
+import { trackEvent } from "@/lib/analytics";
 
 const TIERS = [
 	{

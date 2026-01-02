@@ -1,14 +1,14 @@
 /**
  * Job Type Shim - Global Type Safety Strategy
- * 
+ *
  * This file provides a comprehensive JobWithMetadata interface that encompasses
  * all "scraped" data and "AI-calculated" data fields used throughout the codebase.
- * 
+ *
  * STRATEGY: Instead of fixing 803 `any` types manually, we create one robust
  * interface and perform Global Search & Replace for common patterns like:
  * - `distributedJobs: any[]` → `distributedJobs: JobWithMetadata[]`
  * - `(job as any).visa_friendly` → `job.visa_friendly` (now typed)
- * 
+ *
  * This will instantly clear 60% of type errors.
  */
 
@@ -27,13 +27,16 @@ export interface JobWithMetadata extends Job {
 	visa_confidence_reason?: string;
 	visa_confidence_percentage?: number;
 
-	// Language Requirements (used in rule-based-matcher.service.ts)
-	language_requirements?: string[];
-
 	// Experience Level Fields (used in matching calculations)
 	min_yoe?: number | null; // Years of Experience (null if regex extraction failed)
 	max_yoe?: number | null;
-	experience_level?: "internship" | "graduate" | "junior" | "mid" | "senior" | null;
+	experience_level?:
+		| "internship"
+		| "graduate"
+		| "junior"
+		| "mid"
+		| "senior"
+		| null;
 
 	// Matching Metadata (calculated by matching engine)
 	match_score?: number;
@@ -98,19 +101,3 @@ export function asJobWithMetadata(job: unknown): JobWithMetadata {
 	}
 	throw new Error("Invalid job object - cannot cast to JobWithMetadata");
 }
-
-/**
- * Array type helper for common patterns
- */
-export type JobWithMetadataArray = JobWithMetadata[];
-
-/**
- * Map type for job lookups by hash
- */
-export type JobMap = Map<string, JobWithMetadata>;
-
-/**
- * Record type for job lookups by hash
- */
-export type JobRecord = Record<string, JobWithMetadata>;
-

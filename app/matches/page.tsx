@@ -161,7 +161,7 @@ function MatchesPageContent() {
 			fetchMatches();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []); // Empty deps - only run once on mount
+	}, [fetchMatches]); // Empty deps - only run once on mount
 
 	// Check URL params for free signup success overlay
 	useEffect(() => {
@@ -170,7 +170,7 @@ function MatchesPageContent() {
 
 		if (justSignedUp === "true" && matchCount) {
 			const count = parseInt(matchCount, 10);
-			if (!isNaN(count) && count > 0) {
+			if (!Number.isNaN(count) && count > 0) {
 				setSuccessMatchCount(count);
 				setShowSuccessOverlay(true);
 
@@ -519,7 +519,12 @@ function MatchesPageContent() {
 									>
 										Update Preferences
 									</Button>
-									<Button href="/signup" variant="gradient" size="sm" className="text-xs">
+									<Button
+										href="/signup"
+										variant="gradient"
+										size="sm"
+										className="text-xs"
+									>
 										Upgrade for More Matches
 									</Button>
 								</div>
@@ -793,7 +798,7 @@ function MatchesPageContent() {
 																			() => setClickedJobId(null),
 																			TIMING.CLICK_RESET_DELAY_MS,
 																		);
-																		return;
+																		return undefined;
 																	}
 																}
 
@@ -814,6 +819,7 @@ function MatchesPageContent() {
 																	() => setClickedJobId(null),
 																	TIMING.CLICK_RESET_DELAY_MS,
 																);
+																return undefined;
 															})
 															.then((data) => {
 																if (data?.error && data?.similarMatches) {

@@ -1,16 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { apiLogger } from "@/lib/api-logger";
-import { getDatabaseClient } from "@/Utils/databasePool";
-import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
 import { createConsolidatedMatcher } from "@/Utils/consolidatedMatchingV2";
+import { getDatabaseClient } from "@/Utils/databasePool";
 import type { UserPreferences } from "@/Utils/matching/types";
+import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
 
 /**
  * Ghost Matches API
- * 
+ *
  * Returns additional matches that would be available with Premium tier.
  * Uses "lite" premium matching (rule-based only, no AI) to show value.
- * 
+ *
  * This creates FOMO and drives conversion to Premium.
  */
 
@@ -212,4 +212,3 @@ export async function GET(request: NextRequest) {
 		);
 	}
 }
-

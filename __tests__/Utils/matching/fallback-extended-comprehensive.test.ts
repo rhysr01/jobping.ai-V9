@@ -4,53 +4,53 @@
  */
 
 import {
-  getFallbackMatches,
-  performFallbackMatching,
+	getFallbackMatches,
+	performFallbackMatching,
 } from "@/Utils/matching/fallback.service";
 
 jest.mock("@/Utils/matching/rule-based-matcher.service");
 
 describe("Fallback Service", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+	beforeEach(() => {
+		jest.clearAllMocks();
+	});
 
-  describe("performFallbackMatching", () => {
-    it("should perform fallback matching", async () => {
-      const jobs = [{ id: "job1", title: "Engineer", location: "London" }];
-      const userPrefs = {
-        email: "user@example.com",
-        target_cities: ["London"],
-      };
+	describe("performFallbackMatching", () => {
+		it("should perform fallback matching", async () => {
+			const jobs = [{ id: "job1", title: "Engineer", location: "London" }];
+			const userPrefs = {
+				email: "user@example.com",
+				target_cities: ["London"],
+			};
 
-      const result = await performFallbackMatching(jobs, userPrefs);
+			const result = await performFallbackMatching(jobs, userPrefs);
 
-      expect(result).toBeDefined();
-      expect(result.matches).toBeDefined();
-    });
+			expect(result).toBeDefined();
+			expect(result.matches).toBeDefined();
+		});
 
-    it("should handle empty jobs", async () => {
-      const userPrefs = {
-        email: "user@example.com",
-        target_cities: ["London"],
-      };
+		it("should handle empty jobs", async () => {
+			const userPrefs = {
+				email: "user@example.com",
+				target_cities: ["London"],
+			};
 
-      const result = await performFallbackMatching([], userPrefs);
+			const result = await performFallbackMatching([], userPrefs);
 
-      expect(result.matches).toEqual([]);
-    });
-  });
+			expect(result.matches).toEqual([]);
+		});
+	});
 
-  describe("getFallbackMatches", () => {
-    it("should get fallback matches", async () => {
-      const jobs = [{ id: "job1", title: "Engineer" }];
-      const userPrefs = {
-        email: "user@example.com",
-      };
+	describe("getFallbackMatches", () => {
+		it("should get fallback matches", async () => {
+			const jobs = [{ id: "job1", title: "Engineer" }];
+			const userPrefs = {
+				email: "user@example.com",
+			};
 
-      const matches = await getFallbackMatches(jobs, userPrefs);
+			const matches = await getFallbackMatches(jobs, userPrefs);
 
-      expect(Array.isArray(matches)).toBe(true);
-    });
-  });
+			expect(Array.isArray(matches)).toBe(true);
+		});
+	});
 });

@@ -4,64 +4,64 @@
  */
 
 import {
-  enrichJobData,
-  getJobMetadata,
-  normalizeJobData,
+	enrichJobData,
+	getJobMetadata,
+	normalizeJobData,
 } from "@/Utils/matching/job-enrichment.service";
 
 describe("Job Enrichment Service", () => {
-  describe("enrichJobData", () => {
-    it("should enrich job data", () => {
-      const job = {
-        id: "job1",
-        title: "Software Engineer",
-        company: "Tech Corp",
-        location: "London",
-      };
+	describe("enrichJobData", () => {
+		it("should enrich job data", () => {
+			const job = {
+				id: "job1",
+				title: "Software Engineer",
+				company: "Tech Corp",
+				location: "London",
+			};
 
-      const enriched = enrichJobData(job as any);
+			const enriched = enrichJobData(job as any);
 
-      expect(enriched).toBeDefined();
-      expect(enriched.title).toBe("Software Engineer");
-    });
+			expect(enriched).toBeDefined();
+			expect(enriched.title).toBe("Software Engineer");
+		});
 
-    it("should add metadata", () => {
-      const job = {
-        id: "job1",
-        title: "Engineer",
-      };
+		it("should add metadata", () => {
+			const job = {
+				id: "job1",
+				title: "Engineer",
+			};
 
-      const enriched = enrichJobData(job as any);
+			const enriched = enrichJobData(job as any);
 
-      expect(enriched).toBeDefined();
-    });
-  });
+			expect(enriched).toBeDefined();
+		});
+	});
 
-  describe("normalizeJobData", () => {
-    it("should normalize job data", () => {
-      const job = {
-        title: "  Software Engineer  ",
-        company: "Tech Corp",
-        location: "London, UK",
-      };
+	describe("normalizeJobData", () => {
+		it("should normalize job data", () => {
+			const job = {
+				title: "  Software Engineer  ",
+				company: "Tech Corp",
+				location: "London, UK",
+			};
 
-      const normalized = normalizeJobData(job as any);
+			const normalized = normalizeJobData(job as any);
 
-      expect(normalized.title).toBe("Software Engineer");
-    });
-  });
+			expect(normalized.title).toBe("Software Engineer");
+		});
+	});
 
-  describe("getJobMetadata", () => {
-    it("should extract job metadata", () => {
-      const job = {
-        id: "job1",
-        title: "Engineer",
-        description: "Great opportunity",
-      };
+	describe("getJobMetadata", () => {
+		it("should extract job metadata", () => {
+			const job = {
+				id: "job1",
+				title: "Engineer",
+				description: "Great opportunity",
+			};
 
-      const metadata = getJobMetadata(job as any);
+			const metadata = getJobMetadata(job as any);
 
-      expect(metadata).toBeDefined();
-    });
-  });
+			expect(metadata).toBeDefined();
+		});
+	});
 });

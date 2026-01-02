@@ -171,31 +171,37 @@ export async function GET(request: NextRequest) {
 				isArray: Array.isArray(matchesData),
 				matchesDataLength: Array.isArray(matchesData) ? matchesData.length : 0,
 			});
-			
+
 			// Check for target companies and custom scans when no matches found
 			try {
-				const { getTargetCompaniesFromHistory } = await import("@/Utils/matching/guaranteed/historical-alerts");
+				const { getTargetCompaniesFromHistory } = await import(
+					"@/Utils/matching/guaranteed/historical-alerts"
+				);
 				const { getDatabaseClient } = await import("@/Utils/databasePool");
 				const supabaseClient = getDatabaseClient();
-				
+
 				// Get user preferences for target companies
 				const { data: userPrefs } = await supabase
 					.from("users")
 					.select("career_path, target_cities, roles_selected")
 					.eq("email", email)
 					.single();
-				
+
 				if (userPrefs) {
 					const targetCompaniesResult = await getTargetCompaniesFromHistory(
 						supabaseClient,
 						{
 							email,
-							career_path: userPrefs.career_path ? (Array.isArray(userPrefs.career_path) ? userPrefs.career_path : [userPrefs.career_path]) : [],
+							career_path: userPrefs.career_path
+								? Array.isArray(userPrefs.career_path)
+									? userPrefs.career_path
+									: [userPrefs.career_path]
+								: [],
 							target_cities: userPrefs.target_cities || [],
 							roles_selected: userPrefs.roles_selected || [],
 						},
 					);
-					
+
 					// Check for pending custom scans
 					const { data: customScanData } = await supabase
 						.from("custom_scans")
@@ -205,15 +211,18 @@ export async function GET(request: NextRequest) {
 						.order("created_at", { ascending: false })
 						.limit(1)
 						.single();
-					
+
 					return NextResponse.json({
 						jobs: [],
 						targetCompanies: targetCompaniesResult.targetCompanies,
-						customScan: customScanData ? {
-							scanId: customScanData.id,
-							estimatedTime: "2 hours",
-							message: "Your niche is highly specialized. We've prioritized a custom scrape for your criteria.",
-						} : null,
+						customScan: customScanData
+							? {
+									scanId: customScanData.id,
+									estimatedTime: "2 hours",
+									message:
+										"Your niche is highly specialized. We've prioritized a custom scrape for your criteria.",
+								}
+							: null,
 					});
 				}
 			} catch (error) {
@@ -222,7 +231,7 @@ export async function GET(request: NextRequest) {
 					email,
 				});
 			}
-			
+
 			return NextResponse.json({ jobs: [] });
 		}
 

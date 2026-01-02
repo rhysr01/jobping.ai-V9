@@ -765,8 +765,12 @@ async function scrapeAllCitiesCategories(options = {}) {
 	console.log(`🏢 Target sectors: ${HIGH_PERFORMING_SECTORS.join(", ")}`);
 	// Smart pagination: 2 role-based queries × 4 pages + 1 generic query × 3 pages = 11 requests per city
 	const rolePages = parseInt(process.env.ADZUNA_MAX_PAGES_ROLE || "4", 10);
-	const genericPages = parseInt(process.env.ADZUNA_MAX_PAGES_GENERIC || "3", 10);
-	const estimatedRequests = EU_CITIES_CATEGORIES.length * (2 * rolePages + 1 * genericPages); // Smart pagination
+	const genericPages = parseInt(
+		process.env.ADZUNA_MAX_PAGES_GENERIC || "3",
+		10,
+	);
+	const estimatedRequests =
+		EU_CITIES_CATEGORIES.length * (2 * rolePages + 1 * genericPages); // Smart pagination
 	console.log(
 		`📊 API Usage: ~${EU_CITIES_CATEGORIES.length} cities × (2 role queries × ${rolePages} pages + 1 generic × ${genericPages} pages) = ~${estimatedRequests} calls per run`,
 	);

@@ -40,31 +40,46 @@ export const RATE_LIMIT_CONFIG = {
 		skipSuccessfulRequests: true,
 	},
 	"create-checkout-session": {
-		windowMs: parseInt(process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS || "300000", 10), // 5 minutes
+		windowMs: parseInt(
+			process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS || "300000",
+			10,
+		), // 5 minutes
 		maxRequests: parseInt(process.env.RATE_LIMIT_CHECKOUT_MAX || "30", 10), // Increased to 30 (configurable)
 		skipSuccessfulRequests: false,
 	},
 	"user-matches": {
-		windowMs: parseInt(process.env.RATE_LIMIT_USER_MATCHES_WINDOW_MS || "60000", 10), // 1 minute
+		windowMs: parseInt(
+			process.env.RATE_LIMIT_USER_MATCHES_WINDOW_MS || "60000",
+			10,
+		), // 1 minute
 		maxRequests: parseInt(process.env.RATE_LIMIT_USER_MATCHES_MAX || "100", 10), // Increased to 100 (configurable)
 		skipSuccessfulRequests: false,
 	},
-	"dashboard": {
-		windowMs: parseInt(process.env.RATE_LIMIT_DASHBOARD_WINDOW_MS || "60000", 10), // 1 minute
+	dashboard: {
+		windowMs: parseInt(
+			process.env.RATE_LIMIT_DASHBOARD_WINDOW_MS || "60000",
+			10,
+		), // 1 minute
 		maxRequests: parseInt(process.env.RATE_LIMIT_DASHBOARD_MAX || "200", 10), // Increased to 200 (configurable)
 		skipSuccessfulRequests: false,
 	},
 	"verify-email": {
-		windowMs: parseInt(process.env.RATE_LIMIT_VERIFY_EMAIL_WINDOW_MS || "300000", 10), // 5 minutes
+		windowMs: parseInt(
+			process.env.RATE_LIMIT_VERIFY_EMAIL_WINDOW_MS || "300000",
+			10,
+		), // 5 minutes
 		maxRequests: parseInt(process.env.RATE_LIMIT_VERIFY_EMAIL_MAX || "50", 10), // Increased to 50 (configurable)
 		skipSuccessfulRequests: false,
 	},
 	"cleanup-jobs": {
-		windowMs: parseInt(process.env.RATE_LIMIT_CLEANUP_WINDOW_MS || "300000", 10), // 5 minutes
+		windowMs: parseInt(
+			process.env.RATE_LIMIT_CLEANUP_WINDOW_MS || "300000",
+			10,
+		), // 5 minutes
 		maxRequests: parseInt(process.env.RATE_LIMIT_CLEANUP_MAX || "20", 10), // Increased to 20 (configurable)
 		skipSuccessfulRequests: true,
 	},
-	"signup": {
+	signup: {
 		windowMs: parseInt(process.env.RATE_LIMIT_SIGNUP_WINDOW_MS || "60000", 10), // 1 minute
 		maxRequests: parseInt(process.env.RATE_LIMIT_SIGNUP_MAX || "10", 10), // 10 signups per minute (strict due to AI costs)
 		skipSuccessfulRequests: false,
@@ -221,9 +236,11 @@ class ProductionRateLimiter {
 		}
 
 		try {
-			if (process.env.REDIS_URL) {
+			// Support both REDIS_URL and KV_REDIS_URL (Vercel may set either)
+			const redisUrl = process.env.REDIS_URL || process.env.KV_REDIS_URL;
+			if (redisUrl) {
 				this.redisClient = createClient({
-					url: process.env.REDIS_URL,
+					url: redisUrl,
 					socket: {
 						connectTimeout: 5000,
 					},
@@ -240,7 +257,9 @@ class ProductionRateLimiter {
 
 				await this.redisClient.connect();
 			} else {
-				console.warn("No REDIS_URL found, using in-memory fallback");
+				console.warn(
+					"No REDIS_URL or KV_REDIS_URL found, using in-memory fallback",
+				);
 				this.isRedisConnected = false;
 			}
 		} catch (error) {
@@ -400,8 +419,14 @@ class ProductionRateLimiter {
 		const k = `${PREFIX()}ratelimit:${key}`;
 		try {
 			// Simple INCR/EX pattern
-			const maxRequests = parseInt(process.env.RATE_LIMIT_CONSUME_MAX || "500", 10); // Configurable, default 500
-			const windowSeconds = parseInt(process.env.RATE_LIMIT_CONSUME_WINDOW_SEC || "60", 10); // Configurable, default 60 seconds
+			const maxRequests = parseInt(
+				process.env.RATE_LIMIT_CONSUME_MAX || "500",
+				10,
+			); // Configurable, default 500
+			const windowSeconds = parseInt(
+				process.env.RATE_LIMIT_CONSUME_WINDOW_SEC || "60",
+				10,
+			); // Configurable, default 60 seconds
 			const count = await redis.incr(k);
 			if (count === 1) {
 				await redis.expire(k, windowSeconds);

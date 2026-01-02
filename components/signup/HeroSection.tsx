@@ -34,8 +34,8 @@ export function HeroSection({
 				Tell us where to send your first matches
 			</h1>
 			<p className="mt-3 sm:mt-4 text-base sm:text-lg md:text-xl font-medium leading-relaxed text-zinc-100 px-2">
-				We only ask for the essentials so we can filter internships and
-				graduate roles you can actually land.
+				We only ask for the essentials so we can filter internships and graduate
+				roles you can actually land.
 			</p>
 
 			<div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm md:text-base font-medium text-zinc-100">
@@ -75,4 +75,3 @@ export function HeroSection({
 		</motion.div>
 	);
 }
-
