@@ -78,6 +78,11 @@ export default function ExitIntentPopup() {
 					aria-modal="true"
 					aria-labelledby="exit-popup-title"
 					aria-describedby="exit-popup-description"
+					onKeyDown={(e) => {
+						if (e.key === "Escape") {
+							setShowPopup(false);
+						}
+					}}
 				>
 					<motion.div
 						ref={containerRef as React.RefObject<HTMLDivElement>}
@@ -88,6 +93,7 @@ export default function ExitIntentPopup() {
 						className="bg-white/[0.06] border border-white/10 backdrop-blur-xl rounded-2xl p-8 max-w-md w-full shadow-feature elevation-3"
 					>
 						<button
+							type="button"
 							onClick={() => setShowPopup(false)}
 							className="absolute top-4 right-4 text-content-secondary hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
 							aria-label="Close popup"
@@ -119,7 +125,10 @@ export default function ExitIntentPopup() {
 							>
 								{CTA_GET_MY_5_FREE_MATCHES}
 							</h3>
-							<p id="exit-popup-description" className="text-content-heading mb-4">
+							<p
+								id="exit-popup-description"
+								className="text-content-heading mb-4"
+							>
 								See <strong className="text-white">5 hand-picked jobs</strong>{" "}
 								matched to your city, visa status, and career path. Instant
 								results - no credit card needed.
@@ -136,6 +145,7 @@ export default function ExitIntentPopup() {
 								{CTA_GET_MY_5_FREE_MATCHES} →
 							</Link>
 							<button
+								type="button"
 								onClick={() => setShowPopup(false)}
 								className="mt-4 text-xs text-gray-500 opacity-50 hover:opacity-75 min-h-[44px] min-w-[44px] px-4"
 							>

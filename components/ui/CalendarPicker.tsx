@@ -102,6 +102,7 @@ export default function CalendarPicker({
 					fill="none"
 					viewBox="0 0 24 24"
 					stroke="currentColor"
+					aria-hidden="true"
 				>
 					<path
 						strokeLinecap="round"
@@ -116,7 +117,9 @@ export default function CalendarPicker({
 			{isOpen && (
 				<>
 					{/* Backdrop */}
-					<div
+					<button
+						type="button"
+						aria-label="Close calendar"
 						className="fixed inset-0 z-40"
 						onClick={() => setIsOpen(false)}
 					/>
@@ -143,6 +146,7 @@ export default function CalendarPicker({
 										fill="none"
 										viewBox="0 0 24 24"
 										stroke="currentColor"
+										aria-hidden="true"
 									>
 										<path
 											strokeLinecap="round"
@@ -169,6 +173,7 @@ export default function CalendarPicker({
 										fill="none"
 										viewBox="0 0 24 24"
 										stroke="currentColor"
+										aria-hidden="true"
 									>
 										<path
 											strokeLinecap="round"

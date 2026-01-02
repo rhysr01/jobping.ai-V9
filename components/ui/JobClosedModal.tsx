@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Button from "./Button";
 
 interface SimilarMatch {
@@ -37,7 +37,9 @@ export default function JobClosedModal({
 			{isOpen && (
 				<>
 					{/* Backdrop */}
-					<motion.div
+					<motion.button
+						type="button"
+						aria-label="Close modal"
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
 						exit={{ opacity: 0 }}
@@ -62,6 +64,7 @@ export default function JobClosedModal({
 											fill="none"
 											stroke="currentColor"
 											viewBox="0 0 24 24"
+											aria-hidden="true"
 										>
 											<path
 												strokeLinecap="round"
@@ -151,4 +154,3 @@ export default function JobClosedModal({
 		</AnimatePresence>
 	);
 }
-
