@@ -3,6 +3,7 @@
  * Extracted from jobMatching.ts for better organization
  */
 
+import type { JobWithMetadata } from "@/lib/types/job";
 import type { Job } from "../../scrapers/types";
 import { getScoringWeights } from "../config/matching";
 import {
@@ -220,9 +221,11 @@ export function applyHardGates(
 			);
 
 			// Also check structured field if available
+			// TYPE SHIM: Now properly typed with JobWithMetadata
+			const jobWithMeta = job as JobWithMetadata;
 			const jobVisaFriendly =
-				(job as any).visa_friendly === true ||
-				(job as any).visa_sponsorship === true;
+				jobWithMeta.visa_friendly === true ||
+				jobWithMeta.visa_sponsorship === true;
 
 			// FREE TIER: More lenient - also check for international/global company indicators
 			if (isFreeTier) {
@@ -273,7 +276,8 @@ export function applyHardGates(
 			: ["English"]; // Default free users to English only
 
 	if (userLanguages && userLanguages.length > 0) {
-		const jobLanguages = (job as any).language_requirements;
+		// TYPE SHIM: Now properly typed
+		const jobLanguages = (job as JobWithMetadata).language_requirements;
 
 		// If job has explicit language requirements, check if user speaks any of them
 		if (
@@ -546,11 +550,12 @@ export function applyHardGates(
 	// If YoE extraction returned null (regex miss), DEFAULT TO ALLOWING JOB TO PASS
 	// This ensures we don't accidentally block perfect jobs due to weirdly worded descriptions
 	// Better to spend $0.01 on an AI check than hide a perfect job
-	const jobYoE = job as any;
+	// TYPE SHIM: Now properly typed
+	const jobWithMeta = job as JobWithMetadata;
 	if (
-		jobYoE.min_yoe !== null &&
-		jobYoE.min_yoe !== undefined &&
-		typeof jobYoE.min_yoe === "number"
+		jobWithMeta.min_yoe !== null &&
+		jobWithMeta.min_yoe !== undefined &&
+		typeof jobWithMeta.min_yoe === "number"
 	) {
 		// YoE regex extraction succeeded - could add hard gate here in future
 		// For now, we let all jobs pass through (including those with numeric YoE)

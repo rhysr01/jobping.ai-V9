@@ -2,9 +2,11 @@ import { useEffect, useRef } from "react";
 import { showToast } from "@/lib/toast";
 
 const STORAGE_KEY = "jobping_premium_signup_v1";
+const STORAGE_VERSION = 1; // Increment when formData structure changes
 const EXPIRATION_MS = 86400000; // 24 hours
 
 interface SavedFormState {
+	version: number;
 	step: number;
 	formData: any;
 	timestamp: number;
@@ -28,6 +30,7 @@ export function useFormPersistence(
 		if (step > 1) {
 			try {
 				const state: SavedFormState = {
+					version: STORAGE_VERSION,
 					step,
 					formData,
 					timestamp: Date.now(),
@@ -49,8 +52,35 @@ export function useFormPersistence(
 			const saved = localStorage.getItem(STORAGE_KEY);
 			if (!saved) return;
 
-			const parsed: SavedFormState = JSON.parse(saved);
-			const { step: savedStep, formData: savedData, timestamp } = parsed;
+			// Wrap JSON.parse in try-catch to handle corrupted localStorage
+			let parsed: SavedFormState;
+			try {
+				parsed = JSON.parse(saved);
+			} catch (parseError) {
+				console.error("Failed to parse form persistence data (corrupted localStorage):", parseError);
+				// Clear corrupted data
+				try {
+					localStorage.removeItem(STORAGE_KEY);
+				} catch {
+					// Ignore cleanup errors
+				}
+				return;
+			}
+
+			const { version, step: savedStep, formData: savedData, timestamp } = parsed;
+
+			// Check version compatibility - prevent "Zombie Data" bug
+			if (version !== STORAGE_VERSION) {
+				console.warn(
+					`Form data version mismatch (${version} vs ${STORAGE_VERSION}), clearing storage`,
+				);
+				try {
+					localStorage.removeItem(STORAGE_KEY);
+				} catch {
+					// Ignore cleanup errors
+				}
+				return;
+			}
 
 			// Check if expired (24 hours)
 			const isExpired = Date.now() - timestamp > EXPIRATION_MS;
@@ -74,12 +104,12 @@ export function useFormPersistence(
 							showToast.success(`Resumed from Step ${savedStep}`);
 						},
 					},
-					10000, // Show for 10 seconds
+					TIMING.FORM_PERSISTENCE_SHOW_MS,
 				);
 			}
 		} catch (error) {
 			// Invalid JSON or other error - clear corrupted data
-			console.warn("Failed to restore form progress:", error);
+			console.error("Failed to restore form progress:", error);
 			try {
 				localStorage.removeItem(STORAGE_KEY);
 			} catch {

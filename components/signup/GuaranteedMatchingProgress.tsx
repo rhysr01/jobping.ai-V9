@@ -2,31 +2,32 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle } from "lucide-react";
+import { TIMING } from "@/lib/constants";
 
 const STAGES = [
 	{
 		id: "sql",
 		label: "Deep Database Query",
 		sub: "Checking 2,000+ indexed roles...",
-		duration: 2000,
+		duration: TIMING.MATCHING_STAGES.SQL,
 	},
 	{
 		id: "geo",
 		label: "Location Perimeter Expansion",
 		sub: "Broadening search to Greater Region...",
-		duration: 3000,
+		duration: TIMING.MATCHING_STAGES.GEO,
 	},
 	{
 		id: "ai",
 		label: "Real-time Source Scraping",
 		sub: "Pinging 50+ job boards via AI...",
-		duration: 4000,
+		duration: TIMING.MATCHING_STAGES.AI,
 	},
 	{
 		id: "score",
 		label: "Semantic Alignment",
 		sub: "Ranking matches by career path...",
-		duration: 2000,
+		duration: TIMING.MATCHING_STAGES.SCORE,
 	},
 ];
 

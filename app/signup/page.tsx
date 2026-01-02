@@ -1,14 +1,22 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { HeroSection } from "@/components/signup/HeroSection";
+import { ProgressBar } from "@/components/signup/ProgressBar";
+import { TrustSignals } from "@/components/signup/TrustSignals";
+import { Step1Basics } from "@/components/signup/Step1Basics";
+import { Step2Preferences } from "@/components/signup/Step2Preferences";
+import { Step3CareerPath } from "@/components/signup/Step3CareerPath";
+import { Step4MatchingPreferences } from "@/components/signup/Step4MatchingPreferences";
+import { CITIES, LANGUAGES, CAREER_PATHS } from "@/components/signup/constants";
 import { useAriaAnnounce } from "@/components/ui/AriaLiveRegion";
 import { BrandIcons } from "@/components/ui/BrandIcons";
+import { CityChip } from "@/components/ui/CityChip";
 import EntryLevelSelector from "@/components/ui/EntryLevelSelector";
 import EuropeMap from "@/components/ui/EuropeMap";
-import { CityChip } from "@/components/ui/CityChip";
 import {
 	FormFieldError,
 	FormFieldHelper,
@@ -17,19 +25,30 @@ import {
 import LanguageSelector from "@/components/ui/LanguageSelector";
 import { useReducedMotion } from "@/components/ui/useReducedMotion";
 import WorkEnvironmentSelector from "@/components/ui/WorkEnvironmentSelector";
+import { useFormPersistence } from "@/hooks/useFormPersistence";
 import {
 	useEmailValidation,
 	useRequiredValidation,
 } from "@/hooks/useFormValidation";
 import { ApiError, apiCall, apiCallJson } from "@/lib/api-client";
+import { TIMING } from "@/lib/constants";
 import * as Copy from "@/lib/copy";
+import { logger } from "@/lib/monitoring";
 import { SIGNUP_INITIAL_ROLES } from "@/lib/productMetrics";
 import { showToast } from "@/lib/toast";
-import { useFormPersistence } from "@/hooks/useFormPersistence";
 
 function SignupForm() {
 	const router = useRouter();
-	const [step, setStep] = useState(1);
+	const searchParams = useSearchParams();
+	
+	// Initialize step from URL or default to 1
+	const initialStep = useRef<number | null>(null);
+	if (initialStep.current === null) {
+		const urlStep = searchParams.get("step");
+		initialStep.current = urlStep ? Math.max(1, Math.min(4, parseInt(urlStep, 10))) : 1;
+	}
+	
+	const [step, setStep] = useState(initialStep.current);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -118,7 +137,11 @@ function SignupForm() {
 				setStatsStale(!hasFreshStats);
 			})
 			.catch((err) => {
-				console.error("Failed to fetch stats:", err);
+				logger.error("Failed to fetch stats", {
+					error: err,
+					component: "signup-stats",
+					metadata: { fallbackValues: { activeJobs: "~12,000", totalUsers: "3,400" } },
+				});
 				setActiveJobs("~12,000");
 				setTotalUsers("3,400");
 				setStatsStale(true);
@@ -126,378 +149,6 @@ function SignupForm() {
 			.finally(() => setIsLoadingStats(false));
 	}, []);
 
-	const CITIES = [
-		"Dublin",
-		"London",
-		"Paris",
-		"Amsterdam",
-		"Manchester",
-		"Birmingham",
-		"Belfast",
-		"Madrid",
-		"Barcelona",
-		"Berlin",
-		"Hamburg",
-		"Munich",
-		"Zurich",
-		"Milan",
-		"Rome",
-		"Brussels",
-		"Stockholm",
-		"Copenhagen",
-		"Vienna",
-		"Prague",
-		"Warsaw",
-	];
-
-	const LANGUAGES = [
-		// Most common EU languages
-		"English",
-		"French",
-		"German",
-		"Spanish",
-		"Italian",
-		"Dutch",
-		"Portuguese",
-		// Additional EU languages
-		"Polish",
-		"Swedish",
-		"Danish",
-		"Finnish",
-		"Czech",
-		"Romanian",
-		"Hungarian",
-		"Greek",
-		"Bulgarian",
-		"Croatian",
-		"Serbian",
-		"Slovak",
-		"Slovenian",
-		"Estonian",
-		"Latvian",
-		"Lithuanian",
-		"Ukrainian",
-		// Middle Eastern & Central Asian (common visa seekers)
-		"Arabic",
-		"Turkish",
-		"Hebrew",
-		"Persian",
-		"Farsi",
-		"Urdu",
-		// Asian languages (common visa seekers)
-		"Japanese",
-		"Chinese",
-		"Mandarin",
-		"Cantonese",
-		"Korean",
-		"Hindi",
-		"Thai",
-		"Vietnamese",
-		"Indonesian",
-		"Tagalog",
-		"Malay",
-		"Bengali",
-		"Tamil",
-		"Telugu",
-		// Other common languages
-		"Russian",
-	];
-
-	// NEW CONSTANTS FOR BETTER MATCHING
-	const INDUSTRIES = [
-		"Technology",
-		"Finance",
-		"Consulting",
-		"Healthcare",
-		"Retail",
-		"Manufacturing",
-		"Energy",
-		"Media",
-		"Education",
-		"Government",
-		"Non-profit",
-		"Real Estate",
-		"Transportation",
-		"Automotive",
-		"Fashion",
-		"Food & Beverage",
-		"Travel",
-		"Other",
-	];
-
-	const COMPANY_SIZES = [
-		{ value: "startup", label: "Startup (1-50)", emoji: "" },
-		{ value: "scaleup", label: "Scale-up (50-500)", emoji: "" },
-		{ value: "enterprise", label: "Enterprise (500+)", emoji: "" },
-		{ value: "any", label: "Any Size", emoji: "" },
-	];
-
-	const COMMON_SKILLS = [
-		"Excel",
-		"PowerPoint",
-		"Word",
-		"Python",
-		"R",
-		"SQL",
-		"PowerBI",
-		"Tableau",
-		"Google Analytics",
-		"Salesforce",
-		"HubSpot",
-		"Jira",
-		"Confluence",
-		"Slack",
-		"Microsoft Office",
-		"Google Workspace",
-		"Adobe Creative Suite",
-		"Canva",
-		"Data Analysis",
-		"Project Management",
-		"Digital Marketing",
-		"Social Media",
-		"Email Marketing",
-		"Content Creation",
-		"Research",
-		"Presentation Skills",
-		"Communication",
-		"Leadership",
-		"Problem Solving",
-		"Analytical Thinking",
-	];
-
-	const CAREER_PATHS = [
-		{
-			value: "strategy",
-			label: "Strategy & Business Design",
-			emoji: "",
-			roles: [
-				"Business Analyst",
-				"Associate Consultant",
-				"Junior Consultant",
-				"Strategy Analyst",
-				"Consulting Intern",
-				"Junior Business Analyst",
-				"Transformation Analyst",
-				"Management Consulting Intern",
-				"Growth Consultant",
-				"Business Analyst Trainee",
-				"Junior Associate",
-				"Strategy Consultant",
-				"Digital Transformation Analyst",
-				"Operations Excellence Consultant",
-				"Business Strategy Intern",
-			],
-		},
-		{
-			value: "data",
-			label: "Data & Analytics",
-			emoji: "",
-			roles: [
-				"Data Analyst",
-				"Junior Data Analyst",
-				"Analytics Intern",
-				"Business Intelligence Intern",
-				"Data Analyst Trainee",
-				"Junior Data Scientist",
-				"Data Science Trainee",
-				"Junior Data Engineer",
-				"BI Engineer Intern",
-				"Analytics Associate",
-				"Data Analytics Graduate",
-				"Insights Analyst",
-				"Junior BI Developer",
-				"Data Assistant",
-				"Research & Analytics Intern",
-			],
-		},
-		{
-			value: "sales",
-			label: "Sales & Client Success",
-			emoji: "",
-			roles: [
-				"Sales Development Representative (SDR)",
-				"Business Development Representative (BDR)",
-				"Inside Sales Representative",
-				"Account Executive",
-				"Business Development Associate",
-				"Sales Trainee",
-				"Customer Success Associate",
-				"Revenue Operations Analyst",
-				"Sales Operations Analyst",
-				"Graduate Sales Programme",
-				"Business Development Intern",
-				"Channel Sales Associate",
-				"Account Development Representative",
-				"Junior Sales Executive",
-				"Client Success Manager",
-			],
-		},
-		{
-			value: "marketing",
-			label: "Marketing & Growth",
-			emoji: "",
-			roles: [
-				"Marketing Intern",
-				"Social Media Intern",
-				"Digital Marketing Assistant",
-				"Marketing Coordinator",
-				"Growth Marketing Intern",
-				"Content Marketing Intern",
-				"Brand Assistant",
-				"Marketing Assistant",
-				"Junior Marketing Associate",
-				"Email Marketing Trainee",
-				"SEO/SEM Intern",
-				"Trade Marketing Intern",
-				"Marketing Graduate Programme",
-				"Junior B2B Marketing Coordinator",
-				"Marketing Campaign Assistant",
-			],
-		},
-		{
-			value: "finance",
-			label: "Finance & Investment",
-			emoji: "",
-			roles: [
-				"Financial Analyst",
-				"Finance Intern",
-				"Investment Banking Analyst",
-				"Risk Analyst",
-				"Audit Associate",
-				"Finance Trainee",
-				"FP&A Analyst",
-				"Credit Analyst",
-				"Investment Analyst",
-				"Junior Accountant",
-				"Corporate Finance Analyst",
-				"M&A Analyst",
-				"Treasury Analyst",
-				"Junior Tax Associate",
-				"Finance Graduate",
-			],
-		},
-		{
-			value: "operations",
-			label: "Operations & Supply Chain",
-			emoji: "",
-			roles: [
-				"Operations Analyst",
-				"Supply Chain Analyst",
-				"Logistics Analyst",
-				"Procurement Analyst",
-				"Operations Intern",
-				"Inventory Planner",
-				"Operations Coordinator",
-				"Supply Chain Trainee",
-				"Logistics Planning Graduate",
-				"Demand Planning Intern",
-				"Operations Management Trainee",
-				"Fulfilment Specialist",
-				"Sourcing Analyst",
-				"Process Improvement Analyst",
-				"Supply Chain Graduate",
-			],
-		},
-		{
-			value: "product",
-			label: "Product & Innovation",
-			emoji: "",
-			roles: [
-				"Associate Product Manager (APM)",
-				"Product Analyst",
-				"Product Management Intern",
-				"Junior Product Manager",
-				"Product Operations Associate",
-				"Product Designer",
-				"UX Intern",
-				"Product Research Assistant",
-				"Innovation Analyst",
-				"Product Development Coordinator",
-				"Product Marketing Assistant",
-				"Product Owner Graduate",
-				"Assistant Product Manager",
-				"Product Strategy Intern",
-				"Technical Product Specialist",
-			],
-		},
-		{
-			value: "tech",
-			label: "Tech & Transformation",
-			emoji: "",
-			roles: [
-				"Software Engineer Intern",
-				"Cloud Engineer Intern",
-				"DevOps Engineer Intern",
-				"Data Engineer Intern",
-				"Systems Analyst",
-				"IT Support Analyst",
-				"Application Support Analyst",
-				"Technology Analyst",
-				"QA/Test Analyst",
-				"Platform Engineer Intern",
-				"Cybersecurity Analyst",
-				"IT Operations Trainee",
-				"Technical Consultant",
-				"Solutions Engineer Graduate",
-				"IT Business Analyst",
-			],
-		},
-		{
-			value: "sustainability",
-			label: "Sustainability & ESG",
-			emoji: "",
-			roles: [
-				"ESG Intern",
-				"Sustainability Strategy Intern",
-				"Junior ESG Analyst",
-				"Sustainability Graduate Programme",
-				"ESG Data Analyst Intern",
-				"Corporate Responsibility Intern",
-				"Environmental Analyst",
-				"Sustainability Reporting Trainee",
-				"Climate Analyst",
-				"Sustainable Finance Analyst",
-				"ESG Assurance Intern",
-				"Sustainability Communications Intern",
-				"Junior Impact Analyst",
-				"Sustainability Operations Assistant",
-				"Green Finance Analyst",
-			],
-		},
-		{
-			value: "unsure",
-			label: "Not Sure Yet / General",
-			emoji: "",
-			roles: [
-				"Graduate Trainee",
-				"Rotational Graduate Program",
-				"Management Trainee",
-				"Business Graduate Analyst",
-				"Entry Level Program Associate",
-				"Future Leaders Programme",
-				"General Analyst",
-				"Operations Graduate",
-				"Commercial Graduate",
-				"Early Careers Program",
-				"Project Coordinator",
-				"Business Operations Analyst",
-				"Emerging Leaders Associate",
-				"Corporate Graduate Programme",
-				"Generalist Trainee",
-			],
-		},
-	];
-
-	const COMPANIES = [
-		"Global Consulting Firms",
-		"Startups / Scaleups",
-		"Tech Giants",
-		"Investment Firms / VCs",
-		"Multinationals",
-		"Public Sector / NGOs",
-		"B2B SaaS",
-		"Financial Services",
-	];
 
 	// Form validation hooks
 	const emailValidation = useEmailValidation(formData.email);
@@ -511,7 +162,156 @@ function SignupForm() {
 		"Languages",
 	);
 
+	// Step validation - checks if a step is complete and valid
+	const isStepValid = useCallback(
+		(stepNumber: number): boolean => {
+			// Step 1 validation
+			const step1Valid =
+				formData.fullName.trim() !== "" &&
+				formData.email.trim() !== "" &&
+				emailValidation.isValid &&
+				formData.cities.length > 0 &&
+				formData.languages.length > 0 &&
+				formData.gdprConsent;
+
+			switch (stepNumber) {
+				case 1:
+					return step1Valid;
+				case 2:
+					return (
+						step1Valid &&
+						!!formData.visaStatus &&
+						formData.entryLevelPreferences.length > 0
+					);
+				case 3:
+					return (
+						step1Valid &&
+						!!formData.visaStatus &&
+						formData.entryLevelPreferences.length > 0 &&
+						!!formData.careerPath &&
+						formData.roles.length > 0
+					);
+				case 4:
+					return (
+						step1Valid &&
+						!!formData.visaStatus &&
+						formData.entryLevelPreferences.length > 0 &&
+						!!formData.careerPath &&
+						formData.roles.length > 0
+					); // Step 4 is optional, but requires previous steps
+				default:
+					return false;
+			}
+		},
+		[
+			formData.fullName,
+			formData.email,
+			formData.cities,
+			formData.languages,
+			formData.gdprConsent,
+			formData.visaStatus,
+			formData.entryLevelPreferences,
+			formData.careerPath,
+			formData.roles,
+			emailValidation.isValid,
+		],
+	);
+
+	// Step navigation guard - determines if user can navigate to a target step
+	const canNavigateTo = useCallback(
+		(targetStep: number): boolean => {
+			// Can always go backwards
+			if (targetStep < step) return true;
+
+			// Can only go forwards if current step is valid
+			if (targetStep > step) {
+				return isStepValid(step);
+			}
+
+			return true; // Same step
+		},
+		[step, isStepValid],
+	);
+
+	// Safe step navigation with validation
+	const navigateToStep = useCallback(
+		(targetStep: number) => {
+			if (!canNavigateTo(targetStep)) {
+				// Find first invalid field in current step and focus it
+				let firstErrorField: HTMLElement | null = null;
+
+				if (step === 1) {
+					if (!formData.fullName.trim()) {
+						firstErrorField = formRefs.fullName.current;
+					} else if (!formData.email.trim() || !emailValidation.isValid) {
+						firstErrorField = formRefs.email.current;
+					} else if (formData.cities.length === 0) {
+						firstErrorField = document.getElementById("cities-field");
+					} else if (formData.languages.length === 0) {
+						firstErrorField = document.getElementById("languages-field");
+					} else if (!formData.gdprConsent) {
+						firstErrorField = document.getElementById("gdpr-consent");
+					}
+				} else if (step === 2) {
+					if (!formData.visaStatus) {
+						firstErrorField = document.getElementById("visa-field");
+					} else if (formData.entryLevelPreferences.length === 0) {
+						firstErrorField = document.getElementById("entry-level-field");
+					}
+				} else if (step === 3) {
+					if (!formData.careerPath) {
+						firstErrorField = document.getElementById("career-path-field");
+					} else if (formData.roles.length === 0) {
+						firstErrorField = document.getElementById("roles-field");
+					}
+				}
+
+				if (firstErrorField) {
+					firstErrorField.focus();
+					firstErrorField.scrollIntoView({
+						behavior: "smooth",
+						block: "center",
+					});
+					announce(
+						"Please complete all required fields before continuing",
+						"assertive",
+					);
+				}
+				return;
+			}
+
+			// Update step state
+			setStep(targetStep);
+
+			// Update URL with proper history management
+			const url = new URL(window.location.href);
+			url.searchParams.set("step", targetStep.toString());
+
+			if (targetStep > step) {
+				// Forward navigation - add to history (allows back button to work)
+				router.push(url.toString());
+			} else {
+				// Backward navigation - replace to avoid cluttering history
+				window.history.replaceState({ step: targetStep }, "", url.toString());
+			}
+		},
+		[
+			canNavigateTo,
+			step,
+			formData,
+			emailValidation.isValid,
+			formRefs,
+			announce,
+			router,
+		],
+	);
+
 	const handleSubmit = useCallback(async () => {
+		// CRITICAL FIX: Loading lock - prevent spam-clicking and duplicate submissions
+		if (loading) {
+			return; // Already submitting, ignore additional clicks
+		}
+
 		// Validate form before submitting
 		if (
 			!formData.fullName.trim() ||
@@ -576,7 +376,7 @@ function SignupForm() {
 				showToast.success("Account created successfully! Redirecting...");
 				const redirectUrl =
 					result.redirectUrl || `/signup/success?tier=premium`;
-				setTimeout(() => router.push(redirectUrl), 2000); // Increased delay to show success state
+				setTimeout(() => router.push(redirectUrl), TIMING.REDIRECT_DELAY_MS);
 			} else {
 				// Handle field-specific errors
 				if (result.field && result.error) {
@@ -584,10 +384,10 @@ function SignupForm() {
 					// Focus the problematic field
 					if (result.field === "email" && formRefs.email.current) {
 						formRefs.email.current.focus();
-						setStep(1); // Navigate to step with the field
+						navigateToStep(1); // Navigate to step with the field
 					} else if (result.field === "fullName" && formRefs.fullName.current) {
 						formRefs.fullName.current.focus();
-						setStep(1);
+						navigateToStep(1);
 					}
 					announce(result.error, "assertive");
 				} else {
@@ -615,6 +415,7 @@ function SignupForm() {
 			setLoading(false);
 		}
 	}, [
+		loading, // CRITICAL: Include loading in deps for guard check
 		formData,
 		router,
 		announce,
@@ -635,16 +436,16 @@ function SignupForm() {
 					handleSubmit();
 				}
 			}
-			// Escape to go back
+			// Escape to go back (with validation - can always go back)
 			if (e.key === "Escape" && step > 1) {
 				e.preventDefault();
-				setStep(step - 1);
+				navigateToStep(step - 1);
 			}
 		};
 
 		window.addEventListener("keydown", handleKeyDown);
 		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [step, formData.gdprConsent, loading, handleSubmit]);
+	}, [step, formData.gdprConsent, loading, handleSubmit, navigateToStep]);
 
 	// Announce validation errors to screen readers
 	useEffect(() => {
@@ -653,23 +454,64 @@ function SignupForm() {
 		}
 	}, [emailValidation.error, announce]);
 
-	// Hardware back button handling - prevent users from leaving form
+	// Sync step state with URL query parameter (one-way: step -> URL)
+	// Note: This effect only handles initial mount and external URL changes
+	// Actual navigation is handled in navigateToStep to properly manage history
 	useEffect(() => {
-		const handleBackButton = (e: PopStateEvent) => {
-			if (step > 1) {
-				e.preventDefault();
-				setStep((s) => s - 1);
-				// Re-push state so they stay on the page
-				window.history.pushState(null, "", window.location.pathname);
+		// Only update URL if we're in the browser (client-side)
+		if (typeof window === "undefined") return;
+
+		const url = new URL(window.location.href);
+		const currentStepParam = url.searchParams.get("step");
+		const currentStep = currentStepParam
+			? Math.max(1, Math.min(4, parseInt(currentStepParam, 10)))
+			: null;
+
+		// Only update URL if step changed and doesn't match URL (avoid unnecessary updates)
+		// This handles cases where step changes outside of navigateToStep (e.g., form persistence restore)
+		if (currentStep !== step && currentStep !== null) {
+			// If URL has a different step, sync it (but don't add to history - that's handled by navigateToStep)
+			url.searchParams.set("step", step.toString());
+			window.history.replaceState({ step }, "", url.toString());
+		}
+	}, [step]);
+
+	// Hardware back button handling - sync step from URL on browser navigation
+	useEffect(() => {
+		if (typeof window === "undefined") return;
+
+		const handlePopState = (e: PopStateEvent) => {
+			const url = new URL(window.location.href);
+			const urlStep = url.searchParams.get("step");
+			
+			if (urlStep) {
+				const parsedStep = Math.max(1, Math.min(4, parseInt(urlStep, 10)));
+				// Only navigate if step actually changed (prevents loops)
+				if (parsedStep !== step) {
+					// Use navigateToStep to respect validation guards
+					// But allow going back without validation
+					if (parsedStep < step) {
+						setStep(parsedStep);
+					} else {
+						navigateToStep(parsedStep);
+					}
+				}
+			} else if (step > 1) {
+				// If no step param but we're past step 1, go back to step 1
+				setStep(1);
 			}
 		};
 
-		// Push initial state
-		window.history.pushState(null, "", window.location.pathname);
+		// Initialize URL with current step on mount
+		const url = new URL(window.location.href);
+		if (!url.searchParams.has("step")) {
+			url.searchParams.set("step", step.toString());
+			window.history.replaceState({ step }, "", url.toString());
+		}
 
-		window.addEventListener("popstate", handleBackButton);
-		return () => window.removeEventListener("popstate", handleBackButton);
-	}, [step]);
+		window.addEventListener("popstate", handlePopState);
+		return () => window.removeEventListener("popstate", handlePopState);
+	}, [step, navigateToStep]);
 
 	const toggleArray = (arr: string[], value: string) => {
 		return arr.includes(value)
@@ -744,7 +586,7 @@ function SignupForm() {
 				aria-hidden="true"
 			/>
 			<motion.div
-				className="absolute bottom-20 left-10 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl hidden sm:block"
+				className="absolute bottom-20 left-10 w-80 h-80 bg-brand-600/20 rounded-full blur-3xl hidden sm:block"
 				animate={
 					prefersReduced
 						? { scale: 1, opacity: 0.3 }
@@ -755,126 +597,13 @@ function SignupForm() {
 			/>
 
 			<div className="relative z-10 container-page max-w-5xl py-4 px-4 sm:py-8 sm:px-6 md:py-16">
-				{/* Header */}
-				<motion.div
-					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ duration: 0.5 }}
-					className="mb-10 text-center sm:mb-16 md:mb-20"
-				>
-					<span className="mb-6 inline-flex items-center gap-2 rounded-full border-2 border-brand-500/50 bg-brand-500/15 px-5 py-2 text-sm font-bold text-brand-100 shadow-[0_0_20px_rgba(99,102,241,0.3)]">
-						<BrandIcons.Star className="h-4 w-4" />
-						Premium · €5/mo
-					</span>
+				<HeroSection
+					activeJobs={activeJobs}
+					totalUsers={totalUsers}
+					isLoadingStats={isLoadingStats}
+				/>
 
-					<span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.28em] text-brand-200">
-						Onboarding
-					</span>
-					<h1 className="mt-4 sm:mt-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white">
-						Tell us where to send your first matches
-					</h1>
-					<p className="mt-3 sm:mt-4 text-base sm:text-lg md:text-xl font-medium leading-relaxed text-zinc-100 px-2">
-						We only ask for the essentials so we can filter internships and
-						graduate roles you can actually land.
-					</p>
-
-					<div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm md:text-base font-medium text-zinc-100">
-						{Copy.REASSURANCE_ITEMS.map((item) => (
-							<span
-								key={item}
-								className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/8 px-4 py-2 backdrop-blur-sm"
-							>
-								<BrandIcons.Check className="h-4 w-4 text-brand-300" />
-								{item}
-							</span>
-						))}
-					</div>
-
-					<div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm md:text-base font-medium text-zinc-300">
-						<span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-2 text-brand-100 backdrop-blur-sm">
-							<BrandIcons.Target className="h-4 w-4 text-brand-300" />
-							{isLoadingStats ? (
-								<span className="inline-block h-4 w-20 animate-pulse rounded bg-white/15" />
-							) : (
-								`${activeJobs} active jobs this week`
-							)}
-						</span>
-						{!isLoadingStats &&
-							totalUsers &&
-							parseInt(totalUsers.replace(/\D/g, ""), 10) > 0 && (
-								<span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-2 backdrop-blur-sm">
-									<BrandIcons.Users className="h-4 w-4 text-brand-300" />
-									{`${totalUsers}+ students on JobPing`}
-								</span>
-							)}
-						<span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-2 backdrop-blur-sm">
-							<BrandIcons.Clock className="h-4 w-4 text-brand-300" />
-							First drop arrives within 48 hours
-						</span>
-					</div>
-				</motion.div>
-
-				{/* Sticky Progress Bar - iOS Safari Compatible */}
-				<div className="sticky top-[-1px] z-40 bg-black/80 backdrop-blur-sm border-b border-white/10 mb-6">
-					<div className="h-1 bg-zinc-800">
-						<motion.div
-							className="h-full bg-gradient-to-r from-brand-500 via-purple-600 to-purple-500"
-							initial={{ width: 0 }}
-							animate={{ width: `${(step / 4) * 100}%` }}
-							transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-						/>
-					</div>
-					<div className="flex items-center justify-between px-4 py-2 text-sm text-zinc-400">
-						<span>Step {step} of 4</span>
-						<span>{Math.round((step / 4) * 100)}%</span>
-					</div>
-				</div>
-
-				{/* Desktop Progress Indicator - Hidden on mobile */}
-				<div className="mb-10 sm:mb-16 hidden sm:block">
-					<div className="flex justify-between mb-3 sm:mb-4 px-1 sm:px-2">
-						{[1, 2, 3, 4].map((i) => (
-							<div key={i} className="flex items-center gap-1 sm:gap-3">
-								<div
-									className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-sm sm:text-base transition-all shadow-lg ${
-										i < step
-											? "bg-green-500 text-white shadow-green-500/30"
-											: i === step
-												? "bg-gradient-to-br from-brand-500 to-purple-600 text-white shadow-[0_0_24px_rgba(99,102,241,0.4)]"
-												: "bg-zinc-800/60 border-2 border-zinc-700 text-zinc-400"
-									}`}
-								>
-									{i < step ? <BrandIcons.Check className="h-6 w-6" /> : i}
-								</div>
-								<span className="hidden sm:inline text-sm font-bold text-zinc-300">
-									{i === 1
-										? "Basics"
-										: i === 2
-											? "Preferences"
-											: i === 3
-												? "Career"
-												: "Optional"}
-								</span>
-								{i === 4 && (
-									<span className="hidden sm:inline text-xs text-zinc-500 ml-1">
-										(Optional)
-									</span>
-								)}
-							</div>
-						))}
-					</div>
-					<div className="h-2.5 bg-zinc-800/60 rounded-full overflow-hidden border border-zinc-700/50">
-						<motion.div
-							className="h-full bg-gradient-to-r from-brand-500 via-purple-600 to-purple-500 shadow-[0_0_20px_rgba(99,102,241,0.4)]"
-							initial={{ width: 0 }}
-							animate={{ width: `${(step / 4) * 100}%` }}
-							transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-						/>
-					</div>
-					<div className="text-xs text-zinc-400 text-center mt-2">
-						{Math.round((step / 4) * 100)}% complete
-					</div>
-				</div>
+				<ProgressBar step={step} />
 
 				{/* Form Abandonment Recovery Message */}
 
@@ -930,16 +659,28 @@ function SignupForm() {
 				{/* Form Container */}
 				<div className="glass-card rounded-2xl sm:rounded-3xl border-2 border-white/20 p-4 sm:p-6 md:p-8 lg:p-14 shadow-[0_30px_100px_rgba(0,0,0,0.5)] backdrop-blur-xl">
 					<AnimatePresence mode="wait">
-						{/* Step 1: Basics */}
 						{step === 1 && (
-							<motion.div
+							<Step1Basics
 								key="step1"
-								initial={{ opacity: 0, x: 20 }}
-								animate={{ opacity: 1, x: 0 }}
-								exit={{ opacity: 0, x: -20 }}
-								transition={{ duration: 0.4 }}
-								className="space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12"
-							>
+								formData={formData}
+								setFormData={setFormData}
+								touchedFields={touchedFields}
+								setTouchedFields={setTouchedFields}
+								fieldErrors={fieldErrors}
+								setFieldErrors={setFieldErrors}
+								announce={announce}
+								loading={loading}
+								setStep={navigateToStep}
+								emailValidation={emailValidation}
+								nameValidation={nameValidation}
+								citiesValidation={citiesValidation}
+								languagesValidation={languagesValidation}
+								shouldShowError={shouldShowError}
+								getDisabledMessage={getDisabledMessage}
+								toggleArray={toggleArray}
+							/>
+						)}
+
 								<div>
 									<h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2 sm:mb-3">
 										Let's get started
@@ -950,7 +691,7 @@ function SignupForm() {
 								</div>
 
 								{/* GDPR Consent - MOVED TO STEP 1 (Required) */}
-								<div className="bg-gradient-to-r from-brand-500/15 via-purple-600/15 to-brand-500/15 border-2 border-brand-500/40 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-7 shadow-[0_0_30px_rgba(99,102,241,0.2)]">
+								<div className="bg-gradient-to-r from-brand-500/15 via-brand-700/15 to-brand-500/15 border-2 border-brand-500/40 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-7 shadow-[0_0_30px_rgba(99,102,241,0.2)]">
 									<label className="flex items-start gap-3 sm:gap-4 cursor-pointer group touch-manipulation">
 										<input
 											type="checkbox"
@@ -1470,7 +1211,7 @@ function SignupForm() {
 										}
 										whileHover={{ scale: loading ? 1 : 1.02 }}
 										whileTap={{ scale: loading ? 1 : 0.98 }}
-										className="w-full bg-gradient-to-r from-brand-500 via-purple-500 to-brand-500 text-white font-bold text-base sm:text-lg md:text-xl py-4 sm:py-5 md:py-6 rounded-xl sm:rounded-2xl shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-[0_20px_50px_rgba(99,102,241,0.4)] touch-manipulation min-h-[56px]"
+										className="w-full bg-gradient-to-r from-brand-500 via-brand-600 to-brand-500 text-white font-bold text-base sm:text-lg md:text-xl py-4 sm:py-5 md:py-6 rounded-xl sm:rounded-2xl shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-[0_20px_50px_rgba(99,102,241,0.4)] touch-manipulation min-h-[56px]"
 									>
 										{loading ? (
 											<span className="flex items-center justify-center gap-2">
@@ -1503,19 +1244,34 @@ function SignupForm() {
 							</motion.div>
 						)}
 
-						{/* Step 2: Preferences */}
 						{step === 2 && (
-							<motion.div
+							<Step2Preferences
 								key="step2"
+								formData={formData}
+								setFormData={setFormData}
+								touchedFields={touchedFields}
+								setTouchedFields={setTouchedFields}
+								loading={loading}
+								setStep={navigateToStep}
+								shouldShowError={shouldShowError}
+								getDisabledMessage={getDisabledMessage}
+								toggleArray={toggleArray}
+							/>
+						)}
+
+						{/* Step 2: Preferences - OLD CODE REMOVED */}
+						{false && step === 2 && (
+							<motion.div
+								key="step2-old"
 								initial={{ opacity: 0, x: 20 }}
 								animate={{ opacity: 1, x: 0 }}
 								exit={{ opacity: 0, x: -20 }}
 								transition={{ duration: 0.4 }}
 								className="relative"
 							>
-								<div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#12002b]/40 to-purple-600/15 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
+								<div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#12002b]/40 to-brand-700/15 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
 									<div className="pointer-events-none absolute -top-24 right-0 h-48 w-48 rounded-full bg-brand-500/25 blur-3xl hidden sm:block" />
-									<div className="pointer-events-none absolute -bottom-28 left-12 h-56 w-56 bg-purple-600/20 blur-[120px] hidden sm:block" />
+									<div className="pointer-events-none absolute -bottom-28 left-12 h-56 w-56 bg-brand-700/20 blur-[120px] hidden sm:block" />
 									<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(155,106,255,0.15),transparent_55%)]" />
 									<div className="relative z-10 space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12">
 										<div>
@@ -1530,7 +1286,7 @@ function SignupForm() {
 											</p>
 
 											{/* Progress Helper */}
-											<div className="mt-4 rounded-2xl border border-brand-500/30 bg-gradient-to-r from-brand-500/10 via-purple-600/10 to-brand-500/10 p-4 shadow-glow-subtle">
+											<div className="mt-4 rounded-2xl border border-brand-500/30 bg-gradient-to-r from-brand-500/10 via-brand-700/10 to-brand-500/10 p-4 shadow-glow-subtle">
 												<h3 className="text-sm font-bold text-white/80 mb-2">
 													Required for next step:
 												</h3>
@@ -1632,7 +1388,7 @@ function SignupForm() {
 														whileTap={{ scale: 0.99 }}
 														className={`w-full px-4 sm:px-5 py-3 sm:py-4 rounded-xl border-2 transition-all font-medium text-left touch-manipulation min-h-[48px] ${
 															formData.visaStatus === visa
-																? "border-brand-500 bg-gradient-to-r from-brand-500/20 to-purple-600/10 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]"
+																? "border-brand-500 bg-gradient-to-r from-brand-500/20 to-brand-700/10 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]"
 																: "border-zinc-700 bg-zinc-900/40 text-zinc-300 hover:border-zinc-600"
 														}`}
 													>
@@ -1747,7 +1503,7 @@ function SignupForm() {
 														whileTap={{ scale: 0.99 }}
 														className={`px-4 py-3 rounded-xl border-2 transition-all font-medium text-left text-sm ${
 															formData.targetCompanies.includes(company)
-																? "border-brand-500 bg-gradient-to-r from-brand-500/20 to-purple-600/10 text-white"
+																? "border-brand-500 bg-gradient-to-r from-brand-500/20 to-brand-700/10 text-white"
 																: "border-zinc-700 bg-zinc-900/40 text-zinc-300 hover:border-zinc-600"
 														}`}
 													>
@@ -1785,7 +1541,7 @@ function SignupForm() {
 														!formData.visaStatus ||
 														formData.entryLevelPreferences.length === 0
 															? "opacity-40 cursor-not-allowed bg-zinc-700 text-zinc-400"
-															: "bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] hover:scale-105"
+															: "bg-gradient-to-r from-brand-500 to-brand-700 text-white shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:shadow-[0_24px_60px_rgba(99,102,241,0.5)] hover:scale-105"
 													}`}
 												>
 													{loading ? (
@@ -1822,18 +1578,35 @@ function SignupForm() {
 							</motion.div>
 						)}
 
-						{/* Step 3: Career Path */}
 						{step === 3 && (
-							<motion.div
+							<Step3CareerPath
 								key="step3"
+								formData={formData}
+								setFormData={setFormData}
+								touchedFields={touchedFields}
+								setTouchedFields={setTouchedFields}
+								loading={loading}
+								setStep={navigateToStep}
+								shouldShowError={shouldShowError}
+								getDisabledMessage={getDisabledMessage}
+								toggleArray={toggleArray}
+								selectAllRoles={selectAllRoles}
+								clearAllRoles={clearAllRoles}
+							/>
+						)}
+
+						{/* Step 3: Career Path - OLD CODE REMOVED */}
+						{false && step === 3 && (
+							<motion.div
+								key="step3-old"
 								initial={{ opacity: 0, x: 20 }}
 								animate={{ opacity: 1, x: 0 }}
 								exit={{ opacity: 0, x: -20 }}
 								transition={{ duration: 0.4 }}
 								className="relative"
 							>
-								<div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#130433]/45 to-purple-600/15 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
-									<div className="pointer-events-none absolute -top-24 left-6 h-48 w-48 rounded-full bg-purple-600/25 blur-3xl hidden sm:block" />
+								<div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#130433]/45 to-brand-700/15 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
+									<div className="pointer-events-none absolute -top-24 left-6 h-48 w-48 rounded-full bg-brand-700/25 blur-3xl hidden sm:block" />
 									<div className="pointer-events-none absolute -bottom-28 right-0 h-56 w-56 bg-brand-500/25 blur-[120px] hidden sm:block" />
 									<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(99,102,241,0.12),transparent_60%)]" />
 									<div className="relative z-10 space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12">
@@ -1846,7 +1619,7 @@ function SignupForm() {
 											</p>
 
 											{/* Progress Helper */}
-											<div className="mt-6 rounded-2xl border-2 border-brand-500/40 bg-gradient-to-r from-brand-500/15 via-purple-600/15 to-brand-500/15 p-5 shadow-[0_0_30px_rgba(99,102,241,0.25)]">
+											<div className="mt-6 rounded-2xl border-2 border-brand-500/40 bg-gradient-to-r from-brand-500/15 via-brand-700/15 to-brand-500/15 p-5 shadow-[0_0_30px_rgba(99,102,241,0.25)]">
 												<h3 className="text-sm font-bold text-white/80 mb-2">
 													Required for next step:
 												</h3>
@@ -1925,14 +1698,14 @@ function SignupForm() {
 														whileTap={{ scale: 0.98 }}
 														className={`relative px-4 sm:px-6 py-4 sm:py-6 rounded-xl sm:rounded-2xl border-2 transition-all text-left overflow-hidden group touch-manipulation min-h-[80px] sm:min-h-[100px] ${
 															formData.careerPath === path.value
-																? "border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/15 shadow-glow-signup"
+																? "border-brand-500 bg-gradient-to-br from-brand-500/20 to-brand-700/15 shadow-glow-signup"
 																: "border-zinc-700 bg-zinc-900/40 hover:border-zinc-600 hover:bg-zinc-900/60"
 														}`}
 													>
 														{/* Background gradient on select */}
 														{formData.careerPath === path.value && (
 															<motion.div
-																className="absolute inset-0 bg-gradient-to-br from-brand-500/10 to-purple-600/5"
+																className="absolute inset-0 bg-gradient-to-br from-brand-500/10 to-brand-700/5"
 																initial={{ opacity: 0 }}
 																animate={{ opacity: 1 }}
 																transition={{ duration: 0.3 }}
@@ -1981,7 +1754,7 @@ function SignupForm() {
 																<motion.div
 																	initial={{ scale: 0, rotate: -180 }}
 																	animate={{ scale: 1, rotate: 0 }}
-																	className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-glow-subtle"
+																	className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center flex-shrink-0 shadow-glow-subtle"
 																>
 																	<BrandIcons.Check className="w-5 h-5 text-white" />
 																</motion.div>
@@ -1990,7 +1763,7 @@ function SignupForm() {
 
 														{/* Glow effect on hover */}
 														{formData.careerPath !== path.value && (
-															<div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 to-purple-600/0 group-hover:from-brand-500/5 group-hover:to-purple-600/5 transition-all duration-300" />
+															<div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 to-brand-700/0 group-hover:from-brand-500/5 group-hover:to-brand-700/5 transition-all duration-300" />
 														)}
 													</motion.button>
 												))}
@@ -2018,7 +1791,7 @@ function SignupForm() {
 													initial={{ opacity: 0, y: 10 }}
 													animate={{ opacity: 1, y: 0 }}
 													transition={{ delay: 0.2 }}
-													className="border-2 border-brand-500/30 rounded-2xl p-6 bg-gradient-to-br from-brand-500/5 to-purple-600/5"
+													className="border-2 border-brand-500/30 rounded-2xl p-6 bg-gradient-to-br from-brand-500/5 to-brand-700/5"
 												>
 													<label
 														id="roles-label"
@@ -2104,14 +1877,14 @@ function SignupForm() {
 																		whileTap={{ scale: 0.98 }}
 																		className={`px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl border-2 transition-all font-semibold text-left text-sm relative overflow-hidden touch-manipulation min-h-[48px] ${
 																			formData.roles.includes(role)
-																				? "border-brand-500 bg-gradient-to-r from-brand-500/20 to-purple-600/15 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]"
+																				? "border-brand-500 bg-gradient-to-r from-brand-500/20 to-brand-700/15 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]"
 																				: "border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80"
 																		}`}
 																	>
 																		{formData.roles.includes(role) && (
 																			<motion.div
 																				layoutId="selected-role"
-																				className="absolute inset-0 bg-gradient-to-r from-brand-500/10 to-purple-600/10 -z-10"
+																				className="absolute inset-0 bg-gradient-to-r from-brand-500/10 to-brand-700/10 -z-10"
 																				initial={{ opacity: 0 }}
 																				animate={{ opacity: 1 }}
 																				exit={{ opacity: 0 }}
@@ -2258,19 +2031,31 @@ function SignupForm() {
 							</motion.div>
 						)}
 
-						{/* STEP 4: Matching Preferences */}
 						{step === 4 && (
-							<motion.div
+							<Step4MatchingPreferences
 								key="step4"
+								formData={formData}
+								setFormData={setFormData}
+								loading={loading}
+								setStep={navigateToStep}
+								toggleArray={toggleArray}
+								handleSubmit={handleSubmit}
+							/>
+						)}
+
+						{/* STEP 4: Matching Preferences - OLD CODE REMOVED */}
+						{false && step === 4 && (
+							<motion.div
+								key="step4-old"
 								initial={{ opacity: 0, x: 20 }}
 								animate={{ opacity: 1, x: 0 }}
 								exit={{ opacity: 0, x: -20 }}
 								transition={{ duration: 0.4 }}
 								className="relative"
 							>
-								<div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#0d0425]/45 to-purple-600/15 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
+								<div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#0d0425]/45 to-brand-700/15 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
 									<div className="pointer-events-none absolute -top-28 right-8 h-52 w-52 rounded-full bg-brand-500/25 blur-[120px] hidden sm:block" />
-									<div className="pointer-events-none absolute -bottom-24 left-6 h-48 w-48 rounded-full bg-purple-600/20 blur-3xl hidden sm:block" />
+									<div className="pointer-events-none absolute -bottom-24 left-6 h-48 w-48 rounded-full bg-brand-700/20 blur-3xl hidden sm:block" />
 									<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(136,84,255,0.12),transparent_60%)]" />
 									<div className="relative z-10 space-y-6 sm:space-y-8 md:space-y-10">
 										<div className="text-center">
@@ -2331,7 +2116,7 @@ function SignupForm() {
 														whileTap={{ scale: 0.98 }}
 														className={`px-3 py-2.5 rounded-lg border-2 transition-all font-medium text-sm ${
 															formData.industries.includes(industry)
-																? "border-brand-500 bg-gradient-to-r from-brand-500/20 to-purple-600/10 text-white"
+																? "border-brand-500 bg-gradient-to-r from-brand-500/20 to-brand-700/10 text-white"
 																: "border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80"
 														}`}
 													>
@@ -2369,7 +2154,7 @@ function SignupForm() {
 														whileTap={{ scale: 0.98 }}
 														className={`px-4 py-4 rounded-xl border-2 transition-all font-semibold text-left ${
 															formData.companySizePreference === size.value
-																? "border-brand-500 bg-gradient-to-br from-brand-500/20 to-purple-600/10 text-white shadow-glow-subtle"
+																? "border-brand-500 bg-gradient-to-br from-brand-500/20 to-brand-700/10 text-white shadow-glow-subtle"
 																: "border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80"
 														}`}
 													>
@@ -2456,7 +2241,7 @@ function SignupForm() {
 														whileTap={{ scale: 0.98 }}
 														className={`px-3 py-2 rounded-lg border-2 transition-all font-medium text-sm ${
 															formData.skills.includes(skill)
-																? "border-brand-500 bg-gradient-to-r from-brand-500/20 to-purple-600/10 text-white"
+																? "border-brand-500 bg-gradient-to-r from-brand-500/20 to-brand-700/10 text-white"
 																: "border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80"
 														}`}
 													>
@@ -2553,61 +2338,7 @@ function SignupForm() {
 					</AnimatePresence>
 				</div>
 
-				{/* Trust Signals - PROMINENT */}
-				<motion.div
-					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ delay: 0.6 }}
-					className="mt-12 text-center space-y-4"
-				>
-					<div className="inline-flex items-center gap-2 bg-zinc-900/60 border border-zinc-800 px-6 py-3 rounded-full backdrop-blur-sm">
-						<span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></span>
-						<span className="text-sm font-bold text-zinc-300">
-							{isLoadingStats ? (
-								<span className="inline-block w-24 h-4 bg-zinc-600/20 rounded animate-pulse"></span>
-							) : (
-								`${activeJobs} active early-career roles`
-							)}
-						</span>
-						<span className="text-zinc-400">·</span>
-						<span className="text-sm text-zinc-400">Updated daily</span>
-					</div>
-					<div className="flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-400 px-4">
-						<div className="flex items-center gap-1.5">
-							<svg
-								className="w-4 h-4 text-green-500"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M5 13l4 4L19 7"
-								/>
-							</svg>
-							<span>No CV required</span>
-						</div>
-						<span className="text-zinc-700">·</span>
-						<div className="flex items-center gap-1.5">
-							<svg
-								className="w-4 h-4 text-green-500"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M5 13l4 4L19 7"
-								/>
-							</svg>
-							<span>Unsubscribe anytime</span>
-						</div>
-					</div>
-				</motion.div>
+				<TrustSignals activeJobs={activeJobs} isLoadingStats={isLoadingStats} />
 			</div>
 		</div>
 	);

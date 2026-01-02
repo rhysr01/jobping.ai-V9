@@ -51,9 +51,11 @@ export function GhostMatches({ onUpgradeClick }: GhostMatchesProps) {
 		};
 
 		// Only fetch if user has free matches (delay to avoid blocking main content)
-		setTimeout(() => {
+		const timeoutId = setTimeout(() => {
 			fetchGhostMatches();
-		}, 2000); // 2 second delay to let main matches load first
+		}, TIMING.GHOST_MATCHES_DELAY_MS);
+		
+		return () => clearTimeout(timeoutId);
 	}, []);
 
 	// Don't show if no ghost matches or still loading

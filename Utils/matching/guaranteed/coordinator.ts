@@ -200,8 +200,23 @@ export async function coordinatePremiumMatching(
   let relaxationLevel = 0;
   let locationExpansionLevel: "exact" | "country" | "region" | "remote" = "exact";
 
-  // Step 3: If < minMatches, trigger guaranteed matching
-  if (finalMatches.length < minMatches) {
+  // EARLY EXIT: If we have way more than needed, skip expensive guaranteed matching
+  // Cost Control: Saves on LLM latency and API costs when user already has great matches
+  const EXTREME_SUCCESS_THRESHOLD = minMatches * 5; // 50 for premium, 25 for free
+  if (finalMatches.length >= EXTREME_SUCCESS_THRESHOLD) {
+    apiLogger.info("Extreme success - skipping guaranteed matching (early exit)", {
+      email: userPrefs.email,
+      matchesFound: finalMatches.length,
+      threshold: EXTREME_SUCCESS_THRESHOLD,
+      minMatches,
+    });
+    
+    // Use top matches directly, skip guaranteed fallback
+    finalMatches = finalMatches.slice(0, minMatches * 2); // Take 2x for distribution
+    
+    // Skip to Step 4: Distribution pass (skip Step 3: guaranteed matching)
+  } else if (finalMatches.length < minMatches) {
+    // Step 3: If < minMatches, trigger guaranteed matching
     apiLogger.info("Insufficient matches, triggering guaranteed matching", {
       email: userPrefs.email,
       currentMatches: finalMatches.length,

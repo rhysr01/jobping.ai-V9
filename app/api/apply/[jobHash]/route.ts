@@ -321,23 +321,24 @@ export async function GET(
 
 		healthResult = await checkLinkHealth(jobUrl);
 
-	// Update link health status in database (non-blocking)
-	supabase
-		.from("matches")
-		.update({
-			link_health_status: healthResult.reason,
-			link_checked_at: new Date().toISOString(),
-		})
-		.eq("id", match.id)
-		.then(() => {
-			apiLogger.debug("Link health status updated", {
-				jobHash,
-				status: healthResult.reason,
+		// Update link health status in database (non-blocking)
+		supabase
+			.from("matches")
+			.update({
+				link_health_status: healthResult.reason,
+				link_checked_at: new Date().toISOString(),
+			})
+			.eq("id", match.id)
+			.then(() => {
+				apiLogger.debug("Link health status updated", {
+					jobHash,
+					status: healthResult.reason,
+				});
+			})
+			.catch((err: Error) => {
+				apiLogger.error("Failed to update link health", err);
 			});
-		})
-		.catch((err: Error) => {
-			apiLogger.error("Failed to update link health", err);
-		});
+	}
 
 	// Track outbound click (for attribution/affiliate future)
 	const clickData = {

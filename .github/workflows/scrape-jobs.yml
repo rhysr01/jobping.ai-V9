@@ -45,6 +45,19 @@ jobs:
       with:
         python-version: '3.11'
 
+    - name: Verify requirements file exists
+      run: |
+        if [ ! -f "scripts/python-requirements.txt" ]; then
+          echo "❌ Error: scripts/python-requirements.txt not found after checkout"
+          echo "Current directory: $(pwd)"
+          echo "Repository contents:"
+          ls -la
+          echo "Scripts directory contents:"
+          ls -la scripts/ 2>&1 || echo "scripts/ directory not found"
+          exit 1
+        fi
+        echo "✅ Requirements file found: scripts/python-requirements.txt"
+
     - name: Cache pip packages
       uses: actions/cache@v3
       with:

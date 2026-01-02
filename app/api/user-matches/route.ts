@@ -107,34 +107,41 @@ export const GET = withAxiom(
 		const supabase = getDatabaseClient();
 
 		// CRITICAL DEBUG: First check if matches exist at all (without join)
+		// SECURITY: Only select needed fields, not all fields
 		const { data: rawMatches, error: rawError } = await supabase
 			.from("matches")
-			.select("*")
+			.select("job_hash, match_score, user_email")
 			.eq("user_email", email)
 			.gte("match_score", normalizedMinScore)
 			.limit(limit);
 
-		console.log(`[USER-MATCHES] 🔍 Raw matches query (no join):`, {
-			email,
-			normalizedMinScore,
-			rawMatchesCount: rawMatches?.length || 0,
-			rawError: rawError ? rawError.message : null,
-		});
-
-		if (rawMatches && rawMatches.length > 0) {
-			console.log(`[USER-MATCHES] 🔍 Sample raw match:`, {
-				user_email: rawMatches[0].user_email,
-				job_hash: rawMatches[0].job_hash,
-				match_score: rawMatches[0].match_score,
+		if (process.env.NODE_ENV === "development") {
+			console.log(`[USER-MATCHES] 🔍 Raw matches query (no join):`, {
+				email,
+				normalizedMinScore,
+				rawMatchesCount: rawMatches?.length || 0,
+				rawError: rawError ? rawError.message : null,
 			});
+
+			if (rawMatches && rawMatches.length > 0) {
+				console.log(`[USER-MATCHES] 🔍 Sample raw match:`, {
+					user_email: rawMatches[0].user_email,
+					job_hash: rawMatches[0].job_hash,
+					match_score: rawMatches[0].match_score,
+				});
+			}
 		}
 
 		// Get user matches with job details - with timeout
 		// CRITICAL: Use normalized minScore for comparison
+		// SECURITY: Only select fields that are actually used in the UI
 		const queryPromise = supabase
 			.from("matches")
 			.select(`
-      *,
+      id,
+      job_hash,
+      match_score,
+      match_reason,
       jobs (
         id,
         title,
@@ -143,11 +150,7 @@ export const GET = withAxiom(
         job_url,
         description,
         categories,
-        experience_required,
-        work_environment,
-        language_requirements,
-        company_profile_url,
-        posted_at
+        work_environment
       )
     `)
 			.eq("user_email", email)
@@ -165,22 +168,24 @@ export const GET = withAxiom(
 			timeoutPromise,
 		])) as any;
 
-		console.log(`[USER-MATCHES] 🔍 Query with join result:`, {
-			email,
-			matchesCount: matches?.length || 0,
-			matchesError: matchesError ? matchesError.message : null,
-			sampleMatch:
-				matches && matches.length > 0
-					? {
-							hasJob: !!matches[0].jobs,
-							jobHash: matches[0].job_hash,
-							matchScore: matches[0].match_score,
-						}
-					: null,
-		});
+		if (process.env.NODE_ENV === "development") {
+			console.log(`[USER-MATCHES] 🔍 Query with join result:`, {
+				email,
+				matchesCount: matches?.length || 0,
+				matchesError: matchesError ? matchesError.message : null,
+				sampleMatch:
+					matches && matches.length > 0
+						? {
+								hasJob: !!matches[0].jobs,
+								jobHash: matches[0].job_hash,
+								matchScore: matches[0].match_score,
+							}
+						: null,
+			});
+		}
 
 		if (matchesError) {
-			console.error("Failed to fetch user matches:", matchesError);
+			// Error already logged via logger.error below
 
 			// Log error to Axiom
 			logger.error("Failed to fetch user matches", {
@@ -200,14 +205,17 @@ export const GET = withAxiom(
 		// Transform the data to a cleaner format
 		// CRITICAL FIX: Filter out matches with null jobs (job_hash doesn't exist in jobs table)
 		// This can happen if a job was deleted or filtered out after the match was created
+		// SECURITY: Only include fields that are actually used in the UI
 		const transformedMatches = (matches || [])
 			.filter((match: any) => {
 				const hasJob = match.jobs !== null && match.jobs !== undefined;
 				if (!hasJob && match.job_hash) {
-					console.warn(`[USER-MATCHES] ⚠️ Match has job_hash but no job data:`, {
-						email,
-						job_hash: match.job_hash,
-						match_score: match.match_score,
+					logger.warn("Match has job_hash but no job data", {
+						metadata: {
+							email,
+							job_hash: match.job_hash,
+							match_score: match.match_score,
+						},
 					});
 				}
 				return hasJob;
@@ -216,18 +224,12 @@ export const GET = withAxiom(
 				id: match.id,
 				match_score: match.match_score,
 				match_reason: match.match_reason,
-				match_quality: match.match_quality,
-				match_tags: match.match_tags,
-				matched_at: match.matched_at,
 				job: match.jobs,
 			}));
 
 		// Log if we filtered out any matches with null jobs
 		const nullJobCount = (matches || []).length - transformedMatches.length;
 		if (nullJobCount > 0) {
-			console.warn(
-				`[USER-MATCHES] ⚠️ Filtered out ${nullJobCount} matches with null jobs out of ${(matches || []).length} total`,
-			);
 			logger.debug("Filtered out matches with null jobs", {
 				metadata: {
 					email,
@@ -248,18 +250,20 @@ export const GET = withAxiom(
 						.select("job_hash")
 						.in("job_hash", jobHashes.slice(0, 10)); // Check first 10
 
-					console.log(`[USER-MATCHES] 🔍 Jobs existence check:`, {
-						jobHashesChecked: jobHashes.slice(0, 10).length,
-						jobsFound: jobsCheck?.length || 0,
-						jobsCheckError: jobsCheckError ? jobsCheckError.message : null,
-					});
+					if (process.env.NODE_ENV === "development") {
+						console.log(`[USER-MATCHES] 🔍 Jobs existence check:`, {
+							jobHashesChecked: jobHashes.slice(0, 10).length,
+							jobsFound: jobsCheck?.length || 0,
+							jobsCheckError: jobsCheckError ? jobsCheckError.message : null,
+						});
+					}
 				}
 			}
 		}
 
 		const successResponse = createSuccessResponse(
 			{
-				user_email: email,
+				// SECURITY: Removed user_email from response - client already knows their email
 				total_matches: transformedMatches.length,
 				matches: transformedMatches,
 			},

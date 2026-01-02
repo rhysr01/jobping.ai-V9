@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { ENV } from "@/lib/constants";
+import { ENV } from "@/lib/env";
 import { asyncHandler, ValidationError } from "@/lib/errors";
 import {
 	markUserVerified,

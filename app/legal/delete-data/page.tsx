@@ -82,7 +82,7 @@ export default function DeleteDataPage() {
 								onChange={(e) => setEmail(e.target.value)}
 								required
 								placeholder="your.email@example.com"
-								className="w-full px-4 py-3 rounded-lg border-2 border-zinc-700 bg-zinc-900 text-white placeholder-zinc-500 focus:border-brand-500 focus:outline-none transition-colors"
+								className="w-full px-4 py-3 rounded-lg border-2 border-zinc-700 bg-zinc-900 text-white placeholder-zinc-500 focus:border-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black transition-colors"
 							/>
 						</div>
 

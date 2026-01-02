@@ -5,17 +5,18 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { GhostMatches } from "@/components/matches/GhostMatches";
 import { FreeSuccessOverlay } from "@/components/signup/FreeSuccessOverlay";
 import { GuaranteedMatchingProgress } from "@/components/signup/GuaranteedMatchingProgress";
-import { GhostMatches } from "@/components/matches/GhostMatches";
 import Button from "@/components/ui/Button";
+import CustomScanTrigger from "@/components/ui/CustomScanTrigger";
 import { HotMatchBadge } from "@/components/ui/HotMatchBadge";
 import JobClosedModal from "@/components/ui/JobClosedModal";
 import TargetCompaniesAlert from "@/components/ui/TargetCompaniesAlert";
-import CustomScanTrigger from "@/components/ui/CustomScanTrigger";
 import { useGuaranteedMatchingProgress } from "@/hooks/useGuaranteedMatchingProgress";
 import { trackEvent } from "@/lib/analytics";
 import { ApiError, apiCall, apiCallJson } from "@/lib/api-client";
+import { TIMING } from "@/lib/constants";
 import {
 	FREE_ROLES_PER_SEND,
 	PREMIUM_ROLES_PER_WEEK,
@@ -83,7 +84,7 @@ function MatchesPageContent() {
 		estimatedTime: string;
 		message: string;
 	} | null>(null);
-	
+
 	// Success overlay state for free signup
 	const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
 	const [successMatchCount, setSuccessMatchCount] = useState(0);
@@ -92,7 +93,19 @@ function MatchesPageContent() {
 		try {
 			setError("");
 			setLoading(true);
-			const response = await apiCall("/api/matches/free");
+
+			// Add timeout wrapper - using constant from lib/constants
+			const timeoutPromise = new Promise<Response>((_, reject) =>
+				setTimeout(
+					() => reject(new Error("Request timeout")),
+					TIMING.API_TIMEOUT_MS,
+				),
+			);
+
+			const response = (await Promise.race([
+				apiCall("/api/matches/free"),
+				timeoutPromise,
+			])) as Response;
 
 			// Handle 401 - Cookie expired or invalid
 			if (response.status === 401) {
@@ -103,7 +116,7 @@ function MatchesPageContent() {
 				// Optionally redirect after a delay
 				setTimeout(() => {
 					window.location.href = "/signup/free?expired=true";
-				}, 3000);
+				}, TIMING.SESSION_EXPIRED_REDIRECT_MS);
 				return;
 			}
 
@@ -123,31 +136,44 @@ function MatchesPageContent() {
 			setCustomScan(data.customScan || null);
 			setLoading(false);
 		} catch (err) {
-			// ApiError provides user-friendly messages
-			const errorMessage =
-				err instanceof ApiError
-					? err.message
-					: "Failed to load matches. Please try signing up again.";
-			setError(errorMessage);
+			// Handle timeout specifically
+			if (err instanceof Error && err.message === "Request timeout") {
+				setError("Request took too long. Please try again.");
+			} else {
+				// ApiError provides user-friendly messages
+				const errorMessage =
+					err instanceof ApiError
+						? err.message
+						: "Failed to load matches. Please try signing up again.";
+				setError(errorMessage);
+			}
 			setLoading(false);
 		}
 	}, []);
 
+	// CRITICAL FIX: Use useRef to prevent infinite loop
+	// This is the "Senior-approved" pattern for useEffect mount logic in Next.js 14/15
+	const hasFetchedRef = useRef(false);
+
 	useEffect(() => {
-		fetchMatches();
-	}, [fetchMatches]);
+		if (!hasFetchedRef.current) {
+			hasFetchedRef.current = true;
+			fetchMatches();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []); // Empty deps - only run once on mount
 
 	// Check URL params for free signup success overlay
 	useEffect(() => {
 		const justSignedUp = searchParams?.get("justSignedUp");
 		const matchCount = searchParams?.get("matchCount");
-		
+
 		if (justSignedUp === "true" && matchCount) {
 			const count = parseInt(matchCount, 10);
 			if (!isNaN(count) && count > 0) {
 				setSuccessMatchCount(count);
 				setShowSuccessOverlay(true);
-				
+
 				// Clean up URL params after showing overlay
 				const url = new URL(window.location.href);
 				url.searchParams.delete("justSignedUp");
@@ -364,50 +390,57 @@ function MatchesPageContent() {
 							message="We haven't seen roles for your niche in 48 hours, but we've matched students to these companies recently."
 							onSetAlert={(company) => {
 								trackEvent("target_company_alert_set", { company });
-								showToast.success(`Alert set for ${company}! We'll notify you when new roles appear.`);
+								showToast.success(
+									`Alert set for ${company}! We'll notify you when new roles appear.`,
+								);
 							}}
 						/>
 					)}
 
 					{/* Default No Matches UI */}
-					{!customScan && (!targetCompanies || targetCompanies.length === 0) && (
-						<motion.div
-							initial={{ opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							className="glass-card elevation-2 p-8 text-center max-w-md mx-auto border-dashed border-zinc-700"
-						>
+					{!customScan &&
+						(!targetCompanies || targetCompanies.length === 0) && (
 							<motion.div
-								animate={{ rotate: 360 }}
-								transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-								className="w-12 h-12 border-2 border-zinc-700 border-t-brand-500 rounded-full mx-auto mb-6"
-								aria-hidden="true"
-							/>
-							<h2 className="text-2xl font-bold mb-4 text-zinc-100 tracking-tight">
-								No matches found
-							</h2>
-							<p className="text-zinc-400 mb-6 leading-relaxed">
-								We couldn't find jobs matching your preferences right now.
-							</p>
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								className="glass-card elevation-2 p-8 text-center max-w-md mx-auto border-dashed border-zinc-700"
+							>
+								<motion.div
+									animate={{ rotate: 360 }}
+									transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+									className="w-12 h-12 border-2 border-zinc-700 border-t-brand-500 rounded-full mx-auto mb-6"
+									aria-hidden="true"
+								/>
+								<h2 className="text-2xl font-bold mb-4 text-zinc-100 tracking-tight">
+									No matches found
+								</h2>
+								<p className="text-zinc-400 mb-6 leading-relaxed">
+									We couldn't find jobs matching your preferences right now.
+								</p>
 
-							<div className="space-y-4 mb-6">
-								<p className="text-sm text-zinc-400 font-medium">Try:</p>
-								<ul className="text-sm text-zinc-400 space-y-2 leading-relaxed">
-									<li>• Selecting more cities</li>
-									<li>• Choosing a different career path</li>
-									<li>• Coming back tomorrow (we add 100+ jobs daily)</li>
-								</ul>
-							</div>
+								<div className="space-y-4 mb-6">
+									<p className="text-sm text-zinc-400 font-medium">Try:</p>
+									<ul className="text-sm text-zinc-400 space-y-2 leading-relaxed">
+										<li>• Selecting more cities</li>
+										<li>• Choosing a different career path</li>
+										<li>• Coming back tomorrow (we add 100+ jobs daily)</li>
+									</ul>
+								</div>
 
-							<div className="mt-6 space-y-3">
-								<Button href="/signup/free" variant="secondary" className="w-full">
-									Try Different Preferences
-								</Button>
-								<Button href="/signup" variant="gradient" className="w-full">
-									Upgrade to Premium for More Jobs
-								</Button>
-							</div>
-						</motion.div>
-					)}
+								<div className="mt-6 space-y-3">
+									<Button
+										href="/signup/free"
+										variant="secondary"
+										className="w-full"
+									>
+										Try Different Preferences
+									</Button>
+									<Button href="/signup" variant="gradient" className="w-full">
+										Upgrade to Premium for More Jobs
+									</Button>
+								</div>
+							</motion.div>
+						)}
 				</div>
 			</div>
 		);
@@ -422,7 +455,7 @@ function MatchesPageContent() {
 					onDismiss={() => setShowSuccessOverlay(false)}
 				/>
 			)}
-			
+
 			<div className="container max-w-5xl mx-auto px-4">
 				{/* Tier Indicator */}
 				<div className="text-center mb-6">
@@ -451,6 +484,50 @@ function MatchesPageContent() {
 					</div>
 				</div>
 
+				{/* Low Results State - Show suggestions when 1-3 matches */}
+				{jobs.length > 0 && jobs.length <= 3 && (
+					<motion.div
+						initial={{ opacity: 0, y: 10 }}
+						animate={{ opacity: 1, y: 0 }}
+						className="glass-card elevation-1 p-6 mb-8 border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-amber-600/5 to-amber-500/10"
+					>
+						<div className="flex items-start gap-4">
+							<div className="flex-shrink-0">
+								<span className="text-2xl" aria-hidden="true">
+									💡
+								</span>
+							</div>
+							<div className="flex-1">
+								<h3 className="text-lg font-bold text-amber-200 mb-2">
+									Few matches found ({jobs.length})
+								</h3>
+								<p className="text-sm text-amber-100/90 mb-4">
+									Your preferences are quite specific. To see more matches, try:
+								</p>
+								<ul className="text-sm text-amber-100/80 space-y-2 mb-4">
+									<li>• Adding more cities to your preferences</li>
+									<li>• Selecting additional career paths or roles</li>
+									<li>• Broadening your industry preferences</li>
+									<li>• Checking back tomorrow (we add 100+ jobs daily)</li>
+								</ul>
+								<div className="flex gap-3">
+									<Button
+										href="/preferences"
+										variant="secondary"
+										size="sm"
+										className="text-xs"
+									>
+										Update Preferences
+									</Button>
+									<Button href="/signup" variant="gradient" size="sm" className="text-xs">
+										Upgrade for More Matches
+									</Button>
+								</div>
+							</div>
+						</div>
+					</motion.div>
+				)}
+
 				{/* Target Companies Alert (shown even when matches exist) */}
 				{targetCompanies && targetCompanies.length > 0 && (
 					<TargetCompaniesAlert
@@ -458,7 +535,9 @@ function MatchesPageContent() {
 						message="We've also matched students to these companies recently. Set alerts to be notified when new roles appear."
 						onSetAlert={(company) => {
 							trackEvent("target_company_alert_set", { company });
-							showToast.success(`Alert set for ${company}! We'll notify you when new roles appear.`);
+							showToast.success(
+								`Alert set for ${company}! We'll notify you when new roles appear.`,
+							);
 						}}
 					/>
 				)}
@@ -628,17 +707,20 @@ function MatchesPageContent() {
 											)}
 										</div>
 
-										{/* Match Reason Display - Clean, No Pills */}
+										{/* Match Reason Display - Semantic HTML */}
 										{job.match_reason && (
-											<div className="mb-3 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+											<aside
+												className="mb-3 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg"
+												aria-label="Match explanation"
+											>
 												<p className="text-xs font-semibold text-emerald-400 mb-1.5 flex items-center gap-1.5">
-													<span>💡</span>
+													<span aria-hidden="true">💡</span>
 													Why this match?
 												</p>
 												<p className="text-sm text-zinc-200 leading-relaxed">
 													{job.match_reason}
 												</p>
-											</div>
+											</aside>
 										)}
 
 										{/* Description */}
@@ -709,7 +791,7 @@ function MatchesPageContent() {
 																		);
 																		setTimeout(
 																			() => setClickedJobId(null),
-																			2000,
+																			TIMING.CLICK_RESET_DELAY_MS,
 																		);
 																		return;
 																	}
@@ -728,7 +810,10 @@ function MatchesPageContent() {
 																	"_blank",
 																	"noopener,noreferrer",
 																);
-																setTimeout(() => setClickedJobId(null), 2000);
+																setTimeout(
+																	() => setClickedJobId(null),
+																	TIMING.CLICK_RESET_DELAY_MS,
+																);
 															})
 															.then((data) => {
 																if (data?.error && data?.similarMatches) {
@@ -750,11 +835,18 @@ function MatchesPageContent() {
 																	"_blank",
 																	"noopener,noreferrer",
 																);
-																setTimeout(() => setClickedJobId(null), 2000);
+																setTimeout(
+																	() => setClickedJobId(null),
+																	TIMING.CLICK_RESET_DELAY_MS,
+																);
 															});
 													} else {
 														// Fallback if no email/hash
-														window.open(job.url, "_blank", "noopener,noreferrer");
+														window.open(
+															job.url,
+															"_blank",
+															"noopener,noreferrer",
+														);
 														setTimeout(() => setClickedJobId(null), 2000);
 													}
 												}}

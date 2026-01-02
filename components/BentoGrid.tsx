@@ -46,8 +46,8 @@ const FeatureCard = ({
 			aria-label={`${title} - ${description}`}
 			className={cn(
 				"group relative overflow-hidden rounded-3xl glass-card elevation-1 p-6 transition-all duration-300",
-				"hover:elevation-3 hover:border-purple-500/50 hover:shadow-[0_8px_32px_rgba(139,92,246,0.15)]",
-				"focus-within:ring-2 focus-within:ring-purple-500 focus-within:ring-offset-2 focus-within:ring-offset-black",
+				"hover:elevation-3 hover:border-brand-600/50 hover:shadow-[0_8px_32px_rgba(139,92,246,0.15)]",
+				"focus-within:ring-2 focus-within:ring-brand-600 focus-within:ring-offset-2 focus-within:ring-offset-black",
 				"bg-gradient-to-br from-surface-base/90 via-surface-base/95 to-surface-elevated/90",
 				className
 			)}
@@ -56,15 +56,15 @@ const FeatureCard = ({
 			<div className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-[radial-gradient(circle_at_var(--x,_50%)_var(--y,_50%),rgba(139,92,246,0.15)_0%,transparent_70%)]" />
 			
 			{/* Subtle inner glow */}
-			<div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+			<div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand-600/5 via-transparent to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
 			<div className="relative z-10 flex h-full flex-col justify-between">
 				<div>
 					<div className={cn(
 						"mb-4 inline-flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-xl",
 						"glass-card elevation-1 text-purple-400",
-						"bg-gradient-to-br from-purple-500/20 via-purple-500/10 to-transparent",
-						"border border-purple-500/30",
+						"bg-gradient-to-br from-brand-600/20 via-brand-600/10 to-transparent",
+						"border border-brand-600/30",
 						"shadow-[0_4px_16px_rgba(139,92,246,0.2)]",
 						"group-hover:shadow-[0_8px_24px_rgba(139,92,246,0.3)]",
 						"group-hover:scale-110 transition-transform duration-300"
@@ -144,14 +144,14 @@ export default function HowItWorksBento() {
 
 								{/* Scanning UI Labels */}
 								<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-									<span className="text-xs font-mono text-purple-300 bg-black/60 px-3 py-1.5 rounded-md border border-purple-500/20 uppercase tracking-widest">
+									<span className="text-xs font-mono text-purple-300 bg-black/60 px-3 py-1.5 rounded-md border border-brand-600/20 uppercase tracking-widest">
 										Processing Preferences...
 									</span>
 									<div className="flex gap-1">
 										{[1, 2, 3].map((i) => (
 											<div
 												key={i}
-												className="w-1 h-1 rounded-full bg-purple-500/40 animate-bounce"
+												className="w-1 h-1 rounded-full bg-brand-600/40 animate-bounce"
 												style={{
 													animationDelay: `${i * 0.2}s`,
 												}}
@@ -182,7 +182,7 @@ export default function HowItWorksBento() {
 												"group-hover:scale-105",
 												isVisa
 													? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-[0_4px_12px_rgba(16,185,129,0.2)] group-hover:shadow-[0_6px_16px_rgba(16,185,129,0.3)]"
-													: "bg-purple-500/10 text-purple-300 border-purple-500/20 group-hover:bg-purple-500/15"
+													: "bg-brand-600/10 text-purple-300 border-brand-600/20 group-hover:bg-brand-600/15"
 											)}
 										>
 											<CheckCircle2 size={16} className={cn("shrink-0", isVisa ? "text-emerald-400" : "text-purple-400")} /> {tag}
@@ -211,9 +211,9 @@ export default function HowItWorksBento() {
 									className={cn(
 										"px-5 py-3 md:px-6 md:py-4 rounded-xl glass-card elevation-2",
 										"text-base md:text-lg font-bold text-white",
-										"shadow-lg shadow-purple-500/30",
-										"bg-gradient-to-br from-purple-500/20 via-purple-500/10 to-transparent",
-										"border border-purple-500/30"
+										"shadow-lg shadow-brand-600/30",
+										"bg-gradient-to-br from-brand-600/20 via-brand-600/10 to-transparent",
+										"border border-brand-600/30"
 									)}
 								>
 									Your Preferences
@@ -221,7 +221,7 @@ export default function HowItWorksBento() {
 								<motion.div
 									animate={{ scale: [1, 1.2, 1] }}
 									transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-									className="h-1 w-12 md:w-16 bg-gradient-to-r from-purple-500 via-purple-400 to-emerald-500 rounded-full shadow-lg shadow-purple-500/40"
+									className="h-1 w-12 md:w-16 bg-gradient-to-r from-brand-600 via-purple-400 to-emerald-500 rounded-full shadow-lg shadow-brand-600/40"
 								/>
 								<motion.div
 									initial={{ opacity: 0, scale: 0.9 }}
@@ -241,7 +241,7 @@ export default function HowItWorksBento() {
 								<motion.div
 									animate={{ scale: [1, 1.2, 1] }}
 									transition={{ repeat: Infinity, duration: 2, ease: "easeInOut", delay: 0.5 }}
-									className="h-1 w-12 md:w-16 bg-gradient-to-r from-emerald-500 via-emerald-400 to-purple-500 rounded-full shadow-lg shadow-emerald-500/40"
+									className="h-1 w-12 md:w-16 bg-gradient-to-r from-emerald-500 via-emerald-400 to-brand-600 rounded-full shadow-lg shadow-emerald-500/40"
 								/>
 								<motion.div
 									initial={{ opacity: 0, x: 20 }}
@@ -251,9 +251,9 @@ export default function HowItWorksBento() {
 									className={cn(
 										"px-5 py-3 md:px-6 md:py-4 rounded-xl glass-card elevation-2",
 										"text-base md:text-lg font-bold text-white",
-										"shadow-lg shadow-purple-500/30",
-										"bg-gradient-to-br from-purple-500/20 via-purple-500/10 to-transparent",
-										"border border-purple-500/30"
+										"shadow-lg shadow-brand-600/30",
+										"bg-gradient-to-br from-brand-600/20 via-brand-600/10 to-transparent",
+										"border border-brand-600/30"
 									)}
 								>
 									Job Listings
@@ -284,7 +284,7 @@ export default function HowItWorksBento() {
 									repeat: Infinity,
 									repeatType: "reverse",
 								}}
-								className="absolute inset-0 opacity-10 bg-gradient-to-br from-purple-500/20 via-transparent to-emerald-500/20 pointer-events-none"
+								className="absolute inset-0 opacity-10 bg-gradient-to-br from-brand-600/20 via-transparent to-emerald-500/20 pointer-events-none"
 								style={{ backgroundSize: "200% 200%" }}
 							/>
 						</div>

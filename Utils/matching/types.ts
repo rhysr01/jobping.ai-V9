@@ -120,12 +120,52 @@ export interface MatchResult {
 	provenance: AiProvenance;
 }
 
+/**
+ * Comprehensive JobMatch Interface
+ *
+ * This interface includes all optional fields that are accessed via "as any"
+ * throughout the matching services. This eliminates the need for type assertions.
+ */
 export interface JobMatch {
 	job_index: number;
 	job_hash: string;
 	match_score: number;
 	match_reason: string;
 	confidence_score: number;
+
+	// Optional fields commonly accessed via "as any" in matching services
+	// These fields may be present on jobs returned from matching engine
+	job?: Job; // Full job object (if available)
+
+	// Metadata fields from JobWithMetadata
+	visa_friendly?: boolean;
+	visa_sponsorship?: boolean;
+	visa_confidence?: "verified" | "likely" | "local-only" | "unknown";
+	language_requirements?: string[];
+	min_yoe?: number | null;
+	max_yoe?: number | null;
+
+	// Extended job properties (commonly accessed)
+	city?: string;
+	country?: string;
+	work_environment?: string;
+	source?: string;
+	industry?: string;
+	company_size?: string;
+	is_internship?: boolean;
+	is_graduate?: boolean;
+	is_early_career?: boolean;
+
+	// Score breakdown (if available)
+	score_breakdown?: MatchScore;
+	match_quality?: "excellent" | "very good" | "good" | "fair" | "poor";
+
+	// Provenance
+	provenance?: AiProvenance;
+	relaxationLevel?: number;
+
+	// Job snapshot (for historical matching)
+	job_snapshot?: Record<string, unknown>;
 }
 
 // ================================

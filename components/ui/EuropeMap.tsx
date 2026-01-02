@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMapProjection } from "@/hooks/useMapProjection";
+import { TIMING } from "@/lib/constants";
 
 const OFFSET: Record<string, { dx: number; dy: number }> = {
 	London: { dx: 6, dy: 4 },
@@ -81,7 +82,22 @@ const EuropeMap = memo(
 		const prevSelectedRef = useRef<string[]>([]);
 		const shakeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 		const touchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+		const nestedTouchTimeoutRef = useRef<NodeJS.Timeout | null>(null); // CRITICAL FIX: Separate ref for nested timeout
 		const cityRefs = useRef<Map<string, SVGCircleElement>>(new Map());
+		const [supportsHover, setSupportsHover] = useState(false);
+
+		// Detect if device supports hover (prevents sticky hover on mobile)
+		useEffect(() => {
+			const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+			setSupportsHover(mediaQuery.matches);
+			
+			const handleChange = (e: MediaQueryListEvent) => {
+				setSupportsHover(e.matches);
+			};
+			
+			mediaQuery.addEventListener("change", handleChange);
+			return () => mediaQuery.removeEventListener("change", handleChange);
+		}, []);
 
 		// Track when cities are selected to trigger highlight animation
 		useEffect(() => {
@@ -90,7 +106,10 @@ const EuropeMap = memo(
 			);
 			if (newlySelected) {
 				setJustSelected(newlySelected);
-				const timer = setTimeout(() => setJustSelected(null), 1000);
+				const timer = setTimeout(
+					() => setJustSelected(null),
+					TIMING.MAP_SELECTION_HIGHLIGHT_MS,
+				);
 				prevSelectedRef.current = selectedCities;
 				return () => clearTimeout(timer);
 			}
@@ -105,6 +124,10 @@ const EuropeMap = memo(
 				}
 				if (touchTimeoutRef.current) {
 					clearTimeout(touchTimeoutRef.current);
+				}
+				// CRITICAL FIX: Clean up nested timeout separately to prevent memory leaks
+				if (nestedTouchTimeoutRef.current) {
+					clearTimeout(nestedTouchTimeoutRef.current);
 				}
 			};
 		}, []);
@@ -126,7 +149,10 @@ const EuropeMap = memo(
 				if (shakeTimeoutRef.current) {
 					clearTimeout(shakeTimeoutRef.current);
 				}
-				shakeTimeoutRef.current = setTimeout(() => setShakeCity(null), 450);
+				shakeTimeoutRef.current = setTimeout(
+					() => setShakeCity(null),
+					TIMING.MAP_SHAKE_DURATION_MS,
+				);
 
 				// Call the callback if provided
 				if (onMaxSelectionsReached) {
@@ -176,13 +202,18 @@ const EuropeMap = memo(
 				if (touchTimeoutRef.current) {
 					clearTimeout(touchTimeoutRef.current);
 				}
+				// CRITICAL FIX: Clean up nested timeout separately
+				if (nestedTouchTimeoutRef.current) {
+					clearTimeout(nestedTouchTimeoutRef.current);
+				}
 				touchTimeoutRef.current = setTimeout(() => {
 					setTouchedCity(null);
 					// Keep tooltip visible for a bit longer on touch
-					setTimeout(() => {
+					// CRITICAL FIX: Store nested timeout in separate ref for proper cleanup
+					nestedTouchTimeoutRef.current = setTimeout(() => {
 						setHoveredCity((prev) => (prev === city ? null : prev));
 						setTooltip((prev) => (prev?.city === city ? null : prev));
-					}, 2000);
+					}, TIMING.MAP_TOOLTIP_DELAY_MS);
 				}, 300);
 			},
 			[updateTooltip],
@@ -423,13 +454,12 @@ const EuropeMap = memo(
 
 					{/* City markers */}
 					<g
-						role="group"
 						aria-label={`City Selection (Multi-select, up to ${maxSelections} cities)`}
 						aria-describedby="city-selection-help"
 					>
 						<text id="city-selection-help" className="sr-only">
-							Select up to {maxSelections} cities by clicking on the map markers or
-							using keyboard navigation.
+							Select up to {maxSelections} cities by clicking on the map markers
+							or using keyboard navigation.
 						</text>
 						{cityEntries.map(([city, coords]) => {
 							const selected = isCitySelected(city);
@@ -462,12 +492,9 @@ const EuropeMap = memo(
 							}
 
 							return (
-								<g
-									key={city}
-									role="group"
-									aria-label={`${city}, ${coords.country}`}
-								>
+								<g key={city} aria-label={`${city}, ${coords.country}`}>
 									{/* Invisible larger touch target (44x44px) for better mobile accessibility */}
+									{/* SEMANTIC HTML FIX: Circle with onClick needs role="button" and keyboard handlers */}
 									<circle
 										cx={coords.x}
 										cy={coords.y}
@@ -475,11 +502,25 @@ const EuropeMap = memo(
 										fill="transparent"
 										stroke="transparent"
 										className="pointer-events-auto touch-manipulation"
+										role="button"
+										tabIndex={disabled ? -1 : 0}
+										aria-label={`Select ${city}, ${coords.country}`}
+										aria-describedby={`city-label-${city.replace(/\s+/g, "-")}`}
+										aria-pressed={selected}
+										aria-disabled={disabled}
 										onClick={() => {
 											if (disabled) {
 												triggerShake(city);
 											} else {
 												handleCityClick(city);
+											}
+										}}
+										onKeyDown={(e) => {
+											if (e.key === "Enter" || e.key === " ") {
+												e.preventDefault();
+												if (!disabled) {
+													handleCityClick(city);
+												}
 											}
 										}}
 										onTouchStart={(e) => !disabled && handleCityTouch(city, e)}
@@ -498,6 +539,7 @@ const EuropeMap = memo(
 												className="pointer-events-none"
 												filter="url(#selectedGlow)"
 												aria-hidden="true"
+												style={{ willChange: "transform, opacity" }}
 												initial={
 													justSelected === city
 														? { scale: 0.8, opacity: 0 }
@@ -529,6 +571,7 @@ const EuropeMap = memo(
 												opacity="0.15"
 												className="pointer-events-none"
 												aria-hidden="true"
+												style={{ willChange: "transform, opacity" }}
 												animate={{
 													scale: [1, 1.08, 1],
 													opacity: [0.15, 0.18, 0.15],
@@ -635,7 +678,8 @@ const EuropeMap = memo(
 													? "url(#glow)"
 													: undefined
 										}
-										whileHover={!disabled ? { scale: 1.4, strokeWidth: 4 } : {}}
+										style={{ willChange: "transform, opacity" }}
+										whileHover={!disabled && supportsHover ? { scale: 1.4, strokeWidth: 4 } : {}}
 										whileTap={!disabled ? { scale: 0.9 } : {}}
 										onClick={() => {
 											if (disabled) {
@@ -683,24 +727,12 @@ const EuropeMap = memo(
 													? { duration: 0.7, ease: [0.23, 1, 0.32, 1] }
 													: { duration: 0.25, ease: "easeOut" }
 										}
-										style={
-											selected
-												? {
-														filter:
-															"drop-shadow(0 0 6px rgba(168,155,184,0.3)) drop-shadow(0 0 12px rgba(109,90,143,0.2))",
-													}
-												: hovered || focused || touchedCity === city
-													? {
-															filter:
-																"drop-shadow(0 0 4px rgba(194,168,255,0.3))",
-														}
-													: {}
-										}
 									/>
 
 									{/* Enhanced city label with premium styling */}
 									{(showLabel || touched) && (
 										<motion.text
+											id={`city-label-${city.replace(/\s+/g, "-")}`}
 											x={labelX}
 											y={labelY}
 											textAnchor="middle"
@@ -708,11 +740,13 @@ const EuropeMap = memo(
 											fontSize={selected ? "14" : "13"}
 											fontWeight={selected ? "800" : "700"}
 											className="pointer-events-none select-none"
+											aria-hidden="true"
 											initial={{ opacity: 0, y: 2 }}
 											animate={{ opacity: 1, y: 0 }}
 											transition={{ duration: 0.3, ease: "easeOut" }}
-											style={
-												selected
+											style={{
+												willChange: "transform, opacity",
+												...(selected
 													? {
 															filter:
 																"drop-shadow(0 0 3px rgba(255,255,255,0.4)) drop-shadow(0 0 6px rgba(168,155,184,0.25))",
@@ -728,8 +762,8 @@ const EuropeMap = memo(
 															strokeWidth: 0.4,
 															textShadow:
 																"0 0 6px rgba(243,232,255,0.3), 0 0 3px rgba(194,168,255,0.2)",
-														}
-											}
+														}),
+											}}
 											aria-hidden="true"
 										>
 											{city}

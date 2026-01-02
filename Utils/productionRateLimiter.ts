@@ -64,6 +64,11 @@ export const RATE_LIMIT_CONFIG = {
 		maxRequests: parseInt(process.env.RATE_LIMIT_CLEANUP_MAX || "20", 10), // Increased to 20 (configurable)
 		skipSuccessfulRequests: true,
 	},
+	"signup": {
+		windowMs: parseInt(process.env.RATE_LIMIT_SIGNUP_WINDOW_MS || "60000", 10), // 1 minute
+		maxRequests: parseInt(process.env.RATE_LIMIT_SIGNUP_MAX || "10", 10), // 10 signups per minute (strict due to AI costs)
+		skipSuccessfulRequests: false,
+	},
 	// Default for unspecified endpoints
 	default: {
 		windowMs: parseInt(process.env.RATE_LIMIT_DEFAULT_WINDOW_MS || "60000", 10), // 1 minute
