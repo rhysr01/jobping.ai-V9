@@ -170,7 +170,8 @@ async function findSimilarMatches(
             id, title, company, location, job_url, job_hash, 
             categories, work_environment, is_active
           )
-        `)
+        `,
+				)
 				.eq("user_email", email)
 				.neq("job_hash", currentJobHash)
 				.eq("jobs.is_active", true)
@@ -189,13 +190,13 @@ async function findSimilarMatches(
 
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { jobHash: string } },
+	{ params }: { params: Promise<{ jobHash: string }> },
 ) {
 	const startTime = Date.now();
 	const { searchParams } = new URL(request.url);
 	const email = searchParams.get("email");
 	const token = searchParams.get("token");
-	const jobHash = params.jobHash;
+	const { jobHash } = await params;
 
 	// Validation
 	if (!jobHash || !email) {
@@ -242,10 +243,7 @@ export async function GET(
 			email,
 			error: matchError?.message,
 		});
-		return NextResponse.json(
-			{ error: "Match not found" },
-			{ status: 404 },
-		);
+		return NextResponse.json({ error: "Match not found" }, { status: 404 });
 	}
 
 	const job = match.jobs;
@@ -265,7 +263,9 @@ export async function GET(
 			company: job.company,
 			location: job.location,
 			description: job.description
-				? job.description.replace(/<[^>]+>/g, "").substring(0, 500) // Clean HTML, max 500 chars
+				? job.description
+						.replace(/<[^>]+>/g, "")
+						.substring(0, 500) // Clean HTML, max 500 chars
 				: null,
 			categories: job.categories,
 			work_environment: job.work_environment,
@@ -421,4 +421,3 @@ export async function GET(
 		},
 	});
 }
-
