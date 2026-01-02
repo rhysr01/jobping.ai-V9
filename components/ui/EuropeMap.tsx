@@ -18,6 +18,12 @@ const OFFSET: Record<string, { dx: number; dy: number }> = {
 	Hamburg: { dx: -3, dy: -2 },
 };
 
+// Special offsets when both Dublin and Belfast are selected (prevent overlap)
+const OVERLAP_OFFSETS: Record<string, { dx: number; dy: number }> = {
+	Belfast: { dx: -18, dy: 10 }, // Move Belfast further left and down
+	Dublin: { dx: 14, dy: -8 }, // Move Dublin further right and up
+};
+
 type CityCoordinate = {
 	lat: number;
 	lon: number;
@@ -277,12 +283,18 @@ const EuropeMap = memo(
 		);
 
 		const cityEntries = useMemo<[string, ProjectedCity][]>(() => {
+			// Check if both Dublin and Belfast are selected
+			const bothSelected = selectedCities.includes("Dublin") && selectedCities.includes("Belfast");
+			
 			return Object.entries(CITY_COORDINATES).map(([name, city]) => {
 				const { x, y } = project(city.lat, city.lon);
-				const offset = OFFSET[name] ?? { dx: 0, dy: 0 };
+				// Use overlap offsets if both Dublin and Belfast are selected
+				const offset = bothSelected && OVERLAP_OFFSETS[name]
+					? OVERLAP_OFFSETS[name]
+					: OFFSET[name] ?? { dx: 0, dy: 0 };
 				return [name, { ...city, x: x + offset.dx, y: y + offset.dy }];
 			});
-		}, [project]);
+		}, [project, selectedCities]);
 
 		// Pre-calculate selected city label positions (static, only recalculates when selection changes)
 		const selectedLabelPositions = useMemo(() => {
@@ -292,10 +304,10 @@ const EuropeMap = memo(
 				const coords = cityEntries.find(([name]) => name === city)?.[1];
 				if (!coords) return;
 
-				const offset = OFFSET[city] ?? { dx: 0, dy: 0 };
+				// coords already has the offset applied from cityEntries, so just position the label
 				positions.set(city, {
-					x: coords.x + offset.dx,
-					y: coords.y - 32 + offset.dy, // Base Y for selected
+					x: coords.x,
+					y: coords.y - 32, // Base Y for selected (label above marker)
 				});
 			});
 
@@ -309,11 +321,11 @@ const EuropeMap = memo(
 			const coords = cityEntries.find(([name]) => name === hoveredCity)?.[1];
 			if (!coords) return null;
 
-			const offset = OFFSET[hoveredCity] ?? { dx: 0, dy: 0 };
+			// coords already has the offset applied from cityEntries
 			return {
 				city: hoveredCity,
-				x: coords.x + offset.dx,
-				y: coords.y - 26 + offset.dy, // Base Y for hover
+				x: coords.x,
+				y: coords.y - 26, // Base Y for hover (label above marker)
 			};
 		}, [hoveredCity, selectedCities, cityEntries]);
 
@@ -325,11 +337,11 @@ const EuropeMap = memo(
 			const coords = cityEntries.find(([name]) => name === city)?.[1];
 			if (!coords) return null;
 
-			const offset = OFFSET[city] ?? { dx: 0, dy: 0 };
+			// coords already has the offset applied from cityEntries
 			return {
 				city,
-				x: coords.x + offset.dx,
-				y: coords.y - 26 + offset.dy,
+				x: coords.x,
+				y: coords.y - 26, // Base Y for focused (label above marker)
 			};
 		}, [focusedCity, touchedCity, selectedCities, cityEntries]);
 

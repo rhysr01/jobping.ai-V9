@@ -1,11 +1,34 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { MapPin } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 import { trackEvent } from "@/lib/analytics";
 import { apiCall } from "@/lib/api-client";
+
+// Sample premium jobs to show in blurred cards (creates FOMO)
+const SAMPLE_PREMIUM_JOBS = [
+	{
+		title: "Senior Strategy Consultant",
+		company: "Google",
+		location: "London, UK",
+		matchScore: 95,
+	},
+	{
+		title: "Business Design Lead",
+		company: "McKinsey & Company",
+		location: "Paris, France",
+		matchScore: 92,
+	},
+	{
+		title: "Innovation Strategist",
+		company: "BCG Digital Ventures",
+		location: "Berlin, Germany",
+		matchScore: 89,
+	},
+];
 
 interface GhostMatchesProps {
 	onUpgradeClick?: () => void;
@@ -97,8 +120,8 @@ export function GhostMatches({ onUpgradeClick }: GhostMatchesProps) {
 
 			{/* Ghost Matches Cards */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-				{/* Show 3 blurred placeholder cards */}
-				{[1, 2, 3].map((index) => (
+				{/* Show 3 blurred real job cards */}
+				{SAMPLE_PREMIUM_JOBS.map((job, index) => (
 					<motion.div
 						key={index}
 						initial={{ opacity: 0, scale: 0.95 }}
@@ -106,24 +129,39 @@ export function GhostMatches({ onUpgradeClick }: GhostMatchesProps) {
 						transition={{ delay: 0.6 + index * 0.1 }}
 						className="glass-card elevation-2 p-6 rounded-xl border-2 border-zinc-800 relative overflow-hidden"
 					>
-						{/* Blur overlay */}
-						<div className="absolute inset-0 bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 backdrop-blur-md z-10 flex items-center justify-center">
+						{/* Blur overlay - lighter so brand names are just legible */}
+						<div className="absolute inset-0 bg-gradient-to-br from-zinc-900/60 to-zinc-950/70 backdrop-blur-lg z-10 flex items-center justify-center">
 							<div className="text-center">
-								<BrandIcons.Clock className="h-8 w-8 mx-auto mb-2 text-brand-400" />
+								<div className="w-12 h-12 rounded-full bg-brand-500/20 border-2 border-brand-500/40 flex items-center justify-center mb-2 mx-auto">
+									<BrandIcons.Clock className="h-6 w-6 text-brand-400" />
+								</div>
 								<p className="text-sm font-semibold text-brand-300">
 									Premium Match
 								</p>
 							</div>
 						</div>
 
-						{/* Blurred content (visible but unreadable) */}
-						<div className="opacity-30 blur-sm">
-							<div className="h-4 bg-zinc-700 rounded w-3/4 mb-3"></div>
-							<div className="h-3 bg-zinc-700 rounded w-1/2 mb-4"></div>
+						{/* Real job content - blurred but brand names visible */}
+						<div className="opacity-40 blur-md">
+							<div className="flex items-center justify-between mb-3">
+								<span className="text-xs font-bold px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+									{job.matchScore}% Match
+								</span>
+								<div className="text-sm font-semibold text-white">
+									{job.company}
+								</div>
+							</div>
+							<h3 className="text-base font-bold text-white mb-2 leading-tight">
+								{job.title}
+							</h3>
+							<div className="flex items-center gap-1.5 text-xs text-zinc-300 mb-3">
+								<MapPin size={12} className="shrink-0" />
+								{job.location}
+							</div>
 							<div className="space-y-2">
-								<div className="h-2 bg-zinc-700 rounded"></div>
-								<div className="h-2 bg-zinc-700 rounded w-5/6"></div>
-								<div className="h-2 bg-zinc-700 rounded w-4/6"></div>
+								<div className="h-2 bg-zinc-600 rounded w-full"></div>
+								<div className="h-2 bg-zinc-600 rounded w-5/6"></div>
+								<div className="h-2 bg-zinc-600 rounded w-4/6"></div>
 							</div>
 						</div>
 					</motion.div>
@@ -135,27 +173,32 @@ export function GhostMatches({ onUpgradeClick }: GhostMatchesProps) {
 				initial={{ opacity: 0, y: 10 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ delay: 0.9 }}
-				className="glass-card elevation-3 p-6 rounded-xl border-2 border-brand-600/30 bg-gradient-to-br from-brand-600/10 to-brand-700/10 text-center"
+				className="glass-card elevation-3 p-6 rounded-xl border-2 border-brand-600/30 bg-gradient-to-br from-brand-600/10 to-brand-700/10"
 			>
-				<div className="flex items-center justify-center gap-2 mb-3">
-					<BrandIcons.Target className="h-5 w-5 text-brand-400" />
-					<h3 className="text-xl font-bold text-white">
-						{ghostMatchCount} More High-Quality Matches Found
-					</h3>
+				<div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+					<div className="flex-1 text-center sm:text-left">
+						<div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
+							<BrandIcons.Target className="h-5 w-5 text-brand-400" />
+							<h3 className="text-xl font-bold text-white">
+								{ghostMatchCount} More High-Quality Matches Found
+							</h3>
+						</div>
+						<p className="text-zinc-300 text-sm">
+							These matches were found using AI-powered matching. Upgrade to
+							Premium to unlock them and get 15 fresh jobs per week delivered
+							via email.
+						</p>
+					</div>
+					<Link href="/signup" onClick={handleUpgradeClick}>
+						<motion.button
+							whileHover={{ scale: 1.02 }}
+							whileTap={{ scale: 0.98 }}
+							className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white font-bold rounded-xl hover:shadow-[0_0_30px_rgba(91,33,182,0.5)] transition-all shrink-0"
+						>
+							Upgrade to Premium →
+						</motion.button>
+					</Link>
 				</div>
-				<p className="text-zinc-300 mb-4 text-sm">
-					These matches were found using AI-powered matching. Upgrade to Premium
-					to unlock them and get 15 jobs per week (3x more than free).
-				</p>
-				<Link href="/signup" onClick={handleUpgradeClick}>
-					<motion.button
-						whileHover={{ scale: 1.02 }}
-						whileTap={{ scale: 0.98 }}
-						className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white font-bold rounded-xl hover:shadow-[0_0_30px_rgba(91,33,182,0.5)] transition-all"
-					>
-						Upgrade to Premium →
-					</motion.button>
-				</Link>
 			</motion.div>
 		</motion.div>
 	);

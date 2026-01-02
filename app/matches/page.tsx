@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { X } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
@@ -736,7 +737,7 @@ function MatchesPageContent() {
 											...
 										</p>
 
-										<div className="flex gap-3">
+										<div className="flex gap-4 items-center">
 											<Button
 												variant="primary"
 												size="lg"
@@ -866,19 +867,12 @@ function MatchesPageContent() {
 												type="button"
 												onClick={() => handleJobDismiss(job)}
 												disabled={isDismissing}
-												whileTap={{ scale: 1.5 }}
-												className={`
-                    px-4 py-2.5 rounded-lg
-                    border border-zinc-700 bg-zinc-900/40
-                    text-zinc-400 hover:text-zinc-300 hover:bg-zinc-800/60
-                    transition-all duration-200
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                    text-sm font-medium
-                  `}
+												whileTap={{ scale: 0.95 }}
+												className="px-3 py-2.5 rounded-lg border border-white/10 bg-transparent text-zinc-400 hover:text-zinc-200 hover:border-white/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
 												aria-label={`Mark ${job.company} as not relevant`}
 											>
 												<span className="flex items-center gap-1.5">
-													<span>👎</span>
+													<X size={16} />
 													<span className="hidden sm:inline">Not Relevant</span>
 												</span>
 											</motion.button>
@@ -904,22 +898,26 @@ function MatchesPageContent() {
 							Week?
 						</h2>
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 max-w-md mx-auto">
-							<div className="text-center p-4 rounded-lg bg-zinc-900/50 border border-zinc-800">
+							<div className="text-center p-4 rounded-lg bg-zinc-900/60 border border-zinc-700">
 								<p className="text-2xl font-bold text-white mb-1">
 									{FREE_ROLES_PER_SEND}
 								</p>
-								<p className="text-sm text-zinc-300">Free (one-time)</p>
+								<p className="text-sm text-zinc-200 font-medium">
+									Free (one-time preview)
+								</p>
 							</div>
 							<div className="text-center p-4 rounded-lg bg-brand-500/20 border border-brand-500/30">
 								<p className="text-2xl font-bold text-brand-200 mb-1">
 									{PREMIUM_ROLES_PER_WEEK}
 								</p>
-								<p className="text-sm text-zinc-300">Premium (per week)</p>
+								<p className="text-sm text-brand-100 font-medium">
+									Premium (per week)
+								</p>
 							</div>
 						</div>
 						<p className="text-lg text-zinc-300 mb-6">
-							Premium members get 5 fresh jobs delivered Mon/Wed/Fri (3x more
-							than free)
+							Premium members get 5 fresh jobs delivered Mon/Wed/Fri (15 per
+							week)
 						</p>
 						<div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
 							<Link href="/signup">

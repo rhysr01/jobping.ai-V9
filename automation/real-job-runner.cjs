@@ -166,10 +166,46 @@ class RealJobRunner {
 				}
 			});
 
-			const cities = Array.from(citySet);
+			let cities = Array.from(citySet);
 			const careerPaths = Array.from(careerSet);
 			const industries = Array.from(industrySet);
 			const roles = Array.from(roleSet);
+
+			// Fallback to default cities if no signup cities found
+			// This ensures scrapers run even when there are no active subscriptions
+			// Can be disabled by setting USE_DEFAULT_CITIES=false
+			if (
+				cities.length === 0 &&
+				process.env.USE_DEFAULT_CITIES !== "false"
+			) {
+				const defaultCities = [
+					"London",
+					"Manchester",
+					"Birmingham",
+					"Dublin",
+					"Belfast",
+					"Paris",
+					"Amsterdam",
+					"Brussels",
+					"Berlin",
+					"Hamburg",
+					"Munich",
+					"Zurich",
+					"Madrid",
+					"Barcelona",
+					"Milan",
+					"Rome",
+					"Stockholm",
+					"Copenhagen",
+					"Vienna",
+					"Prague",
+					"Warsaw",
+				];
+				cities = defaultCities;
+				console.log(
+					"ℹ️  No signup cities found; using default cities for scraping",
+				);
+			}
 
 			console.log("🎯 Signup-driven targets ready", {
 				citiesPreview: cities.slice(0, 10),
@@ -177,6 +213,7 @@ class RealJobRunner {
 				totalCareerPaths: careerPaths.length,
 				totalIndustries: industries.length,
 				totalRoles: roles.length,
+				usingDefaults: cities.length > 0 && citySet.size === 0,
 			});
 
 			return { cities, careerPaths, industries, roles };
@@ -185,6 +222,39 @@ class RealJobRunner {
 				"⚠️  Unexpected error collecting signup targets:",
 				error.message,
 			);
+			// Return default cities even on error to ensure scrapers can run
+			// Can be disabled by setting USE_DEFAULT_CITIES=false
+			if (process.env.USE_DEFAULT_CITIES !== "false") {
+				const defaultCities = [
+					"London",
+					"Manchester",
+					"Birmingham",
+					"Dublin",
+					"Belfast",
+					"Paris",
+					"Amsterdam",
+					"Brussels",
+					"Berlin",
+					"Hamburg",
+					"Munich",
+					"Zurich",
+					"Madrid",
+					"Barcelona",
+					"Milan",
+					"Rome",
+					"Stockholm",
+					"Copenhagen",
+					"Vienna",
+					"Prague",
+					"Warsaw",
+				];
+				return {
+					cities: defaultCities,
+					careerPaths: [],
+					industries: [],
+					roles: [],
+				};
+			}
 			return { cities: [], careerPaths: [], industries: [], roles: [] };
 		}
 	}
@@ -1101,9 +1171,11 @@ class RealJobRunner {
 			const cycleStartIso = new Date().toISOString();
 			const signupTargets = await this.getSignupTargets();
 
+			// Note: getSignupTargets() now returns default cities if no signup cities found
+			// So we should always have cities to scrape, unless explicitly disabled
 			if (!signupTargets.cities.length) {
 				console.log(
-					"⚪ No active signup cities detected; skipping scraping cycle.",
+					"⚪ No cities available for scraping; skipping scraping cycle.",
 				);
 				this.currentCycleStats = { total: 0, perSource: {} };
 				return;
