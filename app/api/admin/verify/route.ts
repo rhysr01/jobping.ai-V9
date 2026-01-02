@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 		// Admin verification logic would go here
 		// For now, just return success
 		return NextResponse.json({ ok: true, email });
-	} catch (error) {
+	} catch (_error) {
 		return NextResponse.json(
 			{ ok: false, error: "Invalid request" },
 			{ status: 400 },

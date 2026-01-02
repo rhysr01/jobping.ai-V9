@@ -1,11 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-	FormFieldHelper,
-} from "@/components/ui/FormFieldFeedback";
+import { FormFieldHelper } from "@/components/ui/FormFieldFeedback";
+import { COMMON_SKILLS, COMPANY_SIZES, INDUSTRIES } from "./constants";
 import type { SignupFormData } from "./types";
-import { INDUSTRIES, COMPANY_SIZES, COMMON_SKILLS } from "./constants";
 
 interface Step4MatchingPreferencesProps {
 	formData: SignupFormData;
@@ -34,9 +32,18 @@ export function Step4MatchingPreferences({
 			className="relative"
 		>
 			<div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#0d0425]/45 to-brand-700/15 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
-				<div className="pointer-events-none absolute -top-28 right-8 h-52 w-52 rounded-full bg-brand-500/25 blur-[120px] hidden sm:block" aria-hidden="true" />
-				<div className="pointer-events-none absolute -bottom-24 left-6 h-48 w-48 rounded-full bg-brand-700/20 blur-3xl hidden sm:block" aria-hidden="true" />
-				<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(136,84,255,0.12),transparent_60%)]" aria-hidden="true" />
+				<div
+					className="pointer-events-none absolute -top-28 right-8 h-52 w-52 rounded-full bg-brand-500/25 blur-[120px] hidden sm:block"
+					aria-hidden="true"
+				/>
+				<div
+					className="pointer-events-none absolute -bottom-24 left-6 h-48 w-48 rounded-full bg-brand-700/20 blur-3xl hidden sm:block"
+					aria-hidden="true"
+				/>
+				<div
+					className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(136,84,255,0.12),transparent_60%)]"
+					aria-hidden="true"
+				/>
 				<div className="relative z-10 space-y-6 sm:space-y-8 md:space-y-10">
 					<div className="text-center">
 						<h2 className="text-2xl sm:text-3xl font-black text-white mb-2">
@@ -88,10 +95,7 @@ export function Step4MatchingPreferences({
 									onClick={() =>
 										setFormData({
 											...formData,
-											industries: toggleArray(
-												formData.industries,
-												industry,
-											),
+											industries: toggleArray(formData.industries, industry),
 										})
 									}
 									whileHover={{ scale: 1.02 }}
@@ -151,9 +155,7 @@ export function Step4MatchingPreferences({
 
 					{/* Career Keywords */}
 					<div className="space-y-4">
-						<h3 className="text-xl font-bold text-white">
-							Career Keywords
-						</h3>
+						<h3 className="text-xl font-bold text-white">Career Keywords</h3>
 						<p className="text-sm text-zinc-400">
 							Describe what you're looking for in your own words (optional)
 						</p>
@@ -316,4 +318,3 @@ export function Step4MatchingPreferences({
 		</motion.div>
 	);
 }
-

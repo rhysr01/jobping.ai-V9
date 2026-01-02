@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { apiLogger } from "@/lib/api-logger";
 import { getDatabaseClient } from "@/Utils/databasePool";
 import { getTargetCompaniesFromHistory } from "@/Utils/matching/guaranteed/historical-alerts";
 import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
-import { apiLogger } from "@/lib/api-logger";
 
 export async function GET(request: NextRequest) {
 	// Rate limiting
@@ -24,10 +24,7 @@ export async function GET(request: NextRequest) {
 		const email = searchParams.get("email");
 
 		if (!email) {
-			return NextResponse.json(
-				{ error: "Email required" },
-				{ status: 400 },
-			);
+			return NextResponse.json({ error: "Email required" }, { status: 400 });
 		}
 
 		const supabase = getDatabaseClient();
@@ -44,10 +41,7 @@ export async function GET(request: NextRequest) {
 				email,
 				error: userError?.message,
 			});
-			return NextResponse.json(
-				{ error: "User not found" },
-				{ status: 404 },
-			);
+			return NextResponse.json({ error: "User not found" }, { status: 404 });
 		}
 
 		// Get target companies (non-blocking, can be slow)
@@ -110,4 +104,3 @@ export async function GET(request: NextRequest) {
 		);
 	}
 }
-

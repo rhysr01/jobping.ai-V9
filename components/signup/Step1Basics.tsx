@@ -2,8 +2,8 @@
 
 import { motion } from "framer-motion";
 import { useRef } from "react";
-import EuropeMap from "@/components/ui/EuropeMap";
 import { CityChip } from "@/components/ui/CityChip";
+import EuropeMap from "@/components/ui/EuropeMap";
 import {
 	FormFieldError,
 	FormFieldSuccess,
@@ -11,8 +11,8 @@ import {
 import LanguageSelector from "@/components/ui/LanguageSelector";
 import { SIGNUP_INITIAL_ROLES } from "@/lib/productMetrics";
 import { showToast } from "@/lib/toast";
-import type { SignupFormData } from "./types";
 import { CITIES, LANGUAGES } from "./constants";
+import type { SignupFormData } from "./types";
 
 interface Step1BasicsProps {
 	formData: SignupFormData;
@@ -90,24 +90,16 @@ export function Step1Basics({
 								...formData,
 								gdprConsent: e.target.checked,
 							});
-							setTouchedFields((prev) =>
-								new Set(prev).add("gdprConsent"),
-							);
+							setTouchedFields((prev) => new Set(prev).add("gdprConsent"));
 						}}
 						onBlur={() =>
-							setTouchedFields((prev) =>
-								new Set(prev).add("gdprConsent"),
-							)
+							setTouchedFields((prev) => new Set(prev).add("gdprConsent"))
 						}
 						className="mt-1 w-6 h-6 sm:w-5 sm:h-5 rounded border-2 border-zinc-600 bg-zinc-800 checked:bg-brand-500 checked:border-brand-500 cursor-pointer touch-manipulation min-w-[48px] min-h-[48px] sm:min-w-0 sm:min-h-0"
 						required
 						aria-required="true"
 						aria-describedby={
-							shouldShowError(
-								"gdprConsent",
-								true,
-								formData.gdprConsent,
-							)
+							shouldShowError("gdprConsent", true, formData.gdprConsent)
 								? "gdpr-error"
 								: undefined
 						}
@@ -118,8 +110,8 @@ export function Step1Basics({
 							<span className="text-red-400">*</span>
 						</p>
 						<p className="text-sm text-zinc-400">
-							By checking this box, you consent to receive
-							personalized job matches and agree to our{" "}
+							By checking this box, you consent to receive personalized job
+							matches and agree to our{" "}
 							<a
 								href="/legal/privacy"
 								target="_blank"
@@ -141,11 +133,7 @@ export function Step1Basics({
 						</p>
 					</div>
 				</label>
-				{shouldShowError(
-					"gdprConsent",
-					true,
-					formData.gdprConsent,
-				) && (
+				{shouldShowError("gdprConsent", true, formData.gdprConsent) && (
 					<FormFieldError
 						error="Please check the box to agree to receive job recommendations"
 						id="gdpr-error"
@@ -175,10 +163,7 @@ export function Step1Basics({
 					}}
 					onBlur={() => {
 						setTouchedFields((prev) => new Set(prev).add("fullName"));
-						if (
-							!formData.fullName.trim() &&
-							formData.fullName.length > 0
-						) {
+						if (!formData.fullName.trim() && formData.fullName.length > 0) {
 							announce("Full name is required", "polite");
 						} else if (formData.fullName.trim().length > 0) {
 							announce("Full name is valid", "polite");
@@ -198,8 +183,7 @@ export function Step1Basics({
 					autoCorrect="off"
 					autoCapitalize="words"
 					aria-invalid={
-						(formData.fullName.length > 0 &&
-							!nameValidation.isValid) ||
+						(formData.fullName.length > 0 && !nameValidation.isValid) ||
 						!!fieldErrors.fullName
 					}
 					aria-describedby={
@@ -213,10 +197,7 @@ export function Step1Basics({
 				/>
 				{formData.fullName.length > 0 &&
 					(nameValidation.isValid && !fieldErrors.fullName ? (
-						<FormFieldSuccess
-							message="Looks good!"
-							id="fullName-success"
-						/>
+						<FormFieldSuccess message="Looks good!" id="fullName-success" />
 					) : (
 						<FormFieldError
 							error={fieldErrors.fullName || nameValidation.error}
@@ -233,8 +214,8 @@ export function Step1Basics({
 					Email *
 				</label>
 				<p className="text-sm font-medium text-zinc-300 mb-3 sm:mb-4">
-					Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then
-					curated drops 3x per week (Mon/Wed/Fri).
+					Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated
+					drops 3x per week (Mon/Wed/Fri).
 				</p>
 				<input
 					ref={formRefs.email}
@@ -287,10 +268,7 @@ export function Step1Basics({
 				/>
 				{formData.email.length > 0 &&
 					(emailValidation.isValid && !fieldErrors.email ? (
-						<FormFieldSuccess
-							message="Email looks good!"
-							id="email-success"
-						/>
+						<FormFieldSuccess message="Email looks good!" id="email-success" />
 					) : (
 						<FormFieldError
 							error={fieldErrors.email || emailValidation.error}
@@ -306,17 +284,15 @@ export function Step1Basics({
 					className="block text-base font-bold text-white mb-3"
 				>
 					Preferred Cities *{" "}
-					<span className="text-zinc-400 font-normal">
-						(Select up to 3)
-					</span>
+					<span className="text-zinc-400 font-normal">(Select up to 3)</span>
 				</label>
 				<p className="text-sm text-zinc-400 mb-2">
-					Choose up to 3 cities where you'd like to work. You can
-					click on the map or use the buttons below.
+					Choose up to 3 cities where you'd like to work. You can click on the
+					map or use the buttons below.
 				</p>
 				<p className="text-sm text-zinc-500 mb-4">
-					💡 We'll only show jobs in these cities. You can add more
-					later in your preferences.
+					💡 We'll only show jobs in these cities. You can add more later in
+					your preferences.
 				</p>
 
 				{/* Interactive Europe Map - Hidden on mobile */}
@@ -338,9 +314,7 @@ export function Step1Basics({
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.5 }}
 					className="mb-4 sm:mb-6 md:mb-8 lg:mb-10 hidden sm:block"
-					onBlur={() =>
-						setTouchedFields((prev) => new Set(prev).add("cities"))
-					}
+					onBlur={() => setTouchedFields((prev) => new Set(prev).add("cities"))}
 				>
 					<EuropeMap
 						selectedCities={formData.cities}
@@ -353,9 +327,7 @@ export function Step1Basics({
 									...formData,
 									cities: toggleArray(formData.cities, city),
 								});
-								setTouchedFields((prev) =>
-									new Set(prev).add("cities"),
-								);
+								setTouchedFields((prev) => new Set(prev).add("cities"));
 								if (
 									formData.cities.length === 0 &&
 									!formData.cities.includes(city)
@@ -374,7 +346,7 @@ export function Step1Basics({
 						}}
 						maxSelections={3}
 						className="w-full"
-						onMaxSelectionsReached={(city, max) => {
+						onMaxSelectionsReached={(_city, max) => {
 							showToast.error(
 								`Maximum ${max} cities selected. Remove a city to select another.`,
 							);
@@ -408,8 +380,7 @@ export function Step1Basics({
 				>
 					{CITIES.map((city) => {
 						const isSelected = formData.cities.includes(city);
-						const isDisabled =
-							!isSelected && formData.cities.length >= 3;
+						const isDisabled = !isSelected && formData.cities.length >= 3;
 						return (
 							<CityChip
 								key={city}
@@ -430,10 +401,7 @@ export function Step1Basics({
 										);
 										return;
 									}
-									const nextCities = toggleArray(
-										formData.cities,
-										city,
-									);
+									const nextCities = toggleArray(formData.cities, city);
 									setFormData({
 										...formData,
 										cities: nextCities,
@@ -530,8 +498,7 @@ export function Step1Basics({
 							languagesValidation.isValid,
 						)
 							? "languages-error"
-							: formData.languages.length > 0 &&
-									languagesValidation.isValid
+							: formData.languages.length > 0 && languagesValidation.isValid
 								? "languages-success"
 								: undefined
 					}
@@ -547,9 +514,7 @@ export function Step1Basics({
 								...formData,
 								languages: toggleArray(formData.languages, lang),
 							});
-							setTouchedFields((prev) =>
-								new Set(prev).add("languages"),
-							);
+							setTouchedFields((prev) => new Set(prev).add("languages"));
 							if (formData.languages.length === 0) {
 								announce(
 									`Selected ${lang}. ${formData.languages.length + 1} language selected.`,
@@ -559,13 +524,12 @@ export function Step1Basics({
 						}}
 					/>
 				</div>
-				{formData.languages.length > 0 &&
-					languagesValidation.isValid && (
-						<FormFieldSuccess
-							message={`${formData.languages.length} language${formData.languages.length > 1 ? "s" : ""} selected`}
-							id="languages-success"
-						/>
-					)}
+				{formData.languages.length > 0 && languagesValidation.isValid && (
+					<FormFieldSuccess
+						message={`${formData.languages.length} language${formData.languages.length > 1 ? "s" : ""} selected`}
+						id="languages-success"
+					/>
+				)}
 				{shouldShowError(
 					"languages",
 					formData.languages.length === 0,
@@ -629,4 +593,3 @@ export function Step1Basics({
 		</motion.div>
 	);
 }
-

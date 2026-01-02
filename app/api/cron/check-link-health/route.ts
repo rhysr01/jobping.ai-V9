@@ -170,7 +170,10 @@ export async function POST(request: NextRequest) {
 			.limit(100); // Check 100 top matches per run
 
 		if (fetchError) {
-			apiLogger.error("Failed to fetch matches for health check", fetchError as Error);
+			apiLogger.error(
+				"Failed to fetch matches for health check",
+				fetchError as Error,
+			);
 			return NextResponse.json(
 				{
 					error: "Failed to fetch matches",
@@ -190,7 +193,9 @@ export async function POST(request: NextRequest) {
 			});
 		}
 
-		apiLogger.info(`Checking link health for ${matchesToCheck.length} top matches`);
+		apiLogger.info(
+			`Checking link health for ${matchesToCheck.length} top matches`,
+		);
 
 		let checked = 0;
 		let healthy = 0;
@@ -288,4 +293,3 @@ export async function POST(request: NextRequest) {
 		);
 	}
 }
-

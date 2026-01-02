@@ -4,38 +4,38 @@
  */
 
 import {
-  COUNTRY_LANGUAGE_MAP,
-  getCountryForLanguage,
-  getLanguagesForCountry,
+	COUNTRY_LANGUAGE_MAP,
+	getCountryForLanguage,
+	getLanguagesForCountry,
 } from "@/Utils/countryLanguageMap";
 
 describe("Country Language Map", () => {
-  describe("getLanguagesForCountry", () => {
-    it("should return languages for country", () => {
-      const languages = getLanguagesForCountry("UK");
+	describe("getLanguagesForCountry", () => {
+		it("should return languages for country", () => {
+			const languages = getLanguagesForCountry("UK");
 
-      expect(Array.isArray(languages)).toBe(true);
-    });
+			expect(Array.isArray(languages)).toBe(true);
+		});
 
-    it("should handle unknown country", () => {
-      const languages = getLanguagesForCountry("Unknown");
+		it("should handle unknown country", () => {
+			const languages = getLanguagesForCountry("Unknown");
 
-      expect(languages).toBeDefined();
-    });
-  });
+			expect(languages).toBeDefined();
+		});
+	});
 
-  describe("getCountryForLanguage", () => {
-    it("should return countries for language", () => {
-      const countries = getCountryForLanguage("English");
+	describe("getCountryForLanguage", () => {
+		it("should return countries for language", () => {
+			const countries = getCountryForLanguage("English");
 
-      expect(Array.isArray(countries)).toBe(true);
-    });
-  });
+			expect(Array.isArray(countries)).toBe(true);
+		});
+	});
 
-  describe("COUNTRY_LANGUAGE_MAP", () => {
-    it("should have valid mapping", () => {
-      expect(COUNTRY_LANGUAGE_MAP).toBeDefined();
-      expect(typeof COUNTRY_LANGUAGE_MAP).toBe("object");
-    });
-  });
+	describe("COUNTRY_LANGUAGE_MAP", () => {
+		it("should have valid mapping", () => {
+			expect(COUNTRY_LANGUAGE_MAP).toBeDefined();
+			expect(typeof COUNTRY_LANGUAGE_MAP).toBe("object");
+		});
+	});
 });

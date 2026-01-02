@@ -30,7 +30,7 @@ export interface GradientTextProps
 /**
  * Standardized gradient text component with accessibility-checked gradients
  * All gradients are tested for WCAG AA compliance on dark backgrounds
- * 
+ *
  * @example
  * <GradientText variant="brand">Hero Title</GradientText>
  * <GradientText variant="accent">Highlighted Text</GradientText>
@@ -50,4 +50,3 @@ export default function GradientText({
 		</span>
 	);
 }
-

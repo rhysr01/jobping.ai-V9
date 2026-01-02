@@ -76,13 +76,15 @@ class RedisClientManager {
 	 * Initialize Redis client with proper configuration
 	 */
 	private static async initializeClient(): Promise<void> {
-		if (!ENV.REDIS_URL) {
-			throw new Error("REDIS_URL is not configured");
+		// Support both REDIS_URL and KV_REDIS_URL (Vercel may set either)
+		const redisUrl = ENV.REDIS_URL || process.env.KV_REDIS_URL;
+		if (!redisUrl) {
+			throw new Error("REDIS_URL or KV_REDIS_URL is not configured");
 		}
 
 		try {
 			RedisClientManager.instance = createClient({
-				url: ENV.REDIS_URL,
+				url: redisUrl,
 				socket: {
 					connectTimeout: 5000,
 					reconnectStrategy: (retries) => {

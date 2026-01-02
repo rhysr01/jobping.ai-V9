@@ -192,7 +192,7 @@ export async function GET(
 	request: NextRequest,
 	{ params }: { params: Promise<{ jobHash: string }> },
 ) {
-	const startTime = Date.now();
+	const _startTime = Date.now();
 	const { searchParams } = new URL(request.url);
 	const email = searchParams.get("email");
 	const token = searchParams.get("token");
@@ -273,10 +273,12 @@ export async function GET(
 		};
 
 		// Save snapshot (non-blocking)
-		supabase
-			.from("matches")
-			.update({ job_snapshot: snapshot })
-			.eq("id", match.id)
+		Promise.resolve(
+			supabase
+				.from("matches")
+				.update({ job_snapshot: snapshot })
+				.eq("id", match.id),
+		)
 			.then(() => {
 				apiLogger.debug("Job snapshot saved", { jobHash, email });
 			})
@@ -322,13 +324,15 @@ export async function GET(
 		healthResult = await checkLinkHealth(jobUrl);
 
 		// Update link health status in database (non-blocking)
-		supabase
-			.from("matches")
-			.update({
-				link_health_status: healthResult.reason,
-				link_checked_at: new Date().toISOString(),
-			})
-			.eq("id", match.id)
+		Promise.resolve(
+			supabase
+				.from("matches")
+				.update({
+					link_health_status: healthResult.reason,
+					link_checked_at: new Date().toISOString(),
+				})
+				.eq("id", match.id),
+		)
 			.then(() => {
 				apiLogger.debug("Link health status updated", {
 					jobHash,
@@ -351,15 +355,15 @@ export async function GET(
 	};
 
 	// Log to match_logs for attribution tracking
-	supabase
-		.from("match_logs")
-		.insert({
+	Promise.resolve(
+		supabase.from("match_logs").insert({
 			user_email: email,
 			job_hash: jobHash,
 			match_tags: clickData,
 			feedback_type: "click",
 			verdict: "positive",
-		})
+		}),
+	)
 		.then(() => {
 			apiLogger.debug("Outbound click tracked", { jobHash, email });
 		})

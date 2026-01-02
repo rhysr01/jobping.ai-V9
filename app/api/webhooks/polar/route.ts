@@ -241,7 +241,9 @@ export const POST = Webhooks({
 		});
 
 		try {
-			let result;
+			let result:
+				| { success: boolean; error?: string; message?: string }
+				| undefined;
 
 			switch (eventType) {
 				// Payment events - most important!

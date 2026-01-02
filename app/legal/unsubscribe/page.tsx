@@ -123,7 +123,10 @@ export default function UnsubscribePage() {
 									This will stop all emails from JobPing, including job
 									recommendations and important service updates.
 								</p>
-								<button type="button" className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+								<button
+									type="button"
+									className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+								>
 									Unsubscribe from All
 								</button>
 							</div>

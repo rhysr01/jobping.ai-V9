@@ -94,6 +94,7 @@ function SentryExampleContent() {
 						Quick Test (Sentry Docs Example)
 					</h2>
 					<button
+						type="button"
 						onClick={() => {
 							// Exact example from Sentry docs
 							// @ts-expect-error - Intentionally calling undefined function
@@ -116,6 +117,7 @@ function SentryExampleContent() {
 						</h2>
 						<div className="space-y-3">
 							<button
+								type="button"
 								onClick={triggerClientError}
 								className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
 							>
@@ -126,6 +128,7 @@ function SentryExampleContent() {
 							</p>
 
 							<button
+								type="button"
 								onClick={triggerUnhandledError}
 								className="w-full px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
 							>
@@ -137,6 +140,7 @@ function SentryExampleContent() {
 							</p>
 
 							<button
+								type="button"
 								onClick={triggerSentryException}
 								className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
 							>
@@ -147,6 +151,7 @@ function SentryExampleContent() {
 							</p>
 
 							<button
+								type="button"
 								onClick={triggerSentryMessage}
 								className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
 							>
@@ -164,6 +169,7 @@ function SentryExampleContent() {
 						</h2>
 						<div className="space-y-3">
 							<button
+								type="button"
 								onClick={triggerServerError}
 								className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
 							>

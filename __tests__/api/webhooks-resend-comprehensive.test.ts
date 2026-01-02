@@ -7,257 +7,257 @@ import type { NextRequest } from "next/server";
 import { GET, POST } from "@/app/api/webhooks/resend/route";
 
 jest.mock("@/lib/api-logger", () => ({
-  apiLogger: {
-    info: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-    warn: jest.fn(),
-  },
+	apiLogger: {
+		info: jest.fn(),
+		error: jest.fn(),
+		debug: jest.fn(),
+		warn: jest.fn(),
+	},
 }));
 jest.mock("@/Utils/databasePool");
 jest.mock("node:crypto", () => ({
-  default: {
-    createHmac: jest.fn(() => ({
-      update: jest.fn().mockReturnThis(),
-      digest: jest.fn(() => "mock-signature"),
-    })),
-    timingSafeEqual: jest.fn(() => true),
-  },
-  createHmac: jest.fn(() => ({
-    update: jest.fn().mockReturnThis(),
-    digest: jest.fn(() => "mock-signature"),
-  })),
-  timingSafeEqual: jest.fn(() => true),
+	default: {
+		createHmac: jest.fn(() => ({
+			update: jest.fn().mockReturnThis(),
+			digest: jest.fn(() => "mock-signature"),
+		})),
+		timingSafeEqual: jest.fn(() => true),
+	},
+	createHmac: jest.fn(() => ({
+		update: jest.fn().mockReturnThis(),
+		digest: jest.fn(() => "mock-signature"),
+	})),
+	timingSafeEqual: jest.fn(() => true),
 }));
 
 describe("Webhooks Resend API Route", () => {
-  let mockRequest: NextRequest;
-  let mockSupabase: any;
+	let mockRequest: NextRequest;
+	let mockSupabase: any;
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+	beforeEach(() => {
+		jest.clearAllMocks();
 
-    mockRequest = {
-      method: "POST",
-      text: jest.fn(),
-      headers: new Headers({
-        "resend-signature": "sha256=mock-signature",
-      }),
-    } as any;
+		mockRequest = {
+			method: "POST",
+			text: jest.fn(),
+			headers: new Headers({
+				"resend-signature": "sha256=mock-signature",
+			}),
+		} as any;
 
-    mockSupabase = {
-      from: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockResolvedValue({ error: null }),
-      upsert: jest.fn().mockResolvedValue({ error: null }),
-      rpc: jest.fn().mockResolvedValue({ error: null }),
-    };
+		mockSupabase = {
+			from: jest.fn().mockReturnThis(),
+			insert: jest.fn().mockResolvedValue({ error: null }),
+			upsert: jest.fn().mockResolvedValue({ error: null }),
+			rpc: jest.fn().mockResolvedValue({ error: null }),
+		};
 
-    const { getDatabaseClient } = require("@/Utils/databasePool");
-    getDatabaseClient.mockReturnValue(mockSupabase);
+		const { getDatabaseClient } = require("@/Utils/databasePool");
+		getDatabaseClient.mockReturnValue(mockSupabase);
 
-    // Don't set RESEND_WEBHOOK_SECRET so verification is skipped in tests (returns true)
-    delete process.env.RESEND_WEBHOOK_SECRET;
-  });
+		// Don't set RESEND_WEBHOOK_SECRET so verification is skipped in tests (returns true)
+		delete process.env.RESEND_WEBHOOK_SECRET;
+	});
 
-  describe("POST /api/webhooks/resend", () => {
-    it("should process email.bounced event", async () => {
-      const event = {
-        type: "email.bounced",
-        created_at: new Date().toISOString(),
-        data: {
-          email_id: "email_123",
-          to: "bounced@example.com",
-          from: "test@getjobping.com",
-          subject: "Test",
-          bounce: {
-            bounce_type: "permanent",
-            diagnostic_code: "550 Invalid recipient",
-          },
-        },
-      };
+	describe("POST /api/webhooks/resend", () => {
+		it("should process email.bounced event", async () => {
+			const event = {
+				type: "email.bounced",
+				created_at: new Date().toISOString(),
+				data: {
+					email_id: "email_123",
+					to: "bounced@example.com",
+					from: "test@getjobping.com",
+					subject: "Test",
+					bounce: {
+						bounce_type: "permanent",
+						diagnostic_code: "550 Invalid recipient",
+					},
+				},
+			};
 
-      mockRequest.text.mockResolvedValue(JSON.stringify(event));
+			mockRequest.text.mockResolvedValue(JSON.stringify(event));
 
-      const response = await POST(mockRequest);
-      const data = await response.json();
+			const response = await POST(mockRequest);
+			const data = await response.json();
 
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      expect(data.processed).toBe("email.bounced");
-    });
+			expect(response.status).toBe(200);
+			expect(data.success).toBe(true);
+			expect(data.processed).toBe("email.bounced");
+		});
 
-    it("should suppress permanent bounces", async () => {
-      const event = {
-        type: "email.bounced",
-        created_at: new Date().toISOString(),
-        data: {
-          email_id: "email_123",
-          to: "bounced@example.com",
-          from: "test@getjobping.com",
-          subject: "Test",
-          bounce: {
-            bounce_type: "permanent",
-            diagnostic_code: "550 Invalid recipient",
-          },
-        },
-      };
+		it("should suppress permanent bounces", async () => {
+			const event = {
+				type: "email.bounced",
+				created_at: new Date().toISOString(),
+				data: {
+					email_id: "email_123",
+					to: "bounced@example.com",
+					from: "test@getjobping.com",
+					subject: "Test",
+					bounce: {
+						bounce_type: "permanent",
+						diagnostic_code: "550 Invalid recipient",
+					},
+				},
+			};
 
-      mockRequest.text.mockResolvedValue(JSON.stringify(event));
+			mockRequest.text.mockResolvedValue(JSON.stringify(event));
 
-      await POST(mockRequest);
+			await POST(mockRequest);
 
-      expect(mockSupabase.upsert).toHaveBeenCalled();
-    });
+			expect(mockSupabase.upsert).toHaveBeenCalled();
+		});
 
-    it("should not suppress temporary bounces", async () => {
-      const event = {
-        type: "email.bounced",
-        created_at: new Date().toISOString(),
-        data: {
-          email_id: "email_123",
-          to: "bounced@example.com",
-          from: "test@getjobping.com",
-          subject: "Test",
-          bounce: {
-            bounce_type: "temporary",
-            diagnostic_code: "451 Temporary failure",
-          },
-        },
-      };
+		it("should not suppress temporary bounces", async () => {
+			const event = {
+				type: "email.bounced",
+				created_at: new Date().toISOString(),
+				data: {
+					email_id: "email_123",
+					to: "bounced@example.com",
+					from: "test@getjobping.com",
+					subject: "Test",
+					bounce: {
+						bounce_type: "temporary",
+						diagnostic_code: "451 Temporary failure",
+					},
+				},
+			};
 
-      mockRequest.text.mockResolvedValue(JSON.stringify(event));
+			mockRequest.text.mockResolvedValue(JSON.stringify(event));
 
-      await POST(mockRequest);
+			await POST(mockRequest);
 
-      // Should not suppress temporary bounces
-      expect(mockSupabase.upsert).not.toHaveBeenCalled();
-    });
+			// Should not suppress temporary bounces
+			expect(mockSupabase.upsert).not.toHaveBeenCalled();
+		});
 
-    it("should process email.complained event", async () => {
-      const event = {
-        type: "email.complained",
-        created_at: new Date().toISOString(),
-        data: {
-          email_id: "email_123",
-          to: "complaint@example.com",
-          from: "test@getjobping.com",
-          subject: "Test",
-          complaint: {
-            complaint_type: "spam",
-            feedback_type: "abuse",
-          },
-        },
-      };
+		it("should process email.complained event", async () => {
+			const event = {
+				type: "email.complained",
+				created_at: new Date().toISOString(),
+				data: {
+					email_id: "email_123",
+					to: "complaint@example.com",
+					from: "test@getjobping.com",
+					subject: "Test",
+					complaint: {
+						complaint_type: "spam",
+						feedback_type: "abuse",
+					},
+				},
+			};
 
-      mockRequest.text.mockResolvedValue(JSON.stringify(event));
+			mockRequest.text.mockResolvedValue(JSON.stringify(event));
 
-      const response = await POST(mockRequest);
-      const data = await response.json();
+			const response = await POST(mockRequest);
+			const data = await response.json();
 
-      expect(response.status).toBe(200);
-      expect(data.processed).toBe("email.complained");
-      expect(mockSupabase.upsert).toHaveBeenCalled();
-    });
+			expect(response.status).toBe(200);
+			expect(data.processed).toBe("email.complained");
+			expect(mockSupabase.upsert).toHaveBeenCalled();
+		});
 
-    it("should handle positive signals without suppression", async () => {
-      const event = {
-        type: "email.delivered",
-        created_at: new Date().toISOString(),
-        data: {
-          email_id: "email_123",
-          to: "user@example.com",
-          from: "test@getjobping.com",
-          subject: "Test",
-        },
-      };
+		it("should handle positive signals without suppression", async () => {
+			const event = {
+				type: "email.delivered",
+				created_at: new Date().toISOString(),
+				data: {
+					email_id: "email_123",
+					to: "user@example.com",
+					from: "test@getjobping.com",
+					subject: "Test",
+				},
+			};
 
-      mockRequest.text.mockResolvedValue(JSON.stringify(event));
+			mockRequest.text.mockResolvedValue(JSON.stringify(event));
 
-      const response = await POST(mockRequest);
+			const response = await POST(mockRequest);
 
-      expect(response.status).toBe(200);
-      expect(mockSupabase.upsert).not.toHaveBeenCalled();
-    });
+			expect(response.status).toBe(200);
+			expect(mockSupabase.upsert).not.toHaveBeenCalled();
+		});
 
-    it("should verify webhook signature", async () => {
-      mockRequest.headers.delete("resend-signature");
+		it("should verify webhook signature", async () => {
+			mockRequest.headers.delete("resend-signature");
 
-      const event = {
-        type: "email.bounced",
-        data: {},
-      };
+			const event = {
+				type: "email.bounced",
+				data: {},
+			};
 
-      mockRequest.text.mockResolvedValue(JSON.stringify(event));
+			mockRequest.text.mockResolvedValue(JSON.stringify(event));
 
-      const response = await POST(mockRequest);
+			const response = await POST(mockRequest);
 
-      expect(response.status).toBe(401);
-    });
+			expect(response.status).toBe(401);
+		});
 
-    it.skip("should handle invalid signature", async () => {
-      // TODO: This test is skipped because properly mocking node:crypto's timingSafeEqual
-      // is complex and the current mock setup doesn't allow testing invalid signatures.
-      // When RESEND_WEBHOOK_SECRET is set, verification runs but our mocks don't properly
-      // simulate signature mismatch. Consider testing this at integration level instead.
-      process.env.RESEND_WEBHOOK_SECRET = "test-secret";
+		it.skip("should handle invalid signature", async () => {
+			// TODO: This test is skipped because properly mocking node:crypto's timingSafeEqual
+			// is complex and the current mock setup doesn't allow testing invalid signatures.
+			// When RESEND_WEBHOOK_SECRET is set, verification runs but our mocks don't properly
+			// simulate signature mismatch. Consider testing this at integration level instead.
+			process.env.RESEND_WEBHOOK_SECRET = "test-secret";
 
-      const event = {
-        type: "email.bounced",
-        data: {},
-      };
+			const event = {
+				type: "email.bounced",
+				data: {},
+			};
 
-      mockRequest.text.mockResolvedValue(JSON.stringify(event));
+			mockRequest.text.mockResolvedValue(JSON.stringify(event));
 
-      const response = await POST(mockRequest);
+			const response = await POST(mockRequest);
 
-      expect(response.status).toBe(401);
-    });
+			expect(response.status).toBe(401);
+		});
 
-    it("should allow webhook in dev if secret not set", async () => {
-      delete process.env.RESEND_WEBHOOK_SECRET;
+		it("should allow webhook in dev if secret not set", async () => {
+			delete process.env.RESEND_WEBHOOK_SECRET;
 
-      const event = {
-        type: "email.bounced",
-        data: {},
-      };
+			const event = {
+				type: "email.bounced",
+				data: {},
+			};
 
-      mockRequest.text.mockResolvedValue(JSON.stringify(event));
+			mockRequest.text.mockResolvedValue(JSON.stringify(event));
 
-      const response = await POST(mockRequest);
+			const response = await POST(mockRequest);
 
-      expect(response.status).toBe(200);
-    });
+			expect(response.status).toBe(200);
+		});
 
-    it("should handle unhandled event types", async () => {
-      const event = {
-        type: "email.unknown",
-        created_at: new Date().toISOString(),
-        data: {},
-      };
+		it("should handle unhandled event types", async () => {
+			const event = {
+				type: "email.unknown",
+				created_at: new Date().toISOString(),
+				data: {},
+			};
 
-      mockRequest.text.mockResolvedValue(JSON.stringify(event));
+			mockRequest.text.mockResolvedValue(JSON.stringify(event));
 
-      const response = await POST(mockRequest);
+			const response = await POST(mockRequest);
 
-      expect(response.status).toBe(200);
-    });
+			expect(response.status).toBe(200);
+		});
 
-    it("should handle parsing errors", async () => {
-      mockRequest.text.mockResolvedValue("invalid json");
+		it("should handle parsing errors", async () => {
+			mockRequest.text.mockResolvedValue("invalid json");
 
-      const response = await POST(mockRequest);
+			const response = await POST(mockRequest);
 
-      expect(response.status).toBeGreaterThanOrEqual(500);
-    });
-  });
+			expect(response.status).toBeGreaterThanOrEqual(500);
+		});
+	});
 
-  describe("GET /api/webhooks/resend", () => {
-    it("should return method not allowed", async () => {
-      const response = await GET();
-      const data = await response.json();
+	describe("GET /api/webhooks/resend", () => {
+		it("should return method not allowed", async () => {
+			const response = await GET();
+			const data = await response.json();
 
-      expect(response.status).toBe(405);
-      expect(data.error).toContain("Method not allowed");
-    });
-  });
+			expect(response.status).toBe(405);
+			expect(data.error).toContain("Method not allowed");
+		});
+	});
 });

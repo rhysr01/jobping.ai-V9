@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import dayjs from "dayjs";
 
-export type JobTrack =
+type JobTrack =
 	| "consulting"
 	| "finance"
 	| "strategy"
@@ -53,7 +53,7 @@ export function scoreJob(
 	return Math.max(0, Math.min(100, score));
 }
 
-export type JobPingJob = {
+type JobPingJob = {
 	id: string;
 	title: string;
 	company: string;

@@ -6,8 +6,8 @@ import {
 	FormFieldError,
 	FormFieldSuccess,
 } from "@/components/ui/FormFieldFeedback";
-import type { SignupFormData } from "./types";
 import { CAREER_PATHS } from "./constants";
+import type { SignupFormData } from "./types";
 
 interface Step3CareerPathProps {
 	formData: SignupFormData;
@@ -50,9 +50,18 @@ export function Step3CareerPath({
 			className="relative"
 		>
 			<div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#130433]/45 to-brand-700/15 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
-				<div className="pointer-events-none absolute -top-24 left-6 h-48 w-48 rounded-full bg-brand-700/25 blur-3xl hidden sm:block" aria-hidden="true" />
-				<div className="pointer-events-none absolute -bottom-28 right-0 h-56 w-56 bg-brand-500/25 blur-[120px] hidden sm:block" aria-hidden="true" />
-				<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(99,102,241,0.12),transparent_60%)]" aria-hidden="true" />
+				<div
+					className="pointer-events-none absolute -top-24 left-6 h-48 w-48 rounded-full bg-brand-700/25 blur-3xl hidden sm:block"
+					aria-hidden="true"
+				/>
+				<div
+					className="pointer-events-none absolute -bottom-28 right-0 h-56 w-56 bg-brand-500/25 blur-[120px] hidden sm:block"
+					aria-hidden="true"
+				/>
+				<div
+					className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(99,102,241,0.12),transparent_60%)]"
+					aria-hidden="true"
+				/>
 				<div className="relative z-10 space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12">
 					<div>
 						<h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2 sm:mb-3">
@@ -114,9 +123,7 @@ export function Step3CareerPath({
 							}
 							className="grid grid-cols-1 sm:grid-cols-2 gap-4"
 							onBlur={() =>
-								setTouchedFields((prev) =>
-									new Set(prev).add("careerPath"),
-								)
+								setTouchedFields((prev) => new Set(prev).add("careerPath"))
 							}
 						>
 							{CAREER_PATHS.map((path) => (
@@ -128,8 +135,8 @@ export function Step3CareerPath({
 											(c) => c.value === path.value,
 										);
 										if (newCareer) {
-											const validRoles = formData.roles.filter(
-												(role) => newCareer.roles.includes(role),
+											const validRoles = formData.roles.filter((role) =>
+												newCareer.roles.includes(role),
 											);
 											setFormData({
 												...formData,
@@ -158,9 +165,7 @@ export function Step3CareerPath({
 									<div className="relative flex items-start gap-4">
 										<motion.div
 											className={`text-4xl sm:text-5xl ${
-												formData.careerPath === path.value
-													? "scale-110"
-													: ""
+												formData.careerPath === path.value ? "scale-110" : ""
 											}`}
 											animate={
 												formData.careerPath === path.value
@@ -235,9 +240,7 @@ export function Step3CareerPath({
 									htmlFor="roles-field"
 									className="block text-lg font-black text-white mb-4"
 								>
-									<span className="text-2xl mr-2">
-										{selectedCareer.emoji}
-									</span>
+									<span className="text-2xl mr-2">{selectedCareer.emoji}</span>
 									{selectedCareer.label} Roles
 									<span className="text-zinc-400 font-normal text-base ml-2">
 										(Select at least one - required)
@@ -284,67 +287,60 @@ export function Step3CareerPath({
 									}
 									className="max-h-[350px] overflow-y-auto custom-scrollbar pr-2 -mr-2"
 									onBlur={() =>
-										setTouchedFields((prev) =>
-											new Set(prev).add("roles"),
-										)
+										setTouchedFields((prev) => new Set(prev).add("roles"))
 									}
 								>
 									<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-										{selectedCareer.roles.map(
-											(role: string, idx: number) => (
-												<motion.button
-													key={role}
-													type="button"
-													onClick={() =>
-														setFormData({
-															...formData,
-															roles: toggleArray(
-																formData.roles,
-																role,
-															),
-														})
-													}
-													initial={{ opacity: 0, x: -10 }}
-													animate={{ opacity: 1, x: 0 }}
-													transition={{ delay: idx * 0.02 }}
-													whileHover={{ scale: 1.02, x: 2 }}
-													whileTap={{ scale: 0.98 }}
-													className={`px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl border-2 transition-all font-semibold text-left text-sm relative overflow-hidden touch-manipulation min-h-[48px] ${
-														formData.roles.includes(role)
-															? "border-brand-500 bg-gradient-to-r from-brand-500/20 to-brand-700/15 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]"
-															: "border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80"
-													}`}
-												>
+										{selectedCareer.roles.map((role: string, idx: number) => (
+											<motion.button
+												key={role}
+												type="button"
+												onClick={() =>
+													setFormData({
+														...formData,
+														roles: toggleArray(formData.roles, role),
+													})
+												}
+												initial={{ opacity: 0, x: -10 }}
+												animate={{ opacity: 1, x: 0 }}
+												transition={{ delay: idx * 0.02 }}
+												whileHover={{ scale: 1.02, x: 2 }}
+												whileTap={{ scale: 0.98 }}
+												className={`px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl border-2 transition-all font-semibold text-left text-sm relative overflow-hidden touch-manipulation min-h-[48px] ${
+													formData.roles.includes(role)
+														? "border-brand-500 bg-gradient-to-r from-brand-500/20 to-brand-700/15 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]"
+														: "border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-brand-500/40 hover:bg-zinc-900/80"
+												}`}
+											>
+												{formData.roles.includes(role) && (
+													<motion.div
+														layoutId="selected-role"
+														className="absolute inset-0 bg-gradient-to-r from-brand-500/10 to-brand-700/10 -z-10"
+														initial={{ opacity: 0 }}
+														animate={{ opacity: 1 }}
+														exit={{ opacity: 0 }}
+													/>
+												)}
+												<span className="flex items-center justify-between">
+													{role}
 													{formData.roles.includes(role) && (
-														<motion.div
-															layoutId="selected-role"
-															className="absolute inset-0 bg-gradient-to-r from-brand-500/10 to-brand-700/10 -z-10"
-															initial={{ opacity: 0 }}
-															animate={{ opacity: 1 }}
-															exit={{ opacity: 0 }}
-														/>
+														<svg
+															className="w-5 h-5 text-brand-400"
+															fill="none"
+															viewBox="0 0 24 24"
+															stroke="currentColor"
+														>
+															<path
+																strokeLinecap="round"
+																strokeLinejoin="round"
+																strokeWidth={2}
+																d="M5 13l4 4L19 7"
+															/>
+														</svg>
 													)}
-													<span className="flex items-center justify-between">
-														{role}
-														{formData.roles.includes(role) && (
-															<svg
-																className="w-5 h-5 text-brand-400"
-																fill="none"
-																viewBox="0 0 24 24"
-																stroke="currentColor"
-															>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={2}
-																	d="M5 13l4 4L19 7"
-																/>
-															</svg>
-														)}
-													</span>
-												</motion.button>
-											),
-										)}
+												</span>
+											</motion.button>
+										))}
 									</div>
 								</div>
 								{formData.roles.length > 0 && (
@@ -385,9 +381,7 @@ export function Step3CareerPath({
 							<motion.button
 								onClick={() => setStep(4)}
 								disabled={
-									loading ||
-									!formData.careerPath ||
-									formData.roles.length === 0
+									loading || !formData.careerPath || formData.roles.length === 0
 								}
 								whileHover={{ scale: loading ? 1 : 1.03 }}
 								whileTap={{ scale: loading ? 1 : 0.97 }}
@@ -465,4 +459,3 @@ export function Step3CareerPath({
 		</motion.div>
 	);
 }
-

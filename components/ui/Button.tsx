@@ -29,7 +29,8 @@ export default function Button({
 			"h-11 bg-brand-500 text-white font-medium shadow-md shadow-brand-500/30 hover:bg-brand-600 hover:-translate-y-0.5 active:translate-y-0",
 		secondary:
 			"border-2 border-white/25 bg-white/[0.08] text-white font-medium hover:border-brand-500/50 hover:bg-white/5",
-		ghost: "text-content-secondary hover:text-white hover:bg-white/5 font-medium",
+		ghost:
+			"text-content-secondary hover:text-white hover:bg-white/5 font-medium",
 		danger:
 			"border-2 border-error-500/30 bg-error-500/15 text-error-200 hover:bg-error-500/25 font-medium",
 		gradient:
@@ -65,6 +66,7 @@ export default function Button({
 
 	return (
 		<button
+			type={props.type || "button"}
 			className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
 			disabled={disabled || isLoading}
 			{...props}

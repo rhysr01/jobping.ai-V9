@@ -26,7 +26,6 @@ export const HERO_SUBLINE =
 	"We scan 4,000+ EU companies daily and send you only roles you're qualified for - filtered by location, visa status, and experience.";
 export const HERO_SUBLINE_MICRO =
 	"No dashboards. No job boards. Just roles you can actually apply for.";
-export const HERO_SUBTITLE = "";
 export const HERO_CTA = "Get my first 5 matches";
 export const HERO_PRIMARY_CTA = "Start Free - See Your First 5 Matches";
 export const HERO_SECONDARY_CTA = "View Instant Matches";

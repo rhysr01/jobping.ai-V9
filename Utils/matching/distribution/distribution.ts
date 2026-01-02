@@ -43,7 +43,7 @@ export function distributeJobsWithDiversity(
 	if (targetCount <= 0) return [];
 
 	// Apply relaxed mode: if relaxed, allow more from one source and relax city balance
-	const effectiveMaxPerSource = relaxed 
+	const effectiveMaxPerSource = relaxed
 		? Math.ceil(targetCount / 2) // Relaxed: allow 50% from one source
 		: maxPerSource;
 
@@ -63,9 +63,12 @@ export function distributeJobsWithDiversity(
 		targetCount,
 		effectiveMaxPerSource, // Use relaxed max if applicable
 	);
-	const { hasMultipleSources, effectiveMaxPerSource: effectiveMax, uniqueSources } =
-		sourceDiversity;
-	
+	const {
+		hasMultipleSources,
+		effectiveMaxPerSource: effectiveMax,
+		uniqueSources,
+	} = sourceDiversity;
+
 	// Use the effective max from source diversity check, but respect relaxed mode
 	const finalMaxPerSource = relaxed ? effectiveMaxPerSource : effectiveMax;
 

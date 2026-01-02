@@ -92,4 +92,3 @@ export default function TargetCompaniesAlert({
 		</motion.div>
 	);
 }
-

@@ -40,7 +40,12 @@ export const performAIMatching = inngest.createFunction(
 	},
 	{ event: "matching/perform" },
 	async ({ event, step }) => {
-		const { userPrefs, jobs, userId: _userId, context } = event.data as {
+		const {
+			userPrefs,
+			jobs,
+			userId: _userId,
+			context,
+		} = event.data as {
 			userPrefs: UserPreferences;
 			jobs: Job[];
 			userId?: string;

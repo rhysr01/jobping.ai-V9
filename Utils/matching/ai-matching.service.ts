@@ -118,7 +118,6 @@ export class AIMatchingService {
 		this.openai = new OpenAI({
 			apiKey,
 		});
-		this.cache = AIMatchingCache;
 	}
 
 	async performEnhancedAIMatching(

@@ -14,6 +14,7 @@ jest.mock("@/Utils/productionRateLimiter");
 jest.mock("@/Utils/auth/hmac");
 
 import { GET } from "@/app/api/user-matches/route";
+
 // Sentry removed - using Axiom for error tracking
 
 describe("User Matches API Route", () => {
@@ -45,30 +46,35 @@ describe("User Matches API Route", () => {
 		};
 
 		mockSupabase = {
-			from: jest.fn((table: string) => createChainableMock({
-				data: table === "matches" ? [
-					{
-						match_score: 0.85, // Normalized score (0-1 range)
-						user_email: "user@example.com",
-						job_hash: "hash1",
-						jobs: {
-							id: 1,
-							title: "Software Engineer",
-							company: "Tech Corp",
-							location: "London",
-							job_url: "https://example.com/job1",
-							description: "Job description",
-							categories: "tech",
-							experience_required: "entry",
-							work_environment: "remote",
-							language_requirements: "English",
-							company_profile_url: "https://example.com/company",
-							posted_at: new Date().toISOString(),
-						},
-					},
-				] : [],
-				error: null,
-			})),
+			from: jest.fn((table: string) =>
+				createChainableMock({
+					data:
+						table === "matches"
+							? [
+									{
+										match_score: 0.85, // Normalized score (0-1 range)
+										user_email: "user@example.com",
+										job_hash: "hash1",
+										jobs: {
+											id: 1,
+											title: "Software Engineer",
+											company: "Tech Corp",
+											location: "London",
+											job_url: "https://example.com/job1",
+											description: "Job description",
+											categories: "tech",
+											experience_required: "entry",
+											work_environment: "remote",
+											language_requirements: "English",
+											company_profile_url: "https://example.com/company",
+											posted_at: new Date().toISOString(),
+										},
+									},
+								]
+							: [],
+					error: null,
+				}),
+			),
 		};
 
 		const { getDatabaseClient } = require("@/Utils/databasePool");
@@ -88,11 +94,11 @@ describe("User Matches API Route", () => {
 	describe("GET /api/user-matches", () => {
 		it("should return user matches", async () => {
 			const response = await GET(mockRequest);
-			
+
 			// Behavior: Should return valid response
 			expect(response).toBeDefined();
 			expect(response.status).toBe(200);
-			
+
 			const data = await response.json();
 			expect(data.success).toBe(true);
 			// Response structure: { success: true, data: { matches: [...] } }
@@ -176,7 +182,7 @@ describe("User Matches API Route", () => {
 			});
 
 			const response = await GET(mockRequest);
-			
+
 			// Behavior: Should return error status
 			expect(response.status).toBeGreaterThanOrEqual(500);
 			// ✅ Tests outcome (error status), not implementation

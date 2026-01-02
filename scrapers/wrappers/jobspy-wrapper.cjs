@@ -3,12 +3,12 @@
 // Wrapper for JobSpy scraper - standardizes output format
 async function main() {
 	try {
-		const jobspyModule = require("../../_tools_archive/scripts/jobspy-save.cjs");
+		const jobspyModule = require("../../scripts/jobspy-save.cjs");
 		if (typeof jobspyModule.main === "function") {
 			await jobspyModule.main();
 		} else {
 			// Back-compat: fall back to requiring script (self-exec)
-			require("../../_tools_archive/scripts/jobspy-save.cjs");
+			require("../../scripts/jobspy-save.cjs");
 		}
 		process.exit(0);
 	} catch (error) {
@@ -22,4 +22,3 @@ if (require.main === module) {
 }
 
 module.exports = { main };
-

@@ -4,7 +4,7 @@
 async function main() {
 	try {
 		// Execute the scraper in the same process and let it finish naturally.
-		require("../../_tools_archive/scrapers/reed-scraper-standalone.cjs");
+		require("../reed-scraper-standalone.cjs");
 	} catch (error) {
 		console.error(`❌ Reed failed: ${error.message}`);
 	}
@@ -15,4 +15,3 @@ if (require.main === module) {
 }
 
 module.exports = { main };
-

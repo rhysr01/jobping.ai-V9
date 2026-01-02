@@ -3,57 +3,57 @@ import { POST } from "@/app/api/webhooks/resend/route";
 import { getDatabaseClient } from "@/Utils/databasePool";
 
 jest.mock("@/Utils/databasePool", () => ({
-  getDatabaseClient: jest.fn(() => ({
-    from: jest.fn(() => ({
-      update: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          data: {},
-          error: null,
-        })),
-      })),
-      insert: jest.fn(() => ({
-        data: {},
-        error: null,
-      })),
-    })),
-  })),
+	getDatabaseClient: jest.fn(() => ({
+		from: jest.fn(() => ({
+			update: jest.fn(() => ({
+				eq: jest.fn(() => ({
+					data: {},
+					error: null,
+				})),
+			})),
+			insert: jest.fn(() => ({
+				data: {},
+				error: null,
+			})),
+		})),
+	})),
 }));
 
 jest.mock("@/Utils/auth/hmac", () => ({
-  verifyHMAC: jest.fn().mockReturnValue({ isValid: true }),
+	verifyHMAC: jest.fn().mockReturnValue({ isValid: true }),
 }));
 
 describe("POST /api/webhooks/resend", () => {
-  it("should handle webhook request", async () => {
-    const req = {
-      json: async () => ({
-        type: "email.opened",
-        data: {
-          email: "test@example.com",
-        },
-      }),
-      headers: new Headers(),
-    } as NextRequest;
+	it("should handle webhook request", async () => {
+		const req = {
+			json: async () => ({
+				type: "email.opened",
+				data: {
+					email: "test@example.com",
+				},
+			}),
+			headers: new Headers(),
+		} as NextRequest;
 
-    const response = await POST(req);
-    expect(response.status).toBeGreaterThanOrEqual(200);
-  });
+		const response = await POST(req);
+		expect(response.status).toBeGreaterThanOrEqual(200);
+	});
 
-  it("should successfully process webhook events (behavior test)", async () => {
-    const req = {
-      json: async () => ({
-        type: "email.opened",
-        data: {
-          email: "test@example.com",
-        },
-      }),
-      headers: new Headers(),
-    } as NextRequest;
+	it("should successfully process webhook events (behavior test)", async () => {
+		const req = {
+			json: async () => ({
+				type: "email.opened",
+				data: {
+					email: "test@example.com",
+				},
+			}),
+			headers: new Headers(),
+		} as NextRequest;
 
-    const response = await POST(req);
-    
-    // Behavior: Webhook should be processed successfully
-    expect(response.status).toBeGreaterThanOrEqual(200);
-    // ✅ Tests outcome, not implementation
-  });
+		const response = await POST(req);
+
+		// Behavior: Webhook should be processed successfully
+		expect(response.status).toBeGreaterThanOrEqual(200);
+		// ✅ Tests outcome, not implementation
+	});
 });

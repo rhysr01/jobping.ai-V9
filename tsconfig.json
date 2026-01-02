@@ -49,7 +49,6 @@
 		"**/*.test.ts",
 		"**/*.spec.ts",
 		"tests/**",
-		"**/__mocks__/**",
-		"_tools_archive/**"
+		"**/__mocks__/**"
 	]
 }

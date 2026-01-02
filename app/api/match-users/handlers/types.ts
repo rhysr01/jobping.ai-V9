@@ -17,21 +17,6 @@ export interface PerformanceMetrics {
 	totalRequests: number;
 }
 
-export interface Job {
-	id: string;
-	title: string;
-	company: string;
-	location: string;
-	job_url: string;
-	description: string;
-	created_at: string;
-	job_hash: string;
-	is_sent: boolean;
-	status: string;
-	original_posted_date: string | null;
-	last_seen_at: string | null;
-}
-
 export interface SchemaValidationCache {
 	timestamp: number;
 	result: { valid: boolean; missingColumns?: string[] };

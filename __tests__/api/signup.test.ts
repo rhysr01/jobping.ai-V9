@@ -11,74 +11,74 @@ jest.mock("@/Utils/email/sender");
 jest.mock("@/Utils/emailVerification");
 
 describe("Signup API Route", () => {
-  let mockRequest: NextRequest;
+	let mockRequest: NextRequest;
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+	beforeEach(() => {
+		jest.clearAllMocks();
 
-    mockRequest = {
-      method: "POST",
-      headers: new Headers(),
-      json: jest.fn(),
-    } as any;
-  });
+		mockRequest = {
+			method: "POST",
+			headers: new Headers(),
+			json: jest.fn(),
+		} as any;
+	});
 
-  it("should handle valid signup request", async () => {
-    mockRequest.json.mockResolvedValue({
-      email: "test@example.com",
-      full_name: "Test User",
-      target_cities: ["London"],
-    });
+	it("should handle valid signup request", async () => {
+		mockRequest.json.mockResolvedValue({
+			email: "test@example.com",
+			full_name: "Test User",
+			target_cities: ["London"],
+		});
 
-    const response = await POST(mockRequest);
-    const data = await response.json();
+		const response = await POST(mockRequest);
+		const data = await response.json();
 
-    expect(response.status).toBeLessThan(500);
-  });
+		expect(response.status).toBeLessThan(500);
+	});
 
-  it("should reject invalid email format", async () => {
-    mockRequest.json.mockResolvedValue({
-      email: "invalid-email",
-      full_name: "Test User",
-    });
+	it("should reject invalid email format", async () => {
+		mockRequest.json.mockResolvedValue({
+			email: "invalid-email",
+			full_name: "Test User",
+		});
 
-    const response = await POST(mockRequest);
+		const response = await POST(mockRequest);
 
-    expect(response.status).toBeGreaterThanOrEqual(400);
-  });
+		expect(response.status).toBeGreaterThanOrEqual(400);
+	});
 
-  it("should reject missing required fields", async () => {
-    mockRequest.json.mockResolvedValue({
-      email: "test@example.com",
-    });
+	it("should reject missing required fields", async () => {
+		mockRequest.json.mockResolvedValue({
+			email: "test@example.com",
+		});
 
-    const response = await POST(mockRequest);
+		const response = await POST(mockRequest);
 
-    expect(response.status).toBeGreaterThanOrEqual(400);
-  });
+		expect(response.status).toBeGreaterThanOrEqual(400);
+	});
 
-  it("should handle database errors", async () => {
-    mockRequest.json.mockResolvedValue({
-      email: "test@example.com",
-      full_name: "Test User",
-      target_cities: ["London"],
-    });
+	it("should handle database errors", async () => {
+		mockRequest.json.mockResolvedValue({
+			email: "test@example.com",
+			full_name: "Test User",
+			target_cities: ["London"],
+		});
 
-    const { getDatabaseClient } = require("@/Utils/databasePool");
-    const mockSupabase = {
-      from: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({
-        data: null,
-        error: { message: "Database connection failed", code: "PGRST301" },
-      }),
-    };
-    getDatabaseClient.mockReturnValue(mockSupabase);
+		const { getDatabaseClient } = require("@/Utils/databasePool");
+		const mockSupabase = {
+			from: jest.fn().mockReturnThis(),
+			insert: jest.fn().mockReturnThis(),
+			select: jest.fn().mockReturnThis(),
+			single: jest.fn().mockResolvedValue({
+				data: null,
+				error: { message: "Database connection failed", code: "PGRST301" },
+			}),
+		};
+		getDatabaseClient.mockReturnValue(mockSupabase);
 
-    const response = await POST(mockRequest);
+		const response = await POST(mockRequest);
 
-    // Error should be handled (may be 400 for validation or 500 for server error)
-    expect(response.status).toBeGreaterThanOrEqual(400);
-  });
+		// Error should be handled (may be 400 for validation or 500 for server error)
+		expect(response.status).toBeGreaterThanOrEqual(400);
+	});
 });

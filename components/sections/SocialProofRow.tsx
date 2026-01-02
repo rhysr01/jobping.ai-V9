@@ -82,7 +82,6 @@ export default function SocialProofRow() {
 									}}
 									className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl glass-card elevation-2 px-6 py-6 transition-all duration-300 hover:elevation-3 hover:border-purple-500/30 hover:scale-[1.02] active:scale-[0.98]"
 								>
-
 									{/* Glowing divider */}
 									{index < items.length - 1 && (
 										<span className="hidden md:inline absolute right-0 top-1/2 h-12 w-px bg-gradient-to-b from-transparent via-purple-500/40 to-transparent -translate-y-1/2" />

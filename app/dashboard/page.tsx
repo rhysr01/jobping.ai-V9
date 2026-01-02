@@ -8,7 +8,7 @@ import {
 	XCircle,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 
 interface AccountStatus {
@@ -35,7 +35,7 @@ function DashboardContent() {
 	// Get userId from query params (you may want to get this from auth instead)
 	const userId = searchParams.get("userId") || "";
 
-	const loadAccountStatus = async () => {
+	const loadAccountStatus = useCallback(async () => {
 		try {
 			setLoading(true);
 			setError("");
@@ -101,7 +101,7 @@ function DashboardContent() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [userId]);
 
 	useEffect(() => {
 		if (!userId) {

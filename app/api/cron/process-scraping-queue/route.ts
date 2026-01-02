@@ -70,7 +70,10 @@ const processScrapingQueueHandler = asyncHandler(
 				const { companies, scraperType } = job.payload;
 
 				// Import scraper dynamically based on type
-				let scraperResult: { jobsScraped: number; companiesProcessed: number } | null = null;
+				let scraperResult: {
+					jobsScraped: number;
+					companiesProcessed: number;
+				} | null = null;
 				switch (scraperType) {
 					case "adzuna":
 						scraperResult = await processAdzunaScraper(companies);

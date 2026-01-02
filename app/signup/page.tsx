@@ -4,12 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import {
-	CAREER_PATHS,
-	CITIES,
-	COMPANIES,
-	LANGUAGES,
-} from "@/components/signup/constants";
+import { CAREER_PATHS, COMPANIES } from "@/components/signup/constants";
 import { HeroSection } from "@/components/signup/HeroSection";
 import { ProgressBar } from "@/components/signup/ProgressBar";
 import { Step1Basics } from "@/components/signup/Step1Basics";
@@ -19,15 +14,11 @@ import { Step4MatchingPreferences } from "@/components/signup/Step4MatchingPrefe
 import { TrustSignals } from "@/components/signup/TrustSignals";
 import { useAriaAnnounce } from "@/components/ui/AriaLiveRegion";
 import { BrandIcons } from "@/components/ui/BrandIcons";
-import { CityChip } from "@/components/ui/CityChip";
 import EntryLevelSelector from "@/components/ui/EntryLevelSelector";
-import EuropeMap from "@/components/ui/EuropeMap";
 import {
 	FormFieldError,
-	FormFieldHelper,
 	FormFieldSuccess,
 } from "@/components/ui/FormFieldFeedback";
-import LanguageSelector from "@/components/ui/LanguageSelector";
 import { useReducedMotion } from "@/components/ui/useReducedMotion";
 import WorkEnvironmentSelector from "@/components/ui/WorkEnvironmentSelector";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
@@ -37,9 +28,7 @@ import {
 } from "@/hooks/useFormValidation";
 import { ApiError, apiCall, apiCallJson } from "@/lib/api-client";
 import { TIMING } from "@/lib/constants";
-import * as Copy from "@/lib/copy";
 import { logger } from "@/lib/monitoring";
-import { SIGNUP_INITIAL_ROLES } from "@/lib/productMetrics";
 import { showToast } from "@/lib/toast";
 
 function SignupForm() {
@@ -304,7 +293,16 @@ function SignupForm() {
 				window.history.replaceState({ step: targetStep }, "", url.toString());
 			}
 		},
-		[canNavigateTo, step, formData, emailValidation.isValid, announce, router],
+		[
+			canNavigateTo,
+			step,
+			formData,
+			emailValidation.isValid,
+			announce,
+			router,
+			formRefs.email.current,
+			formRefs.fullName.current,
+		],
 	);
 
 	const handleSubmit = useCallback(async () => {
@@ -416,7 +414,7 @@ function SignupForm() {
 			setLoading(false);
 		}
 	}, [
-		loading, // CRITICAL: Include loading in deps for guard check
+		loading,
 		formData,
 		router,
 		announce,
@@ -425,6 +423,7 @@ function SignupForm() {
 		emailValidation.isValid,
 		step,
 		clearProgress,
+		navigateToStep,
 	]);
 
 	// Keyboard shortcuts for power users
@@ -481,7 +480,7 @@ function SignupForm() {
 	useEffect(() => {
 		if (typeof window === "undefined") return;
 
-		const handlePopState = (e: PopStateEvent) => {
+		const handlePopState = (_e: PopStateEvent) => {
 			const url = new URL(window.location.href);
 			const urlStep = url.searchParams.get("step");
 
@@ -970,6 +969,7 @@ function SignupForm() {
 										<div className="sticky bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
 											<div className="flex gap-3 sm:gap-4">
 												<motion.button
+													type="button"
 													onClick={() => setStep(1)}
 													whileHover={{ scale: 1.02 }}
 													whileTap={{ scale: 0.98 }}
@@ -978,6 +978,7 @@ function SignupForm() {
 													← Back
 												</motion.button>
 												<motion.button
+													type="button"
 													onClick={() => setStep(3)}
 													disabled={
 														loading ||
@@ -1236,6 +1237,10 @@ function SignupForm() {
 											);
 											if (!selectedCareer) return null;
 
+											// TypeScript narrowing: selectedCareer is guaranteed to be defined here
+											// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+											const career = selectedCareer!;
+
 											return (
 												<motion.div
 													initial={{ opacity: 0, y: 10 }}
@@ -1249,9 +1254,9 @@ function SignupForm() {
 														className="block text-lg font-black text-white mb-4"
 													>
 														<span className="text-2xl mr-2">
-															{selectedCareer.emoji}
+															{career.emoji}
 														</span>
-														{selectedCareer.label} Roles
+														{career.label} Roles
 														<span className="text-zinc-400 font-normal text-base ml-2">
 															(Select at least one - required)
 														</span>
@@ -1267,9 +1272,9 @@ function SignupForm() {
 															whileHover={{ scale: 1.02 }}
 															whileTap={{ scale: 0.98 }}
 															className="px-4 py-3 sm:py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-glow-subtle hover:shadow-glow-medium touch-manipulation min-h-[48px]"
-															title={`Select all ${selectedCareer.roles.length} roles in ${selectedCareer.label}`}
+															title={`Select all ${career.roles.length} roles in ${career.label}`}
 														>
-															Select All {selectedCareer.roles.length} Roles
+															Select All {career.roles.length} Roles
 														</motion.button>
 														<motion.button
 															type="button"
@@ -1306,7 +1311,7 @@ function SignupForm() {
 														}
 													>
 														<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-															{selectedCareer.roles.map(
+															{career.roles.map(
 																(role: string, idx: number) => (
 																	<motion.button
 																		key={role}
@@ -1348,6 +1353,8 @@ function SignupForm() {
 																					fill="none"
 																					viewBox="0 0 24 24"
 																					stroke="currentColor"
+																					role="img"
+																					aria-label="Selected"
 																				>
 																					<path
 																						strokeLinecap="round"
@@ -1390,6 +1397,7 @@ function SignupForm() {
 										<div className="sticky bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
 											<div className="flex gap-3 sm:gap-4">
 												<motion.button
+													type="button"
 													onClick={() => setStep(2)}
 													whileHover={{ scale: 1.02 }}
 													whileTap={{ scale: 0.98 }}
@@ -1399,6 +1407,7 @@ function SignupForm() {
 													← Back
 												</motion.button>
 												<motion.button
+													type="button"
 													onClick={() => setStep(4)}
 													disabled={
 														loading ||

@@ -6,96 +6,96 @@
 import { MetricsCollector } from "@/Utils/monitoring/metricsCollector";
 
 jest.mock("@supabase/supabase-js", () => ({
-  createClient: jest.fn(),
+	createClient: jest.fn(),
 }));
 
 describe("Metrics Collector", () => {
-  let collector: MetricsCollector;
-  let mockSupabase: any;
+	let collector: MetricsCollector;
+	let mockSupabase: any;
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+	beforeEach(() => {
+		jest.clearAllMocks();
 
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
-    process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
+		process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+		process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
 
-    mockSupabase = {
-      from: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      count: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      head: true,
-    };
+		mockSupabase = {
+			from: jest.fn().mockReturnThis(),
+			select: jest.fn().mockReturnThis(),
+			count: jest.fn().mockReturnThis(),
+			eq: jest.fn().mockReturnThis(),
+			gte: jest.fn().mockReturnThis(),
+			head: true,
+		};
 
-    const { createClient } = require("@supabase/supabase-js");
-    createClient.mockReturnValue(mockSupabase);
+		const { createClient } = require("@supabase/supabase-js");
+		createClient.mockReturnValue(mockSupabase);
 
-    collector = new MetricsCollector();
-  });
+		collector = new MetricsCollector();
+	});
 
-  describe("collectMetrics", () => {
-    it("should collect system metrics", async () => {
-      mockSupabase.select.mockResolvedValue({ count: 100 });
+	describe("collectMetrics", () => {
+		it("should collect system metrics", async () => {
+			mockSupabase.select.mockResolvedValue({ count: 100 });
 
-      const metrics = await collector.collectMetrics();
+			const metrics = await collector.collectMetrics();
 
-      expect(metrics.timestamp).toBeDefined();
-      expect(metrics.performance).toBeDefined();
-      expect(metrics.business).toBeDefined();
-      expect(metrics.queue).toBeDefined();
-      expect(metrics.errors).toBeDefined();
-    });
+			expect(metrics.timestamp).toBeDefined();
+			expect(metrics.performance).toBeDefined();
+			expect(metrics.business).toBeDefined();
+			expect(metrics.queue).toBeDefined();
+			expect(metrics.errors).toBeDefined();
+		});
 
-    it("should include performance metrics", async () => {
-      const metrics = await collector.collectMetrics();
+		it("should include performance metrics", async () => {
+			const metrics = await collector.collectMetrics();
 
-      expect(metrics.performance.response_time).toBeDefined();
-      expect(metrics.performance.memory_usage).toBeDefined();
-      expect(metrics.performance.uptime).toBeDefined();
-    });
+			expect(metrics.performance.response_time).toBeDefined();
+			expect(metrics.performance.memory_usage).toBeDefined();
+			expect(metrics.performance.uptime).toBeDefined();
+		});
 
-    it("should collect business metrics", async () => {
-      mockSupabase.select.mockResolvedValue({ count: 50 });
+		it("should collect business metrics", async () => {
+			mockSupabase.select.mockResolvedValue({ count: 50 });
 
-      const metrics = await collector.collectMetrics();
+			const metrics = await collector.collectMetrics();
 
-      expect(metrics.business.total_users).toBeDefined();
-      expect(metrics.business.active_users).toBeDefined();
-      expect(metrics.business.total_jobs).toBeDefined();
-    });
+			expect(metrics.business.total_users).toBeDefined();
+			expect(metrics.business.active_users).toBeDefined();
+			expect(metrics.business.total_jobs).toBeDefined();
+		});
 
-    it("should handle errors gracefully", async () => {
-      mockSupabase.select.mockResolvedValue({
-        data: null,
-        error: new Error("Query failed"),
-        count: 0,
-      });
+		it("should handle errors gracefully", async () => {
+			mockSupabase.select.mockResolvedValue({
+				data: null,
+				error: new Error("Query failed"),
+				count: 0,
+			});
 
-      const metrics = await collector.collectMetrics();
+			const metrics = await collector.collectMetrics();
 
-      expect(metrics).toBeDefined();
-      expect(metrics.business.total_users).toBe(0);
-    });
-  });
+			expect(metrics).toBeDefined();
+			expect(metrics.business.total_users).toBe(0);
+		});
+	});
 
-  describe("collectBusinessMetrics", () => {
-    it("should cache metrics", async () => {
-      mockSupabase.select.mockResolvedValue({ count: 100 });
+	describe("collectBusinessMetrics", () => {
+		it("should cache metrics", async () => {
+			mockSupabase.select.mockResolvedValue({ count: 100 });
 
-      await collector.collectMetrics();
-      await collector.collectMetrics();
+			await collector.collectMetrics();
+			await collector.collectMetrics();
 
-      // Should use cache on second call
-      expect(mockSupabase.from).toHaveBeenCalled();
-    });
-  });
+			// Should use cache on second call
+			expect(mockSupabase.from).toHaveBeenCalled();
+		});
+	});
 
-  describe("getMetricsHistory", () => {
-    it("should get historical metrics", async () => {
-      const history = await collector.getMetricsHistory(24);
+	describe("getMetricsHistory", () => {
+		it("should get historical metrics", async () => {
+			const history = await collector.getMetricsHistory(24);
 
-      expect(Array.isArray(history)).toBe(true);
-    });
-  });
+			expect(Array.isArray(history)).toBe(true);
+		});
+	});
 });

@@ -128,35 +128,37 @@ export class ConsolidatedMatchingEngine {
 				originalJobCount: jobsArray.length,
 				reason: "All jobs filtered by visa/language/location requirements",
 			});
-			
+
 			// Try guaranteed matching as fallback (even with 0 eligible jobs, we can relax)
 			try {
 				const { getGuaranteedMatches } = await import("../guaranteed");
 				const { getDatabaseClient } = await import("@/Utils/databasePool");
 				const supabase = getDatabaseClient();
-				
+
 				const guaranteedResult = await getGuaranteedMatches(
 					jobsArray, // Use all jobs, not just eligible (guaranteed will apply its own filtering)
 					userPrefs,
 					supabase,
 				);
-				
+
 				if (guaranteedResult.matches.length > 0) {
 					apiLogger.info("Guaranteed matching provided fallback matches", {
 						email: userPrefs.email,
 						matchesFound: guaranteedResult.matches.length,
 						relaxationLevel: guaranteedResult.metadata.relaxationLevel,
 					});
-					
+
 					// Convert to JobMatch format
-					const guaranteedMatches: JobMatch[] = guaranteedResult.matches.map((m) => ({
-						job_index: 0, // Not used
-						job_hash: m.job.job_hash,
-						match_score: m.match_score,
-						match_reason: m.match_reason,
-						confidence_score: m.confidence_score,
-					}));
-					
+					const guaranteedMatches: JobMatch[] = guaranteedResult.matches.map(
+						(m) => ({
+							job_index: 0, // Not used
+							job_hash: m.job.job_hash,
+							match_score: m.match_score,
+							match_reason: m.match_reason,
+							confidence_score: m.confidence_score,
+						}),
+					);
+
 					return {
 						matches: guaranteedMatches,
 						method: "guaranteed_fallback",
@@ -173,7 +175,7 @@ export class ConsolidatedMatchingEngine {
 					email: userPrefs.email,
 				});
 			}
-			
+
 			return {
 				matches: [],
 				method: "rule_based",
@@ -407,25 +409,25 @@ export class ConsolidatedMatchingEngine {
 		// Check if we have enough matches, if not use guaranteed matching
 		const tier = userPrefs.subscription_tier || "free";
 		const minMatches = tier === "premium" ? 10 : 5;
-		
+
 		if (ruleMatches.length < minMatches) {
 			apiLogger.info("Insufficient matches, trying guaranteed matching", {
 				email: userPrefs.email || "unknown",
 				currentMatches: ruleMatches.length,
 				minRequired: minMatches,
 			});
-			
+
 			try {
 				const { getGuaranteedMatches } = await import("../guaranteed");
 				const { getDatabaseClient } = await import("@/Utils/databasePool");
 				const supabase = getDatabaseClient();
-				
+
 				const guaranteedResult = await getGuaranteedMatches(
 					jobsArray, // Use all jobs
 					userPrefs,
 					supabase,
 				);
-				
+
 				if (guaranteedResult.matches.length >= ruleMatches.length) {
 					apiLogger.info("Guaranteed matching provided better results", {
 						email: userPrefs.email,
@@ -433,16 +435,18 @@ export class ConsolidatedMatchingEngine {
 						ruleMatches: ruleMatches.length,
 						relaxationLevel: guaranteedResult.metadata.relaxationLevel,
 					});
-					
+
 					// Convert to JobMatch format
-					const guaranteedMatches: JobMatch[] = guaranteedResult.matches.map((m) => ({
-						job_index: 0,
-						job_hash: m.job.job_hash,
-						match_score: m.match_score,
-						match_reason: m.match_reason,
-						confidence_score: m.confidence_score,
-					}));
-					
+					const guaranteedMatches: JobMatch[] = guaranteedResult.matches.map(
+						(m) => ({
+							job_index: 0,
+							job_hash: m.job.job_hash,
+							match_score: m.match_score,
+							match_reason: m.match_reason,
+							confidence_score: m.confidence_score,
+						}),
+					);
+
 					this.lastAIMetadata = null;
 					return {
 						matches: guaranteedMatches,
