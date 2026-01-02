@@ -58,6 +58,7 @@ export function FreeMatchingSuite({
 
 			return () => clearTimeout(revealTimer);
 		}
+		return undefined;
 	}, [isLoading, flowState, onComplete]);
 
 	// Confetti animation (only during celebration phase)
