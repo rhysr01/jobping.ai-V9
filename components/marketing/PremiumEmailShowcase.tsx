@@ -1,12 +1,11 @@
 "use client";
 
-import React from "react";
-import { TiltCard } from "@/components/ui/TiltCard";
-import { IPhoneShell } from "@/components/ui/IPhoneShell";
 import { MapPin } from "lucide-react";
+import { IPhoneShell } from "@/components/ui/IPhoneShell";
+import { TiltCard } from "@/components/ui/TiltCard";
 
 // Same profile across all three emails (Monday, Wednesday, Friday)
-	const USER_PROFILE = {
+const USER_PROFILE = {
 	careerPath: "Strategy and Business Design",
 	cities: ["London", "Paris"],
 	visa: "Visa Sponsorship Required",
@@ -26,7 +25,8 @@ const EMAIL_JOBS = {
 				"Perfect for your Strategy and Business Design career path. McKinsey's practice focuses on projects that align with your interests. Located in London, visa sponsorship available, and requires no prior experience - ideal for interns.",
 			visaConfidence: "likely",
 			tags: ["Hybrid", "Internship"],
-			description: "Join our strategy team to help leading organizations solve complex business challenges. Work on strategic planning, market analysis, and business design.",
+			description:
+				"Join our strategy team to help leading organizations solve complex business challenges. Work on strategic planning, market analysis, and business design.",
 		},
 		{
 			title: "Business Design Graduate",
@@ -37,7 +37,8 @@ const EMAIL_JOBS = {
 				"Hot match! BCG Digital Ventures' Graduate Programme is specifically designed for recent graduates. The hybrid work arrangement fits your preferences, and the role is in London with visa sponsorship available.",
 			visaConfidence: "likely",
 			tags: ["Hybrid", "Graduate"],
-			description: "Design and launch new digital businesses. Work with startups and corporates to build innovative solutions from concept to market.",
+			description:
+				"Design and launch new digital businesses. Work with startups and corporates to build innovative solutions from concept to market.",
 		},
 		{
 			title: "Strategy Consultant",
@@ -48,7 +49,8 @@ const EMAIL_JOBS = {
 				"Roland Berger's team specializes in work that matches your Strategy and Business Design career path. The role is based in Paris with visa sponsorship available, and the hybrid setup aligns with your preferences.",
 			visaConfidence: "verified",
 			tags: ["Hybrid", "Entry Level"],
-			description: "Work on strategic projects across industries. Help clients transform their businesses through innovative strategies and design thinking.",
+			description:
+				"Work on strategic projects across industries. Help clients transform their businesses through innovative strategies and design thinking.",
 		},
 		{
 			title: "Business Design Intern",
@@ -59,7 +61,8 @@ const EMAIL_JOBS = {
 				"Great match for Strategy and Business Design. IDEO offers structured training for interns, located in London with visa sponsorship available.",
 			visaConfidence: "likely",
 			tags: ["Hybrid", "Internship"],
-			description: "Design human-centered business solutions. Combine strategy, design, and innovation to create meaningful impact.",
+			description:
+				"Design human-centered business solutions. Combine strategy, design, and innovation to create meaningful impact.",
 		},
 		{
 			title: "Strategic Design Associate",
@@ -70,7 +73,8 @@ const EMAIL_JOBS = {
 				"Strong alignment with your Strategy and Business Design goals. Fjord's team offers clear progression paths. Hybrid work style, visa sponsorship available, and entry-level friendly with excellent training support.",
 			visaConfidence: "likely",
 			tags: ["Hybrid", "Entry Level"],
-			description: "Design service experiences and business strategies. Work at the intersection of design, business, and technology.",
+			description:
+				"Design service experiences and business strategies. Work at the intersection of design, business, and technology.",
 		},
 	],
 	wednesday: [
@@ -83,7 +87,8 @@ const EMAIL_JOBS = {
 				"Perfect for your Strategy and Business Design career path. Deloitte's graduate programme focuses on projects that align with your interests. Located in London, visa sponsorship available, and designed for recent graduates.",
 			visaConfidence: "verified",
 			tags: ["Hybrid", "Graduate"],
-			description: "Help clients navigate complex business challenges. Work on strategic planning, digital transformation, and business model innovation.",
+			description:
+				"Help clients navigate complex business challenges. Work on strategic planning, digital transformation, and business model innovation.",
 		},
 		{
 			title: "Business Design Consultant",
@@ -94,7 +99,8 @@ const EMAIL_JOBS = {
 				"Hot match! PwC's program is specifically designed for early-career professionals. The hybrid work arrangement fits your preferences, and the role is in Paris with visa sponsorship available.",
 			visaConfidence: "likely",
 			tags: ["Hybrid", "Entry Level"],
-			description: "Design innovative business models and strategies. Combine consulting expertise with design thinking to deliver transformative solutions.",
+			description:
+				"Design innovative business models and strategies. Combine consulting expertise with design thinking to deliver transformative solutions.",
 		},
 		{
 			title: "Strategy & Innovation Intern",
@@ -105,7 +111,8 @@ const EMAIL_JOBS = {
 				"EY's team specializes in work that matches your Strategy and Business Design career path. Hybrid setup aligns with your preferences, and requires no prior experience - ideal for interns.",
 			visaConfidence: "verified",
 			tags: ["Hybrid", "Internship"],
-			description: "Drive strategic innovation for leading organizations. Work on growth strategies, market entry, and business transformation.",
+			description:
+				"Drive strategic innovation for leading organizations. Work on growth strategies, market entry, and business transformation.",
 		},
 		{
 			title: "Business Design Strategist",
@@ -116,7 +123,8 @@ const EMAIL_JOBS = {
 				"Great match for Strategy and Business Design. McKinsey Digital offers structured training for entry-level professionals, located in Paris with visa sponsorship available.",
 			visaConfidence: "verified",
 			tags: ["Hybrid", "Entry Level"],
-			description: "Design digital strategies and business models. Combine strategic thinking with design to create innovative digital solutions.",
+			description:
+				"Design digital strategies and business models. Combine strategic thinking with design to create innovative digital solutions.",
 		},
 		{
 			title: "Strategic Planning Graduate",
@@ -127,7 +135,8 @@ const EMAIL_JOBS = {
 				"Strong alignment with your Strategy and Business Design goals. KPMG's graduate programme offers clear progression paths. Hybrid work style, and designed for recent graduates.",
 			visaConfidence: "verified",
 			tags: ["Hybrid", "Graduate"],
-			description: "Help organizations develop strategic plans and business designs. Work on market analysis, competitive strategy, and organizational design.",
+			description:
+				"Help organizations develop strategic plans and business designs. Work on market analysis, competitive strategy, and organizational design.",
 		},
 	],
 	friday: [
@@ -140,7 +149,8 @@ const EMAIL_JOBS = {
 				"Perfect for your Strategy and Business Design career path. Accenture's practice focuses on projects that align with your interests. Located in London, visa sponsorship available, and entry-level friendly.",
 			visaConfidence: "likely",
 			tags: ["Hybrid", "Entry Level"],
-			description: "Design innovative business solutions and strategies. Work with clients to transform their organizations through design-led approaches.",
+			description:
+				"Design innovative business solutions and strategies. Work with clients to transform their organizations through design-led approaches.",
 		},
 		{
 			title: "Strategy Graduate",
@@ -151,7 +161,8 @@ const EMAIL_JOBS = {
 				"Hot match! Oliver Wyman's graduate programme is specifically designed for recent graduates. The hybrid work arrangement fits your preferences, and visa sponsorship available.",
 			visaConfidence: "verified",
 			tags: ["Hybrid", "Graduate"],
-			description: "Solve complex strategic challenges for leading organizations. Work on market strategy, organizational design, and business transformation.",
+			description:
+				"Solve complex strategic challenges for leading organizations. Work on market strategy, organizational design, and business transformation.",
 		},
 		{
 			title: "Design Strategy Intern",
@@ -162,7 +173,8 @@ const EMAIL_JOBS = {
 				"Pentagram's team specializes in work that matches your Strategy and Business Design career path. The role is based in London with visa sponsorship available, and requires no prior experience - ideal for interns.",
 			visaConfidence: "verified",
 			tags: ["Hybrid", "Internship"],
-			description: "Develop strategic design solutions for brands and organizations. Work at the intersection of design, strategy, and business.",
+			description:
+				"Develop strategic design solutions for brands and organizations. Work at the intersection of design, strategy, and business.",
 		},
 		{
 			title: "Business Strategy Associate",
@@ -173,7 +185,8 @@ const EMAIL_JOBS = {
 				"Great match for Strategy and Business Design. Kearney offers structured training for entry-level professionals, hybrid work style, with comprehensive training support.",
 			visaConfidence: "verified",
 			tags: ["Hybrid", "Entry Level"],
-			description: "Help clients develop winning strategies. Work on strategic planning, market analysis, and business model design.",
+			description:
+				"Help clients develop winning strategies. Work on strategic planning, market analysis, and business model design.",
 		},
 		{
 			title: "Innovation Strategy Graduate",
@@ -184,7 +197,8 @@ const EMAIL_JOBS = {
 				"Strong alignment with your Strategy and Business Design goals. Capgemini Invent's graduate programme offers clear progression paths. Located in London with visa sponsorship available.",
 			visaConfidence: "verified",
 			tags: ["Hybrid", "Graduate"],
-			description: "Design innovation strategies and new business models. Combine strategic thinking with design to drive organizational transformation.",
+			description:
+				"Design innovation strategies and new business models. Combine strategic thinking with design to drive organizational transformation.",
 		},
 	],
 };
@@ -244,7 +258,7 @@ export function PremiumEmailShowcase() {
 		<section className="py-32 md:py-40 bg-black border-t border-border-subtle scroll-snap-section relative">
 			{/* Scroll momentum fade */}
 			<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
-			
+
 			<div className="container-page relative z-10">
 				<div className="text-center mb-16">
 					<h2 className="text-3xl font-bold text-white mb-4">
@@ -310,23 +324,33 @@ export function PremiumEmailShowcase() {
 											</div>
 											<div className="space-y-1 text-xs text-content-muted">
 												<div>
-													<strong className="text-content-secondary">Career Path:</strong>{" "}
+													<strong className="text-content-secondary">
+														Career Path:
+													</strong>{" "}
 													{USER_PROFILE.careerPath}
 												</div>
 												<div>
-													<strong className="text-content-secondary">Cities:</strong>{" "}
+													<strong className="text-content-secondary">
+														Cities:
+													</strong>{" "}
 													{USER_PROFILE.cities.join(", ")}
 												</div>
 												<div>
-													<strong className="text-content-secondary">Visa:</strong>{" "}
+													<strong className="text-content-secondary">
+														Visa:
+													</strong>{" "}
 													{USER_PROFILE.visa}
 												</div>
 												<div>
-													<strong className="text-content-secondary">Level:</strong>{" "}
+													<strong className="text-content-secondary">
+														Level:
+													</strong>{" "}
 													{USER_PROFILE.level}
 												</div>
 												<div>
-													<strong className="text-content-secondary">Work Style:</strong>{" "}
+													<strong className="text-content-secondary">
+														Work Style:
+													</strong>{" "}
 													{USER_PROFILE.workStyle}
 												</div>
 											</div>
@@ -398,15 +422,24 @@ export function PremiumEmailShowcase() {
 
 											{/* Action Buttons - Matches Real Email */}
 											<div className="flex gap-2">
-												<button className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold px-3 py-2 rounded-lg text-xs hover:from-indigo-500 hover:to-purple-500 transition-all">
+												<button
+													type="button"
+													className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold px-3 py-2 rounded-lg text-xs hover:from-indigo-500 hover:to-purple-500 transition-all"
+												>
 													View Match Evidence →
 												</button>
 											</div>
 											<div className="flex gap-2 mt-2">
-												<button className="flex-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-semibold">
+												<button
+													type="button"
+													className="flex-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-semibold"
+												>
 													👍 Good match
 												</button>
-												<button className="flex-1 bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-1.5 rounded-lg text-xs font-semibold">
+												<button
+													type="button"
+													className="flex-1 bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-1.5 rounded-lg text-xs font-semibold"
+												>
 													👎 Not for me
 												</button>
 											</div>

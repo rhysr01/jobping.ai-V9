@@ -198,10 +198,16 @@ export function HeroMobileMockup({ stats, topMatch }: HeroMockupProps) {
 
 										{/* Action Buttons */}
 										<div className="flex gap-3">
-											<button className="flex-1 bg-emerald-500 text-content-primary font-bold px-6 py-2.5 rounded-lg text-sm hover:bg-emerald-400 transition-all">
+											<button
+												type="button"
+												className="flex-1 bg-emerald-500 text-content-primary font-bold px-6 py-2.5 rounded-lg text-sm hover:bg-emerald-400 transition-all"
+											>
 												Apply Now →
 											</button>
-											<button className="px-4 py-2.5 rounded-lg border border-border-default bg-surface-elevated/40 text-content-muted hover:text-content-secondary text-sm font-medium">
+											<button
+												type="button"
+												className="px-4 py-2.5 rounded-lg border border-border-default bg-surface-elevated/40 text-content-muted hover:text-content-secondary text-sm font-medium"
+											>
 												👎
 											</button>
 										</div>

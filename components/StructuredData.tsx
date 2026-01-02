@@ -35,10 +35,10 @@ export default function StructuredData({ nonce }: StructuredDataProps) {
 	};
 
 	return (
-		// biome-ignore lint/security/noDangerouslySetInnerHtml: Used for JSON-LD schema
 		<script
 			type="application/ld+json"
 			nonce={nonce}
+			// biome-ignore lint/security/noDangerouslySetInnerHtml: Valid use case for JSON-LD
 			dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
 		/>
 	);
