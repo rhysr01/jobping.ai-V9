@@ -296,18 +296,7 @@ export function Step4MatchingPreferences({
 									</>
 								) : (
 									<>
-										<span>→</span>
-										<span>Find my matches</span>
-										<motion.span
-											animate={{ x: [0, 4, 0] }}
-											transition={{
-												duration: 1,
-												repeat: Infinity,
-												repeatDelay: 0.5,
-											}}
-										>
-											→
-										</motion.span>
+										<span>Complete Signup · €5/mo →</span>
 									</>
 								)}
 							</motion.button>

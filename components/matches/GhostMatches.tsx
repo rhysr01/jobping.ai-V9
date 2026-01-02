@@ -127,41 +127,42 @@ export function GhostMatches({ onUpgradeClick }: GhostMatchesProps) {
 						initial={{ opacity: 0, scale: 0.95 }}
 						animate={{ opacity: 1, scale: 1 }}
 						transition={{ delay: 0.6 + index * 0.1 }}
-						className="glass-card elevation-2 p-6 rounded-xl border-2 border-zinc-800 relative overflow-hidden"
+						className="glass-card elevation-2 p-5 rounded-xl border border-zinc-800/50 relative overflow-hidden"
 					>
-						{/* Blur overlay - lighter so brand names are just legible */}
-						<div className="absolute inset-0 bg-gradient-to-br from-zinc-900/60 to-zinc-950/70 backdrop-blur-lg z-10 flex items-center justify-center">
-							<div className="text-center">
-								<div className="w-12 h-12 rounded-full bg-brand-500/20 border-2 border-brand-500/40 flex items-center justify-center mb-2 mx-auto">
-									<BrandIcons.Clock className="h-6 w-6 text-brand-400" />
-								</div>
-								<p className="text-sm font-semibold text-brand-300">
-									Premium Match
-								</p>
+						{/* Real job content - visible but locked */}
+						<div className="relative z-0">
+							<div className="flex items-center gap-2 mb-3 flex-wrap">
+								<span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+									{job.matchScore}% Match
+								</span>
+							</div>
+							<h3 className="text-xl font-bold text-zinc-100 mb-1.5 leading-tight break-words">
+								{job.title}
+							</h3>
+							<p className="text-brand-300 font-medium mb-2 break-words">
+								{job.company}
+							</p>
+							<div className="flex items-center gap-1.5 text-sm text-zinc-400 mb-4">
+								<MapPin size={14} className="shrink-0" />
+								{job.location}
+							</div>
+							<div className="space-y-2 opacity-60">
+								<div className="h-2 bg-zinc-700/50 rounded w-full"></div>
+								<div className="h-2 bg-zinc-700/50 rounded w-5/6"></div>
+								<div className="h-2 bg-zinc-700/50 rounded w-4/6"></div>
 							</div>
 						</div>
 
-						{/* Real job content - blurred but brand names visible */}
-						<div className="opacity-40 blur-md">
-							<div className="flex items-center justify-between mb-3">
-								<span className="text-xs font-bold px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-									{job.matchScore}% Match
-								</span>
-								<div className="text-sm font-semibold text-white">
-									{job.company}
+						{/* Lock overlay with blur effect */}
+						<div className="absolute inset-0 bg-gradient-to-br from-zinc-950/85 via-zinc-900/80 to-zinc-950/85 backdrop-blur-md z-10 flex items-center justify-center pointer-events-none">
+							<div className="text-center">
+								<div className="w-14 h-14 rounded-full bg-brand-500/20 border-2 border-brand-500/50 flex items-center justify-center mb-3 mx-auto backdrop-blur-sm">
+									<BrandIcons.Clock className="h-7 w-7 text-brand-400" />
 								</div>
-							</div>
-							<h3 className="text-base font-bold text-white mb-2 leading-tight">
-								{job.title}
-							</h3>
-							<div className="flex items-center gap-1.5 text-xs text-zinc-300 mb-3">
-								<MapPin size={12} className="shrink-0" />
-								{job.location}
-							</div>
-							<div className="space-y-2">
-								<div className="h-2 bg-zinc-600 rounded w-full"></div>
-								<div className="h-2 bg-zinc-600 rounded w-5/6"></div>
-								<div className="h-2 bg-zinc-600 rounded w-4/6"></div>
+								<p className="text-sm font-bold text-brand-300 mb-1">
+									Premium Match
+								</p>
+								<p className="text-xs text-zinc-400">Unlock to view</p>
 							</div>
 						</div>
 					</motion.div>
@@ -184,9 +185,8 @@ export function GhostMatches({ onUpgradeClick }: GhostMatchesProps) {
 							</h3>
 						</div>
 						<p className="text-zinc-300 text-sm">
-							These matches were found using AI-powered matching. Upgrade to
-							Premium to unlock them and get 15 fresh jobs per week delivered
-							via email.
+							Upgrade to Premium to unlock these matches and get 15 fresh jobs
+							per week delivered via email (3x more than free).
 						</p>
 					</div>
 					<Link href="/signup" onClick={handleUpgradeClick}>

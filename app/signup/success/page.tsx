@@ -1,5 +1,6 @@
 "use client";
 
+import confetti from "canvas-confetti";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -57,6 +58,26 @@ function SignupSuccessContent() {
 		);
 		const timer = setTimeout(() => setShowSuccess(false), 2000);
 
+		// Premium confetti celebration
+		const duration = 5000;
+		const animationEnd = Date.now() + duration;
+		const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+
+		const interval = setInterval(() => {
+			const timeLeft = animationEnd - Date.now();
+			if (timeLeft <= 0) return clearInterval(interval);
+
+			const particleCount = 50 * (timeLeft / duration);
+			
+			// Multiple bursts with brand colors
+			confetti({
+				...defaults,
+				particleCount,
+				colors: ["#8b5cf6", "#6366f1", "#10b981", "#ffffff"],
+				origin: { x: Math.random(), y: Math.random() - 0.2 },
+			});
+		}, 250);
+
 		// Check verification status from URL params
 		if (verified === "true") {
 			setVerificationStatus("verified");
@@ -64,7 +85,10 @@ function SignupSuccessContent() {
 			setVerificationStatus("error");
 		}
 
-		return () => clearTimeout(timer);
+		return () => {
+			clearTimeout(timer);
+			clearInterval(interval);
+		};
 	}, [verified, verificationError]);
 
 	// Fetch metadata on mount (non-blocking)
@@ -223,10 +247,10 @@ function SignupSuccessContent() {
 						<div className="space-y-4">
 							<h1 className="text-4xl font-black text-white sm:text-5xl md:text-6xl leading-tight">
 								{verificationStatus === "verified"
-									? "Email Verified!"
+									? "Email Verified! 🎉"
 									: verificationStatus === "error"
 										? "Verification Issue"
-										: "You're in."}
+										: "Welcome to Premium! 🎉"}
 							</h1>
 
 							<p className="mx-auto max-w-2xl text-lg font-medium leading-relaxed text-zinc-100 sm:text-xl">
@@ -236,7 +260,7 @@ function SignupSuccessContent() {
 										? verificationError
 											? `Verification failed: ${decodeURIComponent(verificationError)}. Please check your email for a new verification link.`
 											: "There was an issue verifying your email. Please check your email for a verification link."
-										: "We've queued your welcome email and job matches. They usually arrive within a few minutes (or within 48 hours at the latest)."}
+										: "You're now part of the 1% who get personalized job matches delivered to their inbox. Your first matches arrive within 48 hours."}
 							</p>
 
 							{verificationStatus === "error" && (

@@ -54,21 +54,18 @@ export function buildStablePrompt(
 	const workEnv = userPrefs.work_environment || "";
 
 	const industries =
-		isPremiumTier &&
 		Array.isArray(userPrefs.industries) &&
 		userPrefs.industries.length > 0
 			? userPrefs.industries.join(", ")
 			: "";
 
 	const skills =
-		isPremiumTier &&
 		Array.isArray(userPrefs.skills) &&
 		userPrefs.skills.length > 0
 			? userPrefs.skills.join(", ")
 			: "";
 
-	const careerKeywords =
-		isPremiumTier && userPrefs.career_keywords ? userPrefs.career_keywords : "";
+	const careerKeywords = userPrefs.career_keywords ? userPrefs.career_keywords : "";
 
 	const jobsToAnalyze = isPremiumTier
 		? jobsArray.slice(0, JOBS_TO_ANALYZE_PREMIUM)
@@ -83,9 +80,7 @@ export function buildStablePrompt(
 	}
 	const jobList = jobListParts.join("\n");
 
-	const tierContext = isFreeTier
-		? `\nNOTE: This is a FREE tier user with limited preferences. Be more flexible with matching - prioritize basic requirements (location, career path) over advanced preferences.`
-		: `\nNOTE: This is a PREMIUM tier user with detailed preferences. Use ALL available preferences for precise matching.`;
+	const tierContext = `\nNOTE: Provide amazing, high-quality matches for this user. Use ALL available preferences for precise matching.`;
 
 	return `You are a career matching expert. Analyze these jobs and match them to the user's profile.${tierContext}
 
@@ -104,37 +99,7 @@ ${careerKeywords ? `- Career Keywords: ${careerKeywords}` : ""}
 AVAILABLE JOBS:
 ${jobList}
 
-${
-	isFreeTier
-		? `CRITICAL REQUIREMENTS (FREE TIER - More Lenient):
-1. **LOCATION MATCH**: Jobs should be in these cities: ${userCities}
-   - Exact city match preferred, but same country is acceptable
-   - Remote/hybrid jobs are acceptable
-   - Be flexible with location matching
-${
-	careerPaths
-		? `2. **CAREER PATH ALIGNMENT**: Jobs should relate to: ${careerPaths}
-   - Prefer jobs that align with career path, but be flexible
-   - Don't exclude jobs that are tangentially related`
-		: ""
-}
-${
-	languages
-		? `3. **LANGUAGE**: User speaks: ${languages}
-   - Prefer jobs where user speaks required languages
-   - If job requires non-English languages and user only speaks English, still consider if job likely accepts English speakers`
-		: ""
-}
-
-INSTRUCTIONS (FREE TIER - Broader Matching):
-Analyze each job and prioritize jobs that meet basic requirements (location, career path).
-Be more flexible - include jobs that are good fits even if not perfect matches.
-Rank by:
-1. Location match (exact city > same country > remote/hybrid)
-2. Career path alignment
-3. Experience level fit
-4. Overall relevance`
-		: `CRITICAL REQUIREMENTS (PREMIUM TIER - Strict Matching):
+CRITICAL REQUIREMENTS (High-Quality Matching):
 1. **LOCATION MATCH IS REQUIRED**: Jobs MUST be in one of these cities: ${userCities}
    - Exact city match required (e.g., "London" matches "London, UK" but NOT "New London")
    - Remote/hybrid jobs are acceptable if location preference allows
@@ -176,7 +141,7 @@ ${
 		: ""
 }
 
-INSTRUCTIONS (PREMIUM TIER - Precise Matching):
+INSTRUCTIONS (Precise Matching):
 Analyze each job carefully and return ONLY jobs that meet ALL critical requirements above.
 ${languages ? `**CRITICAL**: If a job requires languages the user doesn't speak (e.g., "Japanese speaker" but user doesn't speak Japanese), EXCLUDE it immediately.` : ""}
 Then rank by:
@@ -186,8 +151,7 @@ Then rank by:
 ${languages ? `4. Language match (user must speak at least one required language)` : "4. Language requirements (if specified)"}
 5. Industry preference match${industries ? ` (prioritize ${industries})` : ""}
 6. Skills alignment${skills ? ` (prioritize jobs requiring: ${skills})` : ""}
-7. Company type and culture fit`
-}
+7. Company type and culture fit
 
 MATCH REASON GUIDELINES (Evidence-Based):
 - BE SPECIFIC: Link user's stated skills/experience to job requirements
@@ -200,17 +164,12 @@ MATCH REASON GUIDELINES (Evidence-Based):
 - AVOID: Confidence claims about outcomes ("easy interview", "guaranteed fit")
 - AVOID: Generic statements ("Good match for your skills", "Aligns with preferences")
 
-${
-	isPremiumTier
-		? `EVIDENCE REQUIREMENT (PREMIUM TIER):
+EVIDENCE REQUIREMENT (High-Quality Matching):
 - For match scores > 85, you MUST provide at least TWO distinct points of evidence from the job description
 - Each evidence point should reference specific job requirements or user skills
 - Minimum 30 words required for high-confidence matches (>85%)
 - Example: "Your React experience matches their 'frontend framework' requirement, AND your TypeScript skills align with their 'strongly-typed codebase' preference"
 - If you cannot provide at least two distinct evidence points, lower the match score to 80 or below
-`
-		: ""
-}
 
 DIVERSITY REQUIREMENT:
 When selecting your top 5 matches, prioritize variety:

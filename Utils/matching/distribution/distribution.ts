@@ -408,11 +408,44 @@ export function distributeJobsWithDiversity(
 					bestJob = availableJobs[0];
 				}
 
-				if (bestJob) {
-					selectedJobs.push(bestJob);
-					const source = bestJob.source || "unknown";
-					sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+			if (bestJob) {
+				selectedJobs.push(bestJob);
+				const source = bestJob.source || "unknown";
+				sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+
+				// Update city counts (critical for proper distribution)
+				if (targetCities.length > 0) {
+					const jobCity = (bestJob.city || "").toLowerCase();
+					const jobLocation = ((bestJob as any).location || "").toLowerCase();
+					let matchedCity: string | undefined;
+					for (let i = 0; i < effectiveTargetCities.length; i++) {
+						if (matchesCity(jobCity, jobLocation, effectiveTargetCities[i])) {
+							matchedCity = effectiveTargetCities[i];
+							break;
+						}
+					}
+					if (!matchedCity) {
+						for (let i = 0; i < targetCities.length; i++) {
+							if (matchesCity(jobCity, jobLocation, targetCities[i])) {
+								matchedCity = targetCities[i];
+								break;
+							}
+						}
+					}
+					if (matchedCity) {
+						cityCounts[matchedCity.toLowerCase()] =
+							(cityCounts[matchedCity.toLowerCase()] || 0) + 1;
+					}
 				}
+
+				// Update work environment counts
+				if (canBalanceWorkEnvironments && targetWorkEnvironments.length > 0) {
+					const jobEnv = getJobWorkEnv(bestJob);
+					if (jobEnv) {
+						workEnvCounts[jobEnv] = (workEnvCounts[jobEnv] || 0) + 1;
+					}
+				}
+			}
 			}
 		}
 

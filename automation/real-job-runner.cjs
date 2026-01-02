@@ -166,46 +166,18 @@ class RealJobRunner {
 				}
 			});
 
-			let cities = Array.from(citySet);
+			const cities = Array.from(citySet);
 			const careerPaths = Array.from(careerSet);
 			const industries = Array.from(industrySet);
 			const roles = Array.from(roleSet);
 
-			// Fallback to default cities if no signup cities found
-			// This ensures scrapers run even when there are no active subscriptions
-			// Can be disabled by setting USE_DEFAULT_CITIES=false
-			if (
-				cities.length === 0 &&
-				process.env.USE_DEFAULT_CITIES !== "false"
-			) {
-				const defaultCities = [
-					"London",
-					"Manchester",
-					"Birmingham",
-					"Dublin",
-					"Belfast",
-					"Paris",
-					"Amsterdam",
-					"Brussels",
-					"Berlin",
-					"Hamburg",
-					"Munich",
-					"Zurich",
-					"Madrid",
-					"Barcelona",
-					"Milan",
-					"Rome",
-					"Stockholm",
-					"Copenhagen",
-					"Vienna",
-					"Prague",
-					"Warsaw",
-				];
-				cities = defaultCities;
-				console.log(
-					"ℹ️  No signup cities found; using default cities for scraping",
-				);
-			}
+			// Note: We don't provide default cities here because each scraper has its own defaults:
+			// - Reed: UK/Ireland cities (London, Manchester, Birmingham, Belfast, Dublin)
+			// - CareerJet: EU cities (Dublin, Cork, Belfast, London, Manchester, Edinburgh, Paris, Berlin, Munich, Amsterdam, Madrid, Barcelona, Milan, Rome, Lisbon, Brussels)
+			// - Arbeitnow: DACH cities (Germany, Austria, Switzerland)
+			// - Adzuna: EU_CITIES_CATEGORIES (20 cities)
+			// - JobSpy: Has its own comprehensive city list
+			// Each scraper will use its own defaults if TARGET_CITIES is empty
 
 			console.log("🎯 Signup-driven targets ready", {
 				citiesPreview: cities.slice(0, 10),
@@ -213,7 +185,10 @@ class RealJobRunner {
 				totalCareerPaths: careerPaths.length,
 				totalIndustries: industries.length,
 				totalRoles: roles.length,
-				usingDefaults: cities.length > 0 && citySet.size === 0,
+				note:
+					cities.length === 0
+						? "Scrapers will use their own default city lists"
+						: "Scrapers will filter to their supported cities",
 			});
 
 			return { cities, careerPaths, industries, roles };
@@ -222,39 +197,7 @@ class RealJobRunner {
 				"⚠️  Unexpected error collecting signup targets:",
 				error.message,
 			);
-			// Return default cities even on error to ensure scrapers can run
-			// Can be disabled by setting USE_DEFAULT_CITIES=false
-			if (process.env.USE_DEFAULT_CITIES !== "false") {
-				const defaultCities = [
-					"London",
-					"Manchester",
-					"Birmingham",
-					"Dublin",
-					"Belfast",
-					"Paris",
-					"Amsterdam",
-					"Brussels",
-					"Berlin",
-					"Hamburg",
-					"Munich",
-					"Zurich",
-					"Madrid",
-					"Barcelona",
-					"Milan",
-					"Rome",
-					"Stockholm",
-					"Copenhagen",
-					"Vienna",
-					"Prague",
-					"Warsaw",
-				];
-				return {
-					cities: defaultCities,
-					careerPaths: [],
-					industries: [],
-					roles: [],
-				};
-			}
+			// Return empty arrays - scrapers will use their own defaults
 			return { cities: [], careerPaths: [], industries: [], roles: [] };
 		}
 	}
@@ -1171,14 +1114,16 @@ class RealJobRunner {
 			const cycleStartIso = new Date().toISOString();
 			const signupTargets = await this.getSignupTargets();
 
-			// Note: getSignupTargets() now returns default cities if no signup cities found
-			// So we should always have cities to scrape, unless explicitly disabled
-			if (!signupTargets.cities.length) {
+			// Note: Each scraper handles cities differently:
+			// - Reed: Filters to UK/Ireland cities, uses DEFAULT_LOCATIONS if none provided
+			// - CareerJet/Arbeitnow: Use their own city lists, filter TARGET_CITIES if provided
+			// - JobSpy: Has its own city list, doesn't require TARGET_CITIES
+			// - Adzuna: Filters TARGET_CITIES to supported EU cities
+			// So we don't skip even if signupTargets.cities is empty - scrapers will use their defaults
+			if (signupTargets.cities.length === 0) {
 				console.log(
-					"⚪ No cities available for scraping; skipping scraping cycle.",
+					"ℹ️  No signup cities found; scrapers will use their default city lists.",
 				);
-				this.currentCycleStats = { total: 0, perSource: {} };
-				return;
 			}
 
 			// Run JobSpy variants in parallel for faster execution
