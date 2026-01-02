@@ -6,14 +6,16 @@ import Link from "next/link";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 import { CTA_GET_MY_5_FREE_MATCHES, CTA_GET_MY_5_FREE_MATCHES_ARIA } from "@/lib/copy";
 import { trackEvent } from "@/lib/analytics";
+import { useEffect, useState } from "react";
 
 interface HeroMockupProps {
 	stats?: { totalUsers: number };
 	topMatch?: any;
+	preloadedJobs?: any[];
 }
 
-// Sample jobs for the mockup (showing 5 free matches)
-const SAMPLE_JOBS = [
+// Fallback sample jobs if API fails
+const FALLBACK_JOBS = [
 	{
 		title: "Strategy & Business Design Intern",
 		company: "McKinsey & Company",
@@ -61,7 +63,69 @@ const SAMPLE_JOBS = [
 	},
 ];
 
-export function HeroMobileMockup({ stats: _stats, topMatch: _topMatch }: HeroMockupProps) {
+export function HeroMobileMockup({ stats: _stats, topMatch: _topMatch, preloadedJobs }: HeroMockupProps) {
+	const [jobs, setJobs] = useState<any[]>([]);
+
+	useEffect(() => {
+		// Use preloaded jobs if available, otherwise fetch
+		if (preloadedJobs && preloadedJobs.length > 0) {
+			const formattedJobs = preloadedJobs.slice(0, 5).map((job) => ({
+				title: job.title || "",
+				company: job.company || "",
+				location: job.location || "",
+				matchScore: job.matchScore ? Math.round(job.matchScore * 100) : 90,
+				matchReason: job.matchReason || `Perfect for your career path. Located in ${job.location || ""}.`,
+				workEnvironment: job.workEnvironment || "Hybrid",
+				type: job.isInternship ? "Internship" : job.isGraduate ? "Graduate Programme" : "Full-time",
+			}));
+			setJobs(formattedJobs);
+		} else {
+			// Fetch jobs if not preloaded
+			async function fetchJobs() {
+				try {
+					const now = new Date();
+					const start = new Date(now.getFullYear(), 0, 1);
+					const days = Math.floor(
+						(now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000),
+					);
+					const weekNumber = Math.ceil((days + start.getDay() + 1) / 7);
+
+					const response = await fetch(
+						`/api/sample-jobs?day=monday&tier=free&week=${weekNumber}`,
+						{
+							signal: AbortSignal.timeout(5000),
+						},
+					);
+
+					if (response.ok) {
+						const data = await response.json();
+						if (data.jobs && data.jobs.length > 0) {
+							const formattedJobs = data.jobs.slice(0, 5).map((job: any) => ({
+								title: job.title || "",
+								company: job.company || "",
+								location: job.location || "",
+								matchScore: job.matchScore ? Math.round(job.matchScore * 100) : 90,
+								matchReason: job.matchReason || `Perfect for your career path. Located in ${job.location || ""}.`,
+								workEnvironment: job.workEnvironment || "Hybrid",
+								type: job.isInternship ? "Internship" : job.isGraduate ? "Graduate Programme" : "Full-time",
+							}));
+							setJobs(formattedJobs);
+							return;
+						}
+					}
+				} catch (error) {
+					// Silently fail - use fallback
+				}
+				// Fallback to sample data
+				setJobs(FALLBACK_JOBS);
+			}
+			fetchJobs();
+		}
+	}, [preloadedJobs]);
+
+	// Use jobs or fallback
+	const displayJobs = jobs.length > 0 ? jobs : FALLBACK_JOBS;
+
 	return (
 		<div className="relative mx-auto w-full max-w-[320px] lg:max-w-[380px]">
 			<TiltCard>
@@ -75,7 +139,7 @@ export function HeroMobileMockup({ stats: _stats, topMatch: _topMatch }: HeroMoc
 						<div className="flex flex-col h-full bg-black overflow-hidden">
 							{/* Scrollable matches container */}
 							<div className="flex-1 overflow-y-auto p-4 pt-6 space-y-4">
-								{SAMPLE_JOBS.map((job, index) => (
+								{displayJobs.map((job, index) => (
 									<article
 										key={index}
 										className="glass-card elevation-2 p-4 rounded-xl border border-emerald-500/20 relative"

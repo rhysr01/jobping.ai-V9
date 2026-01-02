@@ -96,7 +96,7 @@ export default function Hero() {
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ delay: 0.2, duration: 0.6 }}
-							className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-relaxed mb-3 max-w-[540px] relative pl-1"
+							className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3 max-w-[540px] relative pl-1 overflow-visible"
 						>
 							{/* Silver Silk gradient: purple-500/80 (20%) → zinc-100 (50%) → purple-500/80 (80%) */}
 							<GradientText variant="brand">Get 5 early-career</GradientText>{" "}
@@ -235,20 +235,7 @@ export default function Hero() {
 					>
 						<HeroMobileMockup
 							stats={stats ? { totalUsers: stats.totalUsers } : undefined}
-							topMatch={
-								preloadedJobs && preloadedJobs.length > 0
-									? {
-											title: preloadedJobs[0].title,
-											company: preloadedJobs[0].company,
-											salary:
-												preloadedJobs[0].salaryRange || "€35k - €50k/year",
-											location: preloadedJobs[0].location,
-											score: preloadedJobs[0].matchScore
-												? Math.round(preloadedJobs[0].matchScore * 100)
-												: 98,
-										}
-									: undefined
-							}
+							preloadedJobs={preloadedJobs}
 						/>
 					</motion.div>
 				</div>
