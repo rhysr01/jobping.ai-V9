@@ -59,7 +59,7 @@ export default function CompanyLogos() {
 			{
 				threshold: 0.1, // Start when 10% of section is visible
 				rootMargin: "100px", // Start slightly before section enters viewport
-			}
+			},
 		);
 
 		observer.observe(sectionRef.current);
@@ -86,7 +86,7 @@ export default function CompanyLogos() {
 			const containerWidth = container.clientWidth;
 			const contentWidth = container.scrollWidth;
 			const maxScroll = contentWidth - containerWidth;
-			
+
 			// Only start auto-scroll if there's actually scrollable content
 			if (maxScroll <= 0) {
 				return;
@@ -185,7 +185,7 @@ export default function CompanyLogos() {
 
 	// Filter out companies with failed logos
 	const validCompanies = companies.filter(
-		(company) => !failedLogos.has(company.logoPath)
+		(company) => !failedLogos.has(company.logoPath),
 	);
 
 	// Hide section if no valid companies
@@ -238,6 +238,7 @@ export default function CompanyLogos() {
 						ref={scrollContainerRef}
 						onMouseEnter={() => setIsHovered(true)}
 						onMouseLeave={() => setIsHovered(false)}
+						role="presentation"
 						className="flex gap-8 overflow-x-auto scrollbar-hide py-8 px-8 [mask-image:linear-gradient(to_right,transparent_0%,white_10%,white_90%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,transparent_0%,white_10%,white_90%,transparent_100%)]"
 						style={{
 							scrollbarWidth: "none",
@@ -297,7 +298,9 @@ export default function CompanyLogos() {
 													e,
 												);
 												// Track failed logos to filter them out
-												setFailedLogos((prev) => new Set(prev).add(company.logoPath));
+												setFailedLogos((prev) =>
+													new Set(prev).add(company.logoPath),
+												);
 												// Hide the card immediately
 												const parent = (e.target as HTMLElement).parentElement
 													?.parentElement?.parentElement;

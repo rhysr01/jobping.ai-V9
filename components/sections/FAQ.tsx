@@ -49,7 +49,7 @@ export default function FAQ() {
 		<section className="py-32 md:py-40 border-t border-white/10 bg-black scroll-snap-section relative">
 			{/* Scroll momentum fade */}
 			<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
-			
+
 			<div className="container-page relative z-10">
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
@@ -79,6 +79,7 @@ export default function FAQ() {
 									className="py-6 md:py-8 first:pt-0"
 								>
 									<button
+										type="button"
 										onClick={() => setOpenIndex(isOpen ? null : index)}
 										className="w-full flex items-center justify-between text-left p-3 rounded-xl glass-card elevation-1 hover:elevation-2 transition-all duration-200 group"
 										aria-expanded={isOpen}

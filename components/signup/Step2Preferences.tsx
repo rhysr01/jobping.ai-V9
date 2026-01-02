@@ -7,8 +7,8 @@ import {
 	FormFieldSuccess,
 } from "@/components/ui/FormFieldFeedback";
 import WorkEnvironmentSelector from "@/components/ui/WorkEnvironmentSelector";
-import type { SignupFormData } from "./types";
 import { COMPANIES } from "./constants";
+import type { SignupFormData } from "./types";
 
 interface Step2PreferencesProps {
 	formData: SignupFormData;
@@ -29,7 +29,7 @@ interface Step2PreferencesProps {
 export function Step2Preferences({
 	formData,
 	setFormData,
-	touchedFields,
+	touchedFields: _touchedFields,
 	setTouchedFields,
 	loading,
 	setStep,
@@ -47,9 +47,18 @@ export function Step2Preferences({
 			className="relative"
 		>
 			<div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#12002b]/40 to-brand-700/15 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
-				<div className="pointer-events-none absolute -top-24 right-0 h-48 w-48 rounded-full bg-brand-500/25 blur-3xl hidden sm:block" aria-hidden="true" />
-				<div className="pointer-events-none absolute -bottom-28 left-12 h-56 w-56 bg-brand-700/20 blur-[120px] hidden sm:block" aria-hidden="true" />
-				<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(155,106,255,0.15),transparent_55%)]" aria-hidden="true" />
+				<div
+					className="pointer-events-none absolute -top-24 right-0 h-48 w-48 rounded-full bg-brand-500/25 blur-3xl hidden sm:block"
+					aria-hidden="true"
+				/>
+				<div
+					className="pointer-events-none absolute -bottom-28 left-12 h-56 w-56 bg-brand-700/20 blur-[120px] hidden sm:block"
+					aria-hidden="true"
+				/>
+				<div
+					className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(155,106,255,0.15),transparent_55%)]"
+					aria-hidden="true"
+				/>
 				<div className="relative z-10 space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12">
 					<div>
 						<h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2 sm:mb-3">
@@ -82,32 +91,31 @@ export function Step2Preferences({
 									<span
 										className={`w-2 h-2 rounded-full ${formData.entryLevelPreferences.length > 0 ? "bg-brand-400" : "bg-zinc-500"}`}
 									></span>
-									Role Type (
-									{formData.entryLevelPreferences.length}/1+ selected)
+									Role Type ({formData.entryLevelPreferences.length}/1+
+									selected)
 								</div>
 							</div>
 						</div>
 					</div>
 
 					<div>
-						<label className="block text-base font-bold text-white mb-3">
+						<label htmlFor="work-environment-field" className="block text-base font-bold text-white mb-3">
 							Work Environment
 						</label>
 						<p className="text-sm text-zinc-200 mb-4">
 							Where would you like to work?
 						</p>
-						<WorkEnvironmentSelector
-							selected={formData.workEnvironment}
-							onChange={(env) =>
-								setFormData({
-									...formData,
-									workEnvironment: toggleArray(
-										formData.workEnvironment,
-										env,
-									),
-								})
-							}
-						/>
+						<div id="work-environment-field">
+							<WorkEnvironmentSelector
+								selected={formData.workEnvironment}
+								onChange={(env) =>
+									setFormData({
+										...formData,
+										workEnvironment: toggleArray(formData.workEnvironment, env),
+									})
+								}
+							/>
+						</div>
 					</div>
 
 					<div>
@@ -122,9 +130,8 @@ export function Step2Preferences({
 							We ask this so we can filter for companies that provide visa
 							sponsorship for your specific region
 						</p>
-						<div
+						<fieldset
 							id="visa-field"
-							role="group"
 							aria-labelledby="visa-label"
 							aria-describedby={
 								shouldShowError(
@@ -137,9 +144,7 @@ export function Step2Preferences({
 							}
 							className="space-y-2"
 							onBlur={() =>
-								setTouchedFields((prev) =>
-									new Set(prev).add("visaStatus"),
-								)
+								setTouchedFields((prev) => new Set(prev).add("visaStatus"))
 							}
 						>
 							{[
@@ -158,9 +163,7 @@ export function Step2Preferences({
 									type="button"
 									onClick={() => {
 										setFormData({ ...formData, visaStatus: visa });
-										setTouchedFields((prev) =>
-											new Set(prev).add("visaStatus"),
-										);
+										setTouchedFields((prev) => new Set(prev).add("visaStatus"));
 									}}
 									whileHover={{ scale: 1.01 }}
 									whileTap={{ scale: 0.99 }}
@@ -173,7 +176,7 @@ export function Step2Preferences({
 									{visa}
 								</motion.button>
 							))}
-						</div>
+						</fieldset>
 						{shouldShowError(
 							"visaStatus",
 							!formData.visaStatus,
@@ -261,10 +264,10 @@ export function Step2Preferences({
 					</div>
 
 					<div>
-						<label className="block text-base font-bold text-white mb-3">
+						<label htmlFor="target-companies-field" className="block text-base font-bold text-white mb-3">
 							Target Companies
 						</label>
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+						<div id="target-companies-field" className="grid grid-cols-1 sm:grid-cols-2 gap-2">
 							{COMPANIES.map((company) => (
 								<motion.button
 									key={company}
@@ -299,6 +302,7 @@ export function Step2Preferences({
 					<div className="sticky bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
 						<div className="flex gap-3 sm:gap-4">
 							<motion.button
+								type="button"
 								onClick={() => setStep(1)}
 								whileHover={{ scale: 1.02 }}
 								whileTap={{ scale: 0.98 }}
@@ -307,6 +311,7 @@ export function Step2Preferences({
 								← Back
 							</motion.button>
 							<motion.button
+								type="button"
 								onClick={() => setStep(3)}
 								disabled={
 									loading ||
@@ -329,7 +334,9 @@ export function Step2Preferences({
 											className="w-5 h-5 animate-spin"
 											viewBox="0 0 24 24"
 											fill="none"
+											aria-hidden="true"
 										>
+											<title>Loading</title>
 											<circle
 												className="opacity-25"
 												cx="12"
@@ -357,4 +364,3 @@ export function Step2Preferences({
 		</motion.div>
 	);
 }
-

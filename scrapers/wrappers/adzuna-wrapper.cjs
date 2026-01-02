@@ -17,9 +17,19 @@ function parseJson(value) {
 	}
 }
 
-const { recordScraperRun } = require("../../_tools_archive/scrapers/shared/telemetry.cjs");
-const { classifyEarlyCareer, makeJobHash } = require("../../_tools_archive/scrapers/shared/helpers.cjs");
-const { processIncomingJob } = require("../../_tools_archive/scrapers/shared/processor.cjs");
+const { recordScraperRun } = require("../shared/telemetry.cjs");
+const { classifyEarlyCareer, makeJobHash } = require("../shared/helpers.cjs");
+const { processIncomingJob } = require("../shared/processor.cjs");
+
+// Helper functions moved to top level
+const localParseLocation = (location) => {
+	const loc = String(location || "").toLowerCase();
+	const isRemote =
+		/\b(remote|work\s*from\s*home|wfh|anywhere|distributed|virtual)\b/i.test(
+			loc,
+		);
+	return { isRemote };
+};
 
 async function main() {
 	const startTime = Date.now();
@@ -30,7 +40,7 @@ async function main() {
 		const targetIndustries = parseJson(process.env.TARGET_INDUSTRIES);
 		const targetRoles = parseJson(process.env.TARGET_ROLES);
 
-		const adzunaModule = require("../../_tools_archive/scripts/adzuna-categories-scraper.cjs");
+		const adzunaModule = require("../../scripts/adzuna-categories-scraper.cjs");
 		const includeRemote =
 			String(process.env.INCLUDE_REMOTE).toLowerCase() === "true";
 		const result = await adzunaModule.scrapeAllCitiesCategories({
@@ -49,21 +59,11 @@ async function main() {
 			process.env.SUPABASE_SERVICE_ROLE_KEY,
 		);
 
-		// Helper functions
-		function localParseLocation(location) {
-			const loc = String(location || "").toLowerCase();
-			const isRemote =
-				/\b(remote|work\s*from\s*home|wfh|anywhere|distributed|virtual)\b/i.test(
-					loc,
-				);
-			return { isRemote };
-		}
-
 		// Get all role names from signup form for matching
-		const { getAllRoles } = require("../../_tools_archive/scrapers/shared/roles.cjs");
+		const { getAllRoles } = require("../shared/roles.cjs");
 		const allFormRoles = getAllRoles().map((r) => r.toLowerCase());
 
-		function convertToDatabaseFormat(job) {
+		const convertToDatabaseFormat = (job) => {
 			const titleLower = (job.title || "").toLowerCase();
 
 			// Check multiple criteria for early-career classification
@@ -103,7 +103,7 @@ async function main() {
 				...processed,
 				job_hash,
 			};
-		}
+		};
 
 		// Filter remote jobs if needed
 		const filteredJobs = includeRemote
@@ -116,7 +116,7 @@ async function main() {
 			.filter((job) => job !== null);
 
 		// CRITICAL: Validate jobs before saving (consolidates all validation logic)
-		const { validateJobs } = require("../../_tools_archive/scrapers/shared/jobValidator.cjs");
+		const { validateJobs } = require("../shared/jobValidator.cjs");
 		const validationResult = validateJobs(dbJobs);
 
 		// Log validation stats
@@ -176,4 +176,3 @@ if (require.main === module) {
 }
 
 module.exports = { main };
-

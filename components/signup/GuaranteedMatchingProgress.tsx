@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle } from "lucide-react";
 import { TIMING } from "@/lib/constants";
 
@@ -47,9 +47,8 @@ export function GuaranteedMatchingProgress({
 	return (
 		<div className="w-full max-w-md mx-auto space-y-8 py-12">
 			{/* The Visual "Scanner" - Matches BentoGrid scanning pattern */}
-			<div
+			<output
 				className="relative h-48 w-full bg-zinc-900/50 rounded-2xl border border-zinc-800 overflow-hidden"
-				role="status"
 				aria-live="polite"
 				aria-label="Scanning for job matches"
 			>
@@ -87,7 +86,7 @@ export function GuaranteedMatchingProgress({
 					{STAGES.map((stage, index) => {
 						const isActive = index === currentStageIndex;
 						const isCompleted = index < currentStageIndex;
-						const isPending = index > currentStageIndex;
+						const _isPending = index > currentStageIndex;
 
 						return (
 							<motion.div
@@ -147,4 +146,3 @@ export function GuaranteedMatchingProgress({
 		</div>
 	);
 }
-
