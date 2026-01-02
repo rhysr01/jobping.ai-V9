@@ -1,12 +1,11 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { TiltCard } from "@/components/ui/TiltCard";
+import { motion } from "framer-motion";
+import { Brain, CheckCircle2, Cpu, FileJson } from "lucide-react";
+import { useEffect, useRef } from "react";
 import GradientText from "@/components/ui/GradientText";
 import Heading from "@/components/ui/Heading";
-import { FileJson, Cpu, Brain, CheckCircle2 } from "lucide-react";
-import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const FeatureCard = ({
 	title,
@@ -40,35 +39,36 @@ const FeatureCard = ({
 	}, []);
 
 	return (
-		<div
+		<article
 			ref={cardRef}
-			role="article"
 			aria-label={`${title} - ${description}`}
 			className={cn(
 				"group relative overflow-hidden rounded-3xl glass-card elevation-1 p-6 transition-all duration-300",
 				"hover:elevation-3 hover:border-brand-600/50 hover:shadow-[0_8px_32px_rgba(139,92,246,0.15)]",
 				"focus-within:ring-2 focus-within:ring-brand-600 focus-within:ring-offset-2 focus-within:ring-offset-black",
 				"bg-gradient-to-br from-surface-base/90 via-surface-base/95 to-surface-elevated/90",
-				className
+				className,
 			)}
 		>
 			{/* Enhanced Glow Effect on Hover */}
 			<div className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-[radial-gradient(circle_at_var(--x,_50%)_var(--y,_50%),rgba(139,92,246,0.15)_0%,transparent_70%)]" />
-			
+
 			{/* Subtle inner glow */}
 			<div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand-600/5 via-transparent to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
 			<div className="relative z-10 flex h-full flex-col justify-between">
 				<div>
-					<div className={cn(
-						"mb-4 inline-flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-xl",
-						"glass-card elevation-1 text-purple-400",
-						"bg-gradient-to-br from-brand-600/20 via-brand-600/10 to-transparent",
-						"border border-brand-600/30",
-						"shadow-[0_4px_16px_rgba(139,92,246,0.2)]",
-						"group-hover:shadow-[0_8px_24px_rgba(139,92,246,0.3)]",
-						"group-hover:scale-110 transition-transform duration-300"
-					)}>
+					<div
+						className={cn(
+							"mb-4 inline-flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-xl",
+							"glass-card elevation-1 text-purple-400",
+							"bg-gradient-to-br from-brand-600/20 via-brand-600/10 to-transparent",
+							"border border-brand-600/30",
+							"shadow-[0_4px_16px_rgba(139,92,246,0.2)]",
+							"group-hover:shadow-[0_8px_24px_rgba(139,92,246,0.3)]",
+							"group-hover:scale-110 transition-transform duration-300",
+						)}
+					>
 						<Icon size={24} className="md:w-7 md:h-7" />
 					</div>
 					<Heading
@@ -76,33 +76,37 @@ const FeatureCard = ({
 						className={cn(
 							"text-xl md:text-2xl mb-3",
 							"group-hover:[&>span]:from-white group-hover:[&>span]:via-purple-200 group-hover:[&>span]:to-emerald-200",
-							"transition-all duration-300"
+							"transition-all duration-300",
 						)}
 					>
 						<GradientText variant="brand">{title}</GradientText>
 					</Heading>
-					<p className={cn(
-						"mt-2 text-base md:text-lg text-content-secondary leading-relaxed",
-						"group-hover:text-content-heading transition-colors duration-300"
-					)}>
+					<p
+						className={cn(
+							"mt-2 text-base md:text-lg text-content-secondary leading-relaxed",
+							"group-hover:text-content-heading transition-colors duration-300",
+						)}
+					>
 						{description}
 					</p>
 				</div>
 				{children}
 			</div>
-		</div>
+		</article>
 	);
 };
 
 export default function HowItWorksBento() {
 	return (
-		<section className={cn(
-			"py-32 md:py-40 bg-black relative overflow-hidden scroll-snap-section",
-			"before:absolute before:inset-0 before:bg-gradient-to-b before:from-purple-900/5 before:via-transparent before:to-emerald-900/5 before:pointer-events-none"
-		)}>
+		<section
+			className={cn(
+				"py-32 md:py-40 bg-black relative overflow-hidden scroll-snap-section",
+				"before:absolute before:inset-0 before:bg-gradient-to-b before:from-purple-900/5 before:via-transparent before:to-emerald-900/5 before:pointer-events-none",
+			)}
+		>
 			{/* Scroll momentum fade */}
 			<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
-			
+
 			<div className="container-page relative z-10">
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
@@ -171,25 +175,37 @@ export default function HowItWorksBento() {
 						className="md:col-span-2"
 					>
 						<div className="mt-auto flex flex-wrap gap-2.5 pt-4">
-							{["Career Path", "Location Match", "Visa Sponsorship", "Entry Level", "Work Environment", "Role Fit"].map(
-								(tag) => {
-									const isVisa = tag === "Visa Sponsorship";
-									return (
-										<span
-											key={tag}
+							{[
+								"Career Path",
+								"Location Match",
+								"Visa Sponsorship",
+								"Entry Level",
+								"Work Environment",
+								"Role Fit",
+							].map((tag) => {
+								const isVisa = tag === "Visa Sponsorship";
+								return (
+									<span
+										key={tag}
+										className={cn(
+											"flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold border transition-all duration-300",
+											"group-hover:scale-105",
+											isVisa
+												? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-[0_4px_12px_rgba(16,185,129,0.2)] group-hover:shadow-[0_6px_16px_rgba(16,185,129,0.3)]"
+												: "bg-brand-600/10 text-purple-300 border-brand-600/20 group-hover:bg-brand-600/15",
+										)}
+									>
+										<CheckCircle2
+											size={16}
 											className={cn(
-												"flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold border transition-all duration-300",
-												"group-hover:scale-105",
-												isVisa
-													? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-[0_4px_12px_rgba(16,185,129,0.2)] group-hover:shadow-[0_6px_16px_rgba(16,185,129,0.3)]"
-													: "bg-brand-600/10 text-purple-300 border-brand-600/20 group-hover:bg-brand-600/15"
+												"shrink-0",
+												isVisa ? "text-emerald-400" : "text-purple-400",
 											)}
-										>
-											<CheckCircle2 size={16} className={cn("shrink-0", isVisa ? "text-emerald-400" : "text-purple-400")} /> {tag}
-										</span>
-									);
-								}
-							)}
+										/>{" "}
+										{tag}
+									</span>
+								);
+							})}
 						</div>
 					</FeatureCard>
 
@@ -213,14 +229,18 @@ export default function HowItWorksBento() {
 										"text-base md:text-lg font-bold text-white",
 										"shadow-lg shadow-brand-600/30",
 										"bg-gradient-to-br from-brand-600/20 via-brand-600/10 to-transparent",
-										"border border-brand-600/30"
+										"border border-brand-600/30",
 									)}
 								>
 									Your Preferences
 								</motion.div>
 								<motion.div
 									animate={{ scale: [1, 1.2, 1] }}
-									transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+									transition={{
+										repeat: Infinity,
+										duration: 2,
+										ease: "easeInOut",
+									}}
 									className="h-1 w-12 md:w-16 bg-gradient-to-r from-brand-600 via-purple-400 to-emerald-500 rounded-full shadow-lg shadow-brand-600/40"
 								/>
 								<motion.div
@@ -233,14 +253,19 @@ export default function HowItWorksBento() {
 										"bg-gradient-to-br from-emerald-500/25 via-emerald-500/15 to-transparent",
 										"text-base md:text-lg font-bold text-emerald-200",
 										"shadow-lg shadow-emerald-500/40",
-										"backdrop-blur-sm"
+										"backdrop-blur-sm",
 									)}
 								>
 									AI Analysis
 								</motion.div>
 								<motion.div
 									animate={{ scale: [1, 1.2, 1] }}
-									transition={{ repeat: Infinity, duration: 2, ease: "easeInOut", delay: 0.5 }}
+									transition={{
+										repeat: Infinity,
+										duration: 2,
+										ease: "easeInOut",
+										delay: 0.5,
+									}}
 									className="h-1 w-12 md:w-16 bg-gradient-to-r from-emerald-500 via-emerald-400 to-brand-600 rounded-full shadow-lg shadow-emerald-500/40"
 								/>
 								<motion.div
@@ -253,7 +278,7 @@ export default function HowItWorksBento() {
 										"text-base md:text-lg font-bold text-white",
 										"shadow-lg shadow-brand-600/30",
 										"bg-gradient-to-br from-brand-600/20 via-brand-600/10 to-transparent",
-										"border border-brand-600/30"
+										"border border-brand-600/30",
 									)}
 								>
 									Job Listings
@@ -273,7 +298,7 @@ export default function HowItWorksBento() {
 									/>
 								))}
 							</div>
-							
+
 							{/* Animated gradient overlay */}
 							<motion.div
 								animate={{
@@ -294,4 +319,3 @@ export default function HowItWorksBento() {
 		</section>
 	);
 }
-

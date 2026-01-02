@@ -50,6 +50,7 @@ export default function FAQSchema({ nonce }: FAQSchemaProps) {
 	};
 
 	return (
+		// biome-ignore lint/security/noDangerouslySetInnerHtml: Used for JSON-LD schema
 		<script
 			type="application/ld+json"
 			nonce={nonce}

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import React, { useRef } from "react";
 
 export const TiltCard = ({ children }: { children: React.ReactNode }) => {
 	const targetRef = useRef<HTMLDivElement>(null);
@@ -38,11 +38,10 @@ export const TiltCard = ({ children }: { children: React.ReactNode }) => {
 	};
 
 	return (
-		<motion.div
+		<motion.article
 			ref={targetRef}
 			onMouseMove={handleMouseMove}
 			onMouseLeave={handleMouseLeave}
-			role="article"
 			aria-label="Interactive job match preview card"
 			tabIndex={0}
 			style={{
@@ -60,7 +59,6 @@ export const TiltCard = ({ children }: { children: React.ReactNode }) => {
 			>
 				{children}
 			</div>
-		</motion.div>
+		</motion.article>
 	);
 };
-

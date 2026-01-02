@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import type { ReactNode } from "react";
 
 interface SuccessAnimationProps {
 	message: string;
@@ -42,6 +41,8 @@ export function SuccessAnimation({
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
+						aria-hidden="true"
+						role="img"
 					>
 						<path
 							strokeLinecap="round"
@@ -57,6 +58,7 @@ export function SuccessAnimation({
 				<p className="text-content-muted text-sm">Redirecting you now...</p>
 				{onComplete && (
 					<motion.button
+						type="button"
 						onClick={onComplete}
 						className="mt-6 btn-primary"
 						whileHover={{ scale: 1.02 }}
@@ -66,39 +68,6 @@ export function SuccessAnimation({
 					</motion.button>
 				)}
 			</motion.div>
-		</motion.div>
-	);
-}
-
-interface SuccessBadgeProps {
-	children: ReactNode;
-	className?: string;
-}
-
-/**
- * Inline success badge for field-level success states
- */
-export function SuccessBadge({ children, className = "" }: SuccessBadgeProps) {
-	return (
-		<motion.div
-			initial={{ opacity: 0, x: -10 }}
-			animate={{ opacity: 1, x: 0 }}
-			className={`inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-sm ${className}`}
-		>
-			<svg
-				className="w-4 h-4"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke="currentColor"
-			>
-				<path
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					strokeWidth={2}
-					d="M5 13l4 4L19 7"
-				/>
-			</svg>
-			{children}
 		</motion.div>
 	);
 }

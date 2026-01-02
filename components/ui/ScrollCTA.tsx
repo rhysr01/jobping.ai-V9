@@ -108,6 +108,7 @@ export default function ScrollCTA() {
 								<BrandIcons.ArrowRight className="h-4 w-4" />
 							</Link>
 							<button
+								type="button"
 								onClick={() => setIsVisible(false)}
 								className="p-2 text-content-muted hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
 								aria-label="Close"

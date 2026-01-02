@@ -159,6 +159,7 @@ export default function Header() {
 
 						{/* Mobile Menu Button */}
 						<button
+							type="button"
 							onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
 							className="md:hidden p-2 text-content-secondary hover:text-white transition-all duration-200"
 							aria-label="Toggle menu"
@@ -179,7 +180,9 @@ export default function Header() {
 				{mobileMenuOpen && (
 					<>
 						{/* Backdrop */}
-						<motion.div
+						<motion.button
+							type="button"
+							aria-label="Close menu"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 							exit={{ opacity: 0 }}
@@ -198,6 +201,7 @@ export default function Header() {
 								<div className="flex items-center justify-between mb-8">
 									<LogoWordmark />
 									<button
+										type="button"
 										onClick={() => setMobileMenuOpen(false)}
 										className="p-2 text-content-secondary hover:text-white transition-all duration-200"
 										aria-label="Close menu"

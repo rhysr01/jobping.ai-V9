@@ -76,6 +76,7 @@ export default function LanguageSelector({
 										viewBox="0 0 24 24"
 										stroke="currentColor"
 										strokeWidth="3"
+										aria-hidden="true"
 									>
 										<polyline points="20 6 9 17 4 12" />
 									</svg>

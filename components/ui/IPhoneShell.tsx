@@ -19,8 +19,9 @@ export function IPhoneShell({
 		<div
 			className={cn(
 				"relative aspect-[9/19] w-full max-w-[320px] mx-auto overflow-hidden rounded-[2.5rem] border-[6px] border-zinc-800 bg-black shadow-2xl",
-				className
+				className,
 			)}
+			role="region"
 			aria-label={ariaLabel}
 		>
 			{/* 1. Hardware Details (Notch & Home Bar) */}
@@ -44,6 +45,7 @@ export function IPhoneShell({
 						className="w-3.5 h-3.5 text-white"
 						fill="currentColor"
 						viewBox="0 0 16 16"
+						aria-hidden="true"
 					>
 						<path d="M2 10h1v4H2v-4zm2-2h1v6H4V8zm2-2h1v8H6V6zm2-2h1v10H8V4zm2-2h1v12h-1V2z" />
 					</svg>
@@ -80,4 +82,3 @@ export function IPhoneShell({
 		</div>
 	);
 }
-
