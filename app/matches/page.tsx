@@ -7,14 +7,12 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { GhostMatches } from "@/components/matches/GhostMatches";
-import { FreeSuccessOverlay } from "@/components/signup/FreeSuccessOverlay";
-import { GuaranteedMatchingProgress } from "@/components/signup/GuaranteedMatchingProgress";
+import { FreeMatchingSuite } from "@/components/signup/FreeMatchingSuite";
 import Button from "@/components/ui/Button";
 import CustomScanTrigger from "@/components/ui/CustomScanTrigger";
 import { HotMatchBadge } from "@/components/ui/HotMatchBadge";
 import JobClosedModal from "@/components/ui/JobClosedModal";
 import TargetCompaniesAlert from "@/components/ui/TargetCompaniesAlert";
-import { useGuaranteedMatchingProgress } from "@/hooks/useGuaranteedMatchingProgress";
 import { trackEvent } from "@/lib/analytics";
 import { ApiError, apiCall, apiCallJson } from "@/lib/api-client";
 import { TIMING } from "@/lib/constants";
@@ -86,8 +84,8 @@ function MatchesPageContent() {
 		message: string;
 	} | null>(null);
 
-	// Success overlay state for free signup
-	const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+	// Matching suite state for free signup
+	const [showMatchingSuite, setShowMatchingSuite] = useState(false);
 	const [successMatchCount, setSuccessMatchCount] = useState(0);
 
 	const fetchMatches = useCallback(async () => {
@@ -164,7 +162,7 @@ function MatchesPageContent() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [fetchMatches]); // Empty deps - only run once on mount
 
-	// Check URL params for free signup success overlay
+	// Check URL params for free signup success
 	useEffect(() => {
 		const justSignedUp = searchParams?.get("justSignedUp");
 		const matchCount = searchParams?.get("matchCount");
@@ -173,9 +171,9 @@ function MatchesPageContent() {
 			const count = parseInt(matchCount, 10);
 			if (!Number.isNaN(count) && count > 0) {
 				setSuccessMatchCount(count);
-				setShowSuccessOverlay(true);
+				setShowMatchingSuite(true);
 
-				// Clean up URL params after showing overlay
+				// Clean up URL params after showing suite
 				const url = new URL(window.location.href);
 				url.searchParams.delete("justSignedUp");
 				url.searchParams.delete("matchCount");
@@ -307,13 +305,10 @@ function MatchesPageContent() {
 		return () => window.removeEventListener("scroll", handleScroll);
 	}, [jobs.length, handleScroll]);
 
-	// Guaranteed matching progress coordination
-	const { currentStage } = useGuaranteedMatchingProgress(loading);
-
-	if (loading) {
+	if (loading && !showMatchingSuite) {
 		return (
 			<div className="min-h-screen bg-black flex items-center justify-center p-4">
-				<GuaranteedMatchingProgress currentStageIndex={currentStage} />
+				<div className="text-white text-xl">Loading matches...</div>
 			</div>
 		);
 	}
@@ -449,11 +444,12 @@ function MatchesPageContent() {
 
 	return (
 		<div className="min-h-screen bg-black py-8">
-			{/* Free Signup Success Overlay */}
-			{showSuccessOverlay && (
-				<FreeSuccessOverlay
+			{/* Unified Matching Suite - Combines celebration + progress */}
+			{showMatchingSuite && (
+				<FreeMatchingSuite
 					matchCount={successMatchCount}
-					onDismiss={() => setShowSuccessOverlay(false)}
+					isLoading={loading}
+					onComplete={() => setShowMatchingSuite(false)}
 				/>
 			)}
 

@@ -1,6 +1,5 @@
 "use client";
 
-import confetti from "canvas-confetti";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -26,9 +25,11 @@ import {
 	useRequiredValidation,
 } from "@/hooks/useFormValidation";
 import { useStats } from "@/hooks/useStats";
+import { useFormPersistenceFree } from "@/hooks/useFormPersistenceFree";
 import { trackEvent } from "@/lib/analytics";
 import { ApiError, apiCall, apiCallJson } from "@/lib/api-client";
 import { showToast } from "@/lib/toast";
+import { LiveMatchingMessages } from "./LiveMatchingMessages";
 
 // Code split EuropeMap for better performance
 const EuropeMap = dynamic(() => import("@/components/ui/EuropeMap"), {
@@ -85,7 +86,6 @@ export default function SignupFormFree() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState("");
 	const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
-	const [showSuccess, setShowSuccess] = useState(false);
 	const prefersReduced = useReducedMotion();
 	const { stats, isLoading: isLoadingStats } = useStats();
 
@@ -95,13 +95,16 @@ export default function SignupFormFree() {
 		email: "",
 		fullName: "",
 		visaSponsorship: "", // Added visa sponsorship field
+		gdprConsent: false, // GDPR consent
 	});
 
 	const [jobCount, setJobCount] = useState<number | null>(null);
 	const [isLoadingJobCount, setIsLoadingJobCount] = useState(false);
-	const [countdown, setCountdown] = useState(3);
 	const [matchCount, setMatchCount] = useState<number>(0);
-	const [showPersonalizing, setShowPersonalizing] = useState(false);
+	const [showLiveMatching, setShowLiveMatching] = useState(false);
+
+	// Form persistence
+	const { clearProgress } = useFormPersistenceFree(formData, setFormData);
 
 	// Form validation hooks
 	const emailValidation = useEmailValidation(formData.email);
@@ -199,30 +202,6 @@ export default function SignupFormFree() {
 		return () => clearTimeout(timeoutId);
 	}, [formData.cities, formData.careerPath]);
 
-	// Countdown and redirect on success
-	useEffect(() => {
-		if (showSuccess && !showPersonalizing) {
-			const interval = setInterval(() => {
-				setCountdown((prev) => {
-					if (prev <= 1) {
-						// Show "Personalizing Your Feed" screen before redirect
-						setShowPersonalizing(true);
-						// Redirect after personalizing screen (2 seconds) with success params
-						setTimeout(() => {
-							router.push(
-								`/matches?justSignedUp=true&matchCount=${matchCount}`,
-							);
-						}, 2000);
-						return 0;
-					}
-					return prev - 1;
-				});
-			}, 1000);
-
-			return () => clearInterval(interval);
-		}
-		return undefined;
-	}, [showSuccess, showPersonalizing, router, matchCount]);
 
 	// Calculate form completion percentage
 	const formProgress = useMemo(() => {
@@ -248,13 +227,15 @@ export default function SignupFormFree() {
 			formData.careerPath &&
 			emailValidation.isValid &&
 			nameValidation.isValid &&
-			visaSponsorshipValidation.isValid,
+			visaSponsorshipValidation.isValid &&
+			formData.gdprConsent,
 		[
 			formData.cities.length,
 			formData.careerPath,
 			emailValidation.isValid,
 			nameValidation.isValid,
 			visaSponsorshipValidation.isValid,
+			formData.gdprConsent,
 		],
 	);
 
@@ -329,6 +310,7 @@ export default function SignupFormFree() {
 						"email",
 						"fullName",
 						"visaSponsorship",
+						"gdprConsent",
 					]),
 				);
 				// Find first invalid field and focus it
@@ -361,6 +343,7 @@ export default function SignupFormFree() {
 
 			setIsSubmitting(true);
 			setError("");
+			setShowLiveMatching(true); // Show live matching screen
 
 			// Track signup started
 			trackEvent("signup_started", { tier: "free" });
@@ -439,67 +422,30 @@ export default function SignupFormFree() {
 					matchCount: matchCountValue,
 				});
 
-				// Trigger confetti animation with brand colors
-				const triggerConfetti = () => {
-					const duration = 3000;
-					const animationEnd = Date.now() + duration;
-					const defaults = {
-						startVelocity: 30,
-						spread: 360,
-						ticks: 60,
-						zIndex: 9999,
-					};
+				// Clear saved progress
+				clearProgress();
+				
+				// Hide live matching
+				setShowLiveMatching(false);
 
-					function randomInRange(min: number, max: number) {
-						return Math.random() * (max - min) + min;
-					}
+				// Track successful signup
+				trackEvent("signup_completed", {
+					tier: "free",
+					cities: formData.cities.length,
+					career_path: formData.careerPath,
+					matchCount: matchCountValue,
+				});
 
-					// Brand colors: Purple (brand), Emerald Green (matches), Zinc White (grounded)
-					const colors = ["#8b5cf6", "#10b981", "#ffffff"]; // Purple, Emerald, White
-
-					const interval: NodeJS.Timeout = setInterval(() => {
-						const timeLeft = animationEnd - Date.now();
-
-						if (timeLeft <= 0) {
-							return clearInterval(interval);
-						}
-
-						const particleCount = 50 * (timeLeft / duration);
-
-						// Left burst - Purple and Emerald
-						confetti({
-							...defaults,
-							particleCount,
-							colors: [colors[0], colors[1]], // Purple and Emerald
-							origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-						});
-
-						// Right burst - Emerald and White
-						confetti({
-							...defaults,
-							particleCount,
-							colors: [colors[1], colors[2]], // Emerald and White
-							origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-						});
-
-						// Center burst - All brand colors
-						confetti({
-							...defaults,
-							particleCount: particleCount * 0.5,
-							colors: colors, // All three colors
-							origin: { x: randomInRange(0.4, 0.6), y: Math.random() - 0.2 },
-						});
-					}, 250);
-				};
-
-				// Show success animation
-				setShowSuccess(true);
-				setCountdown(3);
-				triggerConfetti();
 				showToast.success(
 					`Account created! Found ${matchCountValue} perfect matches...`,
 				);
+
+				// IMMEDIATE REDIRECT - No countdown, no personalizing screen
+				router.push(
+					`/matches?justSignedUp=true&matchCount=${matchCountValue}`,
+				);
 			} catch (err) {
+				setShowLiveMatching(false); // Hide live matching on error
 				const errorMessage =
 					err instanceof ApiError
 						? err.message
@@ -619,19 +565,27 @@ export default function SignupFormFree() {
 						)}
 
 						<form onSubmit={handleFormSubmit} className="space-y-8">
-							{/* ARIA Live Region for form status updates */}
+							{/* Enhanced ARIA Live Region for form status updates */}
 							<div
 								role="status"
 								aria-live="polite"
 								aria-atomic="true"
 								className="sr-only"
 							>
-								{isLoadingJobCount && "Searching for jobs..."}
+								{isLoadingJobCount && "Scanning available jobs in selected cities"}
 								{jobCount !== null &&
 									!isLoadingJobCount &&
-									`Found ${jobCount} jobs matching your preferences`}
+									`Found ${jobCount.toLocaleString()} ${jobCount === 1 ? "job" : "jobs"} matching your preferences`}
 								{emailValidation.error &&
 									`Email error: ${emailValidation.error}`}
+								{formData.cities.length > 0 &&
+									`Selected ${formData.cities.length} ${formData.cities.length === 1 ? "city" : "cities"}`}
+								{formData.careerPath &&
+									`Career path selected: ${formData.careerPath}`}
+								{formData.visaSponsorship &&
+									`Visa sponsorship: ${formData.visaSponsorship}`}
+								{!formData.gdprConsent &&
+									"Please accept the Privacy Policy to continue"}
 							</div>
 
 							{/* VISA SPONSORSHIP - PRIMARY QUESTION (FIRST) */}
@@ -895,46 +849,112 @@ export default function SignupFormFree() {
 								)}
 							</div>
 
-							{/* Job Count Preview */}
+							{/* PROMINENT LIVE MATCHING CARD - Show immediately when cities + career selected */}
 							{formData.cities.length > 0 && formData.careerPath && (
 								<motion.div
-									initial={{ opacity: 0, y: 10 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ duration: 0.3 }}
-									className="rounded-xl bg-brand-500/10 border border-brand-500/30 p-4"
+									initial={{ opacity: 0, scale: 0.95, y: 20 }}
+									animate={{ opacity: 1, scale: 1, y: 0 }}
+									transition={{ duration: 0.5, type: "spring" }}
+									className="relative mb-8 rounded-2xl border-2 border-brand-500/40 bg-gradient-to-br from-brand-500/20 via-brand-700/10 to-brand-500/20 p-8 shadow-[0_0_40px_rgba(99,102,241,0.3)] overflow-hidden"
 									role="status"
 									aria-live="polite"
 								>
-									{isLoadingJobCount ? (
-										<>
-											<AriaLiveRegion level="polite">
-												Checking available jobs in selected cities
-											</AriaLiveRegion>
-											<p className="text-sm text-content-secondary">
-												<span
-													className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-brand-400 border-t-transparent mr-2"
-													aria-hidden="true"
+									{/* Animated background gradient */}
+									<motion.div
+										className="absolute inset-0 bg-gradient-to-r from-brand-500/10 via-transparent to-brand-700/10"
+										animate={{
+											x: ["-100%", "200%"],
+										}}
+										transition={{
+											duration: 3,
+											repeat: Infinity,
+											ease: "linear",
+										}}
+									/>
+
+									<div className="relative z-10">
+										{/* Header */}
+										<div className="flex items-center justify-between mb-6">
+											<div className="flex items-center gap-3">
+												<motion.div
+													animate={{ rotate: 360 }}
+													transition={{
+														duration: 2,
+														repeat: Infinity,
+														ease: "linear",
+													}}
+													className="w-8 h-8 rounded-full border-2 border-brand-400 border-t-transparent"
 												/>
-												Checking available jobs...
-											</p>
-										</>
-									) : jobCount !== null ? (
-										<>
-											<AriaLiveRegion level="polite">
-												Found {jobCount.toLocaleString()}{" "}
-												{jobCount === 1 ? "job" : "jobs"} in{" "}
-												{formData.cities.join(" and ")}
-											</AriaLiveRegion>
-											<p className="text-sm text-content-secondary">
-												Based on your selections, we found{" "}
-												<span className="text-brand-400 font-semibold">
-													{jobCount.toLocaleString()}
-												</span>{" "}
-												{jobCount === 1 ? "job" : "jobs"} in{" "}
-												{formData.cities.join(" and ")}
-											</p>
-										</>
-									) : null}
+												<h3 className="text-xl font-bold text-white">
+													Live Job Matching
+												</h3>
+											</div>
+											{!isLoadingJobCount && jobCount !== null && (
+												<motion.div
+													initial={{ scale: 0 }}
+													animate={{ scale: 1 }}
+													className="px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-500/50"
+												>
+													<span className="text-emerald-400 font-bold text-sm">
+														✓ Ready
+													</span>
+												</motion.div>
+											)}
+										</div>
+
+										{/* Dynamic scanning animation */}
+										{isLoadingJobCount ? (
+											<div className="space-y-4">
+												<LiveMatchingMessages />
+												<div className="flex items-center gap-2 text-sm text-content-secondary">
+													<span className="inline-block h-3 w-3 animate-pulse rounded-full bg-brand-400" />
+													Scanning {formData.cities.join(", ")}...
+												</div>
+											</div>
+										) : jobCount !== null ? (
+											<motion.div
+												initial={{ opacity: 0, y: 10 }}
+												animate={{ opacity: 1, y: 0 }}
+												className="space-y-4"
+											>
+												{/* Big number display */}
+												<div className="text-center">
+													<motion.div
+														key={jobCount}
+														initial={{ scale: 1.2, opacity: 0 }}
+														animate={{ scale: 1, opacity: 1 }}
+														className="text-6xl font-black text-brand-400 mb-2"
+													>
+														{jobCount.toLocaleString()}
+													</motion.div>
+													<p className="text-lg text-content-secondary">
+														{jobCount === 1 ? "job" : "jobs"} found in{" "}
+														<span className="text-white font-semibold">
+															{formData.cities.join(", ")}
+														</span>
+													</p>
+												</div>
+
+												{/* Preview message */}
+												<div className="mt-6 p-4 rounded-xl bg-black/30 border border-brand-500/20">
+													<p className="text-sm text-content-secondary text-center">
+														🎯 We'll show you the{" "}
+														<span className="text-brand-400 font-semibold">
+															top 5 matches
+														</span>{" "}
+														from these {jobCount.toLocaleString()} jobs
+													</p>
+												</div>
+											</motion.div>
+										) : null}
+									</div>
+									<AriaLiveRegion level="polite">
+										{isLoadingJobCount
+											? "Scanning available jobs in selected cities"
+											: jobCount !== null
+												? `Found ${jobCount.toLocaleString()} ${jobCount === 1 ? "job" : "jobs"} matching your preferences`
+												: ""}
+									</AriaLiveRegion>
 								</motion.div>
 							)}
 
@@ -1007,6 +1027,52 @@ export default function SignupFormFree() {
 								</div>
 							</div>
 
+							{/* GDPR Consent */}
+							<div className="mt-6 p-4 rounded-xl bg-zinc-900/50 border border-zinc-800">
+								<label className="flex items-start gap-3 cursor-pointer group">
+									<input
+										type="checkbox"
+										required
+										checked={formData.gdprConsent}
+										onChange={(e) =>
+											setFormData((prev) => ({
+												...prev,
+												gdprConsent: e.target.checked,
+											}))
+										}
+										onBlur={() =>
+											setTouchedFields((prev) =>
+												new Set(prev).add("gdprConsent"),
+											)
+										}
+										className="mt-1 w-5 h-5 rounded border-2 border-zinc-600 bg-zinc-800 checked:bg-brand-500 checked:border-brand-500 cursor-pointer"
+										aria-required="true"
+									/>
+									<span className="text-sm text-content-secondary">
+										I agree to the{" "}
+										<a
+											href="/legal/privacy"
+											target="_blank"
+											rel="noopener noreferrer"
+											className="text-brand-400 hover:text-brand-300 underline"
+										>
+											Privacy Policy
+										</a>{" "}
+										and consent to processing my data for job matching purposes. *
+									</span>
+								</label>
+								{shouldShowError(
+									"gdprConsent",
+									!formData.gdprConsent,
+									formData.gdprConsent,
+								) && (
+									<FormFieldError
+										error="Please accept the Privacy Policy to continue"
+										id="gdpr-error"
+									/>
+								)}
+							</div>
+
 							{/* Spacer for sticky button */}
 							<div className="h-32 sm:h-0" aria-hidden="true" />
 
@@ -1037,160 +1103,57 @@ export default function SignupFormFree() {
 					</motion.div>
 				</div>
 
-				{/* Personalizing Feed Screen */}
+				{/* Live Matching Screen */}
 				<AnimatePresence mode="wait">
-					{showPersonalizing ? (
+					{showLiveMatching && isSubmitting ? (
 						<motion.div
-							key="personalizing"
+							key="live-matching"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 							exit={{ opacity: 0 }}
-							className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md"
+							className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md"
 						>
 							<motion.div
-								initial={{ scale: 0.9, opacity: 0, y: 20 }}
-								animate={{ scale: 1, opacity: 1, y: 0 }}
-								exit={{ scale: 0.9, opacity: 0 }}
-								transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+								initial={{ scale: 0.9, opacity: 0 }}
+								animate={{ scale: 1, opacity: 1 }}
 								className="text-center max-w-md px-4"
 							>
+								{/* Animated scanning lines */}
 								<motion.div
-									animate={{ rotate: 360 }}
-									transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-									className="mx-auto mb-6 h-16 w-16 rounded-full border-4 border-brand-500 border-t-transparent"
-								/>
-								<motion.h2
-									initial={{ opacity: 0, y: 10 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ delay: 0.2 }}
-									className="text-2xl md:text-3xl font-bold text-white mb-3"
-								>
-									Personalizing Your Feed
-								</motion.h2>
-								<motion.p
-									initial={{ opacity: 0, y: 10 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ delay: 0.3 }}
-									className="text-content-muted"
-								>
-									We're matching your preferences with the best opportunities...
-								</motion.p>
-							</motion.div>
-						</motion.div>
-					) : null}
-				</AnimatePresence>
-
-				{/* Success Animation Overlay */}
-				<AnimatePresence mode="wait">
-					{showSuccess && !showPersonalizing ? (
-						<motion.div
-							key="success"
-							initial={{ opacity: 0 }}
-							animate={{ opacity: 1 }}
-							exit={{ opacity: 0 }}
-							className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
-						>
-							<motion.div
-								initial={{ scale: 0.9, opacity: 0, y: 20 }}
-								animate={{ scale: 1, opacity: 1, y: 0 }}
-								exit={{ scale: 0.9, opacity: 0 }}
-								transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-								className="relative z-20 w-full max-w-md"
-							>
-								<motion.div
-									className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-zinc-900/90 to-zinc-950/90 backdrop-blur-xl p-8 md:p-12 shadow-2xl"
+									className="relative w-full h-2 bg-zinc-800 rounded-full mb-8 overflow-hidden"
 									initial={{ opacity: 0 }}
 									animate={{ opacity: 1 }}
-									transition={{ delay: 0.1 }}
 								>
-									{/* Success Icon */}
 									<motion.div
-										initial={{ scale: 0 }}
-										animate={{ scale: 1 }}
-										transition={{
-											type: "spring",
-											stiffness: 200,
-											damping: 15,
-											delay: 0.2,
+										className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-500 to-transparent"
+										animate={{
+											x: ["-100%", "200%"],
 										}}
-										className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/20 ring-4 ring-emerald-500/10"
-									>
-										<BrandIcons.CheckCircle className="h-10 w-10 text-emerald-400" />
-									</motion.div>
+										transition={{
+											duration: 2,
+											repeat: Infinity,
+											ease: "linear",
+										}}
+									/>
+								</motion.div>
 
-									{/* Success Message */}
-									<motion.h2
-										initial={{ opacity: 0, y: 10 }}
-										animate={{ opacity: 1, y: 0 }}
-										transition={{ delay: 0.3 }}
-										className="text-center text-2xl md:text-3xl font-bold text-white mb-3"
-									>
-										Account Created!
-									</motion.h2>
+								{/* Dynamic scanning messages */}
+								<LiveMatchingMessages />
 
-									<motion.p
-										initial={{ opacity: 0, y: 10 }}
-										animate={{ opacity: 1, y: 0 }}
-										transition={{ delay: 0.4 }}
-										className="text-center text-content-secondary mb-6"
-									>
-										Found {matchCount} perfect matches for you
-									</motion.p>
-
-									{/* Scanning Animation */}
-									<motion.div
-										initial={{ opacity: 0 }}
-										animate={{ opacity: 1 }}
-										transition={{ delay: 0.5 }}
-										className="flex items-center justify-center gap-3 text-sm text-content-muted mb-8"
-									>
-										<motion.div
-											animate={{ rotate: 360 }}
-											transition={{
-												duration: 2,
-												repeat: Infinity,
-												ease: "linear",
-											}}
-											className="h-4 w-4 rounded-full border-2 border-emerald-500 border-t-transparent"
-										/>
-										<span>Scanning 420+ sources for your matches...</span>
-									</motion.div>
-
-									{/* Email Instruction */}
-									<motion.div
-										initial={{ opacity: 0, y: 10 }}
-										animate={{ opacity: 1, y: 0 }}
-										transition={{ delay: 0.6 }}
-										className="rounded-xl bg-surface-elevated/50 border border-white/10 p-4 text-center"
-									>
-										<p className="text-sm text-content-secondary mb-2">
-											<span className="font-semibold text-white">
-												Check your inbox in 60 seconds
-											</span>
-										</p>
-										<p className="text-xs text-content-disabled">
-											We're sending your matches to{" "}
-											<span className="text-content-secondary">
-												{formData.email}
-											</span>
-										</p>
-									</motion.div>
-
-									{/* Auto-redirect countdown */}
-									{countdown > 0 && (
-										<motion.p
-											initial={{ opacity: 0 }}
-											animate={{ opacity: 1 }}
-											className="text-center text-xs text-content-disabled mt-4"
-										>
-											Redirecting to your matches in {countdown}...
-										</motion.p>
-									)}
+								{/* Job count ticker */}
+								<motion.div
+									className="mt-8 text-4xl font-bold text-brand-400"
+									key={matchCount}
+									initial={{ scale: 0.8, opacity: 0 }}
+									animate={{ scale: 1, opacity: 1 }}
+								>
+									{matchCount > 0 ? `${matchCount} matches found` : "Scanning..."}
 								</motion.div>
 							</motion.div>
 						</motion.div>
 					) : null}
 				</AnimatePresence>
+
 			</div>
 		</div>
 	);

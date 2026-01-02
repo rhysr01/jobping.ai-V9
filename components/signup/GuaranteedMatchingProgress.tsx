@@ -37,7 +37,7 @@ interface GuaranteedMatchingProgressProps {
 }
 
 /**
- * GuaranteedMatchingProgress - "Neural Sweep" visual for premium matching experience
+ * GuaranteedMatchingProgress - "Neural Sweep" visual for matching experience
  * Transforms waiting time into perceived value by showing the engine "working"
  */
 export function GuaranteedMatchingProgress({

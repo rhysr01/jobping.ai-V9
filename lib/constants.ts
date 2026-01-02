@@ -29,12 +29,13 @@ export const TIMING = {
 
 	// Matching Progress Stages (for GuaranteedMatchingProgress)
 	MATCHING_STAGES: {
-		SQL: 2000, // 2 seconds - Deep Database Query
-		GEO: 3000, // 3 seconds - Location Perimeter Expansion
-		AI: 4000, // 4 seconds - Real-time Source Scraping
-		SCORE: 2000, // 2 seconds - Semantic Alignment
+		SQL: 1000, // 1 second - Deep Database Query
+		GEO: 1500, // 1.5 seconds - Location Perimeter Expansion
+		AI: 2500, // 2.5 seconds - Real-time Source Scraping
+		SCORE: 1000, // 1 second - Semantic Alignment
 	} as const,
-	MATCHING_MIN_DELAY_MS: 2000, // Minimum 2 seconds to show animation (builds trust)
+	MATCHING_MIN_DELAY_MS: 1500, // Minimum 1.5 seconds to show animation (builds trust)
+	MATCHING_CELEBRATION_MS: 2000, // 2 seconds - celebration phase before matching starts
 
 	// Map & UI Interactions
 	MAP_SELECTION_HIGHLIGHT_MS: 1000, // 1 second - city selection highlight duration

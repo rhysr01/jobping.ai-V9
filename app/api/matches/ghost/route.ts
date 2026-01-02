@@ -9,7 +9,7 @@ import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
  * Ghost Matches API
  *
  * Returns additional matches that would be available with Premium tier.
- * Uses "lite" premium matching (rule-based only, no AI) to show value.
+ * Uses AI matching (same quality as main matches) to show value.
  *
  * This creates FOMO and drives conversion to Premium.
  */
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
 			existingMatches?.map((m) => m.job_hash) || [],
 		);
 
-		// Fetch jobs using same strategy as premium (but rule-based only)
+		// Fetch jobs using same strategy as main matches (AI-powered)
 		let query = supabase
 			.from("jobs")
 			.select("*")
@@ -147,8 +147,7 @@ export async function GET(request: NextRequest) {
 			});
 		}
 
-		// Use rule-based matching only (no AI - cost optimization)
-		// This is "lite" premium matching
+		// Use AI matching for amazing matches
 		const userPrefs: UserPreferences = {
 			email: user.email,
 			target_cities: user.target_cities || [],
@@ -164,15 +163,15 @@ export async function GET(request: NextRequest) {
 			company_size_preference: user.company_size_preference || "any",
 			skills: user.skills || [],
 			career_keywords: user.career_keywords || undefined,
-			subscription_tier: "free", // Mark as free for rule-based only
+			subscription_tier: "free",
 		};
 
-		// Use consolidated matcher with forceRulesBased flag
+		// Use consolidated matcher with AI matching enabled
 		const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
 		const matchResult = await matcher.performMatching(
 			availableJobs,
 			userPrefs,
-			true, // forceRulesBased = true (no AI, cost-free)
+			false, // forceRulesBased = false (enable AI for amazing matches)
 		);
 
 		// Get top matches (limit to 5-8 for FOMO effect)
@@ -191,14 +190,14 @@ export async function GET(request: NextRequest) {
 			email,
 			ghostMatchCount,
 			totalJobsScanned: availableJobs.length,
-			method: "rule_based",
+			method: matchResult.method || "ai_success",
 		});
 
 		return NextResponse.json({
 			ghostMatchCount,
 			message:
 				ghostMatchCount > 0
-					? `${ghostMatchCount} more high-quality matches found via AI. Upgrade to Premium to unlock.`
+					? `${ghostMatchCount} more high-quality matches found.`
 					: "No additional matches found",
 		});
 	} catch (error) {

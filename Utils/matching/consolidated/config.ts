@@ -2,8 +2,8 @@
  * Configuration constants for consolidated matching system
  */
 
-// TIER-AWARE: Premium gets larger pool (use GPT-4o-mini savings)
-export const JOBS_TO_ANALYZE_FREE = 50;
+// AI matching available for all users - same quality for everyone
+export const JOBS_TO_ANALYZE_FREE = 100; // Free users get same AI quality as premium
 export const JOBS_TO_ANALYZE_PREMIUM = 100; // Premium: 100 jobs (deeper, more exhaustive)
 export const CACHE_TTL_HOURS = 48;
 export const AI_TIMEOUT_MS = 20000;

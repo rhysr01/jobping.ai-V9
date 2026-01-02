@@ -29,9 +29,8 @@ export async function calculateWeightedScore(
 		userPrefs.subscription_tier === "free" || !userPrefs.subscription_tier;
 	const isPremiumTier = userPrefs.subscription_tier === "premium";
 
-	// FREE TIER: Higher base score (more lenient), focus on basic factors
-	// PREMIUM TIER: Lower base score (stricter), focus on advanced factors
-	let score = isFreeTier ? 60 : 50; // Free: 60 base, Premium: 50 base
+	// Same quality scoring for all users - amazing matches for everyone
+	let score = 50; // Consistent base score for high-quality matching
 	const reasons: string[] = [];
 
 	const title = job.title?.toLowerCase() || "";
@@ -75,7 +74,7 @@ export async function calculateWeightedScore(
 		userCareer,
 		userCareerPaths,
 	);
-	const skillMatchMultiplier = isPremiumTier ? 1.22 : 0.83; // Premium: 22% more, Free: 17% less
+	const skillMatchMultiplier = 1.22; // Same quality for all users
 	score += skillScore.points * skillMatchMultiplier;
 	if (skillScore.points > 0) {
 		reasons.push(skillScore.reason);
@@ -83,14 +82,14 @@ export async function calculateWeightedScore(
 
 	// 4. Company Tier
 	const companyScore = calculateCompanyTierScore(company, jobText);
-	const companyMatchMultiplier = isPremiumTier ? 1.25 : 0.67; // Premium: 25% more, Free: 33% less
+	const companyMatchMultiplier = 1.25; // Same quality for all users
 	score += companyScore.points * companyMatchMultiplier;
 	if (companyScore.points > 0) {
 		reasons.push(companyScore.reason);
 	}
 
-	// 5. Extended preferences (Premium only)
-	if (isPremiumTier) {
+	// 5. Extended preferences (available for all users)
+	{
 		// Industries match bonus (5 pts max)
 		if (userPrefs.industries && userPrefs.industries.length > 0) {
 			const jobIndustry = (job as any).industry || "";

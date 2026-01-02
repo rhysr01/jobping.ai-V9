@@ -7,35 +7,24 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import SocialProofTicker from "@/components/ui/SocialProofTicker";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { useStats } from "@/hooks/useStats";
+import * as Copy from "@/lib/copy";
 import { trackEvent } from "@/lib/analytics";
 
 const TIERS = [
 	{
-		name: "Explorer",
+		name: Copy.FREE_PLAN_TITLE,
 		price: "0",
-		description: "Perfect for starting your search.",
-		features: [
-			"Instant /matches web feed",
-			"Basic match scores",
-			"Unlimited resume syncs",
-			"Standard EU job alerts",
-		],
+		description: Copy.FREE_PLAN_SUBTITLE,
+		features: Copy.FREE_PLAN_FEATURES,
 		cta: "Get Started",
 		href: "/signup/free",
 		popular: false,
 	},
 	{
-		name: "Premium",
+		name: Copy.PREMIUM_PLAN_TITLE,
 		price: "5",
 		description: "The closest thing to a personal headhunter.",
-		features: [
-			"The Premium Rhythm (M/W/F Emails)",
-			"5 Curated matches per email",
-			"Full Match Evidence (Skills/Pay/Tech)",
-			"20+ Deep-intelligence data points",
-			"Priority Internship access",
-			"No ads, no noise",
-		],
+		features: Copy.PREMIUM_PLAN_FEATURES,
 		cta: "Get Premium Access",
 		href: "/signup",
 		popular: true,

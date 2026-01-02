@@ -96,14 +96,17 @@ export default function Hero() {
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ delay: 0.2, duration: 0.6 }}
-							className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3 max-w-[540px] relative"
+							className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-relaxed mb-3 max-w-[540px] relative pl-1"
 						>
 							{/* Silver Silk gradient: purple-500/80 (20%) → zinc-100 (50%) → purple-500/80 (80%) */}
 							<GradientText variant="brand">Get 5 early-career</GradientText>{" "}
 							<GradientText variant="brand">job matches</GradientText>{" "}
-							<span className="text-content-primary">
-								instantly <span className="text-content-secondary">- free</span>
+							<span className="text-content-primary block">
+								instantly
 							</span>
+							<GradientText variant="brand" className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl 2xl:text-[10rem] font-black">
+								free
+							</GradientText>
 						</motion.h1>
 
 						{/* Subheadline - HIGH-STAKES - Clear value prop */}
@@ -111,10 +114,10 @@ export default function Hero() {
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ delay: 0.25, duration: 0.6 }}
-							className="text-lg md:text-xl text-content-secondary leading-relaxed max-w-xl mb-4 mt-6"
+							className="text-lg md:text-xl text-white/70 leading-relaxed max-w-xl mb-4 mt-6"
 						>
-							Stop guessing about visa status. Get curated graduate roles
-							matched to your city and career path in under 2 minutes.
+							Stop guessing about <strong className="text-white font-bold">visa status</strong>. Get curated graduate roles{" "}
+							<strong className="text-white font-bold">matched to your city and career path</strong> in under 2 minutes.
 						</motion.p>
 
 						{/* CTAs */}
@@ -129,7 +132,7 @@ export default function Hero() {
 								onClick={() => {
 									trackEvent("cta_clicked", { type: "free", location: "hero" });
 								}}
-								className="inline-flex min-h-[44px] h-12 animate-shimmer items-center justify-center rounded-full border border-border-subtle bg-[linear-gradient(110deg,#000,45%,#27272a,55%,#000)] bg-[length:200%_100%] px-8 font-medium text-content-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black hover:text-content-heading hover:border-border-default w-full sm:w-auto sm:max-w-xs text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(109,40,217,0.4)] hover:shadow-[0_8px_40px_rgba(109,40,217,0.5)]"
+								className="inline-flex min-h-[44px] h-12 items-center justify-center rounded-full bg-gradient-to-r from-brand-600 to-indigo-600 text-white font-bold px-8 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black hover:from-brand-500 hover:to-indigo-500 w-full sm:w-auto sm:max-w-xs text-base md:text-lg shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(139,92,246,0.5)] hover:shadow-[0_8px_40px_rgba(139,92,246,0.6)]"
 								aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
 							>
 								<span className="flex items-center justify-center gap-2">
@@ -147,7 +150,7 @@ export default function Hero() {
 								transition={{ delay: 0.42, duration: 0.6 }}
 								className="mt-3 p-3 rounded-lg glass-card elevation-1"
 							>
-								<p className="text-xs font-semibold text-content-secondary mb-2.5">
+								<p className="text-xs font-semibold text-white/70 mb-2.5">
 									Here's what we'll ask:
 								</p>
 								<div className="flex flex-wrap gap-1.5 text-xs">
@@ -179,14 +182,16 @@ export default function Hero() {
 							>
 								{stats ? (
 									<>
-										<p className="text-base font-semibold text-content-secondary mb-1">
+										<p className="text-base font-semibold text-white/70 mb-1">
 											Join{" "}
-											{stats.totalUsers > 0
-												? `${stats.totalUsers.toLocaleString("en-US")}+`
-												: "1,500+"}{" "}
+											<strong className="text-white font-bold">
+												{stats.totalUsers > 0
+													? `${stats.totalUsers.toLocaleString("en-US")}+`
+													: "1,500+"}
+											</strong>{" "}
 											job seekers finding roles
 										</p>
-										<p className="text-xs text-content-muted">
+										<p className="text-xs text-white/60">
 											Trusted by students across Europe
 										</p>
 									</>
