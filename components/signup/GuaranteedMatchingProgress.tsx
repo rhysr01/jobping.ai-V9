@@ -78,7 +78,7 @@ export function GuaranteedMatchingProgress({
 						))}
 					</div>
 				</div>
-			</div>
+			</output>
 
 			{/* The Progress Steps */}
 			<div className="space-y-6">
