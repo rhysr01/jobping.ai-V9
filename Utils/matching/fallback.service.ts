@@ -1,4 +1,5 @@
 import { MATCHING_CONFIG } from "../config/matching";
+import { generateRobustFallbackMatches as generateRobustFallbackMatchesFromRules } from "./rule-based-matcher.service";
 import { ScoringService } from "./scoring.service";
 import type { Job, UserPreferences } from "./types";
 
@@ -34,16 +35,18 @@ export class FallbackMatchingService {
 		user: UserPreferences,
 		_maxMatches?: number,
 	): any[] {
-		const scored = this.scoringService.scoreJobsForUser(
-			jobs as any,
-			user as any,
-		);
-		const categorized = (this.scoringService as any).categorizeMatches(scored);
-		const combined = [
-			...(categorized.confident || []),
-			...(categorized.promising || []),
-		];
-		return combined.slice(0, MATCHING_CONFIG.fallback.maxMatches);
+		// Use existing implementation from rule-based-matcher to avoid duplicate logic
+		const matches = generateRobustFallbackMatchesFromRules(jobs as Job[], user);
+		// Convert MatchResult[] to format expected by tests
+		const maxMatches = _maxMatches || MATCHING_CONFIG.fallback.maxMatches;
+		return matches.slice(0, maxMatches).map((m) => ({
+			job: m.job,
+			match_score: m.match_score,
+			match_reason: m.match_reason,
+			match_quality: m.match_quality,
+			confidence_score: m.confidence_score,
+			scoreBreakdown: m.score_breakdown,
+		}));
 	}
 
 	generateMatchesByCriteria(
@@ -135,4 +138,45 @@ export class FallbackMatchingService {
 			maxEmergencyMatches: MATCHING_CONFIG.fallback.maxEmergencyMatches,
 		};
 	}
+}
+
+// Standalone exported functions for tests - use existing implementation
+/**
+ * Perform fallback matching (standalone function)
+ * Uses the existing generateRobustFallbackMatches from rule-based-matcher
+ */
+export async function performFallbackMatching(
+	jobs: Job[],
+	userPrefs: UserPreferences,
+): Promise<{ matches: FallbackMatch[] }> {
+	// Use existing implementation from rule-based-matcher.service
+	const matches = generateRobustFallbackMatchesFromRules(jobs, userPrefs);
+	// Convert MatchResult[] to FallbackMatch[] format expected by tests
+	return {
+		matches: matches.map((m) => {
+			// Validate match_quality is one of the expected values
+			const validQuality = ["excellent", "good", "fair", "low"].includes(
+				m.match_quality,
+			)
+				? (m.match_quality as "excellent" | "good" | "fair" | "low")
+				: undefined;
+			return {
+				job: m.job,
+				match_score: m.match_score,
+				match_reason: m.match_reason,
+				match_quality: validQuality,
+			};
+		}),
+	};
+}
+
+/**
+ * Get fallback matches (standalone function)
+ */
+export async function getFallbackMatches(
+	jobs: Job[],
+	userPrefs: UserPreferences,
+): Promise<FallbackMatch[]> {
+	const result = await performFallbackMatching(jobs, userPrefs);
+	return result.matches;
 }

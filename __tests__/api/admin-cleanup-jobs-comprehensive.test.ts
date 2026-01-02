@@ -6,7 +6,7 @@
 import type { NextRequest } from "next/server";
 import { POST } from "@/app/api/admin/cleanup-jobs/route";
 
-jest.mock("@supabase/supabase-js");
+jest.mock("@/Utils/databasePool");
 // Sentry removed - using Axiom for error tracking
 
 describe("Admin Cleanup Jobs API Route", () => {
@@ -43,12 +43,10 @@ describe("Admin Cleanup Jobs API Route", () => {
       }),
     };
 
-    const { createClient } = require("@supabase/supabase-js");
-    createClient.mockReturnValue(mockSupabase);
+    const { getDatabaseClient } = require("@/Utils/databasePool");
+    getDatabaseClient.mockReturnValue(mockSupabase);
 
     process.env.ADMIN_API_KEY = "test-admin-key";
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
-    process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
   });
 
   describe("POST /api/admin/cleanup-jobs", () => {
@@ -58,21 +56,47 @@ describe("Admin Cleanup Jobs API Route", () => {
         maxAge: 90,
       });
 
-      mockSupabase.limit.mockResolvedValue({
-        data: [
-          { id: "1", created_at: "2023-01-01" },
-          { id: "2", created_at: "2023-02-01" },
-        ],
-        error: null,
-        count: 1000,
+      // Mock the count query
+      const countChain = {
+        select: jest.fn().mockResolvedValue({
+          count: 1000,
+          error: null,
+        }),
+      };
+
+      // Mock the select query
+      const selectChain = {
+        select: jest.fn().mockReturnThis(),
+        lt: jest.fn().mockReturnThis(),
+        order: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue({
+          data: [
+            { id: "1", created_at: "2023-01-01" },
+            { id: "2", created_at: "2023-02-01" },
+          ],
+          error: null,
+          count: 2,
+        }),
+      };
+
+      let callCount = 0;
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === "jobs") {
+          callCount++;
+          // First call: count query
+          if (callCount === 1) return countChain;
+          // Second call: select query
+          return selectChain;
+        }
+        return selectChain;
       });
 
       const response = await POST(mockRequest);
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data.dryRun).toBe(true);
-      expect(data.metrics).toBeDefined();
+      expect(data.success).toBe(true);
+      expect(data.data).toBeDefined();
     });
 
     it("should require admin authentication", async () => {

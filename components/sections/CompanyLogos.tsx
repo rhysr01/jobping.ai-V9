@@ -16,7 +16,10 @@ export default function CompanyLogos() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState(false);
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
+	const sectionRef = useRef<HTMLElement>(null);
 	const [isHovered, setIsHovered] = useState(false);
+	const [isVisible, setIsVisible] = useState(false);
+	const [failedLogos, setFailedLogos] = useState<Set<string>>(new Set());
 
 	useEffect(() => {
 		async function fetchCompanies() {
@@ -41,9 +44,35 @@ export default function CompanyLogos() {
 		fetchCompanies();
 	}, []);
 
-	// Auto-scroll logos slowly to the right with infinite loop
+	// IntersectionObserver to detect when section comes into view
 	useEffect(() => {
-		if (!scrollContainerRef.current || companies.length === 0) {
+		if (!sectionRef.current) return;
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) {
+						setIsVisible(true);
+					}
+				});
+			},
+			{
+				threshold: 0.1, // Start when 10% of section is visible
+				rootMargin: "100px", // Start slightly before section enters viewport
+			}
+		);
+
+		observer.observe(sectionRef.current);
+
+		return () => {
+			observer.disconnect();
+		};
+	}, []);
+
+	// Auto-scroll logos slowly to the right with infinite loop
+	// Only starts when section is visible
+	useEffect(() => {
+		if (!scrollContainerRef.current || companies.length === 0 || !isVisible) {
 			return;
 		}
 
@@ -67,10 +96,10 @@ export default function CompanyLogos() {
 			const singleSetWidth = contentWidth / 2;
 
 			let lastTimestamp: number | null = null;
-			const scrollSpeed = 0.8; // Pixels per millisecond (smooth rightward scroll)
+			const scrollSpeed = 0.3; // Slower scroll speed (was 0.8, now 0.3 pixels per millisecond)
 
 			const animate = (timestamp: number) => {
-				if (!scrollContainerRef.current || isHovered) {
+				if (!scrollContainerRef.current || isHovered || !isVisible) {
 					animationFrameId = null;
 					return;
 				}
@@ -108,7 +137,7 @@ export default function CompanyLogos() {
 		// Wait for images to load and DOM to be ready, then start auto-scroll
 		startDelay = setTimeout(() => {
 			startAutoScroll();
-		}, 500); // Delay to ensure images are loaded and layout is calculated
+		}, 300); // Reduced delay since we're waiting for visibility
 
 		return () => {
 			clearTimeout(startDelay);
@@ -117,7 +146,7 @@ export default function CompanyLogos() {
 				animationFrameId = null;
 			}
 		};
-	}, [companies, isHovered]);
+	}, [companies, isHovered, isVisible]);
 
 	if (isLoading) {
 		return (
@@ -149,19 +178,26 @@ export default function CompanyLogos() {
 		);
 	}
 
-	// Hide section if no companies (production-ready)
-	// Error state: silently hide - not critical for conversion
-	if (companies.length === 0) {
+	// If error, silently hide - not critical for conversion
+	if (error) {
 		return null;
 	}
 
-	// If error, still show section but with empty state (graceful degradation)
-	if (error) {
-		return null; // Silent fail - section is not critical
+	// Filter out companies with failed logos
+	const validCompanies = companies.filter(
+		(company) => !failedLogos.has(company.logoPath)
+	);
+
+	// Hide section if no valid companies
+	if (validCompanies.length === 0 && !isLoading) {
+		return null;
 	}
 
 	return (
-		<section className="py-32 md:py-40 bg-black scroll-snap-section relative">
+		<section
+			ref={sectionRef}
+			className="py-32 md:py-40 bg-black scroll-snap-section relative"
+		>
 			{/* Scroll momentum fade */}
 			<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
 			{/* Soft section band */}
@@ -212,7 +248,7 @@ export default function CompanyLogos() {
 						}}
 					>
 						{/* Duplicate logos for seamless infinite scroll */}
-						{[...companies, ...companies].map((company, index) => (
+						{[...validCompanies, ...validCompanies].map((company, index) => (
 							<motion.div
 								key={`${company.name}-${index}`}
 								initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -257,9 +293,12 @@ export default function CompanyLogos() {
 											className="object-contain h-[140px] w-auto opacity-90 transition-all duration-500 ease-out group-hover:opacity-100 group-hover:scale-125 filter drop-shadow-[0_4px_12px_rgba(139,92,246,0.4)]"
 											onError={(e) => {
 												console.error(
-													`Failed to load logo: ${company.logoPath}`,
+													`Failed to load logo: ${company.logoPath} for ${company.name}`,
 													e,
 												);
+												// Track failed logos to filter them out
+												setFailedLogos((prev) => new Set(prev).add(company.logoPath));
+												// Hide the card immediately
 												const parent = (e.target as HTMLElement).parentElement
 													?.parentElement?.parentElement;
 												if (parent) {

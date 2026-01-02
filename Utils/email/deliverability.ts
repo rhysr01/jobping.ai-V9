@@ -357,7 +357,7 @@ export async function isUserUnsubscribed(email: string): Promise<boolean> {
 /**
  * Get bounce suppression list size
  */
-async function getBounceSuppressionListSize(): Promise<number> {
+export async function getBounceSuppressionListSize(): Promise<number> {
 	try {
 		const supabase = getDatabaseClient();
 
@@ -375,7 +375,7 @@ async function getBounceSuppressionListSize(): Promise<number> {
 /**
  * Get complaint rate
  */
-async function getComplaintRate(): Promise<number> {
+export async function getComplaintRate(): Promise<number> {
 	try {
 		const supabase = getDatabaseClient();
 

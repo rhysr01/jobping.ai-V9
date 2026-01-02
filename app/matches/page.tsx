@@ -2,9 +2,18 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { FreeSuccessOverlay } from "@/components/signup/FreeSuccessOverlay";
+import { GuaranteedMatchingProgress } from "@/components/signup/GuaranteedMatchingProgress";
+import { GhostMatches } from "@/components/matches/GhostMatches";
 import Button from "@/components/ui/Button";
+import { HotMatchBadge } from "@/components/ui/HotMatchBadge";
+import JobClosedModal from "@/components/ui/JobClosedModal";
+import TargetCompaniesAlert from "@/components/ui/TargetCompaniesAlert";
+import CustomScanTrigger from "@/components/ui/CustomScanTrigger";
+import { useGuaranteedMatchingProgress } from "@/hooks/useGuaranteedMatchingProgress";
 import { trackEvent } from "@/lib/analytics";
 import { ApiError, apiCall, apiCallJson } from "@/lib/api-client";
 import {
@@ -37,6 +46,7 @@ interface Job {
 }
 
 function MatchesPageContent() {
+	const searchParams = useSearchParams();
 	const [jobs, setJobs] = useState<Job[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
@@ -48,6 +58,35 @@ function MatchesPageContent() {
 	);
 	const [dismissingJobId, setDismissingJobId] = useState<number | null>(null);
 	const jobsContainerRef = useRef<HTMLDivElement>(null);
+	const [showJobClosedModal, setShowJobClosedModal] = useState(false);
+	const [jobClosedData, setJobClosedData] = useState<{
+		originalJob: { title: string; company: string; location: string };
+		similarMatches: Array<{
+			job_hash: string;
+			title: string;
+			company: string;
+			location: string;
+			job_url: string;
+			match_score: number;
+			match_reason: string;
+		}>;
+		message: string;
+	} | null>(null);
+	const [targetCompanies, setTargetCompanies] = useState<Array<{
+		company: string;
+		lastMatchedAt: string;
+		matchCount: number;
+		roles: string[];
+	}> | null>(null);
+	const [customScan, setCustomScan] = useState<{
+		scanId: string;
+		estimatedTime: string;
+		message: string;
+	} | null>(null);
+	
+	// Success overlay state for free signup
+	const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+	const [successMatchCount, setSuccessMatchCount] = useState(0);
 
 	const fetchMatches = useCallback(async () => {
 		try {
@@ -80,6 +119,8 @@ function MatchesPageContent() {
 
 			const data = await response.json();
 			setJobs(data.jobs || []);
+			setTargetCompanies(data.targetCompanies || null);
+			setCustomScan(data.customScan || null);
 			setLoading(false);
 		} catch (err) {
 			// ApiError provides user-friendly messages
@@ -95,6 +136,26 @@ function MatchesPageContent() {
 	useEffect(() => {
 		fetchMatches();
 	}, [fetchMatches]);
+
+	// Check URL params for free signup success overlay
+	useEffect(() => {
+		const justSignedUp = searchParams?.get("justSignedUp");
+		const matchCount = searchParams?.get("matchCount");
+		
+		if (justSignedUp === "true" && matchCount) {
+			const count = parseInt(matchCount, 10);
+			if (!isNaN(count) && count > 0) {
+				setSuccessMatchCount(count);
+				setShowSuccessOverlay(true);
+				
+				// Clean up URL params after showing overlay
+				const url = new URL(window.location.href);
+				url.searchParams.delete("justSignedUp");
+				url.searchParams.delete("matchCount");
+				window.history.replaceState({}, "", url.toString());
+			}
+		}
+	}, [searchParams]);
 
 	// Track job views and show upgrade banner after engagement
 	useEffect(() => {
@@ -219,37 +280,13 @@ function MatchesPageContent() {
 		return () => window.removeEventListener("scroll", handleScroll);
 	}, [jobs.length, handleScroll]);
 
+	// Guaranteed matching progress coordination
+	const { currentStage } = useGuaranteedMatchingProgress(loading);
+
 	if (loading) {
 		return (
 			<div className="min-h-screen bg-black flex items-center justify-center p-4">
-				<div
-					className="text-center"
-					role="status"
-					aria-live="polite"
-					aria-label="Loading job matches"
-				>
-					<motion.div
-						animate={{ rotate: 360 }}
-						transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-						className="w-16 h-16 border-4 border-brand-500/30 border-t-brand-500 rounded-full mx-auto mb-4"
-						aria-hidden="true"
-					/>
-					<motion.p
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						className="text-zinc-300 text-lg mb-2"
-					>
-						Finding your perfect matches...
-					</motion.p>
-					<motion.p
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						transition={{ delay: 0.2 }}
-						className="text-zinc-300 text-sm"
-					>
-						This usually takes 5-10 seconds
-					</motion.p>
-				</div>
+				<GuaranteedMatchingProgress currentStageIndex={currentStage} />
 			</div>
 		);
 	}
@@ -309,48 +346,83 @@ function MatchesPageContent() {
 	if (jobs.length === 0) {
 		return (
 			<div className="min-h-screen bg-black flex items-center justify-center p-4">
-				<motion.div
-					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					className="glass-card elevation-2 p-8 text-center max-w-md mx-auto border-dashed border-zinc-700"
-				>
-					<motion.div
-						animate={{ rotate: 360 }}
-						transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-						className="w-12 h-12 border-2 border-zinc-700 border-t-brand-500 rounded-full mx-auto mb-6"
-						aria-hidden="true"
-					/>
-					<h2 className="text-2xl font-bold mb-4 text-zinc-100 tracking-tight">
-						No matches found
-					</h2>
-					<p className="text-zinc-400 mb-6 leading-relaxed">
-						We couldn't find jobs matching your preferences right now.
-					</p>
+				<div className="max-w-2xl w-full space-y-6">
+					{/* Custom Scan Trigger */}
+					{customScan && (
+						<CustomScanTrigger
+							scanId={customScan.scanId}
+							estimatedTime={customScan.estimatedTime}
+							message={customScan.message}
+							userEmail={getUserEmail() || ""}
+						/>
+					)}
 
-					<div className="space-y-4 mb-6">
-						<p className="text-sm text-zinc-400 font-medium">Try:</p>
-						<ul className="text-sm text-zinc-400 space-y-2 leading-relaxed">
-							<li>• Selecting more cities</li>
-							<li>• Choosing a different career path</li>
-							<li>• Coming back tomorrow (we add 100+ jobs daily)</li>
-						</ul>
-					</div>
+					{/* Target Companies Alert */}
+					{targetCompanies && targetCompanies.length > 0 && (
+						<TargetCompaniesAlert
+							companies={targetCompanies}
+							message="We haven't seen roles for your niche in 48 hours, but we've matched students to these companies recently."
+							onSetAlert={(company) => {
+								trackEvent("target_company_alert_set", { company });
+								showToast.success(`Alert set for ${company}! We'll notify you when new roles appear.`);
+							}}
+						/>
+					)}
 
-					<div className="mt-6 space-y-3">
-						<Button href="/signup/free" variant="secondary" className="w-full">
-							Try Different Preferences
-						</Button>
-						<Button href="/signup" variant="gradient" className="w-full">
-							Upgrade to Premium for More Jobs
-						</Button>
-					</div>
-				</motion.div>
+					{/* Default No Matches UI */}
+					{!customScan && (!targetCompanies || targetCompanies.length === 0) && (
+						<motion.div
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							className="glass-card elevation-2 p-8 text-center max-w-md mx-auto border-dashed border-zinc-700"
+						>
+							<motion.div
+								animate={{ rotate: 360 }}
+								transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+								className="w-12 h-12 border-2 border-zinc-700 border-t-brand-500 rounded-full mx-auto mb-6"
+								aria-hidden="true"
+							/>
+							<h2 className="text-2xl font-bold mb-4 text-zinc-100 tracking-tight">
+								No matches found
+							</h2>
+							<p className="text-zinc-400 mb-6 leading-relaxed">
+								We couldn't find jobs matching your preferences right now.
+							</p>
+
+							<div className="space-y-4 mb-6">
+								<p className="text-sm text-zinc-400 font-medium">Try:</p>
+								<ul className="text-sm text-zinc-400 space-y-2 leading-relaxed">
+									<li>• Selecting more cities</li>
+									<li>• Choosing a different career path</li>
+									<li>• Coming back tomorrow (we add 100+ jobs daily)</li>
+								</ul>
+							</div>
+
+							<div className="mt-6 space-y-3">
+								<Button href="/signup/free" variant="secondary" className="w-full">
+									Try Different Preferences
+								</Button>
+								<Button href="/signup" variant="gradient" className="w-full">
+									Upgrade to Premium for More Jobs
+								</Button>
+							</div>
+						</motion.div>
+					)}
+				</div>
 			</div>
 		);
 	}
 
 	return (
 		<div className="min-h-screen bg-black py-8">
+			{/* Free Signup Success Overlay */}
+			{showSuccessOverlay && (
+				<FreeSuccessOverlay
+					matchCount={successMatchCount}
+					onDismiss={() => setShowSuccessOverlay(false)}
+				/>
+			)}
+			
 			<div className="container max-w-5xl mx-auto px-4">
 				{/* Tier Indicator */}
 				<div className="text-center mb-6">
@@ -379,13 +451,25 @@ function MatchesPageContent() {
 					</div>
 				</div>
 
+				{/* Target Companies Alert (shown even when matches exist) */}
+				{targetCompanies && targetCompanies.length > 0 && (
+					<TargetCompaniesAlert
+						companies={targetCompanies}
+						message="We've also matched students to these companies recently. Set alerts to be notified when new roles appear."
+						onSetAlert={(company) => {
+							trackEvent("target_company_alert_set", { company });
+							showToast.success(`Alert set for ${company}! We'll notify you when new roles appear.`);
+						}}
+					/>
+				)}
+
 				{/* Sticky Upgrade Banner - Shown after engagement */}
 				{showUpgradeBanner && (
 					<motion.div
 						initial={{ opacity: 0, y: -10 }}
 						animate={{ opacity: 1, y: 0 }}
 						exit={{ opacity: 0, y: -10 }}
-						className="sticky top-0 z-10 bg-gradient-to-r from-brand-500 to-purple-600 rounded-xl p-5 mb-8 shadow-xl border border-brand-400/30"
+						className="sticky top-0 z-10 bg-gradient-to-r from-brand-600 to-brand-700 rounded-xl p-5 mb-8 shadow-xl border border-brand-600/30"
 					>
 						<div className="flex items-center justify-between flex-wrap gap-4">
 							<div>
@@ -455,10 +539,15 @@ function MatchesPageContent() {
 											delay: isDismissing ? 0 : index * 0.1,
 											ease: "easeInOut",
 										}}
-										className="glass-card elevation-2 p-5 hover:elevation-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/5 overflow-hidden"
+										className="glass-card elevation-2 p-5 hover:elevation-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/5 overflow-hidden relative"
 										role="listitem"
 										aria-labelledby={`job-title-${job.id}`}
 									>
+										{/* Hot Match Badge - Top Right Corner (92%+ match score) */}
+										{job.match_score && job.match_score >= 0.92 && (
+											<HotMatchBadge />
+										)}
+
 										{/* Top Row: Job Number + Match Score + Visa Confidence */}
 										<div className="flex items-center gap-2 mb-3 flex-wrap">
 											<span className="text-xs font-bold text-brand-400 bg-brand-500/20 px-2.5 py-1 rounded-full">
@@ -599,14 +688,80 @@ function MatchesPageContent() {
 														});
 													}
 
-													// Open URL
-													window.open(job.url, "_blank", "noopener,noreferrer");
+													// Use bridge route instead of direct redirect
+													if (email && job.job_hash) {
+														const bridgeUrl = `/api/apply/${job.job_hash}?email=${encodeURIComponent(email)}`;
 
-													// Clear loading state after 2s
-													setTimeout(() => setClickedJobId(null), 2000);
+														fetch(bridgeUrl, { redirect: "manual" })
+															.then((response) => {
+																// Check if it's a redirect (healthy link)
+																if (
+																	response.status === 302 ||
+																	response.status === 301
+																) {
+																	const redirectUrl =
+																		response.headers.get("location");
+																	if (redirectUrl) {
+																		window.open(
+																			redirectUrl,
+																			"_blank",
+																			"noopener,noreferrer",
+																		);
+																		setTimeout(
+																			() => setClickedJobId(null),
+																			2000,
+																		);
+																		return;
+																	}
+																}
+
+																// Check if it's JSON (broken link with similar matches)
+																const contentType =
+																	response.headers.get("content-type");
+																if (contentType?.includes("application/json")) {
+																	return response.json();
+																}
+
+																// Fallback: Direct redirect
+																window.open(
+																	job.url,
+																	"_blank",
+																	"noopener,noreferrer",
+																);
+																setTimeout(() => setClickedJobId(null), 2000);
+															})
+															.then((data) => {
+																if (data?.error && data?.similarMatches) {
+																	// Show job closed modal
+																	setJobClosedData({
+																		originalJob: data.originalJob,
+																		similarMatches: data.similarMatches,
+																		message: data.message,
+																	});
+																	setShowJobClosedModal(true);
+																	setClickedJobId(null);
+																}
+															})
+															.catch((err) => {
+																console.error("Bridge route error:", err);
+																// Fallback: Direct redirect
+																window.open(
+																	job.url,
+																	"_blank",
+																	"noopener,noreferrer",
+																);
+																setTimeout(() => setClickedJobId(null), 2000);
+															});
+													} else {
+														// Fallback if no email/hash
+														window.open(job.url, "_blank", "noopener,noreferrer");
+														setTimeout(() => setClickedJobId(null), 2000);
+													}
 												}}
 											>
-												{clickedJobId === job.id ? "Opening..." : "Apply Now →"}
+												{clickedJobId === job.id
+													? "Checking link..."
+													: "Apply Now →"}
 											</Button>
 
 											<motion.button
@@ -636,12 +791,15 @@ function MatchesPageContent() {
 					</AnimatePresence>
 				</div>
 
+				{/* Ghost Matches - Show additional premium matches for free users */}
+				{jobs.length > 0 && <GhostMatches />}
+
 				{/* Bottom CTA - Only show after viewing jobs */}
 				{showUpgradeBanner && (
 					<motion.div
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
-						className="glass-card elevation-3 p-8 text-center bg-gradient-to-br from-brand-500/10 to-purple-600/10 border-2 border-brand-500/20"
+						className="glass-card elevation-3 p-8 text-center bg-gradient-to-br from-brand-600/10 to-brand-700/10 border-2 border-brand-600/20"
 					>
 						<h2 className="text-3xl font-bold mb-3">
 							Want {PREMIUM_ROLES_PER_WEEK - FREE_ROLES_PER_SEND} More Jobs This
@@ -681,6 +839,17 @@ function MatchesPageContent() {
 						</div>
 					</motion.div>
 				)}
+
+				{/* Job Closed Modal */}
+				{jobClosedData && (
+					<JobClosedModal
+						isOpen={showJobClosedModal}
+						onClose={() => setShowJobClosedModal(false)}
+						originalJob={jobClosedData.originalJob}
+						similarMatches={jobClosedData.similarMatches}
+						message={jobClosedData.message}
+					/>
+				)}
 			</div>
 		</div>
 	);
@@ -689,7 +858,15 @@ function MatchesPageContent() {
 export default function MatchesPage() {
 	return (
 		<ErrorBoundary>
-			<MatchesPageContent />
+			<Suspense
+				fallback={
+					<div className="min-h-screen bg-black flex items-center justify-center">
+						<div className="text-white text-xl">Loading...</div>
+					</div>
+				}
+			>
+				<MatchesPageContent />
+			</Suspense>
 		</ErrorBoundary>
 	);
 }

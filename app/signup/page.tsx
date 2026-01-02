@@ -8,6 +8,7 @@ import { useAriaAnnounce } from "@/components/ui/AriaLiveRegion";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 import EntryLevelSelector from "@/components/ui/EntryLevelSelector";
 import EuropeMap from "@/components/ui/EuropeMap";
+import { CityChip } from "@/components/ui/CityChip";
 import {
 	FormFieldError,
 	FormFieldHelper,
@@ -24,6 +25,7 @@ import { ApiError, apiCall, apiCallJson } from "@/lib/api-client";
 import * as Copy from "@/lib/copy";
 import { SIGNUP_INITIAL_ROLES } from "@/lib/productMetrics";
 import { showToast } from "@/lib/toast";
+import { useFormPersistence } from "@/hooks/useFormPersistence";
 
 function SignupForm() {
 	const router = useRouter();
@@ -48,6 +50,14 @@ function SignupForm() {
 		fullName: useRef<HTMLInputElement>(null),
 		email: useRef<HTMLInputElement>(null),
 	};
+
+	// Form persistence hook - saves progress and offers to restore
+	const { clearProgress } = useFormPersistence(
+		step,
+		formData,
+		setFormData,
+		setStep,
+	);
 	const [formData, setFormData] = useState({
 		fullName: "",
 		email: "",
@@ -558,6 +568,9 @@ function SignupForm() {
 			const result = await response.json();
 
 			if (response.ok) {
+				// Clear saved progress immediately after successful API response, before redirect
+				// This prevents "Resume Signup" loop if success page crashes
+				clearProgress();
 				// Show success state before redirect
 				setSuccessState({ show: true, matchesCount: result.matchesCount || 0 });
 				showToast.success("Account created successfully! Redirecting...");
@@ -609,6 +622,7 @@ function SignupForm() {
 		formRefs.fullName,
 		emailValidation.isValid,
 		step,
+		clearProgress,
 	]);
 
 	// Keyboard shortcuts for power users
@@ -686,9 +700,9 @@ function SignupForm() {
 			return `Complete: ${missing.join(", ")}`;
 		} else if (stepNumber === 2) {
 			const missing = [];
-			if (!formData.visaStatus) missing.push("Work Authorization");
+			if (!formData.visaStatus) missing.push("Visa Sponsorship");
 			if (formData.entryLevelPreferences.length === 0)
-				missing.push("Entry Level Preferences");
+				missing.push("Role Type");
 			if (missing.length === 0) return "Continue to Career Path →";
 			return `Complete: ${missing.join(", ")}`;
 		} else if (stepNumber === 3) {
@@ -1231,8 +1245,31 @@ function SignupForm() {
 											}}
 											maxSelections={3}
 											className="w-full"
+											onMaxSelectionsReached={(city, max) => {
+												showToast.error(
+													`Maximum ${max} cities selected. Remove a city to select another.`,
+												);
+											}}
 										/>
 									</motion.div>
+
+									{/* Clear All Cities Button */}
+									{formData.cities.length > 0 && (
+										<div className="mb-3 sm:hidden">
+											<motion.button
+												type="button"
+												onClick={() => {
+													setFormData({ ...formData, cities: [] });
+													announce("All cities cleared", "polite");
+												}}
+												whileHover={{ scale: 1.02 }}
+												whileTap={{ scale: 0.98 }}
+												className="px-4 py-2 bg-zinc-500/10 hover:bg-zinc-500/20 border border-zinc-700 text-zinc-400 hover:text-zinc-300 text-sm font-medium rounded-lg transition-colors touch-manipulation min-h-[44px]"
+											>
+												Clear All Cities
+											</motion.button>
+										</div>
+									)}
 
 									{/* Mobile-friendly city chips - Horizontal scrolling */}
 									<div
@@ -1245,15 +1282,20 @@ function SignupForm() {
 											const isDisabled =
 												!isSelected && formData.cities.length >= 3;
 											return (
-												<motion.button
+												<CityChip
 													key={city}
-													type="button"
-													onClick={() => {
+													city={city}
+													isSelected={isSelected}
+													isDisabled={isDisabled}
+													onToggle={(city) => {
 														// Trigger haptic feedback (if supported)
 														if ("vibrate" in navigator) {
 															navigator.vibrate(10); // 10ms subtle pulse
 														}
 														if (isDisabled) {
+															showToast.error(
+																"Maximum 3 cities selected. Remove a city to select another.",
+															);
 															announce(
 																"Maximum cities selected. Deselect one to choose another.",
 																"polite",
@@ -1280,18 +1322,20 @@ function SignupForm() {
 															);
 														}
 													}}
-													whileTap={{ scale: 0.97 }}
-													className={`flex-none snap-start min-h-[48px] px-6 bg-zinc-900 border border-zinc-800 rounded-full whitespace-nowrap text-sm font-medium transition-colors touch-manipulation ${
-														isSelected
-															? "border-brand-500 bg-brand-500/15 text-white shadow-glow-subtle"
-															: isDisabled
-																? "border-zinc-800 bg-zinc-900/40 text-zinc-500 cursor-not-allowed"
-																: "border-zinc-700 bg-zinc-900/40 text-zinc-200"
-													}`}
-													disabled={isDisabled}
-												>
-													{city}
-												</motion.button>
+													onRemove={(city) => {
+														const nextCities = formData.cities.filter(
+															(c: string) => c !== city,
+														);
+														setFormData({
+															...formData,
+															cities: nextCities,
+														});
+														announce(
+															`Removed ${city}. ${nextCities.length} of 3 cities selected.`,
+															"polite",
+														);
+													}}
+												/>
 											);
 										})}
 									</div>
@@ -1505,7 +1549,7 @@ function SignupForm() {
 														<span
 															className={`w-2 h-2 rounded-full ${formData.entryLevelPreferences.length > 0 ? "bg-brand-400" : "bg-zinc-500"}`}
 														></span>
-														Entry Level Preferences (
+														Role Type (
 														{formData.entryLevelPreferences.length}/1+ selected)
 													</div>
 												</div>
@@ -1539,10 +1583,10 @@ function SignupForm() {
 												htmlFor="visa-field"
 												className="block text-base font-bold text-white mb-3"
 											>
-												Work Authorization *
+												Do you require visa sponsorship? *
 											</label>
 											<p className="text-sm text-zinc-200 mb-3">
-												Select your work authorization status in the EU/UK
+												We ask this so we can filter for companies that provide visa sponsorship for your specific region
 											</p>
 											<div
 												id="visa-field"
@@ -1602,7 +1646,7 @@ function SignupForm() {
 												!!formData.visaStatus,
 											) && (
 												<FormFieldError
-													error="Please select your work authorization status"
+													error="Please select whether you require visa sponsorship"
 													id="visa-error"
 												/>
 											)}
@@ -1614,10 +1658,10 @@ function SignupForm() {
 												htmlFor="entry-level-field"
 												className="block text-base font-bold text-white mb-3"
 											>
-												Entry Level Preference *
+												What type of roles are you looking for? *
 											</label>
 											<p className="text-sm text-zinc-200 mb-4">
-												What type of roles are you looking for?
+												Select the experience levels you're interested in (internships, graduate roles, junior positions)
 											</p>
 											<div
 												id="entry-level-field"
@@ -2231,10 +2275,10 @@ function SignupForm() {
 									<div className="relative z-10 space-y-6 sm:space-y-8 md:space-y-10">
 										<div className="text-center">
 											<h2 className="text-2xl sm:text-3xl font-black text-white mb-2">
-												Additional Preferences
+												Fine-tune Your Matches
 											</h2>
 											<p className="text-sm sm:text-base text-zinc-200 mb-4">
-												Optional - helps us match you even better
+												Optional - Adding these preferences improves match accuracy by up to 40%
 											</p>
 											<motion.button
 												type="button"
@@ -2252,13 +2296,12 @@ function SignupForm() {
 																block: "center",
 															});
 														}
-													}
 												}}
 												whileHover={{ scale: 1.02 }}
 												whileTap={{ scale: 0.98 }}
-												className="text-brand-300 hover:text-brand-200 text-sm font-semibold underline"
+												className="text-zinc-500 hover:text-brand-300 text-sm transition-colors underline underline-offset-4"
 											>
-												Skip Optional Fields →
+												Skip optional fields to see matches now →
 											</motion.button>
 										</div>
 

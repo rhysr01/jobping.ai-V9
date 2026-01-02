@@ -121,7 +121,7 @@ function determineCompanySize(company: string): string {
 	];
 	const _startupKeywords = ["startup", "scale-up", "early-stage"];
 
-	const companyLower = company.toLowerCase();
+	const companyLower = (company || "").toLowerCase();
 
 	if (largeCompanies.some((large) => companyLower.includes(large))) {
 		return "enterprise";

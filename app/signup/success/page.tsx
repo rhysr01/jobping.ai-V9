@@ -12,6 +12,12 @@ import {
 	PREMIUM_SEND_DAYS_LABEL,
 	PREMIUM_SENDS_PER_WEEK,
 } from "@/lib/productMetrics";
+import {
+	calculateMatchAccuracy,
+	getMatchAccuracyColor,
+} from "@/lib/matchAccuracy";
+import CustomScanTrigger from "@/components/ui/CustomScanTrigger";
+import TargetCompaniesAlert from "@/components/ui/TargetCompaniesAlert";
 
 function SignupSuccessContent() {
 	const [showSuccess, setShowSuccess] = useState(true);
@@ -20,6 +26,21 @@ function SignupSuccessContent() {
 	const [verificationStatus, setVerificationStatus] = useState<
 		"pending" | "verified" | "error"
 	>("pending");
+	const [metadata, setMetadata] = useState<{
+		targetCompanies: Array<{
+			company: string;
+			lastMatchedAt: string;
+			matchCount: number;
+			roles: string[];
+		}>;
+		customScan: {
+			scanId: string;
+			estimatedTime: string;
+			message: string;
+		} | null;
+		relaxationLevel: number | null;
+	} | null>(null);
+	const [metadataLoading, setMetadataLoading] = useState(true);
 	const searchParams = useSearchParams();
 	// This is the premium success page - free users go directly to /matches
 	const _tier: "premium" = "premium";
@@ -45,6 +66,28 @@ function SignupSuccessContent() {
 
 		return () => clearTimeout(timer);
 	}, [verified, verificationError]);
+
+	// Fetch metadata on mount (non-blocking)
+	useEffect(() => {
+		if (!email) return;
+
+		// Fetch metadata in background
+		apiCall(`/api/signup/metadata?email=${encodeURIComponent(email)}`)
+			.then((res) => res.json())
+			.then((data) => {
+				setMetadata(data);
+				setMetadataLoading(false);
+			})
+			.catch(() => {
+				setMetadataLoading(false);
+			});
+	}, [email]);
+
+	const handleSetAlert = async (company: string) => {
+		// Track the alert event (placeholder - implement actual alert logic)
+		console.log("Setting alert for company:", company);
+		// TODO: Implement alert setting logic
+	};
 
 	const handleResendEmail = async () => {
 		if (!email) {
@@ -220,6 +263,65 @@ function SignupSuccessContent() {
 							<BrandIcons.Mail className="h-4 w-4 text-brand-300" />
 							hello@getjobping.com · add us to contacts
 						</div>
+
+						{/* Fallback Metadata Section */}
+						{metadataLoading ? (
+							<div className="space-y-4">
+								<div className="h-32 bg-zinc-800/50 rounded-xl animate-pulse" />
+								<div className="h-24 bg-zinc-800/50 rounded-xl animate-pulse" />
+							</div>
+						) : (
+							<>
+								{metadata?.customScan && (
+									<CustomScanTrigger
+										scanId={metadata.customScan.scanId}
+										estimatedTime={metadata.customScan.estimatedTime}
+										message={metadata.customScan.message}
+										userEmail={email}
+									/>
+								)}
+
+								{metadata?.targetCompanies && metadata.targetCompanies.length > 0 && (
+									<TargetCompaniesAlert
+										companies={metadata.targetCompanies}
+										message="We've also matched students to these companies recently. Set alerts to be notified when new roles appear."
+										onSetAlert={handleSetAlert}
+									/>
+								)}
+
+								{/* Match Accuracy Score Badge */}
+								{metadata?.relaxationLevel !== null &&
+									metadata.relaxationLevel !== undefined && (
+										<div className="mb-6">
+											{(() => {
+												const accuracy = calculateMatchAccuracy(
+													metadata.relaxationLevel,
+												);
+												const colorClass = getMatchAccuracyColor(accuracy.label);
+												return (
+													<motion.div
+														initial={{ opacity: 0, y: 10 }}
+														animate={{ opacity: 1, y: 0 }}
+														className={`inline-flex items-center gap-3 rounded-xl border-2 px-5 py-3 ${colorClass} backdrop-blur-sm`}
+													>
+														<div className="flex items-center gap-2">
+															<BrandIcons.Target className="h-5 w-5" />
+															<div>
+																<div className="text-lg font-bold">
+																	{accuracy.percentage} Match Accuracy
+																</div>
+																<div className="text-xs opacity-90">
+																	{accuracy.description}
+																</div>
+															</div>
+														</div>
+													</motion.div>
+												);
+											})()}
+										</div>
+									)}
+							</>
+						)}
 
 						<div className="rounded-3xl border-2 border-white/20 bg-white/[0.08] p-8 sm:p-10 md:p-12 text-left backdrop-blur-md shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
 							<h2 className="text-2xl font-bold text-white mb-8 text-center sm:text-3xl">

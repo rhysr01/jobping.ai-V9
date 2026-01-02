@@ -369,117 +369,136 @@ export async function POST(req: NextRequest) {
 			);
 
 			try {
+				// Initialize distributedJobs at function scope
+				let distributedJobs: any[] = [];
+				let coordinatedResult: any = null;
+				let fallbackMetadata: {
+					targetCompanies?: Array<{ company: string; lastMatchedAt: string; matchCount: number; roles: string[] }>;
+					customScan?: { scanId: string; estimatedTime: string; message: string };
+					relaxationLevel?: number;
+				} | null = null;
+
 				if (jobsForMatching && jobsForMatching.length > 0) {
 					console.log(
-						`[SIGNUP] Found ${jobsForMatching.length} jobs, attempting matching...`,
+						`[SIGNUP] Found ${jobsForMatching.length} jobs, using coordinator pattern...`,
 					);
 
-					// Pass all jobs - engine handles hard gates, pre-ranking, and selects top 50 for AI
-					const matchResult = await matcher.performMatching(
+					// Use coordinator pattern for guaranteed matching
+					const { coordinatePremiumMatching } = await import("@/Utils/matching/guaranteed/coordinator");
+					
+					// Extract work environment preferences from form data
+					const targetWorkEnvironments: string[] =
+						Array.isArray(data.workEnvironment) &&
+						data.workEnvironment.length > 0
+							? data.workEnvironment // Form values: ['Office', 'Hybrid', 'Remote']
+							: [];
+
+					coordinatedResult = await coordinatePremiumMatching(
 						jobsForMatching as any[],
 						userPrefs as any,
+						supabase,
+						{
+							targetCount: 10,
+							targetCities: userData.target_cities || [],
+							targetWorkEnvironments: targetWorkEnvironments,
+						},
 					);
+
+					// Extract matches (already distributed)
+					distributedJobs = coordinatedResult.matches.map(m => ({
+						...m.job,
+						match_score: m.match_score,
+						match_reason: m.match_reason,
+					}));
+
 					console.log(
-						`[SIGNUP] Matching complete: ${matchResult.matches?.length || 0} matches found`,
+						`[SIGNUP] Coordinator complete: ${distributedJobs.length} matches found (method: ${coordinatedResult.metadata.matchingMethod})`,
 					);
 
-					if (matchResult.matches && matchResult.matches.length > 0) {
-						// CRITICAL: Extract all variables we need BEFORE any closures
-						const userEmailForMatches = userData.email;
-						const userCitiesForMatches = userData.target_cities || [];
-						const matchAlgorithmForMatches = matchResult.method;
+					// Store metadata for success page (if fallback was used)
+					if (coordinatedResult.metadata.matchingMethod !== "ai_success") {
+						fallbackMetadata = {
+							targetCompanies: coordinatedResult.targetCompanies.length > 0 ? coordinatedResult.targetCompanies : undefined,
+							customScan: coordinatedResult.customScan || undefined,
+							relaxationLevel: coordinatedResult.metadata.relaxationLevel,
+						};
+					}
 
-						// Get matched jobs with full data
-						const matchedJobsRaw: any[] = [];
-						for (const m of matchResult.matches) {
-							const job = jobsForMatching.find(
-								(j) => j.job_hash === m.job_hash,
-							);
-							if (job) {
-								matchedJobsRaw.push({
-									...job,
-									match_score: m.match_score,
-									match_reason: m.match_reason,
-								});
-							}
-						}
-
-						// DISTRIBUTION: Ensure source diversity, city balance, and work environment balance
-						const targetCount = Math.min(10, matchedJobsRaw.length);
-
-						// Extract work environment preferences from form data
-						const targetWorkEnvironments: string[] =
-							Array.isArray(data.workEnvironment) &&
-							data.workEnvironment.length > 0
-								? data.workEnvironment // Form values: ['Office', 'Hybrid', 'Remote']
-								: [];
-
-						let distributedJobs = distributeJobsWithDiversity(
-							matchedJobsRaw as any[],
-							{
-								targetCount,
-								targetCities: userCitiesForMatches,
-								maxPerSource: Math.ceil(targetCount / 3), // Max 1/3 from any source
-								ensureCityBalance: true,
-								targetWorkEnvironments: targetWorkEnvironments,
-								ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0,
-							},
+					// CRITICAL: If no jobs, trigger guaranteed matching with broader query
+					if (distributedJobs.length === 0) {
+						console.warn(
+							`[SIGNUP] No jobs from coordinator, attempting guaranteed matching with all active jobs...`,
 						);
+						
+						// Fetch ALL active jobs (no filters)
+						const { data: allActiveJobs } = await supabase
+							.from("jobs")
+							.select("*")
+							.eq("is_active", true)
+							.eq("status", "active")
+							.is("filtered_reason", null)
+							.order("created_at", { ascending: false })
+							.limit(2000);
 
-						// FALLBACK: If distribution returns empty (due to strict constraints), use raw matches
-						if (distributedJobs.length === 0 && matchedJobsRaw.length > 0) {
-							console.warn(
-								`[SIGNUP] Distribution returned empty, using ${Math.min(5, matchedJobsRaw.length)} raw matches as fallback`,
+						if (allActiveJobs && allActiveJobs.length > 0) {
+							const guaranteedResult = await coordinatePremiumMatching(
+								allActiveJobs as any[],
+								userPrefs as any,
+								supabase,
+								{
+									targetCount: 10,
+									targetCities: userData.target_cities || [],
+									targetWorkEnvironments: targetWorkEnvironments,
+								},
 							);
-							apiLogger.warn("Distribution returned empty, using raw matches", {
-								email: data.email,
-								rawMatchesCount: matchedJobsRaw.length,
-								targetCities: userCitiesForMatches,
-							});
-							distributedJobs = matchedJobsRaw.slice(
-								0,
-								Math.min(5, matchedJobsRaw.length),
-							) as any[];
+
+							distributedJobs = guaranteedResult.matches.map(m => ({
+								...m.job,
+								match_score: m.match_score,
+								match_reason: m.match_reason,
+							}));
+
+							coordinatedResult = guaranteedResult;
+							fallbackMetadata = {
+								targetCompanies: guaranteedResult.targetCompanies.length > 0 ? guaranteedResult.targetCompanies : undefined,
+								customScan: guaranteedResult.customScan || undefined,
+								relaxationLevel: guaranteedResult.metadata.relaxationLevel,
+							};
 						}
 
-						// Log distribution stats
-						const stats = getDistributionStats(distributedJobs);
+						// If still no jobs, trigger custom scan
+						if (distributedJobs.length === 0) {
+							const { triggerCustomScan, extractMissingCriteria } = await import("@/Utils/matching/guaranteed/custom-scan");
+							const missingCriteria = extractMissingCriteria(userPrefs, []);
+							const customScan = await triggerCustomScan(supabase, userPrefs, missingCriteria);
+							
+							fallbackMetadata = {
+								customScan,
+								relaxationLevel: 7,
+							};
+
+							// Don't throw error - proceed with welcome email and custom scan info
+							console.warn(
+								`[SIGNUP] No jobs found, custom scan triggered: ${customScan.scanId}`,
+							);
+						}
+					}
+
+					// Log distribution stats if we have matches
+					if (distributedJobs.length > 0) {
+						const stats = getDistributionStats(distributedJobs as any[]);
 						apiLogger.info("Job distribution stats", {
 							email: data.email,
 							sourceDistribution: stats.sourceDistribution,
 							cityDistribution: stats.cityDistribution,
 							totalJobs: stats.totalJobs,
+							matchingMethod: coordinatedResult?.metadata?.matchingMethod || "unknown",
+							relaxationLevel: coordinatedResult?.metadata?.relaxationLevel || 0,
 						});
 						console.log(
 							`[SIGNUP] Distribution: Sources=${JSON.stringify(stats.sourceDistribution)}, Cities=${JSON.stringify(stats.cityDistribution)}`,
 						);
-
-						// CRITICAL: Don't proceed if no jobs to send
-						if (distributedJobs.length === 0) {
-							console.error(
-								`[SIGNUP] ❌ No jobs to send after distribution! Raw matches: ${matchedJobsRaw.length}`,
-							);
-							const noJobsError = new Error(
-								"No jobs available to send after distribution",
-							);
-							apiLogger.error("No jobs after distribution", noJobsError, {
-								email: data.email,
-								rawMatchesCount: matchedJobsRaw.length,
-								distributedCount: distributedJobs.length,
-							});
-
-							// Track zero matches event
-							apiLogger.info("no_initial_matches", {
-								event: "no_initial_matches",
-								email: data.email,
-								reason: "distribution_returned_empty",
-								rawMatchesCount: matchedJobsRaw.length,
-								cities: userCitiesForMatches,
-								timestamp: new Date().toISOString(),
-							});
-
-							throw noJobsError;
-						}
+					}
 
 						// Save matches
 						// CRITICAL FIX: Ensure distributedJobs is defined and is an array before processing
@@ -492,19 +511,22 @@ export async function POST(req: NextRequest) {
 							throw new Error("distributedJobs is not an array");
 						}
 
-						// CRITICAL: Process matches in a way that avoids closure issues
-						// Create a helper function to process each job
-						const processJobForMatch = (job: any) => {
-							if (!job || !job.job_hash) {
-								return null;
-							}
-							return {
-								user_email: userEmailForMatches,
-								job_hash: String(job.job_hash),
-								match_score: Number(job.match_score) || 85,
-								match_reason: String(job.match_reason || "AI match"),
-							};
+					// CRITICAL: Process matches in a way that avoids closure issues
+					// Create a helper function to process each job
+					const userEmailForMatches = userData.email;
+					const matchAlgorithmForMatches = coordinatedResult?.metadata?.matchingMethod || "ai_success";
+					
+					const processJobForMatch = (job: any) => {
+						if (!job || !job.job_hash) {
+							return null;
+						}
+						return {
+							user_email: userEmailForMatches,
+							job_hash: String(job.job_hash),
+							match_score: Number(job.match_score) || 85,
+							match_reason: String(job.match_reason || "AI match"),
 						};
+					};
 
 						const matchesToSave: Array<{
 							user_email: string;
@@ -895,7 +917,8 @@ export async function POST(req: NextRequest) {
 			timestamp: new Date().toISOString(),
 		});
 
-		return NextResponse.json({
+		// Include fallback metadata in response if available
+		const responseData: any = {
 			success: true,
 			message:
 				matchesCount > 0
@@ -905,7 +928,12 @@ export async function POST(req: NextRequest) {
 			emailSent,
 			email: userData.email,
 			redirectUrl: `/signup/success?tier=premium&email=${encodeURIComponent(userData.email)}&matches=${matchesCount}`,
-		});
+		};
+
+		// Add fallback metadata if available (will be fetched by metadata API, but include for immediate use)
+		// Note: Metadata is primarily fetched via /api/signup/metadata for decoupling
+
+		return NextResponse.json(responseData);
 	} catch (error) {
 		apiLogger.error("Signup error", error as Error);
 		return NextResponse.json(

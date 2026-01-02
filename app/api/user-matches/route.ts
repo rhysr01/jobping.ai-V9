@@ -39,14 +39,10 @@ function getRequestId(req: NextRequest): string {
 
 export const GET = withAxiom(
 	asyncHandler(async (req: NextRequest) => {
-		// PRODUCTION: Stricter rate limiting for user matches endpoint
+		// PRODUCTION: Rate limiting for user matches endpoint (configurable via env vars)
 		const rateLimitResult = await getProductionRateLimiter().middleware(
 			req,
 			"user-matches",
-			{
-				windowMs: 60 * 1000, // 1 minute
-				maxRequests: 5, // Reduced from 30 to 5 requests per minute
-			},
 		);
 		if (rateLimitResult) {
 			return rateLimitResult;

@@ -15,9 +15,9 @@ describe("Send Configuration", () => {
   describe("SEND_PLAN", () => {
     it("should have free tier configuration", () => {
       expect(SEND_PLAN.free).toBeDefined();
-      expect(SEND_PLAN.free.days).toEqual(["Thu"]);
+      expect(SEND_PLAN.free.days).toEqual([]); // Free tier has no send days
       expect(SEND_PLAN.free.perSend).toBe(5);
-      expect(SEND_PLAN.free.pullsPerWeek).toBe(1);
+      expect(SEND_PLAN.free.pullsPerWeek).toBe(0); // No weekly emails for free
     });
 
     it("should have premium tier configuration", () => {
@@ -50,7 +50,7 @@ describe("Send Configuration", () => {
       expect(canReceive).toBe(true);
     });
 
-    it("should allow send if under limit", () => {
+    it("should deny send for free tier (no sends allowed)", () => {
       const currentWeek = "2024-01-08";
       const ledger = {
         user_id: "user1",
@@ -59,8 +59,9 @@ describe("Send Configuration", () => {
         sends_used: 0,
       };
 
+      // Free tier has pullsPerWeek: 0, so sends_used (0) >= pullsPerWeek (0) = false
       const canReceive = canUserReceiveSend(ledger, currentWeek, "free");
-      expect(canReceive).toBe(true);
+      expect(canReceive).toBe(false);
     });
 
     it("should deny send if limit reached", () => {

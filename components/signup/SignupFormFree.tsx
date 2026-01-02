@@ -15,6 +15,7 @@ import {
 import AriaLiveRegion from "@/components/ui/AriaLiveRegion";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 import Button from "@/components/ui/Button";
+import { CityChip } from "@/components/ui/CityChip";
 import {
 	FormFieldError,
 	FormFieldSuccess,
@@ -206,9 +207,11 @@ export default function SignupFormFree() {
 					if (prev <= 1) {
 						// Show "Personalizing Your Feed" screen before redirect
 						setShowPersonalizing(true);
-						// Redirect after personalizing screen (2 seconds)
+						// Redirect after personalizing screen (2 seconds) with success params
 						setTimeout(() => {
-							router.push("/matches");
+							router.push(
+								`/matches?justSignedUp=true&matchCount=${matchCount}`,
+							);
 						}, 2000);
 						return 0;
 					}
@@ -219,7 +222,7 @@ export default function SignupFormFree() {
 			return () => clearInterval(interval);
 		}
 		return undefined;
-	}, [showSuccess, showPersonalizing, router]);
+	}, [showSuccess, showPersonalizing, router, matchCount]);
 
 	// Calculate form completion percentage
 	const formProgress = useMemo(() => {
@@ -387,8 +390,11 @@ export default function SignupFormFree() {
 					// If redirectToMatches flag is set, redirect to matches page
 					if (data.redirectToMatches) {
 						showToast.success("Redirecting to your matches...");
+						const existingMatchCount = data.matchCount || 5;
 						setTimeout(() => {
-							router.push("/matches");
+							router.push(
+								`/matches?justSignedUp=true&matchCount=${existingMatchCount}`,
+							);
 						}, 1000);
 						return;
 					}
@@ -763,6 +769,11 @@ export default function SignupFormFree() {
 											onCityClick={isSubmitting ? () => {} : handleCityClick}
 											maxSelections={3}
 											className="w-full"
+											onMaxSelectionsReached={(_city, max) => {
+												showToast.error(
+													`Maximum ${max} cities selected. Remove a city to select another.`,
+												);
+											}}
 										/>
 									</Suspense>
 								</motion.div>
@@ -778,25 +789,55 @@ export default function SignupFormFree() {
 										const isDisabled =
 											!isSelected && formData.cities.length >= 3;
 										return (
-											<motion.button
+											<CityChip
 												key={city}
-												type="button"
-												onClick={() => handleCityToggle(city)}
-												whileTap={{ scale: 0.97 }}
-												className={`flex-none snap-start min-h-[48px] px-6 bg-zinc-900 border border-zinc-800 rounded-full whitespace-nowrap text-sm font-medium transition-colors touch-manipulation ${
-													isSelected
-														? "border-brand-500 bg-brand-500/15 text-white"
-														: isDisabled || isSubmitting
-															? "border-border-subtle bg-surface-elevated/40 text-content-secondary cursor-not-allowed"
-															: "border-border-default bg-surface-elevated/40 text-content-heading"
-												}`}
-												disabled={isDisabled || isSubmitting}
-											>
-												{city}
-											</motion.button>
+												city={city}
+												isSelected={isSelected}
+												isDisabled={isDisabled || isSubmitting}
+												onToggle={(city) => {
+													// Trigger haptic feedback (if supported)
+													if ("vibrate" in navigator) {
+														navigator.vibrate(10); // 10ms subtle pulse
+													}
+													if (isDisabled) {
+														showToast.error(
+															"Maximum 3 cities selected. Remove a city to select another.",
+														);
+														return;
+													}
+													handleCityToggle(city);
+												}}
+												onRemove={(city) => {
+													setFormData((prev) => ({
+														...prev,
+														cities: prev.cities.filter((c) => c !== city),
+													}));
+													setTouchedFields((prev) =>
+														new Set(prev).add("cities"),
+													);
+												}}
+											/>
 										);
 									})}
 								</div>
+
+								{/* Clear All Cities Button - Unified for Free users too */}
+								{formData.cities.length > 0 && (
+									<div className="mb-3 sm:hidden">
+										<motion.button
+											type="button"
+											onClick={() => {
+												setFormData((prev) => ({ ...prev, cities: [] }));
+												setTouchedFields((prev) => new Set(prev).add("cities"));
+											}}
+											whileHover={{ scale: 1.02 }}
+											whileTap={{ scale: 0.98 }}
+											className="px-4 py-2 bg-zinc-500/10 hover:bg-zinc-500/20 border border-zinc-700 text-zinc-400 hover:text-zinc-300 text-sm font-medium rounded-lg transition-colors touch-manipulation min-h-[48px]"
+										>
+											Clear All Cities
+										</motion.button>
+									</div>
+								)}
 
 								<div className="mt-2 flex items-center justify-between">
 									<p className="text-sm text-content-secondary">
@@ -984,11 +1025,12 @@ export default function SignupFormFree() {
 										: "Show Me My 5 Matches →"}
 								</Button>
 
-								<p className="text-sm text-center text-content-secondary mt-4">
+								<p className="text-sm text-center text-content-secondary mt-4 leading-relaxed tracking-tight">
 									<span className="text-brand-400 font-semibold">
 										Quick & Free
-									</span>{" "}
-									· No credit card required · Instant results
+									</span>
+									{" • "}
+									No credit card required • Instant results • Cancel anytime
 								</p>
 							</div>
 						</form>

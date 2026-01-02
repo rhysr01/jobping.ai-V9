@@ -4,8 +4,23 @@
  */
 
 import { NextRequest } from "next/server";
-import { GET, POST } from "@/app/api/match-users/route";
 import { hmacSign } from "@/Utils/auth/hmac";
+
+jest.mock("next-axiom", () => ({
+	withAxiom: (handler: any) => handler,
+}));
+
+jest.mock("@/Utils/productionRateLimiter");
+jest.mock("@/Utils/locks");
+jest.mock("@/Utils/auth/hmac");
+jest.mock("@/app/api/match-users/handlers/orchestration");
+jest.mock("@/app/api/match-users/handlers/validation", () => ({
+  ...jest.requireActual("@/app/api/match-users/handlers/validation"),
+  verifyHMACAuth: jest.fn(),
+  verifyHMACFromParams: jest.fn(),
+}));
+
+import { GET, POST } from "@/app/api/match-users/route";
 
 // Mock the consolidated matcher
 jest.mock("@/Utils/consolidatedMatchingV2", () => ({
@@ -44,31 +59,8 @@ jest.mock("@/Utils/matching/logging.service", () => ({
   logMatchSession: jest.fn().mockResolvedValue(undefined),
 }));
 
-// Mock Supabase database client
-jest.mock("@/Utils/databasePool", () => ({
-  getDatabaseClient: jest.fn(() => ({
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          limit: jest.fn(() => ({
-            data: [
-              {
-                id: "user1",
-                email: "test@example.com",
-                full_name: "Test User",
-                subscription_tier: "free",
-                target_cities: ["London"],
-                roles_selected: ["Software Engineer"],
-                is_active: true,
-              },
-            ],
-            error: null,
-          })),
-        })),
-      })),
-    })),
-  })),
-}));
+// Mock Supabase database client - use the global mock system
+jest.mock("@/Utils/databasePool");
 
 // Redis functionality is handled internally by the rate limiter
 // No direct Redis import to mock
@@ -102,6 +94,78 @@ describe("/api/match-users Integration Tests", () => {
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks();
+
+    // Set up database client mock - use the global mock from __mocks__/@supabase/supabase-js.ts
+    const { getDatabaseClient } = require("@/Utils/databasePool");
+    // Import the mocked createClient which uses global.__SB_MOCK__
+    const { createClient } = require("@supabase/supabase-js");
+    const mockSupabase = createClient("https://test.supabase.co", "test-key");
+    getDatabaseClient.mockReturnValue(mockSupabase);
+
+    // Set up rate limiter mock
+    const { getProductionRateLimiter } = require("@/Utils/productionRateLimiter");
+    getProductionRateLimiter.mockReturnValue({
+      middleware: jest.fn().mockResolvedValue(null),
+      initializeRedis: jest.fn().mockResolvedValue(undefined),
+      redisClient: {
+        set: jest.fn().mockResolvedValue("OK"),
+        get: jest.fn().mockResolvedValue(null),
+        del: jest.fn().mockResolvedValue(1),
+      },
+    });
+
+    // Set up locks mock
+    const { withRedisLock } = require("@/Utils/locks");
+    withRedisLock.mockImplementation((_key: string, _ttl: number, fn: () => Promise<any>) => fn());
+
+    // Set up HMAC mocks
+    const { verifyHMAC, isHMACRequired } = require("@/Utils/auth/hmac");
+    verifyHMAC.mockReturnValue({ isValid: true });
+    isHMACRequired.mockReturnValue(false);
+
+    // Set up validation mocks
+    const { verifyHMACAuth, verifyHMACFromParams } = require("@/app/api/match-users/handlers/validation");
+    verifyHMACAuth.mockReturnValue({ isValid: true });
+    verifyHMACFromParams.mockReturnValue({ isValid: true });
+
+    // Set up orchestration mocks
+    const { fetchUsersAndJobs, processUsers } = require("@/app/api/match-users/handlers/orchestration");
+    fetchUsersAndJobs.mockResolvedValue({
+      users: [
+        {
+          id: "1",
+          email: "test1@getjobping.com",
+          subscription_tier: "free",
+          email_verified: true,
+        },
+      ],
+      transformedUsers: [
+        {
+          email: "test1@getjobping.com",
+          preferences: {
+            target_cities: ["london"],
+            languages_spoken: ["English"],
+            career_path: ["tech"],
+          },
+        },
+      ],
+      jobs: [
+        {
+          id: "1",
+          job_hash: "hash1",
+          title: "Junior Software Engineer",
+          company: "Tech Startup",
+        },
+      ],
+      isSemanticAvailable: false,
+    });
+    processUsers.mockResolvedValue([
+      {
+        user: "test1@getjobping.com",
+        success: true,
+        matches: 5,
+      },
+    ]);
 
     // Set up comprehensive mock data
     global.__SB_MOCK__ = {

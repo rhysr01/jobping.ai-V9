@@ -16,7 +16,10 @@ jest.mock("@/Utils/databasePool", () => ({
 
 describe("GET /api/health", () => {
   it("should return health status", async () => {
-    const response = await GET();
+    const mockRequest = {
+      headers: new Headers(),
+    } as any;
+    const response = await GET(mockRequest);
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -25,20 +28,34 @@ describe("GET /api/health", () => {
   });
 
   it("should include database check", async () => {
-    const response = await GET();
+    const mockRequest = {
+      headers: new Headers(),
+    } as any;
+    const response = await GET(mockRequest);
     const data = await response.json();
 
-    expect(data.checks).toHaveProperty("database");
-    expect(data.checks.database).toHaveProperty("status");
+    expect(data.services).toHaveProperty("database");
+    expect(data.services.database).toHaveProperty("status");
   });
 
-  it("should call getDatabaseClient", async () => {
-    await GET();
-    expect(getDatabaseClient).toHaveBeenCalled();
+  it("should include database health status (behavior test)", async () => {
+    const mockRequest = {
+      headers: new Headers(),
+    } as any;
+    const response = await GET(mockRequest);
+    const data = await response.json();
+    
+    // Behavior: Health check should include database status
+    expect(data.services.database).toBeDefined();
+    expect(data.services.database.status).toBeDefined();
+    // ✅ Tests outcome, not internal implementation
   });
 
   it("should include timestamp", async () => {
-    const response = await GET();
+    const mockRequest = {
+      headers: new Headers(),
+    } as any;
+    const response = await GET(mockRequest);
     const data = await response.json();
 
     expect(data).toHaveProperty("timestamp");

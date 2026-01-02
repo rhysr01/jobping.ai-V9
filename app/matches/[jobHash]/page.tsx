@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Button from "@/components/ui/Button";
+import JobClosedModal from "@/components/ui/JobClosedModal";
 import { apiCall } from "@/lib/api-client";
 
 interface MatchEvidence {
@@ -38,6 +39,20 @@ function MatchEvidencePageContent() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
 	const [applying, setApplying] = useState(false);
+	const [showJobClosedModal, setShowJobClosedModal] = useState(false);
+	const [jobClosedData, setJobClosedData] = useState<{
+		originalJob: { title: string; company: string; location: string };
+		similarMatches: Array<{
+			job_hash: string;
+			title: string;
+			company: string;
+			location: string;
+			job_url: string;
+			match_score: number;
+			match_reason: string;
+		}>;
+		message: string;
+	} | null>(null);
 
 	const fetchEvidence = async () => {
 		try {
@@ -92,8 +107,8 @@ function MatchEvidencePageContent() {
 		setApplying(true);
 
 		try {
-			// Track positive click before redirecting
-			await apiCall("/api/tracking/implicit", {
+			// Track positive click before redirecting (non-blocking)
+			apiCall("/api/tracking/implicit", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
@@ -104,15 +119,54 @@ function MatchEvidencePageContent() {
 					metadata: { action: "apply_clicked", page: "evidence" },
 				}),
 			}).catch(() => {
-				// Fail silently - tracking is not critical
+				// Fail silently - tracking is non-critical
 			});
 
-			// Redirect to job URL
+			// Use bridge route instead of direct redirect
+			const bridgeUrl = `/api/apply/${evidence.job.job_hash}?email=${encodeURIComponent(evidence.user_email)}&token=${encodeURIComponent(token)}`;
+
+			// Fetch from bridge route
+			const response = await fetch(bridgeUrl, {
+				method: "GET",
+				redirect: "manual", // Don't auto-follow redirects
+			});
+
+			// Check if it's a redirect (healthy link)
+			if (response.status === 302 || response.status === 301) {
+				const redirectUrl = response.headers.get("location");
+				if (redirectUrl) {
+					window.open(redirectUrl, "_blank", "noopener,noreferrer");
+					setApplying(false);
+					return;
+				}
+			}
+
+			// Check if it's JSON (broken link with similar matches)
+			const contentType = response.headers.get("content-type");
+			if (contentType?.includes("application/json")) {
+				const data = await response.json();
+
+				if (data.error && data.similarMatches) {
+					// Show "Job Closed" UI with similar matches
+					setJobClosedData({
+						originalJob: data.originalJob,
+						similarMatches: data.similarMatches,
+						message: data.message,
+					});
+					setShowJobClosedModal(true);
+					setApplying(false);
+					return;
+				}
+			}
+
+			// Fallback: Direct redirect if bridge route fails
 			window.open(evidence.job.job_url, "_blank", "noopener,noreferrer");
 		} catch (err) {
-			console.error("Error tracking apply click:", err);
-			// Still redirect even if tracking fails
-			window.open(evidence.job.job_url, "_blank", "noopener,noreferrer");
+			console.error("Error in bridge route:", err);
+			// Fallback: Direct redirect
+			if (evidence?.job.job_url) {
+				window.open(evidence.job.job_url, "_blank", "noopener,noreferrer");
+			}
 		} finally {
 			setApplying(false);
 		}
@@ -264,7 +318,7 @@ function MatchEvidencePageContent() {
 						className="flex-1"
 					>
 						{applying
-							? "Opening..."
+							? "Checking link..."
 							: evidence.job.is_active
 								? "Apply on Source →"
 								: "Job May Be Filled"}
@@ -294,6 +348,17 @@ function MatchEvidencePageContent() {
 					</p>
 				</div>
 			</div>
+
+			{/* Job Closed Modal */}
+			{jobClosedData && (
+				<JobClosedModal
+					isOpen={showJobClosedModal}
+					onClose={() => setShowJobClosedModal(false)}
+					originalJob={jobClosedData.originalJob}
+					similarMatches={jobClosedData.similarMatches}
+					message={jobClosedData.message}
+				/>
+			)}
 		</div>
 	);
 }

@@ -98,6 +98,7 @@ export interface UserPreferences {
 
 export interface MatchScore {
 	overall: number;
+	eligibility: number; // 100 if eligible for early career, 0 otherwise
 	careerPath: number;
 	location: number;
 	workEnvironment: number;

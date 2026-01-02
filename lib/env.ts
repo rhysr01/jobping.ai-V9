@@ -96,6 +96,28 @@ const schema = z.object({
 	CLEANUP_BATCH_DELAY_MS: z.coerce.number().min(0).max(5000).default(250),
 	CLEANUP_SECRET: z.string().optional(),
 
+	// Rate Limiting Configuration (all configurable to scale with infrastructure)
+	RATE_LIMIT_DEFAULT_MAX: z.coerce.number().min(1).max(10000).default(500),
+	RATE_LIMIT_DEFAULT_WINDOW_MS: z.coerce.number().min(1000).max(3600000).default(60000),
+	RATE_LIMIT_MATCH_USERS_MAX: z.coerce.number().min(1).max(1000).default(30),
+	RATE_LIMIT_WINDOW_MS: z.coerce.number().min(60000).max(3600000).default(240000),
+	RATE_LIMIT_SCRAPE_MAX: z.coerce.number().min(1).max(1000).default(50),
+	RATE_LIMIT_SCRAPE_WINDOW_MS: z.coerce.number().min(1000).max(3600000).default(60000),
+	RATE_LIMIT_EMAILS_MAX: z.coerce.number().min(1).max(1000).default(20),
+	RATE_LIMIT_EMAILS_WINDOW_MS: z.coerce.number().min(1000).max(3600000).default(60000),
+	RATE_LIMIT_CHECKOUT_MAX: z.coerce.number().min(1).max(1000).default(30),
+	RATE_LIMIT_CHECKOUT_WINDOW_MS: z.coerce.number().min(1000).max(3600000).default(300000),
+	RATE_LIMIT_USER_MATCHES_MAX: z.coerce.number().min(1).max(10000).default(100),
+	RATE_LIMIT_USER_MATCHES_WINDOW_MS: z.coerce.number().min(1000).max(3600000).default(60000),
+	RATE_LIMIT_DASHBOARD_MAX: z.coerce.number().min(1).max(10000).default(200),
+	RATE_LIMIT_DASHBOARD_WINDOW_MS: z.coerce.number().min(1000).max(3600000).default(60000),
+	RATE_LIMIT_VERIFY_EMAIL_MAX: z.coerce.number().min(1).max(1000).default(50),
+	RATE_LIMIT_VERIFY_EMAIL_WINDOW_MS: z.coerce.number().min(1000).max(3600000).default(300000),
+	RATE_LIMIT_CLEANUP_MAX: z.coerce.number().min(1).max(1000).default(20),
+	RATE_LIMIT_CLEANUP_WINDOW_MS: z.coerce.number().min(1000).max(3600000).default(300000),
+	RATE_LIMIT_CONSUME_MAX: z.coerce.number().min(1).max(10000).default(500),
+	RATE_LIMIT_CONSUME_WINDOW_SEC: z.coerce.number().min(1).max(3600).default(60),
+
 	// Logging
 	LOG_LEVEL: z.enum(["error", "warn", "info", "debug"]).default("info"),
 

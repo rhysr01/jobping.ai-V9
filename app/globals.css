@@ -70,12 +70,12 @@ body {
 
 /* Custom Selection Color - Brand Purple */
 ::selection {
-  background-color: rgba(168, 85, 247, 0.3); /* Brand Purple */
+  background-color: rgba(91, 33, 182, 0.3); /* Brand Purple - brand-600 */
   color: white;
 }
 
 ::-moz-selection {
-  background-color: rgba(168, 85, 247, 0.3);
+  background-color: rgba(91, 33, 182, 0.3);
   color: white;
 }
 

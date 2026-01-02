@@ -24,7 +24,7 @@ import {
  */
 export function distributeJobsWithDiversity(
 	jobs: JobWithSource[],
-	options: DistributionOptions,
+	options: DistributionOptions & { relaxed?: boolean },
 ): JobWithSource[] {
 	const jobsArray = Array.isArray(jobs) ? jobs : [];
 
@@ -36,17 +36,23 @@ export function distributeJobsWithDiversity(
 		targetWorkEnvironments = [],
 		ensureWorkEnvironmentBalance: initialWorkEnvBalance = true,
 		qualityFloorThreshold = 10,
+		relaxed = false,
 	} = options;
 
 	if (jobsArray.length === 0) return [];
 	if (targetCount <= 0) return [];
 
-	let ensureCityBalance = initialCityBalance;
+	// Apply relaxed mode: if relaxed, allow more from one source and relax city balance
+	const effectiveMaxPerSource = relaxed 
+		? Math.ceil(targetCount / 2) // Relaxed: allow 50% from one source
+		: maxPerSource;
+
+	let ensureCityBalance = relaxed ? false : initialCityBalance;
 	if (targetCities.length === 0) {
 		ensureCityBalance = false;
 	}
 
-	let ensureWorkEnvironmentBalance = initialWorkEnvBalance;
+	let ensureWorkEnvironmentBalance = relaxed ? false : initialWorkEnvBalance;
 	if (targetWorkEnvironments.length === 0) {
 		ensureWorkEnvironmentBalance = false;
 	}
@@ -55,10 +61,13 @@ export function distributeJobsWithDiversity(
 	const sourceDiversity = checkSourceDiversity(
 		jobsArray,
 		targetCount,
-		maxPerSource,
+		effectiveMaxPerSource, // Use relaxed max if applicable
 	);
-	const { hasMultipleSources, effectiveMaxPerSource, uniqueSources } =
+	const { hasMultipleSources, effectiveMaxPerSource: effectiveMax, uniqueSources } =
 		sourceDiversity;
+	
+	// Use the effective max from source diversity check, but respect relaxed mode
+	const finalMaxPerSource = relaxed ? effectiveMaxPerSource : effectiveMax;
 
 	// Check city balance feasibility
 	const cityBalance = checkCityBalance(
@@ -157,7 +166,7 @@ export function distributeJobsWithDiversity(
 	};
 
 	const canAddFromSource = (source: string): boolean => {
-		return (sourceCounts[source] || 0) < effectiveMaxPerSource;
+		return (sourceCounts[source] || 0) < finalMaxPerSource;
 	};
 
 	const needsMoreFromCity = (city: string, location?: string): boolean => {
@@ -434,15 +443,15 @@ export function distributeJobsWithDiversity(
 
 	if (
 		hasMultipleSources &&
-		maxFromAnySource > effectiveMaxPerSource &&
+		maxFromAnySource > finalMaxPerSource &&
 		selectedJobs.length > 0
 	) {
 		const dominantSource = Object.entries(sourceCounts).find(
-			([_, count]) => count > effectiveMaxPerSource,
+			([_, count]) => count > finalMaxPerSource,
 		)?.[0];
 
 		if (dominantSource) {
-			const excess = sourceCounts[dominantSource] - effectiveMaxPerSource;
+			const excess = sourceCounts[dominantSource] - finalMaxPerSource;
 
 			const jobsFromDominantSource: Array<{
 				job: JobWithSource;
@@ -461,7 +470,7 @@ export function distributeJobsWithDiversity(
 				return scoreB - scoreA;
 			});
 
-			const toRemove = jobsFromDominantSource.slice(effectiveMaxPerSource);
+			const toRemove = jobsFromDominantSource.slice(finalMaxPerSource);
 
 			const indicesToRemove = new Set<number>();
 			for (let i = 0; i < toRemove.length; i++) {
@@ -474,7 +483,7 @@ export function distributeJobsWithDiversity(
 				}
 			}
 
-			sourceCounts[dominantSource] = effectiveMaxPerSource;
+			sourceCounts[dominantSource] = finalMaxPerSource;
 
 			const selectedIds = new Set<string>();
 			for (let i = 0; i < rebalancedJobs.length; i++) {

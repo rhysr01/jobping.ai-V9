@@ -3,19 +3,27 @@
  * Tests connection pooling and health checks
  */
 
-import { getDatabaseClient } from "@/Utils/databasePool";
+import {
+  closeDatabasePool,
+  getDatabaseClient,
+} from "@/Utils/databasePool";
 
-jest.mock("@supabase/supabase-js");
+jest.mock("@supabase/supabase-js", () => ({
+  createClient: jest.fn(),
+}));
 // Sentry removed - using Axiom for error tracking
 
 describe("Database Pool", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
+    // Reset singleton state
+    await closeDatabasePool();
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await closeDatabasePool();
     delete process.env.NEXT_PUBLIC_SUPABASE_URL;
     delete process.env.SUPABASE_SERVICE_ROLE_KEY;
   });
@@ -24,7 +32,7 @@ describe("Database Pool", () => {
     it("should create Supabase client with valid config", () => {
       const { createClient } = require("@supabase/supabase-js");
       const mockClient = { from: jest.fn() };
-      createClient.mockReturnValue(mockClient);
+      (createClient as jest.Mock).mockReturnValue(mockClient);
 
       const client = getDatabaseClient();
 
@@ -60,7 +68,7 @@ describe("Database Pool", () => {
     it("should return same instance on multiple calls", () => {
       const { createClient } = require("@supabase/supabase-js");
       const mockClient = { from: jest.fn() };
-      createClient.mockReturnValue(mockClient);
+      (createClient as jest.Mock).mockReturnValue(mockClient);
 
       const client1 = getDatabaseClient();
       const client2 = getDatabaseClient();
@@ -69,9 +77,10 @@ describe("Database Pool", () => {
       expect(createClient).toHaveBeenCalledTimes(1);
     });
 
-    it("should handle initialization errors", () => {
+    it("should handle initialization errors", async () => {
+      await closeDatabasePool();
       const { createClient } = require("@supabase/supabase-js");
-      createClient.mockImplementation(() => {
+      (createClient as jest.Mock).mockImplementation(() => {
         throw new Error("Connection failed");
       });
 

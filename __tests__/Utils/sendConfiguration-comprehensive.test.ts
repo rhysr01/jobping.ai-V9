@@ -20,10 +20,10 @@ describe("Send Configuration - Comprehensive", () => {
   describe("SEND_PLAN", () => {
     it("should have correct free plan configuration", () => {
       expect(SEND_PLAN.free).toBeDefined();
-      expect(SEND_PLAN.free.days).toEqual(["Thu"]);
+      expect(SEND_PLAN.free.days).toEqual([]); // Free tier has no send days
       expect(SEND_PLAN.free.perSend).toBe(5);
-      expect(SEND_PLAN.free.pullsPerWeek).toBe(1);
-      expect(SEND_PLAN.free.signupBonus).toBe(10);
+      expect(SEND_PLAN.free.pullsPerWeek).toBe(0); // No weekly emails
+      expect(SEND_PLAN.free.signupBonus).toBe(0); // No signup email
       expect(SEND_PLAN.free.earlyAccessHours).toBeUndefined();
     });
 
@@ -68,7 +68,7 @@ describe("Send Configuration - Comprehensive", () => {
       expect(canUserReceiveSend(ledger, currentWeek, "free")).toBe(true);
     });
 
-    it("should allow send when under limit for free tier", () => {
+    it("should deny send for free tier (no sends allowed)", () => {
       const ledger: SendLedgerEntry = {
         user_id: "user1",
         week_start: "2024-01-01",
@@ -77,7 +77,8 @@ describe("Send Configuration - Comprehensive", () => {
         jobs_sent: 0,
       };
       const currentWeek = "2024-01-01";
-      expect(canUserReceiveSend(ledger, currentWeek, "free")).toBe(true);
+      // Free tier has pullsPerWeek: 0, so sends_used (0) >= pullsPerWeek (0) = false
+      expect(canUserReceiveSend(ledger, currentWeek, "free")).toBe(false);
     });
 
     it("should deny send when at limit for free tier", () => {
@@ -211,13 +212,14 @@ describe("Send Configuration - Comprehensive", () => {
       jest.useRealTimers();
     });
 
-    it("should return true for Thursday for free tier", () => {
+    it("should return false for free tier (no send days)", () => {
+      // Free tier has no send days (empty array)
       const thursday = new Date("2024-01-04"); // Thursday
       jest.setSystemTime(thursday);
-      expect(isSendDay("free")).toBe(true);
+      expect(isSendDay("free")).toBe(false);
     });
 
-    it("should return false for non-Thursday for free tier", () => {
+    it("should return false for any day for free tier", () => {
       const monday = new Date("2024-01-01"); // Monday
       jest.setSystemTime(monday);
       expect(isSendDay("free")).toBe(false);
@@ -259,8 +261,8 @@ describe("Send Configuration - Comprehensive", () => {
   });
 
   describe("getSignupBonusJobs", () => {
-    it("should return 10 for free tier", () => {
-      expect(getSignupBonusJobs("free")).toBe(10);
+    it("should return 0 for free tier (no signup bonus)", () => {
+      expect(getSignupBonusJobs("free")).toBe(0);
     });
 
     it("should return 10 for premium tier", () => {

@@ -94,6 +94,11 @@ export function verifyHMAC(
 		.update(data)
 		.digest("hex");
 
+	// Safety check: buffers must have the same length for timingSafeEqual
+	if (signature.length !== expectedSignature.length) {
+		return { isValid: false, error: "Invalid signature" };
+	}
+
 	// Use timing-safe comparison
 	const isValid = crypto.timingSafeEqual(
 		Buffer.from(signature, "hex"),

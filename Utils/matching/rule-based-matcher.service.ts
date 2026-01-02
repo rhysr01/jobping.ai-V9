@@ -27,7 +27,7 @@ import { validateLocationCompatibility } from "./validators";
 export function applyHardGates(
 	job: Job,
 	userPrefs: UserPreferences,
-): { passed: boolean; reason: string } {
+): { passed: boolean; reason: string; reasons?: string[] } {
 	const categories = normalizeToString(job.categories);
 	const _tags = cats(categories);
 
@@ -36,9 +36,12 @@ export function applyHardGates(
 		userPrefs.subscription_tier === "free" || !userPrefs.subscription_tier;
 	const _isPremiumTier = userPrefs.subscription_tier === "premium";
 
+	// Collect all failures instead of returning on first failure
+	const failures: string[] = [];
+
 	// Check if job is eligible for early career
 	if (!hasEligibility(categories)) {
-		return { passed: false, reason: "Not eligible for early career" };
+		failures.push("Not eligible for early career");
 	}
 
 	// Check location compatibility with intelligent fallback
@@ -110,18 +113,16 @@ export function applyHardGates(
 				!isRemoteOrHybrid &&
 				!isInSameCountry
 			) {
-				return {
-					passed: false,
-					reason: `Location mismatch: ${locationValidation.reasons[0]}`,
-				};
+				failures.push(
+					`Location mismatch: ${locationValidation.reasons[0] || "Location does not match user preferences"}`,
+				);
 			}
 		} else {
 			// PREMIUM TIER: Stricter - must match exact cities or be remote/hybrid
 			if (!locationValidation.compatible && !isRemoteOrHybrid) {
-				return {
-					passed: false,
-					reason: `Location mismatch: ${locationValidation.reasons[0]}`,
-				};
+				failures.push(
+					`Location mismatch: ${locationValidation.reasons[0] || "Location does not match user preferences"}`,
+				);
 			}
 		}
 	}
@@ -149,21 +150,17 @@ export function applyHardGates(
 			if (isFreeTier) {
 				// Free users: Only reject if they want remote and job is strictly on-site
 				if (userWorkEnv === "remote" && isJobOnSite) {
-					return {
-						passed: false,
-						reason:
-							"Work environment mismatch: user wants remote but job is on-site",
-					};
+					failures.push(
+						"Work environment mismatch: user wants remote but job is on-site",
+					);
 				}
 				// Otherwise, accept hybrid/remote/on-site for free users (more flexible)
 			} else {
 				// Premium users: Stricter matching
 				if (userWorkEnv === "remote" && isJobOnSite) {
-					return {
-						passed: false,
-						reason:
-							"Work environment mismatch: user wants remote but job is on-site",
-					};
+					failures.push(
+						"Work environment mismatch: user wants remote but job is on-site",
+					);
 				}
 				// Premium users can also reject if they want on-site but job is remote (optional - can be removed if too strict)
 				// if (userWorkEnv === 'on-site' && isJobRemote && !isJobHybrid) {
@@ -250,18 +247,16 @@ export function applyHardGates(
 					!jobVisaFriendly &&
 					!hasInternationalIndicator
 				) {
-					return {
-						passed: false,
-						reason: "Job does not offer visa sponsorship (required for user)",
-					};
+					failures.push(
+						"Job does not offer visa sponsorship (required for user)",
+					);
 				}
 			} else {
 				// PREMIUM TIER: Stricter - must have clear visa sponsorship
 				if (!offersVisaSponsorship && !jobVisaFriendly) {
-					return {
-						passed: false,
-						reason: "Job does not offer visa sponsorship (required for user)",
-					};
+					failures.push(
+						"Job does not offer visa sponsorship (required for user)",
+					);
 				}
 			}
 		}
@@ -422,18 +417,16 @@ export function applyHardGates(
 					// If job requires only non-English languages, still reject for free users
 					// But if job mentions English OR doesn't have explicit requirements, allow
 					if (requiresOnlyNonEnglish) {
-						return {
-							passed: false,
-							reason: `Job requires languages user doesn't speak: ${jobLanguages.join(", ")}`,
-						};
+						failures.push(
+							`Job requires languages user doesn't speak: ${jobLanguages.join(", ")}`,
+						);
 					}
 					// Otherwise, allow (job likely accepts English speakers)
 				} else {
 					// Premium tier or free user without English: Must match
-					return {
-						passed: false,
-						reason: `Job requires languages user doesn't speak: ${jobLanguages.join(", ")}`,
-					};
+					failures.push(
+						`Job requires languages user doesn't speak: ${jobLanguages.join(", ")}`,
+					);
 				}
 			}
 		}
@@ -545,10 +538,7 @@ export function applyHardGates(
 		);
 
 		if (requiresUnknownLanguage) {
-			return {
-				passed: false,
-				reason: "Job description requires languages user doesn't speak",
-			};
+			failures.push("Job description requires languages user doesn't speak");
 		}
 	}
 
@@ -567,6 +557,21 @@ export function applyHardGates(
 		// This is intentional: let AI make the final decision on experience matching
 	}
 	// If min_yoe is null/undefined (regex miss), job automatically passes through
+
+	// Return result with all failures collected
+	if (failures.length > 0) {
+		// Prioritize location mismatch as primary reason if it exists (more user-visible)
+		const locationFailure = failures.find((f) =>
+			f.includes("Location mismatch"),
+		);
+		const primaryReason = locationFailure || failures[0];
+
+		return {
+			passed: false,
+			reason: primaryReason,
+			reasons: failures,
+		};
+	}
 
 	return { passed: true, reason: "Passed all hard gates" };
 }
@@ -607,15 +612,19 @@ export function calculateMatchScore(
 	const weights = getScoringWeights();
 
 	// Calculate overall score (weighted average)
-	let overallScore = Math.round(
-		careerPathScore * weights.careerPath +
-			locationScore * weights.location +
-			workEnvironmentScore * weights.workEnvironment +
-			roleFitScore * weights.roleFit +
-			experienceLevelScore * weights.experienceLevel +
-			companyCultureScore * weights.companyCulture +
-			skillsScore * weights.skills +
-			timingScore * weights.timing,
+	// Cap at 100 to prevent scores over 100
+	let overallScore = Math.min(
+		100,
+		Math.round(
+			careerPathScore * weights.careerPath +
+				locationScore * weights.location +
+				workEnvironmentScore * weights.workEnvironment +
+				roleFitScore * weights.roleFit +
+				experienceLevelScore * weights.experienceLevel +
+				companyCultureScore * weights.companyCulture +
+				skillsScore * weights.skills +
+				timingScore * weights.timing,
+		),
 	);
 
 	// Apply semantic boost if provided (hybrid approach)
@@ -630,8 +639,12 @@ export function calculateMatchScore(
 		);
 	}
 
+	// Calculate eligibility score (100 if eligible for early career, 0 otherwise)
+	const eligibilityScore = hasEligibility(categories) ? 100 : 0;
+
 	return {
 		overall: overallScore,
+		eligibility: eligibilityScore,
 		careerPath: careerPathScore,
 		location: locationScore,
 		workEnvironment: workEnvironmentScore,

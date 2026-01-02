@@ -3,14 +3,10 @@ import { getDatabaseClient } from "@/Utils/databasePool";
 import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
 
 export async function POST(req: NextRequest) {
-	// PRODUCTION: Rate limiting for cleanup endpoint (automation use)
+	// PRODUCTION: Rate limiting for cleanup endpoint (automation use, configurable via env vars)
 	const rateLimitResult = await getProductionRateLimiter().middleware(
 		req,
-		"default",
-		{
-			windowMs: 5 * 60 * 1000, // 5 minutes
-			maxRequests: 2, // Max 2 cleanup requests per 5 minutes
-		},
+		"cleanup-jobs",
 	);
 	if (rateLimitResult) {
 		return rateLimitResult;

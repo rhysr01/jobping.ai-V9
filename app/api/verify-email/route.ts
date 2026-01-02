@@ -17,11 +17,7 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 	if (!isTestMode()) {
 		const rateLimitResult = await getProductionRateLimiter().middleware(
 			request,
-			"default",
-			{
-				windowMs: 5 * 60 * 1000, // 5 minutes
-				maxRequests: 10, // 10 verification attempts per 5 minutes
-			},
+			"verify-email",
 		);
 		if (rateLimitResult) {
 			return rateLimitResult;

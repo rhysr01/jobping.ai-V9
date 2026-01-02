@@ -42,6 +42,8 @@ describe("Send Scheduled Emails API Route", () => {
 
     mockRequest = {
       method: "POST",
+      url: "https://example.com/api/send-scheduled-emails",
+      nextUrl: new URL("https://example.com/api/send-scheduled-emails"),
       headers: new Headers({
         "x-system-api-key": "test-key",
       }),

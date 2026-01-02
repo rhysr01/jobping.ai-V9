@@ -6,7 +6,7 @@
 import type { NextRequest } from "next/server";
 import { GET, POST } from "@/app/api/cleanup-jobs/route";
 
-jest.mock("@supabase/supabase-js");
+jest.mock("@/Utils/databasePool");
 jest.mock("@/Utils/productionRateLimiter", () => ({
   getProductionRateLimiter: jest.fn(() => ({
     middleware: jest.fn().mockResolvedValue(null),
@@ -41,12 +41,10 @@ describe("Cleanup Jobs API Route", () => {
       }),
     };
 
-    const { createClient } = require("@supabase/supabase-js");
-    createClient.mockReturnValue(mockSupabase);
+    const { getDatabaseClient } = require("@/Utils/databasePool");
+    getDatabaseClient.mockReturnValue(mockSupabase);
 
     process.env.SCRAPE_API_KEY = "test-key";
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
-    process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
   });
 
   describe("POST /api/cleanup-jobs", () => {

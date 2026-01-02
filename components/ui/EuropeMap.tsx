@@ -2,16 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-
-// Projection bounds control the visible portion of Europe
-const BOUNDS = { lonMin: -11, lonMax: 31, latMin: 35, latMax: 71 };
-const VIEW = { w: 1000, h: 800 };
-
-const project = (lat: number, lon: number) => {
-	const x = ((lon - BOUNDS.lonMin) / (BOUNDS.lonMax - BOUNDS.lonMin)) * VIEW.w;
-	const y = ((BOUNDS.latMax - lat) / (BOUNDS.latMax - BOUNDS.latMin)) * VIEW.h;
-	return { x, y };
-};
+import { useMapProjection } from "@/hooks/useMapProjection";
 
 const OFFSET: Record<string, { dx: number; dy: number }> = {
 	London: { dx: 6, dy: 4 },
@@ -63,6 +54,7 @@ interface EuropeMapProps {
 	onCityClick: (city: string) => void;
 	maxSelections?: number;
 	className?: string;
+	onMaxSelectionsReached?: (city: string, max: number) => void;
 }
 
 interface TooltipState {
@@ -77,7 +69,9 @@ const EuropeMap = memo(
 		onCityClick,
 		maxSelections = 3,
 		className = "",
+		onMaxSelectionsReached,
 	}: EuropeMapProps) {
+		const { project } = useMapProjection();
 		const [hoveredCity, setHoveredCity] = useState<string | null>(null);
 		const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 		const [focusedCity, setFocusedCity] = useState<string | null>(null);
@@ -126,13 +120,21 @@ const EuropeMap = memo(
 			[selectedCities, maxSelections, onCityClick],
 		);
 
-		const triggerShake = useCallback((city: string) => {
-			setShakeCity(city);
-			if (shakeTimeoutRef.current) {
-				clearTimeout(shakeTimeoutRef.current);
-			}
-			shakeTimeoutRef.current = setTimeout(() => setShakeCity(null), 450);
-		}, []);
+		const triggerShake = useCallback(
+			(city: string) => {
+				setShakeCity(city);
+				if (shakeTimeoutRef.current) {
+					clearTimeout(shakeTimeoutRef.current);
+				}
+				shakeTimeoutRef.current = setTimeout(() => setShakeCity(null), 450);
+
+				// Call the callback if provided
+				if (onMaxSelectionsReached) {
+					onMaxSelectionsReached(city, maxSelections);
+				}
+			},
+			[onMaxSelectionsReached, maxSelections],
+		);
 
 		const updateTooltip = useCallback(
 			(city: string, element: SVGCircleElement) => {
@@ -247,118 +249,71 @@ const EuropeMap = memo(
 				const offset = OFFSET[name] ?? { dx: 0, dy: 0 };
 				return [name, { ...city, x: x + offset.dx, y: y + offset.dy }];
 			});
-		}, []);
+		}, [project]);
 
-		// Calculate label positions with collision detection
-		const labelPositions = useMemo(() => {
+		// Pre-calculate selected city label positions (static, only recalculates when selection changes)
+		const selectedLabelPositions = useMemo(() => {
 			const positions: Map<string, { x: number; y: number }> = new Map();
-			const LABEL_HEIGHT = 20; // Approximate height of label text
-			const LABEL_PADDING = 12; // Padding between labels (increased for better spacing with 3 cities)
-			const MIN_DISTANCE = LABEL_HEIGHT + LABEL_PADDING;
 
-			// Get all cities that should show labels (selected, hovered, or focused)
-			const citiesToLabel = cityEntries
-				.filter(([city]) => {
-					const selected = selectedCities.includes(city);
-					const hovered = hoveredCity === city;
-					const focused = focusedCity === city;
-					const touched = touchedCity === city;
-					return selected || hovered || focused || touched;
-				})
-				.sort(([a], [b]) => {
-					// Sort by selection status (selected first), then by y position
-					const aSelected = selectedCities.includes(a);
-					const bSelected = selectedCities.includes(b);
-					if (aSelected !== bSelected) return aSelected ? -1 : 1;
-					const aCoords = cityEntries.find(([name]) => name === a)?.[1];
-					const bCoords = cityEntries.find(([name]) => name === b)?.[1];
-					const aY = aCoords?.y ?? 0;
-					const bY = bCoords?.y ?? 0;
-					return aY - bY;
+			selectedCities.forEach((city) => {
+				const coords = cityEntries.find(([name]) => name === city)?.[1];
+				if (!coords) return;
+
+				const offset = OFFSET[city] ?? { dx: 0, dy: 0 };
+				positions.set(city, {
+					x: coords.x + offset.dx,
+					y: coords.y - 32 + offset.dy, // Base Y for selected
 				});
-
-			citiesToLabel.forEach(([city, coords]) => {
-				const isSelected = selectedCities.includes(city);
-				const baseY = coords.y - (isSelected ? 32 : 26);
-				let labelY = baseY;
-				let labelX = coords.x;
-
-				// Check for collisions with already positioned labels
-				let attempts = 0;
-				const maxAttempts = 10;
-				let hasCollision = true;
-
-				while (hasCollision && attempts < maxAttempts) {
-					hasCollision = false;
-
-					// Check against all existing labels
-					for (const [otherCity, otherPos] of positions.entries()) {
-						if (otherCity === city) continue;
-
-						const distance = Math.sqrt(
-							(labelX - otherPos.x) ** 2 + (labelY - otherPos.y) ** 2,
-						);
-
-						if (distance < MIN_DISTANCE) {
-							hasCollision = true;
-							// Calculate relative position to determine best adjustment
-							const dx = labelX - otherPos.x;
-							const dy = labelY - otherPos.y;
-							const absDx = Math.abs(dx);
-							const absDy = Math.abs(dy);
-
-							// If cities are close horizontally, prefer horizontal adjustment
-							if (absDx < MIN_DISTANCE * 1.5 && absDy < MIN_DISTANCE) {
-								// Move horizontally to create more space
-								labelX =
-									coords.x +
-									(dx > 0 ? MIN_DISTANCE * 1.5 : -MIN_DISTANCE * 1.5);
-								// Also adjust vertically slightly to avoid perfect alignment
-								if (labelY === baseY) {
-									labelY = baseY - MIN_DISTANCE * 0.5;
-								}
-							} else {
-								// Prefer vertical adjustment
-								if (labelY === baseY) {
-									// First try: move up
-									labelY = baseY - MIN_DISTANCE;
-								} else if (labelY < baseY) {
-									// Already moved up, try moving down
-									labelY = baseY + MIN_DISTANCE;
-								} else if (labelY > baseY) {
-									// Already moved down, try moving further up or to the side
-									if (absDx < MIN_DISTANCE * 2) {
-										// Also adjust horizontally
-										labelX = coords.x + (dx > 0 ? MIN_DISTANCE : -MIN_DISTANCE);
-									}
-									labelY = baseY - MIN_DISTANCE * 2;
-								} else {
-									// Move further vertically
-									labelY = baseY - MIN_DISTANCE * 2.5;
-								}
-							}
-							attempts++;
-							break;
-						}
-					}
-
-					if (!hasCollision) {
-						break;
-					}
-				}
-
-				positions.set(city, { x: labelX, y: labelY });
 			});
 
 			return positions;
-		}, [cityEntries, selectedCities, hoveredCity, focusedCity, touchedCity]);
+		}, [selectedCities, cityEntries]);
+
+		// Calculate hover label position (only when hovering, simple calculation)
+		const hoverLabelPosition = useMemo(() => {
+			if (!hoveredCity || selectedCities.includes(hoveredCity)) return null;
+
+			const coords = cityEntries.find(([name]) => name === hoveredCity)?.[1];
+			if (!coords) return null;
+
+			const offset = OFFSET[hoveredCity] ?? { dx: 0, dy: 0 };
+			return {
+				city: hoveredCity,
+				x: coords.x + offset.dx,
+				y: coords.y - 26 + offset.dy, // Base Y for hover
+			};
+		}, [hoveredCity, selectedCities, cityEntries]);
+
+		// Calculate focused/touched label position (similar to hover)
+		const focusedLabelPosition = useMemo(() => {
+			const city = focusedCity || touchedCity;
+			if (!city || selectedCities.includes(city)) return null;
+
+			const coords = cityEntries.find(([name]) => name === city)?.[1];
+			if (!coords) return null;
+
+			const offset = OFFSET[city] ?? { dx: 0, dy: 0 };
+			return {
+				city,
+				x: coords.x + offset.dx,
+				y: coords.y - 26 + offset.dy,
+			};
+		}, [focusedCity, touchedCity, selectedCities, cityEntries]);
 
 		return (
 			<div
 				className={`relative w-full h-full min-h-[420px] sm:min-h-[480px] md:min-h-[540px] lg:min-h-[600px] rounded-2xl border-2 border-brand-500/30 overflow-hidden shadow-[0_0_60px_rgba(109,90,143,0.12),inset_0_0_100px_rgba(109,90,143,0.04)] touch-manipulation ${className}`}
-				role="application"
-				aria-label="Interactive Europe map for city selection. Use arrow keys to navigate between cities, Enter or Space to select."
+				role="img"
+				aria-label="Map of Europe showing available cities"
+				aria-describedby="map-instructions"
 			>
+				{/* Skip link for keyboard users */}
+				<a
+					href="#form-submit"
+					className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-brand-500 focus:text-white focus:rounded-lg focus:shadow-lg"
+				>
+					Skip to form submission
+				</a>
 				{/* Enhanced multi-layer background */}
 				<div
 					className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950"
@@ -390,7 +345,13 @@ const EuropeMap = memo(
 					preserveAspectRatio="xMidYMid meet"
 					aria-label="Map of Europe showing available cities"
 					style={{ aspectRatio: "5/4" }}
+					role="img"
 				>
+					{/* Hidden instructions for screen readers */}
+					<text id="map-instructions" className="sr-only">
+						Use arrow keys to navigate between cities. Press Enter or Space to
+						select. Maximum {maxSelections} cities can be selected.
+					</text>
 					<defs>
 						{/* Enhanced glow filter */}
 						<filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
@@ -452,8 +413,8 @@ const EuropeMap = memo(
 						href="/maps/europe-borders-lite.svg"
 						x={0}
 						y={0}
-						width={VIEW.w}
-						height={VIEW.h}
+						width={1000}
+						height={800}
 						opacity="0.92"
 						style={{
 							filter: "drop-shadow(0 0 2px rgba(99,102,241,0.2))",
@@ -461,7 +422,15 @@ const EuropeMap = memo(
 					/>
 
 					{/* City markers */}
-					<g aria-label="Selectable cities">
+					<g
+						role="group"
+						aria-label={`City Selection (Multi-select, up to ${maxSelections} cities)`}
+						aria-describedby="city-selection-help"
+					>
+						<text id="city-selection-help" className="sr-only">
+							Select up to {maxSelections} cities by clicking on the map markers or
+							using keyboard navigation.
+						</text>
 						{cityEntries.map(([city, coords]) => {
 							const selected = isCitySelected(city);
 							const disabled = isCityDisabled(city);
@@ -469,13 +438,35 @@ const EuropeMap = memo(
 							const focused = focusedCity === city;
 							const touched = touchedCity === city;
 							const showLabel = selected || hovered || focused || touched;
-							// Use calculated label position if available, otherwise use default
-							const labelPos = labelPositions.get(city);
-							const labelY = labelPos?.y ?? coords.y - (selected ? 32 : 26);
-							const labelX = labelPos?.x ?? coords.x;
+
+							// Use pre-calculated or dynamic label position
+							let labelY: number;
+							let labelX: number;
+
+							if (selected) {
+								const pos = selectedLabelPositions.get(city);
+								labelY = pos?.y ?? coords.y - 32;
+								labelX = pos?.x ?? coords.x;
+							} else if (hovered && hoverLabelPosition?.city === city) {
+								labelY = hoverLabelPosition.y;
+								labelX = hoverLabelPosition.x;
+							} else if (
+								(focused || touched) &&
+								focusedLabelPosition?.city === city
+							) {
+								labelY = focusedLabelPosition.y;
+								labelX = focusedLabelPosition.x;
+							} else {
+								labelY = coords.y - 26;
+								labelX = coords.x;
+							}
 
 							return (
-								<g key={city} aria-label={`${city}, ${coords.country}`}>
+								<g
+									key={city}
+									role="group"
+									aria-label={`${city}, ${coords.country}`}
+								>
 									{/* Invisible larger touch target (44x44px) for better mobile accessibility */}
 									<circle
 										cx={coords.x}
@@ -861,7 +852,8 @@ const EuropeMap = memo(
 			) &&
 			prevProps.maxSelections === nextProps.maxSelections &&
 			prevProps.className === nextProps.className &&
-			prevProps.onCityClick === nextProps.onCityClick
+			prevProps.onCityClick === nextProps.onCityClick &&
+			prevProps.onMaxSelectionsReached === nextProps.onMaxSelectionsReached
 		);
 	},
 );

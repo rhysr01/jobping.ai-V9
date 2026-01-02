@@ -137,16 +137,6 @@ export default function Hero() {
 									<BrandIcons.ArrowRight className="h-5 w-5" />
 								</span>
 							</a>
-							<motion.div
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								transition={{ delay: 0.35, duration: 0.6 }}
-								className="space-y-2 mt-3"
-							>
-								<p className="text-[11px] text-content-muted">
-									100% free to start • Real entry-level roles • No spam
-								</p>
-							</motion.div>
 
 							<TrustBadges />
 

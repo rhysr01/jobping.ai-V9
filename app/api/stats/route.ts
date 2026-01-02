@@ -61,6 +61,22 @@ export const GET = asyncHandler(async (req: NextRequest) => {
 		.eq("is_active", true);
 
 	if (jobsError) {
+		console.error("Error fetching job stats:", jobsError);
+		// Return cached stats if available, otherwise return safe defaults
+		if (cachedStats) {
+			return NextResponse.json(
+				createSuccessResponse(
+					{
+						...cachedStats,
+						cached: true,
+						error: "Using cached data due to database error",
+					},
+					undefined,
+					requestId,
+				),
+				{ status: 200 },
+			);
+		}
 		throw new AppError(
 			"Failed to fetch job stats",
 			500,
@@ -69,28 +85,46 @@ export const GET = asyncHandler(async (req: NextRequest) => {
 		);
 	}
 
-	// Get internship count
-	const { count: internships } = await supabase
+	// Get internship count (with error handling)
+	const { count: internships, error: internshipsError } = await supabase
 		.from("jobs")
 		.select("*", { count: "exact", head: true })
 		.eq("is_active", true)
 		.eq("is_internship", true);
+	if (internshipsError) {
+		console.error("Error fetching internships count:", internshipsError);
+	}
 
-	// Get graduate program count
-	const { count: graduates } = await supabase
+	// Get graduate program count (with error handling)
+	const { count: graduates, error: graduatesError } = await supabase
 		.from("jobs")
 		.select("*", { count: "exact", head: true })
 		.eq("is_active", true)
 		.eq("is_graduate", true);
+	if (graduatesError) {
+		console.error("Error fetching graduates count:", graduatesError);
+	}
 
 	// Get early career count (entry-level roles that aren't internships or graduate programs)
-	const { count: earlyCareer } = await supabase
-		.from("jobs")
-		.select("*", { count: "exact", head: true })
-		.eq("is_active", true)
-		.contains("categories", ["early-career"])
-		.eq("is_internship", false)
-		.eq("is_graduate", false);
+	// Use try-catch for contains query which might fail
+	let earlyCareer = 0;
+	try {
+		const { count, error: earlyCareerError } = await supabase
+			.from("jobs")
+			.select("*", { count: "exact", head: true })
+			.eq("is_active", true)
+			.contains("categories", ["early-career"])
+			.eq("is_internship", false)
+			.eq("is_graduate", false);
+		if (earlyCareerError) {
+			console.error("Error fetching early career count:", earlyCareerError);
+		} else {
+			earlyCareer = count || 0;
+		}
+	} catch (error) {
+		console.error("Error fetching early career count:", error);
+		earlyCareer = 0;
+	}
 
 	// Get weekly new jobs (jobs created in last 7 days, early-career only)
 	const oneWeekAgo = new Date();
@@ -99,18 +133,32 @@ export const GET = asyncHandler(async (req: NextRequest) => {
 
 	// Count early-career jobs created in last week
 	// This includes internships, graduate programs, and early-career categorized jobs
-	const { count: weeklyNewJobs } = await supabase
-		.from("jobs")
-		.select("*", { count: "exact", head: true })
-		.eq("is_active", true)
-		.gte("created_at", oneWeekAgoISO)
-		.or("is_internship.eq.true,is_graduate.eq.true");
+	let weeklyNewJobs = 0;
+	try {
+		const { count, error: weeklyError } = await supabase
+			.from("jobs")
+			.select("*", { count: "exact", head: true })
+			.eq("is_active", true)
+			.gte("created_at", oneWeekAgoISO)
+			.or("is_internship.eq.true,is_graduate.eq.true");
+		if (weeklyError) {
+			console.error("Error fetching weekly new jobs:", weeklyError);
+		} else {
+			weeklyNewJobs = count || 0;
+		}
+	} catch (error) {
+		console.error("Error fetching weekly new jobs:", error);
+		weeklyNewJobs = 0;
+	}
 
-	// Get user count for social proof
-	const { count: totalUsers } = await supabase
+	// Get user count for social proof (with error handling)
+	const { count: totalUsers, error: usersError } = await supabase
 		.from("users")
 		.select("*", { count: "exact", head: true })
 		.eq("active", true);
+	if (usersError) {
+		console.error("Error fetching users count:", usersError);
+	}
 
 	// Format numbers with commas
 	const formatNumber = (num: number) => {

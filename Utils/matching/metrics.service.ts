@@ -137,3 +137,58 @@ export async function getMetricsSummary(days: number = 7): Promise<{
 		return { avgRecallAt50: 0, avgNDCGAt5: 0, sampleCount: 0 };
 	}
 }
+
+// In-memory metrics tracking for tests
+interface InMemoryMatchMetrics {
+	userEmail?: string;
+	matchType: "ai_success" | "fallback" | "ai" | "rules" | "hybrid";
+	matchesGenerated?: number;
+	processingTimeMs?: number;
+	aiCostUsd?: number;
+}
+
+let inMemoryMetrics: InMemoryMatchMetrics[] = [];
+
+/**
+ * Record match metrics (for testing and in-memory tracking)
+ */
+export function recordMatchMetrics(metrics: InMemoryMatchMetrics): void {
+	inMemoryMetrics.push(metrics);
+}
+
+/**
+ * Get match metrics summary (for testing)
+ */
+export function getMatchMetricsSummary(): {
+	totalMatches: number;
+	totalUsers: number;
+	averageMatches: number;
+	averageProcessingTime: number;
+} {
+	const totalMatches = inMemoryMetrics.reduce(
+		(sum, m) => sum + (m.matchesGenerated || 0),
+		0,
+	);
+	const uniqueUsers = new Set(
+		inMemoryMetrics.map((m) => m.userEmail).filter(Boolean),
+	).size;
+	const totalProcessingTime = inMemoryMetrics.reduce(
+		(sum, m) => sum + (m.processingTimeMs || 0),
+		0,
+	);
+	const count = inMemoryMetrics.length;
+
+	return {
+		totalMatches,
+		totalUsers: uniqueUsers,
+		averageMatches: count > 0 ? totalMatches / count : 0,
+		averageProcessingTime: count > 0 ? totalProcessingTime / count : 0,
+	};
+}
+
+/**
+ * Reset match metrics (for testing)
+ */
+export function resetMatchMetrics(): void {
+	inMemoryMetrics = [];
+}

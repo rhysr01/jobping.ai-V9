@@ -6,7 +6,7 @@
 import type { NextRequest } from "next/server";
 import { GET, HEAD } from "@/app/api/cron/process-scraping-queue/route";
 
-jest.mock("@supabase/supabase-js");
+jest.mock("@/Utils/databasePool");
 jest.mock("@/lib/errors", () => ({
   asyncHandler: (fn: any) => fn,
   AppError: class extends Error {
@@ -45,11 +45,8 @@ describe("Process Scraping Queue Cron API Route", () => {
       }),
     };
 
-    const { createClient } = require("@supabase/supabase-js");
-    createClient.mockReturnValue(mockSupabase);
-
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
-    process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
+    const { getDatabaseClient } = require("@/Utils/databasePool");
+    getDatabaseClient.mockReturnValue(mockSupabase);
   });
 
   describe("GET /api/cron/process-scraping-queue", () => {

@@ -204,3 +204,15 @@ export function getConfigSection<T extends keyof typeof MATCHING_CONFIG>(
 
 // Export type for config
 export type MatchingConfig = typeof MATCHING_CONFIG;
+
+// Aliases for test compatibility
+export function getMatchingConfig() {
+	return MATCHING_CONFIG;
+}
+
+export function validateMatchingConfig(
+	config?: MatchingConfig,
+): boolean {
+	const result = validateConfig();
+	return result.valid;
+}

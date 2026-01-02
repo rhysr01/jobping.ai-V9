@@ -21,32 +21,53 @@ const isTestMode = () =>
 const PREFIX = () => (isTestMode() ? "jobping:test:" : "jobping:prod:");
 
 // Production rate limit configurations per endpoint
+// All limits are configurable via environment variables to scale with infrastructure
 export const RATE_LIMIT_CONFIG = {
 	// Public endpoints (stricter limits)
 	scrape: {
-		windowMs: 60 * 1000, // 1 minute
-		maxRequests: 2, // 2 scrape requests per minute (resource intensive)
+		windowMs: parseInt(process.env.RATE_LIMIT_SCRAPE_WINDOW_MS || "60000", 10), // 1 minute default
+		maxRequests: parseInt(process.env.RATE_LIMIT_SCRAPE_MAX || "50", 10), // Increased to 50 (configurable)
 		skipSuccessfulRequests: true,
 	},
 	"match-users": {
 		windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "240000", 10), // 4 minutes (increased frequency for 50+ users)
-		maxRequests: 3, // 3 matching requests per 4 minutes (optimized for 50+ users)
+		maxRequests: parseInt(process.env.RATE_LIMIT_MATCH_USERS_MAX || "30", 10), // Increased to 30 (configurable)
 		skipSuccessfulRequests: true, // Skip successful requests to preserve resources
 	},
 	"send-scheduled-emails": {
-		windowMs: 60 * 1000, // 1 minute
-		maxRequests: 1, // Only automation should call this
+		windowMs: parseInt(process.env.RATE_LIMIT_EMAILS_WINDOW_MS || "60000", 10), // 1 minute
+		maxRequests: parseInt(process.env.RATE_LIMIT_EMAILS_MAX || "20", 10), // Increased to 20 (configurable)
 		skipSuccessfulRequests: true,
 	},
 	"create-checkout-session": {
-		windowMs: 5 * 60 * 1000, // 5 minutes
-		maxRequests: 3, // 3 payment attempts per 5 minutes
+		windowMs: parseInt(process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS || "300000", 10), // 5 minutes
+		maxRequests: parseInt(process.env.RATE_LIMIT_CHECKOUT_MAX || "30", 10), // Increased to 30 (configurable)
 		skipSuccessfulRequests: false,
+	},
+	"user-matches": {
+		windowMs: parseInt(process.env.RATE_LIMIT_USER_MATCHES_WINDOW_MS || "60000", 10), // 1 minute
+		maxRequests: parseInt(process.env.RATE_LIMIT_USER_MATCHES_MAX || "100", 10), // Increased to 100 (configurable)
+		skipSuccessfulRequests: false,
+	},
+	"dashboard": {
+		windowMs: parseInt(process.env.RATE_LIMIT_DASHBOARD_WINDOW_MS || "60000", 10), // 1 minute
+		maxRequests: parseInt(process.env.RATE_LIMIT_DASHBOARD_MAX || "200", 10), // Increased to 200 (configurable)
+		skipSuccessfulRequests: false,
+	},
+	"verify-email": {
+		windowMs: parseInt(process.env.RATE_LIMIT_VERIFY_EMAIL_WINDOW_MS || "300000", 10), // 5 minutes
+		maxRequests: parseInt(process.env.RATE_LIMIT_VERIFY_EMAIL_MAX || "50", 10), // Increased to 50 (configurable)
+		skipSuccessfulRequests: false,
+	},
+	"cleanup-jobs": {
+		windowMs: parseInt(process.env.RATE_LIMIT_CLEANUP_WINDOW_MS || "300000", 10), // 5 minutes
+		maxRequests: parseInt(process.env.RATE_LIMIT_CLEANUP_MAX || "20", 10), // Increased to 20 (configurable)
+		skipSuccessfulRequests: true,
 	},
 	// Default for unspecified endpoints
 	default: {
-		windowMs: 60 * 1000, // 1 minute
-		maxRequests: 20, // 20 requests per minute
+		windowMs: parseInt(process.env.RATE_LIMIT_DEFAULT_WINDOW_MS || "60000", 10), // 1 minute
+		maxRequests: parseInt(process.env.RATE_LIMIT_DEFAULT_MAX || "500", 10), // Increased to 500 (configurable)
 		skipSuccessfulRequests: false,
 	},
 } as const;
@@ -374,11 +395,13 @@ class ProductionRateLimiter {
 		const k = `${PREFIX()}ratelimit:${key}`;
 		try {
 			// Simple INCR/EX pattern
+			const maxRequests = parseInt(process.env.RATE_LIMIT_CONSUME_MAX || "500", 10); // Configurable, default 500
+			const windowSeconds = parseInt(process.env.RATE_LIMIT_CONSUME_WINDOW_SEC || "60", 10); // Configurable, default 60 seconds
 			const count = await redis.incr(k);
 			if (count === 1) {
-				await redis.expire(k, 60); // 1 minute TTL
+				await redis.expire(k, windowSeconds);
 			}
-			return { allowed: count <= 10 }; // 10 requests per minute
+			return { allowed: count <= maxRequests };
 		} catch (e) {
 			console.warn("rate limiter degraded:", e);
 			return { allowed: true };

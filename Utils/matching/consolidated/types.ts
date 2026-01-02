@@ -6,7 +6,7 @@ import type { JobMatch } from "../types";
 
 export interface ConsolidatedMatchResult {
 	matches: JobMatch[];
-	method: "ai_success" | "ai_timeout" | "ai_failed" | "rule_based";
+	method: "ai_success" | "ai_timeout" | "ai_failed" | "rule_based" | "guaranteed_fallback";
 	processingTime: number;
 	confidence: number;
 	aiModel?: string; // AI model used (e.g., 'gpt-4o-mini')

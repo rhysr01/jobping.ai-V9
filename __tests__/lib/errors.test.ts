@@ -121,7 +121,9 @@ describe("errors", () => {
         throw new ValidationError("Test error");
       });
 
-      const mockReq = {} as NextRequest;
+      const mockReq = {
+        headers: new Headers(),
+      } as NextRequest;
       const response = await handler(mockReq);
       expect(response.status).toBe(400);
     });
@@ -131,7 +133,9 @@ describe("errors", () => {
         throw new Error("Thrown error");
       });
 
-      const mockReq = {} as NextRequest;
+      const mockReq = {
+        headers: new Headers(),
+      } as NextRequest;
       const response = await handler(mockReq);
       expect(response.status).toBe(500);
     });

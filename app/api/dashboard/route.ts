@@ -148,14 +148,10 @@ function getEnvironmentStatus() {
 }
 
 export const GET = asyncHandler(async (req: NextRequest) => {
-	// PRODUCTION: Rate limiting for dashboard endpoint
+	// PRODUCTION: Rate limiting for dashboard endpoint (configurable via env vars)
 	const rateLimitResult = await getProductionRateLimiter().middleware(
 		req,
 		"dashboard",
-		{
-			windowMs: 60 * 1000, // 1 minute
-			maxRequests: 30, // 30 requests per minute for dashboard
-		},
 	);
 	if (rateLimitResult) {
 		return rateLimitResult;

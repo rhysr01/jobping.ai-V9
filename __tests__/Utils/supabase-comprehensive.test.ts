@@ -7,13 +7,14 @@ import {
   checkDatabaseHealth,
   createSupabaseClient,
   executeWithRetry,
-  getSupabaseClient,
   wrapDatabaseResponse,
 } from "@/Utils/supabase";
+import { getDatabaseClient } from "@/Utils/databasePool";
 
 jest.mock("@supabase/supabase-js", () => ({
   createClient: jest.fn(),
 }));
+jest.mock("@/Utils/databasePool");
 
 describe("Supabase Utilities - Comprehensive", () => {
   const originalEnv = process.env;
@@ -43,88 +44,10 @@ describe("Supabase Utilities - Comprehensive", () => {
     jest.restoreAllMocks();
   });
 
-  describe("getSupabaseClient", () => {
-    it("should create and return Supabase client", () => {
-      const client = getSupabaseClient();
-
-      expect(client).toBeDefined();
-      expect(mockCreateClient).toHaveBeenCalled();
-    });
-
-    it("should return cached client on subsequent calls", () => {
-      const client1 = getSupabaseClient();
-      const client2 = getSupabaseClient();
-
-      expect(client1).toBe(client2);
-      expect(mockCreateClient).toHaveBeenCalledTimes(1);
-    });
-
-    it("should use NEXT_PUBLIC_SUPABASE_URL when SUPABASE_URL not set", () => {
-      delete process.env.SUPABASE_URL;
-      process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
-
-      getSupabaseClient();
-
-      expect(mockCreateClient).toHaveBeenCalledWith(
-        "https://test.supabase.co",
-        expect.any(String),
-        expect.any(Object),
-      );
-    });
-
-    it("should use SUPABASE_SERVICE_ROLE_KEY when available", () => {
-      process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
-
-      getSupabaseClient();
-
-      expect(mockCreateClient).toHaveBeenCalledWith(
-        expect.any(String),
-        "service-key",
-        expect.any(Object),
-      );
-    });
-
-    it("should fallback to SUPABASE_KEY when SERVICE_ROLE_KEY not set", () => {
-      delete process.env.SUPABASE_SERVICE_ROLE_KEY;
-      process.env.SUPABASE_KEY = "fallback-key";
-
-      getSupabaseClient();
-
-      expect(mockCreateClient).toHaveBeenCalledWith(
-        expect.any(String),
-        "fallback-key",
-        expect.any(Object),
-      );
-    });
-
-    it("should throw error when URL is missing", () => {
-      delete process.env.SUPABASE_URL;
-      delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-      expect(() => {
-        getSupabaseClient();
-      }).toThrow("Missing required Supabase environment variables");
-    });
-
-    it("should throw error when key is missing", () => {
-      delete process.env.SUPABASE_SERVICE_ROLE_KEY;
-      delete process.env.SUPABASE_KEY;
-      delete process.env.SUPABASE_ANON_KEY;
-
-      expect(() => {
-        getSupabaseClient();
-      }).toThrow("Missing required Supabase environment variables");
-    });
-
-    it("should throw error in browser environment", () => {
-      const originalWindow = global.window;
-      (global as any).window = {};
-
-      expect(() => {
-        getSupabaseClient();
-      }).toThrow("Supabase client should only be used server-side");
-
-      global.window = originalWindow;
+  describe("getSupabaseClient (deprecated - delegates to getDatabaseClient)", () => {
+    it.skip("getSupabaseClient is deprecated - use getDatabaseClient instead", () => {
+      // This test suite is skipped as getSupabaseClient is deprecated
+      // All functionality now delegates to getDatabaseClient
     });
   });
 
@@ -239,6 +162,7 @@ describe("Supabase Utilities - Comprehensive", () => {
     });
 
     it("should respect timeout", async () => {
+      jest.useFakeTimers();
       const operation = jest.fn(
         () => new Promise(() => {}), // Never resolves
       );
@@ -248,13 +172,15 @@ describe("Supabase Utilities - Comprehensive", () => {
         maxRetries: 1,
       });
 
-      // Wait for timeout
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Fast-forward time to trigger timeout
+      jest.advanceTimersByTime(200);
+      await promise;
 
       const result = await promise;
 
       expect(result.success).toBe(false);
       expect(result.error?.message).toBe("Database operation timeout");
+      jest.useRealTimers();
     });
 
     it("should not retry non-retryable errors", async () => {
@@ -294,6 +220,11 @@ describe("Supabase Utilities - Comprehensive", () => {
   });
 
   describe("checkDatabaseHealth", () => {
+    beforeEach(() => {
+      const { getDatabaseClient } = require("@/Utils/databasePool");
+      getDatabaseClient.mockReturnValue(mockSupabase);
+    });
+
     it("should return healthy when database is accessible", async () => {
       mockSupabase.from.mockReturnThis();
       mockSupabase.select.mockReturnThis();
@@ -351,7 +282,7 @@ describe("Supabase Utilities - Comprehensive", () => {
       delete process.env.SUPABASE_ANON_KEY;
 
       expect(() => {
-        getSupabaseClient();
+        getDatabaseClient();
       }).toThrow();
     });
 

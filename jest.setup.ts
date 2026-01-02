@@ -24,12 +24,13 @@ if (typeof setImmediate === "undefined") {
 (process.env as any).INTERNAL_API_HMAC_SECRET =
 	"test-hmac-secret-key-for-testing-only";
 
-// Test-specific environment variables
+// Test-specific environment variables (must match validation schema)
 process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
-process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
-process.env.OPENAI_API_KEY = "test-openai-key";
+process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key-12345678901234567890";
+process.env.OPENAI_API_KEY = "sk-test-openai-api-key-123456789012345678901234567890123456789012345678901234567890";
 process.env.MATCH_USERS_DISABLE_AI = "true";
-process.env.RESEND_API_KEY = "test-resend-key";
+process.env.RESEND_API_KEY = "re_test-resend-api-key-12345678901234567890123456789012345678901234567890";
+process.env.SYSTEM_API_KEY = "test-system-api-key-12345678901234567890";
 process.env.NEXT_PUBLIC_URL = "http://localhost:3000";
 process.env.SCRAPE_API_KEY = "test-api-key";
 process.env.BYPASS_RESERVATION = "1";

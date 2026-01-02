@@ -81,7 +81,12 @@ export async function POST(request: NextRequest) {
 		};
 
 		// Record signal to database
-		await recordImplicitSignal(signalData);
+		try {
+			await recordImplicitSignal(signalData);
+		} catch (error) {
+			console.error("Error recording implicit signal:", error);
+			// Continue - don't fail the request if secondary operations fail
+		}
 
 		// If it's a click or significant dwell, also record as feedback
 		// Note: 'shown' signals are tracked but not converted to feedback (they're for CTR calculation)
@@ -89,12 +94,22 @@ export async function POST(request: NextRequest) {
 			signalType === "click" ||
 			(signalType === "dwell" && (value || 0) > 5000)
 		) {
-			await recordAsFeedbackSignal(signalData);
+			try {
+				await recordAsFeedbackSignal(signalData);
+			} catch (error) {
+				console.error("Error recording feedback signal:", error);
+				// Continue - this is secondary
+			}
 		}
 
 		// For 'shown' signals, also record to match_logs for CTR calculation
 		if (signalType === "shown") {
-			await recordShownSignal(signalData);
+			try {
+				await recordShownSignal(signalData);
+			} catch (error) {
+				console.error("Error recording shown signal:", error);
+				// Continue - this is secondary
+			}
 		}
 
 		return NextResponse.json({
@@ -191,7 +206,8 @@ async function recordImplicitSignal(signalData: ImplicitSignalData) {
 
 	if (error) {
 		console.error("Error recording implicit signal:", error);
-		throw error;
+		// Don't throw - let caller handle gracefully
+		throw new Error(`Failed to record signal: ${error.message}`);
 	}
 }
 

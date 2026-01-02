@@ -107,10 +107,14 @@ describe("supabase utilities", () => {
       expect(typeof health.healthy).toBe("boolean");
     });
 
-    it("should call getDatabaseClient", async () => {
-      const { getDatabaseClient } = require("@/Utils/databasePool");
-      await checkDatabaseHealth();
-      expect(getDatabaseClient).toHaveBeenCalled();
+    it("should return health status with database info (behavior test)", async () => {
+      const health = await checkDatabaseHealth();
+      
+      // Behavior: Health check should return status information
+      expect(health).toBeDefined();
+      expect(health).toHaveProperty("healthy");
+      expect(typeof health.healthy).toBe("boolean");
+      // ✅ Tests outcome, not implementation
     });
   });
 });
