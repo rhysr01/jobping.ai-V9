@@ -34,15 +34,20 @@ export interface ComponentHealth {
 
 export class HealthChecker {
 	private supabase: any;
-	private resend: any;
 
 	constructor() {
-		this.supabase = createClient(
-			process.env.NEXT_PUBLIC_SUPABASE_URL!,
-			process.env.SUPABASE_SERVICE_ROLE_KEY!,
-		);
+		const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+		const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+		if (!supabaseUrl || !supabaseKey) {
+			throw new Error("Missing Supabase configuration");
+		}
+		this.supabase = createClient(supabaseUrl, supabaseKey);
 
-		this.resend = new Resend(process.env.RESEND_API_KEY);
+		const resendKey = process.env.RESEND_API_KEY;
+		if (!resendKey) {
+			throw new Error("Missing RESEND_API_KEY environment variable");
+		}
+		this.resend = new Resend(resendKey);
 	}
 
 	async performHealthCheck(): Promise<HealthCheckResult> {

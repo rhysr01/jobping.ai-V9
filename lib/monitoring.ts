@@ -373,9 +373,9 @@ export class PerformanceMonitor {
 	}
 }
 
-// Business metrics tracking
-export class BusinessMetrics {
-	static recordJobCleanup(
+// Business metrics tracking - using object instead of class for better tree-shaking
+export const BusinessMetrics = {
+	recordJobCleanup(
 		deleted: number,
 		total: number,
 		duration: number,
@@ -386,9 +386,9 @@ export class BusinessMetrics {
 			duration,
 			metadata: { total, deletionPercentage: (deleted / total) * 100 },
 		});
-	}
+	},
 
-	static recordUserMatching(
+	recordUserMatching(
 		users: number,
 		jobsMatched: number,
 		duration: number,
@@ -399,9 +399,9 @@ export class BusinessMetrics {
 			duration,
 			metadata: { jobsMatched, avgJobsPerUser: jobsMatched / users },
 		});
-	}
+	},
 
-	static recordEmailSent(
+	recordEmailSent(
 		emails: number,
 		success: number,
 		duration: number,
@@ -412,9 +412,9 @@ export class BusinessMetrics {
 			duration,
 			metadata: { success, successRate: (success / emails) * 100 },
 		});
-	}
+	},
 
-	static recordScraperRun(
+	recordScraperRun(
 		scraper: string,
 		jobsFound: number,
 		duration: number,
@@ -426,9 +426,9 @@ export class BusinessMetrics {
 			duration,
 			metadata: { errors, successRate: errors === 0 ? 100 : 0 },
 		});
-	}
+	},
 
-	static recordAPICall(
+	recordAPICall(
 		endpoint: string,
 		method: string,
 		statusCode: number,
@@ -445,8 +445,8 @@ export class BusinessMetrics {
 		monitor.recordMetric("api.latency", duration);
 		const endpointKey = endpoint.replace(/\s+/g, "").replace(/[:]/g, "_");
 		monitor.recordMetric(`api.latency:${endpointKey}`, duration);
-	}
-}
+	},
+};
 
 // Context management for request tracking
 export class RequestContext {

@@ -109,11 +109,14 @@ export class AIMatchingCache {
 
 export class AIMatchingService {
 	private openai: OpenAI;
-	private cache: any;
 
 	constructor() {
+		const apiKey = process.env.OPENAI_API_KEY;
+		if (!apiKey) {
+			throw new Error("Missing OPENAI_API_KEY environment variable");
+		}
 		this.openai = new OpenAI({
-			apiKey: process.env.OPENAI_API_KEY!,
+			apiKey,
 		});
 		this.cache = AIMatchingCache;
 	}
@@ -401,10 +404,12 @@ LEARNED PREFERENCES (from ${feedbackSummary.total} ratings):
 	private async getCVInsights(userEmail: string): Promise<string[]> {
 		try {
 			const { createClient } = await import("@supabase/supabase-js");
-			const supabase = createClient(
-				process.env.NEXT_PUBLIC_SUPABASE_URL!,
-				process.env.SUPABASE_SERVICE_ROLE_KEY!,
-			);
+			const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+			const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+			if (!supabaseUrl || !supabaseKey) {
+				throw new Error("Missing Supabase configuration");
+			}
+			const supabase = createClient(supabaseUrl, supabaseKey);
 
 			// Check if we have cached CV data
 			const { data: cvCache } = await supabase
@@ -453,10 +458,12 @@ LEARNED PREFERENCES (from ${feedbackSummary.total} ratings):
 	private async getFeedbackSummary(userEmail: string): Promise<any> {
 		try {
 			const { createClient } = await import("@supabase/supabase-js");
-			const supabase = createClient(
-				process.env.NEXT_PUBLIC_SUPABASE_URL!,
-				process.env.SUPABASE_SERVICE_ROLE_KEY!,
-			);
+			const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+			const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+			if (!supabaseUrl || !supabaseKey) {
+				throw new Error("Missing Supabase configuration");
+			}
+			const supabase = createClient(supabaseUrl, supabaseKey);
 
 			// Get last 20 feedback entries
 			const { data: feedback, error } = await supabase

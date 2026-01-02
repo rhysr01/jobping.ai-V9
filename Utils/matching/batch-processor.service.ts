@@ -17,6 +17,7 @@ export interface UserMatchResult {
 		| "ai_timeout"
 		| "ai_failed"
 		| "rule_based"
+		| "guaranteed_fallback"
 		| "shared_cache";
 	processingTime: number;
 	confidence: number;
@@ -51,7 +52,7 @@ export class BatchMatchingProcessor {
 		} = {},
 	): Promise<Map<string, UserMatchResult>> {
 		const results = new Map<string, UserMatchResult>();
-		const { useEmbeddings = true, maxBatchSize = 10 } = options;
+		const { useEmbeddings = true, maxBatchSize: _maxBatchSize = 10 } = options;
 
 		// Step 1: Group users by similarity
 		const userSegments = await this.groupUsersBySimilarity(
@@ -315,13 +316,19 @@ export class BatchMatchingProcessor {
 
 		// Share results with all users in segment
 		for (const user of segment.users) {
+			// Map method: ai_success becomes shared_cache, others pass through
+			let method: UserMatchResult["method"];
+			if (matchResult.method === "ai_success") {
+				method = "shared_cache";
+			} else {
+				// All other methods from ConsolidatedMatchResult are valid
+				method = matchResult.method as UserMatchResult["method"];
+			}
+
 			results.set(user.email, {
 				userEmail: user.email,
 				matches: matchResult.matches,
-				method:
-					matchResult.method === "ai_success"
-						? "shared_cache"
-						: matchResult.method,
+				method,
 				processingTime,
 				confidence: matchResult.confidence,
 			});

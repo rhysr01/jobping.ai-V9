@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { TIMING } from "@/lib/constants";
 
 // Use constants from lib/constants.ts
@@ -15,7 +15,7 @@ const MIN_DELAY_MS = TIMING.MATCHING_MIN_DELAY_MS;
 /**
  * Hook to coordinate guaranteed matching progress stages
  * Manages staged timing for perceived performance - makes results feel "fresh" rather than "stale"
- * 
+ *
  * Performance Art Logic: If API returns in 100ms, user sees 1.9s of "Neural Sweep" animation.
  * This builds trust and makes the results feel intentional, not glitchy.
  */
@@ -26,6 +26,7 @@ export function useGuaranteedMatchingProgress(
 	const [currentStage, setCurrentStage] = useState(0);
 	const [isComplete, setIsComplete] = useState(false);
 	const startTimeRef = useRef<number | null>(null);
+	const nestedTimerRef = useRef<NodeJS.Timeout | null>(null); // CRITICAL FIX: Move to top of hook
 
 	useEffect(() => {
 		if (!isActive || isComplete) return;
@@ -36,7 +37,6 @@ export function useGuaranteedMatchingProgress(
 		}
 
 		const timers: NodeJS.Timeout[] = [];
-		const nestedTimerRef = useRef<NodeJS.Timeout | null>(null); // CRITICAL FIX: Track nested timeout
 
 		// Calculate cumulative timings for each stage
 		let cumulativeTime = 0;
@@ -63,7 +63,9 @@ export function useGuaranteedMatchingProgress(
 		});
 
 		return () => {
-			timers.forEach((timer) => clearTimeout(timer));
+			timers.forEach((timer) => {
+				clearTimeout(timer);
+			});
 			// CRITICAL FIX: Clean up nested timeout to prevent memory leaks
 			if (nestedTimerRef.current) {
 				clearTimeout(nestedTimerRef.current);
@@ -75,6 +77,10 @@ export function useGuaranteedMatchingProgress(
 		setCurrentStage(0);
 		setIsComplete(false);
 		startTimeRef.current = null;
+		if (nestedTimerRef.current) {
+			clearTimeout(nestedTimerRef.current);
+			nestedTimerRef.current = null;
+		}
 	}, []);
 
 	return {
@@ -83,4 +89,3 @@ export function useGuaranteedMatchingProgress(
 		reset,
 	};
 }
-

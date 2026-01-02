@@ -47,8 +47,12 @@ export class CVParserService {
 	private openai: OpenAI;
 
 	constructor() {
+		const apiKey = process.env.OPENAI_API_KEY;
+		if (!apiKey) {
+			throw new Error("Missing OPENAI_API_KEY environment variable");
+		}
 		this.openai = new OpenAI({
-			apiKey: process.env.OPENAI_API_KEY!,
+			apiKey,
 		});
 	}
 
