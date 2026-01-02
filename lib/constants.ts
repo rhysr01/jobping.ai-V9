@@ -59,60 +59,6 @@ export const TIMING = {
 } as const;
 
 /**
- * Brand Colors (Hex Codes)
- *
- * These are the actual brand colors used throughout the app.
- * Replace hardcoded hex codes and Tailwind classes with these constants.
- */
-export const COLORS = {
-	BRAND: {
-		// Primary brand colors (indigo/purple gradient)
-		500: "#6366F1", // indigo-500 - Primary brand color
-		600: "#7C3AED", // purple-600 - Secondary brand color
-		700: "#8B5CF6", // purple-500 - Tertiary brand color
-
-		// Extended brand palette
-		300: "#A78BFA", // purple-300 - Lighter accent
-		400: "#C084FC", // purple-400 - Medium accent
-
-		// RGB values for rgba() usage
-		RGB: {
-			500: "99, 102, 241", // indigo-500 RGB
-			600: "124, 58, 237", // purple-600 RGB
-			700: "139, 111, 246", // purple-500 RGB
-		},
-	},
-
-	// Semantic colors
-	SUCCESS: {
-		400: "#34D399", // emerald-400
-		500: "#10B981", // emerald-500
-		RGB: {
-			400: "52, 211, 153",
-			500: "16, 185, 129",
-		},
-	},
-
-	ERROR: {
-		400: "#F87171", // red-400
-		500: "#EF4444", // red-500
-		RGB: {
-			400: "248, 113, 113",
-			500: "239, 68, 68",
-		},
-	},
-
-	WARNING: {
-		400: "#FBBF24", // amber-400
-		500: "#F59E0B", // amber-500
-		RGB: {
-			400: "251, 191, 36",
-			500: "245, 158, 11",
-		},
-	},
-} as const;
-
-/**
  * UI Constants
  */
 export const UI = {
@@ -145,26 +91,59 @@ export const UI = {
 } as const;
 
 /**
- * Business Logic Constants
+ * HTTP Status Codes
  */
-export const BUSINESS = {
-	// Matching limits
-	MAX_CITY_SELECTIONS: 3,
-	FREE_ROLES_PER_SEND: 5,
-	PREMIUM_ROLES_PER_WEEK: 15,
+export const HTTP_STATUS = {
+	// Success codes
+	OK: 200,
+	CREATED: 201,
+	NO_CONTENT: 204,
 
-	// Form validation
-	MAX_CAREER_KEYWORDS_LENGTH: 200,
+	// Client error codes
+	BAD_REQUEST: 400,
+	UNAUTHORIZED: 401,
+	FORBIDDEN: 403,
+	NOT_FOUND: 404,
+	TOO_MANY_REQUESTS: 429,
 
-	// Job limits
-	MAX_JOBS_PER_BATCH: 1000,
-	MAX_JOBS_FOR_MATCHING: 2000,
+	// Server error codes
+	INTERNAL_ERROR: 500,
+	BAD_GATEWAY: 502,
+	SERVICE_UNAVAILABLE: 503,
 } as const;
 
+export type HttpStatusCode = (typeof HTTP_STATUS)[keyof typeof HTTP_STATUS];
+
 /**
- * Type helpers for constants
+ * Error Codes
  */
-export type TimingConfig = typeof TIMING;
-export type ColorsConfig = typeof COLORS;
-export type UIConfig = typeof UI;
-export type BusinessConfig = typeof BUSINESS;
+export const ERROR_CODES = {
+	// Authentication errors
+	UNAUTHORIZED: "UNAUTHORIZED",
+	FORBIDDEN: "FORBIDDEN",
+	INVALID_TOKEN: "INVALID_TOKEN",
+
+	// Validation errors
+	VALIDATION_ERROR: "VALIDATION_ERROR",
+	MISSING_FIELDS: "MISSING_FIELDS",
+	INVALID_FORMAT: "INVALID_FORMAT",
+
+	// Resource errors
+	NOT_FOUND: "NOT_FOUND",
+	ALREADY_EXISTS: "ALREADY_EXISTS",
+
+	// System errors
+	INTERNAL_ERROR: "INTERNAL_ERROR",
+	SERVICE_UNAVAILABLE: "SERVICE_UNAVAILABLE",
+	DATABASE_ERROR: "DATABASE_ERROR",
+
+	// Rate limiting
+	RATE_LIMITED: "RATE_LIMITED",
+
+	// Matching-specific errors
+	MATCHING_FAILED: "MATCHING_FAILED",
+	AI_TIMEOUT: "AI_TIMEOUT",
+	NO_JOBS_AVAILABLE: "NO_JOBS_AVAILABLE",
+} as const;
+
+export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
