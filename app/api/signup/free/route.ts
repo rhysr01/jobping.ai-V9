@@ -272,7 +272,9 @@ export async function POST(request: NextRequest) {
 				};
 
 				if (cityVariants[city]) {
-					cityVariants[city].forEach((v) => cityVariations.add(v));
+					cityVariants[city].forEach((v) => {
+						cityVariations.add(v);
+					});
 				}
 
 				// Add London area variations (based on actual database values)
@@ -545,7 +547,7 @@ export async function POST(request: NextRequest) {
 				note: "Matching engine will apply hard gates, pre-rank, and select top 50 for AI",
 			});
 
-			let matchResult;
+			let matchResult: any = null;
 			try {
 				// Pass all jobs - engine handles hard gates and pre-ranking internally
 				matchResult = await matcher.performMatching(

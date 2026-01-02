@@ -60,7 +60,7 @@ class LRUCache<K, V> {
 
 	private evictLeastUsed(): void {
 		let leastUsedKey: K | undefined;
-		let leastUsedCount = Infinity;
+		let leastUsedCount: number = Infinity;
 
 		for (const [key, entry] of this.cache.entries()) {
 			if (entry.accessCount < leastUsedCount) {
@@ -216,7 +216,7 @@ Return ONLY valid JSON array with matches.`,
 			.join(",");
 
 		// Include feedback count in cache key
-		let feedbackFingerprint = "no-feedback";
+		let feedbackFingerprint: string = "no-feedback";
 		try {
 			const summary = await this.getFeedbackSummary(userPrefs.email);
 			if (summary && summary.total >= 3) {
@@ -373,7 +373,7 @@ MATCHING RULES - ONLY 2 REQUIREMENTS, EVERYTHING ELSE IS OPTIONAL:
 		// Get feedback summary
 		const feedbackSummary = await this.getFeedbackSummary(profile.email);
 
-		let enhancedContext = basicContext;
+		let enhancedContext: string = basicContext;
 
 		// Add CV insights if available
 		if (cvInsights.length > 0) {
