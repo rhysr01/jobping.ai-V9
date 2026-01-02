@@ -2,14 +2,66 @@
 
 import { IPhoneShell } from "@/components/ui/IPhoneShell";
 import { TiltCard } from "@/components/ui/TiltCard";
+import Link from "next/link";
+import { BrandIcons } from "@/components/ui/BrandIcons";
+import { CTA_GET_MY_5_FREE_MATCHES, CTA_GET_MY_5_FREE_MATCHES_ARIA } from "@/lib/copy";
+import { trackEvent } from "@/lib/analytics";
 
 interface HeroMockupProps {
 	stats?: { totalUsers: number };
 	topMatch?: any;
 }
 
-export function HeroMobileMockup({ stats: _stats, topMatch: _topMatch }: HeroMockupProps) {
+// Sample jobs for the mockup (showing 5 free matches)
+const SAMPLE_JOBS = [
+	{
+		title: "Strategy & Business Design Intern",
+		company: "McKinsey & Company",
+		location: "London, UK",
+		matchScore: 98,
+		matchReason: "Perfect for your Strategy and Business Design career path. Located in London, visa sponsorship available.",
+		workEnvironment: "Hybrid",
+		type: "Internship",
+	},
+	{
+		title: "Graduate Programme - Consulting",
+		company: "BCG",
+		location: "Amsterdam, Netherlands",
+		matchScore: 95,
+		matchReason: "Ideal for recent graduates in Strategy. Visa sponsorship available for non-EU candidates.",
+		workEnvironment: "Hybrid",
+		type: "Graduate Programme",
+	},
+	{
+		title: "Junior Business Analyst",
+		company: "Deloitte",
+		location: "Dublin, Ireland",
+		matchScore: 92,
+		matchReason: "Great entry-level role matching your career path. Dublin location with visa support.",
+		workEnvironment: "On-site",
+		type: "Full-time",
+	},
+	{
+		title: "Strategy Consultant (Entry Level)",
+		company: "PwC",
+		location: "Berlin, Germany",
+		matchScore: 90,
+		matchReason: "Entry-level role in Strategy consulting. Berlin office with relocation support.",
+		workEnvironment: "Hybrid",
+		type: "Full-time",
+	},
+	{
+		title: "Business Design Intern",
+		company: "EY",
+		location: "Paris, France",
+		matchScore: 88,
+		matchReason: "Internship opportunity in Business Design. Paris location, French language preferred.",
+		workEnvironment: "Hybrid",
+		type: "Internship",
+	},
+];
 
+export function HeroMobileMockup({ stats: _stats, topMatch: _topMatch }: HeroMockupProps) {
 	return (
 		<div className="relative mx-auto w-full max-w-[320px] lg:max-w-[380px]">
 			<TiltCard>
@@ -19,66 +71,77 @@ export function HeroMobileMockup({ stats: _stats, topMatch: _topMatch }: HeroMoc
 					<div className="absolute -inset-12 -z-10 bg-purple-500/30 blur-[100px] opacity-50" />
 					<div className="absolute -inset-8 -z-10 bg-brand-500/20 blur-[60px] opacity-40" />
 
-					<IPhoneShell aria-label="Premium job match preview - showing 98% match result">
-						{/* Show single high-quality job card instead of signup flow */}
-						<div className="flex flex-col p-4 pt-6 bg-black h-full overflow-y-auto">
-							{/* Premium Badge */}
-							<div className="mb-4 shrink-0">
-								<span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/15 px-3.5 py-1.5 text-sm font-bold text-purple-300 border border-purple-500/30 shadow-[0_0_12px_rgba(139,92,246,0.3)]">
-									<span className="text-yellow-400">⭐</span> Premium Member
-								</span>
+					<IPhoneShell aria-label="Free job matches preview - showing 5 matches">
+						<div className="flex flex-col h-full bg-black overflow-hidden">
+							{/* Scrollable matches container */}
+							<div className="flex-1 overflow-y-auto p-4 pt-6 space-y-4">
+								{SAMPLE_JOBS.map((job, index) => (
+									<article
+										key={index}
+										className="glass-card elevation-2 p-4 rounded-xl border border-emerald-500/20 relative"
+									>
+										{/* Match Score Badge */}
+										<div className="flex items-center justify-between mb-2.5">
+											<span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+												🔥 {job.matchScore}% Match
+											</span>
+											<div className="text-xs font-semibold text-white truncate ml-2">
+												{job.company}
+											</div>
+										</div>
+
+										{/* Job Title */}
+										<h3 className="text-sm font-bold text-white mb-1.5 leading-tight line-clamp-2">
+											{job.title}
+										</h3>
+
+										{/* Location */}
+										<div className="flex items-center gap-1.5 text-xs text-zinc-300 mb-2">
+											📍 {job.location}
+										</div>
+
+										{/* Match Reason - Compact */}
+										<div className="mb-2 p-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg">
+											<p className="text-[10px] font-semibold text-zinc-400 mb-1">
+												Why this match?
+											</p>
+											<p className="text-xs text-zinc-200 leading-relaxed line-clamp-2">
+												{job.matchReason}
+											</p>
+										</div>
+
+										{/* Tags */}
+										<div className="flex flex-wrap gap-1">
+											<span className="px-1.5 py-0.5 rounded bg-purple-500/15 text-zinc-300 text-[9px] font-semibold">
+												{job.workEnvironment}
+											</span>
+											<span className="px-1.5 py-0.5 rounded bg-purple-500/15 text-zinc-300 text-[9px] font-semibold">
+												{job.type}
+											</span>
+										</div>
+									</article>
+								))}
 							</div>
 
-							{/* Single Featured Job Card - High Match Score */}
-							<article className="glass-card elevation-2 p-5 rounded-xl border-2 border-emerald-500/30 relative">
-								{/* Match Score Badge - Glowing */}
-								<div className="flex items-center justify-between mb-3">
-									<span className="text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_8px_rgba(16,185,129,0.4)]">
-										🔥 98% Match
-									</span>
-									<div className="text-sm font-semibold text-white">
-										McKinsey & Company
-									</div>
-								</div>
-
-								{/* Job Title */}
-								<h3 className="text-base font-bold text-white mb-2 leading-tight">
-									Strategy & Business Design Intern
-								</h3>
-
-								{/* Location */}
-								<div className="flex items-center gap-1.5 text-xs text-zinc-300 mb-3">
-									📍 London, UK
-								</div>
-
-								{/* Match Reason - Muted styling */}
-								<div className="mb-3 p-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg">
-									<p className="text-xs font-semibold text-zinc-400 mb-1.5">
-										Why this match?
-									</p>
-									<p className="text-sm text-zinc-200 leading-relaxed">
-										Perfect for your Strategy and Business Design career path. Located in London, visa sponsorship available.
-									</p>
-								</div>
-
-								{/* Tags */}
-								<div className="flex flex-wrap gap-1.5 mb-3">
-									<span className="px-2 py-0.5 rounded bg-purple-500/15 text-zinc-300 text-[10px] font-semibold">
-										Hybrid
-									</span>
-									<span className="px-2 py-0.5 rounded bg-purple-500/15 text-zinc-300 text-[10px] font-semibold">
-										Internship
-									</span>
-								</div>
-
-								{/* Action Button */}
-								<button
-									type="button"
-									className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold px-4 py-2.5 rounded-lg text-xs hover:from-indigo-500 hover:to-purple-500 transition-all"
+							{/* CTA Button - Fixed at bottom */}
+							<div className="p-4 pt-2 border-t border-white/10 bg-black/80 backdrop-blur-sm shrink-0">
+								<Link
+									href="/signup/free"
+									onClick={() => {
+										trackEvent("cta_clicked", {
+											type: "free",
+											location: "hero_mockup",
+										});
+									}}
+									className="inline-flex w-full min-h-[44px] items-center justify-center rounded-full bg-gradient-to-r from-brand-600 to-indigo-600 text-white font-bold px-6 transition-all hover:from-brand-500 hover:to-indigo-500 shadow-lg hover:shadow-xl shadow-[0_4px_20px_rgba(139,92,246,0.5)] hover:shadow-[0_8px_40px_rgba(139,92,246,0.6)] text-sm"
+									aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
 								>
-									View Match Evidence →
-								</button>
-							</article>
+									<span className="flex items-center justify-center gap-2">
+										{CTA_GET_MY_5_FREE_MATCHES}
+										<BrandIcons.ArrowRight className="h-4 w-4" />
+									</span>
+								</Link>
+							</div>
 						</div>
 					</IPhoneShell>
 				</div>
