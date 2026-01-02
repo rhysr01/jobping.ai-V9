@@ -512,7 +512,7 @@ function MatchesPageContent() {
 								</ul>
 								<div className="flex gap-3">
 									<Button
-										href="/preferences"
+										href="/signup?step=1"
 										variant="secondary"
 										size="sm"
 										className="text-xs"

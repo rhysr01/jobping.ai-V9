@@ -16,8 +16,3 @@ export interface SignupFormData {
 	gdprConsent: boolean;
 }
 
-export interface ValidationState {
-	isValid: boolean;
-	error?: string;
-}
-
