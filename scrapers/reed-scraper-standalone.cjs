@@ -283,84 +283,65 @@ function getCurrentQuerySet() {
 }
 
 /**
- * Generate comprehensive query list covering ALL roles from signup form
- * NOW WITH QUERY ROTATION for variety across runs
- * Since Reed has no API limit, we can be generous with queries
- * ALL QUERIES ARE EARLY-CAREER FOCUSED
+ * Generate career path-based queries rotating between internship, graduate programme, and early career
+ * Rotates every 8 hours: SET_A (internship), SET_B (graduate programme), SET_C (early career)
+ * UK-focused queries for Reed
+ * 
+ * EXPANDED: Now includes both career path queries AND specific role-based queries from QUERY_SETS
+ * This provides broader coverage and should significantly increase job collection
  */
 function generateReedQueries() {
 	const currentSet = getCurrentQuerySet();
-	const baseQueries = QUERY_SETS[currentSet];
 	console.log(
-		`🔄 Reed using query set: ${currentSet} (${baseQueries.length} base terms)`,
+		`🔄 Reed using query set: ${currentSet} - rotating between internship, graduate programme, and early career`,
 	);
 
 	const queries = [];
 
-	// Add base rotation queries (early-career focused)
-	queries.push(...baseQueries);
+	// Career paths from signup form
+	const careerPaths = [
+		"strategy",
+		"finance",
+		"sales",
+		"marketing",
+		"data",
+		"operations",
+		"product",
+		"tech",
+		"sustainability",
+		"people-hr",
+		"legal",
+		"creative",
+		"general-management",
+	];
 
-	// 🥇 TIER 1: Exact role names from signup form (ROTATED SUBSET)
-	// Rotate which roles we prioritize based on query set
-	const allRoles = getAllRoles(); // All roles across all career paths
-	const earlyCareerRoles = getEarlyCareerRoles(); // Roles with intern/graduate/junior keywords
-	const topRolesByPath = getTopRolesByCareerPath(5); // Top 5 roles per career path
+	// Determine query type based on rotation set
+	let queryType;
+	
+	if (currentSet === "SET_A") {
+		// Internship queries
+		queryType = "internship";
+	} else if (currentSet === "SET_B") {
+		// Graduate programme queries (UK uses "graduate programme" or "graduate scheme")
+		queryType = "graduate programme";
+	} else {
+		// Early career queries
+		queryType = "early career";
+	}
 
-	// Rotate role subsets for variety
-	const roleSubset =
-		currentSet === "SET_A"
-			? [
-					...earlyCareerRoles.slice(0, 15), // First 15 early-career roles
-					...allRoles.slice(0, 20), // First 20 all roles
-				]
-			: currentSet === "SET_B"
-				? [
-						...earlyCareerRoles.slice(15, 30), // Next 15 early-career roles
-						...allRoles.slice(20, 40), // Next 20 all roles
-					]
-				: [
-						...earlyCareerRoles.slice(30), // Remaining early-career roles
-						...allRoles.slice(40), // Remaining all roles
-						...Object.values(topRolesByPath).flat(), // Top roles per career path
-					];
+	// Generate queries for each career path
+	for (const path of careerPaths) {
+		queries.push(`${path} ${queryType}`);
+		// For SET_B, also add "graduate scheme" variant (UK-specific)
+		if (currentSet === "SET_B") {
+			queries.push(`${path} graduate scheme`);
+		}
+	}
 
-	// Clean role names and get primary version (without parentheses)
-	const cleanedRoles = roleSubset.map((role) => {
-		const cleaned = cleanRoleForSearch(role);
-		return cleaned[0]; // Use primary cleaned version
-	});
-
-	// Remove duplicates and add unique role names
-	const uniqueRoleTerms = [...new Set(cleanedRoles)];
-	queries.push(...uniqueRoleTerms);
-
-	// 🥈 TIER 2: Generic early-career terms (rotated)
-	const GENERIC_EARLY_TERMS =
-		currentSet === "SET_A"
-			? [
-					"graduate",
-					"graduate programme",
-					"graduate scheme",
-					"entry level",
-					"junior",
-				]
-			: currentSet === "SET_B"
-				? [
-						"trainee",
-						"intern",
-						"internship",
-						"graduate trainee",
-						"management trainee",
-					]
-				: [
-						"graduate trainee",
-						"trainee program",
-						"entry level program",
-						"campus hire",
-						"new grad",
-					];
-
-	queries.push(...GENERIC_EARLY_TERMS);
+	// ADD: Include specific role-based queries from QUERY_SETS for broader coverage
+	// These are more specific and should return more targeted results
+	const roleQueries = QUERY_SETS[currentSet] || [];
+	queries.push(...roleQueries);
 
 	// Remove duplicates and return
 	return [...new Set(queries)];
@@ -370,9 +351,11 @@ const EARLY_TERMS = generateReedQueries();
 
 // Free tier: 1,000 requests/day, 2 runs/day = 500 per run
 // Reed supports only UK/Ireland (5 cities), so: 5 cities × queries × pages ≤ 500
-// Target: 10 queries × 10 pages = 500 requests (perfect!)
+// Target: 10 queries × 10 pages × 5 cities = 500 requests (perfect!)
+// INCREASED: Now using more queries (up to 26 available) but capped at 10 per city to stay within limit
+// If you want to use all queries, reduce pages: 26 queries × 4 pages × 5 cities = 520 (slightly over)
 const MAX_QUERIES_PER_LOCATION = parseInt(
-	process.env.REED_MAX_QUERIES_PER_LOCATION || "10",
+	process.env.REED_MAX_QUERIES_PER_LOCATION || "10", // Default: 10 queries per city (500 requests total)
 	10,
 );
 const INCLUDE_REMOTE =
@@ -384,15 +367,18 @@ const queriesToUse =
 	MAX_QUERIES_PER_LOCATION > 0
 		? EARLY_TERMS.slice(0, MAX_QUERIES_PER_LOCATION)
 		: EARLY_TERMS;
-const estimatedRequests = LOCATIONS.length * queriesToUse.length * 10; // 10 pages avg
+// Calculate estimated requests based on average pages per query type
+// Career path queries: 10 pages, role queries: 10 pages (both use same max now)
+const avgPagesPerQuery = 10;
+const estimatedRequests = LOCATIONS.length * queriesToUse.length * avgPagesPerQuery;
 console.log(
 	`📋 Reed query strategy: Using ${queriesToUse.length} queries per location (from ${EARLY_TERMS.length} total)`,
 );
 console.log(
-	`📊 API Usage: ~${LOCATIONS.length} cities × ${queriesToUse.length} queries × 10 pages = ~${estimatedRequests} calls per run`,
+	`📊 API Usage: ~${LOCATIONS.length} cities × ${queriesToUse.length} queries × ${avgPagesPerQuery} pages = ~${estimatedRequests} calls per run`,
 );
 console.log(
-	`⚠️  Free Tier Limit: 1,000 requests/day (2 runs/day = 500 per run). Current: ~${estimatedRequests} (${estimatedRequests <= 500 ? "✅ SAFE" : "❌ EXCEEDS LIMIT"})`,
+	`⚠️  Free Tier Limit: 1,000 requests/day (2 runs/day = 500 per run). Current: ~${estimatedRequests} (${estimatedRequests <= 500 ? "✅ SAFE" : "⚠️ OVER LIMIT - will be throttled by MAX_QUERIES_PER_LOCATION"})`,
 );
 
 function parseTargetCareerPaths() {
@@ -419,31 +405,22 @@ if (TARGET_CAREER_PATHS.length) {
 
 /**
  * Determine max pages based on query type (smart pagination)
- * Role-based queries get more pages (more targeted, better results)
- * Generic queries get fewer pages (broader, less targeted)
+ * Career path queries (e.g., "strategy internship", "finance graduate programme") - use moderate pages
  * Since Reed has no API limit, we can be generous
  */
 function getMaxPagesForQuery(query) {
-	// Role-based queries (exact role names) - use more pages
-	const roleBasedPattern =
-		/(analyst|consultant|intern|associate|manager|engineer|specialist|coordinator|representative|executive|trainee|assistant)/i;
-	const isRoleBased = roleBasedPattern.test(query) && query.length > 8; // Longer queries are usually role names
-
-	// Generic queries (internship, graduate, junior) - use fewer pages
-	const genericPattern =
-		/^(internship|graduate|junior|entry level|trainee|intern)$/i;
-	const isGeneric = genericPattern.test(query.trim());
+	// Career path queries (e.g., "strategy internship", "finance graduate programme")
+	const careerPathPattern = /^(strategy|finance|sales|marketing|data|operations|product|tech|sustainability|people-hr|legal|creative|general-management)\s+(internship|graduate programme|graduate scheme|early career)/i;
+	const isCareerPathQuery = careerPathPattern.test(query.trim());
 
 	// Reed supports only UK/Ireland (5 cities), so we have more headroom
 	// Free tier: 1,000 requests/day, 2 runs/day = 500 per run
-	// 5 cities × queries × pages ≤ 500
-	// Target: 10 queries × 10 pages = 500 requests (perfect!)
-	if (isRoleBased) {
-		return parseInt(process.env.REED_MAX_PAGES_ROLE || "10", 10); // 10 pages for roles (free tier safe)
-	} else if (isGeneric) {
-		return parseInt(process.env.REED_MAX_PAGES_GENERIC || "8", 10); // 8 pages for generic (free tier safe)
+	// 5 cities × 10 queries × 10 pages = 500 requests (perfect match to limit)
+	// INCREASED: Now using 10 pages to match documentation and maximize job collection
+	if (isCareerPathQuery) {
+		return parseInt(process.env.REED_MAX_PAGES_CAREER_PATH || "10", 10); // 10 pages for career path queries (matches docs)
 	}
-	return parseInt(process.env.REED_MAX_PAGES || "10", 10); // Default: 10 pages (free tier safe)
+	return parseInt(process.env.REED_MAX_PAGES || "10", 10); // Default: 10 pages (matches docs, maximizes collection)
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -495,11 +472,19 @@ async function scrapeLocation(location) {
 	console.log(
 		`   🔍 Using ${termsToUse.length} queries for ${location} (${termsToUse.filter((_, i) => i < 20).length} role-based)`,
 	);
+	
+	let totalQueries = 0;
+	let successfulQueries = 0;
+	let totalJobsFound = 0;
+	let totalJobsFiltered = 0;
 
 	for (const term of termsToUse) {
+		totalQueries++;
 		// Smart pagination: more pages for role-based queries
 		const queryMaxPages = getMaxPagesForQuery(term);
 		let page = 0;
+		let queryJobsFound = 0;
+		let queryJobsFiltered = 0;
 
 		while (page < queryMaxPages) {
 			const params = {
@@ -516,7 +501,8 @@ async function scrapeLocation(location) {
 				maximumSalary: 0,
 				postedByRecruitmentAgency: true,
 				postedByDirectEmployer: true,
-				graduate: true, // Use Reed's graduate filter to focus on early-career roles
+				// REMOVED: graduate: true - This was too restrictive and filtered out many early-career jobs
+				// We'll rely on our own classifyEarlyCareer() function instead for better coverage
 			};
 			try {
 				const data = await fetchReedPage(params);
@@ -581,15 +567,40 @@ async function scrapeLocation(location) {
 			} catch (e) {
 				scrapeErrors += 1;
 				if (e.response && e.response.status === 429) {
+					console.warn(
+						`⚠️  Reed rate limit hit for ${location} ${term}, backing off...`,
+					);
 					await sleep(BACKOFF_DELAY_MS);
 					page--;
 					continue;
 				}
-				console.warn(`Reed error for ${location} ${term}:`, e.message);
+				console.warn(`❌ Reed error for ${location} ${term}:`, e.message);
+				if (e.response) {
+					console.warn(`   HTTP ${e.response.status}: ${e.response.statusText}`);
+				}
 				break;
 			}
 		}
+		
+		// Log query results
+		queryJobsFound = jobs.length - totalJobsFound;
+		totalJobsFound = jobs.length;
+		if (queryJobsFound > 0) {
+			successfulQueries++;
+			console.log(
+				`   ✅ "${term}": Found ${queryJobsFound} jobs (${queryMaxPages} pages checked)`,
+			);
+		} else {
+			console.log(
+				`   ⚠️  "${term}": No jobs found (${queryMaxPages} pages checked)`,
+			);
+		}
 	}
+	
+	// Log location summary
+	console.log(
+		`📊 Reed ${location} summary: ${successfulQueries}/${totalQueries} queries successful, ${jobs.length} total jobs found`,
+	);
 	return jobs;
 }
 

@@ -491,138 +491,167 @@ function inferCategoriesFromTags(tags, title) {
 
 /**
  * Scrape Arbeitnow for a single keyword + location combo
+ * FIXED: Now includes pagination to fetch multiple pages per query
  */
 async function scrapeArbeitnowQuery(keyword, location, supabase) {
-	try {
-		const url = new URL(BASE_URL);
-		url.searchParams.set("search", keyword);
-		url.searchParams.set("location", location.name);
-		url.searchParams.set("page", "1");
+	let totalSaved = 0;
+	const MAX_PAGES = parseInt(process.env.ARBEITNOW_MAX_PAGES || "5", 10); // Default: 5 pages per query
+	let page = 1;
+	let hasMorePages = true;
 
-		const response = await fetch(url.toString(), {
-			headers: {
-				"User-Agent": "JobPing/1.0 (job aggregator)",
-				Accept: "application/json",
-			},
-		});
+	while (hasMorePages && page <= MAX_PAGES) {
+		try {
+			const url = new URL(BASE_URL);
+			url.searchParams.set("search", keyword);
+			url.searchParams.set("location", location.name);
+			url.searchParams.set("page", String(page));
 
-		if (!response.ok) {
-			console.error(
-				`[Arbeitnow] API error ${response.status} for ${keyword} in ${location.name}`,
-			);
-			return 0;
-		}
+			const response = await fetch(url.toString(), {
+				headers: {
+					"User-Agent": "JobPing/1.0 (job aggregator)",
+					Accept: "application/json",
+				},
+			});
 
-		const data = await response.json();
-		const jobs = data.data || [];
-
-		if (jobs.length === 0) {
-			return 0;
-		}
-
-		console.log(
-			`[Arbeitnow] Found ${jobs.length} jobs for "${keyword}" in ${location.name}`,
-		);
-		let savedCount = 0;
-
-		// Process each job
-		for (const job of jobs) {
-			try {
-				// Extract city and country
-				const city = extractCity(job.location);
-				const country = inferCountry(job.location);
-
-				// Create normalized job object for early-career check
-				const normalizedJob = {
-					title: job.title || "",
-					company: job.company_name || "",
-					location: city,
-					description: job.description || "",
-				};
-
-				// Check if it's early career
-				const isEarlyCareer = classifyEarlyCareer(normalizedJob);
-				if (!isEarlyCareer) {
-					continue; // Skip non-early-career jobs
-				}
-
-				// Process through standardization pipe
-				const processed = processIncomingJob(
-					{
-						title: job.title,
-						company: job.company_name,
-						location: job.location,
-						description: job.description,
-						url: job.url,
-						posted_at: normalizeDate(job.created_at),
-						created_at: job.created_at,
-					},
-					{
-						source: "arbeitnow",
-						defaultCity: city,
-						defaultCountry: country,
-					},
+			if (!response.ok) {
+				console.error(
+					`[Arbeitnow] API error ${response.status} for ${keyword} in ${location.name} (page ${page})`,
 				);
-
-				// CRITICAL: Skip if processor rejected (e.g., job board company)
-				if (!processed) {
-					continue;
-				}
-
-				// Generate job_hash
-				const job_hash = makeJobHash({
-					title: processed.title,
-					company: processed.company,
-					location: processed.location,
-				});
-
-				// Infer categories from tags (Arbeitnow-specific)
-				const categories = inferCategoriesFromTags(job.tags || [], job.title);
-
-				// Prepare database record with all standardized fields
-				const jobRecord = {
-					...processed,
-					job_hash,
-					categories, // Override with Arbeitnow-specific categories
-				};
-
-				// CRITICAL: Validate before saving
-				const { validateJob } = require("./shared/jobValidator.cjs");
-				const validation = validateJob(jobRecord);
-				if (!validation.valid) {
-					console.warn(
-						`[Arbeitnow] Skipping invalid job: ${validation.errors.join(", ")}`,
-					);
-					continue;
-				}
-
-				// Upsert to database
-				const { error } = await supabase.from("jobs").upsert(validation.job, {
-					onConflict: "job_hash",
-					ignoreDuplicates: false,
-				});
-
-				if (error) {
-					console.error(
-						`[Arbeitnow] Error saving job ${job_hash}:`,
-						error.message,
-					);
-				} else {
-					savedCount++;
-				}
-			} catch (jobError) {
-				console.error("[Arbeitnow] Error processing job:", jobError.message);
+				break; // Stop pagination on error
 			}
-		}
 
-		return savedCount;
-	} catch (error) {
-		console.error(
-			`[Arbeitnow] Error scraping ${keyword} in ${location.name}:`,
-			error.message,
-		);
-		return 0;
+			const data = await response.json();
+			const jobs = data.data || [];
+			const meta = data.meta || {};
+			
+			// Check if there are more pages
+			// Arbeitnow API typically returns pagination info in meta or we can infer from results
+			if (jobs.length === 0) {
+				hasMorePages = false;
+				break;
+			}
+
+			// If meta indicates total pages, use that
+			if (meta.last_page && page >= meta.last_page) {
+				hasMorePages = false;
+			}
+
+			console.log(
+				`[Arbeitnow] Found ${jobs.length} jobs for "${keyword}" in ${location.name} (page ${page})`,
+			);
+
+			// Process each job
+			for (const job of jobs) {
+				try {
+					// Extract city and country
+					const city = extractCity(job.location);
+					const country = inferCountry(job.location);
+
+					// Create normalized job object for early-career check
+					const normalizedJob = {
+						title: job.title || "",
+						company: job.company_name || "",
+						location: city,
+						description: job.description || "",
+					};
+
+					// Check if it's early career
+					const isEarlyCareer = classifyEarlyCareer(normalizedJob);
+					if (!isEarlyCareer) {
+						continue; // Skip non-early-career jobs
+					}
+
+					// Process through standardization pipe
+					const processed = processIncomingJob(
+						{
+							title: job.title,
+							company: job.company_name,
+							location: job.location,
+							description: job.description,
+							url: job.url,
+							posted_at: normalizeDate(job.created_at),
+							created_at: job.created_at,
+						},
+						{
+							source: "arbeitnow",
+							defaultCity: city,
+							defaultCountry: country,
+						},
+					);
+
+					// CRITICAL: Skip if processor rejected (e.g., job board company)
+					if (!processed) {
+						continue;
+					}
+
+					// Generate job_hash
+					const job_hash = makeJobHash({
+						title: processed.title,
+						company: processed.company,
+						location: processed.location,
+					});
+
+					// Infer categories from tags (Arbeitnow-specific)
+					const categories = inferCategoriesFromTags(job.tags || [], job.title);
+
+					// Prepare database record with all standardized fields
+					const jobRecord = {
+						...processed,
+						job_hash,
+						categories, // Override with Arbeitnow-specific categories
+					};
+
+					// CRITICAL: Validate before saving
+					const { validateJob } = require("./shared/jobValidator.cjs");
+					const validation = validateJob(jobRecord);
+					if (!validation.valid) {
+						console.warn(
+							`[Arbeitnow] Skipping invalid job: ${validation.errors.join(", ")}`,
+						);
+						continue;
+					}
+
+					// Upsert to database
+					const { error } = await supabase.from("jobs").upsert(validation.job, {
+						onConflict: "job_hash",
+						ignoreDuplicates: false,
+					});
+
+					if (error) {
+						console.error(
+							`[Arbeitnow] Error saving job ${job_hash}:`,
+							error.message,
+						);
+					} else {
+						totalSaved++;
+					}
+				} catch (jobError) {
+					console.error("[Arbeitnow] Error processing job:", jobError.message);
+				}
+			}
+
+			// If we got fewer jobs than expected (e.g., < 20), likely no more pages
+			// This is a heuristic - adjust based on typical page size
+			if (jobs.length < 20) {
+				hasMorePages = false;
+			}
+
+			page++;
+			
+			// Rate limiting between pages
+			if (hasMorePages && page <= MAX_PAGES) {
+				await new Promise((resolve) => setTimeout(resolve, 1000)); // 1s delay between pages
+			}
+		} catch (error) {
+			console.error(
+				`[Arbeitnow] Error scraping ${keyword} in ${location.name} (page ${page}):`,
+				error.message,
+			);
+			break; // Stop pagination on error
+		}
 	}
+
+	return totalSaved;
 }
 
 /**
@@ -650,9 +679,15 @@ async function scrapeArbeitnow() {
 	const queries = generateSearchQueries();
 
 	// EXPANDED: More queries for comprehensive DACH coverage
-	// 17 cities × 30 keywords = 510 requests (within free tier limits)
-	// Rate limiting: 2s between requests = ~17 minutes total
-	const limitedQueries = queries.slice(0, 30); // Increased from 25 to maximize coverage
+	// 17 cities × 40 queries × 5 pages = 3,400 requests max
+	// But with rate limiting (2s between queries, 1s between pages), this is manageable
+	// INCREASED from 30 to 40 queries to maximize coverage
+	const limitedQueries = queries.slice(0, 40); // Increased from 30 to maximize coverage
+	
+	const MAX_PAGES = parseInt(process.env.ARBEITNOW_MAX_PAGES || "5", 10);
+	console.log(
+		`[Arbeitnow] Using ${limitedQueries.length} queries across ${CITIES.length} cities (max ${MAX_PAGES} pages per query)`,
+	);
 
 	let totalSaved = 0;
 	let errors = 0;
