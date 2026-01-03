@@ -6,6 +6,8 @@ import {
 	generateMatchExplanation,
 } from "@/Utils/matching/rule-based-matcher.service";
 import type { Job, UserPreferences } from "@/Utils/matching/types";
+import { COMPANY_LOGOS } from "@/lib/companyLogos";
+import { calculateCompanyTierScore } from "@/Utils/matching/consolidated/scoring";
 
 export const dynamic = "force-dynamic"; // Force dynamic rendering
 export const revalidate = 3600; // Cache for 1 hour
@@ -71,6 +73,26 @@ export async function GET(req: NextRequest) {
 			} else {
 				usedCompositeKeys.add(key);
 			}
+		};
+
+		// Helper function to check if company is premium/well-known
+		const isPremiumCompany = (companyName: string): boolean => {
+			if (!companyName) return false;
+			const normalized = companyName.toLowerCase().trim();
+			
+			// Check if company has a logo (premium indicator)
+			const hasLogo = COMPANY_LOGOS.some(
+				(logo) =>
+					logo.name.toLowerCase() === normalized ||
+					normalized.includes(logo.name.toLowerCase()) ||
+					logo.name.toLowerCase().includes(normalized),
+			);
+			
+			if (hasLogo) return true;
+			
+			// Also check using company tier scoring
+			const tierScore = calculateCompanyTierScore(companyName, "");
+			return tierScore.points >= 12; // Famous companies get 12 points
 		};
 
 		// Create fictional user profiles for free and premium
@@ -503,18 +525,27 @@ export async function GET(req: NextRequest) {
 						),
 					);
 
+					// Boost score for premium companies (for iPhone showcase)
+					const companyName = job.company || "";
+					const isPremium = isPremiumCompany(companyName);
+					const premiumBoost = isPremium ? 0.05 : 0; // Add 5% boost for premium companies
+
 					return {
 						job,
-						score: matchResult.score,
+						score: Math.min(1.0, matchResult.score + premiumBoost), // Cap at 1.0
 						reason: matchResult.reason,
 						breakdown: matchResult.breakdown,
 						matchesCity,
 						matchesCareer,
 						isPerfectMatch: matchesCity && matchesCareer,
+						isPremium,
 					};
 				})
 				.sort((a, b) => {
-					// Sort by: perfect matches first, then score
+					// Sort by: premium companies first, then perfect matches, then score
+					if (a.isPremium !== b.isPremium) {
+						return b.isPremium ? 1 : -1;
+					}
 					if (a.isPerfectMatch !== b.isPerfectMatch) {
 						return b.isPerfectMatch ? 1 : -1;
 					}

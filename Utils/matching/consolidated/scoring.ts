@@ -87,48 +87,44 @@ export async function calculateWeightedScore(
 	if (companyScore.points > 0) {
 		reasons.push(companyScore.reason);
 	}
-
-	// 5. Extended preferences (available for all users)
-	{
-		// Industries match bonus (5 pts max)
-		if (userPrefs.industries && userPrefs.industries.length > 0) {
-			const jobIndustry = (job as any).industry || "";
-			const matchesIndustry = userPrefs.industries.some(
-				(industry) =>
-					jobIndustry.toLowerCase().includes(industry.toLowerCase()) ||
-					jobText.includes(industry.toLowerCase()),
-			);
-			if (matchesIndustry) {
-				score += 5;
-				reasons.push("Matches preferred industry");
-			}
+	// Industries match bonus (5 pts max)
+	if (userPrefs.industries && userPrefs.industries.length > 0) {
+		const jobIndustry = (job as any).industry || "";
+		const matchesIndustry = userPrefs.industries.some(
+			(industry) =>
+				jobIndustry.toLowerCase().includes(industry.toLowerCase()) ||
+				jobText.includes(industry.toLowerCase()),
+		);
+		if (matchesIndustry) {
+			score += 5;
+			reasons.push("Matches preferred industry");
 		}
+	}
 
-		// Skills match bonus (5 pts max)
-		if (userPrefs.skills && userPrefs.skills.length > 0) {
-			const skillMatches = userPrefs.skills.filter((skill) =>
-				jobText.includes(skill.toLowerCase()),
-			).length;
-			if (skillMatches > 0) {
-				const skillBonus = Math.min(5, skillMatches * 1.5);
-				score += skillBonus;
-				reasons.push(`Matches ${skillMatches} preferred skill(s)`);
-			}
+	// Skills match bonus (5 pts max)
+	if (userPrefs.skills && userPrefs.skills.length > 0) {
+		const skillMatches = userPrefs.skills.filter((skill) =>
+			jobText.includes(skill.toLowerCase()),
+		).length;
+		if (skillMatches > 0) {
+			const skillBonus = Math.min(5, skillMatches * 1.5);
+			score += skillBonus;
+			reasons.push(`Matches ${skillMatches} preferred skill(s)`);
 		}
+	}
 
-		// Company size preference bonus (3 pts max)
-		if (
-			userPrefs.company_size_preference &&
-			userPrefs.company_size_preference !== "any"
-		) {
-			const companySize = (job as any).company_size || "";
-			const matchesSize = companySize
-				.toLowerCase()
-				.includes(userPrefs.company_size_preference.toLowerCase());
-			if (matchesSize) {
-				score += 3;
-				reasons.push("Matches company size preference");
-			}
+	// Company size preference bonus (3 pts max)
+	if (
+		userPrefs.company_size_preference &&
+		userPrefs.company_size_preference !== "any"
+	) {
+		const companySize = (job as any).company_size || "";
+		const matchesSize = companySize
+			.toLowerCase()
+			.includes(userPrefs.company_size_preference.toLowerCase());
+		if (matchesSize) {
+			score += 3;
+			reasons.push("Matches company size preference");
 		}
 	}
 
@@ -959,6 +955,7 @@ export function calculateCompanyTierScore(
 	_jobText: string,
 ): { points: number; reason: string } {
 	const famousCompanies = [
+		// Tech Giants & FAANG
 		"google",
 		"microsoft",
 		"apple",
@@ -966,9 +963,36 @@ export function calculateCompanyTierScore(
 		"meta",
 		"facebook",
 		"netflix",
+		// Unicorns & High-Growth Tech
+		"spotify",
+		"stripe",
 		"uber",
 		"airbnb",
 		"tesla",
+		"shopify",
+		"notion",
+		"vercel",
+		"github",
+		"openai",
+		"anthropic",
+		"discord",
+		"figma",
+		"linear",
+		// Enterprise Software
+		"salesforce",
+		"oracle",
+		"sap",
+		"adobe",
+		"ibm",
+		"cisco",
+		"vmware",
+		"servicenow",
+		"workday",
+		"atlassian",
+		"slack",
+		"zoom",
+		"dropbox",
+		// Consulting & Professional Services
 		"mckinsey",
 		"bain",
 		"bcg",
@@ -976,8 +1000,13 @@ export function calculateCompanyTierScore(
 		"deloitte",
 		"pwc",
 		"ey",
+		"ernst & young",
 		"kpmg",
 		"accenture",
+		"capgemini",
+		"oliver wyman",
+		"roland berger",
+		// Investment Banking & Finance
 		"goldman sachs",
 		"jpmorgan",
 		"jp morgan",
@@ -986,25 +1015,81 @@ export function calculateCompanyTierScore(
 		"citi",
 		"barclays",
 		"hsbc",
+		"deutsche bank",
+		"credit suisse",
+		"ubs",
+		"bnp paribas",
 		"blackrock",
 		"vanguard",
 		"state street",
-		"unilever",
-		"nestlé",
-		"nestle",
-		"lvmh",
-		"loreal",
-		"l'oreal",
+		// EU Fintech & Neobanks
+		"revolut",
+		"monzo",
+		"n26",
+		"wise",
+		"klarna",
+		"nubank",
+		"checkout.com",
+		// EU E-commerce & Delivery
+		"zalando",
+		"deliveroo",
+		"just eat",
+		"glovo",
+		"hellofresh",
+		"asos",
+		"booking.com",
+		"expedia",
+		// Automotive
 		"volkswagen",
 		"bmw",
 		"mercedes",
+		"mercedes-benz",
+		"audi",
+		"volvo",
+		"porsche",
+		"ferrari",
+		// Industrial & Manufacturing
 		"siemens",
-		"salesforce",
-		"oracle",
-		"sap",
-		"adobe",
-		"spotify",
-		"booking.com",
+		"bosch",
+		"philips",
+		"nestlé",
+		"nestle",
+		"unilever",
+		"loreal",
+		"l'oreal",
+		"lvmh",
+		"ikea",
+		"heineken",
+		// Media & Entertainment
+		"disney",
+		"warner bros",
+		"warner brothers",
+		"bbc",
+		"sky",
+		// Pharmaceuticals & Healthcare
+		"roche",
+		"novartis",
+		"gsk",
+		"glaxosmithkline",
+		"astrazeneca",
+		"sanofi",
+		// Energy & Utilities
+		"shell",
+		"bp",
+		"totalenergies",
+		"total energies",
+		// Retail
+		"tesco",
+		"sainsbury",
+		"sainsburys",
+		"aldi",
+		"lidl",
+		// Gaming
+		"ea",
+		"electronic arts",
+		"ubisoft",
+		"riot games",
+		"epic games",
 	];
 
 	for (const famous of famousCompanies) {

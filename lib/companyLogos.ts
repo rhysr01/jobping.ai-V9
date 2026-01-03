@@ -11,29 +11,9 @@ export interface CompanyLogo {
 }
 
 // Curated list of companies we've sent matches from
-// Only includes companies with real logos (no placeholders)
+// Expanded list of premium companies for showcase and matching
 export const COMPANY_LOGOS: CompanyLogo[] = [
-	{
-		name: "Spotify",
-		logoPath: "/logos/companies/spotify.svg",
-		domain: "spotify.com",
-	},
-	{
-		name: "Revolut",
-		logoPath: "/logos/companies/revolut.svg",
-		domain: "revolut.com",
-	},
-	{
-		name: "Monzo",
-		logoPath: "/logos/companies/monzo.svg",
-		domain: "monzo.com",
-	},
-	{ name: "N26", logoPath: "/logos/companies/n26.svg", domain: "n26.com" },
-	{
-		name: "Deliveroo",
-		logoPath: "/logos/companies/deliveroo.svg",
-		domain: "deliveroo.co.uk",
-	},
+	// Tech Giants & FAANG
 	{
 		name: "Google",
 		logoPath: "/logos/companies/google.svg",
@@ -46,9 +26,50 @@ export const COMPANY_LOGOS: CompanyLogo[] = [
 		domain: "apple.com",
 	},
 	{
+		name: "Microsoft",
+		logoPath: "/logos/companies/microsoft.svg",
+		domain: "microsoft.com",
+	},
+	{
+		name: "Amazon",
+		logoPath: "/logos/companies/amazon.svg",
+		domain: "amazon.com",
+	},
+	{
+		name: "Netflix",
+		logoPath: "/logos/companies/netflix.svg",
+		domain: "netflix.com",
+	},
+	// Unicorns & High-Growth Tech
+	{
+		name: "Spotify",
+		logoPath: "/logos/companies/spotify.svg",
+		domain: "spotify.com",
+	},
+	{
 		name: "Stripe",
 		logoPath: "/logos/companies/stripe.svg",
 		domain: "stripe.com",
+	},
+	{
+		name: "Uber",
+		logoPath: "/logos/companies/uber.svg",
+		domain: "uber.com",
+	},
+	{
+		name: "Airbnb",
+		logoPath: "/logos/companies/airbnb.svg",
+		domain: "airbnb.com",
+	},
+	{
+		name: "Tesla",
+		logoPath: "/logos/companies/tesla.svg",
+		domain: "tesla.com",
+	},
+	{
+		name: "Shopify",
+		logoPath: "/logos/companies/shopify.svg",
+		domain: "shopify.com",
 	},
 	{
 		name: "Notion",
@@ -66,41 +87,112 @@ export const COMPANY_LOGOS: CompanyLogo[] = [
 		domain: "github.com",
 	},
 	{
-		name: "Netflix",
-		logoPath: "/logos/companies/netflix.svg",
-		domain: "netflix.com",
-	},
-	{ name: "Uber", logoPath: "/logos/companies/uber.svg", domain: "uber.com" },
-	{
-		name: "Airbnb",
-		logoPath: "/logos/companies/airbnb.svg",
-		domain: "airbnb.com",
+		name: "OpenAI",
+		logoPath: "/logos/companies/openai.svg",
+		domain: "openai.com",
 	},
 	{
-		name: "Tesla",
-		logoPath: "/logos/companies/tesla.svg",
-		domain: "tesla.com",
+		name: "Anthropic",
+		logoPath: "/logos/companies/anthropic.svg",
+		domain: "anthropic.com",
 	},
 	{
-		name: "Shopify",
-		logoPath: "/logos/companies/shopify.svg",
-		domain: "shopify.com",
+		name: "Discord",
+		logoPath: "/logos/companies/discord.svg",
+		domain: "discord.com",
 	},
+	{
+		name: "Figma",
+		logoPath: "/logos/companies/figma.svg",
+		domain: "figma.com",
+	},
+	{
+		name: "Linear",
+		logoPath: "/logos/companies/linear.svg",
+		domain: "linear.app",
+	},
+	{
+		name: "Vercel",
+		logoPath: "/logos/companies/vercel.svg",
+		domain: "vercel.com",
+	},
+	// Enterprise Software
 	{
 		name: "Salesforce",
 		logoPath: "/logos/companies/salesforce.svg",
 		domain: "salesforce.com",
 	},
 	{
-		name: "Accenture",
-		logoPath: "/logos/companies/accenture.svg",
-		domain: "accenture.com",
+		name: "Oracle",
+		logoPath: "/logos/companies/oracle.svg",
+		domain: "oracle.com",
+	},
+	{ name: "SAP", logoPath: "/logos/companies/sap.svg", domain: "sap.com" },
+	{
+		name: "Adobe",
+		logoPath: "/logos/companies/adobe.svg",
+		domain: "adobe.com",
+	},
+	{
+		name: "IBM",
+		logoPath: "/logos/companies/ibm.svg",
+		domain: "ibm.com",
+	},
+	{
+		name: "Cisco",
+		logoPath: "/logos/companies/cisco.svg",
+		domain: "cisco.com",
+	},
+	{
+		name: "VMware",
+		logoPath: "/logos/companies/vmware.svg",
+		domain: "vmware.com",
+	},
+	{
+		name: "ServiceNow",
+		logoPath: "/logos/companies/servicenow.svg",
+		domain: "servicenow.com",
+	},
+	{
+		name: "Workday",
+		logoPath: "/logos/companies/workday.svg",
+		domain: "workday.com",
+	},
+	{
+		name: "Atlassian",
+		logoPath: "/logos/companies/atlassian.svg",
+		domain: "atlassian.com",
+	},
+	{
+		name: "Slack",
+		logoPath: "/logos/companies/slack.svg",
+		domain: "slack.com",
+	},
+	{
+		name: "Zoom",
+		logoPath: "/logos/companies/zoom.svg",
+		domain: "zoom.us",
+	},
+	{
+		name: "Dropbox",
+		logoPath: "/logos/companies/dropbox.svg",
+		domain: "dropbox.com",
 	},
 	// Consulting & Professional Services
 	{
 		name: "McKinsey",
 		logoPath: "/logos/companies/mckinsey.svg",
 		domain: "mckinsey.com",
+	},
+	{
+		name: "BCG",
+		logoPath: "/logos/companies/bostonconsultinggroup.svg",
+		domain: "bcg.com",
+	},
+	{
+		name: "Bain",
+		logoPath: "/logos/companies/bain.svg",
+		domain: "bain.com",
 	},
 	{
 		name: "Deloitte",
@@ -113,11 +205,6 @@ export const COMPANY_LOGOS: CompanyLogo[] = [
 		domain: "pwc.com",
 	},
 	{
-		name: "BCG",
-		logoPath: "/logos/companies/bostonconsultinggroup.svg",
-		domain: "bcg.com",
-	},
-	{
 		name: "EY",
 		logoPath: "/logos/companies/ernstandyoung.svg",
 		domain: "ey.com",
@@ -127,36 +214,126 @@ export const COMPANY_LOGOS: CompanyLogo[] = [
 		logoPath: "/logos/companies/kpmg.svg",
 		domain: "kpmg.com",
 	},
-	// EU Companies
+	{
+		name: "Accenture",
+		logoPath: "/logos/companies/accenture.svg",
+		domain: "accenture.com",
+	},
+	{
+		name: "Capgemini",
+		logoPath: "/logos/companies/capgemini.svg",
+		domain: "capgemini.com",
+	},
+	{
+		name: "Oliver Wyman",
+		logoPath: "/logos/companies/oliverwyman.svg",
+		domain: "oliverwyman.com",
+	},
+	{
+		name: "Roland Berger",
+		logoPath: "/logos/companies/rolandberger.svg",
+		domain: "rolandberger.com",
+	},
+	// Investment Banking & Finance
+	{
+		name: "Goldman Sachs",
+		logoPath: "/logos/companies/goldmansachs.svg",
+		domain: "goldmansachs.com",
+	},
+	{
+		name: "JPMorgan",
+		logoPath: "/logos/companies/jpmorgan.svg",
+		domain: "jpmorgan.com",
+	},
+	{
+		name: "Morgan Stanley",
+		logoPath: "/logos/companies/morganstanley.svg",
+		domain: "morganstanley.com",
+	},
+	{
+		name: "Citigroup",
+		logoPath: "/logos/companies/citigroup.svg",
+		domain: "citi.com",
+	},
+	{
+		name: "Barclays",
+		logoPath: "/logos/companies/barclays.svg",
+		domain: "barclays.com",
+	},
+	{
+		name: "HSBC",
+		logoPath: "/logos/companies/hsbc.svg",
+		domain: "hsbc.com",
+	},
+	{
+		name: "Deutsche Bank",
+		logoPath: "/logos/companies/deutschebank.svg",
+		domain: "db.com",
+	},
+	{
+		name: "Credit Suisse",
+		logoPath: "/logos/companies/creditsuisse.svg",
+		domain: "credit-suisse.com",
+	},
+	{
+		name: "UBS",
+		logoPath: "/logos/companies/ubs.svg",
+		domain: "ubs.com",
+	},
+	{
+		name: "BNP Paribas",
+		logoPath: "/logos/companies/bnpparibas.svg",
+		domain: "bnpparibas.com",
+	},
+	{
+		name: "BlackRock",
+		logoPath: "/logos/companies/blackrock.svg",
+		domain: "blackrock.com",
+	},
+	{
+		name: "Vanguard",
+		logoPath: "/logos/companies/vanguard.svg",
+		domain: "vanguard.com",
+	},
+	// EU Fintech & Neobanks
+	{
+		name: "Revolut",
+		logoPath: "/logos/companies/revolut.svg",
+		domain: "revolut.com",
+	},
+	{
+		name: "Monzo",
+		logoPath: "/logos/companies/monzo.svg",
+		domain: "monzo.com",
+	},
+	{ name: "N26", logoPath: "/logos/companies/n26.svg", domain: "n26.com" },
+	{ name: "Wise", logoPath: "/logos/companies/wise.svg", domain: "wise.com" },
 	{
 		name: "Klarna",
 		logoPath: "/logos/companies/klarna.svg",
 		domain: "klarna.com",
 	},
 	{
+		name: "Nubank",
+		logoPath: "/logos/companies/nubank.svg",
+		domain: "nubank.com.br",
+	},
+	{
+		name: "Checkout.com",
+		logoPath: "/logos/companies/checkout.svg",
+		domain: "checkout.com",
+	},
+	// EU E-commerce & Delivery
+	{
 		name: "Zalando",
 		logoPath: "/logos/companies/zalando.svg",
 		domain: "zalando.com",
 	},
-	{ name: "Wise", logoPath: "/logos/companies/wise.svg", domain: "wise.com" },
-	{ name: "SAP", logoPath: "/logos/companies/sap.svg", domain: "sap.com" },
 	{
-		name: "Siemens",
-		logoPath: "/logos/companies/siemens.svg",
-		domain: "siemens.com",
+		name: "Deliveroo",
+		logoPath: "/logos/companies/deliveroo.svg",
+		domain: "deliveroo.co.uk",
 	},
-	{ name: "BMW", logoPath: "/logos/companies/bmw.svg", domain: "bmw.com" },
-	{
-		name: "Volkswagen",
-		logoPath: "/logos/companies/volkswagen.svg",
-		domain: "volkswagen.com",
-	},
-	{
-		name: "Volvo",
-		logoPath: "/logos/companies/volvo.svg",
-		domain: "volvo.com",
-	},
-	{ name: "IKEA", logoPath: "/logos/companies/ikea.svg", domain: "ikea.com" },
 	{
 		name: "Just Eat",
 		logoPath: "/logos/companies/justeat.svg",
@@ -166,6 +343,214 @@ export const COMPANY_LOGOS: CompanyLogo[] = [
 		name: "Glovo",
 		logoPath: "/logos/companies/glovo.svg",
 		domain: "glovo.com",
+	},
+	{
+		name: "HelloFresh",
+		logoPath: "/logos/companies/hellofresh.svg",
+		domain: "hellofresh.com",
+	},
+	{
+		name: "ASOS",
+		logoPath: "/logos/companies/asos.svg",
+		domain: "asos.com",
+	},
+	{
+		name: "Booking.com",
+		logoPath: "/logos/companies/booking.svg",
+		domain: "booking.com",
+	},
+	{
+		name: "Expedia",
+		logoPath: "/logos/companies/expedia.svg",
+		domain: "expedia.com",
+	},
+	// Automotive
+	{ name: "BMW", logoPath: "/logos/companies/bmw.svg", domain: "bmw.com" },
+	{
+		name: "Volkswagen",
+		logoPath: "/logos/companies/volkswagen.svg",
+		domain: "volkswagen.com",
+	},
+	{
+		name: "Mercedes-Benz",
+		logoPath: "/logos/companies/mercedes.svg",
+		domain: "mercedes-benz.com",
+	},
+	{
+		name: "Audi",
+		logoPath: "/logos/companies/audi.svg",
+		domain: "audi.com",
+	},
+	{
+		name: "Volvo",
+		logoPath: "/logos/companies/volvo.svg",
+		domain: "volvo.com",
+	},
+	{
+		name: "Porsche",
+		logoPath: "/logos/companies/porsche.svg",
+		domain: "porsche.com",
+	},
+	{
+		name: "Ferrari",
+		logoPath: "/logos/companies/ferrari.svg",
+		domain: "ferrari.com",
+	},
+	// Industrial & Manufacturing
+	{
+		name: "Siemens",
+		logoPath: "/logos/companies/siemens.svg",
+		domain: "siemens.com",
+	},
+	{
+		name: "Bosch",
+		logoPath: "/logos/companies/bosch.svg",
+		domain: "bosch.com",
+	},
+	{
+		name: "Philips",
+		logoPath: "/logos/companies/philips.svg",
+		domain: "philips.com",
+	},
+	{
+		name: "Nestlé",
+		logoPath: "/logos/companies/nestle.svg",
+		domain: "nestle.com",
+	},
+	{
+		name: "Unilever",
+		logoPath: "/logos/companies/unilever.svg",
+		domain: "unilever.com",
+	},
+	{
+		name: "L'Oréal",
+		logoPath: "/logos/companies/loreal.svg",
+		domain: "loreal.com",
+	},
+	{
+		name: "LVMH",
+		logoPath: "/logos/companies/lvmh.svg",
+		domain: "lvmh.com",
+	},
+	{
+		name: "IKEA",
+		logoPath: "/logos/companies/ikea.svg",
+		domain: "ikea.com",
+	},
+	{
+		name: "Heineken",
+		logoPath: "/logos/companies/heineken.svg",
+		domain: "heineken.com",
+	},
+	// Media & Entertainment
+	{
+		name: "Disney",
+		logoPath: "/logos/companies/disney.svg",
+		domain: "disney.com",
+	},
+	{
+		name: "Warner Bros",
+		logoPath: "/logos/companies/warnerbros.svg",
+		domain: "warnerbros.com",
+	},
+	{
+		name: "BBC",
+		logoPath: "/logos/companies/bbc.svg",
+		domain: "bbc.com",
+	},
+	{
+		name: "Sky",
+		logoPath: "/logos/companies/sky.svg",
+		domain: "sky.com",
+	},
+	{
+		name: "Spotify",
+		logoPath: "/logos/companies/spotify.svg",
+		domain: "spotify.com",
+	},
+	// Pharmaceuticals & Healthcare
+	{
+		name: "Roche",
+		logoPath: "/logos/companies/roche.svg",
+		domain: "roche.com",
+	},
+	{
+		name: "Novartis",
+		logoPath: "/logos/companies/novartis.svg",
+		domain: "novartis.com",
+	},
+	{
+		name: "GSK",
+		logoPath: "/logos/companies/gsk.svg",
+		domain: "gsk.com",
+	},
+	{
+		name: "AstraZeneca",
+		logoPath: "/logos/companies/astrazeneca.svg",
+		domain: "astrazeneca.com",
+	},
+	{
+		name: "Sanofi",
+		logoPath: "/logos/companies/sanofi.svg",
+		domain: "sanofi.com",
+	},
+	// Energy & Utilities
+	{
+		name: "Shell",
+		logoPath: "/logos/companies/shell.svg",
+		domain: "shell.com",
+	},
+	{
+		name: "BP",
+		logoPath: "/logos/companies/bp.svg",
+		domain: "bp.com",
+	},
+	{
+		name: "TotalEnergies",
+		logoPath: "/logos/companies/totalenergies.svg",
+		domain: "totalenergies.com",
+	},
+	// Retail
+	{
+		name: "Tesco",
+		logoPath: "/logos/companies/tesco.svg",
+		domain: "tesco.com",
+	},
+	{
+		name: "Sainsbury's",
+		logoPath: "/logos/companies/sainsburys.svg",
+		domain: "sainsburys.co.uk",
+	},
+	{
+		name: "Aldi",
+		logoPath: "/logos/companies/aldi.svg",
+		domain: "aldi.com",
+	},
+	{
+		name: "Lidl",
+		logoPath: "/logos/companies/lidl.svg",
+		domain: "lidl.com",
+	},
+	// Gaming
+	{
+		name: "EA",
+		logoPath: "/logos/companies/ea.svg",
+		domain: "ea.com",
+	},
+	{
+		name: "Ubisoft",
+		logoPath: "/logos/companies/ubisoft.svg",
+		domain: "ubisoft.com",
+	},
+	{
+		name: "Riot Games",
+		logoPath: "/logos/companies/riotgames.svg",
+		domain: "riotgames.com",
+	},
+	{
+		name: "Epic Games",
+		logoPath: "/logos/companies/epicgames.svg",
+		domain: "epicgames.com",
 	},
 ];
 

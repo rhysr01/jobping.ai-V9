@@ -62,7 +62,7 @@ export default function Hero() {
 	return (
 		<section
 			data-testid="hero-section"
-			className="section-padding-hero pt-16 pb-20 md:pt-20 md:pb-24 relative isolate overflow-hidden min-h-[60vh] md:min-h-[65vh] flex items-center bg-black"
+			className="section-padding-hero pt-16 pb-20 md:pt-20 md:pb-24 relative isolate overflow-visible min-h-[60vh] md:min-h-[65vh] flex items-center bg-black"
 		>
 			{/* Layer 1: The Dot Grid (The Foundation) */}
 			<div
@@ -80,15 +80,15 @@ export default function Hero() {
 			<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
 
 			{/* Main container - Split Layout */}
-			<div className="container-page relative z-10 mx-auto max-w-7xl">
+			<div className="container-page relative z-10 mx-auto max-w-7xl overflow-visible">
 				{/* Split Grid Layout: Content Left, Mockup Right */}
-				<div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center mt-4 md:mt-8">
+				<div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center mt-4 md:mt-8 overflow-visible">
 					{/* LEFT SIDE - Content */}
 					<motion.div
 						initial={{ opacity: 0, x: -20 }}
 						animate={{ opacity: 1, x: 0 }}
 						transition={{ duration: 0.6 }}
-						className="text-left space-y-6 relative"
+						className="text-left space-y-6 relative overflow-visible pr-4 sm:pr-6 md:pr-8"
 						style={{ backgroundColor: "transparent" }}
 					>
 						{/* Headline - "Silver Silk" gradient */}
@@ -96,7 +96,7 @@ export default function Hero() {
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ delay: 0.2, duration: 0.6 }}
-							className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3 max-w-[540px] relative pl-1 overflow-visible"
+							className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold tracking-tighter leading-[1.1] mb-3 max-w-[540px] lg:max-w-[600px] xl:max-w-[700px] relative pl-1 pr-2 overflow-visible"
 						>
 							{/* Silver Silk gradient: purple-500/80 (20%) → zinc-100 (50%) → purple-500/80 (80%) */}
 							<GradientText variant="brand">Get 5 early-career</GradientText>{" "}
