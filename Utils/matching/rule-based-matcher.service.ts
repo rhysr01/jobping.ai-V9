@@ -220,9 +220,10 @@ export function applyHardGates(
 				jobText.includes(keyword),
 			);
 
-			// Also check structured field if available
+			// Also check structured field if available (from database)
 			// TYPE SHIM: Now properly typed with JobWithMetadata
 			const jobWithMeta = job as JobWithMetadata;
+			// Check visa_friendly field from database (set by visa detection filter)
 			const jobVisaFriendly =
 				jobWithMeta.visa_friendly === true ||
 				jobWithMeta.visa_sponsorship === true;

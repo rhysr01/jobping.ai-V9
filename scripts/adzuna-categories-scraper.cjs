@@ -43,25 +43,64 @@ let scrapeErrors = 0;
 /**
  * Get country code for Adzuna API based on city name
  * Adzuna requires specific country codes in the API path
- * This ensures Dublin/Cork use 'ie' endpoint instead of 'gb'
+ * VALIDATES that country is supported by Adzuna API before returning
+ * Adzuna supports: GB, FR, DE, IT, NL, ES, PL, AT, BE, CH, US, AU, CA, etc.
+ * NOT SUPPORTED: IE (Ireland), SE (Sweden), DK (Denmark), CZ (Czech Republic),
+ *                FI (Finland), NO (Norway), PT (Portugal), GR (Greece),
+ *                HU (Hungary), RO (Romania), BG (Bulgaria)
  */
+const ADZUNA_SUPPORTED_COUNTRIES = new Set([
+	"gb", "fr", "de", "it", "nl", "es", "pl", "at", "be", "ch",
+	"us", "au", "ca", "mx", "br", "in", "sg", "za", "nz", "ru"
+]);
+
+// Explicitly list unsupported countries for filtering
+const ADZUNA_UNSUPPORTED_COUNTRIES = new Set([
+	"ie", "se", "dk", "cz", "fi", "no", "pt", "gr", "hu", "ro", "bg"
+]);
+
 function getCountryCode(cityName, fallbackCountryCode = "gb") {
-	// Ireland cities require 'ie' country code (critical fix for Dublin 404 errors)
-	if (cityName === "Dublin" || cityName === "Cork") {
-		return "ie";
+	const countryCode = fallbackCountryCode.toLowerCase();
+	
+	// CRITICAL: First check if country is explicitly unsupported
+	if (ADZUNA_UNSUPPORTED_COUNTRIES.has(countryCode)) {
+		console.warn(
+			`⚠️  Adzuna: Country code '${fallbackCountryCode.toUpperCase()}' (${cityName}) is not supported by Adzuna API. Skipping.`
+		);
+		return null; // Signal to skip this city
 	}
-	// For other cities, use the provided fallback (from EU_CITIES_CATEGORIES)
-	// This handles all other countries correctly (es, de, fr, it, nl, etc.)
+	
+	// Validate that the country code is supported by Adzuna
+	if (!ADZUNA_SUPPORTED_COUNTRIES.has(countryCode)) {
+		console.warn(
+			`⚠️  Adzuna: Country code '${fallbackCountryCode}' not supported for city '${cityName}'. Skipping.`
+		);
+		return null; // Signal to skip this city
+	}
+	
+	// For all cities in EU_CITIES_CATEGORIES, use the provided fallback (from EU_CITIES_CATEGORIES)
+	// This handles all supported countries correctly (es, de, fr, it, nl, etc.)
 	return fallbackCountryCode;
 }
 
-// EU Cities - EXPANDED to 20 cities for better coverage
+// EU Cities - FILTERED to only Adzuna-supported countries
+// Adzuna API supports: GB, FR, DE, IT, NL, ES, PL, AT, BE, CH, US, AU, CA, etc.
+// NOT SUPPORTED and REMOVED:
+//   IE (Ireland): Dublin, Cork
+//   SE (Sweden): Stockholm
+//   DK (Denmark): Copenhagen
+//   CZ (Czech Republic): Prague
+//   FI (Finland): Helsinki
+//   NO (Norway): Oslo
+//   PT (Portugal): Lisbon, Porto
+//   GR (Greece): Athens
+//   HU (Hungary): Budapest
+//   RO (Romania): Bucharest
+//   BG (Bulgaria): Sofia
 const EU_CITIES_CATEGORIES = [
 	{ name: "London", country: "gb" }, // ✅ High performer
 	{ name: "Manchester", country: "gb" }, // 🆕 UK's 2nd largest city
 	{ name: "Birmingham", country: "gb" }, // 🆕 UK's 3rd largest city
-	{ name: "Dublin", country: "ie" }, // ✅ RE-ENABLED: Fixed with getCountryCode helper
-	{ name: "Cork", country: "ie" }, // 🆕 Ireland's 2nd largest city
 	{ name: "Madrid", country: "es" }, // ✅ High performer (prácticas goldmine)
 	{ name: "Barcelona", country: "es" }, // 🆕 Spain's 2nd largest city (tech/finance hub)
 	{ name: "Berlin", country: "de" }, // ✅ Moderate performer
@@ -73,10 +112,7 @@ const EU_CITIES_CATEGORIES = [
 	{ name: "Zurich", country: "ch" }, // ✅ Moderate performer
 	{ name: "Milan", country: "it" }, // ✅ High performer (470 jobs)
 	{ name: "Rome", country: "it" }, // 🆕 Italy's capital
-	{ name: "Stockholm", country: "se" }, // 🆕 Nordic tech/finance hub
-	{ name: "Copenhagen", country: "dk" }, // 🆕 Nordic business hub
 	{ name: "Vienna", country: "at" }, // 🆕 Central European business hub
-	{ name: "Prague", country: "cz" }, // 🆕 Central European tech hub
 	{ name: "Warsaw", country: "pl" }, // 🆕 Eastern European business hub
 ];
 
@@ -161,9 +197,11 @@ const getCurrentQuerySet = () => {
 };
 
 const currentSet = getCurrentQuerySet();
+// Note: QUERY_SETS and CORE_ENGLISH_TERMS are no longer used in generateCityQueries
+// but kept for backward compatibility if referenced elsewhere
 const CORE_ENGLISH_TERMS = QUERY_SETS[currentSet];
 console.log(
-	`🔄 Adzuna using query set: ${currentSet} (${CORE_ENGLISH_TERMS.length} terms) - rotates every 8 hours for variety`,
+	`🔄 Adzuna using query set: ${currentSet} - rotating between internship, graduate programme, and early career queries for career paths`,
 );
 
 // Local language terms by country (EXPANDED for better coverage - includes coordinator, assistant, representative, engineer, specialist roles)
@@ -365,96 +403,131 @@ const HIGH_PERFORMING_SECTORS = [
 // supply chain, logistics, data analytics, sustainability
 
 /**
- * Generate multilingual early-career search queries for a specific city
- * OPTIMIZED: Uses fewer, more targeted queries (8-10 per city) like JobSpy
- * Prioritizes exact role names from signup form (highest performing)
+ * Generate career path-based queries rotating between internship, graduate programme, and early career
+ * Rotates every 8 hours: SET_A (internship), SET_B (graduate programme), SET_C (early career)
  */
 function generateCityQueries(countryCode) {
 	const queries = [];
+	const currentSet = getCurrentQuerySet();
 
-	// 🥇 TIER 1: Exact role names from signup form (HIGHEST PRIORITY - proven performers)
-	const { cleanRoleForSearch } = require("../scrapers/shared/roles.cjs");
-	const earlyCareerRoles = getEarlyCareerRoles();
-	const topRoles = getTopRolesByCareerPath(3); // Top 3 roles per career path
-
-	// Prioritize: early-career roles first, then top roles by career path
-	const prioritizedRoles = [
-		...earlyCareerRoles.slice(0, 6), // Top 6 early-career roles (intern/graduate/junior)
-		...Object.values(topRoles).flat().slice(0, 6), // Top 6 roles from each career path
+	// Career paths from signup form
+	const careerPaths = [
+		"strategy",
+		"finance",
+		"sales",
+		"marketing",
+		"data",
+		"operations",
+		"product",
+		"tech",
+		"sustainability",
+		"people-hr",
+		"legal",
+		"creative",
+		"general-management",
 	];
 
-	// Clean role names and get primary version (without parentheses)
-	const cleanedRoles = prioritizedRoles.map((role) => {
-		const cleaned = cleanRoleForSearch(role);
-		return cleaned[0]; // Use primary cleaned version
-	});
-
-	// Add exact role names (remove duplicates, limit to top 2 for free tier)
-	const uniqueRoles = [...new Set(cleanedRoles)];
-	queries.push(...uniqueRoles.slice(0, 2)); // Top 2 exact role names (prioritized)
-
-	// 🥈 TIER 2: Core English terms from rotation (1 term)
-	queries.push(...CORE_ENGLISH_TERMS.slice(0, 1)); // Top 1 from rotation set
-
-	// 🥉 TIER 3: Local language terms (1 term, highest performing)
-	const localTerms = LOCAL_EARLY_CAREER_TERMS[countryCode] || [];
-	// Prioritize internship/graduate terms in local language
-	const prioritizedLocal = [
-		...localTerms.filter((t) =>
-			/(prácticas|becario|stagiaire|stage|praktik|tirocinio|staż)/i.test(t),
-		),
-		...localTerms.filter(
-			(t) =>
-				!/(prácticas|becario|stagiaire|stage|praktik|tirocinio|staż)/i.test(t),
-		),
-	];
-	queries.push(...prioritizedLocal.slice(0, 1)); // Top 1 local term
-
-	// 🎯 TIER 4: High-performing sector internships (only if we have room)
-	// Only add 1-2 sector combinations if we're under 10 queries
-	if (queries.length < 8) {
-		const topSector = HIGH_PERFORMING_SECTORS[0]; // Finance (highest performer)
+	// Determine query type based on rotation set
+	let queryType;
+	let localQueryType;
+	
+	if (currentSet === "SET_A") {
+		// Internship queries
+		queryType = "internship";
+		// Local language internship terms
 		if (countryCode === "es") {
-			queries.push(`prácticas ${topSector}`); // Spanish goldmine
+			localQueryType = "prácticas";
 		} else if (countryCode === "fr") {
-			queries.push(`stagiaire ${topSector}`); // French
+			localQueryType = "stagiaire";
+		} else if (countryCode === "de") {
+			localQueryType = "praktikum";
+		} else if (countryCode === "it") {
+			localQueryType = "stage";
+		} else if (countryCode === "nl") {
+			localQueryType = "stage";
 		} else {
-			queries.push(`${topSector} internship`); // English fallback
+			localQueryType = "internship";
+		}
+	} else if (currentSet === "SET_B") {
+		// Graduate programme queries
+		queryType = "graduate programme";
+		// Local language graduate terms
+		if (countryCode === "es") {
+			localQueryType = "programa de graduados";
+		} else if (countryCode === "fr") {
+			localQueryType = "programme graduate";
+		} else if (countryCode === "de") {
+			localQueryType = "absolventenprogramm";
+		} else if (countryCode === "it") {
+			localQueryType = "programma per neolaureati";
+		} else if (countryCode === "nl") {
+			localQueryType = "traineeship";
+		} else {
+			localQueryType = "graduate programme";
+		}
+	} else {
+		// Early career queries
+		queryType = "early career";
+		// Local language early career terms
+		if (countryCode === "es") {
+			localQueryType = "inicio de carrera";
+		} else if (countryCode === "fr") {
+			localQueryType = "début de carrière";
+		} else if (countryCode === "de") {
+			localQueryType = "berufseinstieg";
+		} else if (countryCode === "it") {
+			localQueryType = "inizio carriera";
+		} else if (countryCode === "nl") {
+			localQueryType = "startersfunctie";
+		} else {
+			localQueryType = "early career";
 		}
 	}
 
-	// Remove duplicates and limit to stay within free tier (250 requests/day)
-	// Target: 3 queries per city (2 role-based × 4 pages + 1 generic × 3 pages = 11 requests/city)
-	// Total: 21 cities × 11 requests = 231 requests per run (just under 250 limit)
-	const limitedQueries = [...new Set(queries)].slice(0, 3); // 3 queries per city for optimized coverage
-	return limitedQueries;
+	// Generate queries for each career path
+	// Limit to top 3 career paths per city to stay within API limits
+	const topCareerPaths = careerPaths.slice(0, 3);
+	
+	for (const path of topCareerPaths) {
+		// Use local language if available, otherwise English
+		if (localQueryType !== queryType && countryCode !== "gb" && countryCode !== "ie") {
+			queries.push(`${path} ${localQueryType}`);
+		} else {
+			queries.push(`${path} ${queryType}`);
+		}
+	}
+
+	// Remove duplicates and return
+	return [...new Set(queries)];
 }
 
 /**
  * Determine max pages based on query type (smart pagination)
- * Role-based queries get more pages (more targeted, better results)
- * Generic queries get fewer pages (broader, less targeted)
+ * Career path queries (e.g., "strategy internship", "finance graduate programme") - use role pages
+ * Generic queries - use generic pages
+ * Exact role name queries - use role pages (highest priority)
  */
-function getMaxPagesForQuery(query) {
-	// Role-based queries (exact role names) - use more pages
-	const roleBasedPattern =
-		/(analyst|consultant|intern|associate|manager|engineer|specialist|coordinator|representative|executive)/i;
-	const isRoleBased = roleBasedPattern.test(query) && query.length > 10; // Longer queries are usually role names
+function getMaxPagesForQuery(query, rolePages = null, genericPages = null) {
+	// Check if it's an exact role name query (from signup form roles)
+	const { getAllRoles } = require("../scrapers/shared/roles.cjs");
+	const allRoles = getAllRoles().map(r => r.toLowerCase());
+	const queryLower = query.toLowerCase().trim();
+	const isExactRoleQuery = allRoles.some(role => {
+		const roleWords = role.split(" ").filter(w => w.length > 3);
+		return roleWords.length > 0 && roleWords.every(word => queryLower.includes(word));
+	});
+	
+	// Career path queries (e.g., "strategy internship", "finance graduate programme")
+	const careerPathPattern = /^(strategy|finance|sales|marketing|data|operations|product|tech|sustainability|people-hr|legal|creative|general-management)\s+(internship|graduate programme|graduate scheme|early career|prácticas|stagiaire|praktikum|stage|programa de graduados|absolventenprogramm|inicio de carrera|début de carrière|berufseinstieg)/i;
+	const isCareerPathQuery = careerPathPattern.test(query.trim());
 
-	// Generic queries (internship, graduate, junior) - use fewer pages
-	const genericPattern =
-		/^(internship|graduate|junior|entry level|trainee|intern)$/i;
-	const isGeneric = genericPattern.test(query.trim());
-
-	// Optimized pagination: Just under 250 requests/day limit
-	// 21 cities × (2 role-based queries × 4 pages + 1 generic query × 3 pages) = 231 requests
-	// Leaves room for second run with slightly fewer pages (3/3 or 4/2)
-	if (isRoleBased) {
-		return parseInt(process.env.ADZUNA_MAX_PAGES_ROLE || "4", 10); // 4 pages for role-based (highest performers)
-	} else if (isGeneric) {
-		return parseInt(process.env.ADZUNA_MAX_PAGES_GENERIC || "3", 10); // 3 pages for generic queries
+	// Use dynamic pages if provided, otherwise fall back to defaults
+	if (isExactRoleQuery || isCareerPathQuery) {
+		// Role-based queries (exact roles or career paths) - use role pages
+		return rolePages !== null ? rolePages : parseInt(process.env.ADZUNA_MAX_PAGES_ROLE || "4", 10);
 	}
-	return parseInt(process.env.ADZUNA_MAX_PAGES || "3", 10); // Default: 3 pages
+	// Generic queries - use generic pages
+	return genericPages !== null ? genericPages : parseInt(process.env.ADZUNA_MAX_PAGES_GENERIC || "3", 10);
 }
 
 /**
@@ -480,6 +553,8 @@ async function scrapeCityCategories(
 			10,
 		),
 		targetCareerPaths = [],
+		rolePages = null, // Dynamic role pages per city (for low-coverage cities)
+		genericPages = null, // Dynamic generic pages per city (for low-coverage cities)
 	} = options;
 
 	if (!appId || !appKey) {
@@ -493,8 +568,9 @@ async function scrapeCityCategories(
 	for (const query of queries) {
 		try {
 			// Smart pagination: more pages for role-based queries, fewer for generic
+			// Use dynamic pages if provided (for low-coverage cities), otherwise use maxPages or default
 			const queryMaxPages =
-				maxPages !== null ? maxPages : getMaxPagesForQuery(query);
+				maxPages !== null ? maxPages : getMaxPagesForQuery(query, rolePages, genericPages);
 
 			if (verbose)
 				console.log(
@@ -507,8 +583,15 @@ async function scrapeCityCategories(
 
 			while (hasMorePages && page <= queryMaxPages) {
 				// Use getCountryCode helper to ensure correct country code for API endpoint
-				// This fixes Dublin 404 errors by using 'ie' instead of 'gb'
+				// Returns null if country is not supported by Adzuna
 				const apiCountryCode = getCountryCode(cityName, countryCode);
+				if (!apiCountryCode) {
+					// Country not supported, skip this query
+					console.warn(
+						`⚠️  Adzuna: Skipping ${cityName} (${countryCode.toUpperCase()}) - country not supported by Adzuna API`
+					);
+					break; // Skip to next query
+				}
 				const url = `https://api.adzuna.com/v1/api/jobs/${apiCountryCode}/search/${page}?app_id=${appId}&app_key=${appKey}&what=${encodeURIComponent(query)}&where=${encodeURIComponent(cityName)}&results_per_page=${resultsPerPage}&sort_by=date&max_days_old=${maxDaysOld}`;
 
 				let response;
@@ -752,10 +835,21 @@ async function scrapeAllCitiesCategories(options = {}) {
 		typeof overridePageDelayJitter === "number"
 			? overridePageDelayJitter
 			: parseInt(process.env.ADZUNA_PAGE_DELAY_JITTER_MS || "0", 10);
-	const maxQueriesPerCity =
+	// Priority cities with low Adzuna coverage - get more queries
+	// Based on database analysis: Most cities have 0 Adzuna jobs, only London has good coverage
+	const LOW_COVERAGE_CITIES = new Set([
+		"warsaw", "manchester", "birmingham", "brussels", "vienna", "rome",
+		"zurich", "milan", "hamburg", "barcelona", "paris", "berlin",
+		"madrid", "munich", "amsterdam" // Amsterdam has only 24 jobs, 0 recent
+	]);
+	const HIGH_COVERAGE_CITIES = new Set([
+		"london" // London has 1102 Adzuna jobs, 986 recent - already well covered
+	]);
+	
+	const baseMaxQueriesPerCity =
 		typeof overrideMaxQueriesPerCity === "number"
 			? overrideMaxQueriesPerCity
-			: parseInt(process.env.ADZUNA_MAX_QUERIES_PER_CITY || "3", 10); // Reduced to 3 for free tier (250 requests/day)
+			: parseInt(process.env.ADZUNA_MAX_QUERIES_PER_CITY || "3", 10);
 
 	console.log(
 		`🎓 Starting multilingual early-career job search across ${EU_CITIES_CATEGORIES.length} EU cities...`,
@@ -763,14 +857,37 @@ async function scrapeAllCitiesCategories(options = {}) {
 	console.log(`📅 Time range: Last 28 days for wider coverage`);
 	console.log(`🌍 Languages: English + local terms per country`);
 	console.log(`🏢 Target sectors: ${HIGH_PERFORMING_SECTORS.join(", ")}`);
-	// Smart pagination: 2 role-based queries × 4 pages + 1 generic query × 3 pages = 11 requests per city
-	const rolePages = parseInt(process.env.ADZUNA_MAX_PAGES_ROLE || "4", 10);
-	const genericPages = parseInt(
+	// Smart pagination with priority for low-coverage cities
+	// Low-coverage cities: More pages to maximize job collection
+	// High-coverage cities: Standard pages (already well covered)
+	const baseRolePages = parseInt(process.env.ADZUNA_MAX_PAGES_ROLE || "4", 10);
+	const baseGenericPages = parseInt(
 		process.env.ADZUNA_MAX_PAGES_GENERIC || "3",
 		10,
 	);
-	const estimatedRequests =
-		EU_CITIES_CATEGORIES.length * (2 * rolePages + 1 * genericPages); // Smart pagination
+	
+	// Calculate estimated requests (weighted by city priority)
+	// After removing 11 unsupported cities, we have 16 cities total
+	const lowCoverageCount = EU_CITIES_CATEGORIES.filter(c => 
+		LOW_COVERAGE_CITIES.has(c.name.toLowerCase())
+	).length;
+	const highCoverageCount = EU_CITIES_CATEGORIES.filter(c => 
+		HIGH_COVERAGE_CITIES.has(c.name.toLowerCase())
+	).length;
+	const standardCount = EU_CITIES_CATEGORIES.length - lowCoverageCount - highCoverageCount;
+	
+	// Query allocation per city type:
+	// Low-coverage: 5 queries (2 role queries × 6 pages + 1 generic × 5 pages) = 5 × 17 = 85 requests per city
+	// High-coverage: 3 queries (2 role queries × 4 pages + 1 generic × 3 pages) = 3 × 11 = 33 requests per city  
+	// Standard: 4 queries (2 role queries × 5 pages + 1 generic × 4 pages) = 4 × 14 = 56 requests per city
+	const estimatedRequests = 
+		(lowCoverageCount * 5 * (2 * 6 + 1 * 5)) +
+		(highCoverageCount * 3 * (2 * 4 + 1 * 3)) +
+		(standardCount * 4 * (2 * 5 + 1 * 4));
+	
+	console.log(
+		`📊 City Priority Breakdown: ${lowCoverageCount} low-coverage (5 queries, 6/5 pages), ${highCoverageCount} high-coverage (3 queries, 4/3 pages), ${standardCount} standard (4 queries, 5/4 pages)`,
+	);
 	console.log(
 		`📊 API Usage: ~${EU_CITIES_CATEGORIES.length} cities × (2 role queries × ${rolePages} pages + 1 generic × ${genericPages} pages) = ~${estimatedRequests} calls per run`,
 	);
@@ -827,28 +944,80 @@ async function scrapeAllCitiesCategories(options = {}) {
 			(c) => c.name.toLowerCase() === cityEnv,
 		);
 	} else if (normalizedTargetCities.length) {
+		// Filter to only Adzuna-supported cities
 		citiesToProcess = EU_CITIES_CATEGORIES.filter((c) =>
 			normalizedTargetCities.includes(c.name.toLowerCase()),
 		);
+		
+		// CRITICAL: Filter out any cities from unsupported countries
+		citiesToProcess = citiesToProcess.filter((c) => {
+			const countryCode = c.country.toLowerCase();
+			if (ADZUNA_UNSUPPORTED_COUNTRIES.has(countryCode)) {
+				console.warn(
+					`⚠️  Adzuna: Skipping ${c.name} (${countryCode.toUpperCase()}) - country not supported by Adzuna API`,
+				);
+				return false;
+			}
+			return true;
+		});
+		
 		if (citiesToProcess.length === 0) {
 			console.warn(
-				"⚠️  Signup cities did not match predefined EU list; falling back to default cities",
+				"⚠️  Signup cities did not match predefined EU list or were from unsupported countries; falling back to default cities",
 			);
 			citiesToProcess = EU_CITIES_CATEGORIES;
 		}
 	} else {
 		citiesToProcess = EU_CITIES_CATEGORIES;
 	}
+	
+	// Final safety check: Ensure all cities are from supported countries
+	citiesToProcess = citiesToProcess.filter((c) => {
+		const countryCode = c.country.toLowerCase();
+		if (ADZUNA_UNSUPPORTED_COUNTRIES.has(countryCode)) {
+			console.warn(
+				`⚠️  Adzuna: Removing ${c.name} (${countryCode.toUpperCase()}) - country not supported by Adzuna API`,
+			);
+			return false;
+		}
+		return ADZUNA_SUPPORTED_COUNTRIES.has(countryCode);
+	});
 
 	for (const city of citiesToProcess) {
 		try {
+			const cityNameLower = city.name.toLowerCase();
+			const isLowCoverage = LOW_COVERAGE_CITIES.has(cityNameLower);
+			const isHighCoverage = HIGH_COVERAGE_CITIES.has(cityNameLower);
+			
+			// Dynamic query allocation based on coverage
+			let cityMaxQueries, cityRolePages, cityGenericPages;
+			if (isLowCoverage) {
+				// Low-coverage cities: More queries and pages to maximize collection
+				cityMaxQueries = baseMaxQueriesPerCity > 0 ? Math.max(baseMaxQueriesPerCity, 5) : 5;
+				cityRolePages = Math.max(baseRolePages, 6); // Increased from 4 to 6
+				cityGenericPages = Math.max(baseGenericPages, 5); // Increased from 3 to 5
+			} else if (isHighCoverage) {
+				// High-coverage cities: Standard allocation (already well covered)
+				cityMaxQueries = baseMaxQueriesPerCity > 0 ? baseMaxQueriesPerCity : 3;
+				cityRolePages = baseRolePages;
+				cityGenericPages = baseGenericPages;
+			} else {
+				// Standard cities: Moderate increase
+				cityMaxQueries = baseMaxQueriesPerCity > 0 ? Math.max(baseMaxQueriesPerCity, 4) : 4;
+				cityRolePages = Math.max(baseRolePages, 5); // Increased from 4 to 5
+				cityGenericPages = Math.max(baseGenericPages, 4); // Increased from 3 to 4
+			}
+			
 			const cityQueries = generateCityQueries(city.country);
 			const limitedCityQueries =
-				maxQueriesPerCity > 0
-					? cityQueries.slice(0, maxQueriesPerCity)
+				cityMaxQueries > 0
+					? cityQueries.slice(0, cityMaxQueries)
 					: cityQueries;
+			
+			const priorityLabel = isLowCoverage ? "🎯 [LOW COVERAGE - PRIORITY] " : 
+			                     isHighCoverage ? "✅ [HIGH COVERAGE] " : "";
 			console.log(
-				`\n🌍 Processing ${city.name} (${city.country.toUpperCase()}) - ${limitedCityQueries.length}/${cityQueries.length} queries...`,
+				`\n${priorityLabel}🌍 Processing ${city.name} (${city.country.toUpperCase()}) - ${limitedCityQueries.length}/${cityQueries.length} queries, ${cityRolePages} role pages, ${cityGenericPages} generic pages...`,
 			);
 
 			const cityJobs = await scrapeCityCategories(
@@ -861,9 +1030,11 @@ async function scrapeAllCitiesCategories(options = {}) {
 					delay: delayMs,
 					timeout: timeoutMs,
 					verbose,
-					maxPages,
+					maxPages: null, // Use dynamic pages per query type
 					pageDelayJitter,
 					targetCareerPaths,
+					rolePages: cityRolePages, // Pass dynamic role pages
+					genericPages: cityGenericPages, // Pass dynamic generic pages
 				},
 			);
 

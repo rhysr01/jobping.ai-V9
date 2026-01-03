@@ -10,6 +10,8 @@
  * - Required fields are present
  */
 
+// Job boards/aggregators to filter out (NOT recruitment agencies)
+// Recruitment agencies like "Hays Recruitment" are legitimate companies
 const JOB_BOARDS = [
 	"reed",
 	"indeed",
@@ -24,11 +26,18 @@ const JOB_BOARDS = [
 	"careerjet",
 	"jooble",
 	"arbeitnow",
+	"efinancial",
+	"stepstone",
 	"reed.co.uk",
 	"indeed.com",
 	"linkedin.com",
 	"adzuna.co.uk",
 	"totaljobs.com",
+	"glassdoor.com",
+	"careerjet.com",
+	"monster.com",
+	"ziprecruiter.com",
+	"stepstone.com",
 ];
 
 const COUNTRY_NAMES = [

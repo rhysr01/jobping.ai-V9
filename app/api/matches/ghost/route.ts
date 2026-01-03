@@ -174,27 +174,47 @@ export async function GET(request: NextRequest) {
 			false, // forceRulesBased = false (enable AI for amazing matches)
 		);
 
-		// Get top matches (limit to 5-8 for FOMO effect)
+		// Get top matches (limit to 5-8 for FOMO effect, show 3 in UI)
 		const ghostMatches = matchResult.matches
 			.filter((m) => m.match_score >= 0.6) // Only show good matches
-			.slice(0, 8)
-			.map((m) => ({
-				job_hash: m.job_hash,
-				match_score: m.match_score,
-				match_reason: m.match_reason,
-			}));
+			.slice(0, 8);
 
 		const ghostMatchCount = ghostMatches.length;
+
+		// Fetch full job data for the ghost matches
+		const ghostJobHashes = ghostMatches.map((m) => m.job_hash);
+		const { data: ghostJobsData } = await supabase
+			.from("jobs")
+			.select("job_hash, title, company, location, city, country")
+			.in("job_hash", ghostJobHashes);
+
+		// Map matches to job data
+		const ghostJobsWithMatches = ghostMatches
+			.slice(0, 3) // Only return top 3 for UI display
+			.map((match) => {
+				const job = ghostJobsData?.find((j) => j.job_hash === match.job_hash);
+				return {
+					job_hash: match.job_hash,
+					title: job?.title || "Job Title",
+					company: job?.company || "Company",
+					location: job?.location || job?.city || "Location",
+					match_score: Math.round(match.match_score * 100), // Convert to percentage
+					match_reason: match.match_reason,
+				};
+			})
+			.filter((job) => job.title && job.company); // Only return jobs with data
 
 		apiLogger.info("Ghost matches calculated", {
 			email,
 			ghostMatchCount,
+			ghostJobsReturned: ghostJobsWithMatches.length,
 			totalJobsScanned: availableJobs.length,
 			method: matchResult.method || "ai_success",
 		});
 
 		return NextResponse.json({
 			ghostMatchCount,
+			ghostJobs: ghostJobsWithMatches,
 			message:
 				ghostMatchCount > 0
 					? `${ghostMatchCount} more high-quality matches found.`

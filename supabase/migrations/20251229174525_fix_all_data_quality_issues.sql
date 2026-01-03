@@ -21,7 +21,7 @@ UPDATE jobs
 SET filtered_reason = COALESCE(filtered_reason || '; ', '') || 'job_board_as_company',
     company_name = NULL
 WHERE company IN ('Reed', 'Indeed', 'LinkedIn', 'Adzuna', 'Totaljobs', 
-                  'Monster', 'ZipRecruiter', 'Jobspy', 'Google')
+                  'Monster', 'ZipRecruiter', 'Jobspy', 'Google', 'StepStone Group', 'StepStone')
    OR company ILIKE '%indeed%'
    OR company ILIKE '%reed%'
    OR company ILIKE '%adzuna%'
@@ -29,7 +29,15 @@ WHERE company IN ('Reed', 'Indeed', 'LinkedIn', 'Adzuna', 'Totaljobs',
    OR company ILIKE '%linkedin%'
    OR company ILIKE '%totaljobs%'
    OR company ILIKE '%monster%'
-   OR company ILIKE '%ziprecruiter%';
+   OR company ILIKE '%ziprecruiter%'
+   OR company ILIKE '%efinancial%'
+   OR company ILIKE '%stepstone%'
+   OR company_name ILIKE '%efinancial%'
+   OR company_name ILIKE '%stepstone%'
+   -- Exclude legitimate recruitment agencies (they place candidates at companies)
+   AND company NOT ILIKE '%recruitment%'
+   AND company NOT ILIKE '%staffing%'
+   AND company NOT ILIKE '%placement%';
 
 -- ============================================================================
 -- 3. EXTRACT CITY FROM LOCATION FIELD (2,036 jobs missing city)

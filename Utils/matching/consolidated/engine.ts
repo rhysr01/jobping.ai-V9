@@ -7,6 +7,7 @@
 import OpenAI from "openai";
 import { apiLogger } from "@/lib/api-logger";
 import type { Job } from "../../../scrapers/types";
+import { matchesCity } from "../distribution/cityMatching";
 import type { JobMatch, UserPreferences } from "../types";
 import { LRUMatchCache } from "./cache";
 import { CircuitBreaker } from "./circuitBreaker";
@@ -227,7 +228,32 @@ export class ConsolidatedMatchingEngine {
 			};
 		}
 
-		// STAGE 3: Pre-rank by rule-based scoring
+		// STAGE 3: Stratified Matching (if multiple cities)
+		// Use bucketized per-city matching to prevent "Global Top-N" bias
+		const targetCities = Array.isArray(userPrefs.target_cities)
+			? userPrefs.target_cities
+			: userPrefs.target_cities
+				? [userPrefs.target_cities]
+				: [];
+
+		const shouldUseStratifiedMatching =
+			targetCities.length > 1 && !forceRulesBased && this.openai?.apiKey;
+
+		if (shouldUseStratifiedMatching) {
+			const stratifiedResult = await this.performStratifiedMatching(
+				eligibleJobs,
+				userPrefs,
+				targetCities,
+				cacheKey,
+				startTime,
+			);
+			if (stratifiedResult) {
+				return stratifiedResult;
+			}
+			// Fall through to global matching if stratified fails
+		}
+
+		// STAGE 3: Pre-rank by rule-based scoring (global matching fallback)
 		const scoredJobs = await this.preRankJobsByScore(eligibleJobs, userPrefs);
 
 		// STAGE 4: Send tier-aware number of highest-scoring jobs to AI
@@ -565,6 +591,319 @@ export class ConsolidatedMatchingEngine {
 			}
 			throw error;
 		}
+	}
+
+	/**
+	 * Stratified Matching: Bucket jobs by city, match per-city, then merge
+	 * Prevents "Global Top-N" bias where high-volume cities dominate
+	 */
+	private async performStratifiedMatching(
+		eligibleJobs: Job[],
+		userPrefs: UserPreferences,
+		targetCities: string[],
+		cacheKey: string,
+		startTime: number,
+	): Promise<ConsolidatedMatchResult | null> {
+		const MIN_JOBS_PER_CITY = 25; // Minimum jobs to analyze per city for quality
+		const isPremiumTier = userPrefs.subscription_tier === "premium";
+		const totalJobsToAnalyze = isPremiumTier
+			? JOBS_TO_ANALYZE_PREMIUM
+			: JOBS_TO_ANALYZE_FREE;
+		const jobsPerCity = Math.max(
+			Math.ceil(totalJobsToAnalyze / targetCities.length),
+			MIN_JOBS_PER_CITY,
+		);
+
+		// STEP 1: Bucket jobs by city
+		const jobsByCity: Record<string, Job[]> = {};
+		const cityJobCounts: Record<string, number> = {};
+
+		for (const city of targetCities) {
+			jobsByCity[city] = [];
+			cityJobCounts[city] = 0;
+		}
+
+		// Also track jobs that don't match any city (fallback)
+		const unmatchedJobs: Job[] = [];
+
+		for (const job of eligibleJobs) {
+			const jobCity = (job.city || "").toLowerCase();
+			const jobLocation = ((job as any).location || "").toLowerCase();
+			let matched = false;
+
+			for (const targetCity of targetCities) {
+				if (matchesCity(jobCity, jobLocation, targetCity)) {
+					jobsByCity[targetCity].push(job);
+					cityJobCounts[targetCity]++;
+					matched = true;
+					break; // Job can only match one city
+				}
+			}
+
+			if (!matched) {
+				unmatchedJobs.push(job);
+			}
+		}
+
+		// Log city distribution for diagnostics
+		apiLogger.info("Stratified matching - city buckets", {
+			email: userPrefs.email || "unknown",
+			targetCities,
+			cityJobCounts,
+			totalEligibleJobs: eligibleJobs.length,
+			unmatchedJobs: unmatchedJobs.length,
+			jobsPerCity,
+		});
+
+		// STEP 2: Match each city bucket in parallel (3-Bucket Sprint)
+		// Helper function to match a single city and capture metadata
+		const performCityMatch = async (
+			city: string,
+		): Promise<{
+			city: string;
+			matches: JobMatch[];
+			tokens: number;
+			cost: number;
+			model?: string;
+			jobsAnalyzed: number;
+		}> => {
+			const cityJobs = jobsByCity[city];
+
+			if (cityJobs.length === 0) {
+				return { city, matches: [], tokens: 0, cost: 0, jobsAnalyzed: 0 };
+			}
+
+			try {
+				// Pre-rank this city's jobs
+				const scoredCityJobs = await this.preRankJobsByScore(
+					cityJobs,
+					userPrefs,
+				);
+
+				// Take top N from this city
+				const topCityJobs = scoredCityJobs
+					.slice(0, jobsPerCity)
+					.map((item) => item.job);
+
+				if (topCityJobs.length === 0) {
+					return { city, matches: [], tokens: 0, cost: 0, jobsAnalyzed: 0 };
+				}
+
+				// Run AI matching on this city's jobs
+				const cityAIMatches = await this.performAIMatchingWithRetry(
+					topCityJobs,
+					userPrefs,
+				);
+
+				// Capture metadata immediately after AI call (before it gets overwritten)
+				// Note: With parallel execution, this.lastAIMetadata might be overwritten
+				// by other concurrent calls, so we capture it as soon as possible
+				const cityMetadata = this.lastAIMetadata
+					? { ...this.lastAIMetadata }
+					: undefined;
+
+				if (cityAIMatches && cityAIMatches.length > 0) {
+					// Validate matches for this city
+					const validatedCityMatches = validation.validateAIMatches(
+						cityAIMatches,
+						topCityJobs,
+						userPrefs,
+					);
+
+					return {
+						city,
+						matches: validatedCityMatches,
+						tokens: cityMetadata?.tokens || 0,
+						cost: cityMetadata?.cost || 0,
+						model: cityMetadata?.model,
+						jobsAnalyzed: topCityJobs.length,
+					};
+				}
+
+				return {
+					city,
+					matches: [],
+					tokens: cityMetadata?.tokens || 0,
+					cost: cityMetadata?.cost || 0,
+					model: cityMetadata?.model,
+					jobsAnalyzed: topCityJobs.length,
+				};
+			} catch (error) {
+				apiLogger.warn("Stratified matching failed for city", {
+					city,
+					error: (error as Error).message,
+					email: userPrefs.email || "unknown",
+				});
+				return { city, matches: [], tokens: 0, cost: 0, jobsAnalyzed: 0 };
+			}
+		};
+
+		// Parallel execution: All cities match simultaneously (3-Bucket Sprint)
+		const bucketResults = await Promise.all(
+			targetCities.map((city) => performCityMatch(city)),
+		);
+
+		// STEP 3: Aggregate results and detect missing cities
+		const allCityMatches: JobMatch[] = [];
+		let totalTokens = 0;
+		let totalCost = 0;
+		let aiModel: string | undefined;
+
+		const citiesWithMatches: string[] = [];
+		const citiesWithoutMatches: string[] = [];
+
+		for (const result of bucketResults) {
+			if (result.matches.length > 0) {
+				allCityMatches.push(...result.matches);
+				citiesWithMatches.push(result.city);
+			} else {
+				citiesWithoutMatches.push(result.city);
+			}
+			totalTokens += result.tokens;
+			totalCost += result.cost;
+			if (!aiModel && result.model) {
+				aiModel = result.model;
+			}
+		}
+
+		// STEP 4: Safety Valve - Retry failed cities with relaxed matching
+		if (citiesWithoutMatches.length > 0 && citiesWithMatches.length > 0) {
+			apiLogger.info(
+				"Stratified matching - retrying failed cities with relaxed matching",
+				{
+					email: userPrefs.email || "unknown",
+					failedCities: citiesWithoutMatches,
+					successfulCities: citiesWithMatches,
+				},
+			);
+
+			// Helper function for relaxed retry
+			const performRelaxedCityMatch = async (
+				city: string,
+			): Promise<{
+				city: string;
+				matches: JobMatch[];
+				tokens: number;
+				cost: number;
+			}> => {
+				const cityJobs = jobsByCity[city];
+				if (cityJobs.length === 0) {
+					return { city, matches: [], tokens: 0, cost: 0 };
+				}
+
+				try {
+					const scoredCityJobs = await this.preRankJobsByScore(
+						cityJobs,
+						userPrefs,
+					);
+					// Analyze more jobs (1.5x) for relaxed retry
+					const topCityJobs = scoredCityJobs
+						.slice(0, Math.ceil(jobsPerCity * 1.5))
+						.map((item) => item.job);
+
+					if (topCityJobs.length === 0) {
+						return { city, matches: [], tokens: 0, cost: 0 };
+					}
+
+					const cityAIMatches = await this.performAIMatchingWithRetry(
+						topCityJobs,
+						userPrefs,
+					);
+
+					const cityMetadata = this.lastAIMetadata
+						? { ...this.lastAIMetadata }
+						: undefined;
+
+					if (cityAIMatches && cityAIMatches.length > 0) {
+						// Relaxed validation: Accept lower scores (60 instead of default 65)
+						const relaxedMatches = cityAIMatches.filter(
+							(m) => (m.match_score || 0) >= 60,
+						);
+
+						// Still validate, but with lower threshold
+						const validated = validation.validateAIMatches(
+							relaxedMatches,
+							topCityJobs,
+							userPrefs,
+						);
+
+						return {
+							city,
+							matches: validated,
+							tokens: cityMetadata?.tokens || 0,
+							cost: cityMetadata?.cost || 0,
+						};
+					}
+				} catch (_error) {
+					// Silently fail retry
+				}
+
+				return { city, matches: [], tokens: 0, cost: 0 };
+			};
+
+			// Retry failed cities in parallel
+			const relaxedRetries = await Promise.all(
+				citiesWithoutMatches.map((city) => performRelaxedCityMatch(city)),
+			);
+
+			// Add relaxed matches and update tracking
+			const remainingFailedCities: string[] = [];
+			for (const retryResult of relaxedRetries) {
+				if (retryResult.matches.length > 0) {
+					allCityMatches.push(...retryResult.matches);
+					citiesWithMatches.push(retryResult.city);
+					totalTokens += retryResult.tokens;
+					totalCost += retryResult.cost;
+				} else {
+					remainingFailedCities.push(retryResult.city);
+				}
+			}
+
+			// Update citiesWithoutMatches for logging
+			citiesWithoutMatches.length = 0;
+			citiesWithoutMatches.push(...remainingFailedCities);
+		}
+
+		// STEP 5: Log city match distribution
+		const cityMatchMetadata = bucketResults.map((result) => ({
+			city: result.city,
+			matches: result.matches.length,
+			jobsAnalyzed: result.jobsAnalyzed,
+			success: result.matches.length > 0,
+		}));
+
+		apiLogger.info("Stratified matching - city results", {
+			email: userPrefs.email || "unknown",
+			cityMatchMetadata,
+			totalMatches: allCityMatches.length,
+			totalTokens,
+			totalCost,
+			citiesWithMatches,
+			citiesWithoutMatches:
+				citiesWithoutMatches.length > 0 ? citiesWithoutMatches : undefined,
+		});
+
+		// STEP 6: Return results if we have matches
+		if (allCityMatches.length > 0) {
+			// Cache successful stratified matches
+			await this.matchCache.set(cacheKey, allCityMatches);
+			this.circuitBreaker.recordSuccess();
+			this.lastAIMetadata = null; // Clear after aggregation
+
+			return {
+				matches: allCityMatches,
+				method: "ai_success",
+				processingTime: Date.now() - startTime,
+				confidence: 0.9,
+				aiModel: aiModel || "gpt-4o-mini",
+				aiCostUsd: totalCost,
+				aiTokensUsed: totalTokens,
+			};
+		}
+
+		// Stratified matching failed, fall through to global matching
+		this.lastAIMetadata = null; // Reset for global matching fallback
+		return null;
 	}
 
 	/**

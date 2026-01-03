@@ -290,12 +290,44 @@ export async function GET(request: NextRequest) {
 
 		const jobsArray = Array.isArray(jobsResult.data) ? jobsResult.data : [];
 
+		// CRITICAL: Filter out job boards (eFinancialCareers, etc.) that shouldn't be shown
+		const filteredJobs = jobsArray.filter((job) => {
+			const company = (job.company || "").toLowerCase();
+			const companyName = (job.company_name || "").toLowerCase();
+			
+			// Filter out known job boards
+			const jobBoards = [
+				"efinancial",
+				"efinancialcareers",
+				"reed",
+				"indeed",
+				"linkedin",
+				"adzuna",
+				"totaljobs",
+				"monster",
+				"ziprecruiter",
+				"jobspy",
+				"google",
+				"glassdoor",
+				"careerjet",
+				"jooble",
+				"arbeitnow",
+				"stepstone",
+			];
+			
+			const isJobBoard = jobBoards.some(
+				(board) => company.includes(board) || companyName.includes(board)
+			);
+			
+			return !isJobBoard;
+		});
+
 		// Sort jobs: active first, then by match score
 		// This ensures active jobs are shown first, but inactive jobs are still shown
-		const activeJobs = jobsArray.filter(
+		const activeJobs = filteredJobs.filter(
 			(j) => j.is_active && j.status === "active",
 		);
-		const inactiveJobs = jobsArray.filter(
+		const inactiveJobs = filteredJobs.filter(
 			(j) => !j.is_active || j.status !== "active",
 		);
 

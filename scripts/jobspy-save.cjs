@@ -884,9 +884,14 @@ async function saveJobs(jobs, source) {
 			},
 		);
 
+		// CRITICAL: Check if processing returned null (job was filtered out, e.g., job board)
+		if (!processed) {
+			return null; // Skip this job
+		}
+
 		// ENHANCED: Build categories array using CAREER_PATH_KEYWORDS (JobSpy-specific enhancement)
 		const { CAREER_PATH_KEYWORDS } = require("../scrapers/shared/helpers.cjs");
-		let categories = [...processed.categories]; // Start with processor categories
+		let categories = [...(processed.categories || [])]; // Start with processor categories
 
 		// Infer career path categories from title and description
 		const fullText = `${(j.title || "").toLowerCase()} ${description.toLowerCase()}`;
@@ -915,7 +920,7 @@ async function saveJobs(jobs, source) {
 		const _industries = extractIndustries(description);
 		const _companySize = extractCompanySize(description, processed.company);
 		const _skills = extractSkills(description);
-		const salary = extractSalaryRange(description);
+		// Note: salary_range field removed - not in database schema
 
 		// Generate job_hash
 		const job_hash = hashJob(j.title, processed.company, j.location);
@@ -924,10 +929,8 @@ async function saveJobs(jobs, source) {
 			...processed,
 			job_hash,
 			categories, // Use enhanced categories
-			// JobSpy-specific fields (if your schema supports them)
-			...(salary ? { salary_range: salary } : {}),
 		};
-	});
+	}).filter(Boolean); // Remove null entries (filtered jobs)
 	// CRITICAL: Use comprehensive validator to prevent data quality issues
 	const { validateJobs } = require("../scrapers/shared/jobValidator.cjs");
 	const validationResult = validateJobs(rows);
@@ -1977,22 +1980,44 @@ async function main() {
 		const priorityLabel = isPriority ? "🎯 [PRIORITY] " : "";
 
 		// Build concept batches with English + local synonyms merged
-		const internshipTerms = ["intern", "internship", "placement"];
+		// Enhanced Batch 1: Internship-specific queries
+		const internshipTerms = [
+			"intern",
+			"internship",
+			"summer internship",
+			"spring internship",
+			"co-op",
+			"coop",
+			"placement",
+			"student position",
+			"working student",
+		];
 		const internshipLocal = localized.filter((t) =>
-			/(praktik|stage|stagiaire|prácticas|tirocinio|staż)/i.test(t),
+			/(praktik|stage|stagiaire|prácticas|tirocinio|staż|werkstudent|becario)/i.test(t),
 		);
 		const internshipBatch = `("${internshipTerms.join('" OR "')}"${internshipLocal.length > 0 ? ` OR "${internshipLocal.join('" OR "')}"` : ""})`;
 
+		// Enhanced Batch 2: Graduate scheme queries
 		const graduateTerms = [
 			"graduate",
+			"graduate scheme",
+			"graduate programme",
+			"graduate program",
+			"grad program",
+			"rotational program",
+			"rotational programme",
+			"management trainee",
+			"graduate trainee",
+			"leadership development",
 			"junior",
 			"entry level",
 			"entry-level",
-			"recent graduate",
+			"early career",
 			"new grad",
+			"recent graduate",
 		];
 		const graduateLocal = localized.filter((t) =>
-			/(absolvent|absolwent|nyexaminerad|nyuddannet|neolaureato|recién graduado|laureato|débutant|beginnend|primo lavoro|nivel inicial)/i.test(
+			/(absolvent|absolwent|nyexaminerad|nyuddannet|neolaureato|recién graduado|laureato|débutant|beginnend|primo lavoro|nivel inicial|jeune diplômé|berufseinsteiger)/i.test(
 				t,
 			),
 		);

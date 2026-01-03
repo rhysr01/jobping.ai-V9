@@ -503,6 +503,21 @@ class RealJobRunner {
 	async runJobSpyInternshipsScraper() {
 		try {
 			console.log("🎓 Running JobSpy Internships-Only scraper...");
+			
+			// Check if file exists before running
+			const fs = require("fs");
+			const path = require("path");
+			const scriptPath = path.join(process.cwd(), "scripts", "jobspy-internships-only.cjs");
+			if (!fs.existsSync(scriptPath)) {
+				console.error(
+					`❌ JobSpy Internships scraper file not found: ${scriptPath}`,
+				);
+				console.error(
+					"⚠️  This scraper is currently disabled. To enable, create the file or update the runner.",
+				);
+				return 0;
+			}
+			
 			const { stdout, stderr } = await execAsync(
 				"NODE_ENV=production node scripts/jobspy-internships-only.cjs",
 				{
@@ -574,6 +589,21 @@ class RealJobRunner {
 	async runJobSpyCareerPathRolesScraper(targets) {
 		try {
 			console.log("🎯 Running JobSpy Career Path Roles scraper...");
+			
+			// Check if file exists before running
+			const fs = require("fs");
+			const path = require("path");
+			const scriptPath = path.join(process.cwd(), "scripts", "jobspy-career-path-roles.cjs");
+			if (!fs.existsSync(scriptPath)) {
+				console.warn(
+					`⚠️  JobSpy Career Path Roles scraper file not found: ${scriptPath}`,
+				);
+				console.warn(
+					"⚠️  Skipping JobSpy Career Path Roles scraper - file does not exist. This scraper is currently disabled.",
+				);
+				return 0; // Return early, don't try to execute
+			}
+			
 			const env = {
 				...process.env,
 				NODE_ENV: "production",
@@ -828,6 +858,17 @@ class RealJobRunner {
 		try {
 			console.log("🔄 Running Arbeitnow scraper...");
 
+			// Check if file exists
+			const fs = require("fs");
+			const path = require("path");
+			const scriptPath = path.join(process.cwd(), "scrapers", "arbeitnow.cjs");
+			if (!fs.existsSync(scriptPath)) {
+				console.error(
+					`❌ Arbeitnow scraper file not found: ${scriptPath}`,
+				);
+				return 0;
+			}
+
 			const { scrapeArbeitnow } = require("../scrapers/arbeitnow.cjs");
 			const { stdout, stderr } = await execAsync(
 				"node scrapers/arbeitnow.cjs",
@@ -843,6 +884,11 @@ class RealJobRunner {
 				console.warn("⚠️  Arbeitnow stderr:", stderr.substring(0, 500));
 			}
 
+			// Log full output for debugging if no match found
+			if (stdout && !stdout.includes("[Arbeitnow] ✅ Complete")) {
+				console.log("📋 Arbeitnow output preview:", stdout.substring(0, 1000));
+			}
+
 			let jobsSaved = 0;
 			const match = stdout.match(
 				/\[Arbeitnow\] ✅ Complete: (\d+) jobs saved in/,
@@ -850,6 +896,24 @@ class RealJobRunner {
 			if (match) {
 				jobsSaved = parseInt(match[1]);
 			} else {
+				// Check for error messages in output
+				if (
+					stdout.includes("❌") ||
+					stdout.includes("Error") ||
+					stdout.includes("Fatal error")
+				) {
+					console.warn("⚠️  Arbeitnow output contains errors - check full logs");
+					const errorLines = stdout
+						.split("\n")
+						.filter((line) =>
+							/❌|Error|error|Fatal/i.test(line),
+						)
+						.slice(0, 5);
+					if (errorLines.length > 0) {
+						console.warn("   Error details:", errorLines.join(" | "));
+					}
+				}
+
 				// Fallback to DB count (last 10 minutes)
 				const { count, error } = await supabase
 					.from("jobs")
@@ -873,6 +937,116 @@ class RealJobRunner {
 			return jobsSaved;
 		} catch (error) {
 			console.error("❌ Arbeitnow scraper failed:", error.message);
+			if (error.code === "ETIMEDOUT") {
+				console.error(
+					"❌ Arbeitnow scraper timed out after 10 minutes",
+				);
+			}
+			if (error.stdout) {
+				console.error("❌ stdout:", error.stdout.substring(0, 500));
+			}
+			if (error.stderr) {
+				console.error("❌ stderr:", error.stderr.substring(0, 500));
+			}
+			return 0;
+		}
+	}
+
+	// Run Jooble scraper
+	async runJoobleScraper() {
+		try {
+			console.log("🔄 Running Jooble scraper...");
+
+			// Check if file exists
+			const fs = require("fs");
+			const path = require("path");
+			const scriptPath = path.join(process.cwd(), "scrapers", "jooble.cjs");
+			if (!fs.existsSync(scriptPath)) {
+				console.error(
+					`❌ Jooble scraper file not found: ${scriptPath}`,
+				);
+				return 0;
+			}
+
+			const { scrapeJooble } = require("../scrapers/jooble.cjs");
+			const { stdout, stderr } = await execAsync(
+				"node scrapers/jooble.cjs",
+				{
+					cwd: process.cwd(),
+					timeout: 600000, // 10 minutes timeout
+					env: { ...process.env },
+				},
+			);
+
+			// Log stderr if present
+			if (stderr && stderr.trim()) {
+				console.warn("⚠️  Jooble stderr:", stderr.substring(0, 500));
+			}
+
+			// Log full output for debugging if no match found
+			if (stdout && !stdout.includes("[Jooble] ✅ Complete")) {
+				console.log("📋 Jooble output preview:", stdout.substring(0, 1000));
+			}
+
+			let jobsSaved = 0;
+			const match = stdout.match(
+				/\[Jooble\] ✅ Complete: (\d+) jobs saved in/,
+			);
+			if (match) {
+				jobsSaved = parseInt(match[1]);
+			} else {
+				// Check for error messages in output
+				if (
+					stdout.includes("❌") ||
+					stdout.includes("Error") ||
+					stdout.includes("Fatal error")
+				) {
+					console.warn("⚠️  Jooble output contains errors - check full logs");
+					const errorLines = stdout
+						.split("\n")
+						.filter((line) =>
+							/❌|Error|error|Fatal/i.test(line),
+						)
+						.slice(0, 5);
+					if (errorLines.length > 0) {
+						console.warn("   Error details:", errorLines.join(" | "));
+					}
+				}
+
+				// Fallback to DB count (last 10 minutes)
+				const { count, error } = await supabase
+					.from("jobs")
+					.select("id", { count: "exact", head: false })
+					.eq("source", "jooble")
+					.gte(
+						"created_at",
+						new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+					);
+				jobsSaved = error ? 0 : count || 0;
+				if (jobsSaved > 0) {
+					console.log(`ℹ️  Jooble: DB fallback count: ${jobsSaved} jobs`);
+				} else {
+					console.warn(
+						"⚠️  Jooble: No jobs found in DB - scraper may have failed silently",
+					);
+				}
+			}
+
+			console.log(`✅ Jooble: ${jobsSaved} jobs processed`);
+			return jobsSaved;
+		} catch (error) {
+			console.error("❌ Jooble scraper failed:", error.message);
+			if (error.code === "ETIMEDOUT") {
+				console.error(
+					"❌ Jooble scraper timed out after 10 minutes",
+				);
+			}
+			if (error.stdout) {
+				console.error("❌ stdout:", error.stdout.substring(0, 500));
+			}
+			if (error.stderr) {
+				console.error("❌ stderr:", error.stderr.substring(0, 500));
+			}
 			return 0;
 		}
 	}
@@ -880,8 +1054,8 @@ class RealJobRunner {
 	// Run Indeed scraper
 	// Indeed scraper removed - not working properly
 
-	// Removed deprecated scrapers: JSearch, Jooble, Ashby, Muse
-	// Current active scrapers: JobSpy (Indeed/Glassdoor), Adzuna, Reed
+	// Removed deprecated scrapers: JSearch, Ashby, Muse
+	// Current active scrapers: JobSpy (Indeed/Glassdoor), Adzuna, Reed, CareerJet, Arbeitnow, Jooble
 
 	// Run SERP API scraper
 	async runSerpAPIScraper() {
@@ -1108,7 +1282,7 @@ class RealJobRunner {
 			console.log("\n🚀 STARTING AUTOMATED SCRAPING CYCLE");
 			console.log("=====================================");
 			console.log(
-				"🎯 Running streamlined scrapers: JobSpy, JobSpy Internships, Career Path Roles, Adzuna, Reed, CareerJet, Arbeitnow",
+				"🎯 Running streamlined scrapers: JobSpy, JobSpy Internships, Career Path Roles, Adzuna, Reed, CareerJet, Arbeitnow, Jooble",
 			);
 
 			const cycleStartIso = new Date().toISOString();
@@ -1268,6 +1442,28 @@ class RealJobRunner {
 				);
 			}
 
+			// Run Jooble (EU-wide coverage, fills gaps from Adzuna)
+			let joobleJobs = 0;
+			if (!stopDueToQuota) {
+				try {
+					joobleJobs = await this.runJoobleScraper();
+					console.log(`✅ Jooble completed: ${joobleJobs} jobs`);
+				} catch (error) {
+					console.error(
+						"❌ Jooble scraper failed, continuing with other scrapers:",
+						error.message,
+					);
+				}
+				stopDueToQuota = await this.evaluateStopCondition(
+					"Jooble scraper",
+					cycleStartIso,
+				);
+			} else {
+				console.log(
+					"⏹️  Skipping Jooble scraper - cycle job target reached.",
+				);
+			}
+
 			if (!stopDueToQuota) {
 				await this.evaluateStopCondition("Full cycle", cycleStartIso);
 			}
@@ -1280,7 +1476,8 @@ class RealJobRunner {
 				careerPathRolesJobs +
 				reedJobs +
 				careerjetJobs +
-				arbeitnowJobs;
+				arbeitnowJobs +
+				joobleJobs;
 			this.runCount++;
 			this.lastRun = new Date();
 
@@ -1303,7 +1500,7 @@ class RealJobRunner {
 			console.log("============================");
 			console.log(`⏱️  Duration: ${duration.toFixed(1)} seconds`);
 			console.log(
-				`📊 Jobs processed this cycle: ${adzunaJobs + jobspyJobs + jobspyInternshipsJobs + careerPathRolesJobs + reedJobs + careerjetJobs + arbeitnowJobs}`,
+				`📊 Jobs processed this cycle: ${adzunaJobs + jobspyJobs + jobspyInternshipsJobs + careerPathRolesJobs + reedJobs + careerjetJobs + arbeitnowJobs + joobleJobs}`,
 			);
 			console.log(`📈 Total jobs processed: ${this.totalJobsSaved}`);
 			console.log(`🔄 Total cycles run: ${this.runCount}`);
@@ -1321,6 +1518,7 @@ class RealJobRunner {
 			console.log(`   - Adzuna: ${adzunaJobs} jobs (reduced priority)`);
 			console.log(`   - CareerJet: ${careerjetJobs} jobs (EU coverage)`);
 			console.log(`   - Arbeitnow: ${arbeitnowJobs} jobs (DACH region)`);
+			console.log(`   - Jooble: ${joobleJobs} jobs (EU-wide coverage)`);
 			console.log(
 				`🧮 Unique job hashes this cycle: ${this.currentCycleStats.total}`,
 			);
@@ -1394,7 +1592,7 @@ class RealJobRunner {
 		console.log("   - Daily health checks");
 		console.log("   - Database monitoring");
 		console.log(
-			"   - 7 core scrapers: JobSpy, JobSpy Internships, Career Path Roles, Adzuna, Reed, CareerJet, Arbeitnow",
+			"   - 8 core scrapers: JobSpy, JobSpy Internships, Career Path Roles, Adzuna, Reed, CareerJet, Arbeitnow, Jooble",
 		);
 	}
 
