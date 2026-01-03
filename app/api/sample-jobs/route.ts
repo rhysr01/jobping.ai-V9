@@ -556,21 +556,59 @@ export async function GET(req: NextRequest) {
 				`After filtering: ${scoredJobs.length} valid jobs (scored and sorted)`,
 			);
 
+			// Helper function to check if job is unpaid (filter out for showcase)
+			const isUnpaid = (job: any): boolean => {
+				const title = (job.title || "").toLowerCase();
+				const description = (job.description || "").toLowerCase();
+				return (
+					title.includes("unpaid") ||
+					description.includes("unpaid") ||
+					title.includes("unpaid internship") ||
+					description.includes("unpaid internship")
+				);
+			};
+
 			// Add jobs from scored list, ensuring diversity and realistic distribution
+			// FOR IPHONE SHOWCASE: Prioritize premium companies to show off database quality
 			const citiesUsed = new Set<string>();
 			let finalHotMatchCount = 0;
 
-			// First pass: Perfect matches (city + career) - highest priority
-			for (const { job, score, reason, isPerfectMatch } of scoredJobs) {
+			// ZERO PASS: Premium companies FIRST (for showcase quality) - even if not perfect match
+			// This ensures we show off big name companies like Google, McKinsey, Deloitte, etc.
+			for (const { job, score, reason, isPremium } of scoredJobs) {
 				if (resultJobs.length >= 5) break;
 				if (isJobUsed(job)) continue;
+				if (isUnpaid(job)) continue; // Skip unpaid internships
+
+				if (isPremium && score >= 0.60) {
+					// Show premium companies with at least 60% match (even if not in preferred city)
+					const finalScore =
+						score >= 0.92 && finalHotMatchCount >= 2
+							? Math.min(0.91, score)
+							: score;
+					if (finalScore >= 0.92) finalHotMatchCount++;
+
+					resultJobs.push({
+						...job,
+						matchScore: finalScore,
+						matchReason: reason,
+					});
+					markJobAsUsed(job);
+				}
+			}
+
+			// First pass: Perfect matches (city + career) - but skip premium (already handled)
+			for (const { job, score, reason, isPerfectMatch, isPremium } of scoredJobs) {
+				if (resultJobs.length >= 5) break;
+				if (isJobUsed(job)) continue;
+				if (isUnpaid(job)) continue; // Skip unpaid internships
+				if (isPremium) continue; // Already handled in zero pass
 
 				const jobCity = (job.city || job.location?.split(",")[0] || "")
 					.toLowerCase()
 					.trim();
 
 				if (isPerfectMatch && !citiesUsed.has(jobCity)) {
-					// Ensure only 1-2 hot matches
 					const finalScore =
 						score >= 0.92 && finalHotMatchCount >= 2
 							? Math.min(0.91, score)
@@ -587,10 +625,12 @@ export async function GET(req: NextRequest) {
 				}
 			}
 
-			// Second pass: City matches (preferred cities)
-			for (const { job, score, reason, matchesCity } of scoredJobs) {
+			// Second pass: City matches (preferred cities) - but skip premium
+			for (const { job, score, reason, matchesCity, isPremium } of scoredJobs) {
 				if (resultJobs.length >= 5) break;
 				if (isJobUsed(job)) continue;
+				if (isUnpaid(job)) continue; // Skip unpaid internships
+				if (isPremium) continue; // Already handled in zero pass
 
 				const jobCity = (job.city || job.location?.split(",")[0] || "")
 					.toLowerCase()
@@ -613,10 +653,12 @@ export async function GET(req: NextRequest) {
 				}
 			}
 
-			// Third pass: Career matches or any remaining high-scored jobs
-			for (const { job, score, reason } of scoredJobs) {
+			// Third pass: Career matches or any remaining high-scored jobs - but skip premium
+			for (const { job, score, reason, isPremium } of scoredJobs) {
 				if (resultJobs.length >= 5) break;
 				if (isJobUsed(job)) continue;
+				if (isUnpaid(job)) continue; // Skip unpaid internships
+				if (isPremium) continue; // Already handled in zero pass
 
 				const finalScore =
 					score >= 0.92 && finalHotMatchCount >= 2
