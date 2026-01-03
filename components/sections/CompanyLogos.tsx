@@ -20,6 +20,7 @@ export default function CompanyLogos() {
 	const [isHovered, setIsHovered] = useState(false);
 	const [isVisible, setIsVisible] = useState(false);
 	const [failedLogos, setFailedLogos] = useState<Set<string>>(new Set());
+	const [imagesLoaded, setImagesLoaded] = useState(0);
 
 	useEffect(() => {
 		async function fetchCompanies() {
@@ -70,9 +71,18 @@ export default function CompanyLogos() {
 	}, []);
 
 	// Auto-scroll logos slowly to the right with infinite loop
-	// Only starts when section is visible
+	// Only starts when section is visible and images are loaded
 	useEffect(() => {
 		if (!scrollContainerRef.current || companies.length === 0 || !isVisible) {
+			return;
+		}
+
+		// Wait for images to load before starting scroll
+		const validCompanies = companies.filter(
+			(company) => !failedLogos.has(company.logoPath),
+		);
+		
+		if (validCompanies.length === 0) {
 			return;
 		}
 
@@ -89,6 +99,13 @@ export default function CompanyLogos() {
 
 			// Only start auto-scroll if there's actually scrollable content
 			if (maxScroll <= 0) {
+				if (process.env.NODE_ENV === "development") {
+					console.log("[CompanyLogos] No scrollable content", {
+						containerWidth,
+						contentWidth,
+						maxScroll,
+					});
+				}
 				return;
 			}
 
@@ -96,7 +113,7 @@ export default function CompanyLogos() {
 			const singleSetWidth = contentWidth / 2;
 
 			let lastTimestamp: number | null = null;
-			const scrollSpeed = 0.3; // Slower scroll speed (was 0.8, now 0.3 pixels per millisecond)
+			const scrollSpeed = 0.5; // Increased from 0.3 for better visibility
 
 			const animate = (timestamp: number) => {
 				if (!scrollContainerRef.current || isHovered || !isVisible) {
@@ -115,7 +132,6 @@ export default function CompanyLogos() {
 				const currentScroll = currentContainer.scrollLeft;
 
 				// If we've scrolled past the first set of logos, reset to start for seamless loop
-				// Since we duplicated the array, reset when we've scrolled one full set width
 				if (currentScroll >= singleSetWidth - 10) {
 					currentContainer.scrollLeft = 0;
 					lastTimestamp = null;
@@ -135,9 +151,14 @@ export default function CompanyLogos() {
 		};
 
 		// Wait for images to load and DOM to be ready, then start auto-scroll
+		// Increased delay to ensure images are rendered
 		startDelay = setTimeout(() => {
+			// Force a layout recalculation
+			if (scrollContainerRef.current) {
+				scrollContainerRef.current.offsetHeight; // Trigger reflow
+			}
 			startAutoScroll();
-		}, 300); // Reduced delay since we're waiting for visibility
+		}, 500); // Increased from 300ms
 
 		return () => {
 			clearTimeout(startDelay);
@@ -146,7 +167,7 @@ export default function CompanyLogos() {
 				animationFrameId = null;
 			}
 		};
-	}, [companies, isHovered, isVisible]);
+	}, [companies, isHovered, isVisible, failedLogos]);
 
 	if (isLoading) {
 		return (
@@ -246,6 +267,8 @@ export default function CompanyLogos() {
 							WebkitOverflowScrolling: "touch",
 							scrollBehavior: "auto", // Disable smooth scroll for programmatic scrolling
 							overflowY: "hidden", // Ensure only horizontal scroll
+							// Ensure container can scroll
+							minWidth: "100%",
 						}}
 					>
 						{/* Duplicate logos for seamless infinite scroll */}
@@ -284,31 +307,31 @@ export default function CompanyLogos() {
 									{/* Inner glow with light source */}
 									<div className="absolute inset-[1px] bg-gradient-to-br from-white/[0.12] via-transparent to-white/[0.04] rounded-2xl pointer-events-none" />
 
-									{/* Logo with full color by default */}
-									<div className="relative z-10 flex items-center justify-center">
+									{/* Logo with improved error handling */}
+									<div className="relative z-10 flex items-center justify-center w-full h-full">
 										<Image
 											src={company.logoPath}
 											alt={`${company.name} company logo`}
 											width={140}
 											height={140}
-											className="object-contain h-[140px] w-auto opacity-90 transition-all duration-500 ease-out group-hover:opacity-100 group-hover:scale-125 filter drop-shadow-[0_4px_12px_rgba(139,92,246,0.4)]"
+											className="object-contain h-[140px] w-auto max-w-[160px] opacity-90 transition-all duration-500 ease-out group-hover:opacity-100 group-hover:scale-125 filter drop-shadow-[0_4px_12px_rgba(139,92,246,0.4)]"
 											onError={(e) => {
 												console.error(
 													`Failed to load logo: ${company.logoPath} for ${company.name}`,
 													e,
 												);
-												// Track failed logos to filter them out
 												setFailedLogos((prev) =>
 													new Set(prev).add(company.logoPath),
 												);
-												// Hide the card immediately
-												const parent = (e.target as HTMLElement).parentElement
-													?.parentElement?.parentElement;
-												if (parent) {
-													parent.style.display = "none";
+												// Hide the card immediately using closest for better DOM selection
+												const target = e.target as HTMLElement;
+												const card = target.closest('.flex-shrink-0');
+												if (card) {
+													(card as HTMLElement).style.display = "none";
 												}
 											}}
 											onLoad={() => {
+												setImagesLoaded((prev) => prev + 1);
 												if (process.env.NODE_ENV === "development") {
 													console.log(
 														`Successfully loaded logo: ${company.logoPath}`,
@@ -316,6 +339,8 @@ export default function CompanyLogos() {
 												}
 											}}
 											loading="lazy"
+											unoptimized={false}
+											priority={index < 6} // Prioritize first 6 logos
 										/>
 									</div>
 								</div>
