@@ -298,6 +298,7 @@ export function scoreJob(
 					jobDescLower.includes(keyword) || jobTitleLower.includes(keyword),
 			);
 
+			// Check visa_friendly field from database (set by visa detection filter)
 			const jobVisaFriendly =
 				(job as any).visa_friendly === true ||
 				(job as any).visa_sponsorship === true;

@@ -99,6 +99,10 @@ export default function SignupFormFree() {
 	});
 
 	const [jobCount, setJobCount] = useState<number | null>(null);
+	const [jobCountMetadata, setJobCountMetadata] = useState<{
+		isLowCount?: boolean;
+		suggestion?: string;
+	} | null>(null);
 	const [isLoadingJobCount, setIsLoadingJobCount] = useState(false);
 	const [matchCount, setMatchCount] = useState<number>(0);
 	const [showLiveMatching, setShowLiveMatching] = useState(false);
@@ -174,26 +178,33 @@ export default function SignupFormFree() {
 			if (formData.cities.length > 0 && formData.careerPath) {
 				setIsLoadingJobCount(true);
 				try {
-					const data = await apiCallJson<{ count?: number }>(
-						"/api/preview-matches",
-						{
-							method: "POST",
-							headers: { "Content-Type": "application/json" },
-							body: JSON.stringify({
-								cities: formData.cities,
-								careerPath: formData.careerPath,
-							}),
-						},
-					);
+					const data = await apiCallJson<{
+						count?: number;
+						isLowCount?: boolean;
+						suggestion?: string;
+					}>("/api/preview-matches", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							cities: formData.cities,
+							careerPath: formData.careerPath,
+						}),
+					});
 					setJobCount(data.count || 0);
+					setJobCountMetadata({
+						isLowCount: data.isLowCount,
+						suggestion: data.suggestion,
+					});
 				} catch (error) {
 					console.error("Failed to fetch job count:", error);
 					setJobCount(null);
+					setJobCountMetadata(null);
 				} finally {
 					setIsLoadingJobCount(false);
 				}
 			} else {
 				setJobCount(null);
+				setJobCountMetadata(null);
 			}
 		};
 
@@ -935,16 +946,28 @@ export default function SignupFormFree() {
 													</p>
 												</div>
 
+												{/* Low count suggestion */}
+												{jobCountMetadata?.isLowCount &&
+													jobCountMetadata.suggestion && (
+														<div className="mt-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+															<p className="text-sm text-amber-200 text-center">
+																💡 {jobCountMetadata.suggestion}
+															</p>
+														</div>
+													)}
+
 												{/* Preview message */}
-												<div className="mt-6 p-4 rounded-xl bg-black/30 border border-brand-500/20">
-													<p className="text-sm text-content-secondary text-center">
-														🎯 We'll show you the{" "}
-														<span className="text-brand-400 font-semibold">
-															top 5 matches
-														</span>{" "}
-														from these {jobCount.toLocaleString()} jobs
-													</p>
-												</div>
+												{!jobCountMetadata?.isLowCount && (
+													<div className="mt-6 p-4 rounded-xl bg-black/30 border border-brand-500/20">
+														<p className="text-sm text-content-secondary text-center">
+															🎯 We'll show you the{" "}
+															<span className="text-brand-400 font-semibold">
+																top 5 matches
+															</span>{" "}
+															from these {jobCount.toLocaleString()} jobs
+														</p>
+													</div>
+												)}
 											</motion.div>
 										) : null}
 									</div>

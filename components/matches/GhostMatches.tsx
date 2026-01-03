@@ -8,27 +8,14 @@ import { BrandIcons } from "@/components/ui/BrandIcons";
 import { trackEvent } from "@/lib/analytics";
 import { apiCall } from "@/lib/api-client";
 
-// Sample premium jobs to show in blurred cards (creates FOMO)
-const SAMPLE_PREMIUM_JOBS = [
-	{
-		title: "Senior Strategy Consultant",
-		company: "Google",
-		location: "London, UK",
-		matchScore: 95,
-	},
-	{
-		title: "Business Design Lead",
-		company: "McKinsey & Company",
-		location: "Paris, France",
-		matchScore: 92,
-	},
-	{
-		title: "Innovation Strategist",
-		company: "BCG Digital Ventures",
-		location: "Berlin, Germany",
-		matchScore: 89,
-	},
-];
+interface GhostJob {
+	job_hash: string;
+	title: string;
+	company: string;
+	location: string;
+	match_score: number;
+	match_reason?: string;
+}
 
 interface GhostMatchesProps {
 	onUpgradeClick?: () => void;
@@ -36,6 +23,7 @@ interface GhostMatchesProps {
 
 export function GhostMatches({ onUpgradeClick }: GhostMatchesProps) {
 	const [ghostMatchCount, setGhostMatchCount] = useState<number | null>(null);
+	const [ghostJobs, setGhostJobs] = useState<GhostJob[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [_error, setError] = useState<string | null>(null);
 
@@ -50,15 +38,18 @@ export function GhostMatches({ onUpgradeClick }: GhostMatchesProps) {
 
 				if (response.ok && data.ghostMatchCount > 0) {
 					setGhostMatchCount(data.ghostMatchCount);
+					setGhostJobs(data.ghostJobs || []);
 
 					// Track ghost matches shown (A/B test metric)
 					trackEvent("ghost_matches_shown", {
 						count: data.ghostMatchCount,
+						jobsDisplayed: data.ghostJobs?.length || 0,
 						variant: "ghost_matches_enabled", // A/B test variant
 						timestamp: new Date().toISOString(),
 					});
 				} else {
 					setGhostMatchCount(0);
+					setGhostJobs([]);
 					// Track when no ghost matches found (for A/B test analysis)
 					trackEvent("ghost_matches_not_available", {
 						reason: data.message || "no_matches",
@@ -120,53 +111,60 @@ export function GhostMatches({ onUpgradeClick }: GhostMatchesProps) {
 
 			{/* Ghost Matches Cards */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-				{/* Show 3 blurred real job cards */}
-				{SAMPLE_PREMIUM_JOBS.map((job, index) => (
-					<motion.div
-						key={index}
-						initial={{ opacity: 0, scale: 0.95 }}
-						animate={{ opacity: 1, scale: 1 }}
-						transition={{ delay: 0.6 + index * 0.1 }}
-						className="glass-card elevation-2 p-5 rounded-xl border border-zinc-800/50 relative overflow-hidden"
-					>
-						{/* Real job content - visible but locked */}
-						<div className="relative z-0">
-							<div className="flex items-center gap-2 mb-3 flex-wrap">
-								<span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-									{job.matchScore}% Match
-								</span>
-							</div>
-							<h3 className="text-xl font-bold text-zinc-100 mb-1.5 leading-tight break-words">
-								{job.title}
-							</h3>
-							<p className="text-brand-300 font-medium mb-2 break-words">
-								{job.company}
-							</p>
-							<div className="flex items-center gap-1.5 text-sm text-zinc-400 mb-4">
-								<MapPin size={14} className="shrink-0" />
-								{job.location}
-							</div>
-							<div className="space-y-2 opacity-60">
-								<div className="h-2 bg-zinc-700/50 rounded w-full"></div>
-								<div className="h-2 bg-zinc-700/50 rounded w-5/6"></div>
-								<div className="h-2 bg-zinc-700/50 rounded w-4/6"></div>
-							</div>
-						</div>
-
-						{/* Lock overlay with blur effect */}
-						<div className="absolute inset-0 bg-gradient-to-br from-zinc-950/85 via-zinc-900/80 to-zinc-950/85 backdrop-blur-md z-10 flex items-center justify-center pointer-events-none">
-							<div className="text-center">
-								<div className="w-14 h-14 rounded-full bg-brand-500/20 border-2 border-brand-500/50 flex items-center justify-center mb-3 mx-auto backdrop-blur-sm">
-									<BrandIcons.Clock className="h-7 w-7 text-brand-400" />
+				{/* Show real ghost jobs from API */}
+				{ghostJobs.length > 0 ? (
+					ghostJobs.map((job, index) => (
+						<motion.div
+							key={job.job_hash}
+							initial={{ opacity: 0, scale: 0.95 }}
+							animate={{ opacity: 1, scale: 1 }}
+							transition={{ delay: 0.6 + index * 0.1 }}
+							className="glass-card elevation-2 p-5 rounded-xl border border-zinc-800/50 relative overflow-hidden"
+						>
+							{/* Real job content - visible but locked */}
+							<div className="relative z-0">
+								<div className="flex items-center gap-2 mb-3 flex-wrap">
+									<span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+										{job.match_score}% Match
+									</span>
 								</div>
-								<p className="text-sm font-bold text-brand-300 mb-1">
-									Premium Match
+								<h3 className="text-xl font-bold text-zinc-100 mb-1.5 leading-tight break-words">
+									{job.title}
+								</h3>
+								<p className="text-brand-300 font-medium mb-2 break-words">
+									{job.company}
 								</p>
-								<p className="text-xs text-zinc-400">Unlock to view</p>
+								<div className="flex items-center gap-1.5 text-sm text-zinc-400 mb-4">
+									<MapPin size={14} className="shrink-0" />
+									{job.location}
+								</div>
+								<div className="space-y-2 opacity-60">
+									<div className="h-2 bg-zinc-700/50 rounded w-full"></div>
+									<div className="h-2 bg-zinc-700/50 rounded w-5/6"></div>
+									<div className="h-2 bg-zinc-700/50 rounded w-4/6"></div>
+								</div>
 							</div>
-						</div>
-					</motion.div>
-				))}
+
+							{/* Lock overlay with subtle blur effect - content should be visible */}
+							<div className="absolute inset-0 bg-gradient-to-br from-zinc-950/50 via-zinc-900/45 to-zinc-950/50 backdrop-blur-sm z-10 flex items-center justify-center pointer-events-none">
+								<div className="text-center">
+									<div className="w-14 h-14 rounded-full bg-brand-500/20 border-2 border-brand-500/50 flex items-center justify-center mb-3 mx-auto backdrop-blur-sm">
+										<BrandIcons.Clock className="h-7 w-7 text-brand-400" />
+									</div>
+									<p className="text-sm font-bold text-brand-300 mb-1">
+										Premium Match
+									</p>
+									<p className="text-xs text-zinc-400">Unlock to view</p>
+								</div>
+							</div>
+						</motion.div>
+					))
+				) : (
+					// Fallback: Show placeholder if no jobs (shouldn't happen if ghostMatchCount > 0)
+					<div className="col-span-full text-center text-zinc-500 text-sm py-8">
+						No ghost matches available
+					</div>
+				)}
 			</div>
 
 			{/* CTA Card */}

@@ -30,11 +30,13 @@ interface Job {
 	id: number;
 	title: string;
 	company: string;
+	company_name?: string;
 	location: string;
 	city: string;
 	country: string;
 	description: string;
 	url: string;
+	job_url?: string;
 	work_environment: string;
 	match_score?: number;
 	match_reason?: string;
@@ -588,7 +590,42 @@ function MatchesPageContent() {
 				>
 					<AnimatePresence mode="popLayout">
 						{jobs
-							.filter((job) => !dismissedJobIds.has(job.id))
+							.filter((job) => {
+								// Filter out dismissed jobs
+								if (dismissedJobIds.has(job.id)) return false;
+
+								// CRITICAL: Filter out job boards (eFinancialCareers, etc.)
+								const company = (job.company || "").toLowerCase();
+								const companyName = (job.company_name || "").toLowerCase();
+								const jobBoards = [
+									"efinancial",
+									"efinancialcareers",
+									"reed",
+									"indeed",
+									"linkedin",
+									"adzuna",
+									"totaljobs",
+									"monster",
+									"ziprecruiter",
+									"jobspy",
+									"google",
+									"glassdoor",
+									"careerjet",
+									"jooble",
+									"arbeitnow",
+									"stepstone",
+								];
+								const isJobBoard = jobBoards.some(
+									(board) =>
+										company.includes(board) || companyName.includes(board),
+								);
+								if (isJobBoard) return false;
+
+								// Ensure job has a valid URL
+								if (!job.job_url && !job.url) return false;
+
+								return true;
+							})
 							.map((job, index) => {
 								const isDismissing = dismissingJobId === job.id;
 								return (
@@ -807,11 +844,14 @@ function MatchesPageContent() {
 																}
 
 																// Fallback: Direct redirect
-																window.open(
-																	job.url,
-																	"_blank",
-																	"noopener,noreferrer",
-																);
+																const fallbackUrl = job.job_url || job.url;
+																if (fallbackUrl) {
+																	window.open(
+																		fallbackUrl,
+																		"_blank",
+																		"noopener,noreferrer",
+																	);
+																}
 																setTimeout(
 																	() => setClickedJobId(null),
 																	TIMING.CLICK_RESET_DELAY_MS,
@@ -833,11 +873,14 @@ function MatchesPageContent() {
 															.catch((err) => {
 																console.error("Bridge route error:", err);
 																// Fallback: Direct redirect
-																window.open(
-																	job.url,
-																	"_blank",
-																	"noopener,noreferrer",
-																);
+																const fallbackUrl = job.job_url || job.url;
+																if (fallbackUrl) {
+																	window.open(
+																		fallbackUrl,
+																		"_blank",
+																		"noopener,noreferrer",
+																	);
+																}
 																setTimeout(
 																	() => setClickedJobId(null),
 																	TIMING.CLICK_RESET_DELAY_MS,
@@ -845,11 +888,14 @@ function MatchesPageContent() {
 															});
 													} else {
 														// Fallback if no email/hash
-														window.open(
-															job.url,
-															"_blank",
-															"noopener,noreferrer",
-														);
+														const fallbackUrl = job.job_url || job.url;
+														if (fallbackUrl) {
+															window.open(
+																fallbackUrl,
+																"_blank",
+																"noopener,noreferrer",
+															);
+														}
 														setTimeout(() => setClickedJobId(null), 2000);
 													}
 												}}

@@ -64,6 +64,18 @@ async function main() {
 		const allFormRoles = getAllRoles().map((r) => r.toLowerCase());
 
 		const convertToDatabaseFormat = (job) => {
+			// CRITICAL: Add null check at the start to prevent "Cannot read properties of null" errors
+			if (!job) {
+				console.warn("⚠️  Adzuna: Skipping null job object");
+				return null;
+			}
+
+			// CRITICAL: Ensure job has required title field
+			if (!job.title || typeof job.title !== "string") {
+				console.warn("⚠️  Adzuna: Skipping job with missing/invalid title:", JSON.stringify(job).substring(0, 100));
+				return null;
+			}
+
 			const titleLower = (job.title || "").toLowerCase();
 
 			// Check multiple criteria for early-career classification
@@ -92,6 +104,22 @@ async function main() {
 				source: "adzuna",
 			});
 
+			// CRITICAL: Check if processing returned null or invalid result
+			if (!processed) {
+				console.warn("⚠️  Adzuna: processIncomingJob returned null for job:", job.title?.substring(0, 50));
+				return null;
+			}
+
+			// CRITICAL: Ensure processed job has required fields
+			if (!processed.title || !processed.company || !processed.location) {
+				console.warn("⚠️  Adzuna: Processed job missing required fields:", {
+					hasTitle: !!processed.title,
+					hasCompany: !!processed.company,
+					hasLocation: !!processed.location,
+				});
+				return null;
+			}
+
 			// Generate job_hash
 			const job_hash = makeJobHash({
 				title: processed.title,
@@ -105,10 +133,20 @@ async function main() {
 			};
 		};
 
+		// CRITICAL: Filter out null/undefined jobs first
+		const validJobs = (result.jobs || []).filter((j) => j != null);
+
 		// Filter remote jobs if needed
 		const filteredJobs = includeRemote
-			? result.jobs
-			: result.jobs.filter((j) => !localParseLocation(j.location).isRemote);
+			? validJobs
+			: validJobs.filter((j) => {
+					try {
+						return !localParseLocation(j.location || "").isRemote;
+					} catch (e) {
+						console.warn("⚠️  Adzuna: Error parsing location, skipping:", j?.title?.substring(0, 50));
+						return false;
+					}
+				});
 
 		// Convert to database format
 		const dbJobs = filteredJobs

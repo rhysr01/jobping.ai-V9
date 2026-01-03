@@ -528,6 +528,15 @@ function processIncomingJob(job, options = {}) {
 	const workEnv = detectWorkEnvironment({ location: rawLocation, description });
 	const { isInternship, isGraduate } = classifyJobType({ title, description });
 
+	// Detect visa friendliness (does NOT reject jobs, only labels them)
+	const { detectVisaFriendliness } = require("./visa-detection.cjs");
+	const visaInfo = detectVisaFriendliness({
+		title,
+		description,
+		company,
+		company_name: rawCompany,
+	});
+
 	// Use classifyEarlyCareer for is_early_career flag
 	const isEarlyCareer = classifyEarlyCareer({ title, description });
 
@@ -565,7 +574,9 @@ function processIncomingJob(job, options = {}) {
 
 	// CRITICAL: Validate and prevent data quality issues
 
-	// 1. Reject job board companies
+	// 1. Reject job board companies (aggregators, not recruitment agencies)
+	// Note: Recruitment agencies (e.g., "Hays Recruitment", "Veritas Education Recruitment") 
+	// are legitimate companies and should NOT be filtered
 	const jobBoards = [
 		"reed",
 		"indeed",
@@ -580,6 +591,17 @@ function processIncomingJob(job, options = {}) {
 		"careerjet",
 		"jooble",
 		"arbeitnow",
+		"efinancial",
+		"stepstone",
+		"reed.co.uk",
+		"indeed.com",
+		"linkedin.com",
+		"adzuna.co.uk",
+		"totaljobs.com",
+		"glassdoor.com",
+		"careerjet.com",
+		"monster.com",
+		"ziprecruiter.com",
 	];
 	const isJobBoard = jobBoards.some(
 		(board) =>
@@ -659,8 +681,9 @@ function processIncomingJob(job, options = {}) {
 		min_yoe: yoERequirement.min_yoe, // Add numeric YoE fields
 		max_yoe: yoERequirement.max_yoe,
 		scrape_timestamp: nowIso, // When this job was scraped/processed
-		// Note: visa_status is stored in users table, not jobs table
-		// visaStatus is detected but not stored in job record
+		// Visa friendliness (true = available, false = not available, null = unknown)
+		// IMPORTANT: Does NOT reject jobs - only labels them for filtering
+		visa_friendly: visaInfo.visa_friendly,
 		is_active: true,
 		created_at: nowIso,
 	};
