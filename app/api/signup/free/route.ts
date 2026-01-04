@@ -3,6 +3,12 @@ import { z } from "zod";
 import { apiLogger } from "@/lib/api-logger";
 import { getCountryFromCity, getCountryVariations } from "@/lib/countryFlags";
 import { triggerMatchingEvent } from "@/lib/inngest/matching-helpers";
+import {
+	QUALITY_THRESHOLDS,
+	calculateQualityMetrics,
+	filterHighQualityJobs,
+	selectJobsForDistribution,
+} from "@/Utils/business-rules/quality-thresholds";
 import { createConsolidatedMatcher } from "@/Utils/consolidatedMatchingV2";
 import { getDatabaseClient } from "@/Utils/databasePool";
 import { getDatabaseCategoriesForForm } from "@/Utils/matching/categoryMapper";
@@ -436,7 +442,7 @@ export async function POST(request: NextRequest) {
 			target_cities: targetCities,
 			career_path: userData.career_path ? [userData.career_path] : [],
 			entry_level_preference: userData.entry_level_preference,
-			work_environment: userData.work_environment,
+			work_environment: undefined, // Free users don't have work environment preferences
 			languages_spoken: userData.languages_spoken || [],
 			roles_selected: userData.roles_selected || [],
 			company_types: userData.company_types || [],
@@ -631,46 +637,33 @@ export async function POST(request: NextRequest) {
 			return scoreB - scoreA; // Higher score = better quality
 		});
 
-		// Step 2: Filter low-quality matches (quality threshold)
-		// Only include jobs with match_score >= 60 for consistent quality
-		const qualityThreshold = 60;
-		const highQualityJobs = matchedJobsRaw.filter((job: any) => {
-			const score = job.match_score || 0;
-			return score >= qualityThreshold;
-		});
+		// Step 2: Filter low-quality matches using business rules
+		const highQualityJobs = filterHighQualityJobs(
+			matchedJobsRaw,
+			QUALITY_THRESHOLDS.FREE_SIGNUP,
+		);
 
-		// Step 3: Calculate quality metrics for logging
-		const averageScore =
-			matchedJobsRaw.length > 0
-				? matchedJobsRaw.reduce(
-						(sum: number, j: any) => sum + (j.match_score || 0),
-						0,
-					) / matchedJobsRaw.length
-				: 0;
-		const minScore =
-			matchedJobsRaw.length > 0
-				? Math.min(...matchedJobsRaw.map((j: any) => j.match_score || 0))
-				: 0;
-		const maxScore =
-			matchedJobsRaw.length > 0
-				? Math.max(...matchedJobsRaw.map((j: any) => j.match_score || 0))
-				: 0;
+		// Step 3: Calculate quality metrics for logging using business rules
+		const qualityMetrics = calculateQualityMetrics(matchedJobsRaw);
 
 		apiLogger.info("Free signup - quality filtering", {
 			email: normalizedEmail,
 			totalMatches: matchedJobsRaw.length,
 			highQualityMatches: highQualityJobs.length,
-			qualityThreshold,
-			averageScore: Math.round(averageScore * 10) / 10,
-			minScore,
-			maxScore,
+			qualityThreshold: QUALITY_THRESHOLDS.FREE_SIGNUP,
+			averageScore: qualityMetrics.averageScore,
+			minScore: qualityMetrics.minScore,
+			maxScore: qualityMetrics.maxScore,
 			qualityFilterApplied: highQualityJobs.length < matchedJobsRaw.length,
 		});
 
 		// Step 4: Use high-quality jobs if we have enough, otherwise use all (with quality priority)
 		// This ensures we always return 5 jobs if possible, but prioritize quality
-		const jobsForDistribution =
-			highQualityJobs.length >= 5 ? highQualityJobs : matchedJobsRaw; // Fallback to all if not enough high-quality (but still sorted by quality)
+		const jobsForDistribution = selectJobsForDistribution(
+			matchedJobsRaw,
+			highQualityJobs,
+			5, // Free tier: 5 jobs
+		);
 
 		// Distribute jobs (max 5 for free)
 		// Extract work environment preferences (may be comma-separated string or array)
@@ -801,7 +794,7 @@ export async function POST(request: NextRequest) {
 				finalJobs.length > 0
 					? Math.max(...finalJobs.map((j: any) => j.match_score || 0))
 					: 0,
-			qualityThresholdMet: finalMinScore >= qualityThreshold,
+			qualityThresholdMet: finalMinScore >= QUALITY_THRESHOLDS.FREE_SIGNUP,
 		});
 
 		// CRITICAL: Filter out jobs without job_hash before saving

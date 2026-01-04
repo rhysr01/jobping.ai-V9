@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 				cities,
 				careerPath,
 				isLowCount: true,
-				suggestion: `No matches found in ${cities.join(", ")}. Try adding 'Hybrid' or 'Remote' work preferences to see more opportunities.`,
+				suggestion: `No matches found in ${cities.join(", ")}. Try selecting different cities or career paths to see more opportunities.`,
 			});
 		}
 
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
 		// Determine if count is low and needs UI nudge
 		const isLowCount = realisticCount < 3;
 		const suggestion = isLowCount
-			? `Matches are tight in ${cities.join(", ")}. Try adding 'Hybrid' or 'Remote' work preferences to see 15+ more opportunities.`
+			? `Matches are tight in ${cities.join(", ")}. Try selecting different cities or career paths to see more opportunities.`
 			: undefined;
 
 		return NextResponse.json({

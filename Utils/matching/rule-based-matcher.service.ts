@@ -41,7 +41,13 @@ export function applyHardGates(
 	const failures: string[] = [];
 
 	// Check if job is eligible for early career
-	if (!hasEligibility(categories)) {
+	// FREE TIER: More lenient - accept jobs with is_internship/is_graduate flags even without categories
+	// This matches the SQL query which filters for: is_internship=true OR is_graduate=true OR categories.cs.{early-career}
+	const isEarlyCareerFromFlags =
+		job.is_internship === true || job.is_graduate === true;
+	const isEarlyCareerFromCategories = hasEligibility(categories);
+
+	if (!isEarlyCareerFromCategories && !isEarlyCareerFromFlags) {
 		failures.push("Not eligible for early career");
 	}
 
