@@ -6,7 +6,7 @@
 
 import OpenAI from "openai";
 import { apiLogger } from "@/lib/api-logger";
-import type { Job } from "../../../scrapers/types";
+import type { Job } from "@/scrapers/types";
 import { matchesCity } from "../distribution/cityMatching";
 import type { JobMatch, UserPreferences } from "../types";
 import { LRUMatchCache } from "./cache";

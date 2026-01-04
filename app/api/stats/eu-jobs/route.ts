@@ -24,6 +24,14 @@ const EU_COUNTRIES = [
 	"Greece",
 ];
 
+// Predefined cities available in the signup form
+const FORM_CITIES = [
+	"Dublin", "Belfast", "London", "Manchester", "Birmingham", "Paris",
+	"Amsterdam", "Brussels", "Berlin", "Hamburg", "Munich", "Zurich",
+	"Madrid", "Barcelona", "Milan", "Rome", "Stockholm", "Copenhagen",
+	"Vienna", "Prague", "Warsaw"
+];
+
 export const dynamic = "force-dynamic";
 export const revalidate = 3600; // 1 hour
 
@@ -36,7 +44,7 @@ export const GET = asyncHandler(async (_req: NextRequest) => {
 	// Count internships
 	const { count: internships, error: internshipsError } = await supabase
 		.from("jobs")
-		.select("*", { count: "exact", head: true })
+		.select("id", { count: "exact", head: true })
 		.eq("is_active", true)
 		.eq("is_internship", true)
 		.in("country", EU_COUNTRIES);
@@ -53,7 +61,7 @@ export const GET = asyncHandler(async (_req: NextRequest) => {
 	// Count graduate roles
 	const { count: graduateRoles, error: graduateError } = await supabase
 		.from("jobs")
-		.select("*", { count: "exact", head: true })
+		.select("id", { count: "exact", head: true })
 		.eq("is_active", true)
 		.eq("is_graduate", true)
 		.in("country", EU_COUNTRIES);
@@ -71,7 +79,7 @@ export const GET = asyncHandler(async (_req: NextRequest) => {
 	// Using categories array for consistency with main stats route
 	const { count: earlyCareer, error: earlyCareerError } = await supabase
 		.from("jobs")
-		.select("*", { count: "exact", head: true })
+		.select("id", { count: "exact", head: true })
 		.eq("is_active", true)
 		.contains("categories", ["early-career"])
 		.eq("is_internship", false)
@@ -90,7 +98,7 @@ export const GET = asyncHandler(async (_req: NextRequest) => {
 	// Count total active jobs from EU countries
 	const { count: total, error: totalError } = await supabase
 		.from("jobs")
-		.select("*", { count: "exact", head: true })
+		.select("id", { count: "exact", head: true })
 		.eq("is_active", true)
 		.in("country", EU_COUNTRIES);
 
@@ -103,13 +111,14 @@ export const GET = asyncHandler(async (_req: NextRequest) => {
 		);
 	}
 
-	// Get unique city count from all EU jobs (not just the 21 cities)
-	// We need to fetch city data for this, but we can limit to just distinct cities
+	// Get unique city count from EU jobs that match our predefined form cities
+	// This ensures we only count cities that users can actually select from
 	const { data: citiesData, error: citiesError } = await supabase
 		.from("jobs")
 		.select("city")
 		.eq("is_active", true)
 		.in("country", EU_COUNTRIES)
+		.in("city", FORM_CITIES)
 		.not("city", "is", null);
 
 	if (citiesError) {
@@ -121,9 +130,9 @@ export const GET = asyncHandler(async (_req: NextRequest) => {
 		);
 	}
 
-	// Count unique cities
+	// Count unique cities that are in our predefined form cities list
 	const uniqueCities = new Set(
-		(citiesData || []).map((j) => j.city?.toLowerCase().trim()).filter(Boolean),
+		(citiesData || []).map((j) => j.city?.trim()).filter(Boolean),
 	).size;
 
 	const stats = {

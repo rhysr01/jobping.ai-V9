@@ -351,19 +351,19 @@ async function withRetry<T>(
 	maxRetries: number = RETRY_CONFIG.maxRetries,
 ): Promise<T> {
 	let lastError: Error;
-	let _retryCount = 0;
-	let _rateLimited = false;
+	// let _retryCount = 0; // Kept for future use
+	// let _rateLimited = false; // Kept for future use
 
 	for (let attempt = 0; attempt <= maxRetries; attempt++) {
 		try {
 			return await operation();
 		} catch (error) {
 			lastError = error as Error;
-			_retryCount = attempt;
+			// _retryCount = attempt; // Kept for future use
 
 			// Check for rate limiting
 			if (error instanceof Error && error.message.includes("rate limit")) {
-				_rateLimited = true;
+				// _rateLimited = true; // Kept for future use
 			}
 
 			if (attempt === maxRetries) {

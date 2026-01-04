@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
 import { getDatabaseClient } from "@/Utils/databasePool";
 import { getBaseUrl } from "@/Utils/url-helpers";
+import { apiLogger } from "@/lib/api-logger";
 
 // Verify unsubscribe token
 function verifyUnsubscribeToken(email: string, token: string): boolean {
@@ -31,14 +32,14 @@ async function suppressEmailForUnsubscribe(email: string): Promise<void> {
 		});
 
 		if (error) {
-			console.error("Failed to insert unsubscribe suppression:", error);
+			apiLogger.error("Failed to insert unsubscribe suppression:", error as Error);
 			throw error;
 		}
 
-		console.log(` Email unsubscribed: ${email}`);
+		apiLogger.info(` Email unsubscribed: ${email}`);
 	} catch (error) {
 		// If table doesn't exist, fail gracefully
-		console.warn("Failed to suppress email for unsubscribe:", error);
+		apiLogger.warn("Failed to suppress email for unsubscribe:", error);
 		throw error;
 	}
 }
@@ -93,7 +94,7 @@ export async function POST(req: NextRequest) {
 		// Return success (no body required for one-click unsubscribe)
 		return new NextResponse(null, { status: 200 });
 	} catch (error) {
-		console.error("One-click unsubscribe failed:", error);
+		apiLogger.error("One-click unsubscribe failed:", error as Error);
 		return NextResponse.json({ error: "Unsubscribe failed" }, { status: 500 });
 	}
 }
@@ -192,7 +193,7 @@ export async function GET(req: NextRequest) {
 			},
 		);
 	} catch (error) {
-		console.error("Unsubscribe page failed:", error);
+		apiLogger.error("Unsubscribe page failed:", error as Error);
 		return new NextResponse(
 			`
       <!DOCTYPE html>

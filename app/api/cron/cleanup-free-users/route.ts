@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 		if (error) throw error;
 
 		const deletedCount = data?.length || 0;
-		console.log(`[CLEANUP] ✅ Deleted ${deletedCount} expired free users`);
+		apiLogger.info(`[CLEANUP] ✅ Deleted ${deletedCount} expired free users`);
 		apiLogger.info("Cleanup completed", { deletedCount });
 
 		return NextResponse.json({
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 			deleted: deletedCount,
 		});
 	} catch (error) {
-		console.error("[CLEANUP ERROR]", error);
+		apiLogger.error("[CLEANUP ERROR]", error as Error);
 		apiLogger.error("Cleanup failed", error as Error);
 		return NextResponse.json({ error: "Cleanup failed" }, { status: 500 });
 	}

@@ -469,60 +469,82 @@ function inferCategories(title, description) {
 
 /**
  * Scrape CareerJet for a single city + keyword combo
+ * FIXED: Batches database saves to prevent timeouts
+ * FIXED: Added pagination to fetch all available pages (was only fetching page 1)
  */
 async function scrapeCareerJetQuery(city, keyword, supabase) {
-	try {
-		const params = new URLSearchParams({
-			locale_code: city.locale,
-			location: city.name,
-			keywords: keyword,
-			affid: CAREERJET_API_KEY,
-			user_ip: "11.22.33.44", // Required by API
-			user_agent: "Mozilla/5.0 JobPing/1.0", // Required by API
-			pagesize: "50", // Max on free tier
-			page: "1",
-			sort: "date", // Most recent first
-			contracttype: "p", // Permanent
-		});
+	const BATCH_SIZE = 50; // Batch size for database saves
+	const jobBatch = []; // Accumulate jobs for batch saving
+	
+	// UNLIMITED: Fetch as many pages as available (no artificial limit)
+	// Only stop when API indicates no more pages or returns empty results
+	const MAX_PAGES = parseInt(process.env.CAREERJET_MAX_PAGES || "1000", 10); // Very high limit, effectively unlimited
+	let page = 1;
+	let hasMorePages = true;
+	let savedCount = 0;
+	let totalResponseTime = 0;
 
-		const url = `${BASE_URL}?${params.toString()}`;
-		const startTime = Date.now();
-		const response = await fetch(url, {
-			headers: {
-				"User-Agent": "Mozilla/5.0 JobPing/1.0",
-				Accept: "application/json",
-			},
-		});
-		const responseTime = Date.now() - startTime;
+	while (hasMorePages && page <= MAX_PAGES) {
+		try {
+			const params = new URLSearchParams({
+				locale_code: city.locale,
+				location: city.name,
+				keywords: keyword,
+				affid: CAREERJET_API_KEY,
+				user_ip: "11.22.33.44", // Required by API
+				user_agent: "Mozilla/5.0 JobPing/1.0", // Required by API
+				pagesize: "50", // Max on free tier
+				page: String(page),
+				sort: "date", // Most recent first
+				contracttype: "p", // Permanent
+			});
 
-		if (!response.ok) {
-			// Log error but don't fail completely - might be rate limit
-			if (response.status === 429) {
-				console.warn(
-					`[CareerJet] Rate limit hit for ${keyword} in ${city.name} - will slow down`,
+			const url = `${BASE_URL}?${params.toString()}`;
+			const startTime = Date.now();
+			const response = await fetch(url, {
+				headers: {
+					"User-Agent": "Mozilla/5.0 JobPing/1.0",
+					Accept: "application/json",
+				},
+			});
+			const responseTime = Date.now() - startTime;
+			totalResponseTime += responseTime;
+
+			if (!response.ok) {
+				// Log error but don't fail completely - might be rate limit
+				if (response.status === 429) {
+					console.warn(
+						`[CareerJet] Rate limit hit for ${keyword} in ${city.name} (page ${page}) - will slow down`,
+					);
+					return { saved: savedCount, shouldSlowDown: true, responseTime: totalResponseTime };
+				}
+				console.error(
+					`[CareerJet] API error ${response.status} for ${keyword} in ${city.name} (page ${page})`,
 				);
-				return { saved: 0, shouldSlowDown: true, responseTime };
+				break; // Stop pagination on error
 			}
-			console.error(
-				`[CareerJet] API error ${response.status} for ${keyword} in ${city.name}`,
+
+			const data = await response.json();
+			const jobs = data.jobs || [];
+			const totalPages = data.pages || data.total_pages || null;
+			const totalResults = data.hits || data.total || null;
+
+			if (jobs.length === 0) {
+				hasMorePages = false;
+				break;
+			}
+
+			// Check if we've reached the last page
+			if (totalPages && page >= totalPages) {
+				hasMorePages = false;
+			}
+
+			console.log(
+				`[CareerJet] Found ${jobs.length} jobs for "${keyword}" in ${city.name} (page ${page}${totalResults ? `/${totalPages || '?'}, total available: ${totalResults}` : ''}${totalPages ? `, ${totalPages} pages total` : ''}) (${responseTime}ms)`,
 			);
-			return { saved: 0, shouldSlowDown: false, responseTime };
-		}
 
-		const data = await response.json();
-		const jobs = data.jobs || [];
-
-		if (jobs.length === 0) {
-			return { saved: 0, shouldSlowDown: false, responseTime };
-		}
-
-		console.log(
-			`[CareerJet] Found ${jobs.length} jobs for "${keyword}" in ${city.name} (${responseTime}ms)`,
-		);
-		let savedCount = 0;
-
-		// Process each job
-		for (const job of jobs) {
+			// Process each job
+			for (const job of jobs) {
 			try {
 				// Create normalized job object for early-career check
 				const normalizedJob = {
@@ -606,7 +628,7 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
 					...(salary ? { salary_range: salary } : {}),
 				};
 
-				// CRITICAL: Validate before saving
+				// CRITICAL: Validate before adding to batch
 				const { validateJob } = require("./shared/jobValidator.cjs");
 				const validation = validateJob(jobRecord);
 				if (!validation.valid) {
@@ -616,31 +638,82 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
 					continue;
 				}
 
-				// Upsert to database
-				const { error } = await supabase.from("jobs").upsert(validation.job, {
-					onConflict: "job_hash",
-					ignoreDuplicates: false,
-				});
+				// Add to batch instead of saving immediately
+				jobBatch.push(validation.job);
 
-				if (error) {
-					console.error(
-						`[CareerJet] Error saving job ${job_hash}:`,
-						error.message,
-					);
-				} else {
-					savedCount++;
+				// Save batch when it reaches BATCH_SIZE
+				if (jobBatch.length >= BATCH_SIZE) {
+					const { error, data } = await supabase.from("jobs").upsert(jobBatch, {
+						onConflict: "job_hash",
+						ignoreDuplicates: false,
+					});
+
+					if (error) {
+						console.error(
+							`[CareerJet] Error saving batch:`,
+							error.message,
+						);
+					} else {
+						const saved = Array.isArray(data) ? data.length : jobBatch.length;
+						savedCount += saved;
+						console.log(
+							`[CareerJet] Saved batch of ${jobBatch.length} jobs`,
+						);
+					}
+					jobBatch.length = 0; // Clear batch
 				}
 			} catch (jobError) {
 				console.error("[CareerJet] Error processing job:", jobError.message);
 			}
-		}
+			}
 
-		// Return both count and whether to slow down (based on response time)
-		return {
-			saved: savedCount,
-			shouldSlowDown: responseTime > 2000,
-			responseTime,
-		};
+			// If we got fewer jobs than expected (less than page size), likely no more pages
+			if (jobs.length < 50) {
+				hasMorePages = false;
+			}
+
+			page++;
+
+			// Rate limiting between pages
+			if (hasMorePages && page <= MAX_PAGES) {
+				await new Promise((resolve) => setTimeout(resolve, 1000)); // 1s delay between pages
+			}
+		} catch (error) {
+			console.error(
+				`[CareerJet] Error scraping ${keyword} in ${city.name} (page ${page}):`,
+				error.message,
+			);
+			break; // Stop pagination on error
+		}
+	}
+
+	// Save any remaining jobs in the batch
+	if (jobBatch.length > 0) {
+		const { error, data } = await supabase.from("jobs").upsert(jobBatch, {
+			onConflict: "job_hash",
+			ignoreDuplicates: false,
+		});
+
+		if (error) {
+			console.error(
+				`[CareerJet] Error saving final batch:`,
+				error.message,
+			);
+		} else {
+			const saved = Array.isArray(data) ? data.length : jobBatch.length;
+			savedCount += saved;
+			console.log(
+				`[CareerJet] Saved final batch of ${jobBatch.length} jobs`,
+			);
+		}
+	}
+
+	// Return both count and whether to slow down (based on response time)
+	return {
+		saved: savedCount,
+		shouldSlowDown: totalResponseTime > 2000,
+		responseTime: totalResponseTime,
+	};
 	} catch (error) {
 		console.error(
 			`[CareerJet] Error scraping ${keyword} in ${city.name}:`,

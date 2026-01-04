@@ -111,7 +111,7 @@ export async function matchUsersHandler(req: NextRequest) {
 		}
 
 		const performanceTracker = trackPerformance();
-		const _requestStartTime = Date.now();
+		// Request start time tracking removed - using performanceTracker instead
 
 		const t0 = Date.now();
 		const lap = (s: string) => apiLogger.perf(s, Date.now() - t0);
@@ -162,13 +162,14 @@ export async function matchUsersHandler(req: NextRequest) {
 			lap("fetch_users");
 
 			// Fetch users and jobs
-			let users, transformedUsers, jobs, _isSemanticAvailable;
+			let users, transformedUsers, jobs;
 			try {
 				const fetched = await fetchUsersAndJobs(supabase, userCap, jobCap);
 				users = fetched.users;
 				transformedUsers = fetched.transformedUsers;
 				jobs = fetched.jobs;
-				_isSemanticAvailable = fetched.isSemanticAvailable;
+				// Semantic availability tracked but not currently used in this handler
+				// const isSemanticAvailable = fetched.isSemanticAvailable;
 			} catch (error) {
 				if (error instanceof UserFetchError) {
 					return formatErrorResponse(error, "USER_FETCH_ERROR", 500);

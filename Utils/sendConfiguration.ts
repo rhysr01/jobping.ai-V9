@@ -11,6 +11,7 @@ interface SendPlan {
 	earlyAccessHours?: number; // Hours early access to fresh jobs
 }
 
+// @ts-expect-error - Interface kept for future use
 interface MatchRules {
 	minScore: number; // Minimum match score
 	lookbackDays: number; // How far back to look for jobs

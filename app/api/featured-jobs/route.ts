@@ -1,8 +1,10 @@
 // API route to fetch featured jobs for landing page
 // Cached for 24 hours to reduce DB load
 
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { getDatabaseClient } from "@/Utils/databasePool";
+import { withApiAuth } from "@/Utils/auth/apiAuth";
+import { apiLogger } from "@/lib/api-logger";
 
 // Cache featured jobs for 24 hours
 let cachedJobs: any[] = [];
@@ -12,7 +14,7 @@ const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 export const dynamic = "force-dynamic";
 export const revalidate = 86400; // 24 hours
 
-export async function GET() {
+async function getFeaturedJobsHandler(_req: NextRequest) {
 	try {
 		// Check if cache is still valid
 		const now = Date.now();
@@ -40,7 +42,7 @@ export async function GET() {
 			.limit(20);
 
 		if (error) {
-			console.error("Error fetching featured jobs:", error);
+			apiLogger.error("Error fetching featured jobs:", error as Error);
 			throw error;
 		}
 
@@ -69,7 +71,7 @@ export async function GET() {
 			fetchedAt: new Date().toISOString(),
 		});
 	} catch (error) {
-		console.error("Failed to fetch featured jobs:", error);
+		apiLogger.error("Failed to fetch featured jobs:", error as Error);
 
 		// Return fallback hardcoded jobs if DB fails
 		return NextResponse.json({
@@ -152,3 +154,11 @@ function selectBestJobs(jobs: any[]): any[] {
 
 	return selected.slice(0, 2);
 }
+
+export const GET = withApiAuth(getFeaturedJobsHandler, {
+	allowPublic: true,
+	rateLimitConfig: {
+		maxRequests: 30, // Moderate limit for featured jobs
+		windowMs: 60000,
+	},
+});

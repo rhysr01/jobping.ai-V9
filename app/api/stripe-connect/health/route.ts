@@ -124,7 +124,7 @@ export async function GET(_req: NextRequest) {
 			{ status },
 		);
 	} catch (error: any) {
-		apiLogger.error("Health check failed", error);
+		apiLogger.error("Health check failed", error as Error);
 		return NextResponse.json(
 			{
 				status: "error",

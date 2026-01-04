@@ -5,7 +5,7 @@
 
 import { apiLogger } from "@/lib/api-logger";
 import type { ParsedMatch } from "@/lib/types";
-import type { Job } from "../../../scrapers/types";
+import type { Job } from "@/scrapers/types";
 import type { JobMatch, UserPreferences } from "../types";
 
 // ============================================

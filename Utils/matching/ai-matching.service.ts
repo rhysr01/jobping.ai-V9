@@ -242,21 +242,28 @@ ${userContext}
 
 ${jobsContext}
 
-You're a friendly career advisor (not a corporate recruiter). 
-Write match reasons that create a "WOW" moment:
+You are a professional career advisor focused on evidence-based matching.
 
- BE SPECIFIC: "You need React + TypeScript. This role uses both PLUS Next.js"
- BE PERSONAL: "Remember that remote role you rated 5�? This is similar but pays ��10K more"
- BE CONFIDENT: "You're overqualified for this (which means easy interview)"
- BE EMOTIONAL: "This is the kind of startup you'll tell your friends about"
+Your job: Find relevant job matches and explain WHY they're relevant using factual evidence.
 
- DON'T: "Good match for your skills" (boring!)
- DON'T: "Aligns with your preferences" (corporate!)
+Write match reasons that are:
+- SPECIFIC: Link user's stated skills/experience to explicit job requirements
+  Example: "Your React + TypeScript experience matches their requirement for 'frontend expertise with modern frameworks'"
+- FACTUAL: Reference actual job description text and user profile data
+  Example: "The job requires '2+ years marketing experience' and you have 3 years in digital marketing"
+- TRANSPARENT: Acknowledge both strengths and potential gaps honestly
+  Example: "This role focuses on B2B marketing, which aligns with your experience, though it's more enterprise-focused than your previous B2C work"
+- PROFESSIONAL: Avoid emotional language, hype, or outcome predictions
+
+NEVER use:
+- "Easy interview" or confidence claims about outcomes
+- "This is the startup you'll tell your friends about" (emotional hype)
+- "Good match" or "Aligns with preferences" (too generic)
 
 For each match, return JSON with:
-- job_index: Index in jobs array (0-based)
+- job_index: Index in jobs array (1-based, matches the number in the job list: 1, 2, 3...)
 - match_score: 1-100
-- match_reason: Exciting, specific, personal reason (2-3 sentences max)
+- match_reason: Evidence-based explanation (2-3 sentences max) linking user profile to specific job requirements
 - confidence_score: 0.0-1.0
 
 Return ONLY valid JSON array, no other text.
@@ -525,7 +532,7 @@ LEARNED PREFERENCES (from ${feedbackSummary.total} ratings):
 						: "English (inferred)";
 
 				return `
-JOB ${index}:
+JOB ${index + 1}: (1-based indexing for user-friendly numbering)
 �������������������������������������
  Title: ${job.title}
 � Company: ${job.company}
@@ -568,15 +575,15 @@ MATCH CRITERIA:
 				.filter(
 					(match) =>
 						typeof match.job_index === "number" &&
-						match.job_index >= 0 &&
-						match.job_index < jobs.length &&
+						match.job_index >= 1 &&
+						match.job_index <= jobs.length &&
 						typeof match.match_score === "number" &&
 						match.match_score >= 1 &&
 						match.match_score <= 100,
 				)
 				.map((match) => ({
 					job_index: match.job_index,
-					job_hash: jobs[match.job_index].job_hash,
+					job_hash: jobs[match.job_index - 1].job_hash, // Convert 1-based to 0-based for array access
 					match_score: match.match_score,
 					match_reason: match.match_reason || "AI match",
 					confidence_score: match.confidence_score || 0.8,
@@ -593,9 +600,9 @@ MATCH CRITERIA:
 		jobs: Job[],
 	): any[] {
 		return aiMatches
-			.filter((match) => match.job_index >= 0 && match.job_index < jobs.length)
+			.filter((match) => match.job_index >= 1 && match.job_index <= jobs.length)
 			.map((match) => ({
-				job: jobs[match.job_index],
+				job: jobs[match.job_index - 1], // Convert 1-based to 0-based for array access
 				match_score: match.match_score,
 				match_reason: match.match_reason,
 				confidence_score: match.confidence_score,

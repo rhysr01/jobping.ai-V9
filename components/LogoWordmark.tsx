@@ -2,7 +2,7 @@ export default function LogoWordmark() {
 	return (
 		<header
 			data-testid="logo"
-			className="inline-flex items-center gap-2 md:gap-3 font-semibold tracking-tight leading-none text-7xl md:text-8xl overflow-visible"
+			className="inline-flex items-center gap-2 md:gap-3 font-semibold tracking-tight leading-none text-7xl md:text-8xl overflow-visible px-1"
 		>
 			<span aria-hidden className="text-white/95 flex items-center shrink-0">
 				{/* White graduation cap before the J */}

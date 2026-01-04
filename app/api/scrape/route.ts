@@ -1,13 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { withAxiom } from "next-axiom";
 import { asyncHandler } from "@/lib/errors";
+import { apiLogger } from "@/lib/api-logger";
 
 // Simple scrape endpoint for production
 export const POST = withAxiom(
 	asyncHandler(async (req: NextRequest) => {
 		const { platforms = ["all"] } = await req.json();
 
-		console.log(` Scrape request for platforms: ${platforms.join(", ")}`);
+		apiLogger.info(` Scrape request for platforms: ${platforms.join(", ")}`);
 
 		// For production, this endpoint is handled by the automation system
 		// Users don't need to manually trigger scraping

@@ -40,7 +40,7 @@ interface Step1BasicsProps {
 export function Step1Basics({
 	formData,
 	setFormData,
-	touchedFields,
+	touchedFields: _touchedFields,
 	setTouchedFields,
 	fieldErrors,
 	setFieldErrors,

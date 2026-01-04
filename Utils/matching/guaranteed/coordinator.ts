@@ -13,7 +13,7 @@ import type { UserPreferences } from "../types";
 import { extractMissingCriteria, triggerCustomScan } from "./custom-scan";
 import { getTargetCompaniesFromHistory } from "./historical-alerts";
 import { getGuaranteedMatches } from "./index";
-import { calculateLocationExpansion } from "./location-proximity";
+// import { calculateLocationExpansion } from "./location-proximity"; // Kept for future use
 
 export interface CoordinatedMatchResult {
 	matches: Array<{
@@ -204,10 +204,10 @@ export async function coordinatePremiumMatching(
 	});
 
 	// Step 1: Calculate location expansion (proximity-aware)
-	const _locationExpansion = calculateLocationExpansion(
-		userPrefs.target_cities || [],
-		userPrefs.work_environment,
-	);
+	// const _locationExpansion = calculateLocationExpansion(
+	// 	userPrefs.target_cities || [],
+	// 	userPrefs.work_environment,
+	// );
 
 	// Step 2: Attempt standard matching (AI + Rule-based)
 	const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
@@ -258,18 +258,18 @@ export async function coordinatePremiumMatching(
 		);
 
 		// Find full job data for standard matches
-		const _standardMatchesWithJobs = finalMatches
-			.map((m) => {
-				const job = allJobs.find((j) => j.job_hash === m.job_hash);
-				if (!job) return null;
-				return {
-					job,
-					match_score: m.match_score,
-					match_reason: m.match_reason,
-					relaxationLevel: 0, // Standard matches have no relaxation
-				};
-			})
-			.filter((m): m is NonNullable<typeof m> => m !== null);
+		// const _standardMatchesWithJobs = finalMatches
+		// 	.map((m) => {
+		// 		const job = allJobs.find((j) => j.job_hash === m.job_hash);
+		// 		if (!job) return null;
+		// 		return {
+		// 			job,
+		// 			match_score: m.match_score,
+		// 			match_reason: m.match_reason,
+		// 			relaxationLevel: 0, // Standard matches have no relaxation
+		// 		};
+		// 	})
+		// 	.filter((m): m is NonNullable<typeof m> => m !== null);
 
 		// Combine standard + guaranteed matches (deduplicate)
 		const combined = combineAndDeduplicate(

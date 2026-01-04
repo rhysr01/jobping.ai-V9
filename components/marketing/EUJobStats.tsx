@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useSpring, useTransform } from "framer-motion";
-import { Briefcase, Globe, GraduationCap, Rocket, TrendingUp } from "lucide-react";
+import { BookOpen, MapPin, Award, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
 import GradientText from "@/components/ui/GradientText";
@@ -60,11 +60,11 @@ export function EUJobStats() {
 				}
 				setHasError(true);
 				setStats({
-					internships: 1973,
-					graduateRoles: 320,
-					earlyCareer: 4580,
-					total: 6837,
-					cities: 18,
+					internships: 2525,
+					graduateRoles: 366,
+					earlyCareer: 6115,
+					total: 8958,
+					cities: 21,
 				});
 			} finally {
 				setIsLoading(false);
@@ -92,37 +92,37 @@ export function EUJobStats() {
 	}
 
 	const displayStats = stats || {
-		internships: 1973,
-		graduateRoles: 320,
-		earlyCareer: 4580,
-		total: 6837,
-		cities: 18,
+		internships: 2525,
+		graduateRoles: 366,
+		earlyCareer: 6115,
+		total: 8958,
+		cities: 21,
 	};
 
 	const statCards = [
 		{
-			icon: Briefcase,
+			icon: BookOpen,
 			label: "Internships",
 			value: displayStats.internships,
 			color: "purple",
 			description: "Entry-level opportunities",
 		},
 		{
-			icon: GraduationCap,
+			icon: Award,
 			label: "Graduate Roles",
 			value: displayStats.graduateRoles,
 			color: "emerald",
 			description: "Fresh graduate positions",
 		},
 		{
-			icon: Rocket,
+			icon: TrendingUp,
 			label: "Early Career",
 			value: displayStats.earlyCareer,
 			color: "blue",
 			description: "0-3 years experience",
 		},
 		{
-			icon: Globe,
+			icon: MapPin,
 			label: "Total Active",
 			value: displayStats.total,
 			color: "zinc",
@@ -271,7 +271,7 @@ export function EUJobStats() {
 												)}
 											>
 												{isInView ? (
-													<AnimatedNumber value={stat.value} duration={1.5} />
+													<AnimatedNumber value={stat.value} duration={6} />
 												) : (
 													stat.value.toLocaleString()
 												)}

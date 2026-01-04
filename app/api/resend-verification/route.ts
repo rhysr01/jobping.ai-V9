@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 			message: "Verification email sent successfully",
 		});
 	} catch (error) {
-		console.error("Resend verification email error:", error);
+		apiLogger.error("Resend verification email error:", error as Error);
 		apiLogger.error("Resend verification email failed", error as Error);
 		return NextResponse.json(
 			{ error: "Failed to resend verification email" },

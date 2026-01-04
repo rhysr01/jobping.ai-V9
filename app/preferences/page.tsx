@@ -34,29 +34,29 @@ function PreferencesContent() {
 		roles: [] as string[],
 	});
 
-	const _CITIES = [
-		"Dublin",
-		"London",
-		"Paris",
-		"Amsterdam",
-		"Manchester",
-		"Birmingham",
-		"Belfast",
-		"Madrid",
-		"Barcelona",
-		"Berlin",
-		"Hamburg",
-		"Munich",
-		"Zurich",
-		"Milan",
-		"Rome",
-		"Brussels",
-		"Stockholm",
-		"Copenhagen",
-		"Vienna",
-		"Prague",
-		"Warsaw",
-	];
+	// const _CITIES = [
+	// 	"Dublin",
+	// 	"London",
+	// 	"Paris",
+	// 	"Amsterdam",
+	// 	"Manchester",
+	// 	"Birmingham",
+	// 	"Belfast",
+	// 	"Madrid",
+	// 	"Barcelona",
+	// 	"Berlin",
+	// 	"Hamburg",
+	// 	"Munich",
+	// 	"Zurich",
+	// 	"Milan",
+	// 	"Rome",
+	// 	"Brussels",
+	// 	"Stockholm",
+	// 	"Copenhagen",
+	// 	"Vienna",
+	// 	"Prague",
+	// 	"Warsaw",
+	// ];
 	const LANGUAGES = [
 		// Most common EU languages
 		"English",
@@ -109,16 +109,16 @@ function PreferencesContent() {
 		// Other common languages
 		"Russian",
 	];
-	const _COMPANIES = [
-		"Global Consulting Firms",
-		"Startups / Scaleups",
-		"Tech Giants",
-		"Investment Firms / VCs",
-		"Multinationals",
-		"Public Sector / NGOs",
-		"B2B SaaS",
-		"Financial Services",
-	];
+	// const _COMPANIES = [
+	// 	"Global Consulting Firms",
+	// 	"Startups / Scaleups",
+	// 	"Tech Giants",
+	// 	"Investment Firms / VCs",
+	// 	"Multinationals",
+	// 	"Public Sector / NGOs",
+	// 	"B2B SaaS",
+	// 	"Financial Services",
+	// ];
 
 	useEffect(() => {
 		if (!token || !email) {

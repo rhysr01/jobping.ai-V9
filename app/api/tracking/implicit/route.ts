@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getDatabaseClient } from "@/Utils/databasePool";
+import { apiLogger } from "@/lib/api-logger";
 
 // Implicit signal data interface
 interface ImplicitSignalData {
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
 		try {
 			await recordImplicitSignal(signalData);
 		} catch (error) {
-			console.error("Error recording implicit signal:", error);
+			apiLogger.error("Error recording implicit signal:", error as Error);
 			// Continue - don't fail the request if secondary operations fail
 		}
 
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
 			try {
 				await recordAsFeedbackSignal(signalData);
 			} catch (error) {
-				console.error("Error recording feedback signal:", error);
+				apiLogger.error("Error recording feedback signal:", error as Error);
 				// Continue - this is secondary
 			}
 		}
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
 			try {
 				await recordShownSignal(signalData);
 			} catch (error) {
-				console.error("Error recording shown signal:", error);
+				apiLogger.error("Error recording shown signal:", error as Error);
 				// Continue - this is secondary
 			}
 		}
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
 			signalId: signalData.timestamp,
 		});
 	} catch (error) {
-		console.error("Error recording implicit signal:", error);
+		apiLogger.error("Error recording implicit signal:", error as Error);
 		return NextResponse.json(
 			{ error: "Failed to record signal" },
 			{ status: 500 },
@@ -165,7 +166,7 @@ export async function GET(request: NextRequest) {
 		const { data: signals, error } = await query;
 
 		if (error) {
-			console.error("Error fetching signals:", error);
+			apiLogger.error("Error fetching signals:", error as Error);
 			return NextResponse.json(
 				{ error: "Failed to fetch signals" },
 				{ status: 500 },
@@ -178,7 +179,7 @@ export async function GET(request: NextRequest) {
 			count: signals?.length || 0,
 		});
 	} catch (error) {
-		console.error("Error fetching signals:", error);
+		apiLogger.error("Error fetching signals:", error as Error);
 		return NextResponse.json(
 			{ error: "Failed to fetch signals" },
 			{ status: 500 },
@@ -205,7 +206,7 @@ async function recordImplicitSignal(signalData: ImplicitSignalData) {
 	});
 
 	if (error) {
-		console.error("Error recording implicit signal:", error);
+		apiLogger.error("Error recording implicit signal:", error as Error);
 		// Don't throw - let caller handle gracefully
 		throw new Error(`Failed to record signal: ${error.message}`);
 	}
@@ -240,7 +241,7 @@ async function recordShownSignal(signalData: ImplicitSignalData) {
 	});
 
 	if (error) {
-		console.error("Error recording shown signal:", error);
+		apiLogger.error("Error recording shown signal:", error as Error);
 		// Don't throw - this is secondary to the main signal recording
 	}
 }
@@ -251,23 +252,23 @@ async function recordAsFeedbackSignal(signalData: ImplicitSignalData) {
 
 	// Determine verdict based on signal
 	let verdict: "positive" | "negative" | "neutral" = "neutral";
-	let _feedbackType = "click";
+	// let _feedbackType = "click"; // Kept for future use
 
 	if (signalData.signal_type === "click") {
 		verdict = "positive";
-		_feedbackType = "click";
+		// _feedbackType = "click"; // Kept for future use
 	} else if (
 		signalData.signal_type === "dwell" &&
 		(signalData.value || 0) > 5000
 	) {
 		verdict = "positive";
-		_feedbackType = "dwell";
+		// _feedbackType = "dwell"; // Kept for future use
 	} else if (
 		signalData.signal_type === "close" &&
 		(signalData.value || 0) < 1000
 	) {
 		verdict = "negative";
-		_feedbackType = "quick_close";
+		// _feedbackType = "quick_close"; // Kept for future use
 	}
 
 	// Record to match_logs for learning
@@ -296,7 +297,7 @@ async function recordAsFeedbackSignal(signalData: ImplicitSignalData) {
 	});
 
 	if (error) {
-		console.error("Error recording feedback signal:", error);
+		apiLogger.error("Error recording feedback signal:", error as Error);
 		// Don't throw - this is secondary to the main signal recording
 	}
 }
@@ -350,12 +351,13 @@ async function calculateEngagementScore(
 		// Normalize to 0-100 scale
 		return Math.min(100, Math.max(0, engagementScore));
 	} catch (error) {
-		console.error("Error calculating engagement score:", error);
+		apiLogger.error("Error calculating engagement score:", error as Error);
 		return 0;
 	}
 }
 
 // Get user behavior insights
+// @ts-expect-error - Function kept for future use
 async function _getUserBehaviorInsights(userEmail: string) {
 	try {
 		const supabase = getDatabaseClient();
@@ -442,7 +444,7 @@ async function _getUserBehaviorInsights(userEmail: string) {
 			).size,
 		};
 	} catch (error) {
-		console.error("Error getting user behavior insights:", error);
+		apiLogger.error("Error getting user behavior insights:", error as Error);
 		return {
 			engagementScore: 0,
 			averageDwellTime: 0,

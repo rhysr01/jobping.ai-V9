@@ -158,12 +158,15 @@ export function middleware(request: NextRequest) {
 	// Enhanced security headers with strict CSP (no unsafe-inline or unsafe-eval)
 	// Using nonces for dynamic scripts and hashes for static inline scripts
 	// Hash for Google Analytics inline script: kqFzuQJivdoTtSFw6wC6ycybBAlKswA7hJ7PojqXc7Q=
+	// Hash for Structured Data JSON-LD: sha256-S/UEtrQCu6TgVoi5WG9EmfntThy9qa0ZZqFKfu1n76w=
+	// Hash for FAQ JSON-LD: sha256-K2qBnrJSupBJBzTvPD141bNBx/+m8R4iJQNj2EHmozM=
+	// Hash for Organization JSON-LD: sha256-6BVL0DgOeCbtUrFGJAsqrMsuY26fcarXXnMdHEfKW3Y=
 	response.headers.set(
 		"Content-Security-Policy",
 		"default-src 'self'; " +
-			`script-src 'self' 'nonce-${nonce}' 'sha256-kqFzuQJivdoTtSFw6wC6ycybBAlKswA7hJ7PojqXc7Q=' https://www.googletagmanager.com https://www.google-analytics.com https://*.supabase.co https://cdn.jsdelivr.net https://*.sentry.io; ` +
+			`script-src 'self' 'nonce-${nonce}' 'sha256-kqFzuQJivdoTtSFw6wC6ycybBAlKswA7hJ7PojqXc7Q=' 'sha256-S/UEtrQCu6TgVoi5WG9EmfntThy9qa0ZZqFKfu1n76w=' 'sha256-K2qBnrJSupBJBzTvPD141bNBx/+m8R4iJQNj2EHmozM=' 'sha256-6BVL0DgOeCbtUrFGJAsqrMsuY26fcarXXnMdHEfKW3Y=' https://www.googletagmanager.com https://www.google-analytics.com https://*.supabase.co https://cdn.jsdelivr.net https://*.sentry.io; ` +
 			"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com; " +
-			"font-src 'self' https://fonts.gstatic.com https://api.fontshare.com; " +
+			"font-src 'self' https://fonts.gstatic.com https://api.fontshare.com https://cdn.fontshare.com; " +
 			"img-src 'self' data: https: blob:; " +
 			"connect-src 'self' https://*.supabase.co https://api.resend.com https://api.openai.com https://www.google-analytics.com https://www.googletagmanager.com https://*.sentry.io; " +
 			"object-src 'none'; " +

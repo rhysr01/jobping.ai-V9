@@ -6,7 +6,6 @@ const { exec } = require("child_process");
 const { promisify } = require("util");
 const execAsync = promisify(exec);
 const { createClient } = require("@supabase/supabase-js");
-const path = require("path");
 const fs = require("fs");
 
 // Initialize language detection (simple version)
@@ -71,9 +70,10 @@ class RealJobRunner {
 		this.currentCycleStats = { total: 0, perSource: {} };
 		this.embeddingRefreshRunning = false;
 		this.lastEmbeddingRefresh = null;
+		this.lastStatsCheck = null; // Cache for stats to reduce DB queries
 	}
 
-	async runEmbeddingRefresh(trigger = "cron") {
+	async runEmbeddingRefresh(trigger = "cron", processFullQueue = true) {
 		if (this.embeddingRefreshRunning) {
 			console.log(
 				`⚠️  Embedding refresh already in progress, skipping (${trigger})`,
@@ -81,18 +81,24 @@ class RealJobRunner {
 			return;
 		}
 
+		// Use TypeScript version with tsx for proper module resolution
 		const command =
 			process.env.EMBEDDING_REFRESH_COMMAND ||
 			"npx tsx scripts/generate_all_embeddings.ts";
 
-		console.log(`\n🧠 Starting embedding refresh (${trigger}) using \
-"${command}" at ${new Date().toISOString()}`);
+		console.log(
+			`\n🧠 Starting embedding refresh (${trigger}) using "${command}" at ${new Date().toISOString()}`,
+		);
+		if (processFullQueue) {
+			console.log("📋 Will process entire embedding queue until empty");
+		}
 		this.embeddingRefreshRunning = true;
 
 		try {
 			const { stdout, stderr } = await execAsync(command, {
 				cwd: process.cwd(),
 				env: process.env,
+				timeout: 1800000, // 30 minutes timeout for full queue processing
 			});
 
 			if (stdout) process.stdout.write(stdout);
@@ -104,6 +110,11 @@ class RealJobRunner {
 			);
 		} catch (error) {
 			console.error("❌ Embedding refresh failed:", error);
+			if (error.code === "ETIMEDOUT") {
+				console.error(
+					"⚠️  Embedding refresh timed out after 30 minutes - queue may be very large",
+				);
+			}
 		} finally {
 			this.embeddingRefreshRunning = false;
 		}
@@ -161,9 +172,19 @@ class RealJobRunner {
 	// collectCycleStats() -> use collectCycleStats() from stats-collector
 
 	async collectCycleStats(sinceIso) {
-		// Use extracted stats collector
+		// Use extracted stats collector with caching to avoid redundant queries
+		// Only refresh if more than 30 seconds have passed since last check
+		const now = Date.now();
+		if (
+			this.lastStatsCheck &&
+			now - this.lastStatsCheck < 30000 &&
+			this.currentCycleStats
+		) {
+			return this.currentCycleStats;
+		}
 		const stats = await collectCycleStats(supabase, sinceIso);
 		this.currentCycleStats = stats;
+		this.lastStatsCheck = now;
 		return stats;
 	}
 
@@ -233,17 +254,18 @@ class RealJobRunner {
 				env.TARGET_ROLES = JSON.stringify(targets.roles);
 			}
 
-			const { stdout, stderr } = await execAsync(
-				"node scrapers/wrappers/adzuna-wrapper.cjs",
-				{
+			const { stdout, stderr } = await this.withTimeout(
+				execAsync("node scrapers/wrappers/adzuna-wrapper.cjs", {
 					cwd: process.cwd(),
 					timeout: 600000, // 10 minutes for full scraper suite
 					env,
-				},
+				}),
+				600000,
+				"Adzuna scraper",
 			);
 
 			// Log stderr if present (might contain important warnings)
-			if (stderr && stderr.trim()) {
+			if (stderr?.trim()) {
 				console.warn("⚠️  Adzuna stderr:", stderr.substring(0, 500));
 			}
 
@@ -306,42 +328,52 @@ class RealJobRunner {
 		try {
 			console.log("🔄 Running JobSpy scraper...");
 
-			// Pre-flight check: Verify Python and JobSpy
+			// Pre-flight check: Verify Python and JobSpy (with timeout)
 			try {
-				const pythonCheck = await execAsync("python3 --version", {
-					timeout: 5000,
-				});
+				const pythonCheck = await this.withTimeout(
+					execAsync("python3 --version", { timeout: 5000 }),
+					5000,
+					"Python check",
+				);
 				console.log(`✅ Python check: ${pythonCheck.stdout.trim()}`);
-			} catch (e) {
+			} catch {
 				console.error("❌ Python not found - JobSpy requires Python 3.11");
 				return 0;
 			}
 
 			try {
-				await execAsync('python3 -c "import jobspy"', {
-					timeout: 5000,
-					stdio: "ignore",
-				});
+				await this.withTimeout(
+					execAsync('python3 -c "import jobspy"', {
+						timeout: 5000,
+						stdio: "ignore",
+					}),
+					5000,
+					"JobSpy import check",
+				);
 				console.log("✅ JobSpy Python package available");
-			} catch (e) {
+			} catch {
 				console.error(
 					"❌ JobSpy Python package not installed - run: pip install python-jobspy",
 				);
 				return 0;
 			}
 
-			// Call standardized wrapper
-			const { stdout, stderr } = await execAsync(
-				"NODE_ENV=production node scrapers/wrappers/jobspy-wrapper.cjs",
-				{
-					cwd: process.cwd(),
-					timeout: 1200000, // 20 minutes timeout (increased from 10)
-					env: { ...process.env },
-				},
+			// Call standardized wrapper with timeout protection
+			const { stdout, stderr } = await this.withTimeout(
+				execAsync(
+					"NODE_ENV=production node scrapers/wrappers/jobspy-wrapper.cjs",
+					{
+						cwd: process.cwd(),
+						timeout: 600000, // 10 minutes timeout (reduced from 20)
+						env: { ...process.env },
+					},
+				),
+				600000,
+				"JobSpy scraper",
 			);
 
 			// Log stderr if present (might contain important info)
-			if (stderr && stderr.trim()) {
+			if (stderr?.trim()) {
 				console.warn("⚠️  JobSpy stderr:", stderr.substring(0, 1000));
 			}
 
@@ -411,11 +443,15 @@ class RealJobRunner {
 	async runJobSpyInternshipsScraper() {
 		try {
 			console.log("🎓 Running JobSpy Internships-Only scraper...");
-			
+
 			// Check if file exists before running
 			const fs = require("fs");
 			const path = require("path");
-			const scriptPath = path.join(process.cwd(), "scripts", "jobspy-internships-only.cjs");
+			const scriptPath = path.join(
+				process.cwd(),
+				"scripts",
+				"jobspy-internships-only.cjs",
+			);
 			if (!fs.existsSync(scriptPath)) {
 				console.error(
 					`❌ JobSpy Internships scraper file not found: ${scriptPath}`,
@@ -425,18 +461,22 @@ class RealJobRunner {
 				);
 				return 0;
 			}
-			
-			const { stdout, stderr } = await execAsync(
-				"NODE_ENV=production node scripts/jobspy-internships-only.cjs",
-				{
-					cwd: process.cwd(),
-					timeout: 1200000, // 20 minutes timeout (increased from 10)
-					env: { ...process.env },
-				},
+
+			const { stdout, stderr } = await this.withTimeout(
+				execAsync(
+					"NODE_ENV=production node scripts/jobspy-internships-only.cjs",
+					{
+						cwd: process.cwd(),
+						timeout: 600000, // 10 minutes timeout (reduced from 20)
+						env: { ...process.env },
+					},
+				),
+				600000,
+				"JobSpy Internships scraper",
 			);
 
 			// Log stderr if present
-			if (stderr && stderr.trim()) {
+			if (stderr?.trim()) {
 				console.warn(
 					"⚠️  JobSpy Internships stderr:",
 					stderr.substring(0, 1000),
@@ -497,11 +537,15 @@ class RealJobRunner {
 	async runJobSpyCareerPathRolesScraper(targets) {
 		try {
 			console.log("🎯 Running JobSpy Career Path Roles scraper...");
-			
+
 			// Check if file exists before running
 			const fs = require("fs");
 			const path = require("path");
-			const scriptPath = path.join(process.cwd(), "scripts", "jobspy-career-path-roles.cjs");
+			const scriptPath = path.join(
+				process.cwd(),
+				"scripts",
+				"jobspy-career-path-roles.cjs",
+			);
 			if (!fs.existsSync(scriptPath)) {
 				console.warn(
 					`⚠️  JobSpy Career Path Roles scraper file not found: ${scriptPath}`,
@@ -511,7 +555,7 @@ class RealJobRunner {
 				);
 				return 0; // Return early, don't try to execute
 			}
-			
+
 			const env = {
 				...process.env,
 				NODE_ENV: "production",
@@ -520,17 +564,21 @@ class RealJobRunner {
 				env.TARGET_CITIES = JSON.stringify(targets.cities);
 			}
 
-			const { stdout, stderr } = await execAsync(
-				"NODE_ENV=production node scripts/jobspy-career-path-roles.cjs",
-				{
-					cwd: process.cwd(),
-					timeout: 1200000, // 20 minutes timeout (increased from 10)
-					env,
-				},
+			const { stdout, stderr } = await this.withTimeout(
+				execAsync(
+					"NODE_ENV=production node scripts/jobspy-career-path-roles.cjs",
+					{
+						cwd: process.cwd(),
+						timeout: 600000, // 10 minutes timeout (reduced from 20)
+						env,
+					},
+				),
+				600000,
+				"Career Path Roles scraper",
 			);
 
 			// Log stderr if present
-			if (stderr && stderr.trim()) {
+			if (stderr?.trim()) {
 				console.warn("⚠️  Career Path Roles stderr:", stderr.substring(0, 1000));
 			}
 
@@ -614,17 +662,18 @@ class RealJobRunner {
 				env.TARGET_ROLES = JSON.stringify(targets.roles);
 			}
 
-			const { stdout, stderr } = await execAsync(
-				"node scrapers/wrappers/reed-wrapper.cjs",
-				{
+			const { stdout, stderr } = await this.withTimeout(
+				execAsync("node scrapers/wrappers/reed-wrapper.cjs", {
 					cwd: process.cwd(),
 					timeout: 300000,
 					env,
-				},
+				}),
+				300000,
+				"Reed scraper",
 			);
 
 			// Log stderr if present
-			if (stderr && stderr.trim()) {
+			if (stderr?.trim()) {
 				console.warn("⚠️  Reed stderr:", stderr.substring(0, 500));
 			}
 
@@ -675,18 +724,18 @@ class RealJobRunner {
 			}
 			console.log("✅ CareerJet API key present");
 
-			const { scrapeCareerJet } = require("../scrapers/careerjet.cjs");
-			const { stdout, stderr } = await execAsync(
-				"node scrapers/careerjet.cjs",
-				{
+			const { stdout, stderr } = await this.withTimeout(
+				execAsync("node scrapers/careerjet.cjs", {
 					cwd: process.cwd(),
 					timeout: 600000, // 10 minutes timeout
 					env: { ...process.env },
-				},
+				}),
+				600000,
+				"CareerJet scraper",
 			);
 
 			// Log stderr if present
-			if (stderr && stderr.trim()) {
+			if (stderr?.trim()) {
 				console.warn("⚠️  CareerJet stderr:", stderr.substring(0, 1000));
 			}
 
@@ -771,24 +820,22 @@ class RealJobRunner {
 			const path = require("path");
 			const scriptPath = path.join(process.cwd(), "scrapers", "arbeitnow.cjs");
 			if (!fs.existsSync(scriptPath)) {
-				console.error(
-					`❌ Arbeitnow scraper file not found: ${scriptPath}`,
-				);
+				console.error(`❌ Arbeitnow scraper file not found: ${scriptPath}`);
 				return 0;
 			}
 
-			const { scrapeArbeitnow } = require("../scrapers/arbeitnow.cjs");
-			const { stdout, stderr } = await execAsync(
-				"node scrapers/arbeitnow.cjs",
-				{
+			const { stdout, stderr } = await this.withTimeout(
+				execAsync("node scrapers/arbeitnow.cjs", {
 					cwd: process.cwd(),
 					timeout: 600000, // 10 minutes timeout
 					env: { ...process.env },
-				},
+				}),
+				600000,
+				"Arbeitnow scraper",
 			);
 
 			// Log stderr if present
-			if (stderr && stderr.trim()) {
+			if (stderr?.trim()) {
 				console.warn("⚠️  Arbeitnow stderr:", stderr.substring(0, 500));
 			}
 
@@ -813,9 +860,7 @@ class RealJobRunner {
 					console.warn("⚠️  Arbeitnow output contains errors - check full logs");
 					const errorLines = stdout
 						.split("\n")
-						.filter((line) =>
-							/❌|Error|error|Fatal/i.test(line),
-						)
+						.filter((line) => /❌|Error|error|Fatal/i.test(line))
 						.slice(0, 5);
 					if (errorLines.length > 0) {
 						console.warn("   Error details:", errorLines.join(" | "));
@@ -846,9 +891,7 @@ class RealJobRunner {
 		} catch (error) {
 			console.error("❌ Arbeitnow scraper failed:", error.message);
 			if (error.code === "ETIMEDOUT") {
-				console.error(
-					"❌ Arbeitnow scraper timed out after 10 minutes",
-				);
+				console.error("❌ Arbeitnow scraper timed out after 10 minutes");
 			}
 			if (error.stdout) {
 				console.error("❌ stdout:", error.stdout.substring(0, 500));
@@ -870,24 +913,22 @@ class RealJobRunner {
 			const path = require("path");
 			const scriptPath = path.join(process.cwd(), "scrapers", "jooble.cjs");
 			if (!fs.existsSync(scriptPath)) {
-				console.error(
-					`❌ Jooble scraper file not found: ${scriptPath}`,
-				);
+				console.error(`❌ Jooble scraper file not found: ${scriptPath}`);
 				return 0;
 			}
 
-			const { scrapeJooble } = require("../scrapers/jooble.cjs");
-			const { stdout, stderr } = await execAsync(
-				"node scrapers/jooble.cjs",
-				{
+			const { stdout, stderr } = await this.withTimeout(
+				execAsync("node scrapers/jooble.cjs", {
 					cwd: process.cwd(),
 					timeout: 600000, // 10 minutes timeout
 					env: { ...process.env },
-				},
+				}),
+				600000,
+				"Jooble scraper",
 			);
 
 			// Log stderr if present
-			if (stderr && stderr.trim()) {
+			if (stderr?.trim()) {
 				console.warn("⚠️  Jooble stderr:", stderr.substring(0, 500));
 			}
 
@@ -897,9 +938,7 @@ class RealJobRunner {
 			}
 
 			let jobsSaved = 0;
-			const match = stdout.match(
-				/\[Jooble\] ✅ Complete: (\d+) jobs saved in/,
-			);
+			const match = stdout.match(/\[Jooble\] ✅ Complete: (\d+) jobs saved in/);
 			if (match) {
 				jobsSaved = parseInt(match[1]);
 			} else {
@@ -912,9 +951,7 @@ class RealJobRunner {
 					console.warn("⚠️  Jooble output contains errors - check full logs");
 					const errorLines = stdout
 						.split("\n")
-						.filter((line) =>
-							/❌|Error|error|Fatal/i.test(line),
-						)
+						.filter((line) => /❌|Error|error|Fatal/i.test(line))
 						.slice(0, 5);
 					if (errorLines.length > 0) {
 						console.warn("   Error details:", errorLines.join(" | "));
@@ -945,9 +982,7 @@ class RealJobRunner {
 		} catch (error) {
 			console.error("❌ Jooble scraper failed:", error.message);
 			if (error.code === "ETIMEDOUT") {
-				console.error(
-					"❌ Jooble scraper timed out after 10 minutes",
-				);
+				console.error("❌ Jooble scraper timed out after 10 minutes");
 			}
 			if (error.stdout) {
 				console.error("❌ stdout:", error.stdout.substring(0, 500));
@@ -1068,14 +1103,17 @@ class RealJobRunner {
 							(Date.now() - lastSourceJob.getTime()) / (1000 * 60 * 60);
 						sourceLastRun[source] = hoursSince;
 
-						// Alert if critical source hasn't run in 7 days
+						// Alert if critical source hasn't run in 7 days (168 hours)
 						if (hoursSince > 168) {
 							console.error(
 								`🚨 ALERT: Source '${source}' hasn't added jobs in ${Math.round(hoursSince)} hours (${Math.round(hoursSince / 24)} days)`,
 							);
 						}
 					} else {
-						console.error(`🚨 ALERT: Source '${source}' has no recent jobs`);
+						// More specific message: source may be working but not in last 100 jobs
+						console.error(
+							`🚨 ALERT: Source '${source}' has no jobs in last 100 ingested (may be working but low volume)`,
+						);
 					}
 				});
 
@@ -1136,7 +1174,7 @@ class RealJobRunner {
 	// Sets is_active = false for jobs not seen in the last N days
 	async deactivateStaleJobs() {
 		try {
-			const ttlDays = parseInt(process.env.JOB_TTL_DAYS || "10", 10);
+			const ttlDays = parseInt(process.env.JOB_TTL_DAYS || "7", 10);
 			const cutoffDate = new Date(Date.now() - ttlDays * 24 * 60 * 60 * 1000);
 			const cutoffIso = cutoffDate.toISOString();
 
@@ -1176,7 +1214,148 @@ class RealJobRunner {
 		}
 	}
 
-	// Main scraping cycle
+	// Delete inactive jobs that have been inactive for more than 5 days
+	// This prevents database bloat while preserving recent inactive jobs for recovery
+	async deleteOldInactiveJobs() {
+		try {
+			const inactiveRetentionDays = parseInt(
+				process.env.INACTIVE_JOB_RETENTION_DAYS || "2",
+				10,
+			);
+			const cutoffDate = new Date(
+				Date.now() - inactiveRetentionDays * 24 * 60 * 60 * 1000,
+			);
+			const cutoffIso = cutoffDate.toISOString();
+
+			console.log(
+				`🗑️  Checking for inactive jobs to delete (inactive for more than ${inactiveRetentionDays} days, cutoff: ${cutoffIso})...`,
+			);
+
+			// First, get jobs that are inactive and haven't been seen in the retention period
+			// We check both is_active = false AND last_seen_at < cutoff
+			const { data: jobsToDelete, error: queryError } = await supabase
+				.from("jobs")
+				.select("id, job_hash, title, company, source, last_seen_at")
+				.eq("is_active", false)
+				.lt("last_seen_at", cutoffIso)
+				.limit(1000); // Process in batches to avoid timeouts
+
+			if (queryError) {
+				console.error(
+					"❌ Failed to query inactive jobs for deletion:",
+					queryError.message,
+				);
+				return 0;
+			}
+
+			if (!jobsToDelete || jobsToDelete.length === 0) {
+				console.log(
+					`✅ No inactive jobs to delete (all inactive jobs are within ${inactiveRetentionDays} day retention period)`,
+				);
+				return 0;
+			}
+
+			const jobHashes = jobsToDelete.map((j) => j.job_hash).filter(Boolean);
+			const jobIds = jobsToDelete.map((j) => j.id).filter(Boolean);
+
+			console.log(
+				`📊 Found ${jobsToDelete.length} inactive jobs to delete (inactive for >${inactiveRetentionDays} days)`,
+			);
+
+			// Delete related records first (to maintain referential integrity)
+			// 1. Delete from embedding_queue
+			const { error: queueError } = await supabase
+				.from("embedding_queue")
+				.delete()
+				.in("job_hash", jobHashes);
+
+			if (queueError) {
+				console.warn(
+					"⚠️  Failed to delete embedding_queue entries:",
+					queueError.message,
+				);
+			}
+
+			// 2. Delete from matches (jobs being deleted shouldn't be matched)
+			const { error: matchesError } = await supabase
+				.from("matches")
+				.delete()
+				.in("job_hash", jobHashes);
+
+			if (matchesError) {
+				console.warn(
+					"⚠️  Failed to delete matches entries:",
+					matchesError.message,
+				);
+			}
+
+			// 3. Delete from user_feedback (optional - might want to keep feedback)
+			// Commented out to preserve user feedback data
+			// const { error: feedbackError } = await supabase
+			//   .from("user_feedback")
+			//   .delete()
+			//   .in("job_hash", jobHashes);
+
+			// Finally, delete the jobs themselves
+			const { error: deleteError } = await supabase
+				.from("jobs")
+				.delete()
+				.in("id", jobIds);
+
+			if (deleteError) {
+				console.error(
+					"❌ Failed to delete inactive jobs:",
+					deleteError.message,
+				);
+				return 0;
+			}
+
+			console.log(
+				`✅ Deleted ${jobsToDelete.length} inactive jobs (inactive for >${inactiveRetentionDays} days)`,
+			);
+
+			return jobsToDelete.length;
+		} catch (error) {
+			console.error("❌ Delete inactive jobs failed:", error.message);
+			return 0;
+		}
+	}
+
+	// Retry helper with exponential backoff
+	async retryWithBackoff(fn, maxRetries = 2, delayMs = 1000) {
+		for (let attempt = 0; attempt <= maxRetries; attempt++) {
+			try {
+				return await fn();
+			} catch (error) {
+				if (attempt === maxRetries) {
+					throw error;
+				}
+				const backoffDelay = delayMs * 2 ** attempt;
+				console.warn(
+					`⚠️  Attempt ${attempt + 1} failed, retrying in ${backoffDelay}ms...`,
+				);
+				await new Promise((resolve) => setTimeout(resolve, backoffDelay));
+			}
+		}
+	}
+
+	// Timeout wrapper to kill slow scrapers faster
+	async withTimeout(promise, timeoutMs, scraperName) {
+		return Promise.race([
+			promise,
+			new Promise((_, reject) =>
+				setTimeout(
+					() =>
+						reject(
+							new Error(`${scraperName} timed out after ${timeoutMs / 1000}s`),
+						),
+					timeoutMs,
+				),
+			),
+		]);
+	}
+
+	// Main scraping cycle - OPTIMIZED for speed and reliability
 	async runScrapingCycle() {
 		if (this.isRunning) {
 			console.log("⏸️ Scraping cycle already running, skipping...");
@@ -1196,97 +1375,102 @@ class RealJobRunner {
 			const cycleStartIso = new Date().toISOString();
 			const signupTargets = await this.getSignupTargets();
 
-			// Note: Each scraper handles cities differently:
-			// - Reed: Filters to UK/Ireland cities, uses DEFAULT_LOCATIONS if none provided
-			// - CareerJet/Arbeitnow: Use their own city lists, filter TARGET_CITIES if provided
-			// - JobSpy: Has its own city list, doesn't require TARGET_CITIES
-			// - Adzuna: Filters TARGET_CITIES to supported EU cities
-			// So we don't skip even if signupTargets.cities is empty - scrapers will use their defaults
 			if (signupTargets.cities.length === 0) {
 				console.log(
 					"ℹ️  No signup cities found; scrapers will use their default city lists.",
 				);
 			}
 
-			// Run JobSpy variants in parallel for faster execution
+			// OPTIMIZATION: Run all fast scrapers in parallel groups
+			// Group 1: JobSpy variants (can run together)
 			console.log("⚡ Running JobSpy variants in parallel...");
 			let jobspyJobs = 0;
 			let jobspyInternshipsJobs = 0;
+			let careerPathRolesJobs = 0;
+
 			try {
-				const [jobspyResult, internshipsResult] = await Promise.all([
-					this.runJobSpyScraper().catch((err) => {
-						console.error("❌ JobSpy scraper failed:", err.message);
-						return 0;
-					}),
-					this.runJobSpyInternshipsScraper().catch((err) => {
-						console.error("❌ JobSpy Internships scraper failed:", err.message);
-						return 0;
-					}),
-				]);
-				jobspyJobs = jobspyResult;
-				jobspyInternshipsJobs = internshipsResult;
+				const [jobspyResult, internshipsResult, careerPathResult] =
+					await Promise.allSettled([
+						this.runJobSpyScraper(),
+						this.runJobSpyInternshipsScraper(),
+						this.runJobSpyCareerPathRolesScraper(signupTargets),
+					]);
+
+				jobspyJobs =
+					jobspyResult.status === "fulfilled" ? jobspyResult.value : 0;
+				jobspyInternshipsJobs =
+					internshipsResult.status === "fulfilled"
+						? internshipsResult.value
+						: 0;
+				careerPathRolesJobs =
+					careerPathResult.status === "fulfilled" ? careerPathResult.value : 0;
+
+				if (jobspyResult.status === "rejected") {
+					console.error(
+						"❌ JobSpy scraper failed:",
+						jobspyResult.reason?.message ?? "Unknown error",
+					);
+				}
+				if (internshipsResult.status === "rejected") {
+					console.error(
+						"❌ JobSpy Internships scraper failed:",
+						internshipsResult.reason?.message ?? "Unknown error",
+					);
+				}
+				if (careerPathResult.status === "rejected") {
+					console.error(
+						"❌ Career Path Roles scraper failed:",
+						careerPathResult.reason?.message ?? "Unknown error",
+					);
+				}
+
 				console.log(
-					`✅ JobSpy parallel execution completed: ${jobspyJobs} general + ${jobspyInternshipsJobs} internships`,
+					`✅ JobSpy parallel execution completed: ${jobspyJobs} general + ${jobspyInternshipsJobs} internships + ${careerPathRolesJobs} career roles`,
 				);
 			} catch (error) {
 				console.error("❌ JobSpy parallel execution failed:", error.message);
 			}
 
+			// Check stop condition once after JobSpy group
 			let stopDueToQuota = await this.evaluateStopCondition(
 				"JobSpy pipelines",
 				cycleStartIso,
 			);
 
-			// Run JobSpy Career Path Roles scraper (searches for all roles across career paths)
-			let careerPathRolesJobs = 0;
-			if (!stopDueToQuota) {
-				try {
-					careerPathRolesJobs =
-						await this.runJobSpyCareerPathRolesScraper(signupTargets);
-					console.log(
-						`✅ Career Path Roles completed: ${careerPathRolesJobs} jobs`,
-					);
-				} catch (error) {
-					console.error(
-						"❌ Career Path Roles scraper failed, continuing with other scrapers:",
-						error.message,
-					);
-				}
-				stopDueToQuota = await this.evaluateStopCondition(
-					"Career Path Roles scraper",
-					cycleStartIso,
-				);
-			} else {
-				console.log(
-					"⏹️  Skipping Career Path Roles scraper - cycle job target reached.",
-				);
-			}
-
-			// Run Adzuna and Reed in parallel (both are critical sources)
-			// Adzuna is high priority (52% of jobs) but was being skipped - ensure it runs
+			// Group 2: Critical API scrapers (Adzuna + Reed) - run in parallel
 			let adzunaJobs = 0;
 			let reedJobs = 0;
 
 			if (!stopDueToQuota) {
 				console.log("⚡ Running Adzuna and Reed in parallel...");
 				try {
-					const [adzunaResult, reedResult] = await Promise.all([
+					const [adzunaResult, reedResult] = await Promise.allSettled([
 						!SKIP_ADZUNA
-							? this.runAdzunaScraper(signupTargets).catch((err) => {
-									console.error("❌ Adzuna scraper failed:", err.message);
-									console.error(
-										"⚠️  Adzuna represents 52% of total jobs - investigate failure!",
-									);
-									return 0;
-								})
+							? this.runAdzunaScraper(signupTargets)
 							: Promise.resolve(0),
-						this.runReedScraper(signupTargets).catch((err) => {
-							console.error("❌ Reed scraper failed:", err.message);
-							return 0;
-						}),
+						this.runReedScraper(signupTargets),
 					]);
-					adzunaJobs = adzunaResult;
-					reedJobs = reedResult;
+
+					adzunaJobs =
+						adzunaResult.status === "fulfilled" ? adzunaResult.value : 0;
+					reedJobs = reedResult.status === "fulfilled" ? reedResult.value : 0;
+
+					if (adzunaResult.status === "rejected") {
+						console.error(
+							"❌ Adzuna scraper failed:",
+							adzunaResult.reason?.message ?? "Unknown error",
+						);
+						console.error(
+							"⚠️  Adzuna represents 52% of total jobs - investigate failure!",
+						);
+					}
+					if (reedResult.status === "rejected") {
+						console.error(
+							"❌ Reed scraper failed:",
+							reedResult.reason?.message ?? "Unknown error",
+						);
+					}
+
 					console.log(
 						`✅ Adzuna + Reed parallel execution completed: ${adzunaJobs} Adzuna + ${reedJobs} Reed`,
 					);
@@ -1306,72 +1490,67 @@ class RealJobRunner {
 				);
 			}
 
-			// Run CareerJet (EU coverage)
+			// Group 3: EU scrapers (CareerJet, Arbeitnow, Jooble) - run in parallel
 			let careerjetJobs = 0;
-			if (!stopDueToQuota) {
-				try {
-					careerjetJobs = await this.runCareerJetScraper();
-					console.log(`✅ CareerJet completed: ${careerjetJobs} jobs`);
-				} catch (error) {
-					console.error(
-						"❌ CareerJet scraper failed, continuing with other scrapers:",
-						error.message,
-					);
-				}
-				stopDueToQuota = await this.evaluateStopCondition(
-					"CareerJet scraper",
-					cycleStartIso,
-				);
-			} else {
-				console.log(
-					"⏹️  Skipping CareerJet scraper - cycle job target reached.",
-				);
-			}
-
-			// Run Arbeitnow (DACH region)
 			let arbeitnowJobs = 0;
-			if (!stopDueToQuota) {
-				try {
-					arbeitnowJobs = await this.runArbeitnowScraper();
-					console.log(`✅ Arbeitnow completed: ${arbeitnowJobs} jobs`);
-				} catch (error) {
-					console.error(
-						"❌ Arbeitnow scraper failed, continuing with other scrapers:",
-						error.message,
-					);
-				}
-				stopDueToQuota = await this.evaluateStopCondition(
-					"Arbeitnow scraper",
-					cycleStartIso,
-				);
-			} else {
-				console.log(
-					"⏹️  Skipping Arbeitnow scraper - cycle job target reached.",
-				);
-			}
-
-			// Run Jooble (EU-wide coverage, fills gaps from Adzuna)
 			let joobleJobs = 0;
+
 			if (!stopDueToQuota) {
+				console.log(
+					"⚡ Running EU scrapers in parallel (CareerJet, Arbeitnow, Jooble)...",
+				);
 				try {
-					joobleJobs = await this.runJoobleScraper();
-					console.log(`✅ Jooble completed: ${joobleJobs} jobs`);
+					const [careerjetResult, arbeitnowResult, joobleResult] =
+						await Promise.allSettled([
+							this.runCareerJetScraper(),
+							this.runArbeitnowScraper(),
+							this.runJoobleScraper(),
+						]);
+
+					careerjetJobs =
+						careerjetResult.status === "fulfilled" ? careerjetResult.value : 0;
+					arbeitnowJobs =
+						arbeitnowResult.status === "fulfilled" ? arbeitnowResult.value : 0;
+					joobleJobs =
+						joobleResult.status === "fulfilled" ? joobleResult.value : 0;
+
+					if (careerjetResult.status === "rejected") {
+						console.error(
+							"❌ CareerJet scraper failed:",
+							careerjetResult.reason?.message ?? "Unknown error",
+						);
+					}
+					if (arbeitnowResult.status === "rejected") {
+						console.error(
+							"❌ Arbeitnow scraper failed:",
+							arbeitnowResult.reason?.message ?? "Unknown error",
+						);
+					}
+					if (joobleResult.status === "rejected") {
+						console.error(
+							"❌ Jooble scraper failed:",
+							joobleResult.reason?.message ?? "Unknown error",
+						);
+					}
+
+					console.log(
+						`✅ EU scrapers parallel execution completed: ${careerjetJobs} CareerJet + ${arbeitnowJobs} Arbeitnow + ${joobleJobs} Jooble`,
+					);
 				} catch (error) {
 					console.error(
-						"❌ Jooble scraper failed, continuing with other scrapers:",
+						"❌ EU scrapers parallel execution failed:",
 						error.message,
 					);
 				}
 				stopDueToQuota = await this.evaluateStopCondition(
-					"Jooble scraper",
+					"EU scrapers",
 					cycleStartIso,
 				);
 			} else {
-				console.log(
-					"⏹️  Skipping Jooble scraper - cycle job target reached.",
-				);
+				console.log("⏹️  Skipping EU scrapers - cycle job target reached.");
 			}
 
+			// Final stop condition check
 			if (!stopDueToQuota) {
 				await this.evaluateStopCondition("Full cycle", cycleStartIso);
 			}
@@ -1389,19 +1568,34 @@ class RealJobRunner {
 			this.runCount++;
 			this.lastRun = new Date();
 
-			// Check database health
-			await this.checkDatabaseHealth();
+			// OPTIMIZATION: Run database operations in parallel
+			console.log("🧹 Running database maintenance operations in parallel...");
+			const [, deactivatedCount, deletedCount, dbStats] =
+				await Promise.allSettled([
+					this.checkDatabaseHealth(),
+					this.deactivateStaleJobs(),
+					this.deleteOldInactiveJobs(),
+					this.getDatabaseStats(),
+				]);
 
-			// Perform database cleanup: deactivate stale jobs
-			const deactivatedCount = await this.deactivateStaleJobs();
-			if (deactivatedCount > 0) {
+			if (
+				deactivatedCount.status === "fulfilled" &&
+				deactivatedCount.value > 0
+			) {
 				console.log(
-					`🧹 Database cleanup: Deactivated ${deactivatedCount} stale jobs`,
+					`🧹 Database cleanup: Deactivated ${deactivatedCount.value} stale jobs`,
+				);
+			}
+			if (deletedCount.status === "fulfilled" && deletedCount.value > 0) {
+				console.log(
+					`🗑️  Database cleanup: Deleted ${deletedCount.value} old inactive jobs`,
 				);
 			}
 
-			// Get final stats
-			const dbStats = await this.getDatabaseStats();
+			const finalDbStats =
+				dbStats.status === "fulfilled"
+					? dbStats.value
+					: { totalJobs: 0, recentJobs: 0, sourceBreakdown: {} };
 
 			const duration = (Date.now() - startTime) / 1000;
 			console.log("\n✅ SCRAPING CYCLE COMPLETE");
@@ -1413,9 +1607,11 @@ class RealJobRunner {
 			console.log(`📈 Total jobs processed: ${this.totalJobsSaved}`);
 			console.log(`🔄 Total cycles run: ${this.runCount}`);
 			console.log(`📅 Last run: ${this.lastRun.toISOString()}`);
-			console.log(`💾 Database total: ${dbStats.totalJobs} jobs`);
-			console.log(`🆕 Database recent (24h): ${dbStats.recentJobs} jobs`);
-			console.log(`🏷️  Sources: ${JSON.stringify(dbStats.sourceBreakdown)}`);
+			console.log(`💾 Database total: ${finalDbStats.totalJobs} jobs`);
+			console.log(`🆕 Database recent (24h): ${finalDbStats.recentJobs} jobs`);
+			console.log(
+				`🏷️  Sources: ${JSON.stringify(finalDbStats.sourceBreakdown)}`,
+			);
 			console.log(`🎯 Core scrapers breakdown:`);
 			console.log(`   - JobSpy (General): ${jobspyJobs} jobs`);
 			console.log(
@@ -1433,9 +1629,17 @@ class RealJobRunner {
 			console.log(
 				`📦 Per-source breakdown this cycle: ${JSON.stringify(this.currentCycleStats.perSource)}`,
 			);
-			if (deactivatedCount > 0) {
-				console.log(`🧹 Stale jobs deactivated: ${deactivatedCount}`);
+			if (
+				deactivatedCount.status === "fulfilled" &&
+				deactivatedCount.value > 0
+			) {
+				console.log(`🧹 Stale jobs deactivated: ${deactivatedCount.value}`);
 			}
+
+			// AUTOMATIC: Process embeddings after each scraping cycle
+			// This ensures new jobs get embeddings quickly
+			console.log("\n🧠 Starting automatic embedding processing...");
+			await this.runEmbeddingRefresh("post-scrape", true);
 		} catch (error) {
 			console.error("❌ Scraping cycle failed:", error);
 		} finally {
@@ -1467,21 +1671,27 @@ class RealJobRunner {
 
 		// Run immediately on startup
 		this.runScrapingCycle();
-		this.runEmbeddingRefresh("startup");
+		// Note: Embeddings will run automatically after scraping cycle completes
 
 		// Schedule runs 2 times per day (morning, evening) - optimized from 3x/day
 		// Still exceeds "daily" promise while reducing costs by 33%
 		cron.schedule("0 8,18 * * *", () => {
 			console.log("\n⏰ Scheduled scraping cycle starting...");
 			this.runScrapingCycle();
+			// Embeddings will run automatically after scraping cycle completes
 		});
 
-		// Schedule embedding refresh every 72 hours (default time 02:00 UTC)
-		const embeddingCron = process.env.EMBEDDING_REFRESH_CRON || "0 2 */3 * *";
+		// Schedule additional embedding refresh every 6 hours to catch any missed jobs
+		// This ensures queue stays empty even if some jobs were added outside scraping cycles
+		const embeddingCron = process.env.EMBEDDING_REFRESH_CRON || "0 */6 * * *";
 		const embeddingTz = process.env.EMBEDDING_REFRESH_TZ || "UTC";
-		cron.schedule(embeddingCron, () => this.runEmbeddingRefresh("cron"), {
-			timezone: embeddingTz,
-		});
+		cron.schedule(
+			embeddingCron,
+			() => this.runEmbeddingRefresh("scheduled", true),
+			{
+				timezone: embeddingTz,
+			},
+		);
 
 		// Schedule daily health check
 		cron.schedule("0 9 * * *", async () => {
@@ -1494,6 +1704,10 @@ class RealJobRunner {
 		console.log("✅ Automation started successfully!");
 		console.log(
 			"   - 2x daily scraping cycles (8am, 6pm UTC) - optimized from 3x/day",
+		);
+		console.log("   - Automatic embedding processing after each scrape cycle");
+		console.log(
+			"   - Embedding queue processed every 6 hours (configurable via EMBEDDING_REFRESH_CRON)",
 		);
 		console.log("   - Parallel execution enabled for faster cycles");
 		console.log("   - Smart stop conditions per scraper");

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { withAxiom } from "next-axiom";
 import { AppError, asyncHandler } from "@/lib/errors";
 import { getDatabaseClient } from "@/Utils/databasePool";
+import { apiLogger } from "@/lib/api-logger";
 
 // Use centralized database client
 const supabase = getDatabaseClient();
@@ -17,7 +18,7 @@ const processScrapingQueueHandler = asyncHandler(
 	async (_request: NextRequest) => {
 		const startTime = Date.now();
 
-		console.log(" Starting cron scraping queue processing...");
+		apiLogger.info(" Starting cron scraping queue processing...");
 
 		// Get pending scraping jobs
 		const { data: jobs, error: fetchError } = await supabase
@@ -31,14 +32,14 @@ const processScrapingQueueHandler = asyncHandler(
 			.limit(BATCH_SIZE);
 
 		if (fetchError) {
-			console.error(" Error fetching scraping jobs:", fetchError);
+			apiLogger.error(" Error fetching scraping jobs:", fetchError);
 			throw new AppError("Failed to fetch jobs", 500, "DB_FETCH_ERROR", {
 				details: fetchError.message,
 			});
 		}
 
 		if (!jobs || jobs.length === 0) {
-			console.log(" No pending scraping jobs to process");
+			apiLogger.info(" No pending scraping jobs to process");
 			return NextResponse.json({
 				message: "No jobs to process",
 				processed: 0,
@@ -46,7 +47,7 @@ const processScrapingQueueHandler = asyncHandler(
 			});
 		}
 
-		console.log(` Processing ${jobs.length} scraping jobs...`);
+		apiLogger.info(` Processing ${jobs.length} scraping jobs...`);
 
 		let processed = 0;
 		let failed = 0;
@@ -55,7 +56,7 @@ const processScrapingQueueHandler = asyncHandler(
 		for (const job of jobs) {
 			// Check if we're running out of time
 			if (Date.now() - startTime > MAX_PROCESSING_TIME) {
-				console.log(" Time limit reached, stopping processing");
+				apiLogger.info(" Time limit reached, stopping processing");
 				break;
 			}
 
@@ -102,11 +103,11 @@ const processScrapingQueueHandler = asyncHandler(
 					.eq("id", job.id);
 
 				processed++;
-				console.log(
+				apiLogger.info(
 					` Completed scraping job ${job.id} for ${scraperType}: ${scraperResult.jobsScraped} jobs`,
 				);
 			} catch (error) {
-				console.error(` Failed to process scraping job ${job.id}:`, error);
+				apiLogger.error(` Failed to process scraping job ${job.id}:`, error as Error);
 
 				// Handle failure with retry logic
 				const newAttempts = (job.attempts || 0) + 1;
@@ -123,7 +124,7 @@ const processScrapingQueueHandler = asyncHandler(
 						})
 						.eq("id", job.id);
 
-					console.error(
+					apiLogger.error(
 						` Job ${job.id} failed permanently after ${newAttempts} attempts`,
 					);
 				} else {
@@ -141,7 +142,7 @@ const processScrapingQueueHandler = asyncHandler(
 						})
 						.eq("id", job.id);
 
-					console.log(
+					apiLogger.info(
 						` Job ${job.id} will retry in ${retryDelay}ms (attempt ${newAttempts}/${maxAttempts})`,
 					);
 				}
@@ -151,7 +152,7 @@ const processScrapingQueueHandler = asyncHandler(
 		}
 
 		const duration = Date.now() - startTime;
-		console.log(
+		apiLogger.info(
 			` Scraping queue processing complete: ${processed} processed, ${failed} failed in ${duration}ms`,
 		);
 

@@ -562,7 +562,16 @@ function processIncomingJob(job, options = {}) {
 	// Note: Career path categories are added by scrapers using categoryMapper.cjs
 	// This just ensures basic categories are valid
 	const { validateAndFixCategories } = require("./categoryMapper.cjs");
-	const validatedCategories = validateAndFixCategories(categories);
+	let validatedCategories = validateAndFixCategories(categories);
+
+	// CRITICAL: Ensure work-type category exists (auto-infer if missing)
+	// This prevents jobs from being saved without work-type categories
+	const { ensureWorkTypeCategory } = require("./workTypeInference.cjs");
+	validatedCategories = ensureWorkTypeCategory({
+		title,
+		description,
+		categories: validatedCategories,
+	});
 
 	// Determine experience_required
 	let experienceRequired = "entry-level";

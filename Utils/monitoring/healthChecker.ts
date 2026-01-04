@@ -34,6 +34,7 @@ export interface ComponentHealth {
 
 export class HealthChecker {
 	private supabase: any;
+	// @ts-expect-error - Resend client kept for future use
 	private resend: Resend;
 
 	constructor() {

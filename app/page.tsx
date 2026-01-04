@@ -91,7 +91,7 @@ export default function Page() {
 									<a
 										href="/signup/free"
 										aria-label="Get my 5 free job matches - start free signup"
-										className="inline-flex min-h-[44px] items-center gap-2 px-6 py-3 bg-brand-500 text-white rounded-full text-sm font-semibold hover:bg-brand-500/90 transition-colors shadow-lg shadow-brand-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+										className="inline-flex min-h-[44px] items-center gap-2 px-8 py-3 bg-brand-500 text-white rounded-full text-sm font-semibold hover:bg-brand-500/90 transition-colors shadow-lg shadow-brand-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
 									>
 										Get My 5 Free Matches
 										<svg

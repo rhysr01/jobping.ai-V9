@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
 			},
 		});
 	} catch (error: any) {
-		apiLogger.error("Failed to retrieve account", error, {
+		apiLogger.error("Failed to retrieve account", error as Error, {
 			errorType: error.type,
 			errorCode: error.code,
 		});

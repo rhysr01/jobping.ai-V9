@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
 
 		return NextResponse.json({ received: true });
 	} catch (error: any) {
-		apiLogger.error("Billing webhook handler error", error, {
+		apiLogger.error("Billing webhook handler error", error as Error, {
 			errorType: error.type,
 			errorCode: error.code,
 		});

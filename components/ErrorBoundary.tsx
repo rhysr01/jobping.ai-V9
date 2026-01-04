@@ -1,6 +1,7 @@
 "use client";
 
 import { Component, type ReactNode } from "react";
+import * as Sentry from "@sentry/nextjs";
 import Button from "./ui/Button";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 interface State {
 	hasError: boolean;
 	error?: Error;
+	errorInfo?: React.ErrorInfo;
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
@@ -23,13 +25,45 @@ export default class ErrorBoundary extends Component<Props, State> {
 		return { hasError: true, error };
 	}
 
-	componentDidCatch(error: Error, errorInfo: any) {
+	componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+		// Log to console for development
 		console.error("Error caught by boundary:", error, errorInfo);
-		// Could send to error tracking service here
+
+		// Send to Sentry with full context
+		Sentry.captureException(error, {
+			contexts: {
+				react: {
+					componentStack: errorInfo.componentStack,
+				},
+			},
+			tags: {
+				errorBoundary: true,
+				errorType: error.name,
+			},
+			extra: {
+				errorInfo,
+				errorMessage: error.message,
+				errorStack: error.stack,
+			},
+			level: "error",
+		});
+
+		// Update state with error info for display
+		this.setState({ errorInfo });
 	}
 
 	handleReset = () => {
-		this.setState({ hasError: false, error: undefined });
+		// Log recovery attempt
+		Sentry.addBreadcrumb({
+			message: "User attempted to recover from error boundary",
+			level: "info",
+		});
+
+		this.setState({
+			hasError: false,
+			error: undefined,
+			errorInfo: undefined,
+		});
 	};
 
 	render() {
@@ -61,6 +95,17 @@ export default class ErrorBoundary extends Component<Props, State> {
 								{this.state.error?.message ||
 									"An unexpected error occurred. Please try again."}
 							</p>
+							{process.env.NODE_ENV === "development" &&
+								this.state.errorInfo && (
+									<details className="mb-6 text-left">
+										<summary className="cursor-pointer text-content-300 mb-2">
+											Error Details (Dev Only)
+										</summary>
+										<pre className="text-xs bg-content-900 p-4 rounded overflow-auto max-h-48">
+											{this.state.errorInfo.componentStack}
+										</pre>
+									</details>
+								)}
 							<div className="flex gap-4 justify-center">
 								<Button onClick={this.handleReset} variant="primary">
 									Try again

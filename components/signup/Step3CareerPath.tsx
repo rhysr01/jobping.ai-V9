@@ -30,7 +30,7 @@ interface Step3CareerPathProps {
 export function Step3CareerPath({
 	formData,
 	setFormData,
-	touchedFields,
+	touchedFields: _touchedFields,
 	setTouchedFields,
 	loading,
 	setStep,

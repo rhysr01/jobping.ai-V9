@@ -189,6 +189,41 @@ function validateJob(job) {
 	const originalCategories = [...(job.categories || [])];
 	job.categories = validateAndFixCategories(job.categories);
 
+	// CRITICAL: Ensure job has at least one work-type category
+	// This prevents jobs from being saved without work-type categories
+	// This is REQUIRED for proper matching - jobs without work-type categories cannot be matched to users
+	const { ensureWorkTypeCategory, WORK_TYPE_CATEGORIES } = require("./workTypeInference.cjs");
+	const hasWorkTypeCategory = (job.categories || []).some((cat) =>
+		WORK_TYPE_CATEGORIES.includes(cat),
+	);
+
+	if (!hasWorkTypeCategory) {
+		// Auto-fix: Infer work-type category from title/description
+		// This ensures ALL jobs have work-type categories for proper matching
+		const inferredCategories = ensureWorkTypeCategory({
+			title: job.title || "",
+			description: job.description || "",
+			categories: job.categories || [],
+		});
+		
+		const inferredWorkTypes = inferredCategories.filter((cat) =>
+			WORK_TYPE_CATEGORIES.includes(cat),
+		);
+		
+		if (inferredWorkTypes.length > 0) {
+			job.categories = inferredCategories;
+			warnings.push(
+				`Missing work-type category - auto-inferred: ${inferredWorkTypes.join(", ")}`,
+			);
+		} else {
+			// This should never happen due to ensureWorkTypeCategory fallback to 'general-management'
+			// But if it does, reject the job - it cannot be matched without a work-type category
+			errors.push(
+				`CRITICAL: Unable to infer work-type category for job "${job.title}" - job will be rejected (required for matching)`,
+			);
+		}
+	}
+
 	// Check if deprecated categories were removed
 	const hadDeprecated = originalCategories.some((cat) =>
 		DEPRECATED_CATEGORIES.includes(cat),

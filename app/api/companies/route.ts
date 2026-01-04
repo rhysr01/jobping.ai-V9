@@ -1,7 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getAllCompanyLogos, getCompanyLogo } from "@/lib/companyLogos";
+import { apiLogger } from "@/lib/api-logger";
 import { asyncHandler } from "@/lib/errors";
 import { getDatabaseClient } from "@/Utils/databasePool";
+import { withApiAuth } from "@/Utils/auth/apiAuth";
 
 // Cache for 1 hour
 let cachedCompanies: Array<{ name: string; logoPath: string }> | null = null;
@@ -21,8 +23,10 @@ function getGuaranteedFallbackCompanies(): Array<{
 	try {
 		const allLogos = getAllCompanyLogos();
 		if (allLogos.length === 0) {
-			console.error(
-				"[Companies API] CRITICAL: getAllCompanyLogos() returned empty array!",
+			apiLogger.error(
+				"CRITICAL: getAllCompanyLogos() returned empty array",
+				new Error("Company logos array is empty"),
+				{ endpoint: "/api/companies" },
 			);
 			// This should never happen due to validation, but provide absolute fallback
 			return [
@@ -35,7 +39,9 @@ function getGuaranteedFallbackCompanies(): Array<{
 			.slice(0, 30)
 			.map((logo) => ({ name: logo.name, logoPath: logo.logoPath }));
 	} catch (error) {
-		console.error("[Companies API] Error getting fallback companies:", error);
+		apiLogger.error("Error getting fallback companies", error as Error, {
+			endpoint: "/api/companies",
+		});
 		// Absolute last resort fallback
 		return [
 			{ name: "Spotify", logoPath: "/logos/companies/spotify.svg" },
@@ -45,7 +51,7 @@ function getGuaranteedFallbackCompanies(): Array<{
 	}
 }
 
-export const GET = asyncHandler(async (_req: NextRequest) => {
+const getCompaniesHandler = asyncHandler(async (_req: NextRequest) => {
 	const now = Date.now();
 
 	if (cachedCompanies && now - lastFetch < CACHE_DURATION) {
@@ -70,7 +76,9 @@ export const GET = asyncHandler(async (_req: NextRequest) => {
 			.not("company", "eq", "");
 
 		if (error) {
-			console.error(`[Companies API] Database error: ${error.message}`);
+			apiLogger.error("Database error fetching companies", error as Error, {
+				endpoint: "/api/companies",
+			});
 			// Fall through to use guaranteed fallback
 			companiesWithLogos = getGuaranteedFallbackCompanies();
 		} else {
@@ -85,19 +93,42 @@ export const GET = asyncHandler(async (_req: NextRequest) => {
 			});
 
 			// Debug: Log total companies found
-			console.log(
-				`[Companies API] Found ${companyData.size} unique companies in database`,
-			);
+			apiLogger.debug("Found companies in database", {
+				endpoint: "/api/companies",
+				companyCount: companyData.size,
+			});
 
-			// Map database companies to logos
+			// Map database companies to logos, but only include companies whose logo files actually exist
 			const dbCompaniesWithLogos = Array.from(companyData.entries())
 				.map(([name, count]) => {
 					const logo = getCompanyLogo(name);
 					if (!logo) {
 						// Debug: Log companies without logos (first 10)
 						if (Array.from(companyData.keys()).indexOf(name) < 10) {
-							console.log(`[Companies API] No logo found for: "${name}"`);
+							apiLogger.debug("No logo found for company", {
+								endpoint: "/api/companies",
+								companyName: name,
+							});
 						}
+						return null;
+					}
+
+					// Check if the logo file actually exists by checking against our known existing logos
+					const existingLogos = [
+						'accenture', 'adobe', 'airbnb', 'amazon', 'apple', 'bmw', 'bostonconsultinggroup',
+						'deloitte', 'github', 'glovo', 'google', 'ibm', 'ikea', 'justeat', 'klarna', 'kpmg',
+						'mckinsey', 'meta', 'microsoft', 'monzo', 'n26', 'netflix', 'notion', 'oracle', 'pwc',
+						'revolut', 'salesforce', 'sap', 'shopify', 'siemens', 'spotify', 'stripe', 'tesla',
+						'uber', 'vercel', 'volkswagen', 'volvo', 'wise', 'zalando'
+					];
+
+					const logoFilename = logo.logoPath.split('/').pop()?.replace('.svg', '');
+					if (!logoFilename || !existingLogos.includes(logoFilename)) {
+						apiLogger.debug("Logo file does not exist", {
+							endpoint: "/api/companies",
+							companyName: name,
+							logoPath: logo.logoPath,
+						});
 						return null;
 					}
 
@@ -121,29 +152,34 @@ export const GET = asyncHandler(async (_req: NextRequest) => {
 					.map(({ name, logoPath }) => ({ name, logoPath }));
 			} else {
 				// Fallback: Show all available logos if no DB matches
-				console.log(
-					`[Companies API] No DB matches found, using guaranteed fallback`,
-				);
+				apiLogger.info("No DB matches found, using guaranteed fallback", {
+					endpoint: "/api/companies",
+				});
 				companiesWithLogos = getGuaranteedFallbackCompanies();
 			}
 		}
 	} catch (error) {
 		// Any error - use guaranteed fallback
-		console.error("[Companies API] Unexpected error:", error);
+		apiLogger.error("Unexpected error fetching companies", error as Error, {
+			endpoint: "/api/companies",
+		});
 		companiesWithLogos = getGuaranteedFallbackCompanies();
 	}
 
 	// Final safety check: ensure we always have at least one company
 	if (!companiesWithLogos || companiesWithLogos.length === 0) {
-		console.error(
-			"[Companies API] CRITICAL: companiesWithLogos is empty! Using emergency fallback.",
+		apiLogger.error(
+			"CRITICAL: companiesWithLogos is empty! Using emergency fallback.",
+			new Error("Companies array is empty"),
+			{ endpoint: "/api/companies" },
 		);
 		companiesWithLogos = getGuaranteedFallbackCompanies();
 	}
 
-	console.log(
-		`[Companies API] Returning ${companiesWithLogos.length} companies with logos`,
-	);
+	apiLogger.info("Returning companies with logos", {
+		endpoint: "/api/companies",
+		count: companiesWithLogos.length,
+	});
 
 	cachedCompanies = companiesWithLogos;
 	lastFetch = now;
@@ -153,4 +189,12 @@ export const GET = asyncHandler(async (_req: NextRequest) => {
 		count: companiesWithLogos.length,
 		cached: false,
 	});
+});
+
+export const GET = withApiAuth(getCompaniesHandler, {
+	allowPublic: true,
+	rateLimitConfig: {
+		maxRequests: 50, // 50 requests per minute
+		windowMs: 60000,
+	},
 });

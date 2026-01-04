@@ -18,4 +18,21 @@ jest.mock('@/lib/env', () => {
 });
 
 describe('env', () => {
+	it('should export ENV object', () => {
+		expect(ENV).toBeDefined();
+		expect(typeof ENV).toBe('object');
+	});
 
+	it('should export environment helper functions', () => {
+		expect(typeof isDevelopment).toBe('function');
+		expect(typeof isProduction).toBe('function');
+		expect(typeof isTest).toBe('function');
+	});
+
+	it('should correctly identify test environment', () => {
+		const originalEnv = process.env.NODE_ENV;
+		process.env.NODE_ENV = 'test';
+		expect(isTest()).toBe(true);
+		process.env.NODE_ENV = originalEnv;
+	});
+});

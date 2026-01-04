@@ -70,7 +70,7 @@ export async function GET(_req: NextRequest) {
 		// Get job supply stats
 		const { count: activeJobs, error: jobsError } = await supabase
 			.from("jobs")
-			.select("*", { count: "exact", head: true })
+			.select("id", { count: "exact", head: true })
 			.eq("is_active", true);
 
 		if (jobsError) {

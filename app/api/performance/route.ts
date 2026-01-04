@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createSuccessResponse } from "@/lib/api-types";
 import { asyncHandler } from "@/lib/errors";
+import { apiLogger } from "@/lib/api-logger";
 
 // Helper to get requestId from request
 function getRequestId(req: NextRequest): string {
@@ -23,7 +24,7 @@ const getPerformanceHandler = asyncHandler(async (request: NextRequest) => {
 	const startTime = Date.now();
 	const requestId = getRequestId(request);
 
-	console.log(" Collecting performance metrics...");
+	apiLogger.info(" Collecting performance metrics...");
 
 	// Get query parameters
 	const { searchParams } = new URL(request.url);
@@ -85,7 +86,7 @@ const optimizePerformanceHandler = asyncHandler(
 		const startTime = Date.now();
 		const requestId = getRequestId(request);
 
-		console.log(" Starting performance optimization...");
+		apiLogger.info(" Starting performance optimization...");
 
 		const optimizationResults = {
 			timestamp: new Date().toISOString(),
@@ -122,7 +123,7 @@ const optimizePerformanceHandler = asyncHandler(
 			optimizationResults.memory_after.heapUsed;
 		optimizationResults.actions.push(`Memory freed: ${memorySaved} bytes`);
 
-		console.log(
+		apiLogger.info(
 			` Performance optimization completed in ${optimizationResults.optimization_time}ms`,
 		);
 

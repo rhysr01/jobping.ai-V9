@@ -846,10 +846,23 @@ async function scrapeAllCitiesCategories(options = {}) {
 		"london" // London has 1102 Adzuna jobs, 986 recent - already well covered
 	]);
 	
-	const baseMaxQueriesPerCity =
+	const maxQueriesPerCity =
 		typeof overrideMaxQueriesPerCity === "number"
 			? overrideMaxQueriesPerCity
 			: parseInt(process.env.ADZUNA_MAX_QUERIES_PER_CITY || "3", 10);
+
+	// Log config immediately after all variables are defined
+	console.log(
+		`⚙️  Adzuna config: ${JSON.stringify({
+			resultsPerPage,
+			maxDaysOld,
+			delayMs,
+			timeoutMs,
+			maxPages,
+			pageDelayJitter,
+			maxQueriesPerCity,
+		})}`,
+	);
 
 	console.log(
 		`🎓 Starting multilingual early-career job search across ${EU_CITIES_CATEGORIES.length} EU cities...`,
@@ -858,8 +871,10 @@ async function scrapeAllCitiesCategories(options = {}) {
 	console.log(`🌍 Languages: English + local terms per country`);
 	console.log(`🏢 Target sectors: ${HIGH_PERFORMING_SECTORS.join(", ")}`);
 	// Smart pagination with priority for low-coverage cities
-	// Low-coverage cities: More pages to maximize job collection
+	// RESPECTS API LIMITS: Free tier is 250 requests/day
+	// Low-coverage cities: More pages to maximize job collection (within limit)
 	// High-coverage cities: Standard pages (already well covered)
+	// Default pages (4 role + 3 generic) are optimized to stay within 250 requests/day
 	const baseRolePages = parseInt(process.env.ADZUNA_MAX_PAGES_ROLE || "4", 10);
 	const baseGenericPages = parseInt(
 		process.env.ADZUNA_MAX_PAGES_GENERIC || "3",
@@ -896,17 +911,6 @@ async function scrapeAllCitiesCategories(options = {}) {
 	);
 	console.log(
 		`⚡ Strategy: Prioritizing exact role names (highest performing), smart pagination (more pages for roles)`,
-	);
-	console.log(
-		`⚙️  Adzuna config: ${JSON.stringify({
-			resultsPerPage,
-			maxDaysOld,
-			delayMs,
-			timeoutMs,
-			maxPages,
-			pageDelayJitter,
-			maxQueriesPerCity,
-		})}`,
 	);
 	if (verbose) {
 		console.log(`🔍 Core English terms: ${CORE_ENGLISH_TERMS.join(", ")}`);
@@ -993,17 +997,17 @@ async function scrapeAllCitiesCategories(options = {}) {
 			let cityMaxQueries, cityRolePages, cityGenericPages;
 			if (isLowCoverage) {
 				// Low-coverage cities: More queries and pages to maximize collection
-				cityMaxQueries = baseMaxQueriesPerCity > 0 ? Math.max(baseMaxQueriesPerCity, 5) : 5;
+				cityMaxQueries = maxQueriesPerCity > 0 ? Math.max(maxQueriesPerCity, 5) : 5;
 				cityRolePages = Math.max(baseRolePages, 6); // Increased from 4 to 6
 				cityGenericPages = Math.max(baseGenericPages, 5); // Increased from 3 to 5
 			} else if (isHighCoverage) {
 				// High-coverage cities: Standard allocation (already well covered)
-				cityMaxQueries = baseMaxQueriesPerCity > 0 ? baseMaxQueriesPerCity : 3;
+				cityMaxQueries = maxQueriesPerCity > 0 ? maxQueriesPerCity : 3;
 				cityRolePages = baseRolePages;
 				cityGenericPages = baseGenericPages;
 			} else {
 				// Standard cities: Moderate increase
-				cityMaxQueries = baseMaxQueriesPerCity > 0 ? Math.max(baseMaxQueriesPerCity, 4) : 4;
+				cityMaxQueries = maxQueriesPerCity > 0 ? Math.max(maxQueriesPerCity, 4) : 4;
 				cityRolePages = Math.max(baseRolePages, 5); // Increased from 4 to 5
 				cityGenericPages = Math.max(baseGenericPages, 4); // Increased from 3 to 4
 			}

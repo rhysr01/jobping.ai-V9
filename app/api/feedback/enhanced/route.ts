@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { withRedis } from "@/lib/redis-client";
 import { getDatabaseClient } from "@/Utils/databasePool";
+import { apiLogger } from "@/lib/api-logger";
 
 // Enhanced feedback data interface
 interface EnhancedFeedbackData {
@@ -142,7 +143,7 @@ export async function POST(request: NextRequest) {
 			feedbackId: feedbackData.timestamp,
 		});
 	} catch (error) {
-		console.error("Error recording enhanced feedback:", error);
+		apiLogger.error("Error recording enhanced feedback:", error as Error);
 		return NextResponse.json(
 			{ error: "Failed to record feedback" },
 			{ status: 500 },
@@ -366,7 +367,7 @@ export async function GET(request: NextRequest) {
 			.limit(limit);
 
 		if (error) {
-			console.error("Error fetching feedback:", error);
+			apiLogger.error("Error fetching feedback:", error as Error);
 			return NextResponse.json(
 				{ error: "Failed to fetch feedback" },
 				{ status: 500 },
@@ -379,7 +380,7 @@ export async function GET(request: NextRequest) {
 			count: feedback?.length || 0,
 		});
 	} catch (error) {
-		console.error("Error processing GET request:", error);
+		apiLogger.error("Error processing GET request:", error as Error);
 		return NextResponse.json(
 			{ error: "Failed to process request" },
 			{ status: 500 },
@@ -450,7 +451,7 @@ async function recordFeedbackToMatchLogs(feedbackData: EnhancedFeedbackData) {
 	});
 
 	if (error) {
-		console.error("Error recording to match_logs:", error);
+		apiLogger.error("Error recording to match_logs:", error as Error);
 		throw error;
 	}
 }
@@ -474,7 +475,7 @@ async function recordFeedbackToDatabase(feedbackData: EnhancedFeedbackData) {
 	});
 
 	if (error) {
-		console.error("Error recording to feedback table:", error);
+		apiLogger.error("Error recording to feedback table:", error as Error);
 		// Don't throw here - match_logs is the primary table
 	}
 }
@@ -507,7 +508,7 @@ async function invalidateAvoidanceCache(
 		});
 	} catch (error) {
 		// Fail silently - cache invalidation is not critical
-		console.warn("Failed to invalidate avoidance cache", error);
+		apiLogger.warn("Failed to invalidate avoidance cache", error);
 	}
 }
 
@@ -559,7 +560,7 @@ async function applyFeedbackReranking(
     }).sort((a, b) => (b.match_score || 0) - (a.match_score || 0));
 
   } catch (error) {
-    console.error('Error applying feedback reranking:', error);
+    apiLogger.error('Error applying feedback reranking:', error as Error);
     return jobs; // Return original jobs if reranking fails
   }
 }

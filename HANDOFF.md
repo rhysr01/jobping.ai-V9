@@ -10,7 +10,7 @@
 JobPing is an AI-powered job matching platform for early-career roles across Europe. It delivers 5 personalized job matches weekly via email, using GPT-based scoring, vector embeddings, and multi-source job aggregation (Adzuna, Reed, JobSpy).
 
 **Live:** https://getjobping.com  
-**Tech Stack:** Next.js 15, React 19, TypeScript, Supabase (PostgreSQL), Resend (email), OpenAI (matching), Vercel (hosting)
+**Tech Stack:** Next.js 16, React 19, TypeScript, Supabase (PostgreSQL), Resend (email), OpenAI (matching), Vercel (hosting)
 
 ---
 
@@ -59,8 +59,8 @@ JobPing is an AI-powered job matching platform for early-career roles across Eur
 - **Provider:** Resend
 - **Templates:** `Utils/email/productionReadyTemplates.ts`
 - **Delivery:** 
-  - Free: 5 jobs/week (Thursday)
-  - Premium: 15 jobs/week (Mon/Wed/Fri)
+  - Free: No emails (website-only access to 5 matches for 30 days)
+  - Premium: 10 matches on signup + 15/week via email (Mon/Wed/Fri, 5 per email)
 - **See:** `docs/guides/PRODUCTION_GUIDE.md` for email configuration
 
 ### 4. Job Sources

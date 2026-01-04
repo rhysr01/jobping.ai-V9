@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getDatabaseClient } from "@/Utils/databasePool";
+import { apiLogger } from "@/lib/api-logger";
 
 // Email feedback interface removed - not currently used
 
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
 			});
 
 		if (feedbackError) {
-			console.error("Error recording email feedback:", feedbackError);
+			apiLogger.error("Error recording email feedback:", feedbackError);
 			return NextResponse.json(
 				{
 					error: "Failed to record feedback",
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
 		});
 
 		if (logError) {
-			console.error("Error recording to match_logs:", logError);
+			apiLogger.error("Error recording to match_logs:", logError);
 			// Don't fail the request - feedback was recorded successfully
 		}
 
@@ -159,7 +160,7 @@ export async function POST(request: NextRequest) {
 			},
 		);
 	} catch (error) {
-		console.error("Error processing email feedback:", error);
+		apiLogger.error("Error processing email feedback:", error as Error);
 		return NextResponse.json(
 			{
 				error: "Failed to process feedback",
@@ -196,7 +197,7 @@ export async function GET(request: NextRequest) {
 			.limit(10);
 
 		if (error) {
-			console.error("Error fetching feedback stats:", error);
+			apiLogger.error("Error fetching feedback stats:", error as Error);
 			return NextResponse.json(
 				{
 					error: "Failed to fetch feedback stats",
@@ -211,7 +212,7 @@ export async function GET(request: NextRequest) {
 			count: feedback?.length || 0,
 		});
 	} catch (error) {
-		console.error("Error fetching feedback stats:", error);
+		apiLogger.error("Error fetching feedback stats:", error as Error);
 		return NextResponse.json(
 			{
 				error: "Failed to fetch feedback stats",

@@ -6,6 +6,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { asyncHandler, ValidationError } from "@/lib/errors";
 import { updateUserEngagement } from "@/Utils/engagementTracker";
+import { apiLogger } from "@/lib/api-logger";
 
 export const POST = asyncHandler(async (req: NextRequest) => {
 	const { email, type } = await req.json();
@@ -21,7 +22,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 	// Update user engagement
 	await updateUserEngagement(email, type as "email_opened" | "email_clicked");
 
-	console.log(` Tracked ${type} for ${email}`);
+	apiLogger.info(` Tracked ${type} for ${email}`);
 
 	return NextResponse.json({
 		success: true,
@@ -46,7 +47,7 @@ export const GET = asyncHandler(async (req: NextRequest) => {
 	// Update user engagement
 	await updateUserEngagement(email, type as "email_opened" | "email_clicked");
 
-	console.log(` Tracked ${type} for ${email}`);
+	apiLogger.info(` Tracked ${type} for ${email}`);
 
 	// For click tracking, redirect to the original URL
 	if (type === "email_clicked" && url) {

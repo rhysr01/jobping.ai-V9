@@ -100,7 +100,7 @@ export default function Header() {
 							className="flex items-center gap-2 group py-1"
 							aria-label="JobPing Home"
 						>
-							<div className="scale-75 md:scale-100 origin-left">
+							<div className="scale-90 md:scale-100 origin-left">
 								<LogoWordmark />
 							</div>
 						</Link>
@@ -119,19 +119,19 @@ export default function Header() {
 											: "text-content-secondary hover:text-white"
 									}`}
 								>
-									{link.label}
-									{activeSection === link.href && (
-										<motion.div
-											layoutId="activeNav"
-											className="absolute -bottom-1 left-0 right-0 h-0.5 bg-purple-500 rounded-full"
-											initial={false}
-											transition={{
-												type: "spring",
-												stiffness: 380,
-												damping: 30,
-											}}
-										/>
-									)}
+								{link.label}
+								{activeSection === link.href && (
+									<motion.div
+										layoutId="activeNav"
+										className="absolute -bottom-1 left-0 right-0 h-0.5 bg-brand-600 rounded-full"
+										initial={false}
+										transition={{
+											type: "spring",
+											stiffness: 380,
+											damping: 30,
+										}}
+									/>
+								)}
 								</Link>
 							))}
 

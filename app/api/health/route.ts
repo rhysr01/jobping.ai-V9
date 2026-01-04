@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { isRedisAvailable } from "@/lib/redis-client";
 import { getDatabaseClient } from "@/Utils/databasePool";
+import { apiLogger } from "@/lib/api-logger";
 
 // Helper to get requestId from request
 function getRequestId(req: NextRequest): string {
@@ -48,7 +49,7 @@ export async function GET(req: NextRequest) {
 		const duration = Date.now() - start;
 
 		if (duration > HEALTH_SLO_MS) {
-			console.warn(
+			apiLogger.warn(
 				`Health check SLO violation: ${duration}ms > ${HEALTH_SLO_MS}ms target`,
 			);
 		}
@@ -83,7 +84,7 @@ export async function GET(req: NextRequest) {
 		response.headers.set("x-request-id", requestId);
 		return response;
 	} catch (error) {
-		console.error("Health check failed:", error);
+		apiLogger.error("Health check failed:", error as Error);
 		const duration = Date.now() - start;
 		const response = NextResponse.json(
 			{

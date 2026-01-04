@@ -19,6 +19,7 @@ import { AppError, UnauthorizedError, ValidationError } from "@/lib/errors";
 import { logger } from "@/lib/monitoring";
 import type { CleanupLogEntry } from "@/lib/types";
 import { getDatabaseClient } from "@/Utils/databasePool";
+import { apiLogger } from "@/lib/api-logger";
 
 // Security configuration
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
@@ -96,15 +97,15 @@ class JobCleanupAPI {
 					: undefined;
 		const logEntry = extra ? { ...baseEntry, ...extra } : baseEntry;
 
-		console.log(
+		apiLogger.info(
 			`[${timestamp}] [${this.requestId}] ${level.toUpperCase()}: ${message}`,
 			data || "",
 		);
 
-		// Structured logging for monitoring systems
-		if (process.env.NODE_ENV === "production") {
-			console.log("CLEANUP_LOG:", JSON.stringify(logEntry));
-		}
+	// Structured logging for monitoring systems
+	if (process.env.NODE_ENV === "production") {
+		apiLogger.info("CLEANUP_LOG:", { logEntry });
+	}
 	}
 
 	async validateRequest(request: CleanupRequest): Promise<void> {
@@ -136,7 +137,7 @@ class JobCleanupAPI {
 			// Get total job count
 			const { count: totalJobs, error: countError } = await this.supabase
 				.from("jobs")
-				.select("*", { count: "exact", head: true });
+				.select("id", { count: "exact", head: true });
 
 			if (countError) {
 				throw new AppError(
@@ -298,7 +299,7 @@ class JobCleanupAPI {
 		// Get current job count for verification
 		const { count: finalJobCount } = await this.supabase
 			.from("jobs")
-			.select("*", { count: "exact", head: true });
+			.select("id", { count: "exact", head: true });
 
 		const report = {
 			requestId: this.requestId,
@@ -312,10 +313,10 @@ class JobCleanupAPI {
 
 		this.log("info", "Cleanup report generated", report);
 
-		// Log structured metrics for monitoring
-		if (process.env.NODE_ENV === "production") {
-			console.log("CLEANUP_METRICS:", JSON.stringify(report));
-		}
+	// Log structured metrics for monitoring
+	if (process.env.NODE_ENV === "production") {
+		apiLogger.info("CLEANUP_METRICS:", { report });
+	}
 
 		return report;
 	}
@@ -388,7 +389,7 @@ export const POST = async (req: NextRequest) => {
 			data: report,
 		});
 	} catch (error) {
-		console.error(`[${requestId}] Cleanup API error:`, error);
+		apiLogger.error(`[${requestId}] Cleanup API error:`, error as Error);
 
 		// Log errors to Axiom
 		logger.error("Cleanup API error", {

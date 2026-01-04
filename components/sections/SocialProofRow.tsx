@@ -7,7 +7,7 @@ import { BrandIcons } from "@/components/ui/BrandIcons";
 import { useStats } from "@/hooks/useStats";
 
 export default function SocialProofRow() {
-	const { stats, isLoading } = useStats();
+	const { stats, isLoading: _isLoading } = useStats();
 	const [_weeklyNewJobs, setWeeklyNewJobs] = useState("");
 	const [_totalUsers, setTotalUsers] = useState("");
 	const [_statsStale, setStatsStale] = useState(true);

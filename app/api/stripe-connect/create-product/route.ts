@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
 			},
 		});
 	} catch (error: any) {
-		apiLogger.error("Failed to create product on connected account", error, {
+		apiLogger.error("Failed to create product on connected account", error as Error, {
 			errorType: error.type,
 			errorCode: error.code,
 		});

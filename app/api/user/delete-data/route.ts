@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { asyncHandler, ValidationError } from "@/lib/errors";
 import { getDatabaseClient } from "@/Utils/databasePool";
+import { apiLogger } from "@/lib/api-logger";
 
 export const POST = asyncHandler(async (request: NextRequest) => {
 	const { email } = await request.json();
@@ -11,7 +12,7 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 
 	const supabase = getDatabaseClient();
 
-	console.log(`  Processing data deletion request for: ${email}`);
+	apiLogger.info(`  Processing data deletion request for: ${email}`);
 
 	// Delete user data from all relevant tables
 	const deletions = await Promise.allSettled([
@@ -79,10 +80,10 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 
 		if (result.status === "fulfilled") {
 			const count = (result.value.data as any)?.length || 0;
-			console.log(` Deleted from ${tableNames[index]}: ${count} records`);
+			apiLogger.info(` Deleted from ${tableNames[index]}: ${count} records`);
 			return { table: tableNames[index], success: true, count: count };
 		} else {
-			console.error(
+			apiLogger.error(
 				` Failed to delete from ${tableNames[index]}:`,
 				result.reason,
 			);
@@ -93,12 +94,12 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 	const successfulDeletions = results.filter((r) => r.success);
 	const failedDeletions = results.filter((r) => !r.success);
 
-	console.log(
+	apiLogger.info(
 		` Data deletion summary: ${successfulDeletions.length} successful, ${failedDeletions.length} failed`,
 	);
 
 	if (failedDeletions.length > 0) {
-		console.warn("  Some deletions failed:", failedDeletions);
+		apiLogger.warn("  Some deletions failed:", failedDeletions);
 	}
 
 	// Return success even if some deletions failed (partial success is acceptable)

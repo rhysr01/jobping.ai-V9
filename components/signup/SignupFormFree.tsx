@@ -24,7 +24,7 @@ import {
 	useEmailValidation,
 	useRequiredValidation,
 } from "@/hooks/useFormValidation";
-import { useStats } from "@/hooks/useStats";
+// import { useStats } from "@/hooks/useStats"; // Kept for future use
 import { useFormPersistenceFree } from "@/hooks/useFormPersistenceFree";
 import { trackEvent } from "@/lib/analytics";
 import { ApiError, apiCall, apiCallJson } from "@/lib/api-client";
@@ -87,7 +87,7 @@ export default function SignupFormFree() {
 	const [error, setError] = useState("");
 	const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
 	const prefersReduced = useReducedMotion();
-	const { stats, isLoading: isLoadingStats } = useStats();
+	// const { stats, isLoading: isLoadingStats } = useStats(); // Kept for future use
 
 	const [formData, setFormData] = useState({
 		cities: [] as string[],
@@ -438,14 +438,6 @@ export default function SignupFormFree() {
 				
 				// Hide live matching
 				setShowLiveMatching(false);
-
-				// Track successful signup
-				trackEvent("signup_completed", {
-					tier: "free",
-					cities: formData.cities.length,
-					career_path: formData.careerPath,
-					matchCount: matchCountValue,
-				});
 
 				showToast.success(
 					`Account created! Found ${matchCountValue} perfect matches...`,

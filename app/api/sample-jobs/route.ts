@@ -1,51 +1,70 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { apiLogger } from "@/lib/api-logger";
+import { COMPANY_LOGOS } from "@/lib/companyLogos";
+import { withApiAuth } from "@/Utils/auth/apiAuth";
 import { getDatabaseClient } from "@/Utils/databasePool";
 import { getDatabaseCategoriesForForm } from "@/Utils/matching/categoryMapper";
+import { calculateCompanyTierScore } from "@/Utils/matching/consolidated/scoring";
 import {
 	calculateMatchScore,
 	generateMatchExplanation,
 } from "@/Utils/matching/rule-based-matcher.service";
 import type { Job, UserPreferences } from "@/Utils/matching/types";
-import { COMPANY_LOGOS } from "@/lib/companyLogos";
-import { calculateCompanyTierScore } from "@/Utils/matching/consolidated/scoring";
 
 export const dynamic = "force-dynamic"; // Force dynamic rendering
 export const revalidate = 3600; // Cache for 1 hour
 
-export async function GET(req: NextRequest) {
+async function getSampleJobsHandler(req: NextRequest) {
 	try {
 		const supabase = getDatabaseClient();
 		const { searchParams } = new URL(req.url);
-		const _day = searchParams.get("day") || "monday";
+		// Day parameter available but not currently used in rotation logic
+		// const _day = searchParams.get("day") || "monday";
 		const tier = searchParams.get("tier") || "free"; // 'free' or 'premium'
-		const weekParam = searchParams.get("week");
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const _weekParam = searchParams.get("week");
 
 		// Calculate week number for rotation (changes weekly)
-		const weekNumber = weekParam
-			? parseInt(weekParam, 10)
-			: (() => {
-					const now = new Date();
-					const start = new Date(now.getFullYear(), 0, 1);
-					const days = Math.floor(
-						(now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000),
-					);
-					return Math.ceil((days + start.getDay() + 1) / 7);
-				})();
+		// Note: weekNumber calculation kept for future use
+		// const _weekNumber = weekParam
+		// 	? parseInt(weekParam, 10)
+		// 	: (() => {
+		// 			const now = new Date();
+		// 			const start = new Date(now.getFullYear(), 0, 1);
+		// 			const days = Math.floor(
+		// 				(now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000),
+		// 			);
+		// 			return Math.ceil((days + start.getDay() + 1) / 7);
+		// 		})();
 
 		// Use week number to rotate through users (ensures weekly rotation)
 		// Rotate through 20 users: week 1 = user 0, week 2 = user 1, etc.
-		const _userOffset = (weekNumber - 1) % 20;
+		// User offset calculation kept for future use
+		// const userOffset = (weekNumber - 1) % 20;
 
 		// Strategy: ALWAYS return real jobs from database
 		// Use fictional user profile - jobs MUST be real
 		// Use week number + tier to select different jobs for rotation
 
-		const resultJobs: any[] = [];
+		interface SampleJob extends Job {
+			matchScore: number; // camelCase for API response
+			matchReason: string; // camelCase for API response
+			userProfile?: UserPreferences;
+		}
+
+		interface PartialJob {
+			job_hash?: string;
+			title?: string;
+			company?: string;
+			location?: string;
+		}
+
+		const resultJobs: SampleJob[] = [];
 		const usedJobHashes = new Set<string>();
 		const usedCompositeKeys = new Set<string>(); // Add this for jobs without hash
 
 		// Helper function to create composite key
-		const getJobKey = (job: any): string => {
+		const getJobKey = (job: PartialJob): string => {
 			if (job.job_hash && job.job_hash.trim() !== "") {
 				return job.job_hash;
 			}
@@ -57,7 +76,7 @@ export async function GET(req: NextRequest) {
 		};
 
 		// Helper function to check if job is already used
-		const isJobUsed = (job: any): boolean => {
+		const isJobUsed = (job: PartialJob): boolean => {
 			const key = getJobKey(job);
 			if (job.job_hash && job.job_hash.trim() !== "") {
 				return usedJobHashes.has(key);
@@ -66,7 +85,7 @@ export async function GET(req: NextRequest) {
 		};
 
 		// Helper function to mark job as used
-		const markJobAsUsed = (job: any): void => {
+		const markJobAsUsed = (job: PartialJob): void => {
 			const key = getJobKey(job);
 			if (job.job_hash && job.job_hash.trim() !== "") {
 				usedJobHashes.add(key);
@@ -79,7 +98,7 @@ export async function GET(req: NextRequest) {
 		const isPremiumCompany = (companyName: string): boolean => {
 			if (!companyName) return false;
 			const normalized = companyName.toLowerCase().trim();
-			
+
 			// Check if company has a logo (premium indicator)
 			const hasLogo = COMPANY_LOGOS.some(
 				(logo) =>
@@ -87,32 +106,28 @@ export async function GET(req: NextRequest) {
 					normalized.includes(logo.name.toLowerCase()) ||
 					logo.name.toLowerCase().includes(normalized),
 			);
-			
+
 			if (hasLogo) return true;
-			
+
 			// Also check using company tier scoring
 			const tierScore = calculateCompanyTierScore(companyName, "");
 			return tierScore.points >= 12; // Famous companies get 12 points
 		};
 
-		// Create fictional user profiles for free and premium
-		// These profiles represent typical user preferences
-		// Jobs MUST be real from database, profiles are fictional
-		// Assume users speak English + common EU languages (not Japanese, Chinese, Korean, etc.)
+		// Create realistic sample user profiles that match actual job categories
+		// These profiles are designed to show high-quality matches for demonstration
 		const fictionalProfiles = {
 			free: {
 				email: "sample-free@jobping.com",
-				// No name - using "Hi user" instead
-				cities: ["London", "Amsterdam", "Berlin"],
-				careerPath: "Strategy", // Changed from "Tech" to "Strategy" for Strategy & Business Design
-				languages_spoken: ["English", "German"], // Common EU languages
+				cities: ["Berlin", "Munich", "Hamburg"], // German cities for better matches
+				careerPath: "strategy", // Use lowercase to match database
+				languages_spoken: ["English", "German"],
 			},
 			premium: {
 				email: "sample-premium@jobping.com",
-				// No name - using "Hi user" instead
-				cities: ["Stockholm", "Dublin", "Paris"],
-				careerPath: "Finance",
-				languages_spoken: ["English", "French"], // Common EU languages
+				cities: ["London", "Amsterdam", "Berlin"],
+				careerPath: "tech", // Tech has many jobs and good matches
+				languages_spoken: ["English", "Dutch", "German"],
 			},
 		};
 
@@ -134,12 +149,26 @@ export async function GET(req: NextRequest) {
 			visa_status: "need_sponsorship",
 		};
 
+		// Get career path categories for the selected profile
+		const careerPathCategories = getDatabaseCategoriesForForm(
+			selectedUserProfile.careerPath.toLowerCase(),
+		);
+
+		// Normalize city names for matching
+		const normalizedCities = selectedUserProfile.cities.map((c) =>
+			c.toLowerCase().trim(),
+		);
+
 		// Enhanced match score calculation using REAL matching engine
 		const calculateRealMatchScore = (
-			job: any,
+			job: Partial<Job>,
 			profile: typeof selectedUserProfile,
 			existingHotMatches: number,
-		): { score: number; reason: string; breakdown: any } => {
+		): {
+			score: number;
+			reason: string;
+			breakdown: Record<string, unknown> | null;
+		} => {
 			// Convert job to Job format expected by matching engine
 			const now = new Date().toISOString();
 			const jobForMatching: Job = {
@@ -192,25 +221,25 @@ export async function GET(req: NextRequest) {
 				const jobCategories = (job.categories || []).map((c: string) =>
 					c.toLowerCase(),
 				);
+				// Stricter career matching - job must have the exact career category
 				const hasCareerMatch = careerPathCategories.some((cat) =>
-					jobCategories.some(
-						(jc: string) =>
-							jc.includes(cat.toLowerCase()) || cat.toLowerCase().includes(jc),
-					),
+					jobCategories.includes(cat.toLowerCase()),
 				);
 
-				// Boost score for perfect matches (city + career)
-				if (
-					matchesPreferredCity &&
-					hasCareerMatch &&
-					matchResult.overall >= 75
-				) {
-					baseScore = Math.min(0.92, baseScore + 0.05);
-				} else if (
-					(matchesPreferredCity || hasCareerMatch) &&
-					matchResult.overall >= 70
-				) {
-					baseScore = Math.min(0.9, baseScore + 0.03);
+				// Much stricter scoring: career path match is crucial for sample quality
+				if (hasCareerMatch) {
+					// Career match = high score, boosted for city matches
+					if (matchesPreferredCity) {
+						baseScore = Math.min(0.95, Math.max(baseScore, 0.85)); // 85-95% for perfect matches
+					} else {
+						baseScore = Math.min(0.9, Math.max(baseScore, 0.75)); // 75-90% for career matches
+					}
+				} else {
+					// No career match = significantly lower score, only show if very high base score
+					baseScore = Math.min(0.65, baseScore * 0.7); // Cap at 65%, reduce by 30%
+					if (baseScore < 0.6) {
+						baseScore = Math.max(0.5, baseScore); // Minimum 50% for any job shown
+					}
 				}
 
 				// Ensure only 1-2 hot matches (92%+)
@@ -222,7 +251,8 @@ export async function GET(req: NextRequest) {
 				const city = job.city || job.location?.split(",")[0] || "Europe";
 				const category = job.categories?.[0]?.replace(/-/g, " ") || "roles";
 				const company = job.company || "This company";
-				const _workEnv = job.work_environment || "Hybrid";
+				// Work environment available but not currently used in reason generation
+				// const workEnv = job.work_environment || "Hybrid";
 				const isGraduate = job.is_graduate || false;
 				const isInternship = job.is_internship || false;
 
@@ -248,10 +278,14 @@ export async function GET(req: NextRequest) {
 				return {
 					score: baseScore,
 					reason: personalizedReason,
-					breakdown: matchResult,
+					breakdown: matchResult
+						? (matchResult as unknown as Record<string, unknown>)
+						: null,
 				};
 			} catch (error) {
-				console.error("Error calculating real match score:", error);
+				apiLogger.error("Error calculating real match score", error as Error, {
+					endpoint: "/api/sample-jobs",
+				});
 				// Fallback to simple scoring
 				const baseScore = 0.8 + Math.random() * 0.12;
 				const city = job.city || job.location?.split(",")[0] || "Europe";
@@ -268,24 +302,25 @@ export async function GET(req: NextRequest) {
 		// Free: week 1 = offset 0, week 2 = offset 5, etc.
 		// Premium: week 1 = offset 10, week 2 = offset 15, etc.
 		// This ensures weekly rotation AND different jobs for free vs premium
-		const baseOffset = tier === "premium" ? 10 : 0;
-		const _jobOffset = (weekNumber - 1) * 5 + baseOffset;
+		// Base offset calculation kept for future pagination
+		// const baseOffset = tier === "premium" ? 10 : 0;
+		// const jobOffset = (_weekNumber - 1) * 5 + baseOffset;
 
 		// Get jobs from preferred cities first to ensure diversity
 		// Filter by cities in the fictional profile to show diverse locations
-		// Normalize city names for matching (handle case-insensitive and variations)
-		const normalizedCities = selectedUserProfile.cities.map((c) =>
-			c.toLowerCase().trim(),
-		);
 
 		// Map career path to database categories (e.g., 'Tech' → 'tech-transformation')
-		const careerPathCategories = getDatabaseCategoriesForForm(
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const _careerPathCategories = getDatabaseCategoriesForForm(
 			selectedUserProfile.careerPath.toLowerCase(),
 		);
 
-		// SIMPLIFIED: Get jobs with early-career filter, but don't filter by career path or cities at DB level
-		// We'll do all filtering in memory to avoid losing jobs
-		const query = supabase
+		// Get jobs that actually match the career path for better sample quality
+		// Filter by career path at database level for more relevant results
+		const userCareerCategories = careerPathCategories;
+
+		// Build dynamic query - prefer jobs that match career path
+		let query = supabase
 			.from("jobs")
 			.select(
 				"title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash",
@@ -297,19 +332,28 @@ export async function GET(req: NextRequest) {
 			.neq("job_url", "")
 			.or(
 				"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}",
-			) // Early-career filter only
-			.order("created_at", { ascending: false })
-			.limit(200); // Get more jobs to filter for diversity
+			);
+
+		// If we have specific career categories, filter by them for better matches
+		if (
+			userCareerCategories.length > 0 &&
+			userCareerCategories[0] !== "all-categories"
+		) {
+			// Use overlap filter to find jobs that have matching categories
+			query = query.overlaps("categories", userCareerCategories);
+		}
+
+		query = query.order("created_at", { ascending: false }).limit(300); // Get more jobs for better selection
 
 		const { data: allJobs, error: jobsError } = await query;
 
 		// Log query result for debugging
 		if (jobsError) {
-			console.warn("Sample jobs query error:", jobsError);
+			apiLogger.warn("Sample jobs query error:", jobsError);
 			// Don't return early - fall through to fallback logic
 		}
 
-		console.log(
+		apiLogger.info(
 			`Sample jobs query result: ${allJobs?.length || 0} jobs found`,
 			{
 				careerPath: selectedUserProfile.careerPath,
@@ -556,12 +600,12 @@ export async function GET(req: NextRequest) {
 					return b.score - a.score;
 				});
 
-			console.log(
+			apiLogger.info(
 				`After filtering: ${scoredJobs.length} valid jobs (scored and sorted)`,
 			);
 
 			// Helper function to check if job is unpaid (filter out for showcase)
-			const isUnpaid = (job: any): boolean => {
+			const isUnpaid = (job: Partial<Job>): boolean => {
 				const title = (job.title || "").toLowerCase();
 				const description = (job.description || "").toLowerCase();
 				return (
@@ -584,7 +628,7 @@ export async function GET(req: NextRequest) {
 				if (isJobUsed(job)) continue;
 				if (isUnpaid(job)) continue; // Skip unpaid internships
 
-				if (isPremium && score >= 0.60) {
+				if (isPremium && score >= 0.6) {
 					// Show premium companies with at least 60% match (even if not in preferred city)
 					const finalScore =
 						score >= 0.92 && finalHotMatchCount >= 2
@@ -602,7 +646,13 @@ export async function GET(req: NextRequest) {
 			}
 
 			// First pass: Perfect matches (city + career) - but skip premium (already handled)
-			for (const { job, score, reason, isPerfectMatch, isPremium } of scoredJobs) {
+			for (const {
+				job,
+				score,
+				reason,
+				isPerfectMatch,
+				isPremium,
+			} of scoredJobs) {
 				if (resultJobs.length >= 5) break;
 				if (isJobUsed(job)) continue;
 				if (isUnpaid(job)) continue; // Skip unpaid internships
@@ -681,7 +731,9 @@ export async function GET(req: NextRequest) {
 
 		// If initial query failed or returned no jobs, try simple fallback
 		if (jobsError || !allJobs || allJobs.length === 0) {
-			console.log(`Fallback needed: Initial query failed or returned 0 jobs`);
+			apiLogger.info(
+				`Fallback needed: Initial query failed or returned 0 jobs`,
+			);
 
 			// Simple fallback: Get ANY early-career jobs (with same filters)
 			const { data: fallbackJobs, error: fallbackError } = await supabase
@@ -701,11 +753,11 @@ export async function GET(req: NextRequest) {
 				.limit(50);
 
 			if (fallbackError) {
-				console.warn("Fallback query error:", fallbackError);
+				apiLogger.warn("Fallback query error:", fallbackError);
 			}
 
 			if (!fallbackError && fallbackJobs && fallbackJobs.length > 0) {
-				console.log(`Fallback: Found ${fallbackJobs.length} jobs`);
+				apiLogger.info(`Fallback: Found ${fallbackJobs.length} jobs`);
 
 				// Apply same filters as main query
 				const userLanguages = selectedUserProfile.languages_spoken || [
@@ -859,11 +911,11 @@ export async function GET(req: NextRequest) {
 
 		// If we have less than 5 jobs, try emergency fallback (even if we have 1-4 jobs)
 		if (validJobs.length < 5) {
-			console.log(
+			apiLogger.info(
 				`Emergency fallback: Only ${validJobs.length} jobs, trying emergency query to get to 5...`,
 			);
 
-			// Emergency: Get ANY early-career job with URL, apply filters
+			// Emergency: Get early-career jobs that match career path, apply filters
 			let emergencyQuery = supabase
 				.from("jobs")
 				.select(
@@ -876,23 +928,35 @@ export async function GET(req: NextRequest) {
 				.neq("job_url", "")
 				.not("job_hash", "in", Array.from(usedJobHashes));
 
-			// Still prefer early-career but don't require it in emergency
+			// Filter by career categories if available
+			if (
+				userCareerCategories.length > 0 &&
+				userCareerCategories[0] !== "all-categories"
+			) {
+				emergencyQuery = emergencyQuery.overlaps(
+					"categories",
+					userCareerCategories,
+				);
+			}
+
 			emergencyQuery = emergencyQuery.or(
 				"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}",
 			);
 			emergencyQuery = emergencyQuery
 				.order("created_at", { ascending: false })
-				.limit(50);
+				.limit(100);
 
 			const { data: emergencyJobs, error: emergencyError } =
 				await emergencyQuery;
 
 			if (emergencyError) {
-				console.warn("Emergency query error:", emergencyError);
+				apiLogger.warn("Emergency query error:", emergencyError);
 			}
 
 			if (!emergencyError && emergencyJobs && emergencyJobs.length > 0) {
-				console.log(`Emergency fallback: Found ${emergencyJobs.length} jobs`);
+				apiLogger.info(
+					`Emergency fallback: Found ${emergencyJobs.length} jobs`,
+				);
 
 				// Apply same filters
 				const userLanguages = selectedUserProfile.languages_spoken || [
@@ -1040,15 +1104,15 @@ export async function GET(req: NextRequest) {
 		}
 
 		if (validJobs.length === 0) {
-			console.error("CRITICAL: No jobs with URLs found after all filters");
-			console.error(
+			apiLogger.error("CRITICAL: No jobs with URLs found after all filters");
+			apiLogger.error(
 				`  - Initial query: ${allJobs?.length || 0} jobs, error: ${jobsError?.message || "none"}`,
 			);
-			console.error(`  - Result jobs before filtering: ${resultJobs.length}`);
-			console.error(`  - Used job hashes: ${usedJobHashes.size}`);
+			apiLogger.error(`  - Result jobs before filtering: ${resultJobs.length}`);
+			apiLogger.error(`  - Used job hashes: ${usedJobHashes.size}`);
 
-			// Last resort: try to get ANY job with URL (no filters at all)
-			const lastResortQuery = supabase
+			// Last resort: try to get jobs with URL, preferring career matches
+			let lastResortQuery = supabase
 				.from("jobs")
 				.select(
 					"title, company, location, description, job_url, categories, work_environment, is_internship, is_graduate, city, job_hash",
@@ -1058,14 +1122,25 @@ export async function GET(req: NextRequest) {
 				.is("filtered_reason", null)
 				.not("job_url", "is", null)
 				.neq("job_url", "")
-				.order("created_at", { ascending: false })
-				.limit(10);
+				.order("created_at", { ascending: false });
+
+			// Still try career filtering even in last resort
+			if (
+				userCareerCategories.length > 0 &&
+				userCareerCategories[0] !== "all-categories"
+			) {
+				lastResortQuery = lastResortQuery
+					.overlaps("categories", userCareerCategories)
+					.limit(20);
+			} else {
+				lastResortQuery = lastResortQuery.limit(10);
+			}
 
 			const { data: lastResortJobs, error: lastResortError } =
 				await lastResortQuery;
 
 			if (lastResortError) {
-				console.error("Last resort query error:", lastResortError);
+				apiLogger.error("Last resort query error:", lastResortError);
 				// Check for Supabase blocking
 				const errorStr = JSON.stringify(lastResortError).toLowerCase();
 				if (
@@ -1073,14 +1148,14 @@ export async function GET(req: NextRequest) {
 					errorStr.includes("429") ||
 					errorStr.includes("memory")
 				) {
-					console.error(
+					apiLogger.error(
 						"⚠️  Supabase appears to be blocking queries (rate limit or memory issue)",
 					);
 				}
 			}
 
 			if (lastResortJobs && lastResortJobs.length > 0) {
-				console.log(
+				apiLogger.info(
 					`Last resort: Found ${lastResortJobs.length} jobs (no filters)`,
 				);
 				lastResortJobs.forEach((job, _index) => {
@@ -1107,7 +1182,7 @@ export async function GET(req: NextRequest) {
 			}
 
 			if (validJobs.length === 0) {
-				console.error(
+				apiLogger.error(
 					"❌ All fallback queries failed - returning empty result",
 				);
 				// Return empty array instead of 500 error to prevent breaking the UI
@@ -1131,7 +1206,7 @@ export async function GET(req: NextRequest) {
 		}
 
 		if (validJobs.length < 5) {
-			console.warn(`Only found ${validJobs.length} jobs, expected 5`);
+			apiLogger.warn(`Only found ${validJobs.length} jobs, expected 5`);
 		}
 
 		// Format jobs - use REAL job URLs from database
@@ -1153,9 +1228,11 @@ export async function GET(req: NextRequest) {
 					workEnvironment: job.work_environment || "Hybrid",
 					isInternship: job.is_internship || false,
 					isGraduate: job.is_graduate || false,
-					matchScore: job.matchScore || 0.85,
+					matchScore: (job as SampleJob).matchScore || job.matchScore || 0.85,
 					matchReason:
-						job.matchReason || "Good match based on your preferences",
+						(job as SampleJob).matchReason ||
+						job.matchReason ||
+						"Good match based on your preferences",
 					userProfile: selectedUserProfile, // Always use the fictional profile
 				};
 			});
@@ -1169,10 +1246,18 @@ export async function GET(req: NextRequest) {
 			userProfile: formattedJobs[0]?.userProfile,
 		});
 	} catch (error) {
-		console.error("Failed to fetch sample jobs:", error);
+		apiLogger.error("Failed to fetch sample jobs:", error as Error);
 		return NextResponse.json(
 			{ jobs: [], error: "Internal server error" },
 			{ status: 500 },
 		);
 	}
 }
+
+export const GET = withApiAuth(getSampleJobsHandler, {
+	allowPublic: true,
+	rateLimitConfig: {
+		maxRequests: 20, // Lower limit - expensive query
+		windowMs: 60000,
+	},
+});

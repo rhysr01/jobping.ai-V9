@@ -492,12 +492,17 @@ function inferCategoriesFromTags(tags, title) {
 /**
  * Scrape Arbeitnow for a single keyword + location combo
  * FIXED: Now includes pagination to fetch multiple pages per query
+ * FIXED: Batches database saves to prevent timeouts
  */
 async function scrapeArbeitnowQuery(keyword, location, supabase) {
-	let totalSaved = 0;
-	const MAX_PAGES = parseInt(process.env.ARBEITNOW_MAX_PAGES || "5", 10); // Default: 5 pages per query
+	// UNLIMITED: Fetch as many pages as available (no artificial limit)
+	// Only stop when API indicates no more pages or returns empty results
+	const MAX_PAGES = parseInt(process.env.ARBEITNOW_MAX_PAGES || "1000", 10); // Very high limit, effectively unlimited
+	const BATCH_SIZE = 50; // Batch size for database saves
 	let page = 1;
 	let hasMorePages = true;
+	let totalSaved = 0; // Track total saved jobs
+	const jobBatch = []; // Accumulate jobs for batch saving
 
 	while (hasMorePages && page <= MAX_PAGES) {
 		try {
@@ -540,7 +545,7 @@ async function scrapeArbeitnowQuery(keyword, location, supabase) {
 				`[Arbeitnow] Found ${jobs.length} jobs for "${keyword}" in ${location.name} (page ${page})`,
 			);
 
-			// Process each job
+			// Process each job and add to batch
 			for (const job of jobs) {
 				try {
 					// Extract city and country
@@ -601,7 +606,7 @@ async function scrapeArbeitnowQuery(keyword, location, supabase) {
 						categories, // Override with Arbeitnow-specific categories
 					};
 
-					// CRITICAL: Validate before saving
+					// CRITICAL: Validate before adding to batch
 					const { validateJob } = require("./shared/jobValidator.cjs");
 					const validation = validateJob(jobRecord);
 					if (!validation.valid) {
@@ -611,19 +616,30 @@ async function scrapeArbeitnowQuery(keyword, location, supabase) {
 						continue;
 					}
 
-					// Upsert to database
-					const { error } = await supabase.from("jobs").upsert(validation.job, {
-						onConflict: "job_hash",
-						ignoreDuplicates: false,
-					});
+					// Add to batch instead of saving immediately
+					jobBatch.push(validation.job);
 
-					if (error) {
-						console.error(
-							`[Arbeitnow] Error saving job ${job_hash}:`,
-							error.message,
-						);
-					} else {
-						totalSaved++;
+					// Save batch when it reaches BATCH_SIZE
+					if (jobBatch.length >= BATCH_SIZE) {
+						// CRITICAL FIX: Use ignoreDuplicates: true to prevent timeout on updates
+						// This avoids expensive UPDATE operations for existing jobs
+						// last_seen_at will be updated by the matching engine, not by scrapers
+						const { error } = await supabase.from("jobs").upsert(jobBatch, {
+							onConflict: "job_hash",
+							ignoreDuplicates: true, // Changed from false to true to prevent timeouts
+						});
+
+						if (error) {
+							console.error(
+								`[Arbeitnow] Error saving batch:`,
+								error.message,
+							);
+						} else {
+							console.log(
+								`[Arbeitnow] Saved batch of ${jobBatch.length} jobs`,
+							);
+						}
+						jobBatch.length = 0; // Clear batch
 					}
 				} catch (jobError) {
 					console.error("[Arbeitnow] Error processing job:", jobError.message);
@@ -648,6 +664,28 @@ async function scrapeArbeitnowQuery(keyword, location, supabase) {
 				error.message,
 			);
 			break; // Stop pagination on error
+		}
+	}
+
+	// Save any remaining jobs in the batch
+	if (jobBatch.length > 0) {
+		// CRITICAL FIX: Use ignoreDuplicates: true to prevent timeout on updates
+		const { error, data } = await supabase.from("jobs").upsert(jobBatch, {
+			onConflict: "job_hash",
+			ignoreDuplicates: true, // Changed from false to true to prevent timeouts
+		});
+
+		if (error) {
+			console.error(
+				`[Arbeitnow] Error saving final batch:`,
+				error.message,
+			);
+		} else {
+			const saved = Array.isArray(data) ? data.length : jobBatch.length;
+			totalSaved += saved;
+			console.log(
+				`[Arbeitnow] Saved final batch of ${jobBatch.length} jobs`,
+			);
 		}
 	}
 
@@ -684,9 +722,9 @@ async function scrapeArbeitnow() {
 	// INCREASED from 30 to 40 queries to maximize coverage
 	const limitedQueries = queries.slice(0, 40); // Increased from 30 to maximize coverage
 	
-	const MAX_PAGES = parseInt(process.env.ARBEITNOW_MAX_PAGES || "5", 10);
+	const MAX_PAGES = parseInt(process.env.ARBEITNOW_MAX_PAGES || "1000", 10);
 	console.log(
-		`[Arbeitnow] Using ${limitedQueries.length} queries across ${CITIES.length} cities (max ${MAX_PAGES} pages per query)`,
+		`[Arbeitnow] Using ${limitedQueries.length} queries across ${CITIES.length} cities (unlimited pages per query, will fetch all available)`,
 	);
 
 	let totalSaved = 0;

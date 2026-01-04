@@ -114,6 +114,10 @@ export const WORK_TYPE_CATEGORIES = [
 	"retail-luxury",
 	"entrepreneurship",
 	"technology",
+	"people-hr",
+	"legal-compliance",
+	"creative-design",
+	"general-management",
 ];
 
 // Student satisfaction optimization

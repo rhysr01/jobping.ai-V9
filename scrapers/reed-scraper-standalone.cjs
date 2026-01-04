@@ -89,10 +89,31 @@ function parseLocation(location) {
 
 // Use centralized processor for standardization
 function convertToDatabaseFormat(job) {
+	// CRITICAL: Add null check - processIncomingJob can return null for job boards
+	if (!job) {
+		console.warn("⚠️  Reed: Skipping null job object");
+		return null;
+	}
+
 	// Process through standardization pipe
 	const processed = processIncomingJob(job, {
 		source: "reed",
 	});
+
+	// CRITICAL: Check if processing returned null (e.g., job board company)
+	if (!processed) {
+		return null;
+	}
+
+	// CRITICAL: Ensure processed job has required fields
+	if (!processed.title || !processed.company || !processed.location) {
+		console.warn("⚠️  Reed: Processed job missing required fields:", {
+			hasTitle: !!processed.title,
+			hasCompany: !!processed.company,
+			hasLocation: !!processed.location,
+		});
+		return null;
+	}
 
 	// Add job_hash (needs to be calculated after processing)
 	const job_hash = makeJobHash({
@@ -405,22 +426,23 @@ if (TARGET_CAREER_PATHS.length) {
 
 /**
  * Determine max pages based on query type (smart pagination)
- * Career path queries (e.g., "strategy internship", "finance graduate programme") - use moderate pages
- * Since Reed has no API limit, we can be generous
+ * RESPECTS API LIMITS: Free tier is 1,000 requests/day, 2 runs/day = 500 per run
+ * Strategy: 5 cities × 10 queries × 10 pages = 500 requests (perfect match to limit)
+ * This maximizes job collection while staying within free tier limits
  */
 function getMaxPagesForQuery(query) {
 	// Career path queries (e.g., "strategy internship", "finance graduate programme")
 	const careerPathPattern = /^(strategy|finance|sales|marketing|data|operations|product|tech|sustainability|people-hr|legal|creative|general-management)\s+(internship|graduate programme|graduate scheme|early career)/i;
 	const isCareerPathQuery = careerPathPattern.test(query.trim());
 
-	// Reed supports only UK/Ireland (5 cities), so we have more headroom
-	// Free tier: 1,000 requests/day, 2 runs/day = 500 per run
-	// 5 cities × 10 queries × 10 pages = 500 requests (perfect match to limit)
-	// INCREASED: Now using 10 pages to match documentation and maximize job collection
+	// REED FREE TIER LIMIT: 1,000 requests/day, 2 runs/day = 500 per run
+	// Calculation: 5 cities × 10 queries × 10 pages = 500 requests (perfect!)
+	// We use 10 pages to maximize collection while respecting the limit
+	// Users can override via env vars if they have paid tier
 	if (isCareerPathQuery) {
-		return parseInt(process.env.REED_MAX_PAGES_CAREER_PATH || "10", 10); // 10 pages for career path queries (matches docs)
+		return parseInt(process.env.REED_MAX_PAGES_CAREER_PATH || "10", 10); // 10 pages respects free tier limit
 	}
-	return parseInt(process.env.REED_MAX_PAGES || "10", 10); // Default: 10 pages (matches docs, maximizes collection)
+	return parseInt(process.env.REED_MAX_PAGES || "10", 10); // 10 pages respects free tier limit
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -687,6 +709,12 @@ async function saveJobsToDB(jobs) {
 	}
 	const seen = new Set();
 	const unique = all.filter((j) => {
+		// CRITICAL: Add null check to prevent "Cannot read properties of null" errors
+		if (!j || !j.title || !j.company || !j.location) {
+			console.warn("⚠️  Reed: Skipping job with missing required fields");
+			return false;
+		}
+		
 		const key = makeJobHash({
 			title: j.title,
 			company: j.company,

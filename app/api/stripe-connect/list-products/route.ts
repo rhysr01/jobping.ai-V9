@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
 			hasMore: products.has_more,
 		});
 	} catch (error: any) {
-		apiLogger.error("Failed to list products", error, {
+		apiLogger.error("Failed to list products", error as Error, {
 			errorType: error.type,
 			errorCode: error.code,
 		});

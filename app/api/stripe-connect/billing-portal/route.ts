@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
 			url: session.url,
 		});
 	} catch (error: any) {
-		apiLogger.error("Failed to create billing portal session", error, {
+		apiLogger.error("Failed to create billing portal session", error as Error, {
 			errorType: error.type,
 			errorCode: error.code,
 		});

@@ -1,12 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { healthChecker } from "@/Utils/monitoring/healthChecker";
 import { metricsCollector } from "@/Utils/monitoring/metricsCollector";
+import { apiLogger } from "@/lib/api-logger";
 
 const getDashboardHandler = async (_request: NextRequest) => {
 	const startTime = Date.now();
 
 	try {
-		console.log(" Generating monitoring dashboard...");
+		apiLogger.info(" Generating monitoring dashboard...");
 
 		// Collect all monitoring data in parallel
 		const [healthResult, metrics, activeAlerts] = await Promise.allSettled([
@@ -41,7 +42,7 @@ const getDashboardHandler = async (_request: NextRequest) => {
 
 		return NextResponse.json(dashboard);
 	} catch (error) {
-		console.error(" Dashboard generation error:", error);
+		apiLogger.error(" Dashboard generation error:", error as Error);
 		return NextResponse.json(
 			{
 				error: "Failed to generate dashboard",

@@ -14,7 +14,7 @@ type JobTrack =
 
 export function inferTrack(text: string): JobTrack {
 	const t = text.toLowerCase();
-	if (/(consultant|consulting|advisory|strategy)/.test(t)) return "consulting";
+	if (/(consultant|consulting|advisory)/.test(t)) return "consulting";
 	if (/(investment|bank|finance|equity|audit|account)/.test(t))
 		return "finance";
 	if (/(strategy|corporate strategy|strategic)/.test(t)) return "strategy";

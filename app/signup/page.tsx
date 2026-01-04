@@ -57,8 +57,6 @@ function SignupForm() {
 	const [totalUsers, setTotalUsers] = useState("");
 	const [isLoadingStats, setIsLoadingStats] = useState(true);
 	const [_statsStale, setStatsStale] = useState(true);
-	// This is the premium signup flow - free users go to /signup/free
-	const _tier: "premium" = "premium";
 	const prefersReduced = useReducedMotion();
 	const { announce, Announcement } = useAriaAnnounce();
 	const formRefs = {
@@ -704,10 +702,9 @@ function SignupForm() {
 								getDisabledMessage={getDisabledMessage}
 								toggleArray={toggleArray}
 							/>
-						)}
+					)}
 
-						{/* Step 2: Preferences - OLD CODE REMOVED */}
-						{false && step === 2 && (
+					{step === 3 && (
 							<motion.div
 								key="step2-old"
 								initial={{ opacity: 0, x: 20 }}
@@ -1044,10 +1041,9 @@ function SignupForm() {
 								selectAllRoles={selectAllRoles}
 								clearAllRoles={clearAllRoles}
 							/>
-						)}
+					)}
 
-						{/* Step 3: Career Path - OLD CODE REMOVED */}
-						{false && step === 3 && (
+					{step === 4 && (
 							<motion.div
 								key="step3-old"
 								initial={{ opacity: 0, x: 20 }}

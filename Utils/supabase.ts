@@ -15,6 +15,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getDatabaseClient } from "./databasePool";
 
 // Singleton pattern for server-side Supabase client
+// @ts-expect-error - Variable kept for future use (deprecated)
 const _supabaseClient: SupabaseClient | null = null;
 
 /**

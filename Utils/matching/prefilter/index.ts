@@ -35,6 +35,7 @@ export async function preFilterJobsByUserPreferencesEnhanced(
 		jobs,
 		targetCities,
 		user.email,
+		user.subscription_tier,
 	);
 	let filteredJobs = locationMatchResult.jobs;
 	const matchLevel = locationMatchResult.matchLevel;

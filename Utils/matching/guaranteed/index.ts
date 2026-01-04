@@ -21,6 +21,7 @@ import {
 	countRelaxationLevels,
 	generateMatchReason,
 } from "./single-pass-scoring";
+import { getDatabaseCategoriesForForm, WORK_TYPE_CATEGORIES } from "../categoryMapper";
 
 export interface GuaranteedMatchResult {
 	matches: MatchResult[];
@@ -93,8 +94,74 @@ async function getGuaranteedMatchesSinglePass(
 		(s): s is NonNullable<typeof s> => s !== null,
 	);
 
+	// Step 1.5: For premium users, enforce strict location and category filters
+	// Premium users should only get jobs from their exact target cities and career paths
+	const tier = userPrefs.subscription_tier || "free";
+	const isPremium = tier === "premium";
+
+	let strictlyFilteredJobs = validScoredJobs;
+
+	if (isPremium) {
+		// Filter by exact location match (no country-level expansion for premium)
+		const targetCities = (userPrefs.target_cities || []).map((c) =>
+			c.toLowerCase(),
+		);
+		if (targetCities.length > 0) {
+			strictlyFilteredJobs = strictlyFilteredJobs.filter((s) => {
+				const jobCity = (s.job.city || "").toLowerCase();
+				const jobLocation = (s.job.location || "").toLowerCase();
+				return targetCities.some(
+					(city) =>
+						jobCity === city ||
+						jobCity.includes(city) ||
+						city.includes(jobCity) ||
+						jobLocation.includes(city),
+				);
+			});
+		}
+
+		// Filter by exact career path match (no adjacent categories for premium)
+		const userCareerPaths = Array.isArray(userPrefs.career_path)
+			? userPrefs.career_path
+			: userPrefs.career_path
+				? [userPrefs.career_path]
+				: [];
+
+		if (userCareerPaths.length > 0) {
+			// Use category mapper to get database categories (imported at top)
+			const userDatabaseCategories = new Set<string>();
+			userCareerPaths.forEach((path) => {
+				getDatabaseCategoriesForForm(path).forEach((cat: string) => {
+					userDatabaseCategories.add(cat.toLowerCase());
+				});
+			});
+
+			const workTypeCategories = WORK_TYPE_CATEGORIES.map((wt: string) => wt.toLowerCase());
+
+			strictlyFilteredJobs = strictlyFilteredJobs.filter((s) => {
+				const jobCategories = ((s.job as any).categories || []).map(
+					(c: string) => c.toLowerCase(),
+				);
+				
+				// First check: Job must have at least one work-type category
+				const hasWorkTypeCategory = jobCategories.some((cat: string) =>
+					workTypeCategories.includes(cat),
+				);
+				
+				if (!hasWorkTypeCategory) {
+					return false; // Filter out jobs without work-type categories
+				}
+				
+				// Second check: Job must have at least one matching category
+				return jobCategories.some((cat: string) =>
+					userDatabaseCategories.has(cat),
+				);
+			});
+		}
+	}
+
 	// Step 2: Filter by minimum score (50% floor)
-	const eligibleJobs = validScoredJobs.filter((s) => s.finalScore >= 50);
+	const eligibleJobs = strictlyFilteredJobs.filter((s) => s.finalScore >= 50);
 
 	// Step 3: Sort by final score (highest first)
 	eligibleJobs.sort((a, b) => b.finalScore - a.finalScore);

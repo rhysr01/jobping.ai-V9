@@ -7,6 +7,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifySecureToken } from "@/Utils/auth/secureTokens";
 import { getDatabaseClient } from "@/Utils/databasePool";
+import { apiLogger } from "@/lib/api-logger";
 
 // 1x1 transparent PNG (base64)
 const TRANSPARENT_PIXEL = Buffer.from(
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
 
 				if (insertError) {
 					// Fail silently - tracking is not critical
-					console.warn("Failed to record shown signal:", insertError);
+					apiLogger.warn("Failed to record shown signal:", insertError);
 				}
 
 				// Also record to match_logs for CTR calculation
@@ -101,7 +102,7 @@ export async function GET(request: NextRequest) {
 
 				if (matchLogsError) {
 					// Fail silently - tracking is not critical
-					console.warn(
+					apiLogger.warn(
 						"Failed to record shown signal to match_logs:",
 						matchLogsError,
 					);

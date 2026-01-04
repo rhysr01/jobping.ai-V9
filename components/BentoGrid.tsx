@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Brain, CheckCircle2, Cpu, FileJson } from "lucide-react";
+import { Brain, CheckCircle2, Cpu, FileJson, BookOpen, MapPin, Award, TrendingUp, Building, Target, Zap, Users, Sparkles } from "lucide-react";
 import { useEffect, useRef } from "react";
 import GradientText from "@/components/ui/GradientText";
 import Heading from "@/components/ui/Heading";
@@ -98,23 +98,24 @@ const FeatureCard = ({
 
 export default function HowItWorksBento() {
 	return (
-		<section
-			className={cn(
-				"py-32 md:py-40 bg-black relative overflow-hidden scroll-snap-section",
-				"before:absolute before:inset-0 before:bg-gradient-to-b before:from-purple-900/5 before:via-transparent before:to-emerald-900/5 before:pointer-events-none",
-			)}
-		>
-			{/* Scroll momentum fade */}
-			<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
+	<section
+		id="how-it-works"
+		className={cn(
+			"py-24 sm:py-32 md:py-40 bg-black relative overflow-hidden scroll-snap-section",
+			"before:absolute before:inset-0 before:bg-gradient-to-b before:from-purple-900/5 before:via-transparent before:to-emerald-900/5 before:pointer-events-none",
+		)}
+	>
+		{/* Scroll momentum fade */}
+		<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
 
-			<div className="container-page relative z-10">
-				<motion.div
-					initial={{ opacity: 0, y: 20 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					viewport={{ once: true }}
-					transition={{ duration: 0.6 }}
-					className="mb-12 text-center"
-				>
+		<div className="container-page relative z-10 px-4 sm:px-6">
+			<motion.div
+				initial={{ opacity: 0, y: 20 }}
+				whileInView={{ opacity: 1, y: 0 }}
+				viewport={{ once: true }}
+				transition={{ duration: 0.6 }}
+				className="mb-10 sm:mb-12 text-center"
+			>
 					<Heading
 						level="h2"
 						color="gradient"
@@ -125,14 +126,14 @@ export default function HowItWorksBento() {
 					</Heading>
 				</motion.div>
 
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[280px]">
-					{/* Card 1: Quick Setup */}
-					<FeatureCard
-						title="Instant Setup"
-						description="Tell us your career path and preferred cities. No resume upload needed—just simple preferences that power our AI matching in seconds."
-						icon={FileJson}
-						className="md:col-span-1"
-					>
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:auto-rows-auto">
+				{/* Card 1: Quick Setup */}
+				<FeatureCard
+					title="Instant Setup"
+					description="Tell us your career path and preferred cities. No resume upload needed—just simple preferences that power our AI matching in seconds."
+					icon={FileJson}
+					className="md:col-span-1 min-h-[280px]"
+				>
 						<div className="mt-4 space-y-4">
 							<div className="relative h-28 w-full rounded-xl bg-surface-elevated/50 border border-white/5 overflow-hidden">
 								{/* Vertical Scanning Line */}
@@ -147,20 +148,24 @@ export default function HowItWorksBento() {
 								/>
 
 								{/* Scanning UI Labels */}
-								<div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-									<span className="text-xs font-mono text-purple-300 bg-black/60 px-3 py-1.5 rounded-md border border-brand-600/20 uppercase tracking-widest">
-										Processing Preferences...
-									</span>
-									<div className="flex gap-1">
-										{[1, 2, 3].map((i) => (
-											<div
-												key={i}
-												className="w-1 h-1 rounded-full bg-brand-600/40 animate-bounce"
-												style={{
-													animationDelay: `${i * 0.2}s`,
-												}}
-											/>
-										))}
+								<div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+									<div className="flex items-center gap-2">
+										<span className="text-xs font-mono text-purple-300 bg-black/60 px-3 py-1.5 rounded-md border border-brand-600/20 uppercase tracking-widest">
+											Processing Preferences
+										</span>
+									</div>
+									
+									{/* Progress bar animation */}
+									<div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden">
+										<motion.div
+											animate={{ x: ["-100%", "200%"] }}
+											transition={{
+												repeat: Infinity,
+												duration: 1.5,
+												ease: "easeInOut",
+											}}
+											className="h-full w-1/3 bg-gradient-to-r from-transparent via-purple-400 to-transparent"
+										/>
 									</div>
 								</div>
 							</div>
@@ -172,7 +177,7 @@ export default function HowItWorksBento() {
 						title="AI-Powered Matching"
 						description="We scan 1,400+ daily listings across multiple job boards. Our AI analyzes each job description against your career path, location preferences, and visa requirements to find your perfect entry-level matches."
 						icon={Cpu}
-						className="md:col-span-2"
+						className="md:col-span-2 min-h-[280px]"
 					>
 						<div className="mt-auto flex flex-wrap gap-2.5 pt-4">
 							{[
@@ -210,108 +215,165 @@ export default function HowItWorksBento() {
 					</FeatureCard>
 
 					{/* Card 3: Match Intelligence (Wide Card) */}
-					<FeatureCard
-						title="Smart Scoring System"
-						description="Every job is scored across 8+ factors: career path alignment (most important), location match, visa sponsorship availability (critical for international students), work environment, role fit, experience level, company culture, skills alignment, and job freshness. We then ensure diversity across job sources and cities for balanced, high-quality matches."
-						icon={Brain}
-						className="md:col-span-3 h-auto"
-					>
-						<div className="mt-8 relative h-40 md:h-48 w-full flex items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-surface-elevated/50 via-surface-base/80 to-surface-elevated/50 border border-white/5">
-							{/* Visualizing the "Matching" Process */}
-							<div className="flex items-center gap-6 md:gap-8 z-10 flex-wrap justify-center">
-								<motion.div
-									initial={{ opacity: 0, x: -20 }}
-									whileInView={{ opacity: 1, x: 0 }}
-									viewport={{ once: true }}
-									transition={{ duration: 0.5 }}
-									className={cn(
-										"px-5 py-3 md:px-6 md:py-4 rounded-xl glass-card elevation-2",
-										"text-base md:text-lg font-bold text-white",
-										"shadow-lg shadow-brand-600/30",
-										"bg-gradient-to-br from-brand-600/20 via-brand-600/10 to-transparent",
-										"border border-brand-600/30",
-									)}
-								>
-									Your Preferences
-								</motion.div>
-								<motion.div
-									animate={{ scale: [1, 1.2, 1] }}
-									transition={{
-										repeat: Infinity,
-										duration: 2,
-										ease: "easeInOut",
-									}}
-									className="h-1 w-12 md:w-16 bg-gradient-to-r from-brand-600 via-purple-400 to-emerald-500 rounded-full shadow-lg shadow-brand-600/40"
-								/>
-								<motion.div
-									initial={{ opacity: 0, scale: 0.9 }}
-									whileInView={{ opacity: 1, scale: 1 }}
-									viewport={{ once: true }}
-									transition={{ duration: 0.5, delay: 0.2 }}
-									className={cn(
-										"px-5 py-3 md:px-6 md:py-4 rounded-xl border-2 border-emerald-500/60",
-										"bg-gradient-to-br from-emerald-500/25 via-emerald-500/15 to-transparent",
-										"text-base md:text-lg font-bold text-emerald-200",
-										"shadow-lg shadow-emerald-500/40",
-										"backdrop-blur-sm",
-									)}
-								>
-									AI Analysis
-								</motion.div>
-								<motion.div
-									animate={{ scale: [1, 1.2, 1] }}
-									transition={{
-										repeat: Infinity,
-										duration: 2,
-										ease: "easeInOut",
-										delay: 0.5,
-									}}
-									className="h-1 w-12 md:w-16 bg-gradient-to-r from-emerald-500 via-emerald-400 to-brand-600 rounded-full shadow-lg shadow-emerald-500/40"
-								/>
-								<motion.div
-									initial={{ opacity: 0, x: 20 }}
-									whileInView={{ opacity: 1, x: 0 }}
-									viewport={{ once: true }}
-									transition={{ duration: 0.5, delay: 0.4 }}
-									className={cn(
-										"px-5 py-3 md:px-6 md:py-4 rounded-xl glass-card elevation-2",
-										"text-base md:text-lg font-bold text-white",
-										"shadow-lg shadow-brand-600/30",
-										"bg-gradient-to-br from-brand-600/20 via-brand-600/10 to-transparent",
-										"border border-brand-600/30",
-									)}
-								>
-									Job Listings
-								</motion.div>
-							</div>
-
-							{/* Background Decorative "Data Points" with animation */}
-							<div className="absolute inset-0 opacity-20 grid grid-cols-8 gap-2 pointer-events-none">
-								{[...Array(16)].map((_, i) => (
+				<FeatureCard
+					title="Smart Scoring System"
+					description="A 9-signal audit that ensures quality by weighting what matters most to your career."
+					icon={Brain}
+					className="md:col-span-3 min-h-[320px]"
+				>
+						<div className="mt-4 space-y-4">
+							{/* Primary Signals */}
+							<div className="space-y-2">
+								<div className="flex items-center gap-2 mb-4">
+									<Brain className="w-5 h-5 text-emerald-400" />
+									<span className="text-sm font-semibold text-emerald-300 uppercase tracking-wider">Primary Signals</span>
+								</div>
+								<div className="grid grid-cols-1 gap-2">
 									<motion.div
-										key={i}
-										initial={{ opacity: 0, scale: 0 }}
-										whileInView={{ opacity: 1, scale: 1 }}
+										initial={{ opacity: 0, x: -20 }}
+										whileInView={{ opacity: 1, x: 0 }}
 										viewport={{ once: true }}
-										transition={{ delay: i * 0.05, duration: 0.3 }}
-										className="h-1 w-1 bg-purple-400 rounded-full"
-									/>
-								))}
+										transition={{ duration: 0.5, delay: 0.1 }}
+										className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/15 transition-all duration-300"
+									>
+										<div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-400/50">
+											<MapPin className="w-5 h-5 text-emerald-300" />
+										</div>
+										<div className="flex-1 min-w-0">
+											<div className="font-semibold text-emerald-200 text-sm">Location Match</div>
+											<div className="text-xs text-emerald-300/80 mt-0.5">Your preferred cities and regions</div>
+										</div>
+									</motion.div>
+
+									<motion.div
+										initial={{ opacity: 0, x: -20 }}
+										whileInView={{ opacity: 1, x: 0 }}
+										viewport={{ once: true }}
+										transition={{ duration: 0.5, delay: 0.2 }}
+										className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/15 transition-all duration-300"
+									>
+										<div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-400/50">
+											<Award className="w-5 h-5 text-emerald-300" />
+										</div>
+										<div className="flex-1 min-w-0">
+											<div className="font-semibold text-emerald-200 text-sm">Career Path</div>
+											<div className="text-xs text-emerald-300/80 mt-0.5">Professional alignment and growth</div>
+										</div>
+									</motion.div>
+
+									<motion.div
+										initial={{ opacity: 0, x: -20 }}
+										whileInView={{ opacity: 1, x: 0 }}
+										viewport={{ once: true }}
+										transition={{ duration: 0.5, delay: 0.3 }}
+										className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/15 transition-all duration-300"
+									>
+										<div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-400/50">
+											<BookOpen className="w-5 h-5 text-emerald-300" />
+										</div>
+										<div className="flex-1 min-w-0">
+											<div className="font-semibold text-emerald-200 text-sm">Experience Level</div>
+											<div className="text-xs text-emerald-300/80 mt-0.5">Entry-level and graduate roles</div>
+										</div>
+									</motion.div>
+								</div>
 							</div>
 
-							{/* Animated gradient overlay */}
-							<motion.div
-								animate={{
-									backgroundPosition: ["0% 0%", "100% 100%"],
-								}}
-								transition={{
-									duration: 10,
-									repeat: Infinity,
-									repeatType: "reverse",
-								}}
-								className="absolute inset-0 opacity-10 bg-gradient-to-br from-brand-600/20 via-transparent to-emerald-500/20 pointer-events-none"
-								style={{ backgroundSize: "200% 200%" }}
-							/>
+							{/* Secondary Signals */}
+							<div className="space-y-2">
+								<div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Additional Factors</div>
+								<div className="grid grid-cols-2 gap-2">
+									<motion.div
+										initial={{ opacity: 0, y: 10 }}
+										whileInView={{ opacity: 1, y: 0 }}
+										viewport={{ once: true }}
+										transition={{ duration: 0.4, delay: 0.4 }}
+										className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300"
+									>
+										<div className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-500/20 flex items-center justify-center border border-zinc-500/50">
+											<Building className="w-4 h-4 text-zinc-300" />
+										</div>
+										<div className="flex-1 min-w-0">
+											<span className="text-sm font-medium text-zinc-300">Company Quality</span>
+										</div>
+									</motion.div>
+
+									<motion.div
+										initial={{ opacity: 0, y: 10 }}
+										whileInView={{ opacity: 1, y: 0 }}
+										viewport={{ once: true }}
+										transition={{ duration: 0.4, delay: 0.5 }}
+										className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300"
+									>
+										<div className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-500/20 flex items-center justify-center border border-zinc-500/50">
+											<Target className="w-4 h-4 text-zinc-300" />
+										</div>
+										<div className="flex-1 min-w-0">
+											<span className="text-sm font-medium text-zinc-300">Skills Match</span>
+										</div>
+									</motion.div>
+
+									<motion.div
+										initial={{ opacity: 0, y: 10 }}
+										whileInView={{ opacity: 1, y: 0 }}
+										viewport={{ once: true }}
+										transition={{ duration: 0.4, delay: 0.6 }}
+										className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300"
+									>
+										<div className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-500/20 flex items-center justify-center border border-zinc-500/50">
+											<Zap className="w-4 h-4 text-zinc-300" />
+										</div>
+										<div className="flex-1 min-w-0">
+											<span className="text-sm font-medium text-zinc-300">Industry Fit</span>
+										</div>
+									</motion.div>
+
+									<motion.div
+										initial={{ opacity: 0, y: 10 }}
+										whileInView={{ opacity: 1, y: 0 }}
+										viewport={{ once: true }}
+										transition={{ duration: 0.4, delay: 0.7 }}
+										className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300"
+									>
+										<div className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-500/20 flex items-center justify-center border border-zinc-500/50">
+											<Users className="w-4 h-4 text-zinc-300" />
+										</div>
+										<div className="flex-1 min-w-0">
+											<span className="text-sm font-medium text-zinc-300">Company Size</span>
+										</div>
+									</motion.div>
+
+									<motion.div
+										initial={{ opacity: 0, y: 10 }}
+										whileInView={{ opacity: 1, y: 0 }}
+										viewport={{ once: true }}
+										transition={{ duration: 0.4, delay: 0.8 }}
+										className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300"
+									>
+										<div className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-500/20 flex items-center justify-center border border-zinc-500/50">
+											<Sparkles className="w-4 h-4 text-zinc-300" />
+										</div>
+										<div className="flex-1 min-w-0">
+											<span className="text-sm font-medium text-zinc-300">Cold Start</span>
+										</div>
+									</motion.div>
+
+									<motion.div
+										initial={{ opacity: 0, y: 10 }}
+										whileInView={{ opacity: 1, y: 0 }}
+										viewport={{ once: true }}
+										transition={{ duration: 0.4, delay: 0.9 }}
+										className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300"
+									>
+										<div className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-500/20 flex items-center justify-center border border-zinc-500/50">
+											<TrendingUp className="w-4 h-4 text-zinc-300" />
+										</div>
+										<div className="flex-1 min-w-0">
+											<span className="text-sm font-medium text-zinc-300">Feedback Learning</span>
+										</div>
+									</motion.div>
+								</div>
+							</div>
 						</div>
 					</FeatureCard>
 				</div>

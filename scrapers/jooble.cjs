@@ -276,13 +276,17 @@ async function scrapeJoobleQuery(keyword, location, supabase, apiKey) {
 		return 0;
 	}
 
+	const BATCH_SIZE = 50; // Batch size for database saves
 	let totalSaved = 0;
 	let totalFound = 0;
 	let totalFilteredEarlyCareer = 0;
 	let totalFilteredProcessor = 0;
 	let totalFilteredValidation = 0;
+	const jobBatch = []; // Accumulate jobs for batch saving
 
-	const MAX_PAGES = parseInt(process.env.JOOBLE_MAX_PAGES || "3", 10); // Default: 3 pages per query
+	// UNLIMITED: Fetch as many pages as available (no artificial limit)
+	// Only stop when API indicates no more pages or returns empty results
+	const MAX_PAGES = parseInt(process.env.JOOBLE_MAX_PAGES || "1000", 10); // Very high limit, effectively unlimited
 	let page = 1;
 	let hasMorePages = true;
 
@@ -427,7 +431,7 @@ async function scrapeJoobleQuery(keyword, location, supabase, apiKey) {
 						job_hash,
 					};
 
-					// CRITICAL: Validate before saving
+					// CRITICAL: Validate before adding to batch
 					const { validateJob } = require("./shared/jobValidator.cjs");
 					const validation = validateJob(jobRecord);
 					if (!validation.valid) {
@@ -438,19 +442,26 @@ async function scrapeJoobleQuery(keyword, location, supabase, apiKey) {
 						continue;
 					}
 
-					// Upsert to database
-					const { error } = await supabase.from("jobs").upsert(validation.job, {
-						onConflict: "job_hash",
-						ignoreDuplicates: false,
-					});
+					// Add to batch instead of saving immediately
+					jobBatch.push(validation.job);
 
-					if (error) {
-						console.error(
-							`[Jooble] Error saving job ${job_hash}:`,
-							error.message,
-						);
-					} else {
-						totalSaved++;
+					// Save batch when it reaches BATCH_SIZE
+					if (jobBatch.length >= BATCH_SIZE) {
+						const { error, data } = await supabase
+							.from("jobs")
+							.upsert(jobBatch, {
+								onConflict: "job_hash",
+								ignoreDuplicates: false,
+							});
+
+						if (error) {
+							console.error(`[Jooble] Error saving batch:`, error.message);
+						} else {
+							const saved = Array.isArray(data) ? data.length : jobBatch.length;
+							totalSaved += saved;
+							console.log(`[Jooble] Saved batch of ${jobBatch.length} jobs`);
+						}
+						jobBatch.length = 0; // Clear batch
 					}
 				} catch (jobError) {
 					console.error("[Jooble] Error processing job:", jobError.message);
@@ -474,6 +485,22 @@ async function scrapeJoobleQuery(keyword, location, supabase, apiKey) {
 				error.message,
 			);
 			break; // Stop pagination on error
+		}
+	}
+
+	// Save any remaining jobs in the batch
+	if (jobBatch.length > 0) {
+		const { error, data } = await supabase.from("jobs").upsert(jobBatch, {
+			onConflict: "job_hash",
+			ignoreDuplicates: false,
+		});
+
+		if (error) {
+			console.error(`[Jooble] Error saving final batch:`, error.message);
+		} else {
+			const saved = Array.isArray(data) ? data.length : jobBatch.length;
+			totalSaved += saved;
+			console.log(`[Jooble] Saved final batch of ${jobBatch.length} jobs`);
 		}
 	}
 

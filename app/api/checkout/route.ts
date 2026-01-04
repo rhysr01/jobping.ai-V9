@@ -1,6 +1,7 @@
 import { Checkout } from "@polar-sh/nextjs";
 import { type NextRequest, NextResponse } from "next/server";
 import { ENV } from "@/lib/env";
+import { apiLogger } from "@/lib/api-logger";
 
 // Polar's Checkout component handles GET requests with query parameters
 // Usage: /api/checkout?product_id=prod_xxx&customer_email=user@example.com
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
 			redirect: checkoutUrl,
 		});
 	} catch (error) {
-		console.error("Checkout creation error:", error);
+		apiLogger.error("Checkout creation error:", error as Error);
 		return NextResponse.json(
 			{ error: "Failed to create checkout session" },
 			{ status: 500 },

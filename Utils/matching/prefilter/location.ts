@@ -71,13 +71,15 @@ export function matchesLocationStrict(
 }
 
 /**
- * Progressive location matching with intelligent fallback
- * Returns jobs that match at any level: exact city > country > remote/hybrid > all
+ * Strict location matching - exact cities only
+ * ALL USERS get strict matching - quality is consistent across tiers
+ * Differentiation is quantity (5 vs 10 matches) and frequency (one-time vs weekly), not quality
  */
 export function getLocationMatchedJobs(
 	jobs: JobWithFreshness[],
 	cities: string[],
 	userEmail: string,
+	subscriptionTier?: "free" | "premium",
 ): {
 	jobs: JobWithFreshness[];
 	matchLevel: LocationMatchLevel;
@@ -86,14 +88,19 @@ export function getLocationMatchedJobs(
 		return { jobs, matchLevel: "all" };
 	}
 
-	// Level 1: Exact city matches (strict)
+	// ALL USERS: Strict location matching (exact cities only)
+	// Quality is the same for all users - differentiation is quantity/frequency, not quality
 	const exactMatches = jobs.filter((job) =>
 		cities.some((city) => matchesLocationStrict(job, city)),
 	);
 
-	if (exactMatches.length >= 20) {
-		return { jobs: exactMatches, matchLevel: "exact" };
-	}
+	apiLogger.info("Strict location matching (exact cities only)", {
+		email: userEmail,
+		exactMatches: exactMatches.length,
+		targetCities: cities,
+		tier: subscriptionTier || "free",
+	});
+	return { jobs: exactMatches, matchLevel: "exact" };
 
 	// Level 2: Country-level matches (relaxed)
 	const targetCountries = new Set<string>();

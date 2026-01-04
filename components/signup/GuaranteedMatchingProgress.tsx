@@ -42,7 +42,7 @@ interface GuaranteedMatchingProgressProps {
  */
 export function GuaranteedMatchingProgress({
 	currentStageIndex,
-	onComplete,
+	onComplete: _onComplete,
 }: GuaranteedMatchingProgressProps) {
 	return (
 		<div className="w-full max-w-md mx-auto space-y-8 py-12">
@@ -86,7 +86,7 @@ export function GuaranteedMatchingProgress({
 					{STAGES.map((stage, index) => {
 						const isActive = index === currentStageIndex;
 						const isCompleted = index < currentStageIndex;
-						const _isPending = index > currentStageIndex;
+						// const _isPending = index > currentStageIndex;
 
 						return (
 							<motion.div

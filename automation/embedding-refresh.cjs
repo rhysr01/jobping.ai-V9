@@ -13,7 +13,7 @@ try {
 	console.warn("⚠️  Could not load .env.local, relying on process env only");
 }
 
-const DEFAULT_COMMAND = "npx tsx scripts/generate_all_embeddings.ts";
+const DEFAULT_COMMAND = "node scripts/generate_all_embeddings.cjs";
 const DEFAULT_SCHEDULE = "0 2 */3 * *"; // Every 3 days at 02:00 (roughly every 72h)
 const DEFAULT_TIMEZONE = process.env.EMBEDDING_REFRESH_TZ || "UTC";
 

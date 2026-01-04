@@ -36,7 +36,7 @@ async function sendWelcomeEmailAndTrack(
 
 		apiLogger.info(`Welcome email (${context}) sent to user`, { email });
 		if (process.env.NODE_ENV === "development") {
-			console.log(
+			apiLogger.info(
 				`[SIGNUP] ✅ Welcome email (${context}) sent successfully to ${email}`,
 			);
 		}
@@ -112,6 +112,18 @@ export async function POST(req: NextRequest) {
 				{ status: 409 },
 			);
 		}
+
+		// Check for pending promo code
+		const { data: pendingPromo } = await supabase
+			.from("promo_pending")
+			.select("promo_code, expires_at")
+			.eq("email", normalizedEmail)
+			.single();
+
+		const hasValidPromo =
+			pendingPromo &&
+			pendingPromo.promo_code?.toLowerCase() === "rhys" &&
+			new Date(pendingPromo.expires_at) > new Date();
 
 		// This is the premium signup API - free users use /api/signup/free
 		const subscriptionTier: "premium" = "premium";
@@ -262,11 +274,21 @@ export async function POST(req: NextRequest) {
 
 		apiLogger.info(`User created`, { email: data.email });
 
+		// Clean up promo_pending if promo code was used
+		if (hasValidPromo) {
+			await supabase.from("promo_pending").delete().eq("email", normalizedEmail);
+			apiLogger.info("Promo code applied and cleaned up", {
+				email: normalizedEmail,
+				promoCode: pendingPromo.promo_code,
+			});
+		}
+
 		// Track signup success event
 		apiLogger.info("signup_success", {
 			event: "signup_success",
 			email: data.email,
 			tier: "premium",
+			hasPromo: hasValidPromo,
 			timestamp: new Date().toISOString(),
 		});
 
@@ -290,7 +312,7 @@ export async function POST(req: NextRequest) {
 				},
 			);
 			if (process.env.NODE_ENV === "development") {
-				console.log(
+				apiLogger.info(
 					`[SIGNUP] ✅ Matches already exist for ${normalizedEmail}, skipping expensive matching`,
 				);
 			}
@@ -298,7 +320,7 @@ export async function POST(req: NextRequest) {
 			// Get actual match count
 			const { count: matchCount } = await supabase
 				.from("matches")
-				.select("*", { count: "exact", head: true })
+				.select("id", { count: "exact", head: true })
 				.eq("user_email", normalizedEmail);
 
 			matchesCount = matchCount || 0;
@@ -396,7 +418,7 @@ export async function POST(req: NextRequest) {
 					cities: userData.target_cities,
 				});
 				if (process.env.NODE_ENV === "development") {
-					console.log(
+					apiLogger.info(
 						`[SIGNUP] Fetching jobs for cities: ${JSON.stringify(userData.target_cities)}`,
 					);
 				}
@@ -474,7 +496,7 @@ export async function POST(req: NextRequest) {
 					note: "Matching engine handles hard gates, pre-ranking, and AI matching",
 				});
 				if (process.env.NODE_ENV === "development") {
-					console.log(
+					apiLogger.info(
 						`[SIGNUP] Using ${allJobs?.length || 0} jobs, matching engine will handle filtering and ranking`,
 					);
 				}
@@ -501,7 +523,7 @@ export async function POST(req: NextRequest) {
 
 					if (jobsForMatching && jobsForMatching.length > 0) {
 						if (process.env.NODE_ENV === "development") {
-							console.log(
+							apiLogger.info(
 								`[SIGNUP] Found ${jobsForMatching.length} jobs, using coordinator pattern...`,
 							);
 						}
@@ -543,7 +565,7 @@ export async function POST(req: NextRequest) {
 						}));
 
 						if (process.env.NODE_ENV === "development") {
-							console.log(
+							apiLogger.info(
 								`[SIGNUP] Coordinator complete: ${distributedJobs.length} matches found (method: ${coordinatedResult.metadata.matchingMethod})`,
 							);
 						}
@@ -651,7 +673,7 @@ export async function POST(req: NextRequest) {
 									coordinatedResult?.metadata?.relaxationLevel || 0,
 							});
 							if (process.env.NODE_ENV === "development") {
-								console.log(
+								apiLogger.info(
 									`[SIGNUP] Distribution: Sources=${JSON.stringify(stats.sourceDistribution)}, Cities=${JSON.stringify(stats.cityDistribution)}`,
 								);
 							}
@@ -748,7 +770,7 @@ export async function POST(req: NextRequest) {
 							});
 						}
 						if (process.env.NODE_ENV === "development") {
-							console.log(
+							apiLogger.info(
 								`[SIGNUP] 🔍 Attempting to save ${matchEntries.length} matches:`,
 								{
 									email: data.email,
@@ -801,7 +823,7 @@ export async function POST(req: NextRequest) {
 										savedMatchesCount: actualSavedCount,
 									});
 									if (process.env.NODE_ENV === "development") {
-										console.log(
+										apiLogger.info(
 											`[SIGNUP] ✅ Successfully saved ${matchesCount} matches for ${data.email} (DB returned ${actualSavedCount})`,
 										);
 									}
@@ -819,16 +841,16 @@ export async function POST(req: NextRequest) {
 												.limit(10);
 
 										if (verifyError) {
-											console.error(
+											apiLogger.error(
 												`[SIGNUP] ❌ Failed to verify matches:`,
 												verifyError,
 											);
 										} else {
-											console.log(
+											apiLogger.info(
 												`[SIGNUP] �� Verification query returned ${verifyMatches?.length || 0} matches`,
 											);
 											if (verifyMatches && verifyMatches.length > 0) {
-												console.log(`[SIGNUP] 🔍 Sample verified match:`, {
+												apiLogger.info(`[SIGNUP] 🔍 Sample verified match:`, {
 													id: verifyMatches[0].id,
 													user_email: verifyMatches[0].user_email,
 													job_hash: verifyMatches[0].job_hash,
@@ -845,12 +867,12 @@ export async function POST(req: NextRequest) {
 														.single();
 
 												if (jobCheckError) {
-													console.warn(
-														`[SIGNUP] ⚠️ Job ${verifyMatches[0].job_hash} not found in jobs table:`,
-														jobCheckError.message,
-													);
+							apiLogger.warn(
+								`[SIGNUP] ⚠️ Job ${verifyMatches[0].job_hash} not found in jobs table:`,
+								{ message: jobCheckError.message },
+							);
 												} else {
-													console.log(`[SIGNUP] ✅ Job exists:`, {
+													apiLogger.info(`[SIGNUP] ✅ Job exists:`, {
 														job_hash: jobCheck.job_hash,
 														title: jobCheck.title,
 														company: jobCheck.company,
@@ -879,7 +901,7 @@ export async function POST(req: NextRequest) {
 									jobsToSend: distributedJobs.length,
 								});
 								if (process.env.NODE_ENV === "development") {
-									console.log(
+									apiLogger.info(
 										`[SIGNUP] Preparing to send matched jobs email to ${data.email} with ${distributedJobs.length} jobs`,
 									);
 								}
@@ -1037,11 +1059,11 @@ export async function POST(req: NextRequest) {
 			emailStatus: emailSent ? "sent" : "not_sent",
 		});
 		if (process.env.NODE_ENV === "development") {
-			console.log(`[SIGNUP] ===== FINAL STATUS =====`);
-			console.log(`[SIGNUP] Email: ${data.email}`);
-			console.log(`[SIGNUP] Matches: ${matchesCount}`);
-			console.log(`[SIGNUP] Email Sent: ${emailSent ? "YES ✅" : "NO ❌"}`);
-			console.log(`[SIGNUP] ========================`);
+			apiLogger.info(`[SIGNUP] ===== FINAL STATUS =====`);
+			apiLogger.info(`[SIGNUP] Email: ${data.email}`);
+			apiLogger.info(`[SIGNUP] Matches: ${matchesCount}`);
+			apiLogger.info(`[SIGNUP] Email Sent: ${emailSent ? "YES ✅" : "NO ❌"}`);
+			apiLogger.info(`[SIGNUP] ========================`);
 		}
 
 		// SAFETY NET: Ensure email is sent even if something went wrong

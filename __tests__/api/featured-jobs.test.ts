@@ -6,17 +6,22 @@ jest.mock("@/Utils/databasePool", () => ({
 		from: jest.fn(() => ({
 			select: jest.fn(() => ({
 				eq: jest.fn(() => ({
-					order: jest.fn(() => ({
-						limit: jest.fn(() => ({
-							data: [
-								{
-									job_hash: "hash1",
-									title: "Software Engineer",
-									company: "Tech Co",
-									location: "London",
-								},
-							],
-							error: null,
+					or: jest.fn(() => ({
+						ilike: jest.fn(() => ({
+							order: jest.fn(() => ({
+								limit: jest.fn(() => Promise.resolve({
+									data: [
+										{
+											job_hash: "hash1",
+											title: "Software Engineer",
+											company: "Tech Co",
+											location: "London",
+											is_internship: true,
+										},
+									],
+									error: null,
+								})),
+							})),
 						})),
 					})),
 				})),
@@ -25,9 +30,26 @@ jest.mock("@/Utils/databasePool", () => ({
 	})),
 }));
 
+jest.mock("@/Utils/auth/apiAuth", () => ({
+	withApiAuth: jest.fn((handler) => handler),
+}));
+
+jest.mock("@/Utils/productionRateLimiter", () => ({
+	getProductionRateLimiter: jest.fn(() => ({
+		middleware: jest.fn().mockResolvedValue(null),
+	})),
+}));
+
 describe("GET /api/featured-jobs", () => {
+	const mockRequest = {
+		nextUrl: {
+			pathname: "/api/featured-jobs",
+		},
+		headers: new Headers(),
+	} as any;
+
 	it("should return featured jobs", async () => {
-		const response = await GET();
+		const response = await GET(mockRequest);
 		const data = await response.json();
 
 		expect(response.status).toBe(200);
@@ -36,7 +58,7 @@ describe("GET /api/featured-jobs", () => {
 	});
 
 	it("should return job data structure (behavior test)", async () => {
-		const response = await GET();
+		const response = await GET(mockRequest);
 		const data = await response.json();
 
 		// Behavior: Should return jobs array or object with jobs

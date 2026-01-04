@@ -13,6 +13,7 @@ export default {
 					100: "#EDE9FE",
 					200: "#DDD6FE",
 					300: "#C4B5FD",
+					400: "#A78BFA", // Added for completeness
 					500: "#6D28D9", // Deep rich dark purple
 					600: "#5B21B6",
 					700: "#4C1D95",
@@ -128,11 +129,11 @@ export default {
 					"0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
 				overlay:
 					"0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
-				"elev-1": "0 10px 30px -10px rgba(107,90,133,0.2)",
-				"elev-2": "0 20px 60px -18px rgba(107,90,133,0.25)",
+				"elev-1": "0 10px 30px -10px rgba(109,40,217,0.2)",
+				"elev-2": "0 20px 60px -18px rgba(109,40,217,0.25)",
 				// Reduced glow utilities - use sparingly
-				"glow-subtle": "0 0 12px rgba(107,90,133,0.15)",
-				"glow-strong": "0 0 24px rgba(107,90,133,0.2)",
+				"glow-subtle": "0 0 12px rgba(109,40,217,0.15)",
+				"glow-strong": "0 0 24px rgba(109,40,217,0.2)",
 			},
 			// Micro-interaction timing
 			transitionDuration: {

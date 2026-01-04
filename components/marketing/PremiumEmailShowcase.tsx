@@ -13,192 +13,207 @@ const USER_PROFILE = {
 	workStyle: "Remote, Hybrid",
 };
 
-// Sample jobs for each email (5 jobs per email, different jobs each day)
+// Real jobs from database - Strategy/Business Design roles in London & Paris
 const EMAIL_JOBS = {
 	monday: [
 		{
-			title: "Strategy & Business Design Intern",
-			company: "McKinsey & Company",
+			title: "Junior Business Design Analyst - Change",
+			company: "Counter Terrorism Policing",
 			location: "London, UK",
-			score: 98,
+			jobUrl: "https://www.glassdoor.co.uk/job-listing/j?jl=1009977120890",
+			score: 95,
 			matchReason:
-				"Perfect for your Strategy and Business Design career path. McKinsey's practice focuses on projects that align with your interests. Located in London, visa sponsorship available, and requires no prior experience - ideal for interns.",
+				"Perfect for your Strategy and Business Design career path. This junior role is specifically designed for early-career professionals. Located in London, and the role combines business design with strategic change initiatives.",
 			visaConfidence: "likely",
-			tags: ["Hybrid", "Internship"],
+			tags: ["On-Site", "Entry Level"],
 			description:
-				"Join our strategy team to help leading organizations solve complex business challenges. Work on strategic planning, market analysis, and business design.",
+				"Junior Business Design Analyst - Change - Police Staff - Counter Terrorism Policing HQ at Counter Terrorism Policing.",
 		},
 		{
-			title: "Business Design Graduate",
-			company: "BCG Digital Ventures",
+			title: "Corporate or Retail Banking - Strategic Analyst",
+			company: "eFinancialCareers",
 			location: "London, UK",
+			jobUrl: "https://www.reed.co.uk/jobs/corporate-or-retail-banking-strategic-analyst/56264348",
 			score: 92,
 			matchReason:
-				"Hot match! BCG Digital Ventures' Graduate Programme is specifically designed for recent graduates. The hybrid work arrangement fits your preferences, and the role is in London with visa sponsorship available.",
+				"Hot match! A tier 1 strategy and analytics group looking for talented bankers to pivot into strategic projects. This team consists of ex-bankers working with Heads of Product and Strategy at major banks.",
 			visaConfidence: "likely",
-			tags: ["Hybrid", "Graduate"],
+			tags: ["On-Site", "Entry Level"],
 			description:
-				"Design and launch new digital businesses. Work with startups and corporates to build innovative solutions from concept to market.",
+				"A tier 1 strategy and analytics group are looking for talented corporate bankers or retail bankers who would like to pivot into a role using their product knowledge from a major bank to work on strategic projects.",
 		},
 		{
-			title: "Strategy Consultant",
-			company: "Roland Berger",
+			title: "Consultant AMOA / Business Analyst Banque",
+			company: "Open",
 			location: "Paris, France",
-			score: 90,
+			jobUrl: "https://fr.indeed.com/viewjob?jk=06a01de0320241d8",
+			score: 89,
 			matchReason:
-				"Roland Berger's team specializes in work that matches your Strategy and Business Design career path. The role is based in Paris with visa sponsorship available, and the hybrid setup aligns with your preferences.",
-			visaConfidence: "verified",
-			tags: ["Hybrid", "Entry Level"],
+				"Strong match for Strategy and Business Design in the finance sector. This consultant role focuses on retail banking, market finance, or insurance. Located in Paris, offering exposure to strategic business analysis.",
+			visaConfidence: "likely",
+			tags: ["On-Site", "Entry Level"],
 			description:
-				"Work on strategic projects across industries. Help clients transform their businesses through innovative strategies and design thinking.",
+				"Consultant AMOA / Business Analyst Banque de détail, Finance de Marché ou Assurance confirmé - H/F at Open.",
 		},
 		{
-			title: "Business Design Intern",
-			company: "IDEO",
+			title: "Trainee Recruitment Consultant",
+			company: "G2 Recruitment",
 			location: "London, UK",
-			score: 88,
+			jobUrl: "https://www.glassdoor.co.uk/job-listing/j?jl=1009975208375",
+			score: 86,
 			matchReason:
-				"Great match for Strategy and Business Design. IDEO offers structured training for interns, located in London with visa sponsorship available.",
+				"Great entry point into strategy and business consulting. This trainee role offers structured training and exposure to multiple industries. Located in London with excellent career progression opportunities.",
 			visaConfidence: "likely",
-			tags: ["Hybrid", "Internship"],
+			tags: ["On-Site", "Entry Level"],
 			description:
-				"Design human-centered business solutions. Combine strategy, design, and innovation to create meaningful impact.",
+				"Trainee Recruitment Consultant at G2 Recruitment.",
 		},
 		{
-			title: "Strategic Design Associate",
-			company: "Fjord",
+			title: "Assistant Consultant Communication en Alternance",
+			company: "L'École Française",
 			location: "Paris, France",
-			score: 85,
+			jobUrl: "https://www.glassdoor.fr/job-listing/j?jl=1009977514410",
+			score: 84,
 			matchReason:
-				"Strong alignment with your Strategy and Business Design goals. Fjord's team offers clear progression paths. Hybrid work style, visa sponsorship available, and entry-level friendly with excellent training support.",
+				"Solid match for early-career consulting. This alternance role provides hands-on experience in strategic communication consulting. Based in Paris with structured learning program.",
 			visaConfidence: "likely",
-			tags: ["Hybrid", "Entry Level"],
+			tags: ["On-Site", "Entry Level"],
 			description:
-				"Design service experiences and business strategies. Work at the intersection of design, business, and technology.",
+				"Assistant Consultant Communication en Alternance H/F at L'École Française.",
 		},
 	],
 	wednesday: [
 		{
-			title: "Strategy Graduate Programme",
-			company: "Deloitte",
+			title: "Senior Technical Accelerator Consultant – Impact",
+			company: "ServiceNow",
 			location: "London, UK",
-			score: 95,
-			matchReason:
-				"Perfect for your Strategy and Business Design career path. Deloitte's graduate programme focuses on projects that align with your interests. Located in London, visa sponsorship available, and designed for recent graduates.",
-			visaConfidence: "verified",
-			tags: ["Hybrid", "Graduate"],
-			description:
-				"Help clients navigate complex business challenges. Work on strategic planning, digital transformation, and business model innovation.",
-		},
-		{
-			title: "Business Design Consultant",
-			company: "PwC",
-			location: "Paris, France",
+			jobUrl: "https://uk.indeed.com/viewjob?jk=dbd4d0aa59a890db",
 			score: 93,
 			matchReason:
-				"Hot match! PwC's program is specifically designed for early-career professionals. The hybrid work arrangement fits your preferences, and the role is in Paris with visa sponsorship available.",
-			visaConfidence: "likely",
-			tags: ["Hybrid", "Entry Level"],
-			description:
-				"Design innovative business models and strategies. Combine consulting expertise with design thinking to deliver transformative solutions.",
-		},
-		{
-			title: "Strategy & Innovation Intern",
-			company: "EY",
-			location: "London, UK",
-			score: 91,
-			matchReason:
-				"EY's team specializes in work that matches your Strategy and Business Design career path. Hybrid setup aligns with your preferences, and requires no prior experience - ideal for interns.",
+				"Excellent match! ServiceNow's Impact team combines strategy with technical transformation. This role focuses on sustainability and ESG initiatives, perfect for business design professionals looking to make an impact.",
 			visaConfidence: "verified",
-			tags: ["Hybrid", "Internship"],
+			tags: ["On-Site", "Entry Level"],
 			description:
-				"Drive strategic innovation for leading organizations. Work on growth strategies, market entry, and business transformation.",
+				"Senior Technical Accelerator Consultant – Impact at ServiceNow.",
 		},
 		{
-			title: "Business Design Strategist",
-			company: "McKinsey Digital",
+			title: "Consultant transformation Finance SAP S/4HANA",
+			company: "Apsia",
 			location: "Paris, France",
-			score: 89,
+			jobUrl: "https://www.glassdoor.fr/job-listing/j?jl=1009957043862",
+			score: 90,
 			matchReason:
-				"Great match for Strategy and Business Design. McKinsey Digital offers structured training for entry-level professionals, located in Paris with visa sponsorship available.",
-			visaConfidence: "verified",
-			tags: ["Hybrid", "Entry Level"],
+				"Hot match! This transformation consultant role combines finance strategy with business design. Work on SAP S/4HANA implementation projects in Paris, gaining exposure to enterprise transformation initiatives.",
+			visaConfidence: "likely",
+			tags: ["On-Site", "Entry Level"],
 			description:
-				"Design digital strategies and business models. Combine strategic thinking with design to create innovative digital solutions.",
+				"Consultant transformation Finance SAP S/4HANA Paris at Apsia.",
 		},
 		{
-			title: "Strategic Planning Graduate",
-			company: "KPMG",
-			location: "London, UK",
-			score: 87,
+			title: "Consultant Pricing",
+			company: "Converteo",
+			location: "Paris, France",
+			jobUrl: "https://fr.indeed.com/viewjob?jk=7c71cf8d78ef216f",
+			score: 88,
 			matchReason:
-				"Strong alignment with your Strategy and Business Design goals. KPMG's graduate programme offers clear progression paths. Hybrid work style, and designed for recent graduates.",
-			visaConfidence: "verified",
-			tags: ["Hybrid", "Graduate"],
+				"Strong alignment with Strategy and Business Design. This pricing consultant role involves strategic analysis and business modeling. Based in Paris with CDI contract, offering stability and growth.",
+			visaConfidence: "likely",
+			tags: ["On-Site", "Entry Level"],
 			description:
-				"Help organizations develop strategic plans and business designs. Work on market analysis, competitive strategy, and organizational design.",
+				"Consultant Pricing H/F - CDI at Converteo at Converteo",
+		},
+		{
+			title: "Inbound Headhunter & Career Consultant",
+			company: "Empire",
+			location: "London, UK",
+			jobUrl: "https://uk.indeed.com/viewjob?jk=589340fb08c1c3a8",
+			score: 85,
+			matchReason:
+				"Good match for strategy-minded professionals. This consulting role focuses on career strategy and talent acquisition. Located in London, offering exposure to strategic workforce planning.",
+			visaConfidence: "likely",
+			tags: ["On-Site", "Entry Level"],
+			description:
+				"Inbound Headhunter & Career Consultant at Empire.",
+		},
+		{
+			title: "CONSULTANT CHANGE MANAGEMENT",
+			company: "KONECTA HOLDING FRANCE",
+			location: "Paris, France",
+			jobUrl: "https://fr.indeed.com/viewjob?jk=d00602608f9a3dda",
+			score: 82,
+			matchReason:
+				"Solid entry into change management consulting. This role focuses on organizational transformation and strategic change initiatives. Based in Paris region with opportunities to work on impactful projects.",
+			visaConfidence: "likely",
+			tags: ["On-Site", "Entry Level"],
+			description:
+				"Chez Konecta, nous recrutons des talents engagés et passionnés",
 		},
 	],
 	friday: [
 		{
-			title: "Business Design Analyst",
-			company: "Accenture",
-			location: "London, UK",
-			score: 94,
-			matchReason:
-				"Perfect for your Strategy and Business Design career path. Accenture's practice focuses on projects that align with your interests. Located in London, visa sponsorship available, and entry-level friendly.",
-			visaConfidence: "likely",
-			tags: ["Hybrid", "Entry Level"],
-			description:
-				"Design innovative business solutions and strategies. Work with clients to transform their organizations through design-led approaches.",
-		},
-		{
-			title: "Strategy Graduate",
-			company: "Oliver Wyman",
+			title: "Consultant(e) Confirmé(e) Quant CIB",
+			company: "Nexialog Consulting",
 			location: "Paris, France",
-			score: 92,
+			jobUrl: "https://www.glassdoor.fr/job-listing/j?jl=1009967298608",
+			score: 91,
 			matchReason:
-				"Hot match! Oliver Wyman's graduate programme is specifically designed for recent graduates. The hybrid work arrangement fits your preferences, and visa sponsorship available.",
+				"Excellent match for strategic quantitative analysis. This consultant role in Corporate & Investment Banking combines strategy with analytical rigor. CDI position in Paris offering strong career development.",
 			visaConfidence: "verified",
-			tags: ["Hybrid", "Graduate"],
+			tags: ["On-Site", "Entry Level"],
 			description:
-				"Solve complex strategic challenges for leading organizations. Work on market strategy, organizational design, and business transformation.",
+				"Consultant(e) Confirmé(e) Quant CIB - CDI (H/F) at Nexialog Consulting at Nexialog Consulting",
 		},
 		{
-			title: "Design Strategy Intern",
-			company: "Pentagram",
-			location: "London, UK",
-			score: 90,
-			matchReason:
-				"Pentagram's team specializes in work that matches your Strategy and Business Design career path. The role is based in London with visa sponsorship available, and requires no prior experience - ideal for interns.",
-			visaConfidence: "verified",
-			tags: ["Hybrid", "Internship"],
-			description:
-				"Develop strategic design solutions for brands and organizations. Work at the intersection of design, strategy, and business.",
-		},
-		{
-			title: "Business Strategy Associate",
-			company: "Kearney",
+			title: "Consultant AMOA – Épargne Salariale",
+			company: "Reactis",
 			location: "Paris, France",
+			jobUrl: "https://www.glassdoor.fr/job-listing/j?jl=1009963524068",
 			score: 88,
 			matchReason:
-				"Great match for Strategy and Business Design. Kearney offers structured training for entry-level professionals, hybrid work style, with comprehensive training support.",
-			visaConfidence: "verified",
-			tags: ["Hybrid", "Entry Level"],
+				"Strong match! This AMOA consultant role focuses on employee savings strategy. Work with financial institutions in Paris, combining business analysis with strategic project management.",
+			visaConfidence: "likely",
+			tags: ["On-Site", "Entry Level"],
 			description:
-				"Help clients develop winning strategies. Work on strategic planning, market analysis, and business model design.",
+				"Consultant AMOA – Épargne Salariale (H/F) at Reactis at Reactis",
 		},
 		{
-			title: "Innovation Strategy Graduate",
-			company: "Capgemini Invent",
+			title: "Lettings Consultant",
+			company: "DEX Property Management",
 			location: "London, UK",
-			score: 86,
+			jobUrl: "https://www.glassdoor.co.uk/job-listing/j?jl=1009971317004",
+			score: 85,
 			matchReason:
-				"Strong alignment with your Strategy and Business Design goals. Capgemini Invent's graduate programme offers clear progression paths. Located in London with visa sponsorship available.",
-			visaConfidence: "verified",
-			tags: ["Hybrid", "Graduate"],
+				"Good entry point for consulting and business strategy. This role involves strategic property management and client relationship building. Located in London with clear progression paths.",
+			visaConfidence: "likely",
+			tags: ["On-Site", "Entry Level"],
 			description:
-				"Design innovation strategies and new business models. Combine strategic thinking with design to drive organizational transformation.",
+				"Lettings Consultant at DEX Property Management.",
+		},
+		{
+			title: "Recruitment Consultant",
+			company: "The Best Connection Employment Group",
+			location: "London, UK",
+			jobUrl: "https://uk.indeed.com/viewjob?jk=8bc9e1397a46d01f",
+			score: 83,
+			matchReason:
+				"Solid match for strategy and business design professionals. This consultant role offers exposure to multiple sectors and strategic workforce planning. Based in London with comprehensive training.",
+			visaConfidence: "likely",
+			tags: ["On-Site", "Entry Level"],
+			description:
+				"Recruitment Consultant at The Best Connection Employment Group.",
+		},
+		{
+			title: "Consultant - Forensic Psychiatrist",
+			company: "NHS",
+			location: "London, UK",
+			jobUrl: "https://uk.indeed.com/viewjob?jk=213b855aaab47089",
+			score: 80,
+			matchReason:
+				"Alternative path for strategy professionals interested in healthcare consulting. This consultant role offers strategic impact in healthcare transformation. Permanent position in London.",
+			visaConfidence: "verified",
+			tags: ["On-Site", "Entry Level"],
+			description:
+				"This post is permanent or for a secondment opportunity",
 		},
 	],
 };
@@ -253,209 +268,196 @@ const getVisaStyle = (confidence: string) => {
 	}
 };
 
+const renderContent = (email: typeof PREMIUM_DAYS[0]) => {
+	// All emails show the same format: scrollable email with all 5 jobs
+	// Note: IPhoneShell already provides overflow-y-auto, we just need to fill the space
+	return (
+		<div className="h-full bg-zinc-950 flex flex-col">
+		{/* Email Header - Sticky */}
+		<div className="px-3 py-2 border-b border-white/5 bg-surface-elevated/20 shrink-0">
+			<div className="text-[10px] text-zinc-400 mb-0.5">
+				From: <span className="text-purple-400 font-medium">{email.from}</span>
+			</div>
+			<div className="text-[10px] text-zinc-400">
+				Subject: <span className="text-white font-semibold">{email.subject}</span>
+			</div>
+		</div>
+
+		{/* Email Body - All content flows naturally for scrolling */}
+		<div className="p-3 space-y-2.5">
+			{/* Premium Badge */}
+			<div className="inline-flex items-center gap-1 rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-bold text-purple-300 border border-purple-500/30">
+				<span className="text-yellow-400">⭐</span> Premium Member
+			</div>
+
+			{/* Title */}
+			<h1 className="text-[13px] font-bold text-white">
+				{email.subject}
+			</h1>
+
+			{/* Profile Pill - Fixed layout */}
+			<div className="rounded-full bg-indigo-500/20 border border-white/15 px-2.5 py-1">
+				<div className="flex items-start gap-1 text-[10px]">
+					<div className="flex items-center gap-1 shrink-0">
+						<Briefcase size={10} className="text-indigo-300" />
+						<span className="text-content-heading font-medium whitespace-nowrap">
+							{USER_PROFILE.careerPath}
+						</span>
+					</div>
+					<span className="text-content-muted shrink-0">·</span>
+					<div className="flex items-center gap-1 shrink-0">
+						<MapPin size={10} className="text-indigo-300" />
+						<span className="text-content-heading font-medium whitespace-nowrap">
+							{USER_PROFILE.cities.join(", ")}
+						</span>
+					</div>
+				</div>
+			</div>
+
+				{/* All 5 Job Cards */}
+				<div className="space-y-2.5 pt-1">
+					{email.jobs.map((job, index) => (
+						<div
+							key={index}
+							className="rounded-lg border border-white/10 bg-black/40 p-2.5"
+						>
+				{/* Match Score & Company */}
+				<div className="flex items-center justify-between mb-1.5">
+					<span
+						className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+							job.score >= 92
+								? "bg-emerald-500/30 text-emerald-400 border border-emerald-500/40"
+								: "bg-purple-500/30 text-purple-400 border border-purple-500/40"
+						}`}
+					>
+						{job.score >= 92 ? "🔥 " : ""}
+						{job.score}% Match
+					</span>
+					<div className="text-[10px] font-semibold text-content-heading truncate ml-2">
+						{job.company}
+					</div>
+				</div>
+
+				{/* Job Title */}
+				<h3 className="text-[12px] font-bold text-white mb-1 leading-tight line-clamp-2">
+					{job.title}
+				</h3>
+
+				{/* Location */}
+				<div className="flex items-center gap-1 text-[10px] text-content-secondary mb-1.5">
+					<MapPin size={10} className="shrink-0" />
+					{job.location}
+				</div>
+
+				{/* Match Reason */}
+				<div className="mb-1.5 p-1.5 bg-purple-500/15 border-l-2 border-purple-500 rounded">
+					<div className="text-[9px] font-semibold text-purple-400 uppercase tracking-wider mb-0.5">
+						🤖 Why This Matches
+					</div>
+					<p className="text-[10px] text-content-heading leading-relaxed line-clamp-2">
+						{job.matchReason}
+					</p>
+				</div>
+
+				{/* Tags */}
+				<div className="flex flex-wrap gap-1 mb-1.5">
+					{job.tags.map((tag) => (
+						<span
+							key={tag}
+							className="px-1.5 py-0.5 rounded bg-purple-500/15 text-content-secondary text-[9px] font-semibold"
+						>
+							{tag}
+						</span>
+					))}
+					{job.visaConfidence && (
+						<span
+							className={`px-1.5 py-0.5 rounded text-[9px] font-semibold border ${getVisaStyle(job.visaConfidence).bg} ${getVisaStyle(job.visaConfidence).text} ${getVisaStyle(job.visaConfidence).border}`}
+						>
+							{getVisaStyle(job.visaConfidence).label}
+						</span>
+					)}
+				</div>
+
+				{/* Action Buttons */}
+				<div className="space-y-1 relative z-10">
+					<a
+						href={job.jobUrl}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="block w-full bg-gradient-to-r from-emerald-600 to-green-600 text-white font-semibold px-2 py-1.5 rounded-lg text-[10px] text-center hover:from-emerald-500 hover:to-green-500 transition-colors pointer-events-auto cursor-pointer"
+						onClick={(e) => {
+							e.stopPropagation();
+							window.open(job.jobUrl, '_blank', 'noopener,noreferrer');
+						}}
+					>
+						Apply Now →
+					</a>
+					<div className="flex gap-1">
+						<button
+							type="button"
+							className="flex-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2 py-1 rounded-lg text-[9px] font-semibold pointer-events-auto"
+						>
+							👍 Good
+						</button>
+						<button
+							type="button"
+							className="flex-1 bg-red-500/10 border border-red-500/30 text-red-400 px-2 py-1 rounded-lg text-[9px] font-semibold pointer-events-auto"
+						>
+							👎 Not for me
+						</button>
+					</div>
+				</div>
+						</div>
+					))}
+				</div>
+
+				{/* Bottom spacing for scroll */}
+				<div className="h-4" />
+			</div>
+		</div>
+	);
+};
+
 export function PremiumEmailShowcase() {
 	return (
-		<section className="py-32 md:py-40 bg-black border-t border-border-subtle scroll-snap-section relative">
+		<section className="py-24 sm:py-32 md:py-40 bg-black border-t border-border-subtle scroll-snap-section relative">
 			{/* Scroll momentum fade */}
 			<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
 
-			<div className="container-page relative z-10">
-				<div className="text-center mb-16">
-					<h2 className="text-3xl font-bold text-white mb-4">
+			<div className="container-page relative z-10 px-4 sm:px-6">
+				<div className="text-center mb-10 sm:mb-12 md:mb-16">
+					<h2 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4">
 						The Premium Rhythm
 					</h2>
-					<p className="text-content-secondary max-w-2xl mx-auto italic">
+					<p className="text-sm sm:text-base text-content-secondary max-w-2xl mx-auto italic">
 						"The closest thing to having a personal headhunter."
 					</p>
 				</div>
 
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-					{PREMIUM_DAYS.map((email) => {
-						const featuredJob = email.jobs[0]; // Show first job as featured
-						const remainingCount = email.jobs.length - 1;
+				<div className="grid grid-cols-1 md:grid-cols-3 gap-10 sm:gap-12 md:gap-8 max-w-6xl mx-auto">
+					{PREMIUM_DAYS.map((email) => (
+						<div key={email.day} className="relative flex flex-col items-center">
+							{/* Day Label - Bigger and Bolder */}
+							<div className="mb-4 sm:mb-6 text-center">
+								<div className="text-lg sm:text-xl font-black text-white mb-1">
+									{email.day}
+								</div>
+								<div className="text-sm text-zinc-400 font-medium">
+									{email.time}
+								</div>
+							</div>
 
-						return (
-							<TiltCard key={email.day}>
-								<IPhoneShell
-									showMailHeader={true}
-									aria-label={`Premium email preview for ${email.day} - ${featuredJob.title} at ${featuredJob.company}`}
-								>
-									{/* Email Headers */}
-									<div className="px-5 py-4 border-b border-white/5 bg-surface-elevated/20 shrink-0">
-										<div className="text-xs text-content-muted mb-1">
-											From:{" "}
-											<span className="text-purple-400 font-medium tracking-wide">
-												{email.from}
-											</span>
-										</div>
-										<div className="text-xs text-content-muted">
-											Subject:{" "}
-											<span className="text-white font-semibold tracking-tight">
-												{email.subject}
-											</span>
-										</div>
-									</div>
-
-									{/* Email Content - Scrollable */}
-									<div className="p-5 flex flex-col flex-1 overflow-y-auto bg-zinc-950">
-										{/* Premium Badge */}
-										<div className="mb-4 shrink-0">
-											<span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/15 px-3.5 py-1.5 text-sm font-bold text-purple-300 border border-purple-500/30 shadow-[0_0_12px_rgba(139,92,246,0.3)]">
-												<span className="text-yellow-400">⭐</span> Premium Member
-											</span>
-										</div>
-
-										{/* Title */}
-										<h1 className="text-lg font-bold text-white mb-3 shrink-0">
-											{email.subject}
-										</h1>
-
-										{/* Profile Section - Pill Style */}
-										<div className="mb-4 rounded-full bg-indigo-500/20 border border-white/15 px-4 py-2.5 shrink-0">
-											<div className="flex items-center gap-2 flex-wrap">
-												<Briefcase size={12} className="text-indigo-300 shrink-0" />
-												<span className="text-xs text-content-heading font-medium">
-													{USER_PROFILE.careerPath}
-												</span>
-												<span className="text-xs text-content-muted">·</span>
-												<MapPin size={12} className="text-indigo-300 shrink-0" />
-												<span className="text-xs text-content-heading font-medium">
-													{USER_PROFILE.cities.join(", ")}
-												</span>
-											</div>
-										</div>
-
-										{/* Matches Header */}
-										<p className="text-sm text-zinc-300 mb-4 leading-relaxed shrink-0 font-medium">
-											Matches based on your 5 active filters:
-										</p>
-
-										{/* Profile Details - Compact List */}
-										<div className="mb-4 rounded-lg bg-indigo-500/20 border border-white/15 p-4 pb-5 shrink-0">
-											<div className="space-y-2 text-xs text-content-muted">
-												<div className="flex items-center gap-2">
-													<span className="text-indigo-300 shrink-0 text-sm" aria-hidden="true">🛂</span>
-													<span className="text-content-heading">{USER_PROFILE.visa}</span>
-												</div>
-												<div className="flex items-center gap-2">
-													<GraduationCap size={14} className="text-indigo-300 shrink-0" />
-													<span className="text-content-heading">{USER_PROFILE.level}</span>
-												</div>
-												<div className="flex items-center gap-2">
-													<Home size={14} className="text-indigo-300 shrink-0" />
-													<span className="text-content-heading">{USER_PROFILE.workStyle}</span>
-												</div>
-											</div>
-										</div>
-
-										{/* CTA Button - View All Matches */}
-										<button
-											type="button"
-											className="mb-4 w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold px-4 py-3 rounded-lg text-sm hover:from-indigo-500 hover:to-purple-500 transition-all shadow-lg hover:shadow-xl shadow-purple-500/20 shrink-0"
-										>
-											View All 5 Matches →
-										</button>
-
-										{/* Featured Job Card (First Job) - Matches Real Email Design */}
-										<div className="rounded-xl border border-white/10 bg-black/40 p-4 mb-3 flex flex-col">
-											{/* Match Score Badge */}
-											<div className="flex items-center justify-between mb-3 shrink-0">
-												<span
-													className={`text-xs font-bold px-2.5 py-1 rounded ${
-														featuredJob.score >= 92
-															? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-															: "bg-purple-500/20 text-purple-400 border border-purple-500/30"
-													}`}
-												>
-													{featuredJob.score >= 92 ? "🔥 " : ""}
-													{featuredJob.score}% Match
-												</span>
-												<div className="text-sm font-semibold text-content-heading">
-													{featuredJob.company}
-												</div>
-											</div>
-
-											{/* Job Title */}
-											<h3 className="text-base font-bold text-white mb-2 leading-tight line-clamp-2 break-words">
-												{featuredJob.title}
-											</h3>
-
-											{/* Location */}
-											<div className="flex items-center gap-1.5 text-xs text-content-secondary mb-3">
-												<MapPin size={12} className="shrink-0" />
-												{featuredJob.location}
-											</div>
-
-											{/* Match Reason - Purple border left, matches real email */}
-											<div className="mb-3 p-3 bg-purple-500/15 border-l-2 border-purple-500 rounded">
-												<div className="text-xs font-semibold text-purple-400 uppercase tracking-wider mb-1.5">
-													🤖 Why This Matches
-												</div>
-												<p className="text-sm text-content-heading leading-relaxed">
-													{featuredJob.matchReason}
-												</p>
-											</div>
-
-											{/* Description */}
-											<p className="text-xs text-content-muted mb-3 leading-relaxed line-clamp-2 break-words">
-												{featuredJob.description}
-											</p>
-
-											{/* Tags */}
-											<div className="flex flex-wrap gap-1.5 mb-3">
-												{featuredJob.tags.map((tag) => (
-													<span
-														key={tag}
-														className="px-2 py-0.5 rounded bg-purple-500/15 text-content-secondary text-[10px] font-semibold"
-													>
-														{tag}
-													</span>
-												))}
-												{featuredJob.visaConfidence && (
-													<span
-														className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${getVisaStyle(featuredJob.visaConfidence).bg} ${getVisaStyle(featuredJob.visaConfidence).text} ${getVisaStyle(featuredJob.visaConfidence).border}`}
-													>
-														{getVisaStyle(featuredJob.visaConfidence).label}
-													</span>
-												)}
-											</div>
-
-											{/* Action Buttons - Matches Real Email */}
-											<div className="flex gap-2">
-												<button
-													type="button"
-													className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold px-3 py-3 rounded-lg text-xs hover:from-indigo-500 hover:to-purple-500 transition-all min-h-[44px] touch-manipulation"
-												>
-													View Match Evidence →
-												</button>
-											</div>
-											<div className="flex gap-2 mt-2">
-												<button
-													type="button"
-													className="flex-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-2.5 rounded-lg text-xs font-semibold min-h-[44px] touch-manipulation"
-												>
-													👍 Good match
-												</button>
-												<button
-													type="button"
-													className="flex-1 bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-2.5 rounded-lg text-xs font-semibold min-h-[44px] touch-manipulation"
-												>
-													👎 Not for me
-												</button>
-											</div>
-										</div>
-
-										{/* +4 more matches indicator */}
-										<div className="text-center pt-3 border-t border-white/5 shrink-0">
-											<p className="text-xs text-content-secondary font-semibold">
-												+{remainingCount} more matches in this email
-											</p>
-										</div>
-									</div>
-								</IPhoneShell>
+							<TiltCard>
+								<div className="relative w-full max-w-[280px] sm:max-w-[320px] mx-auto overflow-hidden">
+									<IPhoneShell
+										aria-label={`Premium email preview for ${email.day} showing 5 job matches`}
+									>
+										{renderContent(email)}
+									</IPhoneShell>
+								</div>
 							</TiltCard>
-						);
-					})}
+						</div>
+					))}
 				</div>
 			</div>
 		</section>

@@ -5,8 +5,10 @@ import {
 	getCountryFlag,
 	getCountryFromCity,
 } from "@/lib/countryFlags";
+import { apiLogger } from "@/lib/api-logger";
 import { asyncHandler } from "@/lib/errors";
 import { getDatabaseClient } from "@/Utils/databasePool";
+import { withApiAuth } from "@/Utils/auth/apiAuth";
 
 // Cache for 1 hour
 let cachedCountries: Array<{
@@ -21,7 +23,7 @@ const CACHE_DURATION = 60 * 60 * 1000;
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
-export const GET = asyncHandler(async (_req: NextRequest) => {
+const getCountriesHandler = asyncHandler(async (_req: NextRequest) => {
 	const now = Date.now();
 
 	if (cachedCountries && now - lastFetch < CACHE_DURATION) {
@@ -144,14 +146,17 @@ export const GET = asyncHandler(async (_req: NextRequest) => {
 			}))
 			.filter((c) => c.cities.length > 0) // Only show countries with cities
 			.sort((a, b) => a.country.localeCompare(b.country)); // Alphabetical order
-		console.log(
-			`[Countries API] No DB countries found, showing ${countries.length} available countries as fallback`,
-		);
+		apiLogger.info("No DB countries found, using fallback", {
+			endpoint: "/api/countries",
+			fallbackCount: countries.length,
+		});
 	}
 
-	console.log(
-		`[Countries API] Found ${countries.length} countries with ${data?.length || 0} total jobs`,
-	);
+	apiLogger.debug("Found countries", {
+		endpoint: "/api/countries",
+		countryCount: countries.length,
+		totalJobs: data?.length || 0,
+	});
 
 	cachedCountries = countries;
 	lastFetch = now;
@@ -161,4 +166,12 @@ export const GET = asyncHandler(async (_req: NextRequest) => {
 		count: countries.length,
 		cached: false,
 	});
+});
+
+export const GET = withApiAuth(getCountriesHandler, {
+	allowPublic: true,
+	rateLimitConfig: {
+		maxRequests: 30, // Lower limit - less frequently needed
+		windowMs: 60000,
+	},
 });

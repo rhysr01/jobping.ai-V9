@@ -5,7 +5,7 @@
 
 import type OpenAI from "openai";
 import type { ParsedMatch } from "@/lib/types";
-import type { Job } from "../../../scrapers/types";
+import type { Job } from "@/scrapers/types";
 import type { JobMatch, UserPreferences } from "../types";
 import { JOBS_TO_ANALYZE_FREE, JOBS_TO_ANALYZE_PREMIUM } from "./config";
 
@@ -23,7 +23,7 @@ export function buildStablePrompt(
 ): string {
 	const jobsArray = Array.isArray(jobs) ? jobs : [];
 
-	const isFreeTier =
+	// const isFreeTier =
 		userPrefs.subscription_tier === "free" || !userPrefs.subscription_tier;
 	const isPremiumTier = userPrefs.subscription_tier === "premium";
 
@@ -70,14 +70,22 @@ export function buildStablePrompt(
 	// Check if user needs visa sponsorship
 	const visaStatus = userPrefs.visa_status?.toLowerCase() || "";
 	const needsVisaSponsorship =
-		visaStatus.includes("non-eu") ||
-		visaStatus.includes("non-uk") ||
+		// Explicit non-EU/UK indicators
+		(visaStatus.includes("non-eu") && !visaStatus.includes("non-eu citizen")) ||
+		(visaStatus.includes("non-uk") && !visaStatus.includes("non-uk citizen")) ||
 		visaStatus.includes("require sponsorship") ||
 		visaStatus.includes("need_sponsorship") ||
 		visaStatus.includes("visa-required") ||
-		(visaStatus.includes("sponsorship") && !visaStatus.includes("eu")) ||
+		// Sponsorship keywords (but not if user is a citizen)
+		(visaStatus.includes("sponsorship") &&
+			!visaStatus.includes("eu") &&
+			!visaStatus.includes("uk citizen")) ||
+		// Fallback: if status exists but doesn't indicate citizenship/permanent residency
 		(!visaStatus.includes("eu-citizen") &&
 			!visaStatus.includes("eu citizen") &&
+			!visaStatus.includes("uk citizen") &&
+			!visaStatus.includes("eea citizen") &&
+			!visaStatus.includes("swiss citizen") &&
 			!visaStatus.includes("citizen") &&
 			!visaStatus.includes("permanent") &&
 			visaStatus.length > 0);

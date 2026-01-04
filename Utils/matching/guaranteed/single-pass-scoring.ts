@@ -6,6 +6,7 @@
  */
 
 import type { Job } from "@/scrapers/types";
+import { getDatabaseCategoriesForForm } from "../categoryMapper";
 import { CITY_COUNTRY_MAP } from "../prefilter/location";
 import type { UserPreferences } from "../types";
 import { calculateVisaConfidence } from "../visa-confidence";
@@ -149,10 +150,12 @@ function checkRoleMatch(
 
 /**
  * Check career path match
+ * Uses database categories for proper matching (not just title/description keywords)
  */
 function checkCareerPathMatch(
 	job: Job,
 	userCareerPaths: string[],
+	_userPrefs?: UserPreferences,
 ): {
 	isExact: boolean;
 	isAdjacent: boolean;
@@ -162,46 +165,32 @@ function checkCareerPathMatch(
 		return { isExact: false, isAdjacent: false };
 	}
 
-	const jobTitle = (job.title || "").toLowerCase();
-	const jobDesc = (job.description || "").toLowerCase();
-	const jobText = `${jobTitle} ${jobDesc}`;
 	const categories = (job.categories || []).map((c) => c.toLowerCase());
 
-	// Check exact match
-	for (const path of userCareerPaths) {
-		const pathLower = path.toLowerCase();
-		if (
-			jobTitle.includes(pathLower) ||
-			jobDesc.includes(pathLower) ||
-			categories.some((c) => c.includes(pathLower))
-		) {
-			return { isExact: true, isAdjacent: false };
-		}
+	// CRITICAL: Use database category mapping for proper matching
+	// Category mapper imported at top of file
+	const userDatabaseCategories = new Set<string>();
+	userCareerPaths.forEach((path) => {
+		getDatabaseCategoriesForForm(path).forEach((cat: string) => {
+			userDatabaseCategories.add(cat.toLowerCase());
+		});
+	});
+
+	// Check exact match using database categories (most reliable)
+	const hasExactCategoryMatch = categories.some((cat) =>
+		userDatabaseCategories.has(cat),
+	);
+
+	if (hasExactCategoryMatch) {
+		return { isExact: true, isAdjacent: false };
 	}
 
-	// Check adjacent career paths (simplified)
-	const adjacentMap: Record<string, string[]> = {
-		tech: ["software", "engineering", "developer", "programming"],
-		finance: ["banking", "investment", "accounting", "consulting"],
-		consulting: ["strategy", "management", "advisory", "finance"],
-		marketing: ["growth", "product", "brand", "content"],
-		product: ["design", "ux", "ui", "marketing"],
-	};
+	// No keyword fallback - strict category matching only for all users
+	// This prevents false positives (e.g., "strategy" matching "strategic marketing")
+	// Quality is consistent across all users
 
-	for (const path of userCareerPaths) {
-		const pathLower = path.toLowerCase();
-		const adjacentTerms = adjacentMap[pathLower] || [];
-		for (const term of adjacentTerms) {
-			if (jobText.includes(term)) {
-				return {
-					isExact: false,
-					isAdjacent: true,
-					adjacentReason: `Adjacent career: ${term} (user wanted ${path})`,
-				};
-			}
-		}
-	}
-
+	// No adjacent career paths - strict matching only
+	// All users get exact category matches only
 	return { isExact: false, isAdjacent: false };
 }
 
@@ -318,18 +307,34 @@ export function calculateGuaranteedMatchScore(
 
 	let relaxationLevel = 0;
 	const relaxationReasons: string[] = [];
+	const isPremium = userPrefs.subscription_tier === "premium";
 
-	// Penalty 1: Location Mismatch (-10%)
+	// Penalty 1: Location Mismatch
+	// TIER-AWARE: Premium users should never have location mismatches (filtered earlier)
 	const targetCities = userPrefs.target_cities || [];
 	const locationMatch = checkLocationMatch(job, targetCities);
 	if (locationMatch.level === "country") {
-		penalties.locationMismatch = 10;
-		relaxationLevel = Math.max(relaxationLevel, 1);
-		relaxationReasons.push("Same country, different city");
+		// Premium users shouldn't reach here (filtered in hard gates), but add safety check
+		if (isPremium) {
+			// Premium users with country-level matches are invalid - should have been filtered
+			penalties.locationMismatch = 50; // Large penalty for premium users
+			relaxationLevel = Math.max(relaxationLevel, 1);
+			relaxationReasons.push("INVALID: Country-level match for premium user");
+		} else {
+			penalties.locationMismatch = 10;
+			relaxationLevel = Math.max(relaxationLevel, 1);
+			relaxationReasons.push("Same country, different city");
+		}
 	} else if (locationMatch.level === "country_wide") {
-		penalties.countryWide = 12;
-		relaxationLevel = Math.max(relaxationLevel, 6);
-		relaxationReasons.push("Country-wide search");
+		if (isPremium) {
+			penalties.countryWide = 50; // Large penalty for premium users
+			relaxationLevel = Math.max(relaxationLevel, 6);
+			relaxationReasons.push("INVALID: Country-wide match for premium user");
+		} else {
+			penalties.countryWide = 12;
+			relaxationLevel = Math.max(relaxationLevel, 6);
+			relaxationReasons.push("Country-wide search");
+		}
 	}
 
 	// Penalty 2: Role Proximity (-15%)
@@ -341,15 +346,23 @@ export function calculateGuaranteedMatchScore(
 		relaxationReasons.push(roleMatch.relatedReason || "Related role");
 	}
 
-	// Penalty 3: Career Path Adjacent (-20%)
+	// Penalty 3: Career Path Adjacent
+	// TIER-AWARE: Premium users shouldn't get adjacent career paths (filtered in hard gates)
 	const userCareerPaths = userPrefs.career_path || [];
-	const careerMatch = checkCareerPathMatch(job, userCareerPaths);
+	const careerMatch = checkCareerPathMatch(job, userCareerPaths, userPrefs);
 	if (careerMatch.isAdjacent && !careerMatch.isExact) {
-		penalties.careerPathAdjacent = 20;
-		relaxationLevel = Math.max(relaxationLevel, 4);
-		relaxationReasons.push(
-			careerMatch.adjacentReason || "Adjacent career path",
-		);
+		if (isPremium) {
+			// Premium users with adjacent matches are invalid - should have been filtered
+			penalties.careerPathAdjacent = 50; // Large penalty for premium users
+			relaxationLevel = Math.max(relaxationLevel, 4);
+			relaxationReasons.push("INVALID: Adjacent career path for premium user");
+		} else {
+			penalties.careerPathAdjacent = 20;
+			relaxationLevel = Math.max(relaxationLevel, 4);
+			relaxationReasons.push(
+				careerMatch.adjacentReason || "Adjacent career path",
+			);
+		}
 	}
 
 	// Penalty 4: Work Environment Mismatch (-8%)
@@ -386,12 +399,27 @@ export function calculateGuaranteedMatchScore(
 
 	// Calculate final score
 	const totalPenalty = Object.values(penalties).reduce((sum, p) => sum + p, 0);
-	const finalScore = Math.max(50, baseScore - totalPenalty); // Floor at 50%
+
+	// TIER-AWARE: Premium users with relaxation should have lower scores
+	// If premium user has any relaxation, it's a data quality issue (should have been filtered)
+	const finalScore =
+		isPremium && relaxationLevel > 0
+			? Math.max(30, baseScore - totalPenalty) // Lower floor for premium users with relaxation
+			: Math.max(50, baseScore - totalPenalty); // Normal floor for free users
+
+	// Reset relaxation level for premium users if they have exact matches (should be 0)
+	// This handles edge cases where premium filtering might have missed something
+	const finalRelaxationLevel =
+		isPremium && relaxationLevel > 0 && finalScore < 50
+			? relaxationLevel // Keep relaxation level if score is low (indicates filtering issue)
+			: isPremium && relaxationLevel > 0
+				? 0 // Reset to 0 if score is acceptable (exact match despite relaxation flag)
+				: relaxationLevel; // Keep for free users
 
 	return {
 		finalScore,
 		penalties,
-		relaxationLevel,
+		relaxationLevel: finalRelaxationLevel,
 		relaxationReason: relaxationReasons.join("; ") || "Exact match",
 		baseScore,
 	};

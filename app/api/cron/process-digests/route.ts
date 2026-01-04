@@ -321,14 +321,14 @@ export async function GET() {
 	try {
 		const { count: readyCount } = await supabase
 			.from("pending_digests")
-			.select("*", { count: "exact", head: true })
+			.select("id", { count: "exact", head: true })
 			.lte("scheduled_for", now)
 			.eq("sent", false)
 			.eq("cancelled", false);
 
 		const { count: totalPending } = await supabase
 			.from("pending_digests")
-			.select("*", { count: "exact", head: true })
+			.select("id", { count: "exact", head: true })
 			.eq("sent", false)
 			.eq("cancelled", false);
 

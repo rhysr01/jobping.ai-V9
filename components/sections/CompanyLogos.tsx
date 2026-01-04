@@ -20,7 +20,6 @@ export default function CompanyLogos() {
 	const [isHovered, setIsHovered] = useState(false);
 	const [isVisible, setIsVisible] = useState(false);
 	const [failedLogos, setFailedLogos] = useState<Set<string>>(new Set());
-	const [imagesLoaded, setImagesLoaded] = useState(0);
 
 	useEffect(() => {
 		async function fetchCompanies() {
@@ -73,16 +72,11 @@ export default function CompanyLogos() {
 	// Auto-scroll logos slowly to the right with infinite loop
 	// Only starts when section is visible and images are loaded
 	useEffect(() => {
-		if (!scrollContainerRef.current || companies.length === 0 || !isVisible) {
+		if (!scrollContainerRef.current || displayCompanies.length === 0 || !isVisible) {
 			return;
 		}
 
-		// Wait for images to load before starting scroll
-		const validCompanies = companies.filter(
-			(company) => !failedLogos.has(company.logoPath),
-		);
-		
-		if (validCompanies.length === 0) {
+		if (displayCompanies.length === 0) {
 			return;
 		}
 
@@ -209,8 +203,35 @@ export default function CompanyLogos() {
 		(company) => !failedLogos.has(company.logoPath),
 	);
 
-	// Hide section if no valid companies
-	if (validCompanies.length === 0 && !isLoading) {
+	// Show premium fallback companies if no database companies are available
+	// Only include companies whose logo files actually exist to avoid 404 errors
+	const fallbackCompanies = [
+		{ name: "Microsoft", logoPath: "/logos/companies/microsoft.svg" },
+		{ name: "Amazon", logoPath: "/logos/companies/amazon.svg" },
+		{ name: "Google", logoPath: "/logos/companies/google.svg" },
+		{ name: "Apple", logoPath: "/logos/companies/apple.svg" },
+		{ name: "Meta", logoPath: "/logos/companies/meta.svg" },
+		{ name: "Netflix", logoPath: "/logos/companies/netflix.svg" },
+		{ name: "Spotify", logoPath: "/logos/companies/spotify.svg" },
+		{ name: "Stripe", logoPath: "/logos/companies/stripe.svg" },
+		{ name: "Tesla", logoPath: "/logos/companies/tesla.svg" },
+		{ name: "Uber", logoPath: "/logos/companies/uber.svg" },
+		{ name: "Shopify", logoPath: "/logos/companies/shopify.svg" },
+		{ name: "Notion", logoPath: "/logos/companies/notion.svg" },
+		{ name: "Vercel", logoPath: "/logos/companies/vercel.svg" },
+		{ name: "GitHub", logoPath: "/logos/companies/github.svg" },
+		{ name: "Salesforce", logoPath: "/logos/companies/salesforce.svg" },
+		{ name: "Oracle", logoPath: "/logos/companies/oracle.svg" },
+		{ name: "SAP", logoPath: "/logos/companies/sap.svg" },
+		{ name: "Adobe", logoPath: "/logos/companies/adobe.svg" },
+		{ name: "IBM", logoPath: "/logos/companies/ibm.svg" },
+		{ name: "Siemens", logoPath: "/logos/companies/siemens.svg" },
+	];
+
+	const displayCompanies = validCompanies.length > 0 ? validCompanies : fallbackCompanies;
+
+	// Hide section if no companies to display
+	if (displayCompanies.length === 0 && !isLoading) {
 		return null;
 	}
 
@@ -272,7 +293,7 @@ export default function CompanyLogos() {
 						}}
 					>
 						{/* Duplicate logos for seamless infinite scroll */}
-						{[...validCompanies, ...validCompanies].map((company, index) => (
+						{[...displayCompanies, ...displayCompanies].map((company, index) => (
 							<motion.div
 								key={`${company.name}-${index}`}
 								initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -329,16 +350,15 @@ export default function CompanyLogos() {
 												if (card) {
 													(card as HTMLElement).style.display = "none";
 												}
-											}}
-											onLoad={() => {
-												setImagesLoaded((prev) => prev + 1);
-												if (process.env.NODE_ENV === "development") {
-													console.log(
-														`Successfully loaded logo: ${company.logoPath}`,
-													);
-												}
-											}}
-											loading="lazy"
+										}}
+										onLoad={() => {
+											if (process.env.NODE_ENV === "development") {
+												console.log(
+													`Successfully loaded logo: ${company.logoPath}`,
+												);
+											}
+										}}
+										loading={index < 6 ? "eager" : "lazy"}
 											unoptimized={false}
 											priority={index < 6} // Prioritize first 6 logos
 										/>

@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { AppError, asyncHandler, ValidationError } from "@/lib/errors";
 import { getDatabaseClient } from "@/Utils/databasePool";
+import { apiLogger } from "@/lib/api-logger";
 
 export const POST = asyncHandler(async (request: NextRequest) => {
 	const formData = await request.formData();
@@ -45,7 +46,7 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 		.single();
 
 	if (error) {
-		console.error("Database error:", error);
+		apiLogger.error("Database error:", error as Error);
 		throw new AppError("Database error", 500, "DB_ERROR", {
 			error: error.message,
 		});

@@ -22,20 +22,20 @@ export function HeroSection({
 			transition={{ duration: 0.5 }}
 			className="mb-10 text-center sm:mb-16 md:mb-20"
 		>
-		<span className="mb-6 inline-flex items-center gap-2 rounded-full border-2 border-brand-500/50 bg-brand-500/15 px-5 py-2 text-sm font-bold text-brand-100 shadow-[0_0_20px_rgba(99,102,241,0.3)]">
-			<BrandIcons.Star className="h-4 w-4" />
-			Premium · €5/month · Cancel anytime
-		</span>
+			<span className="mb-6 inline-flex items-center gap-2 rounded-full border-2 border-brand-500/50 bg-brand-500/15 px-5 py-2 text-sm font-bold text-brand-100 shadow-[0_0_20px_rgba(99,102,241,0.3)]">
+				<BrandIcons.Star className="h-4 w-4" />
+				Premium · €5/month · Built by a student
+			</span>
 
-		<span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.28em] text-brand-200">
-			Onboarding
-		</span>
-		<h1 className="mt-4 sm:mt-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white">
-			Get 15 Premium Matches for €5/mo
-		</h1>
+			<span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.28em] text-brand-200">
+				Onboarding
+			</span>
+			<h1 className="mt-4 sm:mt-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white">
+				15 Jobs Per Week, 3× Weekly
+			</h1>
 			<p className="mt-3 sm:mt-4 text-base sm:text-lg md:text-xl font-medium leading-relaxed text-zinc-100 px-2">
-				We only ask for the essentials so we can filter internships and graduate
-				roles you can actually land.
+				Stop scrolling LinkedIn for hours. Get AI-matched jobs delivered
+				Mon/Wed/Fri - matched to your career path, cities, and visa needs.
 			</p>
 
 			<div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm md:text-base font-medium text-zinc-100">
@@ -64,12 +64,12 @@ export function HeroSection({
 					parseInt(totalUsers.replace(/\D/g, ""), 10) > 0 && (
 						<span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-2 backdrop-blur-sm">
 							<BrandIcons.Users className="h-4 w-4 text-brand-300" />
-							{`${totalUsers}+ students on JobPing`}
+							{`${totalUsers}+ students using JobPing`}
 						</span>
 					)}
 				<span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-2 backdrop-blur-sm">
 					<BrandIcons.Clock className="h-4 w-4 text-brand-300" />
-					First drop arrives within 48 hours
+					First email Monday 9 AM
 				</span>
 			</div>
 		</motion.div>

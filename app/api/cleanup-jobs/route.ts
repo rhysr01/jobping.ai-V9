@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getDatabaseClient } from "@/Utils/databasePool";
 import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
+import { apiLogger } from "@/lib/api-logger";
 
 export async function POST(req: NextRequest) {
 	// PRODUCTION: Rate limiting for cleanup endpoint (automation use, configurable via env vars)
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
 		const { daysThreshold = 7 } = await req.json();
 		const supabase = getDatabaseClient();
 
-		console.log(
+		apiLogger.info(
 			` Starting job cleanup for jobs not seen in ${daysThreshold} days`,
 		);
 
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
 			.select("id, title, company, source, last_seen_at");
 
 		if (updateError) {
-			console.error(" Job cleanup failed:", updateError);
+			apiLogger.error(" Job cleanup failed:", updateError);
 			return NextResponse.json(
 				{ error: "Failed to update jobs", details: updateError.message },
 				{ status: 500 },
@@ -55,16 +56,16 @@ export async function POST(req: NextRequest) {
 		// Get count of jobs that were marked inactive
 		const { count: totalInactive } = await supabase
 			.from("jobs")
-			.select("*", { count: "exact", head: true })
+			.select("id", { count: "exact", head: true })
 			.eq("is_active", false);
 
 		// Get count of active jobs
 		const { count: totalActive } = await supabase
 			.from("jobs")
-			.select("*", { count: "exact", head: true })
+			.select("id", { count: "exact", head: true })
 			.eq("is_active", true);
 
-		console.log(
+		apiLogger.info(
 			` Job cleanup completed: ${inactiveJobs?.length || 0} jobs marked inactive`,
 		);
 
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest) {
 			sampleInactiveJobs: inactiveJobs?.slice(0, 5) || [],
 		});
 	} catch (error: unknown) {
-		console.error(" Job cleanup error:", error);
+		apiLogger.error(" Job cleanup error:", error as Error);
 		const errorMessage =
 			error instanceof Error ? error.message : "Unknown error";
 		return NextResponse.json(
@@ -101,12 +102,12 @@ export async function GET() {
 		// Get job statistics
 		const { count: totalActive } = await supabase
 			.from("jobs")
-			.select("*", { count: "exact", head: true })
+			.select("id", { count: "exact", head: true })
 			.eq("is_active", true);
 
 		const { count: totalInactive } = await supabase
 			.from("jobs")
-			.select("*", { count: "exact", head: true })
+			.select("id", { count: "exact", head: true })
 			.eq("is_active", false);
 
 		// Get jobs by source
@@ -136,7 +137,7 @@ export async function GET() {
 			timestamp: new Date().toISOString(),
 		});
 	} catch (error: unknown) {
-		console.error(" Job cleanup stats error:", error);
+		apiLogger.error(" Job cleanup stats error:", error as Error);
 		const errorMessage =
 			error instanceof Error ? error.message : "Unknown error";
 		return NextResponse.json(

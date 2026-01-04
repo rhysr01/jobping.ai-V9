@@ -7,7 +7,11 @@ import type { JobWithMetadata } from "@/lib/types/job";
 import type { Job } from "../../scrapers/types";
 import { getScoringWeights } from "../config/matching";
 import {
-	careerSlugs,
+	getDatabaseCategoriesForForm,
+	WORK_TYPE_CATEGORIES,
+} from "./categoryMapper";
+import {
+	// careerSlugs, // Kept for future use
 	cats,
 	hasEligibility,
 	normalizeToString,
@@ -30,12 +34,13 @@ export function applyHardGates(
 	userPrefs: UserPreferences,
 ): { passed: boolean; reason: string; reasons?: string[] } {
 	const categories = normalizeToString(job.categories);
-	const _tags = cats(categories);
+	// const _tags = cats(categories); // Kept for future use
 
-	// TIER-AWARE: Free users get more lenient matching
+	// Note: All users get strict matching - quality is consistent
+	// Differentiation is quantity (5 vs 10 matches) and frequency (one-time vs weekly)
 	const isFreeTier =
 		userPrefs.subscription_tier === "free" || !userPrefs.subscription_tier;
-	const _isPremiumTier = userPrefs.subscription_tier === "premium";
+	// const _isPremiumTier = userPrefs.subscription_tier === "premium";
 
 	// Collect all failures instead of returning on first failure
 	const failures: string[] = [];
@@ -51,9 +56,9 @@ export function applyHardGates(
 		failures.push("Not eligible for early career");
 	}
 
-	// Check location compatibility with intelligent fallback
-	// FREE TIER: More lenient - allow jobs in same country or nearby cities
-	// PREMIUM TIER: Stricter - must match exact cities or remote/hybrid
+	// Check location compatibility - STRICT for all users
+	// ALL USERS: Must match exact cities or be remote/hybrid
+	// Quality is consistent - differentiation is quantity/frequency, not quality
 	if (userPrefs.target_cities && userPrefs.target_cities.length > 0) {
 		// Enhanced location matching using structured data
 		const locationValidation = validateLocationCompatibility(
@@ -69,110 +74,36 @@ export function applyHardGates(
 			(job.location || "").toLowerCase().includes("hybrid") ||
 			(job.location || "").toLowerCase().includes("work from home");
 
-		// FREE TIER: More lenient - allow jobs in same country even if not exact city match
-		if (isFreeTier) {
-			// For free users, allow jobs in same country as target cities
-			const jobCountry = job.country || "";
-			const userCountries = userPrefs.target_cities
-				.map((city) => {
-					// Extract country from city (simplified - could be enhanced)
-					if (
-						city.includes("London") ||
-						city.includes("Manchester") ||
-						city.includes("Birmingham") ||
-						city.includes("Belfast")
-					)
-						return "UK";
-					if (city.includes("Dublin")) return "Ireland";
-					if (city.includes("Paris")) return "France";
-					if (city.includes("Amsterdam")) return "Netherlands";
-					if (
-						city.includes("Berlin") ||
-						city.includes("Munich") ||
-						city.includes("Hamburg")
-					)
-						return "Germany";
-					if (city.includes("Madrid") || city.includes("Barcelona"))
-						return "Spain";
-					if (city.includes("Milan") || city.includes("Rome")) return "Italy";
-					if (city.includes("Stockholm")) return "Sweden";
-					if (city.includes("Copenhagen")) return "Denmark";
-					if (city.includes("Vienna")) return "Austria";
-					if (city.includes("Prague")) return "Czech Republic";
-					if (city.includes("Warsaw")) return "Poland";
-					if (city.includes("Zurich")) return "Switzerland";
-					if (city.includes("Brussels")) return "Belgium";
-					return "";
-				})
-				.filter(Boolean);
-
-			const isInSameCountry =
-				jobCountry &&
-				userCountries.some(
-					(country) =>
-						jobCountry.toLowerCase().includes(country.toLowerCase()) ||
-						country.toLowerCase().includes(jobCountry.toLowerCase()),
-				);
-
-			// Free tier: Pass if location matches OR is in same country OR is remote/hybrid
-			if (
-				!locationValidation.compatible &&
-				!isRemoteOrHybrid &&
-				!isInSameCountry
-			) {
-				failures.push(
-					`Location mismatch: ${locationValidation.reasons[0] || "Location does not match user preferences"}`,
-				);
-			}
-		} else {
-			// PREMIUM TIER: Stricter - must match exact cities or be remote/hybrid
-			if (!locationValidation.compatible && !isRemoteOrHybrid) {
-				failures.push(
-					`Location mismatch: ${locationValidation.reasons[0] || "Location does not match user preferences"}`,
-				);
-			}
+		// ALL USERS: Must match exact cities or be remote/hybrid
+		if (!locationValidation.compatible && !isRemoteOrHybrid) {
+			failures.push(
+				`Location mismatch: ${locationValidation.reasons[0] || "Location does not match user preferences"}`,
+			);
 		}
 	}
 
-	// Check work environment preference (more flexible for free users)
-	// FREE TIER: More lenient - accept any work environment if not specified
-	// PREMIUM TIER: Stricter - must match user's preference
+	// Check work environment preference - flexible matching for all users
+	// Remote and hybrid are compatible with each other
 	if (userPrefs.work_environment && userPrefs.work_environment !== "unclear") {
 		const jobWorkEnv =
 			job.work_environment?.toLowerCase() || (job.location || "").toLowerCase();
 		const userWorkEnv = userPrefs.work_environment.toLowerCase();
 
-		// More flexible matching:
+		// Flexible matching (same for all users):
 		// - Remote jobs are acceptable for hybrid preference
 		// - Hybrid jobs are acceptable for remote preference
-		// - Only reject if user wants remote/hybrid but job is strictly on-site
+		// - Only reject if user wants remote but job is strictly on-site
 		if (jobWorkEnv) {
 			const isJobRemote =
 				jobWorkEnv.includes("remote") || jobWorkEnv.includes("work from home");
 			const isJobHybrid = jobWorkEnv.includes("hybrid");
 			const isJobOnSite = !isJobRemote && !isJobHybrid;
 
-			// FREE TIER: More lenient - only reject if user explicitly wants remote and job is strictly on-site
-			// PREMIUM TIER: Stricter - must match preference more closely
-			if (isFreeTier) {
-				// Free users: Only reject if they want remote and job is strictly on-site
-				if (userWorkEnv === "remote" && isJobOnSite) {
-					failures.push(
-						"Work environment mismatch: user wants remote but job is on-site",
-					);
-				}
-				// Otherwise, accept hybrid/remote/on-site for free users (more flexible)
-			} else {
-				// Premium users: Stricter matching
-				if (userWorkEnv === "remote" && isJobOnSite) {
-					failures.push(
-						"Work environment mismatch: user wants remote but job is on-site",
-					);
-				}
-				// Premium users can also reject if they want on-site but job is remote (optional - can be removed if too strict)
-				// if (userWorkEnv === 'on-site' && isJobRemote && !isJobHybrid) {
-				//   return { passed: false, reason: 'Work environment mismatch: user wants on-site but job is remote' };
-				// }
+			// All users: Only reject if they want remote and job is strictly on-site
+			if (userWorkEnv === "remote" && isJobOnSite) {
+				failures.push(
+					"Work environment mismatch: user wants remote but job is on-site",
+				);
 			}
 			// Hybrid and remote are compatible with each other
 			// On-site is acceptable if user didn't specify remote preference
@@ -180,8 +111,7 @@ export function applyHardGates(
 	}
 
 	// Check visa sponsorship requirement (CRITICAL HARD GATE)
-	// FREE TIER: More lenient - allow jobs that might offer visa (weaker detection)
-	// PREMIUM TIER: Stricter - must have clear visa sponsorship indicators
+	// ALL USERS: Must have clear visa sponsorship indicators
 	if (userPrefs.visa_status) {
 		const visaStatus = userPrefs.visa_status.toLowerCase();
 		// Explicit check for sponsorship requirement
@@ -272,15 +202,59 @@ export function applyHardGates(
 		}
 	}
 
+	// ALL USERS: Career path matching (must match exact categories)
+	// Jobs without work-type categories cannot be matched to users with career path preferences
+	if (userPrefs.career_path && userPrefs.career_path.length > 0) {
+		// Use category mapper imported at top of file
+		const userDatabaseCategories = new Set<string>();
+		userPrefs.career_path.forEach((path) => {
+			getDatabaseCategoriesForForm(path).forEach((cat: string) => {
+				userDatabaseCategories.add(cat.toLowerCase());
+			});
+		});
+
+		const jobCategories = cats(categories).map((c: string) => c.toLowerCase());
+
+		// Check if job has any work-type category (not just seniority levels)
+		const workTypeCategories = WORK_TYPE_CATEGORIES.map((wt: string) =>
+			wt.toLowerCase(),
+		);
+		const hasWorkTypeCategory = jobCategories.some((cat) =>
+			workTypeCategories.includes(cat),
+		);
+
+		// If job has no work-type category, it cannot be matched to users with career path preferences
+		if (!hasWorkTypeCategory) {
+			failures.push(
+				`Job has no work-type category: job only has seniority categories [${jobCategories.join(", ")}] but user has career path preferences [${Array.from(userDatabaseCategories).join(", ")}]`,
+			);
+		} else {
+			// Job has work-type category, check if it matches user's career path
+			const hasCareerPathMatch = jobCategories.some((cat) =>
+				userDatabaseCategories.has(cat),
+			);
+
+			if (!hasCareerPathMatch) {
+				// PREMIUM TIER: Strict - must match exactly
+				// FREE TIER: More lenient - allow if job has any work-type category (will be scored lower)
+				if (!isFreeTier) {
+					failures.push(
+						`Career path mismatch: job categories [${jobCategories.join(", ")}] do not match user's career path [${Array.from(userDatabaseCategories).join(", ")}]`,
+					);
+				}
+				// For free tier, we allow it but it will score lower (handled in scoring logic)
+			}
+		}
+	}
+
 	// Check language requirements (CRITICAL HARD GATE)
-	// FREE TIER: More lenient - default to English, allow jobs with no explicit language requirement
-	// PREMIUM TIER: Stricter - must match user's specified languages
+	// ALL USERS: Must match user's specified languages (defaults to English if not specified)
 	const userLanguages =
 		userPrefs.languages_spoken &&
 		Array.isArray(userPrefs.languages_spoken) &&
 		userPrefs.languages_spoken.length > 0
 			? userPrefs.languages_spoken
-			: ["English"]; // Default free users to English only
+			: ["English"]; // Default to English if not specified
 
 	if (userLanguages && userLanguages.length > 0) {
 		// TYPE SHIM: Now properly typed
@@ -594,7 +568,7 @@ export function calculateMatchScore(
 	semanticScore?: number,
 ): MatchScore {
 	const categories = normalizeToString(job.categories);
-	const _tags = cats(categories);
+	// const _tags = cats(categories); // Kept for future use
 
 	// Career path score (0-100) - MOST IMPORTANT
 	const careerPathScore = calculateCareerPathScore(job, userPrefs, categories);
@@ -674,7 +648,7 @@ export function calculateConfidenceScore(
 	userPrefs: UserPreferences,
 ): number {
 	const categories = normalizeToString(job.categories);
-	const _tags = cats(categories);
+	// const _tags = cats(categories); // Kept for future use
 
 	let confidence = 0.5; // Base confidence
 
@@ -696,14 +670,20 @@ export function calculateConfidenceScore(
 	}
 
 	// Increase confidence for career path match
+	// STANDARDIZED: Use database category mapping
 	const userCareerPaths = userPrefs.career_path || [];
-	const jobCareerSlugs = careerSlugs(categories);
+	if (userCareerPaths.length > 0) {
+		// Use category mapper imported at top of file
+		const userDatabaseCategories = new Set<string>();
+		userCareerPaths.forEach((path) => {
+			getDatabaseCategoriesForForm(path).forEach((cat: string) => {
+				userDatabaseCategories.add(cat.toLowerCase());
+			});
+		});
 
-	if (userCareerPaths.length > 0 && jobCareerSlugs.length > 0) {
-		const hasCareerMatch = userCareerPaths.some((userPath) =>
-			jobCareerSlugs.some((jobSlug) =>
-				jobSlug.includes(userPath.toLowerCase()),
-			),
+		const jobCategories = cats(categories).map((c: string) => c.toLowerCase());
+		const hasCareerMatch = jobCategories.some((cat) =>
+			userDatabaseCategories.has(cat),
 		);
 
 		if (hasCareerMatch) {
@@ -720,7 +700,7 @@ export function generateMatchExplanation(
 	_userPrefs: UserPreferences,
 ): { reason: string; tags: string } {
 	const categories = normalizeToString(job.categories);
-	const _tags = cats(categories);
+	// const _tags = cats(categories); // Kept for future use
 
 	const reasons: string[] = [];
 	const matchTags: string[] = [];
@@ -1065,6 +1045,7 @@ function calculateTimingScore(job: Job): number {
 /**
  * Calculate career path score (0-100)
  * Career path is the MOST IMPORTANT factor (40% weight)
+ * STANDARDIZED: Uses getDatabaseCategoriesForForm for consistent category mapping
  */
 function calculateCareerPathScore(
 	job: Job,
@@ -1077,36 +1058,41 @@ function calculateCareerPathScore(
 		return 70; // Neutral score if no preference
 	}
 
-	const jobCareerSlugs = careerSlugs(categories);
-	const jobCategories = cats(categories);
-
-	// Check for exact career path match
-	const hasCareerMatch = userCareerPaths.some((userPath) => {
-		const userPathLower = userPath.toLowerCase();
-
-		// Check job categories for career path match
-		return (
-			jobCareerSlugs.some(
-				(jobSlug) =>
-					jobSlug.includes(userPathLower) || userPathLower.includes(jobSlug),
-			) ||
-			jobCategories.some(
-				(cat) =>
-					cat.toLowerCase().includes(userPathLower) ||
-					userPathLower.includes(cat.toLowerCase()),
-			)
-		);
+	// STANDARDIZED: Use database category mapping for consistent matching
+	// Category mapper imported at top of file
+	const userDatabaseCategories = new Set<string>();
+	userCareerPaths.forEach((path) => {
+		getDatabaseCategoriesForForm(path).forEach((cat: string) => {
+			userDatabaseCategories.add(cat.toLowerCase());
+		});
 	});
+
+	// Normalize job categories to array
+	const jobCategories = cats(categories).map((c: string) => c.toLowerCase());
+
+	// Check for exact career path match using database categories
+	const hasCareerMatch = jobCategories.some((cat) =>
+		userDatabaseCategories.has(cat),
+	);
 
 	if (hasCareerMatch) {
 		return 100; // Perfect match
 	}
 
-	// Partial match (related career paths)
+	// TIER-AWARE: Premium users don't get partial matches (strict matching)
+	const isPremiumTier = userPrefs.subscription_tier === "premium";
+	if (isPremiumTier) {
+		return 30; // No match for premium users (strict)
+	}
+
+	// Partial match (related career paths) - only for free users
 	const hasPartialMatch = userCareerPaths.some((userPath) => {
 		const userPathLower = userPath.toLowerCase();
 		const jobText = `${job.title || ""} ${job.description || ""}`.toLowerCase();
-		return jobText.includes(userPathLower);
+		// Only match if keyword appears AND it's not a false positive
+		// Check that the keyword isn't part of a different word
+		const wordBoundaryRegex = new RegExp(`\\b${userPathLower}\\b`, "i");
+		return wordBoundaryRegex.test(jobText);
 	});
 
 	return hasPartialMatch ? 60 : 30; // Partial match or no match
@@ -1122,11 +1108,28 @@ function calculateWorkEnvironmentScore(
 	userPrefs: UserPreferences,
 ): number {
 	// Normalize user preference (form values: 'Office', 'Hybrid', 'Remote')
-	const userWorkEnv = toWorkEnv(userPrefs.work_environment);
+	// Handle comma-separated strings from premium form (e.g., "Office, Hybrid")
+	const workEnvRaw = userPrefs.work_environment;
+	let userWorkEnvs: ("remote" | "hybrid" | "on-site")[] = [];
+
+	if (workEnvRaw) {
+		if (typeof workEnvRaw === "string" && workEnvRaw.includes(",")) {
+			// Multiple selections: parse each value
+			const values = workEnvRaw.split(",").map((v) => v.trim());
+			userWorkEnvs = values
+				.map((v) => toWorkEnv(v))
+				.filter((v): v is "remote" | "hybrid" | "on-site" => v !== null);
+		} else {
+			// Single selection
+			const env = toWorkEnv(workEnvRaw);
+			if (env) userWorkEnvs = [env];
+		}
+	}
+
 	const jobWorkEnv = toWorkEnv(job.work_environment);
 
 	// If no preference specified, neutral score
-	if (!userWorkEnv) {
+	if (userWorkEnvs.length === 0) {
 		return 50;
 	}
 
@@ -1135,31 +1138,46 @@ function calculateWorkEnvironmentScore(
 		return 50;
 	}
 
-	// Exact match
-	if (userWorkEnv === jobWorkEnv) {
+	// Check if job matches any of user's selected environments
+	const exactMatch = userWorkEnvs.includes(jobWorkEnv);
+	if (exactMatch) {
 		return 100;
 	}
 
-	// Compatibility rules (form options only)
-	if (userWorkEnv === "remote") {
-		// Remote users accept: remote (100), hybrid (60)
-		if (jobWorkEnv === "hybrid") return 60;
-		if (jobWorkEnv === "on-site") return 20;
+	// Compatibility rules: Only apply if user explicitly selected a compatible environment
+	// Example: User selects "Office, Hybrid" → can match Hybrid jobs (compatibility) but NOT Remote jobs
+	// Example: User selects "Hybrid" → can match Remote jobs (compatibility) but NOT Office-only jobs
+	let bestScore = 0;
+
+	for (const userWorkEnv of userWorkEnvs) {
+		let score = 0;
+
+		if (userWorkEnv === "remote") {
+			// Remote users accept: remote (100), hybrid (60) - compatibility allowed
+			if (jobWorkEnv === "hybrid") score = 60;
+			else if (jobWorkEnv === "on-site") score = 20;
+		} else if (userWorkEnv === "hybrid") {
+			// Hybrid users accept: hybrid (100), remote (90), on-site (40) - compatibility allowed
+			if (jobWorkEnv === "remote") score = 90;
+			else if (jobWorkEnv === "on-site") score = 40;
+		} else if (userWorkEnv === "on-site") {
+			// Office users accept: on-site (100), hybrid (70) - compatibility allowed
+			// BUT: Do NOT match Remote jobs if user only selected Office (no Remote in selection)
+			if (jobWorkEnv === "hybrid") score = 70;
+			// Only allow Remote compatibility if user also selected Remote or Hybrid
+			else if (jobWorkEnv === "remote" && userWorkEnvs.includes("remote")) {
+				score = 20; // User selected both Office and Remote
+			} else if (jobWorkEnv === "remote" && userWorkEnvs.includes("hybrid")) {
+				score = 20; // User selected Office and Hybrid (Hybrid can be remote-compatible)
+			} else if (jobWorkEnv === "remote") {
+				score = 0; // User only selected Office, don't match Remote jobs
+			}
+		}
+
+		bestScore = Math.max(bestScore, score);
 	}
 
-	if (userWorkEnv === "hybrid") {
-		// Hybrid users accept: hybrid (100), remote (90), on-site (40)
-		if (jobWorkEnv === "remote") return 90;
-		if (jobWorkEnv === "on-site") return 40;
-	}
-
-	if (userWorkEnv === "on-site") {
-		// Office users accept: on-site (100), hybrid (70), remote (20)
-		if (jobWorkEnv === "hybrid") return 70;
-		if (jobWorkEnv === "remote") return 20;
-	}
-
-	return 30; // Mismatch
+	return bestScore > 0 ? bestScore : 30; // Return best compatibility score or mismatch
 }
 
 /**

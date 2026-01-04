@@ -1,31 +1,48 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { asyncHandler } from "@/lib/errors";
+import { apiLogger } from "@/lib/api-logger";
 import { performanceMonitor } from "@/lib/monitoring";
 import { getDatabaseClient } from "@/Utils/databasePool";
 import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
 
+interface DatabaseMetrics {
+	users: number;
+	jobs: number;
+	matches: number;
+	timestamp: string;
+	error?: string;
+}
+
 // Helper function to get database metrics
-async function getDatabaseMetrics(): Promise<Record<string, any>> {
+async function getDatabaseMetrics(): Promise<DatabaseMetrics> {
 	try {
 		const supabase = getDatabaseClient();
 
-		// Get counts for key tables
+		// Get counts for key tables (using head: true for count-only queries)
 		const [usersResult, jobsResult, matchesResult] = await Promise.allSettled([
-			supabase.from("users").select("*", { count: "exact", head: true }),
-			supabase.from("jobs").select("*", { count: "exact", head: true }),
-			supabase.from("matches").select("*", { count: "exact", head: true }),
+			supabase.from("users").select("id", { count: "exact", head: true }),
+			supabase.from("jobs").select("id", { count: "exact", head: true }),
+			supabase.from("matches").select("id", { count: "exact", head: true }),
 		]);
 
 		return {
-			users: usersResult.status === "fulfilled" ? usersResult.value.count : 0,
-			jobs: jobsResult.status === "fulfilled" ? jobsResult.value.count : 0,
+			users: usersResult.status === "fulfilled" ? (usersResult.value.count ?? 0) : 0,
+			jobs: jobsResult.status === "fulfilled" ? (jobsResult.value.count ?? 0) : 0,
 			matches:
-				matchesResult.status === "fulfilled" ? matchesResult.value.count : 0,
+				matchesResult.status === "fulfilled" ? (matchesResult.value.count ?? 0) : 0,
 			timestamp: new Date().toISOString(),
 		};
 	} catch (error) {
-		console.error("Database metrics error:", error);
-		return { error: "Failed to fetch database metrics" };
+		apiLogger.error("Database metrics error", error as Error, {
+			endpoint: "/api/dashboard",
+		});
+		return {
+			users: 0,
+			jobs: 0,
+			matches: 0,
+			timestamp: new Date().toISOString(),
+			error: "Failed to fetch database metrics",
+		};
 	}
 }
 

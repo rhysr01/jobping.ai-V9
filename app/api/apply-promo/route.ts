@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { AppError, asyncHandler, ValidationError } from "@/lib/errors";
 import { getDatabaseClient } from "@/Utils/databasePool";
+import { apiLogger } from "@/lib/api-logger";
 
 export const POST = asyncHandler(async (req: NextRequest) => {
 	// Get database client with service_role key
@@ -34,7 +35,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			.eq("email", email);
 
 		if (updateError) {
-			console.error("Error updating user:", updateError);
+			apiLogger.error("Error updating user:", updateError);
 			throw new AppError("Failed to upgrade user", 500, "DB_UPDATE_ERROR", {
 				error: updateError.message,
 			});
@@ -62,7 +63,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 	);
 
 	if (tempError) {
-		console.error("Error storing promo pending:", tempError);
+		apiLogger.error("Error storing promo pending:", tempError);
 		// Don't fail - just log and continue
 	}
 

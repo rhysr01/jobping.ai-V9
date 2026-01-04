@@ -5,8 +5,8 @@
 
 import { apiLogger } from "@/lib/api-logger";
 import { withRedis } from "@/lib/redis-client";
+import type { Job } from "@/scrapers/types";
 import { getDatabaseClient } from "@/Utils/databasePool";
-import type { Job } from "../../../scrapers/types";
 import type { UserPreferences } from "../types";
 
 // ============================================
@@ -27,7 +27,8 @@ export async function calculateWeightedScore(
 	// TIER-AWARE: Different base scores and weights
 	const isFreeTier =
 		userPrefs.subscription_tier === "free" || !userPrefs.subscription_tier;
-	const isPremiumTier = userPrefs.subscription_tier === "premium";
+	// Note: Premium tier logic can be added here when needed
+	// const isPremiumTier = userPrefs.subscription_tier === "premium";
 
 	// Same quality scoring for all users - amazing matches for everyone
 	let score = 50; // Consistent base score for high-quality matching

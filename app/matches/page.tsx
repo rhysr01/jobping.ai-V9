@@ -164,16 +164,20 @@ function MatchesPageContent() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [fetchMatches]); // Empty deps - only run once on mount
 
+	// Track if user just signed up (to delay upgrade banner)
+	const [justSignedUp, setJustSignedUp] = useState(false);
+
 	// Check URL params for free signup success
 	useEffect(() => {
-		const justSignedUp = searchParams?.get("justSignedUp");
+		const justSignedUpParam = searchParams?.get("justSignedUp");
 		const matchCount = searchParams?.get("matchCount");
 
-		if (justSignedUp === "true" && matchCount) {
+		if (justSignedUpParam === "true" && matchCount) {
 			const count = parseInt(matchCount, 10);
 			if (!Number.isNaN(count) && count > 0) {
 				setSuccessMatchCount(count);
 				setShowMatchingSuite(true);
+				setJustSignedUp(true);
 
 				// Clean up URL params after showing suite
 				const url = new URL(window.location.href);
@@ -185,16 +189,18 @@ function MatchesPageContent() {
 	}, [searchParams]);
 
 	// Track job views and show upgrade banner after engagement
+	// Delay banner for new signups (20+ seconds) to let them explore first
 	useEffect(() => {
 		if (jobs.length === 0) return;
 
-		// Show banner after 3 seconds OR after viewing 2+ jobs
+		// Show banner after 20 seconds for new signups, 3 seconds for returning users
+		const delay = justSignedUp ? 20000 : 3000;
 		const timer = setTimeout(() => {
 			setShowUpgradeBanner(true);
-		}, 3000);
+		}, delay);
 
 		return () => clearTimeout(timer);
-	}, [jobs.length]);
+	}, [jobs.length, justSignedUp]);
 
 	// Memoized scroll handler to prevent re-creating on every render
 	const handleScroll = useCallback(() => {
@@ -584,7 +590,7 @@ function MatchesPageContent() {
 				{/* Job Cards */}
 				<div
 					ref={jobsContainerRef}
-					className="space-y-5 mb-12"
+					className="space-y-6 md:space-y-7 mb-12"
 					role="list"
 					aria-label="Job matches"
 				>
@@ -657,7 +663,7 @@ function MatchesPageContent() {
 											delay: isDismissing ? 0 : index * 0.1,
 											ease: "easeInOut",
 										}}
-										className="glass-card elevation-2 p-5 hover:elevation-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/5 overflow-hidden relative"
+										className="glass-card elevation-2 p-4 md:p-6 pb-6 hover:elevation-3 transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/5 overflow-hidden relative"
 										role="listitem"
 										aria-labelledby={`job-title-${job.id}`}
 									>
@@ -667,13 +673,13 @@ function MatchesPageContent() {
 										)}
 
 										{/* Top Row: Job Number + Match Score + Visa Confidence */}
-										<div className="flex items-center gap-2 mb-3 flex-wrap">
+										<div className="flex items-center gap-2.5 mb-3 flex-wrap">
 											<span className="text-xs font-bold text-brand-400 bg-brand-500/20 px-2.5 py-1 rounded-full">
 												#{index + 1}
 											</span>
 											{job.match_score && (
 												<span
-													className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+													className={`text-xs md:text-sm font-semibold px-2.5 py-1 rounded-full ${
 														job.match_score >= 0.92
 															? "text-emerald-400 bg-emerald-500/20"
 															: "text-green-400 bg-green-500/20"
@@ -719,18 +725,18 @@ function MatchesPageContent() {
 										{/* Job Title - Larger, more prominent */}
 										<h3
 											id={`job-title-${job.id}`}
-											className="text-xl font-bold mb-1.5 text-zinc-100 break-words tracking-tight"
+											className="text-xl md:text-2xl font-bold mb-2.5 text-zinc-100 break-words tracking-normal leading-snug"
 										>
 											{job.title}
 										</h3>
 
 										{/* Company - Brand color */}
-										<p className="text-brand-300 font-medium mb-2 break-words">
+										<p className="text-brand-200 font-semibold mb-3 break-words">
 											{job.company}
 										</p>
 
 										{/* Location + Work Environment */}
-										<div className="flex flex-wrap gap-2 mb-3">
+										<div className="flex flex-wrap gap-2 mb-4">
 											<span className="inline-flex items-center px-2.5 py-1 rounded-full bg-zinc-800/50 text-sm text-zinc-300">
 												📍{" "}
 												{job.location ||
@@ -749,7 +755,7 @@ function MatchesPageContent() {
 										{/* Match Reason Display - Semantic HTML */}
 										{job.match_reason && (
 											<aside
-												className="mb-3 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg"
+												className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 border-l-2 border-l-emerald-500/40 rounded-lg"
 												aria-label="Match explanation"
 											>
 												<p className="text-xs font-semibold text-emerald-400 mb-1.5 flex items-center gap-1.5">
@@ -763,167 +769,237 @@ function MatchesPageContent() {
 										)}
 
 										{/* Description */}
-										<p className="text-zinc-400 text-sm mb-4 line-clamp-3 leading-relaxed">
+										<p className="text-zinc-300 text-sm mb-4 line-clamp-3 md:line-clamp-4 leading-relaxed">
 											{job.description
 												?.replace(/<[^>]*>/g, "")
 												.substring(0, 200)}
 											...
 										</p>
 
-										<div className="flex gap-4 items-center">
-											<Button
-												variant="primary"
-												size="lg"
-												className="flex-1 bg-emerald-500 text-zinc-950 font-bold px-6 hover:bg-emerald-400 transition-all duration-200"
-												disabled={clickedJobId === job.id || isDismissing}
-												onClick={async () => {
-													setClickedJobId(job.id);
-													handleJobClick(job.id, job.company, index + 1);
+										{/* Button Area Separator */}
+										<div className="border-t border-white/10 pt-4 mt-4">
+											<div className="flex gap-4 items-center">
+												<Button
+													variant="primary"
+													size="lg"
+													className="flex-1 bg-emerald-500 text-zinc-950 font-bold px-8 py-3.5 min-h-[48px] hover:bg-emerald-400 transition-all duration-200 shadow-lg shadow-emerald-500/20 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+													disabled={clickedJobId === job.id || isDismissing}
+													onClick={async () => {
+														setClickedJobId(job.id);
+														handleJobClick(job.id, job.company, index + 1);
 
-													// Track apply click (5x weight in penalty calculation)
-													const email = getUserEmail();
-													if (email && job.job_hash) {
-														apiCallJson("/api/feedback/enhanced", {
-															method: "POST",
-															headers: { "Content-Type": "application/json" },
-															body: JSON.stringify({
-																jobHash: job.job_hash,
-																email,
-																feedbackType: "click",
-																verdict: "positive",
-																relevanceScore: job.match_score || 80,
-																matchQualityScore: 5,
-																reason: "User clicked Apply button",
-																source: "web",
-																metadata: {
-																	action: "apply_clicked",
-																	page: "matches",
-																},
-															}),
-														}).catch((err) => {
-															console.error(
-																"Failed to track apply click:",
-																err,
-															);
-															// Don't block user - tracking is non-critical
-														});
-													}
+														// Track apply click (5x weight in penalty calculation)
+														const email = getUserEmail();
+														if (email && job.job_hash) {
+															apiCallJson("/api/feedback/enhanced", {
+																method: "POST",
+																headers: { "Content-Type": "application/json" },
+																body: JSON.stringify({
+																	jobHash: job.job_hash,
+																	email,
+																	feedbackType: "click",
+																	verdict: "positive",
+																	relevanceScore: job.match_score || 80,
+																	matchQualityScore: 5,
+																	reason: "User clicked Apply button",
+																	source: "web",
+																	metadata: {
+																		action: "apply_clicked",
+																		page: "matches",
+																	},
+																}),
+															}).catch((err) => {
+																console.error(
+																	"Failed to track apply click:",
+																	err,
+																);
+																// Don't block user - tracking is non-critical
+															});
+														}
 
-													// Use bridge route instead of direct redirect
-													if (email && job.job_hash) {
-														const bridgeUrl = `/api/apply/${job.job_hash}?email=${encodeURIComponent(email)}`;
+														// Use bridge route instead of direct redirect
+														if (email && job.job_hash) {
+															const bridgeUrl = `/api/apply/${job.job_hash}?email=${encodeURIComponent(email)}`;
 
-														fetch(bridgeUrl, { redirect: "manual" })
-															.then((response) => {
-																// Check if it's a redirect (healthy link)
-																if (
-																	response.status === 302 ||
-																	response.status === 301
-																) {
-																	const redirectUrl =
-																		response.headers.get("location");
-																	if (redirectUrl) {
+															fetch(bridgeUrl, { redirect: "manual" })
+																.then((response) => {
+																	// Check if it's a redirect (healthy link)
+																	if (
+																		response.status === 302 ||
+																		response.status === 301
+																	) {
+																		const redirectUrl =
+																			response.headers.get("location");
+																		if (redirectUrl) {
+																			window.open(
+																				redirectUrl,
+																				"_blank",
+																				"noopener,noreferrer",
+																			);
+																			setTimeout(
+																				() => setClickedJobId(null),
+																				TIMING.CLICK_RESET_DELAY_MS,
+																			);
+																			return undefined;
+																		}
+																	}
+
+																	// Check if it's JSON (broken link with similar matches)
+																	const contentType =
+																		response.headers.get("content-type");
+																	if (
+																		contentType?.includes("application/json")
+																	) {
+																		return response.json();
+																	}
+
+																	// Fallback: Direct redirect
+																	const fallbackUrl = job.job_url || job.url;
+																	if (fallbackUrl) {
 																		window.open(
-																			redirectUrl,
+																			fallbackUrl,
 																			"_blank",
 																			"noopener,noreferrer",
 																		);
-																		setTimeout(
-																			() => setClickedJobId(null),
-																			TIMING.CLICK_RESET_DELAY_MS,
-																		);
-																		return undefined;
 																	}
-																}
-
-																// Check if it's JSON (broken link with similar matches)
-																const contentType =
-																	response.headers.get("content-type");
-																if (contentType?.includes("application/json")) {
-																	return response.json();
-																}
-
-																// Fallback: Direct redirect
-																const fallbackUrl = job.job_url || job.url;
-																if (fallbackUrl) {
-																	window.open(
-																		fallbackUrl,
-																		"_blank",
-																		"noopener,noreferrer",
+																	setTimeout(
+																		() => setClickedJobId(null),
+																		TIMING.CLICK_RESET_DELAY_MS,
 																	);
-																}
-																setTimeout(
-																	() => setClickedJobId(null),
-																	TIMING.CLICK_RESET_DELAY_MS,
-																);
-																return undefined;
-															})
-															.then((data) => {
-																if (data?.error && data?.similarMatches) {
-																	// Show job closed modal
-																	setJobClosedData({
-																		originalJob: data.originalJob,
-																		similarMatches: data.similarMatches,
-																		message: data.message,
-																	});
-																	setShowJobClosedModal(true);
-																	setClickedJobId(null);
-																}
-															})
-															.catch((err) => {
-																console.error("Bridge route error:", err);
-																// Fallback: Direct redirect
-																const fallbackUrl = job.job_url || job.url;
-																if (fallbackUrl) {
-																	window.open(
-																		fallbackUrl,
-																		"_blank",
-																		"noopener,noreferrer",
+																	return undefined;
+																})
+																.then((data) => {
+																	if (data?.error && data?.similarMatches) {
+																		// Show job closed modal
+																		setJobClosedData({
+																			originalJob: data.originalJob,
+																			similarMatches: data.similarMatches,
+																			message: data.message,
+																		});
+																		setShowJobClosedModal(true);
+																		setClickedJobId(null);
+																	}
+																})
+																.catch((err) => {
+																	console.error("Bridge route error:", err);
+																	// Fallback: Direct redirect
+																	const fallbackUrl = job.job_url || job.url;
+																	if (fallbackUrl) {
+																		window.open(
+																			fallbackUrl,
+																			"_blank",
+																			"noopener,noreferrer",
+																		);
+																	}
+																	setTimeout(
+																		() => setClickedJobId(null),
+																		TIMING.CLICK_RESET_DELAY_MS,
 																	);
-																}
-																setTimeout(
-																	() => setClickedJobId(null),
-																	TIMING.CLICK_RESET_DELAY_MS,
+																});
+														} else {
+															// Fallback if no email/hash
+															const fallbackUrl = job.job_url || job.url;
+															if (fallbackUrl) {
+																window.open(
+																	fallbackUrl,
+																	"_blank",
+																	"noopener,noreferrer",
 																);
-															});
-													} else {
-														// Fallback if no email/hash
-														const fallbackUrl = job.job_url || job.url;
-														if (fallbackUrl) {
-															window.open(
-																fallbackUrl,
-																"_blank",
-																"noopener,noreferrer",
-															);
+															}
+															setTimeout(() => setClickedJobId(null), 2000);
 														}
-														setTimeout(() => setClickedJobId(null), 2000);
-													}
-												}}
-											>
-												{clickedJobId === job.id
-													? "Checking link..."
-													: "Apply Now →"}
-											</Button>
+													}}
+												>
+													{clickedJobId === job.id
+														? "Checking link..."
+														: "Apply Now →"}
+												</Button>
 
-											<motion.button
-												type="button"
-												onClick={() => handleJobDismiss(job)}
-												disabled={isDismissing}
-												whileTap={{ scale: 0.95 }}
-												className="px-3 py-2.5 rounded-lg border border-white/10 bg-transparent text-zinc-400 hover:text-zinc-200 hover:border-white/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-												aria-label={`Mark ${job.company} as not relevant`}
-											>
-												<span className="flex items-center gap-1.5">
-													<X size={16} />
-													<span className="hidden sm:inline">Not Relevant</span>
-												</span>
-											</motion.button>
+												<motion.button
+													type="button"
+													onClick={() => handleJobDismiss(job)}
+													disabled={isDismissing}
+													whileTap={{ scale: 0.95 }}
+													className="p-3 min-h-[48px] rounded-lg border border-white/10 bg-transparent text-zinc-400 hover:text-zinc-200 hover:border-white/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+													aria-label={`Mark ${job.company} as not relevant`}
+													title="Not relevant"
+												>
+													<span className="flex items-center gap-1.5">
+														<X size={16} />
+														<span className="hidden sm:inline">
+															Not Relevant
+														</span>
+													</span>
+												</motion.button>
+											</div>
 										</div>
 									</motion.article>
 								);
 							})}
 					</AnimatePresence>
 				</div>
+
+				{/* What's Next Section - Show for new free signups */}
+				{justSignedUp && jobs.length > 0 && (
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.3 }}
+						className="glass-card elevation-2 p-8 sm:p-10 mb-8 border-2 border-brand-500/20 bg-gradient-to-br from-brand-500/10 to-purple-600/5"
+					>
+						<h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 text-center">
+							What's Next?
+						</h2>
+						<div className="space-y-6">
+							<div className="flex gap-4">
+								<div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-300 font-bold text-lg border-2 border-brand-500/30">
+									1
+								</div>
+								<div className="flex-1">
+									<h3 className="font-bold text-white text-lg mb-2">
+										This is a one-time preview
+									</h3>
+									<p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
+										You're viewing {FREE_ROLES_PER_SEND} matches right now. This
+										is a free preview to test our AI matching quality—no emails
+										sent, no spam.
+									</p>
+								</div>
+							</div>
+							<div className="flex gap-4">
+								<div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-300 font-bold text-lg border-2 border-brand-500/30">
+									2
+								</div>
+								<div className="flex-1">
+									<h3 className="font-bold text-white text-lg mb-2">
+										Want more jobs?
+									</h3>
+									<p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
+										Upgrade to Premium to get {PREMIUM_ROLES_PER_WEEK} fresh
+										jobs per week delivered via email (Mon/Wed/Fri). That's{" "}
+										{PREMIUM_ROLES_PER_WEEK - FREE_ROLES_PER_SEND} more jobs
+										than this preview.
+									</p>
+								</div>
+							</div>
+							<div className="flex gap-4">
+								<div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-300 font-bold text-lg border-2 border-brand-500/30">
+									3
+								</div>
+								<div className="flex-1">
+									<h3 className="font-bold text-white text-lg mb-2">
+										Explore your matches
+									</h3>
+									<p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
+										Review the jobs above and see how well our AI matched them
+										to your preferences. Each job links directly to the
+										application.
+									</p>
+								</div>
+							</div>
+						</div>
+					</motion.div>
+				)}
 
 				{/* Ghost Matches - Show additional premium matches for free users */}
 				{jobs.length > 0 && <GhostMatches />}
@@ -945,7 +1021,7 @@ function MatchesPageContent() {
 									{FREE_ROLES_PER_SEND}
 								</p>
 								<p className="text-sm text-zinc-200 font-medium">
-									Free (one-time preview)
+									Free (one-time only)
 								</p>
 							</div>
 							<div className="text-center p-4 rounded-lg bg-brand-500/20 border border-brand-500/30">

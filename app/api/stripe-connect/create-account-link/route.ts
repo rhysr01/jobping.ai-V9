@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 			expiresAt: accountLink.expires_at,
 		});
 	} catch (error: any) {
-		apiLogger.error("Failed to create account link", error, {
+		apiLogger.error("Failed to create account link", error as Error, {
 			errorType: error.type,
 			errorCode: error.code,
 		});

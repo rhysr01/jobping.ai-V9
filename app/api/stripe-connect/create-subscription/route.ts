@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
 			},
 		});
 	} catch (error: any) {
-		apiLogger.error("Failed to create subscription", error, {
+		apiLogger.error("Failed to create subscription", error as Error, {
 			errorType: error.type,
 			errorCode: error.code,
 		});

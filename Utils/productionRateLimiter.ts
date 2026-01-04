@@ -213,7 +213,7 @@ export const SCRAPER_RATE_LIMITS = {
 	},
 };
 
-class ProductionRateLimiter {
+export class ProductionRateLimiter {
 	public redisClient: any = null;
 	private fallbackMap: Map<string, { count: number; resetTime: number }> =
 		new Map();
@@ -732,6 +732,7 @@ export function shouldThrottleScraper(platform: string): boolean {
 // Lazy cleanup timer (only start in production)
 let cleanupTimer: NodeJS.Timeout | null = null;
 
+// @ts-expect-error - Function kept for future use
 function _startCleanupTimer() {
 	if (isTestMode()) {
 		return;

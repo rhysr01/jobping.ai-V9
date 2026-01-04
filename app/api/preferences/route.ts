@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifySecureToken } from "@/Utils/auth/secureTokens";
 import { getDatabaseClient } from "@/Utils/databasePool";
+import { apiLogger } from "@/lib/api-logger";
 
 export async function GET(req: NextRequest) {
 	try {
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
 
 		return NextResponse.json({ success: true, user });
 	} catch (error) {
-		console.error("Preferences GET error:", error);
+		apiLogger.error("Preferences GET error:", error as Error);
 		return NextResponse.json(
 			{ error: "Failed to load preferences" },
 			{ status: 500 },
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
 			.eq("email", email);
 
 		if (error) {
-			console.error("Update preferences error:", error);
+			apiLogger.error("Update preferences error:", error as Error);
 			return NextResponse.json(
 				{ error: "Failed to update preferences" },
 				{ status: 500 },
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
 
 		return NextResponse.json({ success: true, message: "Preferences updated" });
 	} catch (error) {
-		console.error("Preferences POST error:", error);
+		apiLogger.error("Preferences POST error:", error as Error);
 		return NextResponse.json(
 			{ error: "Failed to save preferences" },
 			{ status: 500 },

@@ -119,7 +119,7 @@ function determineCompanySize(company: string): string {
 		"apple",
 		"netflix",
 	];
-	const _startupKeywords = ["startup", "scale-up", "early-stage"];
+	// const _startupKeywords = ["startup", "scale-up", "early-stage"];
 
 	const companyLower = (company || "").toLowerCase();
 

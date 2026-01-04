@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 			.limit(10);
 
 		if (matchesError) {
-			console.error("Error fetching matches:", matchesError);
+			apiLogger.error("Error fetching matches:", matchesError);
 		}
 
 		// Get job details for matches
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
 			jobsSent: Math.min(jobs.length, 5),
 		});
 	} catch (error) {
-		console.error("Resend email error:", error);
+		apiLogger.error("Resend email error:", error as Error);
 		apiLogger.error("Resend email failed", error as Error);
 		return NextResponse.json(
 			{ error: "Failed to resend email" },

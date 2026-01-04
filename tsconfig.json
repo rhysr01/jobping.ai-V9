@@ -7,10 +7,9 @@
 		"strict": true,
 		"strictNullChecks": true,
 		"strictFunctionTypes": true,
-		"noUnusedLocals": false, // Temporarily disabled - will re-enable after cleanup
-		"noUnusedParameters": false, // Temporarily disabled - will re-enable after cleanup
-		// Note: These should be true in production, but disabled temporarily to allow build
-		// TODO: Clean up unused variables and re-enable these checks
+		"noUnusedLocals": true, // Re-enabled after cleanup
+		"noUnusedParameters": true, // Re-enabled after cleanup
+		// Note: These are now enabled for production code quality
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
 		"forceConsistentCasingInFileNames": true,

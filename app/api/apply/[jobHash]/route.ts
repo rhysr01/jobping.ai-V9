@@ -192,7 +192,7 @@ export async function GET(
 	request: NextRequest,
 	{ params }: { params: Promise<{ jobHash: string }> },
 ) {
-	const _startTime = Date.now();
+	// Performance tracking removed - not currently used
 	const { searchParams } = new URL(request.url);
 	const email = searchParams.get("email");
 	const token = searchParams.get("token");
@@ -282,9 +282,9 @@ export async function GET(
 			.then(() => {
 				apiLogger.debug("Job snapshot saved", { jobHash, email });
 			})
-			.catch((err: Error) => {
-				apiLogger.error("Failed to save job snapshot", err);
-			});
+		.catch((error: Error) => {
+			apiLogger.error("Failed to save job snapshot", error as Error);
+		});
 	}
 
 	// PERFORMANCE OPTIMIZATION: Check cache first before HEAD request
@@ -339,9 +339,9 @@ export async function GET(
 					status: healthResult.reason,
 				});
 			})
-			.catch((err: Error) => {
-				apiLogger.error("Failed to update link health", err);
-			});
+		.catch((error: Error) => {
+			apiLogger.error("Failed to update link health", error as Error);
+		});
 	}
 
 	// Track outbound click (for attribution/affiliate future)
@@ -367,9 +367,9 @@ export async function GET(
 		.then(() => {
 			apiLogger.debug("Outbound click tracked", { jobHash, email });
 		})
-		.catch((err: Error) => {
-			apiLogger.error("Failed to track outbound click", err);
-		});
+	.catch((error: Error) => {
+		apiLogger.error("Failed to track outbound click", error as Error);
+	});
 
 	// Handle broken/redirected links
 	if (!healthResult.healthy && healthResult.reason !== "blocked") {

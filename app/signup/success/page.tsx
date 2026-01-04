@@ -19,14 +19,12 @@ import {
 	PREMIUM_SEND_DAYS_LABEL,
 	PREMIUM_SENDS_PER_WEEK,
 } from "@/lib/productMetrics";
+import { showToast } from "@/lib/toast";
 
 function SignupSuccessContent() {
 	const [showSuccess, setShowSuccess] = useState(true);
 	const [emailSentAt, setEmailSentAt] = useState<string>("");
 	const [resending, setResending] = useState(false);
-	const [verificationStatus, setVerificationStatus] = useState<
-		"pending" | "verified" | "error"
-	>("pending");
 	const [metadata, setMetadata] = useState<{
 		targetCompanies: Array<{
 			company: string;
@@ -44,10 +42,10 @@ function SignupSuccessContent() {
 	const [metadataLoading, setMetadataLoading] = useState(true);
 	const searchParams = useSearchParams();
 	// This is the premium success page - free users go directly to /matches
-	const _tier: "premium" = "premium";
+	// const _tier: "premium" = "premium"; // Kept for future use
 	const email = searchParams?.get("email") || "";
-	const verified = searchParams?.get("verified");
-	const verificationError = searchParams?.get("error");
+	const matchCount = searchParams?.get("matches") || "10";
+	const matchCountNum = parseInt(matchCount, 10) || 10;
 
 	useEffect(() => {
 		setEmailSentAt(
@@ -78,18 +76,11 @@ function SignupSuccessContent() {
 			});
 		}, 250);
 
-		// Check verification status from URL params
-		if (verified === "true") {
-			setVerificationStatus("verified");
-		} else if (verified === "false" || verificationError) {
-			setVerificationStatus("error");
-		}
-
 		return () => {
 			clearTimeout(timer);
 			clearInterval(interval);
 		};
-	}, [verified, verificationError]);
+	}, []);
 
 	// Fetch metadata on mount (non-blocking)
 	useEffect(() => {
@@ -108,14 +99,15 @@ function SignupSuccessContent() {
 	}, [email]);
 
 	const handleSetAlert = async (company: string) => {
-		// Track the alert event (placeholder - implement actual alert logic)
+		// Track the alert event
 		console.log("Setting alert for company:", company);
-		// TODO: Implement alert setting logic
+		showToast.success(`Alert set for ${company}! We'll notify you when new roles appear.`);
+		// TODO: Implement actual alert setting API endpoint
 	};
 
 	const handleResendEmail = async () => {
 		if (!email) {
-			alert("Email address not found. Please contact support.");
+			showToast.error("Email address not found. Please contact support.");
 			return;
 		}
 
@@ -129,9 +121,9 @@ function SignupSuccessContent() {
 
 			const result = await response.json();
 			if (response.ok) {
-				alert("Email resent successfully! Check your inbox.");
+				showToast.success("Email resent successfully! Check your inbox.");
 			} else {
-				alert(
+				showToast.error(
 					result.error || "Failed to resend email. Please try again later.",
 				);
 			}
@@ -140,42 +132,7 @@ function SignupSuccessContent() {
 				error instanceof ApiError
 					? error.message
 					: "Failed to resend email. Please try again later.";
-			alert(errorMessage);
-		} finally {
-			setResending(false);
-		}
-	};
-
-	const handleResendVerification = async () => {
-		if (!email) {
-			alert("Email address not found. Please contact support.");
-			return;
-		}
-
-		setResending(true);
-		try {
-			const response = await apiCall("/api/resend-verification", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ email }),
-			});
-
-			const result = await response.json();
-			if (response.ok) {
-				alert("Verification email sent! Check your inbox.");
-				setVerificationStatus("pending");
-			} else {
-				alert(
-					result.error ||
-						"Failed to resend verification email. Please try again later.",
-				);
-			}
-		} catch (error) {
-			const errorMessage =
-				error instanceof ApiError
-					? error.message
-					: "Failed to resend verification email. Please try again later.";
-			alert(errorMessage);
+			showToast.error(errorMessage);
 		} finally {
 			setResending(false);
 		}
@@ -209,13 +166,7 @@ function SignupSuccessContent() {
 								stiffness: 200,
 								damping: 15,
 							}}
-							className={`mx-auto w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center border-4 ${
-								verificationStatus === "verified"
-									? "bg-gradient-to-br from-emerald-500 via-green-500 to-emerald-600 shadow-[0_0_80px_rgba(16,185,129,0.6)] border-emerald-500/30"
-									: verificationStatus === "error"
-										? "bg-gradient-to-br from-red-500 via-red-600 to-red-700 shadow-[0_0_80px_rgba(239,68,68,0.6)] border-red-500/30"
-										: "bg-gradient-to-br from-emerald-500 via-green-500 to-emerald-600 shadow-[0_0_80px_rgba(16,185,129,0.6)] border-emerald-500/30"
-							}`}
+							className="mx-auto w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center border-4 bg-gradient-to-br from-emerald-500 via-green-500 to-emerald-600 shadow-[0_0_80px_rgba(16,185,129,0.6)] border-emerald-500/30"
 						>
 							<motion.svg
 								initial={{ pathLength: 0, opacity: 0 }}
@@ -227,60 +178,34 @@ function SignupSuccessContent() {
 								stroke="currentColor"
 								strokeWidth="3"
 							>
-								{verificationStatus === "error" ? (
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										d="M6 18L18 6M6 6l12 12"
-									/>
-								) : (
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										d="M5 13l4 4L19 7"
-									/>
-								)}
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M5 13l4 4L19 7"
+								/>
 							</motion.svg>
 						</motion.div>
 
 						{/* Main Message */}
 						<div className="space-y-4">
 							<h1 className="text-4xl font-black text-white sm:text-5xl md:text-6xl leading-tight">
-								{verificationStatus === "verified"
-									? "Email Verified! 🎉"
-									: verificationStatus === "error"
-										? "Verification Issue"
-										: "Welcome to Premium! 🎉"}
+								Welcome to Premium! 🎉
 							</h1>
 
 							<p className="mx-auto max-w-2xl text-lg font-medium leading-relaxed text-zinc-100 sm:text-xl">
-								{verificationStatus === "verified"
-									? "Your email has been verified successfully! Your job matches are on the way."
-									: verificationStatus === "error"
-										? verificationError
-											? `Verification failed: ${decodeURIComponent(verificationError)}. Please check your email for a new verification link.`
-											: "There was an issue verifying your email. Please check your email for a verification link."
-										: "You're now part of the 1% who get personalized job matches delivered to their inbox. Your first matches arrive within 48 hours."}
+								You're now part of the 1% who get personalized job matches delivered to their inbox. We found{" "}
+								<span className="text-brand-300 font-bold">{matchCountNum}</span> perfect matches for you—check your inbox now!
 							</p>
 
-							{verificationStatus === "error" && (
-								<div className="mx-auto max-w-md rounded-lg border-2 border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
-									<p className="font-semibold mb-2">Need help?</p>
-									<p className="mb-3">
-										Check your email for a verification link, or click the
-										button below to resend it.
-									</p>
-									<motion.button
-										onClick={handleResendVerification}
-										disabled={resending || !email}
-										whileHover={{ scale: 1.02 }}
-										whileTap={{ scale: 0.98 }}
-										className="w-full px-4 py-2 bg-red-500/20 border-2 border-red-500/50 hover:border-red-400/70 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-all"
-									>
-										{resending ? "Sending..." : "Resend Verification Email"}
-									</motion.button>
-								</div>
-							)}
+							{/* Value Reinforcement */}
+							<div className="mx-auto max-w-md rounded-xl border-2 border-brand-500/30 bg-brand-500/10 p-4 text-center">
+								<p className="text-sm font-semibold text-brand-200 mb-1">
+									Premium Value
+								</p>
+								<p className="text-base text-white font-bold">
+									{`${PREMIUM_ROLES_PER_WEEK} jobs per week`} · {`${PREMIUM_SENDS_PER_WEEK} email drops`} · Mon/Wed/Fri delivery
+								</p>
+							</div>
 						</div>
 
 						<div className="mx-auto inline-flex items-center gap-2 rounded-full border-2 border-white/20 bg-white/8 px-5 py-2.5 text-sm font-medium text-zinc-100 backdrop-blur-sm">
@@ -370,8 +295,8 @@ function SignupSuccessContent() {
 											Check your inbox
 										</div>
 										<div className="text-zinc-100 text-sm sm:text-base font-medium leading-relaxed">
-											Your first drop includes 10 jobs plus your premium welcome
-											email. If you don't see it after a few minutes, peek at
+											Your first drop includes {matchCountNum} jobs plus your premium welcome
+											email. Check your inbox now—if you don't see it after a few minutes, peek at
 											spam.
 										</div>
 										<div className="mt-3 text-xs sm:text-sm text-zinc-300 font-medium">

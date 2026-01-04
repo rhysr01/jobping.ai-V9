@@ -10,6 +10,7 @@ import {
 	sendReEngagementEmails,
 } from "@/Utils/email/reEngagementService";
 import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
+import { apiLogger } from "@/lib/api-logger";
 
 async function handleSendReEngagement(req: NextRequest) {
 	// Rate limiting for re-engagement emails
@@ -28,11 +29,11 @@ async function handleSendReEngagement(req: NextRequest) {
 	}
 
 	try {
-		console.log(" Starting re-engagement email process...");
+		apiLogger.info(" Starting re-engagement email process...");
 
 		const result = await sendReEngagementEmails();
 
-		console.log(
+		apiLogger.info(
 			` Re-engagement complete: ${result.emailsSent} emails sent, ${result.errors.length} errors`,
 		);
 
@@ -43,7 +44,7 @@ async function handleSendReEngagement(req: NextRequest) {
 			errors: result.errors,
 		});
 	} catch (error) {
-		console.error(" Re-engagement email process failed:", error);
+		apiLogger.error(" Re-engagement email process failed:", error as Error);
 		return NextResponse.json(
 			{
 				error: "Re-engagement email process failed",
@@ -63,7 +64,7 @@ async function handleGetReEngagementStats(_req: NextRequest) {
 			stats,
 		});
 	} catch (error) {
-		console.error(" Failed to get re-engagement stats:", error);
+		apiLogger.error(" Failed to get re-engagement stats:", error as Error);
 		return NextResponse.json(
 			{
 				error: "Failed to get re-engagement stats",

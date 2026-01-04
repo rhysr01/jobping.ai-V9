@@ -7,6 +7,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { withAxiom } from "next-axiom";
 import { getDatabaseClient } from "@/Utils/databasePool";
 import { embeddingService } from "@/Utils/matching/embedding.service";
+import { apiLogger } from "@/lib/api-logger";
 
 export const POST = withAxiom(async function POST(request: NextRequest) {
 	try {
@@ -39,7 +40,7 @@ export const POST = withAxiom(async function POST(request: NextRequest) {
 			.limit(BATCH_SIZE);
 
 		if (queueError) {
-			console.error("Error fetching embedding queue:", queueError);
+			apiLogger.error("Error fetching embedding queue:", queueError);
 			return NextResponse.json(
 				{ error: "Failed to fetch queue", details: queueError.message },
 				{ status: 500 },
@@ -63,7 +64,7 @@ export const POST = withAxiom(async function POST(request: NextRequest) {
 			.eq("is_active", true);
 
 		if (jobsError) {
-			console.error("Error fetching jobs:", jobsError);
+			apiLogger.error("Error fetching jobs:", jobsError);
 			return NextResponse.json(
 				{ error: "Failed to fetch jobs", details: jobsError.message },
 				{ status: 500 },
@@ -117,7 +118,7 @@ export const POST = withAxiom(async function POST(request: NextRequest) {
 			message: `Processed ${embeddings.size} embeddings, ${failedHashes.length} failed`,
 		});
 	} catch (error) {
-		console.error("Error processing embedding queue:", error);
+		apiLogger.error("Error processing embedding queue:", error as Error);
 		return NextResponse.json(
 			{
 				error: "Internal server error",
@@ -136,7 +137,7 @@ export const GET = withAxiom(async function GET(_request: NextRequest) {
 
 		const supabase = getDatabaseClient();
 
-		const { data: stats, error } = await supabase
+		const { data: stats } = await supabase
 			.from("embedding_queue")
 			.select("processed_at, retry_count")
 			.is("processed_at", null);

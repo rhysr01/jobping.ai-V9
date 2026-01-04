@@ -59,11 +59,11 @@ export function IPhoneShell({
 			{/* 3. Screen Content Safe Area */}
 			<div className="h-full pt-10 pb-6 overflow-hidden relative flex flex-col">
 				{showMailHeader && (
-					<div className="h-12 border-b border-white/10 flex items-center px-5 bg-zinc-900/50 backdrop-blur-md shrink-0">
-						<span className="text-blue-400 text-sm">‹ Inbox</span>
-						<div className="flex-1 text-center pr-8">
-							<p className="text-[10px] text-content-muted uppercase tracking-widest">
-								JobPing Match
+					<div className="h-12 border-b border-white/10 flex items-center px-6 bg-zinc-900/50 backdrop-blur-md shrink-0">
+						<span className="text-blue-400 text-sm font-medium">‹ Inbox</span>
+						<div className="flex-1 text-center">
+							<p className="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold">
+								JOBPING MATCH
 							</p>
 						</div>
 					</div>
@@ -74,9 +74,9 @@ export function IPhoneShell({
 				</div>
 			</div>
 
-			{/* 4. Glass Reflection Overlay */}
+			{/* 4. Glass Reflection Overlay - Allow clicks through */}
 			<div
-				className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-transparent pointer-events-none z-50 rounded-[2.2rem] iphone-reflection"
+				className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-transparent pointer-events-none z-30 rounded-[2.2rem] iphone-reflection"
 				aria-hidden="true"
 			/>
 		</div>

@@ -137,6 +137,9 @@ export async function POST(request: NextRequest) {
 			return response;
 		}
 
+		// Clean up any promo_pending entries - promo codes are for premium only, not free
+		await supabase.from("promo_pending").delete().eq("email", normalizedEmail);
+
 		// Create free user record
 		const freeExpiresAt = new Date();
 		freeExpiresAt.setDate(freeExpiresAt.getDate() + 30); // 30 days from now
@@ -155,7 +158,7 @@ export async function POST(request: NextRequest) {
 					entry_level_preferences?.join(", ") || "graduate, intern, junior",
 				visa_status: visa_status, // Map visa sponsorship to visa_status
 				email_verified: true,
-				subscription_active: false, // Free users not active
+				subscription_active: false, // Free users not active - promo codes are for premium only
 				active: true,
 			})
 			.select()
@@ -813,7 +816,7 @@ export async function POST(request: NextRequest) {
 
 		if (validJobs.length === 0) {
 			const error = new Error("No valid jobs to save (all missing job_hash)");
-			apiLogger.error("No valid jobs to save (all missing job_hash)", error, {
+			apiLogger.error("No valid jobs to save (all missing job_hash)", error as Error, {
 				email: normalizedEmail,
 				finalJobsCount: finalJobs.length,
 				distributedJobsCount: distributedJobs.length,

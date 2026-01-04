@@ -5,11 +5,7 @@ import {
 	PREMIUM_SENDS_PER_WEEK,
 } from "@/lib/productMetrics";
 
-interface FAQSchemaProps {
-	nonce?: string;
-}
-
-export default function FAQSchema({ nonce }: FAQSchemaProps) {
+export default function FAQSchema() {
 	const faqData = {
 		"@context": "https://schema.org",
 		"@type": "FAQPage",
@@ -52,7 +48,6 @@ export default function FAQSchema({ nonce }: FAQSchemaProps) {
 	return (
 		<script
 			type="application/ld+json"
-			nonce={nonce}
 			// biome-ignore lint/security/noDangerouslySetInnerHtml: Valid use case for JSON-LD
 			dangerouslySetInnerHTML={{ __html: JSON.stringify(faqData) }}
 		/>

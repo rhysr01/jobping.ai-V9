@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
 				"Account created successfully. Call /api/stripe-connect/create-account-link to start onboarding.",
 		});
 	} catch (error: any) {
-		apiLogger.error("Failed to create Stripe Connect account", error, {
+		apiLogger.error("Failed to create Stripe Connect account", error as Error, {
 			errorType: error.type,
 			errorCode: error.code,
 		});

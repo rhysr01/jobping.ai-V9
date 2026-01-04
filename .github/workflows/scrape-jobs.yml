@@ -112,6 +112,12 @@ jobs:
           echo "✅ REED_API_KEY is set"
         fi
         
+        if [ -z "${{ secrets.JOOBLE_API_KEY }}" ]; then
+          echo "⚠️  JOOBLE_API_KEY secret is missing (Jooble scraper will skip)"
+        else
+          echo "✅ JOOBLE_API_KEY is set"
+        fi
+        
         echo "✅ Required secrets validated"
       
     - name: Run scraping
@@ -130,6 +136,7 @@ jobs:
         ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
         REED_API_KEY: ${{ secrets.REED_API_KEY }}
         CAREERJET_API_KEY: ${{ secrets.CAREERJET_API_KEY }}
+        JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}
         MUSE_API_KEY: ${{ secrets.MUSE_API_KEY }}
         RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         JOBPING_API_KEY: ${{ secrets.JOBPING_API_KEY }}

@@ -8,6 +8,7 @@ import { withAxiom } from "next-axiom";
 import { verifyHMAC } from "@/Utils/auth/hmac";
 import { getDatabaseClient } from "@/Utils/databasePool";
 import { embeddingService } from "@/Utils/matching/embedding.service";
+import { apiLogger } from "@/lib/api-logger";
 
 export const POST = withAxiom(async function POST(req: NextRequest) {
 	try {
@@ -60,7 +61,7 @@ export const POST = withAxiom(async function POST(req: NextRequest) {
 			});
 		}
 
-		console.log(`Generating embeddings for ${jobs.length} jobs`);
+		apiLogger.info(`Generating embeddings for ${jobs.length} jobs`);
 
 		// Generate embeddings in batches (logs token count and cost)
 		const embeddings = await embeddingService.batchGenerateJobEmbeddings(
@@ -82,7 +83,7 @@ export const POST = withAxiom(async function POST(req: NextRequest) {
 			// Token count and cost logged by embeddingService.batchGenerateJobEmbeddings
 		});
 	} catch (error) {
-		console.error("Embedding generation error:", error);
+		apiLogger.error("Embedding generation error:", error as Error);
 		return NextResponse.json(
 			{
 				error: "Failed to generate embeddings",

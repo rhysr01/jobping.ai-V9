@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getDatabaseClient } from "@/Utils/databasePool";
 import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
+import { apiLogger } from "@/lib/api-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -124,7 +125,7 @@ export async function GET(req: NextRequest) {
 
 		return NextResponse.json(result);
 	} catch (error) {
-		console.error("Error in recent-matches API:", error);
+		apiLogger.error("Error in recent-matches API:", error as Error);
 		// Return graceful fallback on timeout or error
 		return NextResponse.json({
 			city: null,

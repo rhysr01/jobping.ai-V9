@@ -33,10 +33,24 @@ export const toOptString = (v: unknown): string | null =>
 export const toWorkEnv = (
 	v: unknown,
 ): "remote" | "hybrid" | "on-site" | null => {
-	const s = typeof v === "string" ? v.toLowerCase() : "";
+	if (!v) return null;
+	
+	const s = typeof v === "string" ? v.toLowerCase().trim() : "";
+	
+	// Handle comma-separated strings (premium users can select multiple)
+	// For normalization, take the first value (backward compatibility)
+	// Matching functions should parse the raw string to handle multiple selections
+	const firstValue = s.split(",")[0].trim();
+	
+	if (firstValue === "onsite" || firstValue === "office") return "on-site";
+	if (firstValue === "hybrid") return "hybrid";
+	if (firstValue === "remote") return "remote";
+	
+	// Fallback: check full string (for single values)
 	if (s === "onsite" || s === "office") return "on-site";
 	if (s === "hybrid") return "hybrid";
 	if (s === "remote") return "remote";
+	
 	return null;
 };
 

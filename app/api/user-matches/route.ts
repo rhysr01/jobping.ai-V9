@@ -7,6 +7,7 @@ import { logger } from "@/lib/monitoring";
 import { verifyHMAC } from "@/Utils/auth/hmac";
 import { getDatabaseClient } from "@/Utils/databasePool";
 import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
+import { apiLogger } from "@/lib/api-logger";
 
 // Input validation schema
 const userMatchesQuerySchema = z.object({
@@ -116,7 +117,7 @@ export const GET = withAxiom(
 			.limit(limit);
 
 		if (process.env.NODE_ENV === "development") {
-			console.log(`[USER-MATCHES] 🔍 Raw matches query (no join):`, {
+			apiLogger.info(`[USER-MATCHES] 🔍 Raw matches query (no join):`, {
 				email,
 				normalizedMinScore,
 				rawMatchesCount: rawMatches?.length || 0,
@@ -124,7 +125,7 @@ export const GET = withAxiom(
 			});
 
 			if (rawMatches && rawMatches.length > 0) {
-				console.log(`[USER-MATCHES] 🔍 Sample raw match:`, {
+				apiLogger.info(`[USER-MATCHES] 🔍 Sample raw match:`, {
 					user_email: rawMatches[0].user_email,
 					job_hash: rawMatches[0].job_hash,
 					match_score: rawMatches[0].match_score,
@@ -169,7 +170,7 @@ export const GET = withAxiom(
 		])) as any;
 
 		if (process.env.NODE_ENV === "development") {
-			console.log(`[USER-MATCHES] 🔍 Query with join result:`, {
+			apiLogger.info(`[USER-MATCHES] 🔍 Query with join result:`, {
 				email,
 				matchesCount: matches?.length || 0,
 				matchesError: matchesError ? matchesError.message : null,
@@ -251,7 +252,7 @@ export const GET = withAxiom(
 						.in("job_hash", jobHashes.slice(0, 10)); // Check first 10
 
 					if (process.env.NODE_ENV === "development") {
-						console.log(`[USER-MATCHES] 🔍 Jobs existence check:`, {
+						apiLogger.info(`[USER-MATCHES] 🔍 Jobs existence check:`, {
 							jobHashesChecked: jobHashes.slice(0, 10).length,
 							jobsFound: jobsCheck?.length || 0,
 							jobsCheckError: jobsCheckError ? jobsCheckError.message : null,

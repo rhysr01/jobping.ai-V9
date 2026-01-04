@@ -6,8 +6,8 @@ interface HeroBackgroundAuraProps {
 }
 
 export default function HeroBackgroundAura({
-	offset = 0,
-	enableMotion = true,
+	offset: _offset = 0,
+	enableMotion: _enableMotion = true,
 }: HeroBackgroundAuraProps) {
 	// Static aura - no animations, no mouse tracking
 	return (
