@@ -889,7 +889,7 @@ async function scrapeAllCitiesCategories(options = {}) {
 		`📊 City Priority Breakdown: ${lowCoverageCount} low-coverage (5 queries, 6/5 pages), ${highCoverageCount} high-coverage (3 queries, 4/3 pages), ${standardCount} standard (4 queries, 5/4 pages)`,
 	);
 	console.log(
-		`📊 API Usage: ~${EU_CITIES_CATEGORIES.length} cities × (2 role queries × ${rolePages} pages + 1 generic × ${genericPages} pages) = ~${estimatedRequests} calls per run`,
+		`📊 API Usage: ~${EU_CITIES_CATEGORIES.length} cities × (2 role queries × ${baseRolePages} pages + 1 generic × ${baseGenericPages} pages) = ~${estimatedRequests} calls per run`,
 	);
 	console.log(
 		`⚠️  Free Tier Limit: 250 requests/day. Current: ~${estimatedRequests} (${estimatedRequests < 250 ? "✅ SAFE" : "❌ EXCEEDS LIMIT"})`,

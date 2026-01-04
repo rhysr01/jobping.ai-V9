@@ -268,8 +268,7 @@ function normalizeDate(dateValue) {
  * Scrape Jooble for a single keyword + location combo
  * FIXED: Added pagination, better logging, and response structure debugging
  */
-async function scrapeJoobleQuery(keyword, location, supabase) {
-	const apiKey = process.env.JOOBLE_API_KEY || "";
+async function scrapeJoobleQuery(keyword, location, supabase, apiKey) {
 	if (!apiKey) {
 		console.error(
 			`[Jooble] ❌ API key missing for ${keyword} in ${location.name}`,
@@ -506,6 +505,14 @@ async function scrapeJooble() {
 		return;
 	}
 
+	const apiKey = process.env.JOOBLE_API_KEY || "";
+	if (!apiKey) {
+		console.error(
+			"[Jooble] ❌ JOOBLE_API_KEY not set. Please set the JOOBLE_API_KEY environment variable.",
+		);
+		return;
+	}
+
 	const startTime = Date.now();
 	console.log("[Jooble] 🚀 Starting scrape...");
 
@@ -526,7 +533,7 @@ async function scrapeJooble() {
 	for (const city of CITIES) {
 		for (const keyword of limitedQueries) {
 			try {
-				const saved = await scrapeJoobleQuery(keyword, city, supabase);
+				const saved = await scrapeJoobleQuery(keyword, city, supabase, apiKey);
 				totalSaved += saved;
 
 				// Rate limiting: 2 seconds between requests
