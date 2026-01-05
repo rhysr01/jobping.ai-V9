@@ -56,32 +56,34 @@ export async function POST(request: NextRequest) {
 
 		const supabase = getDatabaseClient();
 
-		// PERFORMANCE FIX: Fetch limited sample (1000 jobs max) instead of all jobs
-	// This gives us a representative sample to estimate realistic count
-	const SAMPLE_SIZE = 1000;
-	const SIXTY_DAYS_AGO = new Date();
-	SIXTY_DAYS_AGO.setDate(SIXTY_DAYS_AGO.getDate() - 60);
+		// PERFORMANCE FIX: Since we're filtering by cities upfront, query ALL jobs
+	// from selected cities instead of limiting to 1000 recent jobs
+	// This gives accurate counts for the specific cities chosen
+	// const SAMPLE_SIZE = 1000; // Removed - query all jobs in selected cities
+	// const SIXTY_DAYS_AGO = new Date();
+	// SIXTY_DAYS_AGO.setDate(SIXTY_DAYS_AGO.getDate() - 60);
 
 	console.error("🔍 PREVIEW: Building database query", {
 		requestedCities: cities,
 		citiesCount: cities.length,
-		sampleSize: SAMPLE_SIZE,
-		dateFilter: SIXTY_DAYS_AGO.toISOString(),
+		queryType: "FULL_DATABASE_FOR_SELECTED_CITIES",
+		// sampleSize: SAMPLE_SIZE, // Removed
+		// dateFilter: SIXTY_DAYS_AGO.toISOString(), // Removed
 		careerPath: careerPath,
 		visaSponsorship: visaSponsorship
 	});
 
-	// Build query to fetch sample jobs (not just count)
+	// Build query to fetch ALL jobs from selected cities
 	let query = supabase
 		.from("jobs")
 		.select("*")
 		.eq("is_active", true)
 		.eq("status", "active")
-		.is("filtered_reason", null)
-		.gte("created_at", SIXTY_DAYS_AGO.toISOString()) // Recent jobs only
-		.limit(SAMPLE_SIZE); // CRITICAL: Limit to prevent memory issues
+		.is("filtered_reason", null);
+		// .gte("created_at", SIXTY_DAYS_AGO.toISOString()) // Removed date filter
+		// .limit(SAMPLE_SIZE); // Removed sample limit
 
-	console.error("🔍 PREVIEW: Base query built - is_active, status, filtered_reason, date, limit");
+	console.error("🔍 PREVIEW: Full database query built - is_active, status, filtered_reason (no limits)");
 
 	// Filter by cities at database level - CRITICAL for performance and accuracy
 	if (cities.length > 0 && cities.length <= 50) {
@@ -96,7 +98,7 @@ export async function POST(request: NextRequest) {
 	// This matches the signup API's approach (signup/free/route.ts lines 332-334)
 	// Database has categories like "strategy-business-design" not "strategy"
 
-	console.error("🔍 PREVIEW: About to query database for jobs");
+	console.error("🔍 PREVIEW: About to query FULL database for jobs in selected cities");
 
 	// DEBUG: Simplify to just check early-career category
 	query = query.contains("categories", ["early-career"]);
@@ -169,6 +171,7 @@ export async function POST(request: NextRequest) {
 		careerPath,
 		visaSponsorship,
 		jobsFetched: sampleJobs?.length || 0,
+		queryType: "FULL_DATABASE",
 		sampleCities: sampleJobs?.slice(0, 3).map(j => ({ city: j.city, categories: j.categories })) || []
 	});
 
