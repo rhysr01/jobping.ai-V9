@@ -140,26 +140,35 @@ export async function POST(request: NextRequest) {
 	const eligibleJobs = preFilterByHardGates(sampleJobs, userPrefs);
 	let realisticCount = eligibleJobs.length;
 
-	// CRO OPTIMIZATION: Show realistic potential matches
-	// If strict hard gates return 0, try more lenient preview criteria
+	// CRO OPTIMIZATION: Visa is the critical filter, be smart about preview
 	if (realisticCount === 0 && sampleJobs.length > 0) {
-		// For preview, be more lenient with career path matching
-		// Keep visa status (user has selected it) but relax career path requirements
-		const previewUserPrefs = {
-			...userPrefs,
-			career_path: [], // Skip career path filtering for preview estimation
-		};
-
-		const previewEligibleJobs = preFilterByHardGates(sampleJobs, previewUserPrefs);
-		const previewCount = previewEligibleJobs.length;
-
-		if (previewCount > 0) {
-			// Estimate realistic matches based on location + basic criteria fit
-			// Career path will be applied during actual matching
-			realisticCount = Math.max(1, Math.min(5, Math.floor(previewCount * 0.4)));
+		// Since form requires visa selection first, but preview might trigger before it's set
+		if (userPrefs.visa_status) {
+			// User has selected visa status - be lenient with career path only
+			const visaLenientPrefs = {
+				...userPrefs,
+				career_path: [], // Skip career path for estimation, keep visa strict
+			};
+			const visaLenientJobs = preFilterByHardGates(sampleJobs, visaLenientPrefs);
+			if (visaLenientJobs.length > 0) {
+				realisticCount = Math.max(1, Math.min(5, Math.floor(visaLenientJobs.length * 0.4)));
+			}
 		} else {
-			// If even lenient criteria return 0, show minimal indication of potential
-			realisticCount = 1; // At least show 1 to indicate some potential exists
+			// Visa not selected yet - be very lenient (skip both career + visa)
+			const fullyLenientPrefs = {
+				...userPrefs,
+				career_path: [],
+				visa_status: undefined,
+			};
+			const fullyLenientJobs = preFilterByHardGates(sampleJobs, fullyLenientPrefs);
+			if (fullyLenientJobs.length > 0) {
+				realisticCount = Math.max(1, Math.min(3, Math.floor(fullyLenientJobs.length * 0.2)));
+			}
+		}
+
+		// Final fallback - always show at least 1 potential match
+		if (realisticCount === 0) {
+			realisticCount = 1;
 		}
 	}
 
