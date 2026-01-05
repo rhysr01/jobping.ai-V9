@@ -83,12 +83,13 @@ export async function POST(request: NextRequest) {
 
 	console.error("🔍 PREVIEW: Base query built - is_active, status, filtered_reason, date, limit");
 
-	// DEBUG: Temporarily skip city filtering to see total jobs
-	// Filter by cities at database level
-	// if (cities.length > 0 && cities.length <= 50) {
-	// 	query = query.in("city", cities);
-	// }
-	console.error("🔍 PREVIEW: CITY FILTERING DISABLED - fetching from ALL cities globally");
+	// Filter by cities at database level - CRITICAL for performance and accuracy
+	if (cities.length > 0 && cities.length <= 50) {
+		query = query.in("city", cities);
+		console.error("🔍 PREVIEW: Applied city filter to database query", { cities });
+	} else {
+		console.error("🔍 PREVIEW: City filter skipped - too many cities requested", { citiesCount: cities.length });
+	}
 
 	// DON'T filter by career path at DB level - too restrictive for preview
 	// Let hard gates handle career path matching for more accurate preview
