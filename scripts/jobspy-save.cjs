@@ -8,7 +8,11 @@
  * - Upserts into 'jobs' table using job_hash
  */
 
-require("dotenv").config({ path: ".env.local" });
+// Load environment variables conditionally
+// In production/GitHub Actions, env vars are already set
+if (process.env.NODE_ENV !== "production" && !process.env.GITHUB_ACTIONS) {
+    require("dotenv").config({ path: ".env.local" });
+}
 const { spawnSync } = require("node:child_process");
 const { createClient } = require("@supabase/supabase-js");
 const { processIncomingJob } = require("../scrapers/shared/processor.cjs");

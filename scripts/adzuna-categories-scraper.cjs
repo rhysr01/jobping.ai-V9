@@ -1,4 +1,8 @@
-require("dotenv").config({ path: ".env.local" });
+// Load environment variables conditionally
+// In production/GitHub Actions, env vars are already set
+if (process.env.NODE_ENV !== "production" && !process.env.GITHUB_ACTIONS) {
+    require("dotenv").config({ path: ".env.local" });
+}
 const axios = require("axios");
 
 // Check for required API credentials
