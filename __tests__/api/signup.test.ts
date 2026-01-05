@@ -115,16 +115,15 @@ describe("POST /api/signup - Contract Tests", () => {
 		});
 
 		it("should return 400 for empty cities array", async () => {
-			const { req } = createMocks({
-				method: "POST",
-				body: {
+			const mockRequest = {
+				json: jest.fn().mockResolvedValue({
 					email: "test@example.com",
 					fullName: "Test User",
 					cities: [],
-				},
-			});
+				}),
+			} as any;
 
-			const response = await POST(req as any);
+			const response = await POST(mockRequest);
 			const data = await response.json();
 
 			expect(response.status).toBe(400);

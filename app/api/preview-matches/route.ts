@@ -87,18 +87,27 @@ export async function POST(request: NextRequest) {
 		// Order by recency for better sample quality
 		query = query.order("created_at", { ascending: false });
 
-		const { data: sampleJobs, error } = await query;
+	const { data: sampleJobs, error } = await query;
 
-		if (error) {
-			apiLogger.error("Failed to fetch preview matches", error as Error, {
-				cities,
-				careerPath,
-			});
-			return NextResponse.json(
-				{ error: "Failed to count matches" },
-				{ status: 500 },
-			);
-		}
+	if (error) {
+		apiLogger.error("Failed to fetch preview matches", error as Error, {
+			cities,
+			careerPath,
+		});
+		return NextResponse.json(
+			{ error: "Failed to count matches" },
+			{ status: 500 },
+		);
+	}
+
+	// DEBUG: Log what we actually fetched
+	console.log("PREVIEW DEBUG:", {
+		cities,
+		careerPath,
+		visaSponsorship,
+		jobsFetched: sampleJobs?.length || 0,
+		sampleCities: sampleJobs?.slice(0, 3).map(j => ({ city: j.city, categories: j.categories })) || []
+	});
 
 		// If no jobs found in sample, return early
 		if (!sampleJobs || sampleJobs.length === 0) {

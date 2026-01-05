@@ -59,14 +59,76 @@ jest.mock("@/lib/monitoring", () => ({
 }));
 
 describe("GET /api/dashboard - Contract Tests", () => {
-	let supabase: any;
+	let mockSupabase: any;
 
 	beforeAll(async () => {
-		supabase = getDatabaseClient();
+		// Mock Supabase client for dashboard tests
+		mockSupabase = {
+			from: jest.fn((table: string) => ({
+				select: jest.fn(() => ({
+					eq: jest.fn(() => ({
+						order: jest.fn(() => ({
+							limit: jest.fn().mockResolvedValue({
+								data: [],
+								error: null,
+							}),
+						})),
+					})),
+					neq: jest.fn(() => ({
+						delete: jest.fn().mockResolvedValue({}),
+					})),
+				})),
+				delete: jest.fn(() => ({
+					neq: jest.fn(() => ({
+						delete: jest.fn().mockResolvedValue({}),
+					})),
+				})),
+			})),
+		};
 	});
 
 	beforeEach(() => {
 		jest.clearAllMocks();
+		// Reset Supabase mock for each test
+		(getDatabaseClient as jest.Mock).mockReturnValue(mockSupabase);
+
+		// Set up mock responses for count queries used by dashboard
+		mockSupabase.from.mockImplementation((table: string) => {
+			const baseMock = {
+				select: jest.fn(),
+				delete: jest.fn(() => ({
+					neq: jest.fn(() => ({
+						delete: jest.fn().mockResolvedValue({}),
+					})),
+				})),
+			};
+
+			baseMock.select.mockImplementation((fields: any, options?: any) => {
+				if (options?.count === "exact" && options?.head === true) {
+					// Mock count queries
+					let count = 0;
+					if (table === "users") count = 5;
+					else if (table === "jobs") count = 10;
+					else if (table === "matches") count = 15;
+
+					return Promise.resolve({ data: null, count, error: null });
+				}
+
+				// Default select mock
+				return {
+					eq: jest.fn(() => ({
+						order: jest.fn(() => ({
+							limit: jest.fn().mockResolvedValue({
+								data: [],
+								error: null,
+							}),
+						})),
+					})),
+				};
+			});
+
+			return baseMock;
+		});
 	});
 
 	afterEach(async () => {

@@ -117,18 +117,17 @@ describe("POST /api/signup/free - Contract Tests", () => {
 		});
 
 		it("should return 400 for invalid email format", async () => {
-			const { req } = createMocks({
-				method: "POST",
-				body: {
+			const mockRequest = {
+				json: jest.fn().mockResolvedValue({
 					email: "invalid-email",
 					full_name: "Test User",
 					preferred_cities: ["London"],
 					career_paths: ["tech"],
 					visa_sponsorship: "no",
-				},
-			});
+				}),
+			} as any;
 
-			const response = await POST(req as any);
+			const response = await POST(mockRequest);
 			expect(response.status).toBe(400);
 
 			const data = await response.json();

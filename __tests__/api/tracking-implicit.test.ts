@@ -93,16 +93,15 @@ describe("POST /api/tracking/implicit - Contract Tests", () => {
 		});
 
 		it("should return 400 for invalid signal type", async () => {
-			const { req } = createMocks({
-				method: "POST",
-				body: {
+			const mockRequest = {
+				json: jest.fn().mockResolvedValue({
 					jobHash: "job123",
 					email: "user@example.com",
 					signalType: "invalid_signal",
-				},
-			});
+				}),
+			} as any;
 
-			const response = await POST(req as any);
+			const response = await POST(mockRequest);
 			expect(response.status).toBe(400);
 
 			const data = await response.json();
