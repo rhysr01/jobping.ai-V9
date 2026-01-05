@@ -440,7 +440,7 @@ export async function POST(req: NextRequest) {
 				// Filtering at DB level excludes too many jobs, reducing matching pool
 				// query = query.overlaps("categories", careerPathCategories);
 
-				query = query.order("created_at", { ascending: false }).limit(1000);
+				query = query.limit(1000); // Jobs are already fresh, no need for date ordering
 
 				const { data: allJobs, error: jobsError } = await query;
 
