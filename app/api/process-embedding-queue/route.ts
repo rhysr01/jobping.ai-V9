@@ -127,7 +127,7 @@ export const POST = async function (request: NextRequest) {
 			{ status: 500 },
 		);
 	}
-});
+};
 
 // GET endpoint to check queue status
 export const GET = async function GET(_request: NextRequest) {
