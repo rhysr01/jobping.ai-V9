@@ -206,8 +206,6 @@ export default function CompanyLogos() {
 	// Show premium fallback companies if no database companies are available
 	// Only include companies whose logo files actually exist to avoid 404 errors
 	const fallbackCompanies = [
-		{ name: "Microsoft", logoPath: "/logos/companies/microsoft.svg" },
-		{ name: "Amazon", logoPath: "/logos/companies/amazon.svg" },
 		{ name: "Google", logoPath: "/logos/companies/google.svg" },
 		{ name: "Apple", logoPath: "/logos/companies/apple.svg" },
 		{ name: "Meta", logoPath: "/logos/companies/meta.svg" },
