@@ -62,6 +62,15 @@ export async function POST(request: NextRequest) {
 	const SIXTY_DAYS_AGO = new Date();
 	SIXTY_DAYS_AGO.setDate(SIXTY_DAYS_AGO.getDate() - 60);
 
+	console.error("🔍 PREVIEW: Building database query", {
+		requestedCities: cities,
+		citiesCount: cities.length,
+		sampleSize: SAMPLE_SIZE,
+		dateFilter: SIXTY_DAYS_AGO.toISOString(),
+		careerPath: careerPath,
+		visaSponsorship: visaSponsorship
+	});
+
 	// Build query to fetch sample jobs (not just count)
 	let query = supabase
 		.from("jobs")
@@ -72,11 +81,14 @@ export async function POST(request: NextRequest) {
 		.gte("created_at", SIXTY_DAYS_AGO.toISOString()) // Recent jobs only
 		.limit(SAMPLE_SIZE); // CRITICAL: Limit to prevent memory issues
 
+	console.error("🔍 PREVIEW: Base query built - is_active, status, filtered_reason, date, limit");
+
 	// DEBUG: Temporarily skip city filtering to see total jobs
 	// Filter by cities at database level
 	// if (cities.length > 0 && cities.length <= 50) {
 	// 	query = query.in("city", cities);
 	// }
+	console.error("🔍 PREVIEW: CITY FILTERING DISABLED - fetching from ALL cities globally");
 
 	// DON'T filter by career path at DB level - too restrictive for preview
 	// Let hard gates handle career path matching for more accurate preview
@@ -99,6 +111,45 @@ export async function POST(request: NextRequest) {
 		hasError: !!error,
 		errorMessage: error?.message
 	});
+
+	if (sampleJobs && sampleJobs.length > 0) {
+		// Analyze city distribution
+		const cityCounts = {};
+		const categoryCounts = {};
+		sampleJobs.forEach(job => {
+			cityCounts[job.city] = (cityCounts[job.city] || 0) + 1;
+			if (job.categories && Array.isArray(job.categories)) {
+				job.categories.forEach(cat => {
+					categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+				});
+			}
+		});
+
+		console.error("🔍 PREVIEW: City distribution in sample", {
+			totalJobs: sampleJobs.length,
+			cityCounts,
+			requestedCities: cities,
+			jobsInRequestedCities: cities.reduce((sum, city) => sum + (cityCounts[city] || 0), 0)
+		});
+
+		console.error("🔍 PREVIEW: Top categories in sample", {
+			totalJobs: sampleJobs.length,
+			topCategories: Object.entries(categoryCounts)
+				.sort(([,a], [,b]) => b - a)
+				.slice(0, 10)
+				.map(([cat, count]) => `${cat}: ${count}`)
+		});
+
+		// Check how many have early-career specifically
+		const earlyCareerJobs = sampleJobs.filter(job =>
+			job.categories && Array.isArray(job.categories) && job.categories.includes("early-career")
+		);
+		console.error("🔍 PREVIEW: Early-career analysis", {
+			totalJobs: sampleJobs.length,
+			earlyCareerJobs: earlyCareerJobs.length,
+			earlyCareerPercentage: Math.round((earlyCareerJobs.length / sampleJobs.length) * 100)
+		});
+	}
 
 	if (error) {
 		apiLogger.error("Failed to fetch preview matches", error as Error, {
@@ -185,19 +236,36 @@ export async function POST(request: NextRequest) {
 	console.error("🔍 PREVIEW: Initial realistic count", { realisticCount });
 
 	// CRO OPTIMIZATION: Visa is the critical filter, be smart about preview
+	console.error("🔍 PREVIEW: CRO logic check", {
+		realisticCount,
+		sampleJobsLength: sampleJobs.length,
+		hasVisaStatus: !!userPrefs.visa_status,
+		croWillTrigger: realisticCount === 0 && sampleJobs.length > 0
+	});
+
 	if (realisticCount === 0 && sampleJobs.length > 0) {
+		console.error("🔍 PREVIEW: CRO logic triggered - applying fallbacks");
+
 		// Since form requires visa selection first, but preview might trigger before it's set
 		if (userPrefs.visa_status) {
+			console.error("🔍 PREVIEW: User has visa status - trying visa-lenient fallback");
 			// User has selected visa status - be lenient with career path only
 			const visaLenientPrefs = {
 				...userPrefs,
 				career_path: [], // Skip career path for estimation, keep visa strict
 			};
 			const visaLenientJobs = preFilterByHardGates(sampleJobs, visaLenientPrefs);
+			const calculatedCount = Math.max(1, Math.min(5, Math.floor(visaLenientJobs.length * 0.4)));
+			console.error("🔍 PREVIEW: Visa-lenient result", {
+				visaLenientJobs: visaLenientJobs.length,
+				calculatedCount,
+				cappedAt5: calculatedCount >= 5
+			});
 			if (visaLenientJobs.length > 0) {
-				realisticCount = Math.max(1, Math.min(5, Math.floor(visaLenientJobs.length * 0.4)));
+				realisticCount = calculatedCount;
 			}
 		} else {
+			console.error("🔍 PREVIEW: No visa status - trying fully-lenient fallback");
 			// Visa not selected yet - be very lenient (skip both career + visa)
 			const fullyLenientPrefs = {
 				...userPrefs,
@@ -205,15 +273,26 @@ export async function POST(request: NextRequest) {
 				visa_status: undefined,
 			};
 			const fullyLenientJobs = preFilterByHardGates(sampleJobs, fullyLenientPrefs);
+			const calculatedCount = Math.max(1, Math.min(3, Math.floor(fullyLenientJobs.length * 0.2)));
+			console.error("🔍 PREVIEW: Fully-lenient result", {
+				fullyLenientJobs: fullyLenientJobs.length,
+				calculatedCount,
+				cappedAt3: calculatedCount >= 3
+			});
 			if (fullyLenientJobs.length > 0) {
-				realisticCount = Math.max(1, Math.min(3, Math.floor(fullyLenientJobs.length * 0.2)));
+				realisticCount = calculatedCount;
 			}
 		}
 
+		console.error("🔍 PREVIEW: After CRO fallbacks", { realisticCount });
+
 		// Final fallback - always show at least 1 potential match
 		if (realisticCount === 0) {
+			console.error("🔍 PREVIEW: Applying final fallback - setting to 1");
 			realisticCount = 1;
 		}
+	} else {
+		console.error("🔍 PREVIEW: CRO logic NOT triggered - count is already > 0");
 	}
 
 	// Calculate pass rate to estimate total realistic count
