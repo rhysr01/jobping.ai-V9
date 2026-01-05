@@ -1,0 +1,38 @@
+# Code owners for JobPing repository
+# This file defines who owns which parts of the codebase
+# Format: <pattern> <owners>
+
+# Default ownership - Rhys Rowland (maintainer)
+* @rhysr01
+
+# Critical infrastructure and security
+/.github/ @rhysr01
+/package.json @rhysr01
+/package-lock.json @rhysr01
+/next.config.ts @rhysr01
+/middleware.ts @rhysr01
+/lib/env.ts @rhysr01
+/lib/config.ts @rhysr01
+
+# Database and migrations
+/supabase/ @rhysr01
+
+# Core business logic
+/Utils/matching/ @rhysr01
+/Utils/auth/ @rhysr01
+/Utils/security/ @rhysr01
+
+# API endpoints
+/app/api/ @rhysr01
+
+# Email functionality
+/Utils/email/ @rhysr01
+
+# Scrapers and data sources
+/scrapers/ @rhysr01
+
+# Documentation
+/docs/ @rhysr01
+*.md @rhysr01
+ARCHITECTURE.md @rhysr01
+README.md @rhysr01

@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  jobping:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      # Add your environment variables here
+      # Copy from .env.local and replace with actual values
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - SYSTEM_API_KEY=${SYSTEM_API_KEY}
+      - INTERNAL_API_HMAC_SECRET=${INTERNAL_API_HMAC_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      # Mount source code for development (optional)
+      - .:/app:ro
+      - /app/node_modules
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Redis for caching (if not using external Redis)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Optional: PostgreSQL for local development (if not using Supabase)
+  # Uncomment and configure if you want a local database
+  # postgres:
+  #   image: postgres:15
+  #   environment:
+  #     POSTGRES_DB: jobping_dev
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: password
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+volumes:
+  redis_data:
+  # postgres_data:
+
+# Optional: Override for development
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# docker-compose.dev.yml:
+#   jobping:
+#     command: npm run dev
+#     environment:
+#       - NODE_ENV=development
+#       - CHOKIDAR_USEPOLLING=true
+#     volumes:
+#       - .:/app
+#       - /app/node_modules
+#     ports:
+#       - "3000:3000"

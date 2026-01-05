@@ -1,0 +1,101 @@
+# Pre-commit hooks configuration for JobPing
+# Install with: pip install pre-commit && pre-commit install
+
+repos:
+  # Pre-commit built-in hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^.*\.(md|json)$
+      - id: end-of-file-fixer
+        exclude: ^.*\.(md|json)$
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-toml
+      - id: check-xml
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Biome for TypeScript/JavaScript linting and formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      # Run the linter
+      - id: ruff
+        types_or: [ python, pyi ]
+        args: [ --fix ]
+      # Run the formatter
+      - id: ruff-format
+        types_or: [ python, pyi ]
+
+  # Biome for TypeScript/JavaScript
+  - repo: https://github.com/biomejs/pre-commit
+    rev: v0.3.0
+    hooks:
+      - id: biome-check
+        additional_dependencies: ["@biomejs/biome@1.9.4"]
+        types: [javascript, jsx, typescript, tsx, json]
+        types_or: [javascript, jsx, typescript, tsx, json]
+      - id: biome-format
+        additional_dependencies: ["@biomejs/biome@1.9.4"]
+        types: [javascript, jsx, typescript, tsx, json]
+        types_or: [javascript, jsx, typescript, tsx, json]
+
+  # Security scanning
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: ^(package-lock\.json|\.env\.example)$
+
+  # TypeScript type checking
+  - repo: local
+    hooks:
+      - id: typescript-check
+        name: TypeScript Type Check
+        entry: npm run type-check
+        language: system
+        pass_filenames: false
+        types: [typescript]
+
+  # Test suite
+  - repo: local
+    hooks:
+      - id: run-tests
+        name: Run Tests
+        entry: npm test
+        language: system
+        pass_filenames: false
+        types: [typescript, javascript]
+        stages: [push]
+
+# Configuration for specific file types
+exclude: |
+  (?x)^(
+    # Dependencies
+    node_modules/|
+    # Build outputs
+    \.next/|
+    out/|
+    dist/|
+    coverage/|
+    # Generated files
+    next-env\.d\.ts|
+    type-check-output\.txt|
+    # Logs
+    .*\.log|
+    # Environment files
+    \.env.*|
+    # IDE
+    \.vscode/|
+    \.idea/|
+    # OS
+    \.DS_Store|
+    Thumbs\.db
+  )$
