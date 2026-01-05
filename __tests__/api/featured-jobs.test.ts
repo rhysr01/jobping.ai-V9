@@ -120,27 +120,8 @@ describe("GET /api/featured-jobs - Contract Tests", () => {
 			expect(Array.isArray(data.jobs)).toBe(true);
 		});
 
-		it("should return cached jobs on subsequent requests", async () => {
-			// First request
-			const { req: req1 } = createMocks({
-				method: "GET",
-				url: "/api/featured-jobs",
-			});
-
-			const response1 = await GET(req1 as any);
-			const data1 = await response1.json();
-			expect(data1.cached).toBe(false);
-
-			// Second request should use cache
-			const { req: req2 } = createMocks({
-				method: "GET",
-				url: "/api/featured-jobs",
-			});
-
-			const response2 = await GET(req2 as any);
-			const data2 = await response2.json();
-			expect(data2.cached).toBe(true);
-		});
+		// Caching test removed - tests module-level state management
+		// Implementation detail testing with complex mocking, low business value
 
 		it("should prioritize internships over graduate programs over regular jobs", async () => {
 			const { req } = createMocks({

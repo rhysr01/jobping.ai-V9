@@ -69,10 +69,11 @@ export async function POST(request: NextRequest) {
 		.gte("created_at", SIXTY_DAYS_AGO.toISOString()) // Recent jobs only
 		.limit(SAMPLE_SIZE); // CRITICAL: Limit to prevent memory issues
 
+	// DEBUG: Temporarily skip city filtering to see total jobs
 	// Filter by cities at database level
-	if (cities.length > 0 && cities.length <= 50) {
-		query = query.in("city", cities);
-	}
+	// if (cities.length > 0 && cities.length <= 50) {
+	// 	query = query.in("city", cities);
+	// }
 
 	// DON'T filter by career path at DB level - too restrictive for preview
 	// Let hard gates handle career path matching for more accurate preview

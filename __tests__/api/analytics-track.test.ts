@@ -53,15 +53,14 @@ describe("POST /api/analytics/track - Contract Tests", () => {
 		});
 
 		it("should return 400 for non-string event", async () => {
-			const { req } = createMocks({
-				method: "POST",
-				body: {
+			const mockRequest = {
+				json: jest.fn().mockResolvedValue({
 					event: 123,
 					properties: { userId: "123" },
-				},
-			});
+				}),
+			} as any;
 
-			const response = await POST(req as any);
+			const response = await POST(mockRequest);
 			expect(response.status).toBe(400);
 
 			const data = await response.json();

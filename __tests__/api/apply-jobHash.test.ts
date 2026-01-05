@@ -101,12 +101,13 @@ describe("GET /api/apply/[jobHash] - Contract Tests", () => {
 				reason: "Token expired",
 			});
 
-			const { req } = createMocks({
+			const mockRequest = {
 				method: "GET",
-				url: `/api/apply/${testJobHash}?email=${testUserEmail}&token=invalid`,
-			});
+				url: `http://localhost/api/apply/${testJobHash}?email=${testUserEmail}&token=invalid`,
+				nextUrl: new URL(`http://localhost/api/apply/${testJobHash}?email=${testUserEmail}&token=invalid`),
+			} as any;
 
-			const response = await GET(req, { params: Promise.resolve({ jobHash: testJobHash }) });
+			const response = await GET(mockRequest, { params: Promise.resolve({ jobHash: testJobHash }) });
 			expect(response.status).toBe(401);
 
 			const data = await response.json();
