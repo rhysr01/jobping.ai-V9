@@ -15,12 +15,12 @@ export const POST = matchUsersHandler;
 
 // Enhanced GET endpoint with tier analytics
 export async function GET(_req: NextRequest) {
-	// Return 405 for GET method as this endpoint is primarily for POST
-	return NextResponse.json(
-		{
-			error:
-				"Method not allowed. This endpoint is designed for POST requests only.",
-		},
-		{ status: 405 },
-	);
+  // Return 405 for GET method as this endpoint is primarily for POST
+  return NextResponse.json(
+    {
+      error:
+        "Method not allowed. This endpoint is designed for POST requests only.",
+    },
+    { status: 405 },
+  );
 }

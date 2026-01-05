@@ -23,6 +23,7 @@
 ## System Overview
 
 GetJobPing is a **multi-stage AI-powered job matching platform** for early-career roles across Europe. The system combines:
+
 - **SQL pre-filtering** (90% job pool reduction)
 - **AI semantic matching** (GPT-4o-mini with LRU caching)
 - **Rule-based fallbacks** (guaranteed matches)
@@ -62,21 +63,25 @@ GetJobPing is a **multi-stage AI-powered job matching platform** for early-caree
 ## Tech Stack
 
 ### Core Framework
+
 - **Next.js 16** - App Router, React Server Components, API Routes
 - **React 19** - UI framework with hooks and suspense
 - **TypeScript** - 100% typed codebase with strict mode
 
 ### Backend & Database
+
 - **Supabase** - PostgreSQL with Row-Level Security (RLS)
 - **pgvector** - Vector embeddings for semantic search
 - **Redis** (optional) - Rate limiting and caching
 
 ### AI & Matching
+
 - **OpenAI GPT-4o-mini** - Semantic job scoring
 - **LRU Cache** - 60-80% hit rate, reduces AI costs by 60-80%
 - **Circuit Breaker** - Prevents cascade failures
 
 ### External Services
+
 - **Resend** - Transactional email delivery
 - **Polar** - Subscription management (€5/month premium)
 - **Sentry** - Error tracking (multi-runtime)
@@ -84,6 +89,7 @@ GetJobPing is a **multi-stage AI-powered job matching platform** for early-caree
 - **Vercel** - Hosting & edge network
 
 ### Job Sources (8 scrapers)
+
 - JobSpy (Indeed, Glassdoor)
 - Adzuna, Reed, CareerJet
 - Arbeitnow, Jooble
@@ -124,6 +130,7 @@ scrapers/             # Data Acquisition Layer
 ### 2. Middleware Pipeline
 
 Every request goes through:
+
 1. **Request Tracking** - Unique ID, timing, context
 2. **CSRF Protection** - State-changing methods require token
 3. **HTTPS Enforcement** - 301 redirect in production
@@ -158,6 +165,7 @@ Every request goes through:
 ### 5-Stage Matching Pipeline
 
 **Stage 1: SQL Pre-filtering** (Cost: $0, 90% reduction)
+
 ```typescript
 // Location: Utils/matching/jobSearchService.ts
 - Filter by: city, categories, active status
@@ -166,6 +174,7 @@ Every request goes through:
 ```
 
 **Stage 2: AI Matching** (Cost: $0.001-0.01/user with caching)
+
 ```typescript
 // Location: Utils/matching/consolidated/engine.ts
 - Model: GPT-4o-mini with function calling
@@ -176,6 +185,7 @@ Every request goes through:
 ```
 
 **Stage 3: Guaranteed Fallback** (Cost: $0, rule-based)
+
 ```typescript
 // Location: Utils/matching/guaranteed/index.ts
 - Triggers: If < 10 matches after Stage 2
@@ -185,6 +195,7 @@ Every request goes through:
 ```
 
 **Stage 4: Custom Scan** (Cost: Medium, background)
+
 ```typescript
 // Location: Utils/matching/guaranteed/historical-alerts.ts
 - Triggers: If < 10 matches after Stage 3
@@ -193,6 +204,7 @@ Every request goes through:
 ```
 
 **Stage 5: Diversity Pass** (Cost: $0, in-memory)
+
 ```typescript
 // Location: Utils/matching/consolidated/diversity.ts
 - Ensures: Variety in companies, locations, roles
@@ -255,48 +267,48 @@ Penalties:
 ```
 1. User Signs Up
    └─> app/api/signup/route.ts or app/api/signup/free/route.ts
-   
+
 2. Profile Validation
    └─> Zod schema validation
    └─> City normalization (München → Munich)
    └─> Career path to database categories
-   
+
 3. Insert to Database
    └─> Supabase users table
    └─> Row-Level Security applied
-   
+
 4. Trigger Matching
    └─> app/api/match-users/route.ts (or Inngest workflow)
-   
+
 5. Fetch Candidate Jobs
    └─> Utils/matching/jobSearchService.ts
    └─> SQL filters: city, categories, active=true
    └─> Result: ~1,000 jobs (from ~10,000 total)
-   
+
 6. Pre-rank Jobs
    └─> Utils/matching/rule-based-matcher.service.ts
    └─> Quick scoring: location, category, experience
    └─> Top 50 jobs selected
-   
+
 7. AI Matching
    └─> Utils/matching/consolidated/engine.ts
    └─> Check cache (LRU)
    └─> Call OpenAI GPT-4o-mini (if cache miss)
    └─> Validate output
    └─> Store in cache
-   
+
 8. Guaranteed Fallback (if < 10 matches)
    └─> Utils/matching/guaranteed/index.ts
    └─> Relax criteria (location, categories)
    └─> Score with penalties
-   
+
 9. Diversity Filter
    └─> Ensure variety in companies/locations
-   
+
 10. Save Matches
     └─> Supabase matches table
     └─> Deduplicate by job_hash
-    
+
 11. Send Email (Premium only)
     └─> Utils/email/sender.ts
     └─> Resend API
@@ -308,30 +320,30 @@ Penalties:
 ```
 1. Cron Trigger (2x daily: 8am, 6pm UTC)
    └─> vercel.json cron or automation/real-job-runner.cjs
-   
+
 2. Execute Scrapers (parallel)
    └─> scrapers/wrappers/*.cjs
    └─> 8 scrapers: JobSpy, Adzuna, Reed, CareerJet, etc.
-   
+
 3. Data Normalization
    └─> scrapers/shared/processor.cjs
    └─> City names (Praha → Prague)
    └─> Company names (remove Ltd, GmbH)
    └─> Infer categories from title/description
-   
+
 4. Validation
    └─> scrapers/shared/jobValidator.cjs
    └─> Required: work-type category, location, company
    └─> Reject: Non-business roles, job board companies
-   
+
 5. Insert to Database
    └─> Supabase jobs table
    └─> Batch insert for performance
-   
+
 6. Database Trigger (automatic)
    └─> migration: 20260104000005_prevent_missing_work_type_categories.sql
    └─> Final normalization & category enforcement
-   
+
 7. Generate Embeddings (every 72 hours)
    └─> automation/embedding-refresh.cjs
    └─> OpenAI text-embedding-3-small
@@ -345,6 +357,7 @@ Penalties:
 ### Multi-Layer Security
 
 **1. Middleware Security** (middleware.ts)
+
 - CSRF Protection (x-csrf-token: "jobping-request")
 - Security Headers (CSP with nonces, HSTS, X-Frame-Options)
 - Cookie Hardening (SameSite=Lax, Secure)
@@ -352,22 +365,26 @@ Penalties:
 - Admin Basic Auth (/admin routes)
 
 **2. Database Security** (Supabase)
+
 - Row-Level Security (RLS) enabled on all public tables
 - Users can only see their own data
 - Service role has full access for admin operations
 
 **3. API Security**
+
 - Rate Limiting (Redis-backed, leaky bucket algorithm)
 - Auth Middleware (`Utils/auth/apiAuth.ts`)
 - HMAC Authentication for system endpoints
 - Input Validation (Zod schemas)
 
 **4. Webhook Security**
+
 - Polar: Official SDK with signature verification
 - Resend: HMAC with timing-safe comparison
 - Stripe: Signature verification via SDK
 
 **5. Environment Variables**
+
 - Validated at startup (`lib/env.ts`)
 - Type-safe access via ENV constant
 - No hardcoded secrets (158 files scanned)
@@ -380,7 +397,7 @@ Content-Security-Policy:
   script-src 'self' 'nonce-${nonce}' 'sha256-...' https://...;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   connect-src 'self' https://*.supabase.co https://api.openai.com ...;
-  
+
 Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 X-Frame-Options: DENY
 X-Content-Type-Options: nosniff
@@ -396,18 +413,21 @@ Permissions-Policy: camera=(), microphone=(), geolocation=()
 ### Hosting & Deployment
 
 **Vercel** - Serverless Next.js deployment
+
 - Edge Network: Global CDN
 - Automatic Deployments: Push to `main`
 - Preview URLs: For PRs
 - Environment Variables: Validated at startup
 
 **Function Timeouts** (vercel.json):
+
 - Default: 60 seconds
 - Match-users: 300 seconds (5 min)
 - Send-emails: 300 seconds
 - Process-queue: 300 seconds
 
 **Cron Jobs** (5 scheduled):
+
 1. Process embedding queue: Every 5 minutes
 2. Send scheduled emails: Daily at 9am
 3. Process digests: Hourly
@@ -415,6 +435,7 @@ Permissions-Policy: camera=(), microphone=(), geolocation=()
 5. Check link health: Every 6 hours
 
 **Inngest Workflows** - Durable Background Jobs
+
 - Endpoint: `/api/inngest` (GET, POST, PUT)
 - Functions: `helloWorld`, `performAIMatching`
 - Features:
@@ -430,17 +451,20 @@ Permissions-Policy: camera=(), microphone=(), geolocation=()
 ### Monitoring & Observability
 
 **Sentry** - Error Tracking
+
 - Multi-runtime: Server, Client, Edge
 - Sampling: 10% in production
 - ErrorBoundary integration
 - Component stack traces
 
 **Axiom** - Structured Logging
+
 - JSON format logs
 - Auto-configured via Vercel
 - Query-able log aggregation
 
 **apiLogger** - Structured Logging Helper
+
 ```typescript
 // lib/api-logger.ts
 apiLogger.info("Message", { context });
@@ -449,6 +473,7 @@ apiLogger.error("Error", error as Error, { context });
 ```
 
 **Health Endpoints**:
+
 - `/api/health` - Multi-service health checks with SLO tracking (<100ms target)
   - Status: Database, Redis, OpenAI, Scrapers
   - Response time monitoring
@@ -483,6 +508,7 @@ apiLogger.error("Error", error as Error, { context });
 ### Payment Infrastructure
 
 **Stripe Connect** (9 endpoints) - `/api/stripe-connect/*`
+
 - **Account Management**:
   - `POST /create-account` - Create connected Stripe accounts
   - `POST /create-account-link` - Generate account onboarding links
@@ -498,6 +524,7 @@ apiLogger.error("Error", error as Error, { context });
 - **Use Cases**: Marketplace features, multi-vendor payments (future)
 
 **Polar** - Subscription Management
+
 - Handles €5/month premium subscriptions
 - Webhook integration for subscription events
 - Official SDK with signature verification
@@ -505,6 +532,7 @@ apiLogger.error("Error", error as Error, { context });
 ### Feedback & Analytics
 
 **Advanced Feedback System** - `/api/feedback/enhanced`
+
 - **Multi-Signal Feedback**:
   - Explicit: thumbs_up, thumbs_down, save, hide, not_relevant
   - Implicit: click, open, dwell (tracked separately)
@@ -514,6 +542,7 @@ apiLogger.error("Error", error as Error, { context });
 - **Data Model**: Stored in `job_feedback` table with timestamps
 
 **Implicit Signal Tracking** - `/api/tracking/implicit`
+
 - **Behavioral Signals**:
   - Dwell time (time spent on job listing)
   - Click patterns (job card clicks, apply button clicks)
@@ -528,18 +557,20 @@ apiLogger.error("Error", error as Error, { context });
 ### Route Patterns
 
 **Public Routes** (with rate limiting):
+
 ```typescript
 // app/api/companies/route.ts
 export const GET = withApiAuth(
   async (req: NextRequest) => { ... },
-  { 
-    allowPublic: true, 
+  {
+    allowPublic: true,
     rateLimitConfig: { maxRequests: 50, windowMs: 60000 }
   }
 );
 ```
 
 **System Routes** (require SYSTEM_API_KEY):
+
 ```typescript
 // app/api/match-users/route.ts
 const apiKey = req.headers.get("x-system-api-key");
@@ -549,6 +580,7 @@ if (apiKey !== ENV.SYSTEM_API_KEY) {
 ```
 
 **Webhook Routes** (signature verification):
+
 ```typescript
 // app/api/webhooks/polar/route.ts
 export const POST = Webhooks({
@@ -564,6 +596,7 @@ export const POST = Webhooks({
 ### Core Tables
 
 **users** - User profiles
+
 ```sql
 - id (uuid, primary key)
 - email (text, unique)
@@ -578,6 +611,7 @@ export const POST = Webhooks({
 ```
 
 **jobs** - Job postings
+
 ```sql
 - id (uuid, primary key)
 - job_hash (text, unique) -- Deduplication
@@ -597,6 +631,7 @@ export const POST = Webhooks({
 ```
 
 **matches** - User-job matches
+
 ```sql
 - id (uuid, primary key)
 - user_email (text, foreign key → users.email)
@@ -608,6 +643,7 @@ export const POST = Webhooks({
 ```
 
 **companies** - Company metadata
+
 ```sql
 - id (uuid, primary key)
 - name (text, unique)
@@ -620,6 +656,7 @@ export const POST = Webhooks({
 ### Indexes
 
 **Performance Optimization:**
+
 ```sql
 -- jobs table
 CREATE INDEX idx_jobs_city ON jobs(city);
@@ -645,6 +682,7 @@ CREATE INDEX idx_matches_score ON matches(match_score DESC);
 **Schedule:** 2x daily (8am, 6pm UTC)
 
 **8 Active Scrapers:**
+
 1. **JobSpy** - Indeed, Glassdoor
 2. **JobSpy Internships** - Internship-only variant
 3. **Career Path Roles** - Role-specific scraping
@@ -655,6 +693,7 @@ CREATE INDEX idx_matches_score ON matches(match_score DESC);
 8. **Jooble** - Global aggregator
 
 **Features:**
+
 - Parallel execution for speed
 - Smart stop conditions per scraper
 - Daily health checks
@@ -668,6 +707,7 @@ CREATE INDEX idx_matches_score ON matches(match_score DESC);
 **Schedule:** Every 72 hours
 
 **Process:**
+
 1. Fetch jobs without embeddings
 2. Generate embeddings via OpenAI (text-embedding-3-small)
 3. Store in pgvector column
@@ -678,29 +718,34 @@ CREATE INDEX idx_matches_score ON matches(match_score DESC);
 ## Performance Optimizations
 
 ### 1. Database Query Optimization
+
 - Pre-filtering reduces job pool by 90%
 - Proper indexes on city, categories, active status
 - JSONB queries for categories (GIN index)
 - pgvector for semantic search
 
 ### 2. AI Cost Optimization
+
 - LRU Cache: 60-80% hit rate
 - Reduces AI costs by 60-80%
 - Cache invalidation on user feedback
 - Circuit breaker prevents cascade failures
 
 ### 3. Image Optimization
+
 - Next.js Image component
 - WebP and AVIF formats
 - Responsive sizing
 - Lazy loading
 
 ### 4. Code Splitting
+
 - Dynamic imports for heavy components
 - Route-based code splitting
 - Component-level code splitting
 
 ### 5. Caching Strategy
+
 - Redis for rate limiting (optional)
 - In-memory LRU cache for AI results
 - HTTP caching headers
@@ -769,4 +814,3 @@ supabase db reset
 
 **Last Updated:** January 2025  
 **Production Ready:** ✅ Yes (Score: 94/100)
-

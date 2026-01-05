@@ -13,6 +13,7 @@
 **Risk:** Unauthenticated routes allow scrapers to drain database resources and bypass rate limits.
 
 **Target Routes:**
+
 - `/api/companies/route.ts`
 - `/api/countries/route.ts`
 - `/api/sample-jobs/route.ts`
@@ -29,13 +30,13 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
 
 export interface AuthConfig {
-    requireAuth?: boolean; // Require user authentication
-    requireSystemKey?: boolean; // Require system API key
-    allowPublic?: boolean; // Allow public access (with rate limiting)
-    rateLimitConfig?: {
-        maxRequests: number;
-        windowMs: number;
-    };
+  requireAuth?: boolean; // Require user authentication
+  requireSystemKey?: boolean; // Require system API key
+  allowPublic?: boolean; // Allow public access (with rate limiting)
+  rateLimitConfig?: {
+    maxRequests: number;
+    windowMs: number;
+  };
 }
 
 /**
@@ -43,65 +44,65 @@ export interface AuthConfig {
  * Supports: Public (rate-limited), User auth, System key auth
  */
 export function withApiAuth(
-    handler: (req: NextRequest) => Promise<NextResponse>,
-    config: AuthConfig = {},
+  handler: (req: NextRequest) => Promise<NextResponse>,
+  config: AuthConfig = {},
 ) {
-    return async (req: NextRequest): Promise<NextResponse> => {
-        const {
-            requireAuth = false,
-            requireSystemKey = false,
-            allowPublic = false,
-            rateLimitConfig,
-        } = config;
+  return async (req: NextRequest): Promise<NextResponse> => {
+    const {
+      requireAuth = false,
+      requireSystemKey = false,
+      allowPublic = false,
+      rateLimitConfig,
+    } = config;
 
-        // System key check (highest priority)
-        if (requireSystemKey) {
-            const apiKey = req.headers.get("x-api-key");
-            const systemKey = process.env.SYSTEM_API_KEY;
-            
-            if (!systemKey || apiKey !== systemKey) {
-                return NextResponse.json(
-                    { error: "Unauthorized: Invalid system API key" },
-                    { status: 401 },
-                );
-            }
-        }
+    // System key check (highest priority)
+    if (requireSystemKey) {
+      const apiKey = req.headers.get("x-api-key");
+      const systemKey = process.env.SYSTEM_API_KEY;
 
-        // User auth check
-        if (requireAuth) {
-            // TODO: Implement user session check
-            // For now, check for email in headers or session
-            const userEmail = req.headers.get("x-user-email");
-            if (!userEmail) {
-                return NextResponse.json(
-                    { error: "Unauthorized: User authentication required" },
-                    { status: 401 },
-                );
-            }
-        }
+      if (!systemKey || apiKey !== systemKey) {
+        return NextResponse.json(
+          { error: "Unauthorized: Invalid system API key" },
+          { status: 401 },
+        );
+      }
+    }
 
-        // Rate limiting for public endpoints (leaky bucket style)
-        if (allowPublic || (!requireAuth && !requireSystemKey)) {
-            const rateLimiter = getProductionRateLimiter();
-            const customConfig = rateLimitConfig || {
-                maxRequests: 100, // Allow bursts
-                windowMs: 60000, // 1 minute window
-            };
+    // User auth check
+    if (requireAuth) {
+      // TODO: Implement user session check
+      // For now, check for email in headers or session
+      const userEmail = req.headers.get("x-user-email");
+      if (!userEmail) {
+        return NextResponse.json(
+          { error: "Unauthorized: User authentication required" },
+          { status: 401 },
+        );
+      }
+    }
 
-            const rateLimitResult = await rateLimiter.middleware(
-                req,
-                "public-api",
-                customConfig,
-            );
+    // Rate limiting for public endpoints (leaky bucket style)
+    if (allowPublic || (!requireAuth && !requireSystemKey)) {
+      const rateLimiter = getProductionRateLimiter();
+      const customConfig = rateLimitConfig || {
+        maxRequests: 100, // Allow bursts
+        windowMs: 60000, // 1 minute window
+      };
 
-            if (rateLimitResult) {
-                return rateLimitResult; // Rate limit exceeded
-            }
-        }
+      const rateLimitResult = await rateLimiter.middleware(
+        req,
+        "public-api",
+        customConfig,
+      );
 
-        // Call the actual handler
-        return await handler(req);
-    };
+      if (rateLimitResult) {
+        return rateLimitResult; // Rate limit exceeded
+      }
+    }
+
+    // Call the actual handler
+    return await handler(req);
+  };
 }
 ```
 
@@ -113,17 +114,17 @@ export function withApiAuth(
 import { withApiAuth } from "@/Utils/auth/apiAuth";
 
 export const GET = withApiAuth(
-    async (req: NextRequest) => {
-        // Existing handler code
-        // ...
+  async (req: NextRequest) => {
+    // Existing handler code
+    // ...
+  },
+  {
+    allowPublic: true, // Public but rate-limited
+    rateLimitConfig: {
+      maxRequests: 50, // 50 requests per minute
+      windowMs: 60000,
     },
-    {
-        allowPublic: true, // Public but rate-limited
-        rateLimitConfig: {
-            maxRequests: 50, // 50 requests per minute
-            windowMs: 60000,
-        },
-    },
+  },
 );
 ```
 
@@ -133,17 +134,17 @@ export const GET = withApiAuth(
 import { withApiAuth } from "@/Utils/auth/apiAuth";
 
 export const GET = withApiAuth(
-    async (req: NextRequest) => {
-        // Existing handler code
-        // ...
+  async (req: NextRequest) => {
+    // Existing handler code
+    // ...
+  },
+  {
+    allowPublic: true,
+    rateLimitConfig: {
+      maxRequests: 30, // Lower limit for countries (less frequently needed)
+      windowMs: 60000,
     },
-    {
-        allowPublic: true,
-        rateLimitConfig: {
-            maxRequests: 30, // Lower limit for countries (less frequently needed)
-            windowMs: 60000,
-        },
-    },
+  },
 );
 ```
 
@@ -153,17 +154,17 @@ export const GET = withApiAuth(
 import { withApiAuth } from "@/Utils/auth/apiAuth";
 
 export const GET = withApiAuth(
-    async (req: NextRequest) => {
-        // Existing handler code
-        // ...
+  async (req: NextRequest) => {
+    // Existing handler code
+    // ...
+  },
+  {
+    allowPublic: true,
+    rateLimitConfig: {
+      maxRequests: 20, // Lower limit - expensive query
+      windowMs: 60000,
     },
-    {
-        allowPublic: true,
-        rateLimitConfig: {
-            maxRequests: 20, // Lower limit - expensive query
-            windowMs: 60000,
-        },
-    },
+  },
 );
 ```
 
@@ -176,26 +177,26 @@ import { withApiAuth } from "@/Utils/auth/apiAuth";
 import { NextRequest } from "next/server";
 
 describe("withApiAuth", () => {
-    it("allows public access with rate limiting", async () => {
-        const handler = jest.fn().mockResolvedValue(
-            new Response(JSON.stringify({ data: "test" }))
-        );
+  it("allows public access with rate limiting", async () => {
+    const handler = jest
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ data: "test" })));
 
-        const wrappedHandler = withApiAuth(handler, {
-            allowPublic: true,
-            rateLimitConfig: { maxRequests: 2, windowMs: 1000 },
-        });
-
-        // First 2 requests should succeed
-        await wrappedHandler(new NextRequest("http://localhost/api/test"));
-        await wrappedHandler(new NextRequest("http://localhost/api/test"));
-        
-        // Third should be rate limited
-        const result = await wrappedHandler(
-            new NextRequest("http://localhost/api/test")
-        );
-        expect(result.status).toBe(429);
+    const wrappedHandler = withApiAuth(handler, {
+      allowPublic: true,
+      rateLimitConfig: { maxRequests: 2, windowMs: 1000 },
     });
+
+    // First 2 requests should succeed
+    await wrappedHandler(new NextRequest("http://localhost/api/test"));
+    await wrappedHandler(new NextRequest("http://localhost/api/test"));
+
+    // Third should be rate limited
+    const result = await wrappedHandler(
+      new NextRequest("http://localhost/api/test"),
+    );
+    expect(result.status).toBe(429);
+  });
 });
 ```
 
@@ -250,18 +251,18 @@ const unusedLocals: string[] = [];
 const unusedParams: string[] = [];
 
 lines.forEach((line) => {
-    if (line.includes("' is declared but its value is never read")) {
-        const match = line.match(/(\w+)' is declared/);
-        if (match) {
-            unusedLocals.push(match[1]);
-        }
+  if (line.includes("' is declared but its value is never read")) {
+    const match = line.match(/(\w+)' is declared/);
+    if (match) {
+      unusedLocals.push(match[1]);
     }
-    if (line.includes("' is declared but never used")) {
-        const match = line.match(/(\w+)' is declared/);
-        if (match) {
-            unusedParams.push(match[1]);
-        }
+  }
+  if (line.includes("' is declared but never used")) {
+    const match = line.match(/(\w+)' is declared/);
+    if (match) {
+      unusedParams.push(match[1]);
     }
+  }
 });
 
 console.log(`Found ${unusedLocals.length} unused locals`);
@@ -271,24 +272,27 @@ console.log(`Found ${unusedParams.length} unused parameters`);
 const byFile: Record<string, { locals: string[]; params: string[] }> = {};
 
 lines.forEach((line) => {
-    const fileMatch = line.match(/^([^(]+)\(/);
-    if (fileMatch) {
-        const file = fileMatch[1];
-        if (!byFile[file]) {
-            byFile[file] = { locals: [], params: [] };
-        }
+  const fileMatch = line.match(/^([^(]+)\(/);
+  if (fileMatch) {
+    const file = fileMatch[1];
+    if (!byFile[file]) {
+      byFile[file] = { locals: [], params: [] };
     }
+  }
 });
 
 console.log("\nBy file:");
 Object.entries(byFile).forEach(([file, items]) => {
-    console.log(`${file}: ${items.locals.length} locals, ${items.params.length} params`);
+  console.log(
+    `${file}: ${items.locals.length} locals, ${items.params.length} params`,
+  );
 });
 ```
 
 #### Step 3: Cleanup Strategy
 
 **Priority Order:**
+
 1. **Remove dead code** - Variables that are truly unused
 2. **Fix logic bugs** - Variables that should be used but aren't
 3. **Prefix with underscore** - Parameters that are required by interface but unused (e.g., `_event`)
@@ -298,26 +302,26 @@ Object.entries(byFile).forEach(([file, items]) => {
 ```typescript
 // Before
 function processJob(job: Job, user: User, metadata: any) {
-    const processed = normalizeJob(job);
-    return processed; // metadata is unused
+  const processed = normalizeJob(job);
+  return processed; // metadata is unused
 }
 
 // After - Option 1: Remove if truly unused
 function processJob(job: Job, user: User) {
-    const processed = normalizeJob(job);
-    return processed;
+  const processed = normalizeJob(job);
+  return processed;
 }
 
 // After - Option 2: Prefix if required by interface
 function processJob(job: Job, user: User, _metadata: any) {
-    const processed = normalizeJob(job);
-    return processed;
+  const processed = normalizeJob(job);
+  return processed;
 }
 
 // After - Option 3: Use it if it should be used
 function processJob(job: Job, user: User, metadata: any) {
-    const processed = normalizeJob(job);
-    return { ...processed, metadata }; // Now it's used
+  const processed = normalizeJob(job);
+  return { ...processed, metadata }; // Now it's used
 }
 ```
 
@@ -329,8 +333,8 @@ function processJob(job: Job, user: User, metadata: any) {
 {
   "compilerOptions": {
     // ... existing options
-    "noUnusedLocals": true,  // Changed from false
-    "noUnusedParameters": true,  // Changed from false
+    "noUnusedLocals": true, // Changed from false
+    "noUnusedParameters": true // Changed from false
   }
 }
 ```
@@ -356,12 +360,14 @@ npm run type-check || exit 1
 #### Step 1: Verify Sentry Configuration
 
 **Files to check:**
+
 - `sentry.client.config.ts`
 - `sentry.server.config.ts`
 - `sentry.edge.config.ts`
 - `next.config.ts` (Sentry integration)
 
 **Verify:**
+
 - `SENTRY_DSN` or `NEXT_PUBLIC_SENTRY_DSN` is set
 - Sentry is initialized correctly
 - Source maps are uploaded
@@ -507,14 +513,14 @@ export default class ErrorBoundary extends Component<Props, State> {
 import * as Sentry from "@sentry/nextjs";
 
 export function setSentryUser(user: { email: string; id?: string }) {
-    Sentry.setUser({
-        email: user.email,
-        id: user.id,
-    });
+  Sentry.setUser({
+    email: user.email,
+    id: user.id,
+  });
 }
 
 export function clearSentryUser() {
-    Sentry.setUser(null);
+  Sentry.setUser(null);
 }
 ```
 
@@ -572,7 +578,7 @@ describe("ErrorBoundary", () => {
 
 ---
 
-## 🗄️ DATABASE PERFORMANCE: N+1 and SELECT * Optimization
+## 🗄️ DATABASE PERFORMANCE: N+1 and SELECT \* Optimization
 
 ### 2.1 Fix N+1 Query Issues in Matching Logic
 
@@ -583,25 +589,28 @@ describe("ErrorBoundary", () => {
 **File:** `Utils/matching/consolidated/engine.ts`
 
 **Look for patterns like:**
+
 ```typescript
 // BAD: N+1 query pattern
 for (const job of jobs) {
-    const { data: company } = await supabase
-        .from('companies')
-        .select('visa_sponsorship')
-        .eq('id', job.company_id)
-        .single();
-    // Use company data
+  const { data: company } = await supabase
+    .from("companies")
+    .select("visa_sponsorship")
+    .eq("id", job.company_id)
+    .single();
+  // Use company data
 }
 
 // GOOD: Single query with join
 const { data: jobsWithCompanies } = await supabase
-    .from('jobs')
-    .select(`
+  .from("jobs")
+  .select(
+    `
         *,
         company:companies(visa_sponsorship, name, size)
-    `)
-    .in('id', jobIds);
+    `,
+  )
+  .in("id", jobIds);
 ```
 
 #### Step 2: Audit Matching Queries
@@ -623,18 +632,18 @@ const files = glob.sync("Utils/matching/**/*.ts");
 const apiFiles = glob.sync("app/api/**/*.ts");
 
 const patterns = [
-    /for\s*\([^)]*of[^)]*\)\s*\{[\s\S]*?await\s+supabase/g,
-    /\.map\([^)]*=>\s*\{[\s\S]*?await\s+supabase/g,
-    /\.forEach\([^)]*=>\s*\{[\s\S]*?await\s+supabase/g,
+  /for\s*\([^)]*of[^)]*\)\s*\{[\s\S]*?await\s+supabase/g,
+  /\.map\([^)]*=>\s*\{[\s\S]*?await\s+supabase/g,
+  /\.forEach\([^)]*=>\s*\{[\s\S]*?await\s+supabase/g,
 ];
 
 files.forEach((file) => {
-    const content = readFileSync(file, "utf-8");
-    patterns.forEach((pattern, i) => {
-        if (pattern.test(content)) {
-            console.log(`⚠️  Potential N+1 in ${file}`);
-        }
-    });
+  const content = readFileSync(file, "utf-8");
+  patterns.forEach((pattern, i) => {
+    if (pattern.test(content)) {
+      console.log(`⚠️  Potential N+1 in ${file}`);
+    }
+  });
 });
 ```
 
@@ -643,29 +652,32 @@ files.forEach((file) => {
 **File:** `Utils/matching/consolidated/engine.ts`
 
 **Before:**
+
 ```typescript
 // Fetch jobs
 const { data: jobs } = await supabase
-    .from('jobs')
-    .select('*')
-    .eq('city', userCity);
+  .from("jobs")
+  .select("*")
+  .eq("city", userCity);
 
 // Then fetch company data for each (N+1!)
 for (const job of jobs) {
-    const { data: company } = await supabase
-        .from('companies')
-        .select('visa_sponsorship')
-        .eq('id', job.company_id)
-        .single();
+  const { data: company } = await supabase
+    .from("companies")
+    .select("visa_sponsorship")
+    .eq("id", job.company_id)
+    .single();
 }
 ```
 
 **After:**
+
 ```typescript
 // Fetch jobs with company data in single query
 const { data: jobs } = await supabase
-    .from('jobs')
-    .select(`
+  .from("jobs")
+  .select(
+    `
         id,
         title,
         company,
@@ -681,9 +693,10 @@ const { data: jobs } = await supabase
             size,
             industry
         )
-    `)
-    .eq('city', userCity)
-    .eq('is_active', true);
+    `,
+  )
+  .eq("city", userCity)
+  .eq("is_active", true);
 ```
 
 #### Step 4: Add Query Performance Monitoring
@@ -692,17 +705,17 @@ const { data: jobs } = await supabase
 
 ```typescript
 export async function logSlowQuery(
-    query: string,
-    duration: number,
-    threshold: number = 1000, // 1 second
+  query: string,
+  duration: number,
+  threshold: number = 1000, // 1 second
 ) {
-    if (duration > threshold) {
-        logger.warn("Slow database query detected", {
-            query: query.substring(0, 200), // Truncate for logging
-            duration,
-            threshold,
-        });
-    }
+  if (duration > threshold) {
+    logger.warn("Slow database query detected", {
+      query: query.substring(0, 200), // Truncate for logging
+      duration,
+      threshold,
+    });
+  }
 }
 ```
 
@@ -711,13 +724,14 @@ export async function logSlowQuery(
 
 ---
 
-### 2.2 Replace SELECT * with Specific Columns
+### 2.2 Replace SELECT \* with Specific Columns
 
 **Risk:** Unnecessary data transfer, slower API responses, higher memory usage.
 
-#### Step 1: Audit SELECT * Usage
+#### Step 1: Audit SELECT \* Usage
 
 **Command:**
+
 ```bash
 grep -r "\.select\('\\*'\)" app/api Utils/ --include="*.ts" | wc -l
 grep -r "SELECT \*" supabase/migrations --include="*.sql" | wc -l
@@ -734,11 +748,11 @@ grep -r "SELECT \*" supabase/migrations --include="*.sql" | wc -l
  */
 
 export const JOB_COLUMNS = {
-    // Minimal (for lists)
-    minimal: "id, title, company, location, city, job_url, posted_date",
-    
-    // Standard (for detail views)
-    standard: `
+  // Minimal (for lists)
+  minimal: "id, title, company, location, city, job_url, posted_date",
+
+  // Standard (for detail views)
+  standard: `
         id,
         title,
         company,
@@ -755,9 +769,9 @@ export const JOB_COLUMNS = {
         salary_max,
         is_active
     `,
-    
-    // Full (for matching/processing)
-    full: `
+
+  // Full (for matching/processing)
+  full: `
         id,
         title,
         company,
@@ -782,45 +796,49 @@ export const JOB_COLUMNS = {
 };
 
 export const USER_COLUMNS = {
-    minimal: "id, email, subscription_tier",
-    standard: "id, email, subscription_tier, created_at, preferences",
-    full: "id, email, subscription_tier, created_at, updated_at, preferences, email_verified",
+  minimal: "id, email, subscription_tier",
+  standard: "id, email, subscription_tier, created_at, preferences",
+  full: "id, email, subscription_tier, created_at, updated_at, preferences, email_verified",
 };
 
 export const COMPANY_COLUMNS = {
-    minimal: "id, name",
-    standard: "id, name, visa_sponsorship, size",
-    full: "id, name, visa_sponsorship, size, industry, description",
+  minimal: "id, name",
+  standard: "id, name, visa_sponsorship, size",
+  full: "id, name, visa_sponsorship, size, industry, description",
 };
 ```
 
-#### Step 3: Replace SELECT * in API Routes
+#### Step 3: Replace SELECT \* in API Routes
 
 **File:** `app/api/user-matches/route.ts`
 
 **Before:**
+
 ```typescript
 const { data: matches } = await supabase
-    .from('matches')
-    .select('*')
-    .eq('user_id', userId);
+  .from("matches")
+  .select("*")
+  .eq("user_id", userId);
 ```
 
 **After:**
+
 ```typescript
 import { JOB_COLUMNS } from "@/Utils/database/columns";
 
 const { data: matches } = await supabase
-    .from('matches')
-    .select(`
+  .from("matches")
+  .select(
+    `
         id,
         user_id,
         job_id,
         match_score,
         created_at,
         job:jobs(${JOB_COLUMNS.minimal})
-    `)
-    .eq('user_id', userId);
+    `,
+  )
+  .eq("user_id", userId);
 ```
 
 **Estimated Time:** 2-3 hours  
@@ -843,65 +861,72 @@ import { readFileSync } from "fs";
 import { glob } from "glob";
 
 interface TODO {
-    file: string;
-    line: number;
-    content: string;
-    priority: "critical" | "high" | "medium" | "low" | "unknown";
+  file: string;
+  line: number;
+  content: string;
+  priority: "critical" | "high" | "medium" | "low" | "unknown";
 }
 
 const todos: TODO[] = [];
 const files = glob.sync("**/*.{ts,tsx,js,jsx}", {
-    ignore: ["node_modules/**", ".next/**", "coverage/**"],
+  ignore: ["node_modules/**", ".next/**", "coverage/**"],
 });
 
 files.forEach((file) => {
-    const content = readFileSync(file, "utf-8");
-    const lines = content.split("\n");
+  const content = readFileSync(file, "utf-8");
+  const lines = content.split("\n");
 
-    lines.forEach((line, index) => {
-        const todoMatch = line.match(/TODO[:\s]+(.+)/i);
-        const fixmeMatch = line.match(/FIXME[:\s]+(.+)/i);
-        const hackMatch = line.match(/HACK[:\s]+(.+)/i);
+  lines.forEach((line, index) => {
+    const todoMatch = line.match(/TODO[:\s]+(.+)/i);
+    const fixmeMatch = line.match(/FIXME[:\s]+(.+)/i);
+    const hackMatch = line.match(/HACK[:\s]+(.+)/i);
 
-        if (todoMatch || fixmeMatch || hackMatch) {
-            const content = (todoMatch || fixmeMatch || hackMatch)?.[1] || "";
-            const priority = determinePriority(content);
+    if (todoMatch || fixmeMatch || hackMatch) {
+      const content = (todoMatch || fixmeMatch || hackMatch)?.[1] || "";
+      const priority = determinePriority(content);
 
-            todos.push({
-                file,
-                line: index + 1,
-                content: content.trim(),
-                priority,
-            });
-        }
-    });
+      todos.push({
+        file,
+        line: index + 1,
+        content: content.trim(),
+        priority,
+      });
+    }
+  });
 });
 
 function determinePriority(content: string): TODO["priority"] {
-    const lower = content.toLowerCase();
-    if (lower.includes("critical") || lower.includes("security") || lower.includes("bug")) {
-        return "critical";
-    }
-    if (lower.includes("high") || lower.includes("important")) {
-        return "high";
-    }
-    if (lower.includes("low") || lower.includes("nice")) {
-        return "low";
-    }
-    if (lower.includes("medium")) {
-        return "medium";
-    }
-    return "unknown";
+  const lower = content.toLowerCase();
+  if (
+    lower.includes("critical") ||
+    lower.includes("security") ||
+    lower.includes("bug")
+  ) {
+    return "critical";
+  }
+  if (lower.includes("high") || lower.includes("important")) {
+    return "high";
+  }
+  if (lower.includes("low") || lower.includes("nice")) {
+    return "low";
+  }
+  if (lower.includes("medium")) {
+    return "medium";
+  }
+  return "unknown";
 }
 
 // Output JSON for processing
 console.log(JSON.stringify(todos, null, 2));
 
 // Output summary
-const byPriority = todos.reduce((acc, todo) => {
+const byPriority = todos.reduce(
+  (acc, todo) => {
     acc[todo.priority] = (acc[todo.priority] || 0) + 1;
     return acc;
-}, {} as Record<string, number>);
+  },
+  {} as Record<string, number>,
+);
 
 console.log("\nSummary:");
 console.log(byPriority);
@@ -910,6 +935,7 @@ console.log(byPriority);
 #### Step 2: Categorize TODOs
 
 **Categories:**
+
 1. **Delete** - Old, irrelevant, or already fixed
 2. **Fix Now** - Critical/High priority from audit
 3. **Issue-ify** - Valid but not launch-critical
@@ -930,6 +956,7 @@ console.log(byPriority);
 **Estimated Effort:** [time estimate]
 
 **Acceptance Criteria:**
+
 - [ ] [What needs to be done]
 - [ ] [How to verify it's done]
 ```
@@ -937,6 +964,7 @@ console.log(byPriority);
 #### Step 4: Clean Up Code
 
 **Action Items:**
+
 1. Delete obsolete TODOs
 2. Fix critical/high priority TODOs immediately
 3. Create GitHub issues for medium/low priority
@@ -950,6 +978,7 @@ console.log(byPriority);
 ## 📋 EXECUTION CHECKLIST
 
 ### Day 1: Critical Security & Stability
+
 - [ ] **Morning (2-3 hours):** API Route Authentication
   - [ ] Create `withApiAuth` middleware
   - [ ] Apply to `/api/companies`, `/api/countries`, `/api/sample-jobs`
@@ -970,19 +999,21 @@ console.log(byPriority);
   - [ ] Verify Sentry dashboard
 
 ### Day 2: Database Performance
+
 - [ ] **Morning (3-4 hours):** N+1 Query Fixes
   - [ ] Audit matching queries for N+1 patterns
   - [ ] Refactor to use joins
   - [ ] Add query performance monitoring
   - [ ] Test performance improvements
 
-- [ ] **Afternoon (2-3 hours):** SELECT * Optimization
+- [ ] **Afternoon (2-3 hours):** SELECT \* Optimization
   - [ ] Create column definition utilities
-  - [ ] Replace SELECT * in API routes
+  - [ ] Replace SELECT \* in API routes
   - [ ] Measure response size reduction
   - [ ] Update tests
 
 ### Day 3: Technical Debt & Polish
+
 - [ ] **Morning (2-3 hours):** TODO Triage
   - [ ] Extract all TODOs
   - [ ] Categorize and prioritize
@@ -1000,21 +1031,25 @@ console.log(byPriority);
 ## 🎯 SUCCESS METRICS
 
 ### Security
+
 - ✅ All public API routes have rate limiting
 - ✅ No unauthenticated access to sensitive data
 - ✅ Error tracking integrated and tested
 
 ### Code Quality
+
 - ✅ TypeScript strictness enabled
 - ✅ Zero unused variables/parameters
 - ✅ Reduced `any` types by 50%+
 
 ### Performance
+
 - ✅ No N+1 query patterns in matching logic
-- ✅ SELECT * replaced with specific columns
+- ✅ SELECT \* replaced with specific columns
 - ✅ API response times < 200ms (p95)
 
 ### Technical Debt
+
 - ✅ Critical TODOs resolved
 - ✅ Medium/Low TODOs tracked in GitHub
 - ✅ Codebase clean and maintainable
@@ -1024,12 +1059,14 @@ console.log(byPriority);
 ## 🚀 POST-LAUNCH PRIORITIES
 
 ### Week 1 After Launch
+
 1. Monitor Sentry for new errors
 2. Review rate limiting effectiveness
 3. Monitor database query performance
 4. Address any production issues
 
 ### Month 1 After Launch
+
 1. Increase test coverage thresholds
 2. Complete remaining high-priority TODOs
 3. Performance optimization based on real usage
@@ -1040,4 +1077,3 @@ console.log(byPriority);
 **Last Updated:** January 2025  
 **Status:** Ready for Execution  
 **Estimated Total Time:** 12-18 hours over 3 days
-

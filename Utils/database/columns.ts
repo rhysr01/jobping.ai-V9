@@ -16,15 +16,15 @@
  * Job table column sets
  */
 export const JOB_COLUMNS = {
-	/**
-	 * Minimal columns for list views (fast, lightweight)
-	 */
-	minimal: "id, title, company, location, city, job_url, posted_date",
+  /**
+   * Minimal columns for list views (fast, lightweight)
+   */
+  minimal: "id, title, company, location, city, job_url, posted_date",
 
-	/**
-	 * Standard columns for detail views
-	 */
-	standard: `
+  /**
+   * Standard columns for detail views
+   */
+  standard: `
 		id,
 		title,
 		company,
@@ -42,10 +42,10 @@ export const JOB_COLUMNS = {
 		is_active
 	`,
 
-	/**
-	 * Full columns for matching/processing (includes all fields)
-	 */
-	full: `
+  /**
+   * Full columns for matching/processing (includes all fields)
+   */
+  full: `
 		id,
 		title,
 		company,
@@ -73,55 +73,55 @@ export const JOB_COLUMNS = {
  * User table column sets
  */
 export const USER_COLUMNS = {
-	/**
-	 * Minimal user data
-	 */
-	minimal: "id, email, subscription_tier",
+  /**
+   * Minimal user data
+   */
+  minimal: "id, email, subscription_tier",
 
-	/**
-	 * Standard user data for most operations
-	 */
-	standard: "id, email, subscription_tier, created_at, preferences",
+  /**
+   * Standard user data for most operations
+   */
+  standard: "id, email, subscription_tier, created_at, preferences",
 
-	/**
-	 * Full user data (use sparingly)
-	 */
-	full: "id, email, subscription_tier, created_at, updated_at, preferences, email_verified",
+  /**
+   * Full user data (use sparingly)
+   */
+  full: "id, email, subscription_tier, created_at, updated_at, preferences, email_verified",
 };
 
 /**
  * Company table column sets
  */
 export const COMPANY_COLUMNS = {
-	/**
-	 * Minimal company data
-	 */
-	minimal: "id, name",
+  /**
+   * Minimal company data
+   */
+  minimal: "id, name",
 
-	/**
-	 * Standard company data
-	 */
-	standard: "id, name, visa_sponsorship, size",
+  /**
+   * Standard company data
+   */
+  standard: "id, name, visa_sponsorship, size",
 
-	/**
-	 * Full company data
-	 */
-	full: "id, name, visa_sponsorship, size, industry, description",
+  /**
+   * Full company data
+   */
+  full: "id, name, visa_sponsorship, size, industry, description",
 };
 
 /**
  * Match table column sets
  */
 export const MATCH_COLUMNS = {
-	/**
-	 * Minimal match data
-	 */
-	minimal: "id, user_id, job_id, match_score, created_at",
+  /**
+   * Minimal match data
+   */
+  minimal: "id, user_id, job_id, match_score, created_at",
 
-	/**
-	 * Standard match data with job details
-	 */
-	standard: `
+  /**
+   * Standard match data with job details
+   */
+  standard: `
 		id,
 		user_id,
 		job_id,
@@ -131,10 +131,10 @@ export const MATCH_COLUMNS = {
 		job:jobs(${JOB_COLUMNS.minimal})
 	`,
 
-	/**
-	 * Full match data with all details
-	 */
-	full: `
+  /**
+   * Full match data with all details
+   */
+  full: `
 		id,
 		user_id,
 		job_id,
@@ -145,4 +145,3 @@ export const MATCH_COLUMNS = {
 		job:jobs(${JOB_COLUMNS.standard})
 	`,
 };
-

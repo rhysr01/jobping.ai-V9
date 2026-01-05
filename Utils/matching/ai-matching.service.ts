@@ -15,92 +15,92 @@ import type { EnrichedJob, JobMatch, NormalizedUserProfile } from "./types";
 // ================================
 
 interface LRUCacheEntry<T> {
-	value: T;
-	timestamp: number;
-	accessCount: number;
+  value: T;
+  timestamp: number;
+  accessCount: number;
 }
 
 class LRUCache<K, V> {
-	private cache = new Map<K, LRUCacheEntry<V>>();
-	private maxSize: number;
-	private ttl: number;
+  private cache = new Map<K, LRUCacheEntry<V>>();
+  private maxSize: number;
+  private ttl: number;
 
-	constructor(maxSize: number, ttlMs: number) {
-		this.maxSize = maxSize;
-		this.ttl = ttlMs;
-	}
+  constructor(maxSize: number, ttlMs: number) {
+    this.maxSize = maxSize;
+    this.ttl = ttlMs;
+  }
 
-	get(key: K): V | undefined {
-		const entry = this.cache.get(key);
-		if (!entry) return undefined;
+  get(key: K): V | undefined {
+    const entry = this.cache.get(key);
+    if (!entry) return undefined;
 
-		const now = Date.now();
-		if (now - entry.timestamp > this.ttl) {
-			this.cache.delete(key);
-			return undefined;
-		}
+    const now = Date.now();
+    if (now - entry.timestamp > this.ttl) {
+      this.cache.delete(key);
+      return undefined;
+    }
 
-		entry.accessCount++;
-		return entry.value;
-	}
+    entry.accessCount++;
+    return entry.value;
+  }
 
-	set(key: K, value: V): void {
-		const now = Date.now();
+  set(key: K, value: V): void {
+    const now = Date.now();
 
-		if (this.cache.size >= this.maxSize) {
-			this.evictLeastUsed();
-		}
+    if (this.cache.size >= this.maxSize) {
+      this.evictLeastUsed();
+    }
 
-		this.cache.set(key, {
-			value,
-			timestamp: now,
-			accessCount: 1,
-		});
-	}
+    this.cache.set(key, {
+      value,
+      timestamp: now,
+      accessCount: 1,
+    });
+  }
 
-	private evictLeastUsed(): void {
-		let leastUsedKey: K | undefined;
-		let leastUsedCount: number = Infinity;
+  private evictLeastUsed(): void {
+    let leastUsedKey: K | undefined;
+    let leastUsedCount: number = Infinity;
 
-		for (const [key, entry] of this.cache.entries()) {
-			if (entry.accessCount < leastUsedCount) {
-				leastUsedCount = entry.accessCount;
-				leastUsedKey = key;
-			}
-		}
+    for (const [key, entry] of this.cache.entries()) {
+      if (entry.accessCount < leastUsedCount) {
+        leastUsedCount = entry.accessCount;
+        leastUsedKey = key;
+      }
+    }
 
-		if (leastUsedKey !== undefined) {
-			this.cache.delete(leastUsedKey);
-		}
-	}
+    if (leastUsedKey !== undefined) {
+      this.cache.delete(leastUsedKey);
+    }
+  }
 
-	clear(): void {
-		this.cache.clear();
-	}
+  clear(): void {
+    this.cache.clear();
+  }
 
-	size(): number {
-		return this.cache.size;
-	}
+  size(): number {
+    return this.cache.size;
+  }
 }
 
 export class AIMatchingCache {
-	private static cache = new LRUCache<string, any[]>(10000, 1000 * 60 * 30); // 10k entries, 30 minutes TTL
+  private static cache = new LRUCache<string, any[]>(10000, 1000 * 60 * 30); // 10k entries, 30 minutes TTL
 
-	static get(key: string): any[] | undefined {
-		return AIMatchingCache.cache.get(key);
-	}
+  static get(key: string): any[] | undefined {
+    return AIMatchingCache.cache.get(key);
+  }
 
-	static set(key: string, value: any[]): void {
-		AIMatchingCache.cache.set(key, value);
-	}
+  static set(key: string, value: any[]): void {
+    AIMatchingCache.cache.set(key, value);
+  }
 
-	static clear(): void {
-		AIMatchingCache.cache.clear();
-	}
+  static clear(): void {
+    AIMatchingCache.cache.clear();
+  }
 
-	static size(): number {
-		return AIMatchingCache.cache.size();
-	}
+  static size(): number {
+    return AIMatchingCache.cache.size();
+  }
 }
 
 // ================================
@@ -108,48 +108,48 @@ export class AIMatchingCache {
 // ================================
 
 export class AIMatchingService {
-	private openai: OpenAI;
+  private openai: OpenAI;
 
-	constructor() {
-		const apiKey = process.env.OPENAI_API_KEY;
-		if (!apiKey) {
-			throw new Error("Missing OPENAI_API_KEY environment variable");
-		}
-		this.openai = new OpenAI({
-			apiKey,
-		});
-	}
+  constructor() {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("Missing OPENAI_API_KEY environment variable");
+    }
+    this.openai = new OpenAI({
+      apiKey,
+    });
+  }
 
-	async performEnhancedAIMatching(
-		jobs: Job[],
-		userPrefs: NormalizedUserProfile,
-	): Promise<JobMatch[]> {
-		const startTime = Date.now();
+  async performEnhancedAIMatching(
+    jobs: Job[],
+    userPrefs: NormalizedUserProfile,
+  ): Promise<JobMatch[]> {
+    const startTime = Date.now();
 
-		try {
-			// Check cache first (with feedback-aware key)
-			const cacheKey = await this.generateCacheKey(jobs, userPrefs);
-			const cachedResult = AIMatchingCache.get(cacheKey);
+    try {
+      // Check cache first (with feedback-aware key)
+      const cacheKey = await this.generateCacheKey(jobs, userPrefs);
+      const cachedResult = AIMatchingCache.get(cacheKey);
 
-			if (cachedResult) {
-				console.log("� Cache hit for AI matching");
-				return cachedResult;
-			}
+      if (cachedResult) {
+        console.log("� Cache hit for AI matching");
+        return cachedResult;
+      }
 
-			// Enrich jobs with additional data
-			const enrichedJobs = jobs.map((job) => enrichJobData(job));
+      // Enrich jobs with additional data
+      const enrichedJobs = jobs.map((job) => enrichJobData(job));
 
-			// Build prompt (with feedback learning)
-			const prompt = await this.buildMatchingPrompt(enrichedJobs, userPrefs);
+      // Build prompt (with feedback learning)
+      const prompt = await this.buildMatchingPrompt(enrichedJobs, userPrefs);
 
-			// Call OpenAI with timeout
-			const response = await Promise.race([
-				this.openai.chat.completions.create({
-					model: "gpt-4o-mini",
-					messages: [
-						{
-							role: "system",
-							content: `You are an expert career advisor for EARLY-CAREER business school candidates.
+      // Call OpenAI with timeout
+      const response = await Promise.race([
+        this.openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `You are an expert career advisor for EARLY-CAREER business school candidates.
 
 DATABASE QUALITY (use this info):
 - 100% of jobs have verified city data (14 target cities)
@@ -167,77 +167,77 @@ YOUR MATCHING PRIORITY:
 4. RELEVANCE: Is role description compelling for early-career?
 
 Return ONLY valid JSON array with matches.`,
-						},
-						{
-							role: "user",
-							content: prompt,
-						},
-					],
-					temperature: 0.1, // Low temperature for consistent scoring
-					max_tokens: 2500, // More room for exciting match reasons
-				}),
-				timeout<OpenAI.Chat.Completions.ChatCompletion>(
-					20000,
-					"AI matching timeout",
-				),
-			]);
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          temperature: 0.1, // Low temperature for consistent scoring
+          max_tokens: 2500, // More room for exciting match reasons
+        }),
+        timeout<OpenAI.Chat.Completions.ChatCompletion>(
+          20000,
+          "AI matching timeout",
+        ),
+      ]);
 
-			// Parse and validate response
-			const matches = this.parseAndValidateMatches(
-				response.choices[0]?.message?.content || "",
-				jobs,
-			);
+      // Parse and validate response
+      const matches = this.parseAndValidateMatches(
+        response.choices[0]?.message?.content || "",
+        jobs,
+      );
 
-			// Cache result
-			AIMatchingCache.set(cacheKey, matches);
+      // Cache result
+      AIMatchingCache.set(cacheKey, matches);
 
-			const latency = Date.now() - startTime;
-			console.log(
-				`�� AI matching completed in ${latency}ms, found ${matches.length} matches`,
-			);
+      const latency = Date.now() - startTime;
+      console.log(
+        `�� AI matching completed in ${latency}ms, found ${matches.length} matches`,
+      );
 
-			return matches;
-		} catch (error) {
-			console.error("AI matching failed:", error);
-			throw new Error(
-				`AI matching failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-			);
-		}
-	}
+      return matches;
+    } catch (error) {
+      console.error("AI matching failed:", error);
+      throw new Error(
+        `AI matching failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
+  }
 
-	private async generateCacheKey(
-		jobs: Job[],
-		userPrefs: NormalizedUserProfile,
-	): Promise<string> {
-		const jobHashes = jobs
-			.map((j) => j.job_hash)
-			.sort()
-			.join(",");
+  private async generateCacheKey(
+    jobs: Job[],
+    userPrefs: NormalizedUserProfile,
+  ): Promise<string> {
+    const jobHashes = jobs
+      .map((j) => j.job_hash)
+      .sort()
+      .join(",");
 
-		// Include feedback count in cache key
-		let feedbackFingerprint: string = "no-feedback";
-		try {
-			const summary = await this.getFeedbackSummary(userPrefs.email);
-			if (summary && summary.total >= 3) {
-				// Include feedback count and positive ratio in cache key
-				feedbackFingerprint = `fb${summary.total}-pos${summary.positive}`;
-			}
-		} catch {
-			// Ignore errors, use default
-		}
+    // Include feedback count in cache key
+    let feedbackFingerprint: string = "no-feedback";
+    try {
+      const summary = await this.getFeedbackSummary(userPrefs.email);
+      if (summary && summary.total >= 3) {
+        // Include feedback count and positive ratio in cache key
+        feedbackFingerprint = `fb${summary.total}-pos${summary.positive}`;
+      }
+    } catch {
+      // Ignore errors, use default
+    }
 
-		const userKey = `${userPrefs.email}-${userPrefs.careerFocus}-${feedbackFingerprint}`;
-		return `ai-match:${userKey}:${jobHashes}`;
-	}
+    const userKey = `${userPrefs.email}-${userPrefs.careerFocus}-${feedbackFingerprint}`;
+    return `ai-match:${userKey}:${jobHashes}`;
+  }
 
-	private async buildMatchingPrompt(
-		jobs: EnrichedJob[],
-		userProfile: NormalizedUserProfile,
-	): Promise<string> {
-		const userContext = await this.buildUserContextWithFeedback(userProfile);
-		const jobsContext = this.buildJobsContext(jobs);
+  private async buildMatchingPrompt(
+    jobs: EnrichedJob[],
+    userProfile: NormalizedUserProfile,
+  ): Promise<string> {
+    const userContext = await this.buildUserContextWithFeedback(userProfile);
+    const jobsContext = this.buildJobsContext(jobs);
 
-		return `
+    return `
 ${userContext}
 
 ${jobsContext}
@@ -268,22 +268,22 @@ For each match, return JSON with:
 
 Return ONLY valid JSON array, no other text.
 `;
-	}
+  }
 
-	private buildUserContext(profile: NormalizedUserProfile): string {
-		const careerPaths =
-			profile.career_path && profile.career_path.length > 0
-				? profile.career_path
-						.map((p) => `   ${this.formatCareerPath(p)}`)
-						.join("\n")
-				: "  (Open to all career paths)";
+  private buildUserContext(profile: NormalizedUserProfile): string {
+    const careerPaths =
+      profile.career_path && profile.career_path.length > 0
+        ? profile.career_path
+            .map((p) => `   ${this.formatCareerPath(p)}`)
+            .join("\n")
+        : "  (Open to all career paths)";
 
-		const specificRoles =
-			profile.roles_selected && profile.roles_selected.length > 0
-				? profile.roles_selected.map((r) => `   ${r}`).join("\n")
-				: "  (Open to all role types)";
+    const specificRoles =
+      profile.roles_selected && profile.roles_selected.length > 0
+        ? profile.roles_selected.map((r) => `   ${r}`).join("\n")
+        : "  (Open to all role types)";
 
-		return `
+    return `
 USER PROFILE:
 - Email: ${profile.email}
 
@@ -352,47 +352,47 @@ MATCHING RULES - ONLY 2 REQUIREMENTS, EVERYTHING ELSE IS OPTIONAL:
 - Don't penalize jobs for missing optional fields
 - Rank based on career fit first, then use optional data to fine-tune
 `;
-	}
+  }
 
-	// Helper to format career path names nicely
-	// Handles both form values (simple) and database categories (hyphenated)
-	private formatCareerPath(slug: string): string {
-		// First try to get label for simple form value
-		const label = getCareerPathLabel(slug);
-		if (label !== slug) return label;
+  // Helper to format career path names nicely
+  // Handles both form values (simple) and database categories (hyphenated)
+  private formatCareerPath(slug: string): string {
+    // First try to get label for simple form value
+    const label = getCareerPathLabel(slug);
+    if (label !== slug) return label;
 
-		// If not found, might be a database category - convert to form value first
-		const formValue = mapDatabaseToForm(slug);
-		return getCareerPathLabel(formValue) || slug;
-	}
+    // If not found, might be a database category - convert to form value first
+    const formValue = mapDatabaseToForm(slug);
+    return getCareerPathLabel(formValue) || slug;
+  }
 
-	// NEW: Build user context WITH feedback learning AND CV insights
-	private async buildUserContextWithFeedback(
-		profile: NormalizedUserProfile,
-	): Promise<string> {
-		// Get basic context
-		const basicContext = this.buildUserContext(profile);
+  // NEW: Build user context WITH feedback learning AND CV insights
+  private async buildUserContextWithFeedback(
+    profile: NormalizedUserProfile,
+  ): Promise<string> {
+    // Get basic context
+    const basicContext = this.buildUserContext(profile);
 
-		// Get CV insights
-		const cvInsights = await this.getCVInsights(profile.email);
+    // Get CV insights
+    const cvInsights = await this.getCVInsights(profile.email);
 
-		// Get feedback summary
-		const feedbackSummary = await this.getFeedbackSummary(profile.email);
+    // Get feedback summary
+    const feedbackSummary = await this.getFeedbackSummary(profile.email);
 
-		let enhancedContext: string = basicContext;
+    let enhancedContext: string = basicContext;
 
-		// Add CV insights if available
-		if (cvInsights.length > 0) {
-			enhancedContext += `
+    // Add CV insights if available
+    if (cvInsights.length > 0) {
+      enhancedContext += `
 
 CV HIGHLIGHTS (use these for WOW factor):
 ${cvInsights.map((insight: string) => `- ${insight}`).join("\n")}
 `;
-		}
+    }
 
-		// Add feedback insights if available
-		if (feedbackSummary && feedbackSummary.total >= 3) {
-			enhancedContext += `
+    // Add feedback insights if available
+    if (feedbackSummary && feedbackSummary.total >= 3) {
+      enhancedContext += `
 
 LEARNED PREFERENCES (from ${feedbackSummary.total} ratings):
  USER LOVES:
@@ -401,137 +401,137 @@ LEARNED PREFERENCES (from ${feedbackSummary.total} ratings):
  USER AVOIDS:
   ${feedbackSummary.disliked.map((item: string) => `- ${item}`).join("\n  ")}
 `;
-		}
+    }
 
-		return enhancedContext;
-	}
+    return enhancedContext;
+  }
 
-	// NEW: Get CV insights for WOW factor
-	private async getCVInsights(userEmail: string): Promise<string[]> {
-		try {
-			const { createClient } = await import("@supabase/supabase-js");
-			const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-			const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-			if (!supabaseUrl || !supabaseKey) {
-				throw new Error("Missing Supabase configuration");
-			}
-			const supabase = createClient(supabaseUrl, supabaseKey);
+  // NEW: Get CV insights for WOW factor
+  private async getCVInsights(userEmail: string): Promise<string[]> {
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error("Missing Supabase configuration");
+      }
+      const supabase = createClient(supabaseUrl, supabaseKey);
 
-			// Check if we have cached CV data
-			const { data: cvCache } = await supabase
-				.from("user_cv_data")
-				.select("cv_data")
-				.eq("user_email", userEmail)
-				.single();
+      // Check if we have cached CV data
+      const { data: cvCache } = await supabase
+        .from("user_cv_data")
+        .select("cv_data")
+        .eq("user_email", userEmail)
+        .single();
 
-			if (cvCache?.cv_data) {
-				const cvData = cvCache.cv_data as any;
+      if (cvCache?.cv_data) {
+        const cvData = cvCache.cv_data as any;
 
-				// Generate WOW insights from CV
-				const insights: string[] = [];
+        // Generate WOW insights from CV
+        const insights: string[] = [];
 
-				if (cvData.total_years_experience) {
-					insights.push(`${cvData.total_years_experience} years experience`);
-				}
+        if (cvData.total_years_experience) {
+          insights.push(`${cvData.total_years_experience} years experience`);
+        }
 
-				if (cvData.previous_companies && cvData.previous_companies.length > 0) {
-					insights.push(
-						`Worked at: ${cvData.previous_companies.slice(0, 2).join(", ")}`,
-					);
-				}
+        if (cvData.previous_companies && cvData.previous_companies.length > 0) {
+          insights.push(
+            `Worked at: ${cvData.previous_companies.slice(0, 2).join(", ")}`,
+          );
+        }
 
-				if (cvData.technical_skills && cvData.technical_skills.length > 0) {
-					insights.push(
-						`Skills: ${cvData.technical_skills.slice(0, 3).join(", ")}`,
-					);
-				}
+        if (cvData.technical_skills && cvData.technical_skills.length > 0) {
+          insights.push(
+            `Skills: ${cvData.technical_skills.slice(0, 3).join(", ")}`,
+          );
+        }
 
-				if (cvData.unique_strengths && cvData.unique_strengths.length > 0) {
-					insights.push(...cvData.unique_strengths.slice(0, 2));
-				}
+        if (cvData.unique_strengths && cvData.unique_strengths.length > 0) {
+          insights.push(...cvData.unique_strengths.slice(0, 2));
+        }
 
-				return insights;
-			}
+        return insights;
+      }
 
-			return [];
-		} catch (error) {
-			console.error("Error fetching CV insights:", error);
-			return [];
-		}
-	}
+      return [];
+    } catch (error) {
+      console.error("Error fetching CV insights:", error);
+      return [];
+    }
+  }
 
-	// NEW: Fetch and analyze user feedback
-	private async getFeedbackSummary(userEmail: string): Promise<any> {
-		try {
-			const { createClient } = await import("@supabase/supabase-js");
-			const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-			const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-			if (!supabaseUrl || !supabaseKey) {
-				throw new Error("Missing Supabase configuration");
-			}
-			const supabase = createClient(supabaseUrl, supabaseKey);
+  // NEW: Fetch and analyze user feedback
+  private async getFeedbackSummary(userEmail: string): Promise<any> {
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error("Missing Supabase configuration");
+      }
+      const supabase = createClient(supabaseUrl, supabaseKey);
 
-			// Get last 20 feedback entries
-			const { data: feedback, error } = await supabase
-				.from("user_feedback")
-				.select("verdict, relevance_score, job_context")
-				.eq("user_email", userEmail)
-				.order("created_at", { ascending: false })
-				.limit(20);
+      // Get last 20 feedback entries
+      const { data: feedback, error } = await supabase
+        .from("user_feedback")
+        .select("verdict, relevance_score, job_context")
+        .eq("user_email", userEmail)
+        .order("created_at", { ascending: false })
+        .limit(20);
 
-			if (error || !feedback || feedback.length === 0) {
-				return null;
-			}
+      if (error || !feedback || feedback.length === 0) {
+        return null;
+      }
 
-			// Analyze patterns
-			const positive = feedback.filter((f) => f.relevance_score >= 4);
-			const negative = feedback.filter((f) => f.relevance_score <= 2);
+      // Analyze patterns
+      const positive = feedback.filter((f) => f.relevance_score >= 4);
+      const negative = feedback.filter((f) => f.relevance_score <= 2);
 
-			// Extract what they loved (top 3 things from 5-star jobs)
-			const loved: string[] = [];
-			positive.slice(0, 5).forEach((f) => {
-				const ctx = f.job_context;
-				if (ctx?.location) loved.push(`${ctx.location} location`);
-				if (ctx?.company) loved.push(`${ctx.company}-type companies`);
-			});
+      // Extract what they loved (top 3 things from 5-star jobs)
+      const loved: string[] = [];
+      positive.slice(0, 5).forEach((f) => {
+        const ctx = f.job_context;
+        if (ctx?.location) loved.push(`${ctx.location} location`);
+        if (ctx?.company) loved.push(`${ctx.company}-type companies`);
+      });
 
-			// Extract what they disliked (top 3 things from 1-2 star jobs)
-			const disliked: string[] = [];
-			negative.slice(0, 5).forEach((f) => {
-				const ctx = f.job_context;
-				if (ctx?.location) disliked.push(`${ctx.location} location`);
-				if (ctx?.title?.toLowerCase().includes("senior"))
-					disliked.push("Senior roles");
-			});
+      // Extract what they disliked (top 3 things from 1-2 star jobs)
+      const disliked: string[] = [];
+      negative.slice(0, 5).forEach((f) => {
+        const ctx = f.job_context;
+        if (ctx?.location) disliked.push(`${ctx.location} location`);
+        if (ctx?.title?.toLowerCase().includes("senior"))
+          disliked.push("Senior roles");
+      });
 
-			return {
-				total: feedback.length,
-				positive: positive.length,
-				negative: negative.length,
-				loved: [...new Set(loved)].slice(0, 3), // Dedupe, top 3
-				disliked: [...new Set(disliked)].slice(0, 3),
-			};
-		} catch (error) {
-			console.error("Error fetching feedback:", error);
-			return null;
-		}
-	}
+      return {
+        total: feedback.length,
+        positive: positive.length,
+        negative: negative.length,
+        loved: [...new Set(loved)].slice(0, 3), // Dedupe, top 3
+        disliked: [...new Set(disliked)].slice(0, 3),
+      };
+    } catch (error) {
+      console.error("Error fetching feedback:", error);
+      return null;
+    }
+  }
 
-	private buildJobsContext(jobs: EnrichedJob[]): string {
-		return jobs
-			.map((job, index) => {
-				const careerPaths =
-					job.categories
-						?.filter((c: string) => c !== "early-career")
-						.map((c: string) => this.formatCareerPath(c))
-						.join(" + ") || "General Business";
+  private buildJobsContext(jobs: EnrichedJob[]): string {
+    return jobs
+      .map((job, index) => {
+        const careerPaths =
+          job.categories
+            ?.filter((c: string) => c !== "early-career")
+            .map((c: string) => this.formatCareerPath(c))
+            .join(" + ") || "General Business";
 
-				const languages =
-					job.language_requirements && job.language_requirements.length > 0
-						? job.language_requirements.join(", ")
-						: "English (inferred)";
+        const languages =
+          job.language_requirements && job.language_requirements.length > 0
+            ? job.language_requirements.join(", ")
+            : "English (inferred)";
 
-				return `
+        return `
 JOB ${index + 1}: (1-based indexing for user-friendly numbering)
 �������������������������������������
  Title: ${job.title}
@@ -553,82 +553,82 @@ MATCH CRITERIA:
  Role appropriate for early-career?
 �������������������������������������
 `;
-			})
-			.join("\n");
-	}
+      })
+      .join("\n");
+  }
 
-	parseAndValidateMatches(response: string, jobs: Job[]): JobMatch[] {
-		try {
-			// Clean up response
-			const cleanedResponse = response
-				.replace(/```json\n?/g, "")
-				.replace(/```\n?/g, "")
-				.trim();
+  parseAndValidateMatches(response: string, jobs: Job[]): JobMatch[] {
+    try {
+      // Clean up response
+      const cleanedResponse = response
+        .replace(/```json\n?/g, "")
+        .replace(/```\n?/g, "")
+        .trim();
 
-			const matches = JSON.parse(cleanedResponse);
+      const matches = JSON.parse(cleanedResponse);
 
-			if (!Array.isArray(matches)) {
-				throw new Error("Response is not an array");
-			}
+      if (!Array.isArray(matches)) {
+        throw new Error("Response is not an array");
+      }
 
-			return matches
-				.filter(
-					(match) =>
-						typeof match.job_index === "number" &&
-						match.job_index >= 1 &&
-						match.job_index <= jobs.length &&
-						typeof match.match_score === "number" &&
-						match.match_score >= 1 &&
-						match.match_score <= 100,
-				)
-				.map((match) => ({
-					job_index: match.job_index,
-					job_hash: jobs[match.job_index - 1].job_hash, // Convert 1-based to 0-based for array access
-					match_score: match.match_score,
-					match_reason: match.match_reason || "AI match",
-					confidence_score: match.confidence_score || 0.8,
-				}));
-		} catch (error) {
-			console.error("Failed to parse AI response:", error);
-			throw new Error("Invalid AI response format");
-		}
-	}
+      return matches
+        .filter(
+          (match) =>
+            typeof match.job_index === "number" &&
+            match.job_index >= 1 &&
+            match.job_index <= jobs.length &&
+            typeof match.match_score === "number" &&
+            match.match_score >= 1 &&
+            match.match_score <= 100,
+        )
+        .map((match) => ({
+          job_index: match.job_index,
+          job_hash: jobs[match.job_index - 1].job_hash, // Convert 1-based to 0-based for array access
+          match_score: match.match_score,
+          match_reason: match.match_reason || "AI match",
+          confidence_score: match.confidence_score || 0.8,
+        }));
+    } catch (error) {
+      console.error("Failed to parse AI response:", error);
+      throw new Error("Invalid AI response format");
+    }
+  }
 
-	convertToRobustMatches(
-		aiMatches: any[],
-		_user: NormalizedUserProfile,
-		jobs: Job[],
-	): any[] {
-		return aiMatches
-			.filter((match) => match.job_index >= 1 && match.job_index <= jobs.length)
-			.map((match) => ({
-				job: jobs[match.job_index - 1], // Convert 1-based to 0-based for array access
-				match_score: match.match_score,
-				match_reason: match.match_reason,
-				confidence_score: match.confidence_score,
-			}))
-			.sort((a, b) => b.match_score - a.match_score);
-	}
+  convertToRobustMatches(
+    aiMatches: any[],
+    _user: NormalizedUserProfile,
+    jobs: Job[],
+  ): any[] {
+    return aiMatches
+      .filter((match) => match.job_index >= 1 && match.job_index <= jobs.length)
+      .map((match) => ({
+        job: jobs[match.job_index - 1], // Convert 1-based to 0-based for array access
+        match_score: match.match_score,
+        match_reason: match.match_reason,
+        confidence_score: match.confidence_score,
+      }))
+      .sort((a, b) => b.match_score - a.match_score);
+  }
 
-	async testConnection(): Promise<boolean> {
-		try {
-			await this.openai.chat.completions.create({
-				model: "gpt-4o-mini",
-				messages: [{ role: "user", content: "test" }],
-				max_tokens: 1,
-			});
-			return true;
-		} catch (_error) {
-			return false;
-		}
-	}
+  async testConnection(): Promise<boolean> {
+    try {
+      await this.openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: "test" }],
+        max_tokens: 1,
+      });
+      return true;
+    } catch (_error) {
+      return false;
+    }
+  }
 
-	getStats(): any {
-		return {
-			model: "gpt-4o-mini",
-			maxTokens: 4000,
-			temperature: 0.7,
-			timeout: 20000,
-		};
-	}
+  getStats(): any {
+    return {
+      model: "gpt-4o-mini",
+      maxTokens: 4000,
+      temperature: 0.7,
+      timeout: 20000,
+    };
+  }
 }

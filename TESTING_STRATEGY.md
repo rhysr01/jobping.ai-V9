@@ -3,16 +3,19 @@
 **Reference this document before writing, running, or modifying tests.**
 
 ## 🎯 Current Status (POST-MAJOR TESTING IMPROVEMENTS)
+
 - **Test Pass Rate:** 100% (620 passed / 643 total)
 - **Test Suites:** 57 passed, 1 skipped
 - **Coverage:** 18.87% statements | 11.78% branches | 21.27% functions | 18.27% lines
 - **Major Achievement:** Transformed from 18.27% to comprehensive business logic coverage
 
 ### 📊 Coverage Quality Transformation
+
 **BEFORE:** Low overall % with untested critical business logic
 **AFTER:** Strategic coverage of highest-business-value modules
 
 #### ✅ **New Comprehensive Coverage Added:**
+
 - **Business Rules:** 0% → 100% coverage (job filtering, status sorting)
 - **CV Processing:** 0% → 85%+ coverage (WOW insights, career analysis)
 - **Performance Utils:** 0% → 90%+ coverage (response optimization, caching)
@@ -20,6 +23,7 @@
 - **Property-Based Testing:** 0% → High coverage (algorithm edge cases)
 
 #### ⚠️ **Remaining Gaps (Strategic Priority):**
+
 - **API Routes:** 0% coverage (77+ endpoint files in app/api/)
 - **Scrapers:** 0% coverage (external data sources)
 - **Integration Logic:** Low coverage (cross-service interactions)
@@ -27,21 +31,25 @@
 ## ✅ **MAJOR IMPROVEMENTS ACHIEVED** (Previous Problems Now Solved)
 
 ### ✅ **1. Eliminated Brittle Unit Tests**
+
 - **SOLVED:** Replaced complex mocks with contract testing
 - **SOLVED:** Focus on business value over implementation details
 - **SOLVED:** Added comprehensive property-based testing for algorithms
 
 ### ✅ **2. Streamlined Integration Testing**
+
 - **SOLVED:** Real database operations with proper cleanup
 - **SOLVED:** Contract testing for API reliability
 - **SOLVED:** Fixed resource leaks (8 open handles resolved)
 
 ### ✅ **3. Optimized Test-to-Code Ratio**
+
 - **SOLVED:** 100% pass rate with clean, fast execution
 - **SOLVED:** Tests now catch real business logic bugs
 - **SOLVED:** Strategic coverage of highest-value modules
 
 ### ✅ **4. Corrected Focus Areas**
+
 - **SOLVED:** Business rules 100% tested, API contracts validated
 - **SOLVED:** User behavior and edge cases thoroughly covered
 - **SOLVED:** Clear prioritization: business logic > utilities > implementation
@@ -49,11 +57,13 @@
 ## 🎯 **Remaining Strategic Priorities**
 
 ### ⚠️ **High Priority (Next Sprint):**
+
 - **API Route Coverage:** 77+ endpoint files (0% → 30% target)
 - **Integration Testing:** Cross-service workflows
 - **Error Recovery:** System resilience under failure conditions
 
 ### 📋 **Medium Priority:**
+
 - **Scraper Testing:** External data source reliability
 - **Performance Regression:** Load testing safeguards
 - **Security Validation:** Input sanitization and auth testing
@@ -165,10 +175,10 @@ const mockSupabase = {
     select: () => ({
       eq: () => ({
         data: mockData,
-        error: null
-      })
-    })
-  })
+        error: null,
+      }),
+    }),
+  }),
 };
 ```
 
@@ -181,7 +191,7 @@ const mockSupabase = {
 ### ✅ Good Examples
 
 ```typescript
-import { fc } from 'fast-check';
+import { fc } from "fast-check";
 
 describe("Job Matching Algorithm", () => {
   it("should always return valid match scores", () => {
@@ -189,15 +199,17 @@ describe("Job Matching Algorithm", () => {
       fc.property(
         fc.record({
           job: jobArbitrary,
-          user: userPreferencesArbitrary
+          user: userPreferencesArbitrary,
         }),
         ({ job, user }) => {
           const result = calculateMatchScore(job, user);
-          return result.score >= 0 &&
-                 result.score <= 100 &&
-                 typeof result.reason === 'string';
-        }
-      )
+          return (
+            result.score >= 0 &&
+            result.score <= 100 &&
+            typeof result.reason === "string"
+          );
+        },
+      ),
     );
   });
 
@@ -206,14 +218,14 @@ describe("Job Matching Algorithm", () => {
       fc.property(
         fc.record({
           job: malformedJobArbitrary,
-          user: malformedUserArbitrary
+          user: malformedUserArbitrary,
         }),
         ({ job, user }) => {
           const result = calculateMatchScore(job, user);
           // Should not throw, should return sensible defaults
           return !isNaN(result.score);
-        }
-      )
+        },
+      ),
     );
   });
 });
@@ -231,23 +243,26 @@ describe("Job Matching Algorithm", () => {
 describe("Job Application Critical Path", () => {
   it("should allow user to signup, get matches, and apply", async () => {
     // Use Playwright or similar
-    await page.goto('/signup');
-    await page.fill('[data-testid="email"]', 'test@example.com');
+    await page.goto("/signup");
+    await page.fill('[data-testid="email"]', "test@example.com");
     await page.fill('[data-testid="preferences"]', validPreferences);
     await page.click('[data-testid="signup-button"]');
 
     // Should redirect to matches
-    await page.waitForURL('/matches');
-    expect(await page.locator('[data-testid="job-card"]').count()).toBeGreaterThan(0);
+    await page.waitForURL("/matches");
+    expect(
+      await page.locator('[data-testid="job-card"]').count(),
+    ).toBeGreaterThan(0);
 
     // Apply to first job
     await page.click('[data-testid="apply-button"]:first-child');
-    await page.waitForURL('/application-success');
+    await page.waitForURL("/application-success");
   });
 });
 ```
 
 **Critical Paths to Test:**
+
 1. User signup → preferences → first matches
 2. Job matching → application → confirmation
 3. Payment flow (if applicable)
@@ -259,6 +274,7 @@ describe("Job Application Critical Path", () => {
 ## 🗑️ Test Deletion Criteria
 
 ### Delete Immediately:
+
 - Tests that only verify implementation details
 - Tests with complex mocking chains (>5 mocks)
 - Tests that break on every refactor
@@ -267,12 +283,14 @@ describe("Job Application Critical Path", () => {
 - Duplicate tests
 
 ### Keep But Improve:
+
 - Tests that verify important business rules
 - Tests that prevent regression bugs
 - Tests that are fast and reliable
 - Tests that cover edge cases
 
 ### Questions to Ask:
+
 1. **Does this test verify business value or implementation details?**
 2. **Would a user care if this test fails?**
 3. **Does this test catch bugs that would affect users?**
@@ -282,18 +300,21 @@ describe("Job Application Critical Path", () => {
 ## 🛠️ Test Maintenance Checklist
 
 ### Before Writing Tests:
+
 - [ ] Read this guide
 - [ ] Identify which testing level (Unit/Integration/E2E)
 - [ ] Ensure test adds business value
 - [ ] Check if similar test already exists
 
 ### During Test Runs:
+
 - [ ] Run `npm test` to check current status
 - [ ] Delete failing tests that don't provide value
 - [ ] Skip complex tests temporarily if blocking progress
 - [ ] Update README coverage stats
 
 ### After Code Changes:
+
 - [ ] Run affected tests
 - [ ] Delete tests that no longer provide value
 - [ ] Update mocks only if absolutely necessary
@@ -302,11 +323,13 @@ describe("Job Application Critical Path", () => {
 ## 📊 Quality Metrics to Track
 
 ### Primary Metrics:
+
 - **Mutation Test Score:** >80% (tests catch actual bugs)
 - **Test Execution Time:** <5 minutes for full suite
 - **Test Maintenance Time:** <20% of development time
 
 ### Secondary Metrics:
+
 - **Lines of Test Code per Production Code:** <1:1 ratio
 - **Test Reliability:** >95% pass rate consistently
 - **Business Logic Coverage:** >90% of critical paths
@@ -314,18 +337,21 @@ describe("Job Application Critical Path", () => {
 ## 🔧 Tools & Setup
 
 ### Recommended Tools:
+
 - **fast-check** for property-based testing
 - **testcontainers** for integration test databases
 - **Playwright** for E2E tests
 - **Jest** with minimal mocking
 
 ### Test Database Setup:
+
 ```bash
 # Use testcontainers or local test DB
 # Avoid complex Supabase mocks
 ```
 
 ### CI/CD Integration:
+
 ```yaml
 # Run tests in order: unit → integration → e2e
 # Fail fast on critical path failures
@@ -335,6 +361,7 @@ describe("Job Application Critical Path", () => {
 ## 📝 Examples in This Codebase
 
 ### ✅ **NEW: Excellent Test Examples (Our Improvements):**
+
 - `__tests__/api/matches-free.test.ts` - Comprehensive API contract testing
 - `__tests__/api/signup.test.ts` - Premium user creation validation
 - `__tests__/Utils/business-rules/job-filtering.test.ts` - 100% business logic coverage
@@ -343,11 +370,13 @@ describe("Job Application Critical Path", () => {
 - `__tests__/Utils/matching/property-based-matching.test.ts` - Algorithm edge case detection
 
 ### ✅ **Good Tests to Keep:**
+
 - `Utils/matching/validators.test.ts` - Tests business logic
 - `api/tracking-implicit.test.ts` - Simple contract test
 - `Utils/embedding-extended.test.ts` - Focused on core functionality
 
 ### 🗑️ **Tests Successfully Improved/Deleted:**
+
 - `api/stats.test.ts` - **UPDATED** with real database operations
 - `integration/api/match-users.test.ts` - **REPLACED** with contract testing
 - `Utils/databasePool-comprehensive.test.ts` - **SUPERSEDED** by focused business logic tests
@@ -355,6 +384,7 @@ describe("Job Application Critical Path", () => {
 ## 🎯 **COMPLETED ACHIEVEMENTS** ✅
 
 ### ✅ **Phase 1: Foundation Transformation (COMPLETED)**
+
 1. **Audit existing tests** - ✅ Replaced 30+ low-value tests with high-value ones
 2. **Set up real database testing** - ✅ Contract testing with actual DB operations
 3. **Add property-based tests** - ✅ Comprehensive algorithm edge case testing
@@ -364,6 +394,7 @@ describe("Job Application Critical Path", () => {
 ### 🚀 **Phase 2: API Coverage Expansion (NEXT PRIORITY)**
 
 #### **Immediate Next Steps:**
+
 1. **API Route Contract Testing** - Target 30% coverage for user-facing endpoints
    - `/api/matches/free` ✅ (70%+ coverage)
    - `/api/signup` ✅ (70%+ coverage)
@@ -382,11 +413,13 @@ describe("Job Application Critical Path", () => {
    - Multi-tenant user journeys
 
 #### **Quality Assurance Goals:**
+
 - **Mutation Testing:** >80% score for business logic
 - **Performance Regression:** Automated load testing
 - **Security Testing:** Input validation and auth bypass prevention
 
 ### 📊 **Success Metrics Achieved:**
+
 - **Business Logic Coverage:** 100% for job filtering, 85%+ for CV processing
 - **API Contract Coverage:** 70%+ for critical user endpoints
 - **Test Reliability:** 100% pass rate, clean execution
@@ -398,6 +431,7 @@ describe("Job Application Critical Path", () => {
 ## 🎉 **TRANSFORMATION SUMMARY**
 
 ### **Before Our Improvements:**
+
 - ❌ 18.27% coverage with untested critical business logic
 - ❌ Complex mocks causing maintenance burden
 - ❌ Resource leaks and hanging tests
@@ -405,6 +439,7 @@ describe("Job Application Critical Path", () => {
 - ❌ Low confidence in code changes
 
 ### **After Our Improvements:**
+
 - ✅ **Strategic Coverage:** Business-critical modules fully tested
 - ✅ **Clean Architecture:** Contract testing over implementation testing
 - ✅ **Resource Management:** Zero leaks, fast reliable execution
@@ -412,6 +447,7 @@ describe("Job Application Critical Path", () => {
 - ✅ **High Confidence:** Changes validated against real behavior
 
 ### **Key Philosophy:**
+
 **Tests should give confidence that the system works for users, not that the code is implemented a certain way. Focus on observable behavior, business value, and edge cases that matter.**
 
 **Our testing transformation has shifted from "code coverage" to "business confidence" - ensuring the system reliably serves users while being maintainable for developers.** 🚀
@@ -423,32 +459,40 @@ describe("Job Application Critical Path", () => {
 ### 🎯 **Optimal Testing Pyramid**
 
 #### 1. **Contract Tests** (Primary Focus - 70% of tests)
+
 **What:** API endpoint contract validation - what the system does, not how
 **Why:** Catches integration bugs, validates business logic, ensures reliability
 **Examples in codebase:**
+
 - ✅ `/api/user-matches` - User experience validation
 - ✅ `/api/dashboard` - System monitoring contracts
 - ✅ `/api/signup/free` - User acquisition flows
 - ✅ `/api/apply/[jobHash]` - Conversion funnel validation
 
 #### 2. **Property-Based Tests** (Strategic - 20% of tests)
+
 **What:** Algorithm validation using generated edge cases
 **Why:** Finds bugs traditional unit tests miss
 **Examples:**
+
 - ✅ `rule-based-matcher` career path matching
 - ✅ Business rule calculations
 
 #### 3. **Unit Tests** (Minimal - 5% of tests)
+
 **What:** Pure function testing, utility validation
 **Why:** Fast feedback, but limited business value
 **Examples:**
+
 - ✅ Utility functions (email senders, data transformers)
 - ✅ Business rule calculations
 
 #### 4. **Integration Tests** (Minimal - 5% of tests)
+
 **What:** End-to-end user journeys
 **Why:** Expensive, slow, brittle - use sparingly
 **Examples:**
+
 - ⚠️ Only for critical revenue/business flows
 - ❌ Avoid for routine CRUD operations
 
@@ -457,6 +501,7 @@ describe("Job Application Critical Path", () => {
 ### **Criteria for Deletion:**
 
 #### 1. **No Business Value**
+
 ```typescript
 // ❌ DELETE - Tests implementation details
 it("should call database with correct SQL", () => {
@@ -472,6 +517,7 @@ it("should return user matches for valid request", async () => {
 ```
 
 #### 2. **Testing Implementation, Not Behavior**
+
 ```typescript
 // ❌ DELETE - Tests how, not what
 it("should use regex for career path matching", () => {
@@ -486,15 +532,18 @@ it("should match tech careers for 'developer' input", () => {
 ```
 
 #### 3. **Slow/Flaky Tests**
+
 - Tests that take >500ms consistently
 - Tests that fail randomly due to timing/async issues
 - Tests that require complex setup/mocking
 
 #### 4. **Duplicate Coverage**
+
 - Multiple tests covering the same business behavior
 - Tests that don't add new confidence
 
 #### 5. **Maintenance Burden > Value**
+
 - Tests requiring frequent updates for non-functional changes
 - Tests with complex, brittle mocking
 
@@ -503,6 +552,7 @@ it("should match tech careers for 'developer' input", () => {
 ### **Must-Fix Criteria:**
 
 #### 1. **Business-Critical Paths**
+
 ```typescript
 // ✅ FIX - User acquisition broken
 it("should create free user account", async () => {
@@ -512,6 +562,7 @@ it("should create free user account", async () => {
 ```
 
 #### 2. **Revenue-Generating Flows**
+
 ```typescript
 // ✅ FIX - Payment processing broken
 it("should create Stripe checkout session", async () => {
@@ -521,6 +572,7 @@ it("should create Stripe checkout session", async () => {
 ```
 
 #### 3. **Core User Experience**
+
 ```typescript
 // ✅ FIX - Job matching broken
 it("should return relevant job matches", async () => {
@@ -530,6 +582,7 @@ it("should return relevant job matches", async () => {
 ```
 
 #### 4. **Fast-Failing Validation**
+
 ```typescript
 // ✅ FIX - Input validation broken
 it("should reject invalid email", async () => {
@@ -543,6 +596,7 @@ it("should reject invalid email", async () => {
 ### **Red Flags (Delete/Fix):**
 
 #### 1. **Heavy Mocking**
+
 ```typescript
 // ❌ RED FLAG - Too many mocks = testing mocks, not code
 jest.mock("database");
@@ -553,6 +607,7 @@ jest.mock("api-client");
 ```
 
 #### 2. **Testing Private Methods**
+
 ```typescript
 // ❌ RED FLAG - Implementation testing
 it("should call private _validateInput method", () => {
@@ -561,6 +616,7 @@ it("should call private _validateInput method", () => {
 ```
 
 #### 3. **Async Timing Tests**
+
 ```typescript
 // ❌ RED FLAG - Brittle timing tests
 await wait(1000); // Arbitrary delays
@@ -568,6 +624,7 @@ expect(mockCallback).toHaveBeenCalled();
 ```
 
 #### 4. **Overly Specific Assertions**
+
 ```typescript
 // ❌ RED FLAG - Tests implementation details
 expect(result.exactPropertyName).toBe("exactValue");
@@ -577,6 +634,7 @@ expect(mock.method).toHaveBeenCalledWith(exactParams);
 ### **Green Flags (Keep/Expand):**
 
 #### 1. **Business Outcome Testing**
+
 ```typescript
 // ✅ GREEN FLAG - Tests what users care about
 it("should allow job seekers to find relevant opportunities", async () => {
@@ -587,6 +645,7 @@ it("should allow job seekers to find relevant opportunities", async () => {
 ```
 
 #### 2. **Real Integration Points**
+
 ```typescript
 // ✅ GREEN FLAG - Tests actual system integration
 it("should persist user data to database", async () => {
@@ -597,6 +656,7 @@ it("should persist user data to database", async () => {
 ```
 
 #### 3. **Error Scenario Coverage**
+
 ```typescript
 // ✅ GREEN FLAG - Tests failure modes
 it("should handle network failures gracefully", async () => {
@@ -609,12 +669,14 @@ it("should handle network failures gracefully", async () => {
 ## 📊 **Test Metrics to Track**
 
 ### **Primary Metrics:**
+
 - **Test Execution Time:** < 30 seconds for full suite
 - **Test Pass Rate:** > 95% consistently
 - **Business Logic Coverage:** > 80% of critical paths
 - **Test Maintenance Time:** < 15% of development time
 
 ### **Secondary Metrics:**
+
 - **Lines of Test Code per Production Code:** < 1:1 ratio
 - **Test to Code Churn Ratio:** Tests should change less frequently than prod code
 - **False Positive Rate:** < 5% (tests failing due to test issues, not code issues)
@@ -622,6 +684,7 @@ it("should handle network failures gracefully", async () => {
 ## 🛠️ **Practical Commands**
 
 ### **Running Tests:**
+
 ```bash
 # Full suite (fast feedback)
 npm test
@@ -637,6 +700,7 @@ npm test -- --testNamePattern="should return 400" --verbose
 ```
 
 ### **Test Maintenance:**
+
 ```bash
 # Find slow tests
 npm test -- --verbose | grep -E "[0-9]+\.[0-9]+ s" | sort -nr
@@ -675,12 +739,14 @@ grep -r "_\." __tests__/ | grep -v "constructor"
 ## 🔄 **Continuous Improvement**
 
 ### **Monthly Review:**
+
 1. Run test metrics analysis
 2. Identify slow/flaky tests for deletion
 3. Review new tests against this guide
 4. Update testing strategy based on lessons learned
 
 ### **When Adding Tests:**
+
 1. Reference this guide first
 2. Prefer contract tests over unit tests
 3. Test business outcomes, not implementation

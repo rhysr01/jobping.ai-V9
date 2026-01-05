@@ -11,24 +11,26 @@ type BasicJob = {
 type UserPreferencesLike = {
   rolePreference?: string | null;
   locationPreference?: string | null;
-  salaryPreference?: string | null; // e.g. "‚¬45-65k" or "‚¬50k+"
+  salaryPreference?: string | null; // e.g. "ï¿½ï¿½45-65k" or "ï¿½ï¿½50k+"
 };
 
 function getDayContext(date: Date = new Date()): string {
-  return date.toLocaleDateString('en-GB', { weekday: 'long' });
+  return date.toLocaleDateString("en-GB", { weekday: "long" });
 }
 
 function uniqueNonEmpty(values: Array<string | undefined | null>): string[] {
-  return Array.from(new Set(values.filter((v): v is string => !!v && v.trim().length > 0)));
+  return Array.from(
+    new Set(values.filter((v): v is string => !!v && v.trim().length > 0)),
+  );
 }
 
 function selectTopCompanies(jobs: BasicJob[], max = 3): string[] {
-  const companies = uniqueNonEmpty(jobs.map(j => j.company));
+  const companies = uniqueNonEmpty(jobs.map((j) => j.company));
   return companies.slice(0, max);
 }
 
 function formatCompanyList(companies: string[]): string {
-  if (companies.length === 0) return '';
+  if (companies.length === 0) return "";
   if (companies.length === 1) return companies[0];
   if (companies.length === 2) return `${companies[0]} & ${companies[1]}`;
   return `${companies[0]}, ${companies[1]} & ${companies[2]}`;
@@ -38,7 +40,7 @@ function coerceRole(preferences?: UserPreferencesLike): string | undefined {
   const role = preferences?.rolePreference || undefined;
   if (!role) return undefined;
   // Title case minimal
-  return role.replace(/\b\w/g, c => c.toUpperCase());
+  return role.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export function buildPersonalizedSubject(options: {
@@ -54,10 +56,14 @@ export function buildPersonalizedSubject(options: {
   const day = getDayContext(now);
 
   // Derive top job for score-based variant
-  const topJob = [...jobs].sort((a, b) => (b.match_score || 0) - (a.match_score || 0))[0];
+  const topJob = [...jobs].sort(
+    (a, b) => (b.match_score || 0) - (a.match_score || 0),
+  )[0];
   const topCompany = topJob?.company;
   const topTitle = topJob?.title;
-  const topScore = topJob?.match_score ? Math.round(topJob.match_score) : undefined;
+  const topScore = topJob?.match_score
+    ? Math.round(topJob.match_score)
+    : undefined;
 
   const companies = selectTopCompanies(jobs, 3);
   const companiesText = formatCompanyList(companies);
@@ -68,14 +74,23 @@ export function buildPersonalizedSubject(options: {
   }
 
   // Variant B: "Amsterdam Frontend: React role at Stripe (94% match) + 2 more"
-  if (role && location && topCompany && topTitle && topScore !== undefined && total >= 1) {
-    const more = total > 1 ? ` + ${total - 1} more` : '';
+  if (
+    role &&
+    location &&
+    topCompany &&
+    topTitle &&
+    topScore !== undefined &&
+    total >= 1
+  ) {
+    const more = total > 1 ? ` + ${total - 1} more` : "";
     return `${location} ${role}: ${topTitle} at ${topCompany} (${topScore}% match)${more}`;
   }
 
   // Variant C: "Your Tuesday Frontend matches: 3 Amsterdam opportunities"
   if (role && location && total > 0) {
-    const cityWord = /^(a|e|i|o|u)/i.test(location) ? 'opportunities in' : 'opportunities';
+    const cityWord = /^(a|e|i|o|u)/i.test(location)
+      ? "opportunities in"
+      : "opportunities";
     return `Your ${day} ${role} matches: ${total} ${location} ${cityWord}`;
   }
 
@@ -90,9 +105,9 @@ export function buildPersonalizedSubject(options: {
   }
 
   // Fallback generic
-  return total > 1 ? `${total} Fresh Job Matches - JobPing` : `New Job Match - JobPing`;
+  return total > 1
+    ? `${total} Fresh Job Matches - JobPing`
+    : `New Job Match - JobPing`;
 }
 
 export type { UserPreferencesLike, BasicJob };
-
-

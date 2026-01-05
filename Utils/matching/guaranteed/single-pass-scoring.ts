@@ -12,140 +12,140 @@ import type { UserPreferences } from "../types";
 import { calculateVisaConfidence } from "../visa-confidence";
 
 export interface RelaxationPenalties {
-	locationMismatch: number; // -10% if city wrong but country right
-	roleProximity: number; // -15% if related role (Frontend vs React)
-	careerPathAdjacent: number; // -20% if adjacent career path
-	visaHighPotential: number; // -5% if high-potential sponsor (not explicit)
-	workEnvMismatch: number; // -8% if remote/hybrid mismatch
-	historical: number; // -30% if job > 7 days old
-	countryWide: number; // -12% if country-level match
+  locationMismatch: number; // -10% if city wrong but country right
+  roleProximity: number; // -15% if related role (Frontend vs React)
+  careerPathAdjacent: number; // -20% if adjacent career path
+  visaHighPotential: number; // -5% if high-potential sponsor (not explicit)
+  workEnvMismatch: number; // -8% if remote/hybrid mismatch
+  historical: number; // -30% if job > 7 days old
+  countryWide: number; // -12% if country-level match
 }
 
 export interface GuaranteedMatchScore {
-	finalScore: number;
-	penalties: RelaxationPenalties;
-	relaxationLevel: number; // 0 = exact, 7 = custom scan
-	relaxationReason: string;
-	baseScore: number;
+  finalScore: number;
+  penalties: RelaxationPenalties;
+  relaxationLevel: number; // 0 = exact, 7 = custom scan
+  relaxationReason: string;
+  baseScore: number;
 }
 
 /**
  * Check location match level
  */
 function checkLocationMatch(
-	job: Job,
-	targetCities: string[],
+  job: Job,
+  targetCities: string[],
 ): {
-	level: "exact" | "country" | "country_wide" | "remote" | "none";
-	country?: string;
+  level: "exact" | "country" | "country_wide" | "remote" | "none";
+  country?: string;
 } {
-	if (targetCities.length === 0) {
-		return { level: "none" };
-	}
+  if (targetCities.length === 0) {
+    return { level: "none" };
+  }
 
-	const jobLocation = (job.location || "").toLowerCase();
-	const jobCity = (job as any).city?.toLowerCase() || "";
-	const jobCountry = (job as any).country?.toLowerCase() || "";
+  const jobLocation = (job.location || "").toLowerCase();
+  const jobCity = (job as any).city?.toLowerCase() || "";
+  const jobCountry = (job as any).country?.toLowerCase() || "";
 
-	// Check for remote/hybrid
-	if (
-		jobLocation.includes("remote") ||
-		jobLocation.includes("work from home") ||
-		jobLocation.includes("hybrid")
-	) {
-		return { level: "remote" };
-	}
+  // Check for remote/hybrid
+  if (
+    jobLocation.includes("remote") ||
+    jobLocation.includes("work from home") ||
+    jobLocation.includes("hybrid")
+  ) {
+    return { level: "remote" };
+  }
 
-	// Check exact city match
-	for (const city of targetCities) {
-		const cityLower = city.toLowerCase();
-		if (
-			jobLocation.includes(cityLower) ||
-			jobCity.includes(cityLower) ||
-			cityLower === jobCity
-		) {
-			return { level: "exact" };
-		}
-	}
+  // Check exact city match
+  for (const city of targetCities) {
+    const cityLower = city.toLowerCase();
+    if (
+      jobLocation.includes(cityLower) ||
+      jobCity.includes(cityLower) ||
+      cityLower === jobCity
+    ) {
+      return { level: "exact" };
+    }
+  }
 
-	// Check country match
-	const targetCountries = new Set<string>();
-	for (const city of targetCities) {
-		const cityLower = city.toLowerCase();
-		const countries = CITY_COUNTRY_MAP[cityLower] || [];
-		countries.forEach((c) => targetCountries.add(c.toLowerCase()));
-	}
+  // Check country match
+  const targetCountries = new Set<string>();
+  for (const city of targetCities) {
+    const cityLower = city.toLowerCase();
+    const countries = CITY_COUNTRY_MAP[cityLower] || [];
+    countries.forEach((c) => targetCountries.add(c.toLowerCase()));
+  }
 
-	if (jobCountry && targetCountries.has(jobCountry)) {
-		return { level: "country", country: jobCountry };
-	}
+  if (jobCountry && targetCountries.has(jobCountry)) {
+    return { level: "country", country: jobCountry };
+  }
 
-	// Check if any target city's country matches
-	for (const city of targetCities) {
-		const cityLower = city.toLowerCase();
-		const countries = CITY_COUNTRY_MAP[cityLower] || [];
-		for (const country of countries) {
-			if (jobLocation.includes(country.toLowerCase())) {
-				return { level: "country_wide", country: country };
-			}
-		}
-	}
+  // Check if any target city's country matches
+  for (const city of targetCities) {
+    const cityLower = city.toLowerCase();
+    const countries = CITY_COUNTRY_MAP[cityLower] || [];
+    for (const country of countries) {
+      if (jobLocation.includes(country.toLowerCase())) {
+        return { level: "country_wide", country: country };
+      }
+    }
+  }
 
-	return { level: "none" };
+  return { level: "none" };
 }
 
 /**
  * Check role match (exact vs related)
  */
 function checkRoleMatch(
-	job: Job,
-	userRoles: string[],
+  job: Job,
+  userRoles: string[],
 ): {
-	isExact: boolean;
-	isRelated: boolean;
-	relatedReason?: string;
+  isExact: boolean;
+  isRelated: boolean;
+  relatedReason?: string;
 } {
-	if (!userRoles || userRoles.length === 0) {
-		return { isExact: false, isRelated: false };
-	}
+  if (!userRoles || userRoles.length === 0) {
+    return { isExact: false, isRelated: false };
+  }
 
-	const jobTitle = (job.title || "").toLowerCase();
-	const jobDesc = (job.description || "").toLowerCase();
-	const jobText = `${jobTitle} ${jobDesc}`;
+  const jobTitle = (job.title || "").toLowerCase();
+  const jobDesc = (job.description || "").toLowerCase();
+  const jobText = `${jobTitle} ${jobDesc}`;
 
-	// Check exact match
-	for (const role of userRoles) {
-		const roleLower = role.toLowerCase();
-		if (jobTitle.includes(roleLower) || jobDesc.includes(roleLower)) {
-			return { isExact: true, isRelated: false };
-		}
-	}
+  // Check exact match
+  for (const role of userRoles) {
+    const roleLower = role.toLowerCase();
+    if (jobTitle.includes(roleLower) || jobDesc.includes(roleLower)) {
+      return { isExact: true, isRelated: false };
+    }
+  }
 
-	// Check related roles (simplified - can be enhanced with semantic matching)
-	const relatedRoleMap: Record<string, string[]> = {
-		frontend: ["react", "vue", "angular", "javascript", "typescript", "ui"],
-		backend: ["api", "server", "database", "node", "python", "java"],
-		"full stack": ["fullstack", "full-stack", "react", "node", "api"],
-		data: ["analyst", "scientist", "engineer", "sql", "python"],
-		product: ["manager", "owner", "designer", "ux"],
-		"software engineer": ["developer", "programmer", "coder", "engineer"],
-	};
+  // Check related roles (simplified - can be enhanced with semantic matching)
+  const relatedRoleMap: Record<string, string[]> = {
+    frontend: ["react", "vue", "angular", "javascript", "typescript", "ui"],
+    backend: ["api", "server", "database", "node", "python", "java"],
+    "full stack": ["fullstack", "full-stack", "react", "node", "api"],
+    data: ["analyst", "scientist", "engineer", "sql", "python"],
+    product: ["manager", "owner", "designer", "ux"],
+    "software engineer": ["developer", "programmer", "coder", "engineer"],
+  };
 
-	for (const role of userRoles) {
-		const roleLower = role.toLowerCase();
-		const relatedTerms = relatedRoleMap[roleLower] || [];
-		for (const term of relatedTerms) {
-			if (jobText.includes(term)) {
-				return {
-					isExact: false,
-					isRelated: true,
-					relatedReason: `Related role: ${term} (user wanted ${role})`,
-				};
-			}
-		}
-	}
+  for (const role of userRoles) {
+    const roleLower = role.toLowerCase();
+    const relatedTerms = relatedRoleMap[roleLower] || [];
+    for (const term of relatedTerms) {
+      if (jobText.includes(term)) {
+        return {
+          isExact: false,
+          isRelated: true,
+          relatedReason: `Related role: ${term} (user wanted ${role})`,
+        };
+      }
+    }
+  }
 
-	return { isExact: false, isRelated: false };
+  return { isExact: false, isRelated: false };
 }
 
 /**
@@ -153,313 +153,313 @@ function checkRoleMatch(
  * Uses database categories for proper matching (not just title/description keywords)
  */
 function checkCareerPathMatch(
-	job: Job,
-	userCareerPaths: string[],
-	_userPrefs?: UserPreferences,
+  job: Job,
+  userCareerPaths: string[],
+  _userPrefs?: UserPreferences,
 ): {
-	isExact: boolean;
-	isAdjacent: boolean;
-	adjacentReason?: string;
+  isExact: boolean;
+  isAdjacent: boolean;
+  adjacentReason?: string;
 } {
-	if (!userCareerPaths || userCareerPaths.length === 0) {
-		return { isExact: false, isAdjacent: false };
-	}
+  if (!userCareerPaths || userCareerPaths.length === 0) {
+    return { isExact: false, isAdjacent: false };
+  }
 
-	const categories = (job.categories || []).map((c) => c.toLowerCase());
+  const categories = (job.categories || []).map((c) => c.toLowerCase());
 
-	// CRITICAL: Use database category mapping for proper matching
-	// Category mapper imported at top of file
-	const userDatabaseCategories = new Set<string>();
-	userCareerPaths.forEach((path) => {
-		getDatabaseCategoriesForForm(path).forEach((cat: string) => {
-			userDatabaseCategories.add(cat.toLowerCase());
-		});
-	});
+  // CRITICAL: Use database category mapping for proper matching
+  // Category mapper imported at top of file
+  const userDatabaseCategories = new Set<string>();
+  userCareerPaths.forEach((path) => {
+    getDatabaseCategoriesForForm(path).forEach((cat: string) => {
+      userDatabaseCategories.add(cat.toLowerCase());
+    });
+  });
 
-	// Check exact match using database categories (most reliable)
-	const hasExactCategoryMatch = categories.some((cat) =>
-		userDatabaseCategories.has(cat),
-	);
+  // Check exact match using database categories (most reliable)
+  const hasExactCategoryMatch = categories.some((cat) =>
+    userDatabaseCategories.has(cat),
+  );
 
-	if (hasExactCategoryMatch) {
-		return { isExact: true, isAdjacent: false };
-	}
+  if (hasExactCategoryMatch) {
+    return { isExact: true, isAdjacent: false };
+  }
 
-	// No keyword fallback - strict category matching only for all users
-	// This prevents false positives (e.g., "strategy" matching "strategic marketing")
-	// Quality is consistent across all users
+  // No keyword fallback - strict category matching only for all users
+  // This prevents false positives (e.g., "strategy" matching "strategic marketing")
+  // Quality is consistent across all users
 
-	// No adjacent career paths - strict matching only
-	// All users get exact category matches only
-	return { isExact: false, isAdjacent: false };
+  // No adjacent career paths - strict matching only
+  // All users get exact category matches only
+  return { isExact: false, isAdjacent: false };
 }
 
 /**
  * Check work environment match
  */
 function checkWorkEnvironmentMatch(
-	job: Job,
-	userWorkEnv?: string,
+  job: Job,
+  userWorkEnv?: string,
 ): {
-	isMatch: boolean;
-	isMismatch: boolean;
+  isMatch: boolean;
+  isMismatch: boolean;
 } {
-	if (!userWorkEnv || userWorkEnv === "unclear") {
-		return { isMatch: true, isMismatch: false };
-	}
+  if (!userWorkEnv || userWorkEnv === "unclear") {
+    return { isMatch: true, isMismatch: false };
+  }
 
-	const jobLocation = (job.location || "").toLowerCase();
-	const isRemote =
-		jobLocation.includes("remote") || jobLocation.includes("work from home");
-	const isHybrid = jobLocation.includes("hybrid");
-	const isOnSite = !isRemote && !isHybrid;
+  const jobLocation = (job.location || "").toLowerCase();
+  const isRemote =
+    jobLocation.includes("remote") || jobLocation.includes("work from home");
+  const isHybrid = jobLocation.includes("hybrid");
+  const isOnSite = !isRemote && !isHybrid;
 
-	if (userWorkEnv === "remote" && isRemote) {
-		return { isMatch: true, isMismatch: false };
-	}
-	if (userWorkEnv === "hybrid" && (isHybrid || isRemote)) {
-		return { isMatch: true, isMismatch: false };
-	}
-	if (userWorkEnv === "on-site" && isOnSite) {
-		return { isMatch: true, isMismatch: false };
-	}
+  if (userWorkEnv === "remote" && isRemote) {
+    return { isMatch: true, isMismatch: false };
+  }
+  if (userWorkEnv === "hybrid" && (isHybrid || isRemote)) {
+    return { isMatch: true, isMismatch: false };
+  }
+  if (userWorkEnv === "on-site" && isOnSite) {
+    return { isMatch: true, isMismatch: false };
+  }
 
-	// Mismatch (e.g., user wants remote but job is on-site)
-	return { isMatch: false, isMismatch: true };
+  // Mismatch (e.g., user wants remote but job is on-site)
+  return { isMatch: false, isMismatch: true };
 }
 
 /**
  * Calculate job age in days
  */
 function calculateJobAge(job: Job): number {
-	const postedAt = (job as any).posted_at || job.created_at;
-	if (!postedAt) {
-		return 0; // Assume fresh if no date
-	}
+  const postedAt = (job as any).posted_at || job.created_at;
+  if (!postedAt) {
+    return 0; // Assume fresh if no date
+  }
 
-	const postedDate = new Date(postedAt);
-	const now = new Date();
-	const diffMs = now.getTime() - postedDate.getTime();
-	return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const postedDate = new Date(postedAt);
+  const now = new Date();
+  const diffMs = now.getTime() - postedDate.getTime();
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
 
 /**
  * Check if company is known sponsor
  */
 function isKnownSponsor(company?: string | null): boolean {
-	if (!company) return false;
+  if (!company) return false;
 
-	const companyLower = company.toLowerCase();
-	const knownSponsors = [
-		"google",
-		"microsoft",
-		"amazon",
-		"meta",
-		"apple",
-		"netflix",
-		"spotify",
-		"stripe",
-		"salesforce",
-		"oracle",
-		"ibm",
-		"accenture",
-		"deloitte",
-		"pwc",
-		"ey",
-		"kpmg",
-		"mckinsey",
-		"boston consulting",
-		"bain",
-		"goldman sachs",
-		"morgan stanley",
-		"jpmorgan",
-		"barclays",
-		"hsbc",
-		"deutsche bank",
-		"uber",
-		"airbnb",
-		"tesla",
-		"shopify",
-		"notion",
-		"vercel",
-	];
+  const companyLower = company.toLowerCase();
+  const knownSponsors = [
+    "google",
+    "microsoft",
+    "amazon",
+    "meta",
+    "apple",
+    "netflix",
+    "spotify",
+    "stripe",
+    "salesforce",
+    "oracle",
+    "ibm",
+    "accenture",
+    "deloitte",
+    "pwc",
+    "ey",
+    "kpmg",
+    "mckinsey",
+    "boston consulting",
+    "bain",
+    "goldman sachs",
+    "morgan stanley",
+    "jpmorgan",
+    "barclays",
+    "hsbc",
+    "deutsche bank",
+    "uber",
+    "airbnb",
+    "tesla",
+    "shopify",
+    "notion",
+    "vercel",
+  ];
 
-	return knownSponsors.some((sponsor) => companyLower.includes(sponsor));
+  return knownSponsors.some((sponsor) => companyLower.includes(sponsor));
 }
 
 /**
  * SINGLE-PASS: Calculate all relaxation penalties in one scoring function
  */
 export function calculateGuaranteedMatchScore(
-	job: Job,
-	userPrefs: UserPreferences,
-	baseScore: number, // From existing calculateMatchScore
+  job: Job,
+  userPrefs: UserPreferences,
+  baseScore: number, // From existing calculateMatchScore
 ): GuaranteedMatchScore {
-	const penalties: RelaxationPenalties = {
-		locationMismatch: 0,
-		roleProximity: 0,
-		careerPathAdjacent: 0,
-		visaHighPotential: 0,
-		workEnvMismatch: 0,
-		historical: 0,
-		countryWide: 0,
-	};
+  const penalties: RelaxationPenalties = {
+    locationMismatch: 0,
+    roleProximity: 0,
+    careerPathAdjacent: 0,
+    visaHighPotential: 0,
+    workEnvMismatch: 0,
+    historical: 0,
+    countryWide: 0,
+  };
 
-	let relaxationLevel = 0;
-	const relaxationReasons: string[] = [];
-	const isPremium = userPrefs.subscription_tier === "premium";
+  let relaxationLevel = 0;
+  const relaxationReasons: string[] = [];
+  const isPremium = userPrefs.subscription_tier === "premium";
 
-	// Penalty 1: Location Mismatch
-	// TIER-AWARE: Premium users should never have location mismatches (filtered earlier)
-	const targetCities = userPrefs.target_cities || [];
-	const locationMatch = checkLocationMatch(job, targetCities);
-	if (locationMatch.level === "country") {
-		// Premium users shouldn't reach here (filtered in hard gates), but add safety check
-		if (isPremium) {
-			// Premium users with country-level matches are invalid - should have been filtered
-			penalties.locationMismatch = 50; // Large penalty for premium users
-			relaxationLevel = Math.max(relaxationLevel, 1);
-			relaxationReasons.push("INVALID: Country-level match for premium user");
-		} else {
-			penalties.locationMismatch = 10;
-			relaxationLevel = Math.max(relaxationLevel, 1);
-			relaxationReasons.push("Same country, different city");
-		}
-	} else if (locationMatch.level === "country_wide") {
-		if (isPremium) {
-			penalties.countryWide = 50; // Large penalty for premium users
-			relaxationLevel = Math.max(relaxationLevel, 6);
-			relaxationReasons.push("INVALID: Country-wide match for premium user");
-		} else {
-			penalties.countryWide = 12;
-			relaxationLevel = Math.max(relaxationLevel, 6);
-			relaxationReasons.push("Country-wide search");
-		}
-	}
+  // Penalty 1: Location Mismatch
+  // TIER-AWARE: Premium users should never have location mismatches (filtered earlier)
+  const targetCities = userPrefs.target_cities || [];
+  const locationMatch = checkLocationMatch(job, targetCities);
+  if (locationMatch.level === "country") {
+    // Premium users shouldn't reach here (filtered in hard gates), but add safety check
+    if (isPremium) {
+      // Premium users with country-level matches are invalid - should have been filtered
+      penalties.locationMismatch = 50; // Large penalty for premium users
+      relaxationLevel = Math.max(relaxationLevel, 1);
+      relaxationReasons.push("INVALID: Country-level match for premium user");
+    } else {
+      penalties.locationMismatch = 10;
+      relaxationLevel = Math.max(relaxationLevel, 1);
+      relaxationReasons.push("Same country, different city");
+    }
+  } else if (locationMatch.level === "country_wide") {
+    if (isPremium) {
+      penalties.countryWide = 50; // Large penalty for premium users
+      relaxationLevel = Math.max(relaxationLevel, 6);
+      relaxationReasons.push("INVALID: Country-wide match for premium user");
+    } else {
+      penalties.countryWide = 12;
+      relaxationLevel = Math.max(relaxationLevel, 6);
+      relaxationReasons.push("Country-wide search");
+    }
+  }
 
-	// Penalty 2: Role Proximity (-15%)
-	const userRoles = userPrefs.roles_selected || [];
-	const roleMatch = checkRoleMatch(job, userRoles);
-	if (roleMatch.isRelated && !roleMatch.isExact) {
-		penalties.roleProximity = 15;
-		relaxationLevel = Math.max(relaxationLevel, 3);
-		relaxationReasons.push(roleMatch.relatedReason || "Related role");
-	}
+  // Penalty 2: Role Proximity (-15%)
+  const userRoles = userPrefs.roles_selected || [];
+  const roleMatch = checkRoleMatch(job, userRoles);
+  if (roleMatch.isRelated && !roleMatch.isExact) {
+    penalties.roleProximity = 15;
+    relaxationLevel = Math.max(relaxationLevel, 3);
+    relaxationReasons.push(roleMatch.relatedReason || "Related role");
+  }
 
-	// Penalty 3: Career Path Adjacent
-	// TIER-AWARE: Premium users shouldn't get adjacent career paths (filtered in hard gates)
-	const userCareerPaths = userPrefs.career_path || [];
-	const careerMatch = checkCareerPathMatch(job, userCareerPaths, userPrefs);
-	if (careerMatch.isAdjacent && !careerMatch.isExact) {
-		if (isPremium) {
-			// Premium users with adjacent matches are invalid - should have been filtered
-			penalties.careerPathAdjacent = 50; // Large penalty for premium users
-			relaxationLevel = Math.max(relaxationLevel, 4);
-			relaxationReasons.push("INVALID: Adjacent career path for premium user");
-		} else {
-			penalties.careerPathAdjacent = 20;
-			relaxationLevel = Math.max(relaxationLevel, 4);
-			relaxationReasons.push(
-				careerMatch.adjacentReason || "Adjacent career path",
-			);
-		}
-	}
+  // Penalty 3: Career Path Adjacent
+  // TIER-AWARE: Premium users shouldn't get adjacent career paths (filtered in hard gates)
+  const userCareerPaths = userPrefs.career_path || [];
+  const careerMatch = checkCareerPathMatch(job, userCareerPaths, userPrefs);
+  if (careerMatch.isAdjacent && !careerMatch.isExact) {
+    if (isPremium) {
+      // Premium users with adjacent matches are invalid - should have been filtered
+      penalties.careerPathAdjacent = 50; // Large penalty for premium users
+      relaxationLevel = Math.max(relaxationLevel, 4);
+      relaxationReasons.push("INVALID: Adjacent career path for premium user");
+    } else {
+      penalties.careerPathAdjacent = 20;
+      relaxationLevel = Math.max(relaxationLevel, 4);
+      relaxationReasons.push(
+        careerMatch.adjacentReason || "Adjacent career path",
+      );
+    }
+  }
 
-	// Penalty 4: Work Environment Mismatch (-8%)
-	const workEnvMatch = checkWorkEnvironmentMatch(
-		job,
-		userPrefs.work_environment,
-	);
-	if (workEnvMatch.isMismatch) {
-		penalties.workEnvMismatch = 8;
-		relaxationLevel = Math.max(relaxationLevel, 2);
-		relaxationReasons.push("Work environment relaxed (remote/hybrid)");
-	}
+  // Penalty 4: Work Environment Mismatch (-8%)
+  const workEnvMatch = checkWorkEnvironmentMatch(
+    job,
+    userPrefs.work_environment,
+  );
+  if (workEnvMatch.isMismatch) {
+    penalties.workEnvMismatch = 8;
+    relaxationLevel = Math.max(relaxationLevel, 2);
+    relaxationReasons.push("Work environment relaxed (remote/hybrid)");
+  }
 
-	// Penalty 5: Visa High-Potential (-5%)
-	if (userPrefs.visa_status?.includes("sponsor")) {
-		const visaConfidence = calculateVisaConfidence(job);
-		if (
-			visaConfidence.confidence === "unknown" &&
-			isKnownSponsor(job.company)
-		) {
-			penalties.visaHighPotential = 5;
-			relaxationLevel = Math.max(relaxationLevel, 5);
-			relaxationReasons.push("High-potential sponsor (company history)");
-		}
-	}
+  // Penalty 5: Visa High-Potential (-5%)
+  if (userPrefs.visa_status?.includes("sponsor")) {
+    const visaConfidence = calculateVisaConfidence(job);
+    if (
+      visaConfidence.confidence === "unknown" &&
+      isKnownSponsor(job.company)
+    ) {
+      penalties.visaHighPotential = 5;
+      relaxationLevel = Math.max(relaxationLevel, 5);
+      relaxationReasons.push("High-potential sponsor (company history)");
+    }
+  }
 
-	// Penalty 6: Historical Job (-30%)
-	const jobAge = calculateJobAge(job);
-	if (jobAge > 7) {
-		penalties.historical = 30;
-		relaxationLevel = Math.max(relaxationLevel, 7);
-		relaxationReasons.push("Historical job (>7 days old)");
-	}
+  // Penalty 6: Historical Job (-30%)
+  const jobAge = calculateJobAge(job);
+  if (jobAge > 7) {
+    penalties.historical = 30;
+    relaxationLevel = Math.max(relaxationLevel, 7);
+    relaxationReasons.push("Historical job (>7 days old)");
+  }
 
-	// Calculate final score
-	const totalPenalty = Object.values(penalties).reduce((sum, p) => sum + p, 0);
+  // Calculate final score
+  const totalPenalty = Object.values(penalties).reduce((sum, p) => sum + p, 0);
 
-	// TIER-AWARE: Premium users with relaxation should have lower scores
-	// If premium user has any relaxation, it's a data quality issue (should have been filtered)
-	const finalScore =
-		isPremium && relaxationLevel > 0
-			? Math.max(30, baseScore - totalPenalty) // Lower floor for premium users with relaxation
-			: Math.max(50, baseScore - totalPenalty); // Normal floor for free users
+  // TIER-AWARE: Premium users with relaxation should have lower scores
+  // If premium user has any relaxation, it's a data quality issue (should have been filtered)
+  const finalScore =
+    isPremium && relaxationLevel > 0
+      ? Math.max(30, baseScore - totalPenalty) // Lower floor for premium users with relaxation
+      : Math.max(50, baseScore - totalPenalty); // Normal floor for free users
 
-	// Reset relaxation level for premium users if they have exact matches (should be 0)
-	// This handles edge cases where premium filtering might have missed something
-	const finalRelaxationLevel =
-		isPremium && relaxationLevel > 0 && finalScore < 50
-			? relaxationLevel // Keep relaxation level if score is low (indicates filtering issue)
-			: isPremium && relaxationLevel > 0
-				? 0 // Reset to 0 if score is acceptable (exact match despite relaxation flag)
-				: relaxationLevel; // Keep for free users
+  // Reset relaxation level for premium users if they have exact matches (should be 0)
+  // This handles edge cases where premium filtering might have missed something
+  const finalRelaxationLevel =
+    isPremium && relaxationLevel > 0 && finalScore < 50
+      ? relaxationLevel // Keep relaxation level if score is low (indicates filtering issue)
+      : isPremium && relaxationLevel > 0
+        ? 0 // Reset to 0 if score is acceptable (exact match despite relaxation flag)
+        : relaxationLevel; // Keep for free users
 
-	return {
-		finalScore,
-		penalties,
-		relaxationLevel: finalRelaxationLevel,
-		relaxationReason: relaxationReasons.join("; ") || "Exact match",
-		baseScore,
-	};
+  return {
+    finalScore,
+    penalties,
+    relaxationLevel: finalRelaxationLevel,
+    relaxationReason: relaxationReasons.join("; ") || "Exact match",
+    baseScore,
+  };
 }
 
 /**
  * Generate match reason with relaxation context
  */
 export function generateMatchReason(
-	scoreBreakdown: any,
-	relaxationReason: string,
+  scoreBreakdown: any,
+  relaxationReason: string,
 ): string {
-	const reasons: string[] = [];
+  const reasons: string[] = [];
 
-	if (scoreBreakdown.careerPath > 80) {
-		reasons.push("Strong career path match");
-	}
-	if (scoreBreakdown.location > 80) {
-		reasons.push("Perfect location match");
-	}
-	if (scoreBreakdown.roleFit > 80) {
-		reasons.push("Ideal role fit");
-	}
+  if (scoreBreakdown.careerPath > 80) {
+    reasons.push("Strong career path match");
+  }
+  if (scoreBreakdown.location > 80) {
+    reasons.push("Perfect location match");
+  }
+  if (scoreBreakdown.roleFit > 80) {
+    reasons.push("Ideal role fit");
+  }
 
-	if (relaxationReason !== "Exact match") {
-		reasons.push(`Relaxed: ${relaxationReason}`);
-	}
+  if (relaxationReason !== "Exact match") {
+    reasons.push(`Relaxed: ${relaxationReason}`);
+  }
 
-	return reasons.join(" • ") || "Good overall match";
+  return reasons.join(" • ") || "Good overall match";
 }
 
 /**
  * Count relaxation levels in matches
  */
 export function countRelaxationLevels(
-	matches: Array<{ relaxationLevel: number }>,
+  matches: Array<{ relaxationLevel: number }>,
 ): Record<number, number> {
-	const counts: Record<number, number> = {};
-	matches.forEach((m) => {
-		counts[m.relaxationLevel] = (counts[m.relaxationLevel] || 0) + 1;
-	});
-	return counts;
+  const counts: Record<number, number> = {};
+  matches.forEach((m) => {
+    counts[m.relaxationLevel] = (counts[m.relaxationLevel] || 0) + 1;
+  });
+  return counts;
 }

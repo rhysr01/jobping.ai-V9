@@ -10,201 +10,204 @@ const supabase = getDatabaseClient();
 // Configuration
 const BATCH_SIZE = parseInt(process.env.SCRAPING_BATCH_SIZE || "3", 10);
 const MAX_PROCESSING_TIME = parseInt(
-	process.env.MAX_PROCESSING_TIME || "25000",
-	10,
+  process.env.MAX_PROCESSING_TIME || "25000",
+  10,
 ); // 25 seconds (Vercel limit)
 
 const processScrapingQueueHandler = asyncHandler(
-	async (_request: NextRequest) => {
-		const startTime = Date.now();
+  async (_request: NextRequest) => {
+    const startTime = Date.now();
 
-		apiLogger.info(" Starting cron scraping queue processing...");
+    apiLogger.info(" Starting cron scraping queue processing...");
 
-		// Get pending scraping jobs
-		const { data: jobs, error: fetchError } = await supabase
-			.from("job_queue")
-			.select("*")
-			.eq("type", "job_scrape")
-			.eq("status", "pending")
-			.lte("scheduled_for", new Date().toISOString())
-			.order("priority", { ascending: false })
-			.order("created_at", { ascending: true })
-			.limit(BATCH_SIZE);
+    // Get pending scraping jobs
+    const { data: jobs, error: fetchError } = await supabase
+      .from("job_queue")
+      .select("*")
+      .eq("type", "job_scrape")
+      .eq("status", "pending")
+      .lte("scheduled_for", new Date().toISOString())
+      .order("priority", { ascending: false })
+      .order("created_at", { ascending: true })
+      .limit(BATCH_SIZE);
 
-		if (fetchError) {
-			apiLogger.error(" Error fetching scraping jobs:", fetchError);
-			throw new AppError("Failed to fetch jobs", 500, "DB_FETCH_ERROR", {
-				details: fetchError.message,
-			});
-		}
+    if (fetchError) {
+      apiLogger.error(" Error fetching scraping jobs:", fetchError);
+      throw new AppError("Failed to fetch jobs", 500, "DB_FETCH_ERROR", {
+        details: fetchError.message,
+      });
+    }
 
-		if (!jobs || jobs.length === 0) {
-			apiLogger.info(" No pending scraping jobs to process");
-			return NextResponse.json({
-				message: "No jobs to process",
-				processed: 0,
-				duration: Date.now() - startTime,
-			});
-		}
+    if (!jobs || jobs.length === 0) {
+      apiLogger.info(" No pending scraping jobs to process");
+      return NextResponse.json({
+        message: "No jobs to process",
+        processed: 0,
+        duration: Date.now() - startTime,
+      });
+    }
 
-		apiLogger.info(` Processing ${jobs.length} scraping jobs...`);
+    apiLogger.info(` Processing ${jobs.length} scraping jobs...`);
 
-		let processed = 0;
-		let failed = 0;
+    let processed = 0;
+    let failed = 0;
 
-		// Process each job
-		for (const job of jobs) {
-			// Check if we're running out of time
-			if (Date.now() - startTime > MAX_PROCESSING_TIME) {
-				apiLogger.info(" Time limit reached, stopping processing");
-				break;
-			}
+    // Process each job
+    for (const job of jobs) {
+      // Check if we're running out of time
+      if (Date.now() - startTime > MAX_PROCESSING_TIME) {
+        apiLogger.info(" Time limit reached, stopping processing");
+        break;
+      }
 
-			try {
-				// Mark as processing
-				await supabase
-					.from("job_queue")
-					.update({ status: "processing" })
-					.eq("id", job.id);
+      try {
+        // Mark as processing
+        await supabase
+          .from("job_queue")
+          .update({ status: "processing" })
+          .eq("id", job.id);
 
-				// Process the scraping job
-				const { companies, scraperType } = job.payload;
+        // Process the scraping job
+        const { companies, scraperType } = job.payload;
 
-				// Import scraper dynamically based on type
-				let scraperResult: {
-					jobsScraped: number;
-					companiesProcessed: number;
-				} | null = null;
-				switch (scraperType) {
-					case "adzuna":
-						scraperResult = await processAdzunaScraper(companies);
-						break;
-					case "reed":
-						scraperResult = await processReedScraper(companies);
-						break;
-					case "muse":
-						scraperResult = await processMuseScraper(companies);
-						break;
-					case "greenhouse":
-						scraperResult = await processGreenhouseScraper(companies);
-						break;
-					default:
-						throw new Error(`Unknown scraper type: ${scraperType}`);
-				}
+        // Import scraper dynamically based on type
+        let scraperResult: {
+          jobsScraped: number;
+          companiesProcessed: number;
+        } | null = null;
+        switch (scraperType) {
+          case "adzuna":
+            scraperResult = await processAdzunaScraper(companies);
+            break;
+          case "reed":
+            scraperResult = await processReedScraper(companies);
+            break;
+          case "muse":
+            scraperResult = await processMuseScraper(companies);
+            break;
+          case "greenhouse":
+            scraperResult = await processGreenhouseScraper(companies);
+            break;
+          default:
+            throw new Error(`Unknown scraper type: ${scraperType}`);
+        }
 
-				// Mark as completed
-				await supabase
-					.from("job_queue")
-					.update({
-						status: "completed",
-						result: scraperResult,
-						updated_at: new Date().toISOString(),
-					})
-					.eq("id", job.id);
+        // Mark as completed
+        await supabase
+          .from("job_queue")
+          .update({
+            status: "completed",
+            result: scraperResult,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", job.id);
 
-				processed++;
-				apiLogger.info(
-					` Completed scraping job ${job.id} for ${scraperType}: ${scraperResult.jobsScraped} jobs`,
-				);
-			} catch (error) {
-				apiLogger.error(` Failed to process scraping job ${job.id}:`, error as Error);
+        processed++;
+        apiLogger.info(
+          ` Completed scraping job ${job.id} for ${scraperType}: ${scraperResult.jobsScraped} jobs`,
+        );
+      } catch (error) {
+        apiLogger.error(
+          ` Failed to process scraping job ${job.id}:`,
+          error as Error,
+        );
 
-				// Handle failure with retry logic
-				const newAttempts = (job.attempts || 0) + 1;
-				const maxAttempts = job.max_attempts || 2;
+        // Handle failure with retry logic
+        const newAttempts = (job.attempts || 0) + 1;
+        const maxAttempts = job.max_attempts || 2;
 
-				if (newAttempts >= maxAttempts) {
-					// Max attempts reached, mark as failed
-					await supabase
-						.from("job_queue")
-						.update({
-							status: "failed",
-							error: error instanceof Error ? error.message : "Unknown error",
-							updated_at: new Date().toISOString(),
-						})
-						.eq("id", job.id);
+        if (newAttempts >= maxAttempts) {
+          // Max attempts reached, mark as failed
+          await supabase
+            .from("job_queue")
+            .update({
+              status: "failed",
+              error: error instanceof Error ? error.message : "Unknown error",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", job.id);
 
-					apiLogger.error(
-						` Job ${job.id} failed permanently after ${newAttempts} attempts`,
-					);
-				} else {
-					// Retry with exponential backoff
-					const retryDelay = Math.min(1000 * 2 ** newAttempts, 300000); // Max 5 minutes
-					const retryTime = new Date(Date.now() + retryDelay);
+          apiLogger.error(
+            ` Job ${job.id} failed permanently after ${newAttempts} attempts`,
+          );
+        } else {
+          // Retry with exponential backoff
+          const retryDelay = Math.min(1000 * 2 ** newAttempts, 300000); // Max 5 minutes
+          const retryTime = new Date(Date.now() + retryDelay);
 
-					await supabase
-						.from("job_queue")
-						.update({
-							attempts: newAttempts,
-							status: "retrying",
-							scheduled_for: retryTime.toISOString(),
-							error: error instanceof Error ? error.message : "Unknown error",
-						})
-						.eq("id", job.id);
+          await supabase
+            .from("job_queue")
+            .update({
+              attempts: newAttempts,
+              status: "retrying",
+              scheduled_for: retryTime.toISOString(),
+              error: error instanceof Error ? error.message : "Unknown error",
+            })
+            .eq("id", job.id);
 
-					apiLogger.info(
-						` Job ${job.id} will retry in ${retryDelay}ms (attempt ${newAttempts}/${maxAttempts})`,
-					);
-				}
+          apiLogger.info(
+            ` Job ${job.id} will retry in ${retryDelay}ms (attempt ${newAttempts}/${maxAttempts})`,
+          );
+        }
 
-				failed++;
-			}
-		}
+        failed++;
+      }
+    }
 
-		const duration = Date.now() - startTime;
-		apiLogger.info(
-			` Scraping queue processing complete: ${processed} processed, ${failed} failed in ${duration}ms`,
-		);
+    const duration = Date.now() - startTime;
+    apiLogger.info(
+      ` Scraping queue processing complete: ${processed} processed, ${failed} failed in ${duration}ms`,
+    );
 
-		return NextResponse.json({
-			message: "Scraping queue processing complete",
-			processed,
-			failed,
-			total: jobs.length,
-			duration,
-		});
-	},
+    return NextResponse.json({
+      message: "Scraping queue processing complete",
+      processed,
+      failed,
+      total: jobs.length,
+      duration,
+    });
+  },
 );
 
 // Scraper processing functions
 async function processAdzunaScraper(
-	companies: string[],
+  companies: string[],
 ): Promise<{ jobsScraped: number; companiesProcessed: number }> {
-	// NOTE: Mock implementation - real scraper not yet implemented
-	return {
-		jobsScraped: Math.floor(Math.random() * 10),
-		companiesProcessed: companies.length,
-	};
+  // NOTE: Mock implementation - real scraper not yet implemented
+  return {
+    jobsScraped: Math.floor(Math.random() * 10),
+    companiesProcessed: companies.length,
+  };
 }
 
 async function processReedScraper(
-	companies: string[],
+  companies: string[],
 ): Promise<{ jobsScraped: number; companiesProcessed: number }> {
-	// NOTE: Mock implementation - real scraper not yet implemented
-	return {
-		jobsScraped: Math.floor(Math.random() * 8),
-		companiesProcessed: companies.length,
-	};
+  // NOTE: Mock implementation - real scraper not yet implemented
+  return {
+    jobsScraped: Math.floor(Math.random() * 8),
+    companiesProcessed: companies.length,
+  };
 }
 
 async function processMuseScraper(
-	companies: string[],
+  companies: string[],
 ): Promise<{ jobsScraped: number; companiesProcessed: number }> {
-	// NOTE: Mock implementation - real scraper not yet implemented
-	return {
-		jobsScraped: Math.floor(Math.random() * 5),
-		companiesProcessed: companies.length,
-	};
+  // NOTE: Mock implementation - real scraper not yet implemented
+  return {
+    jobsScraped: Math.floor(Math.random() * 5),
+    companiesProcessed: companies.length,
+  };
 }
 
 async function processGreenhouseScraper(
-	companies: string[],
+  companies: string[],
 ): Promise<{ jobsScraped: number; companiesProcessed: number }> {
-	// NOTE: Mock implementation - real scraper not yet implemented
-	return {
-		jobsScraped: Math.floor(Math.random() * 12),
-		companiesProcessed: companies.length,
-	};
+  // NOTE: Mock implementation - real scraper not yet implemented
+  return {
+    jobsScraped: Math.floor(Math.random() * 12),
+    companiesProcessed: companies.length,
+  };
 }
 
 // Export without Axiom logging (temporarily disabled due to URL configuration issue)
@@ -212,5 +215,5 @@ export const GET = processScrapingQueueHandler;
 
 // Health check endpoint
 export const HEAD = async function HEAD() {
-	return new NextResponse(null, { status: 200 });
+  return new NextResponse(null, { status: 200 });
 };

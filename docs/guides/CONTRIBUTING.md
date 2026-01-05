@@ -42,25 +42,30 @@ All must pass before opening a PR.
 ## Code Style
 
 ### TypeScript
+
 - Strict mode enabled
 - No `any` types
 - Explicit return types for functions
 
 ### Validation
+
 - Use Zod for all input validation
 - Import from `@/lib/schemas`
 
 ### Error Handling
+
 - Use `asyncHandler` wrapper for API routes
 - Throw custom errors (`ValidationError`, `NotFoundError`, etc.)
 - Import from `@/lib/errors`
 
 ### Logging
+
 - Use `logger` from `@/lib/monitoring`
 - Log user actions with `logUserAction()`
 - Never use `console.log` in production code
 
 ### Import Paths
+
 We use a consistent import path convention:
 
 - **`@/lib/`** - Shared utilities, types, config, and infrastructure
@@ -72,6 +77,7 @@ We use a consistent import path convention:
   - Use for: Database clients, matching services, email services, business logic
 
 **Guidelines:**
+
 - If it's shared infrastructure → `@/lib/`
 - If it's business/domain logic → `@/Utils/`
 - When in doubt, ask or check existing patterns in the codebase
@@ -79,6 +85,7 @@ We use a consistent import path convention:
 ## Testing
 
 ### Unit Tests
+
 ```bash
 # Run tests
 npm test
@@ -91,6 +98,7 @@ npm run test:coverage
 ```
 
 ### E2E Tests
+
 ```bash
 npm run test:e2e
 ```
@@ -98,6 +106,7 @@ npm run test:e2e
 ## Submitting PRs
 
 1. **Create feature branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -108,6 +117,7 @@ npm run test:e2e
    - Follow code style above
 
 3. **Commit your changes**
+
    ```bash
    git add .
    git commit -m "feat: add amazing feature"
@@ -117,6 +127,7 @@ npm run test:e2e
    ```bash
    git push origin feature/your-feature-name
    ```
+
    - Open PR on GitHub
    - Describe what you changed and why
    - Link related issues
@@ -134,6 +145,7 @@ Use conventional commits:
 - `chore:` - Maintenance
 
 Examples:
+
 ```bash
 git commit -m "feat: add promo code validation"
 git commit -m "fix: prevent duplicate job matches"
@@ -145,5 +157,4 @@ git commit -m "docs: update API documentation"
 - Open an issue
 - Email: engineering@getjobping.com
 
-Thanks for contributing! 
-
+Thanks for contributing!

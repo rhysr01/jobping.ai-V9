@@ -11,12 +11,14 @@
 ## Quick Reference
 
 ### Key Files
+
 - **Processor**: `scrapers/shared/processor.cjs` - Auto-infers work-type categories
 - **Validator**: `scrapers/shared/jobValidator.cjs` - Enforces standards
 - **Inference Module**: `scrapers/shared/workTypeInference.cjs` - Category inference logic
 - **Database Trigger**: `supabase/migrations/20260104000005_prevent_missing_work_type_categories.sql`
 
 ### Verification Queries
+
 ```sql
 -- Check trigger is active
 SELECT tgname FROM pg_trigger WHERE tgname = 'ensure_work_type_category_on_jobs';
@@ -32,6 +34,7 @@ AND NOT has_work_type_category(categories);
 ## 🎯 Problem
 
 **28.43% of jobs (2,779 out of 9,775) were missing work-type categories**, causing:
+
 - Users getting irrelevant matches
 - Jobs matched to wrong career paths
 - Poor user experience
@@ -47,26 +50,28 @@ We've implemented **4 layers of protection** to ensure this never happens again:
 **File**: `scrapers/shared/jobValidator.cjs`
 
 **What it does**:
+
 - Validates jobs before they're saved
 - **Auto-fixes**: If job is missing work-type category, automatically infers one from title/description
 - Logs warnings when auto-fix occurs
 
 **Code**:
+
 ```javascript
 // CRITICAL: Ensure job has at least one work-type category
 const { ensureWorkTypeCategory } = require("./workTypeInference.cjs");
 const hasWorkTypeCategory = (job.categories || []).some((cat) =>
-    WORK_TYPE_CATEGORIES.includes(cat),
+  WORK_TYPE_CATEGORIES.includes(cat),
 );
 
 if (!hasWorkTypeCategory) {
-    // Auto-fix: Infer work-type category
-    job.categories = ensureWorkTypeCategory({
-        title: job.title || "",
-        description: job.description || "",
-        categories: job.categories || [],
-    });
-    warnings.push("Missing work-type category - auto-inferred");
+  // Auto-fix: Infer work-type category
+  job.categories = ensureWorkTypeCategory({
+    title: job.title || "",
+    description: job.description || "",
+    categories: job.categories || [],
+  });
+  warnings.push("Missing work-type category - auto-inferred");
 }
 ```
 
@@ -77,18 +82,20 @@ if (!hasWorkTypeCategory) {
 **File**: `scrapers/shared/processor.cjs`
 
 **What it does**:
+
 - Automatically infers work-type categories during job processing
 - Runs BEFORE validation, so jobs already have work-type categories when validated
 - Uses keyword matching on title and description
 
 **Code**:
+
 ```javascript
 // CRITICAL: Ensure work-type category exists (auto-infer if missing)
 const { ensureWorkTypeCategory } = require("./workTypeInference.cjs");
 validatedCategories = ensureWorkTypeCategory({
-    title,
-    description,
-    categories: validatedCategories,
+  title,
+  description,
+  categories: validatedCategories,
 });
 ```
 
@@ -99,12 +106,14 @@ validatedCategories = ensureWorkTypeCategory({
 **File**: `supabase/migrations/20260104000005_prevent_missing_work_type_categories.sql`
 
 **What it does**:
+
 - **Database-level enforcement** - cannot be bypassed
 - Runs BEFORE INSERT/UPDATE on jobs table
 - Automatically adds work-type category if missing
 - Logs warnings for monitoring
 
 **How it works**:
+
 1. Trigger fires on INSERT/UPDATE
 2. Checks if job has work-type category
 3. If missing, infers from title/description using SQL function
@@ -112,6 +121,7 @@ validatedCategories = ensureWorkTypeCategory({
 5. Logs warning for monitoring
 
 **SQL Function**:
+
 ```sql
 CREATE TRIGGER ensure_work_type_category_on_jobs
     BEFORE INSERT OR UPDATE ON jobs
@@ -124,24 +134,27 @@ CREATE TRIGGER ensure_work_type_category_on_jobs
 
 ### Layer 4: Matching Logic Filter ✅
 
-**Files**: 
+**Files**:
+
 - `Utils/matching/rule-based-matcher.service.ts`
 - `Utils/matching/guaranteed/index.ts`
 
 **What it does**:
+
 - **Final safety net** - filters out jobs without work-type categories
 - Prevents jobs from being matched to users with career path preferences
 - Hard gate failure if job lacks work-type category
 
 **Code**:
+
 ```typescript
 // Check if job has any work-type category
 const hasWorkTypeCategory = jobCategories.some((cat) =>
-    workTypeCategories.includes(cat),
+  workTypeCategories.includes(cat),
 );
 
 if (!hasWorkTypeCategory) {
-    failures.push("Job has no work-type category");
+  failures.push("Job has no work-type category");
 }
 ```
 
@@ -198,7 +211,7 @@ if (!hasWorkTypeCategory) {
 ### Check for Jobs Still Missing Work-Type Categories
 
 ```sql
-SELECT COUNT(*) 
+SELECT COUNT(*)
 FROM jobs
 WHERE is_active = true
 AND categories IS NOT NULL
@@ -216,6 +229,7 @@ AND NOT has_work_type_category(categories);
 ### Monitor Auto-Fixes
 
 The validator logs warnings when auto-fixing:
+
 - Check scraper logs for: `"Missing work-type category - auto-inferred"`
 - Monitor frequency to ensure scrapers are working correctly
 
@@ -253,6 +267,7 @@ All prevention layers are implemented and ready. Once migration is run and code 
 ## Related Migrations
 
 See `supabase/migrations/` for complete migration history:
+
 - `20260104000000_fix_duplicate_jobs.sql` - Removed 2,718 duplicate jobs
 - `20260104000001_fix_invalid_categories.sql` - Fixed old form value categories
 - `20260104000002_add_missing_categories.sql` - Added work-type categories to existing jobs
@@ -261,4 +276,3 @@ See `supabase/migrations/` for complete migration history:
 - `20260104000005_prevent_missing_work_type_categories.sql` - Database trigger for prevention
 
 For migration execution instructions, see `docs/guides/MIGRATION_RUN_ORDER.md`.
-

@@ -18,400 +18,397 @@ import { fetchCandidateJobs } from "@/Utils/matching/jobSearchService";
 import type { UserPreferences } from "@/Utils/matching/types";
 import { transformUsers } from "@/Utils/matching/userBatchService";
 import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
-import {
-	getCurrentWeekStart,
-	isSendDay,
-} from "@/Utils/sendConfiguration";
+import { getCurrentWeekStart, isSendDay } from "@/Utils/sendConfiguration";
 
 type User = Database["public"]["Tables"]["users"]["Row"];
 
 async function handleSendScheduledEmails(req: NextRequest) {
-	const startTime = Date.now();
+  const startTime = Date.now();
 
-	// Rate limiting
-	let rateLimitResult: NextResponse | null = null;
-	try {
-		const limiter: any = getProductionRateLimiter();
-		if (limiter && typeof limiter.middleware === "function") {
-			rateLimitResult = await limiter.middleware(req, "send-scheduled-emails");
-		}
-	} catch {
-		rateLimitResult = null;
-	}
-	if (rateLimitResult) {
-		return rateLimitResult;
-	}
+  // Rate limiting
+  let rateLimitResult: NextResponse | null = null;
+  try {
+    const limiter: any = getProductionRateLimiter();
+    if (limiter && typeof limiter.middleware === "function") {
+      rateLimitResult = await limiter.middleware(req, "send-scheduled-emails");
+    }
+  } catch {
+    rateLimitResult = null;
+  }
+  if (rateLimitResult) {
+    return rateLimitResult;
+  }
 
-	try {
-		const supabase = getDatabaseClient();
-		const today = new Date().toLocaleDateString("en-US", {
-			weekday: "short",
-		}) as string;
-		const currentWeek = getCurrentWeekStart();
+  try {
+    const supabase = getDatabaseClient();
+    const today = new Date().toLocaleDateString("en-US", {
+      weekday: "short",
+    }) as string;
+    const currentWeek = getCurrentWeekStart();
 
-		apiLogger.info("Starting scheduled email send", { today, currentWeek });
+    apiLogger.info("Starting scheduled email send", { today, currentWeek });
 
-		// Check if today is a send day for premium users only
-		// Free users get instant matches via /matches page, no emails sent
-		const isPremiumSendDay = isSendDay("premium");
+    // Check if today is a send day for premium users only
+    // Free users get instant matches via /matches page, no emails sent
+    const isPremiumSendDay = isSendDay("premium");
 
-		if (!isPremiumSendDay) {
-			apiLogger.info("Not a send day for premium tier", { today });
-			return NextResponse.json({
-				success: true,
-				message: "Not a send day",
-				today,
-				emailsSent: 0,
-			});
-		}
+    if (!isPremiumSendDay) {
+      apiLogger.info("Not a send day for premium tier", { today });
+      return NextResponse.json({
+        success: true,
+        message: "Not a send day",
+        today,
+        emailsSent: 0,
+      });
+    }
 
-		// Build query for eligible PREMIUM users only
-		// Free users get instant matches on /matches page, not emails
-		let userQuery = supabase
-			.from("users")
-			.select("*")
-			.eq("active", true)
-			.eq("subscription_tier", "premium") // Only premium users get emails
-			.is("delivery_paused", false)
-			.order("created_at", { ascending: false });
+    // Build query for eligible PREMIUM users only
+    // Free users get instant matches on /matches page, not emails
+    let userQuery = supabase
+      .from("users")
+      .select("*")
+      .eq("active", true)
+      .eq("subscription_tier", "premium") // Only premium users get emails
+      .is("delivery_paused", false)
+      .order("created_at", { ascending: false });
 
-		// Premium users: check if they received email today (to avoid duplicate sends on same day)
-		const todayStart = new Date();
-		todayStart.setHours(0, 0, 0, 0);
-		const todayISO = todayStart.toISOString();
-		userQuery = userQuery.or(
-			`last_email_sent.is.null,last_email_sent.lt.${todayISO}`,
-		);
+    // Premium users: check if they received email today (to avoid duplicate sends on same day)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayISO = todayStart.toISOString();
+    userQuery = userQuery.or(
+      `last_email_sent.is.null,last_email_sent.lt.${todayISO}`,
+    );
 
-		const { data: users, error: usersError } = await userQuery.limit(100);
+    const { data: users, error: usersError } = await userQuery.limit(100);
 
-		if (usersError) {
-			apiLogger.error("Failed to fetch users", usersError as Error);
-			return NextResponse.json(
-				{
-					error: "Failed to fetch users",
-					details: usersError.message,
-				},
-				{ status: 500 },
-			);
-		}
+    if (usersError) {
+      apiLogger.error("Failed to fetch users", usersError as Error);
+      return NextResponse.json(
+        {
+          error: "Failed to fetch users",
+          details: usersError.message,
+        },
+        { status: 500 },
+      );
+    }
 
-		if (!users || users.length === 0) {
-			apiLogger.info("No eligible users found for scheduled send");
-			return NextResponse.json({
-				success: true,
-				message: "No eligible users",
-				emailsSent: 0,
-			});
-		}
+    if (!users || users.length === 0) {
+      apiLogger.info("No eligible users found for scheduled send");
+      return NextResponse.json({
+        success: true,
+        message: "No eligible users",
+        emailsSent: 0,
+      });
+    }
 
-		apiLogger.info(
-			`Found ${users.length} eligible premium users for scheduled send`,
-			{
-				premiumSendDay: isPremiumSendDay,
-				userCount: users.length,
-			},
-		);
+    apiLogger.info(
+      `Found ${users.length} eligible premium users for scheduled send`,
+      {
+        premiumSendDay: isPremiumSendDay,
+        userCount: users.length,
+      },
+    );
 
-		// Transform users to expected format
-		const transformedUsers = transformUsers(users);
+    // Transform users to expected format
+    const transformedUsers = transformUsers(users);
 
-		// Create matcher
-		const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
+    // Create matcher
+    const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
 
-		// Fetch jobs for matching
-		const { jobs, filters } = await fetchCandidateJobs(
-			supabase,
-			10000, // Large job cap for matching
-			transformedUsers.map((u) => ({ preferences: u.preferences })),
-		);
+    // Fetch jobs for matching
+    const { jobs, filters } = await fetchCandidateJobs(
+      supabase,
+      10000, // Large job cap for matching
+      transformedUsers.map((u) => ({ preferences: u.preferences })),
+    );
 
-		apiLogger.info(`Fetched ${jobs.length} jobs for matching`, {
-			jobCount: jobs.length,
-			filters,
-		});
+    apiLogger.info(`Fetched ${jobs.length} jobs for matching`, {
+      jobCount: jobs.length,
+      filters,
+    });
 
-		let emailsSent = 0;
-		const errors: Array<{ email: string; error: string }> = [];
-		let usersWithoutMatches = 0;
+    let emailsSent = 0;
+    const errors: Array<{ email: string; error: string }> = [];
+    let usersWithoutMatches = 0;
 
-		// Process each user
-		for (let i = 0; i < transformedUsers.length; i++) {
-			const user = transformedUsers[i];
-			const originalUser = users[i] as User;
+    // Process each user
+    for (let i = 0; i < transformedUsers.length; i++) {
+      const user = transformedUsers[i];
+      const originalUser = users[i] as User;
 
-			try {
-				const userTier = (user.subscription_tier || "free") as
-					| "free"
-					| "premium";
+      try {
+        const userTier = (user.subscription_tier || "free") as
+          | "free"
+          | "premium";
 
-				// Only process premium users - free users get instant matches on /matches page, not emails
-				if (userTier !== "premium") {
-					continue;
-				}
+        // Only process premium users - free users get instant matches on /matches page, not emails
+        if (userTier !== "premium") {
+          continue;
+        }
 
-				// Skip if not a send day for premium
-				if (!isPremiumSendDay) continue;
+        // Skip if not a send day for premium
+        if (!isPremiumSendDay) continue;
 
-				// Additional check: for premium users, verify they haven't received email today
-				if (userTier === "premium" && user.last_email_sent) {
-					const lastSent = new Date(user.last_email_sent);
-					const todayStart = new Date();
-					todayStart.setHours(0, 0, 0, 0);
-					if (lastSent >= todayStart) {
-						apiLogger.debug("Premium user already received email today", {
-							email: user.email,
-							lastSent: user.last_email_sent,
-						});
-						continue;
-					}
-				}
+        // Additional check: for premium users, verify they haven't received email today
+        if (userTier === "premium" && user.last_email_sent) {
+          const lastSent = new Date(user.last_email_sent);
+          const todayStart = new Date();
+          todayStart.setHours(0, 0, 0, 0);
+          if (lastSent >= todayStart) {
+            apiLogger.debug("Premium user already received email today", {
+              email: user.email,
+              lastSent: user.last_email_sent,
+            });
+            continue;
+          }
+        }
 
-				// OPTIMIZED: Skip pre-filtering - let AI do semantic matching
-				// AI matching is semantic and can understand relevance even without exact category matches
-				// Pre-filtering was too restrictive and removing good matches
-				// Get top candidates for AI matching
-				const candidates = jobs.slice(0, 50);
+        // OPTIMIZED: Skip pre-filtering - let AI do semantic matching
+        // AI matching is semantic and can understand relevance even without exact category matches
+        // Pre-filtering was too restrictive and removing good matches
+        // Get top candidates for AI matching
+        const candidates = jobs.slice(0, 50);
 
-				// Perform AI matching
-				const matchResult = await matcher.performMatching(
-					candidates as any[],
-					user as unknown as UserPreferences,
-					false, // Don't disable AI
-				);
+        // Perform AI matching
+        const matchResult = await matcher.performMatching(
+          candidates as any[],
+          user as unknown as UserPreferences,
+          false, // Don't disable AI
+        );
 
-				if (!matchResult.matches || matchResult.matches.length === 0) {
-					usersWithoutMatches++;
-					apiLogger.debug("No matches found for user", { email: user.email });
-					continue;
-				}
+        if (!matchResult.matches || matchResult.matches.length === 0) {
+          usersWithoutMatches++;
+          apiLogger.debug("No matches found for user", { email: user.email });
+          continue;
+        }
 
-				// Get matched jobs with full data
-				const matchedJobs = matchResult.matches
-					.map((match) => {
-						const job = jobs.find((j) => j.job_hash === match.job_hash);
-						if (!job) return null;
-						return {
-							...job,
-							match_score: match.match_score,
-							match_reason: match.match_reason || "AI-matched",
-						};
-					})
-					.filter((j) => j !== null);
+        // Get matched jobs with full data
+        const matchedJobs = matchResult.matches
+          .map((match) => {
+            const job = jobs.find((j) => j.job_hash === match.job_hash);
+            if (!job) return null;
+            return {
+              ...job,
+              match_score: match.match_score,
+              match_reason: match.match_reason || "AI-matched",
+            };
+          })
+          .filter((j) => j !== null);
 
-				// CRITICAL: Always limit to 5 jobs per email (per SEND_PLAN configuration)
-				const MAX_JOBS_PER_EMAIL = 5; // Changed from 10 to 5 - maximum 5 jobs per email
-				const hasExcessMatches = matchedJobs.length > MAX_JOBS_PER_EMAIL;
+        // CRITICAL: Always limit to 5 jobs per email (per SEND_PLAN configuration)
+        const MAX_JOBS_PER_EMAIL = 5; // Changed from 10 to 5 - maximum 5 jobs per email
+        const hasExcessMatches = matchedJobs.length > MAX_JOBS_PER_EMAIL;
 
-				// Sort by match score to get best matches first
-				const sortedJobs = [...matchedJobs].sort(
-					(a, b) => (b.match_score || 0) - (a.match_score || 0),
-				);
+        // Sort by match score to get best matches first
+        const sortedJobs = [...matchedJobs].sort(
+          (a, b) => (b.match_score || 0) - (a.match_score || 0),
+        );
 
-				// Always take only top 5 for the email
-				const jobsForEmail = sortedJobs.slice(0, MAX_JOBS_PER_EMAIL);
+        // Always take only top 5 for the email
+        const jobsForEmail = sortedJobs.slice(0, MAX_JOBS_PER_EMAIL);
 
-				// Extract work environment preferences
-				let targetWorkEnvironments: string[] = [];
-				if (user.preferences.work_environment) {
-					if (Array.isArray(user.preferences.work_environment)) {
-						targetWorkEnvironments = user.preferences.work_environment;
-					} else if (typeof user.preferences.work_environment === "string") {
-						targetWorkEnvironments = user.preferences.work_environment
-							.split(",")
-							.map((env) => env.trim())
-							.filter(Boolean);
-					}
-				}
+        // Extract work environment preferences
+        let targetWorkEnvironments: string[] = [];
+        if (user.preferences.work_environment) {
+          if (Array.isArray(user.preferences.work_environment)) {
+            targetWorkEnvironments = user.preferences.work_environment;
+          } else if (typeof user.preferences.work_environment === "string") {
+            targetWorkEnvironments = user.preferences.work_environment
+              .split(",")
+              .map((env) => env.trim())
+              .filter(Boolean);
+          }
+        }
 
-				// Apply job distribution for diversity (max 5 jobs)
-				const distributedJobs = distributeJobsWithDiversity(
-					jobsForEmail as any[],
-					{
-						targetCount: MAX_JOBS_PER_EMAIL,
-						targetCities: user.preferences.target_cities || [],
-						maxPerSource: Math.ceil(MAX_JOBS_PER_EMAIL / 3),
-						ensureCityBalance: true,
-						targetWorkEnvironments: targetWorkEnvironments,
-						ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0,
-					},
-				);
+        // Apply job distribution for diversity (max 5 jobs)
+        const distributedJobs = distributeJobsWithDiversity(
+          jobsForEmail as any[],
+          {
+            targetCount: MAX_JOBS_PER_EMAIL,
+            targetCities: user.preferences.target_cities || [],
+            maxPerSource: Math.ceil(MAX_JOBS_PER_EMAIL / 3),
+            ensureCityBalance: true,
+            targetWorkEnvironments: targetWorkEnvironments,
+            ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0,
+          },
+        );
 
-				// Send email with maximum 5 jobs - include user preferences for personalization
-				await sendMatchedJobsEmail({
-					to: user.email || "",
-					jobs: distributedJobs,
-					userName: user.full_name || undefined,
-					subscriptionTier: userTier,
-					isSignupEmail: false,
-					userPreferences: {
-						career_path: user.preferences.career_path,
-						target_cities: user.preferences.target_cities,
-						visa_status: user.preferences.visa_status,
-						entry_level_preference: user.preferences.entry_level_preference,
-						work_environment: user.preferences.work_environment,
-					},
-				});
+        // Send email with maximum 5 jobs - include user preferences for personalization
+        await sendMatchedJobsEmail({
+          to: user.email || "",
+          jobs: distributedJobs,
+          userName: user.full_name || undefined,
+          subscriptionTier: userTier,
+          isSignupEmail: false,
+          userPreferences: {
+            career_path: user.preferences.career_path,
+            target_cities: user.preferences.target_cities,
+            visa_status: user.preferences.visa_status,
+            entry_level_preference: user.preferences.entry_level_preference,
+            work_environment: user.preferences.work_environment,
+          },
+        });
 
-				// If there are excess matches, queue them for digest email (48 hours later)
-				if (hasExcessMatches && sortedJobs.length > MAX_JOBS_PER_EMAIL) {
-					const remainingJobs = sortedJobs.slice(MAX_JOBS_PER_EMAIL);
+        // If there are excess matches, queue them for digest email (48 hours later)
+        if (hasExcessMatches && sortedJobs.length > MAX_JOBS_PER_EMAIL) {
+          const remainingJobs = sortedJobs.slice(MAX_JOBS_PER_EMAIL);
 
-					if (remainingJobs.length > 0) {
-						const scheduledFor = new Date();
-						scheduledFor.setHours(scheduledFor.getHours() + 48);
+          if (remainingJobs.length > 0) {
+            const scheduledFor = new Date();
+            scheduledFor.setHours(scheduledFor.getHours() + 48);
 
-						// Store job data as JSONB
-						const jobData = remainingJobs.map((job) => ({
-							job_hash: job.job_hash,
-							match_score: job.match_score || 0,
-							match_reason: job.match_reason || "AI-matched",
-						}));
+            // Store job data as JSONB
+            const jobData = remainingJobs.map((job) => ({
+              job_hash: job.job_hash,
+              match_score: job.match_score || 0,
+              match_reason: job.match_reason || "AI-matched",
+            }));
 
-						await supabase.from("pending_digests").insert({
-							user_email: user.email,
-							job_hashes: jobData,
-							scheduled_for: scheduledFor.toISOString(),
-							sent: false,
-							cancelled: false,
-						});
+            await supabase.from("pending_digests").insert({
+              user_email: user.email,
+              job_hashes: jobData,
+              scheduled_for: scheduledFor.toISOString(),
+              sent: false,
+              cancelled: false,
+            });
 
-						apiLogger.info("Queued pending digest for user", {
-							email: user.email,
-							jobsQueued: remainingJobs.length,
-							scheduledFor: scheduledFor.toISOString(),
-						});
-					}
+            apiLogger.info("Queued pending digest for user", {
+              email: user.email,
+              jobsQueued: remainingJobs.length,
+              scheduledFor: scheduledFor.toISOString(),
+            });
+          }
 
-					// Update user's last_email_sent
-					await supabase
-						.from("users")
-						.update({
-							last_email_sent: new Date().toISOString(),
-							email_count: (originalUser.email_count || 0) + 1,
-						})
-						.eq("email", user.email);
+          // Update user's last_email_sent
+          await supabase
+            .from("users")
+            .update({
+              last_email_sent: new Date().toISOString(),
+              email_count: (originalUser.email_count || 0) + 1,
+            })
+            .eq("email", user.email);
 
-					emailsSent++;
-				} else {
-					// User has <= 5 matches, send all at once (normal flow)
-					// CRITICAL: Still limit to MAX_JOBS_PER_EMAIL (5) even if they have fewer matches
-					const jobsToSend = Math.min(sortedJobs.length, MAX_JOBS_PER_EMAIL);
+          emailsSent++;
+        } else {
+          // User has <= 5 matches, send all at once (normal flow)
+          // CRITICAL: Still limit to MAX_JOBS_PER_EMAIL (5) even if they have fewer matches
+          const jobsToSend = Math.min(sortedJobs.length, MAX_JOBS_PER_EMAIL);
 
-					if (jobsToSend < 1) {
-						usersWithoutMatches++;
-						apiLogger.debug("No matches for user", {
-							email: user.email,
-							matchesFound: sortedJobs.length,
-						});
-						continue;
-					}
+          if (jobsToSend < 1) {
+            usersWithoutMatches++;
+            apiLogger.debug("No matches for user", {
+              email: user.email,
+              matchesFound: sortedJobs.length,
+            });
+            continue;
+          }
 
-					// Extract work environment preferences (may be comma-separated string or array)
-					let targetWorkEnvironments: string[] = [];
-					if (user.preferences.work_environment) {
-						if (Array.isArray(user.preferences.work_environment)) {
-							targetWorkEnvironments = user.preferences.work_environment;
-						} else if (typeof user.preferences.work_environment === "string") {
-							// Parse comma-separated string: "Office, Hybrid" -> ["Office", "Hybrid"]
-							targetWorkEnvironments = user.preferences.work_environment
-								.split(",")
-								.map((env) => env.trim())
-								.filter(Boolean);
-						}
-					}
+          // Extract work environment preferences (may be comma-separated string or array)
+          let targetWorkEnvironments: string[] = [];
+          if (user.preferences.work_environment) {
+            if (Array.isArray(user.preferences.work_environment)) {
+              targetWorkEnvironments = user.preferences.work_environment;
+            } else if (typeof user.preferences.work_environment === "string") {
+              // Parse comma-separated string: "Office, Hybrid" -> ["Office", "Hybrid"]
+              targetWorkEnvironments = user.preferences.work_environment
+                .split(",")
+                .map((env) => env.trim())
+                .filter(Boolean);
+            }
+          }
 
-					// Apply job distribution for diversity (max 5 jobs)
-					const distributedJobs = distributeJobsWithDiversity(
-						sortedJobs.slice(0, jobsToSend) as any[],
-						{
-							targetCount: jobsToSend,
-							targetCities: user.preferences.target_cities || [],
-							maxPerSource: Math.ceil(MAX_JOBS_PER_EMAIL / 3),
-							ensureCityBalance: true,
-							targetWorkEnvironments: targetWorkEnvironments,
-							ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0,
-						},
-					);
+          // Apply job distribution for diversity (max 5 jobs)
+          const distributedJobs = distributeJobsWithDiversity(
+            sortedJobs.slice(0, jobsToSend) as any[],
+            {
+              targetCount: jobsToSend,
+              targetCities: user.preferences.target_cities || [],
+              maxPerSource: Math.ceil(MAX_JOBS_PER_EMAIL / 3),
+              ensureCityBalance: true,
+              targetWorkEnvironments: targetWorkEnvironments,
+              ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0,
+            },
+          );
 
-					// Send email
-					await sendMatchedJobsEmail({
-						to: user.email || "",
-						jobs: distributedJobs,
-						userName: user.full_name || undefined,
-						subscriptionTier: userTier,
-						isSignupEmail: false,
-						userPreferences: {
-							career_path: user.preferences.career_path,
-							target_cities: user.preferences.target_cities,
-							visa_status: user.preferences.visa_status,
-							entry_level_preference: user.preferences.entry_level_preference,
-							work_environment: user.preferences.work_environment,
-						},
-					});
+          // Send email
+          await sendMatchedJobsEmail({
+            to: user.email || "",
+            jobs: distributedJobs,
+            userName: user.full_name || undefined,
+            subscriptionTier: userTier,
+            isSignupEmail: false,
+            userPreferences: {
+              career_path: user.preferences.career_path,
+              target_cities: user.preferences.target_cities,
+              visa_status: user.preferences.visa_status,
+              entry_level_preference: user.preferences.entry_level_preference,
+              work_environment: user.preferences.work_environment,
+            },
+          });
 
-					// Update user's last_email_sent
-					await supabase
-						.from("users")
-						.update({
-							last_email_sent: new Date().toISOString(),
-							email_count: (originalUser.email_count || 0) + 1,
-						})
-						.eq("email", user.email);
+          // Update user's last_email_sent
+          await supabase
+            .from("users")
+            .update({
+              last_email_sent: new Date().toISOString(),
+              email_count: (originalUser.email_count || 0) + 1,
+            })
+            .eq("email", user.email);
 
-					emailsSent++;
+          emailsSent++;
 
-					apiLogger.info("Scheduled email sent successfully", {
-						email: user.email,
-						tier: userTier,
-						jobsSent: distributedJobs.length,
-					});
-				}
-			} catch (error) {
-				const errorMessage =
-					error instanceof Error ? error.message : "Unknown error";
-				errors.push({
-					email: user.email || "unknown",
-					error: errorMessage,
-				});
-				apiLogger.error(
-					"Failed to send scheduled email to user",
-					error as Error,
-					{
-						email: user.email,
-					},
-				);
-			}
-		}
+          apiLogger.info("Scheduled email sent successfully", {
+            email: user.email,
+            tier: userTier,
+            jobsSent: distributedJobs.length,
+          });
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        errors.push({
+          email: user.email || "unknown",
+          error: errorMessage,
+        });
+        apiLogger.error(
+          "Failed to send scheduled email to user",
+          error as Error,
+          {
+            email: user.email,
+          },
+        );
+      }
+    }
 
-		const processingTime = Date.now() - startTime;
+    const processingTime = Date.now() - startTime;
 
-		apiLogger.info("Scheduled email send completed", {
-			emailsSent,
-			errors: errors.length,
-			usersWithoutMatches,
-			processingTime,
-		});
+    apiLogger.info("Scheduled email send completed", {
+      emailsSent,
+      errors: errors.length,
+      usersWithoutMatches,
+      processingTime,
+    });
 
-		return NextResponse.json({
-			success: true,
-			message: "Scheduled email send completed",
-			emailsSent,
-			usersProcessed: users.length,
-			usersWithoutMatches,
-			errors: errors.length > 0 ? errors : undefined,
-			processingTime,
-		});
-	} catch (error) {
-		apiLogger.error("Scheduled email send failed", error as Error);
-		return NextResponse.json(
-			{
-				error: "Scheduled email send failed",
-				details: error instanceof Error ? error.message : "Unknown error",
-			},
-			{ status: 500 },
-		);
-	}
+    return NextResponse.json({
+      success: true,
+      message: "Scheduled email send completed",
+      emailsSent,
+      usersProcessed: users.length,
+      usersWithoutMatches,
+      errors: errors.length > 0 ? errors : undefined,
+      processingTime,
+    });
+  } catch (error) {
+    apiLogger.error("Scheduled email send failed", error as Error);
+    return NextResponse.json(
+      {
+        error: "Scheduled email send failed",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
+  }
 }
 
 // Export POST handler with authentication and Axiom logging
@@ -419,44 +416,44 @@ async function handleSendScheduledEmails(req: NextRequest) {
 // 1. Vercel Cron: sends CRON_SECRET in Authorization header (optional, for extra security)
 // 2. Manual calls: use SYSTEM_API_KEY in x-api-key header (required)
 export const POST = async function (request: NextRequest) {
-	try {
-		const authHeader = request.headers.get("authorization");
-		const cronSecret = process.env.CRON_SECRET; // Optional - only needed if you want to verify Vercel cron
-		const systemKey = process.env.SYSTEM_API_KEY; // Required - for manual calls and fallback
+  try {
+    const authHeader = request.headers.get("authorization");
+    const cronSecret = process.env.CRON_SECRET; // Optional - only needed if you want to verify Vercel cron
+    const systemKey = process.env.SYSTEM_API_KEY; // Required - for manual calls and fallback
 
-		// Check if request is authorized
-		// Option 1: Vercel cron with CRON_SECRET (if set)
-		const isVercelCron = cronSecret && authHeader === `Bearer ${cronSecret}`;
+    // Check if request is authorized
+    // Option 1: Vercel cron with CRON_SECRET (if set)
+    const isVercelCron = cronSecret && authHeader === `Bearer ${cronSecret}`;
 
-		// Option 2: Manual call with SYSTEM_API_KEY
-		const apiKey = request.headers.get("x-api-key");
-		const isSystemKey = systemKey && apiKey === systemKey;
+    // Option 2: Manual call with SYSTEM_API_KEY
+    const apiKey = request.headers.get("x-api-key");
+    const isSystemKey = systemKey && apiKey === systemKey;
 
-		// Allow if either auth method passes
-		// Note: If CRON_SECRET is not set, Vercel cron requests will still work via SYSTEM_API_KEY
-		if (!isVercelCron && !isSystemKey) {
-			apiLogger.warn("Unauthorized scheduled email send attempt", {
-				hasAuthHeader: !!authHeader,
-				hasApiKey: !!apiKey,
-				hasCronSecret: !!cronSecret,
-				hasSystemKey: !!systemKey,
-			});
-			return NextResponse.json(
-				{ error: "Unauthorized: Invalid or missing authentication" },
-				{ status: 401 },
-			);
-		}
+    // Allow if either auth method passes
+    // Note: If CRON_SECRET is not set, Vercel cron requests will still work via SYSTEM_API_KEY
+    if (!isVercelCron && !isSystemKey) {
+      apiLogger.warn("Unauthorized scheduled email send attempt", {
+        hasAuthHeader: !!authHeader,
+        hasApiKey: !!apiKey,
+        hasCronSecret: !!cronSecret,
+        hasSystemKey: !!systemKey,
+      });
+      return NextResponse.json(
+        { error: "Unauthorized: Invalid or missing authentication" },
+        { status: 401 },
+      );
+    }
 
-		// Call the handler
-		return await handleSendScheduledEmails(request);
-	} catch (error) {
-		apiLogger.error("Scheduled email route error", error as Error);
-		return NextResponse.json(
-			{
-				error: "Internal server error",
-				details: error instanceof Error ? error.message : "Unknown error",
-			},
-			{ status: 500 },
-		);
-	}
+    // Call the handler
+    return await handleSendScheduledEmails(request);
+  } catch (error) {
+    apiLogger.error("Scheduled email route error", error as Error);
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
+  }
 };

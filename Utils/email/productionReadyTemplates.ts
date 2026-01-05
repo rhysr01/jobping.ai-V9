@@ -2,14 +2,14 @@
 // Safe for major clients: Gmail, Outlook, Apple Mail
 
 import {
-	FREE_ROLES_PER_SEND,
-	PREMIUM_ROLES_PER_MONTH,
-	PREMIUM_ROLES_PER_WEEK,
+  FREE_ROLES_PER_SEND,
+  PREMIUM_ROLES_PER_MONTH,
+  PREMIUM_ROLES_PER_WEEK,
 } from "../../lib/productMetrics";
 import {
-	calculateVisaConfidence,
-	getVisaConfidenceLabel,
-	// getVisaConfidenceStyle, // Kept for future use
+  calculateVisaConfidence,
+  getVisaConfidenceLabel,
+  // getVisaConfidenceStyle, // Kept for future use
 } from "../../Utils/matching/visa-confidence";
 import { issueSecureToken } from "../auth/secureTokens";
 import { buildPreferencesLink } from "../preferences/links";
@@ -19,70 +19,70 @@ import type { EmailJobCard } from "./types";
 // Inline constants and functions to avoid Turbopack module resolution issues
 // These are copied from Utils/matching/categoryMapper.ts to avoid import problems
 const CAREER_PATH_LABELS: Record<string, string> = {
-	strategy: "Strategy & Business Design",
-	data: "Data & Analytics",
-	sales: "Sales & Client Success",
-	marketing: "Marketing & Growth",
-	finance: "Finance & Investment",
-	operations: "Operations & Supply Chain",
-	product: "Product & Innovation",
-	tech: "Tech & Transformation",
-	sustainability: "Sustainability & ESG",
-	unsure: "Not Sure Yet / General",
+  strategy: "Strategy & Business Design",
+  data: "Data & Analytics",
+  sales: "Sales & Client Success",
+  marketing: "Marketing & Growth",
+  finance: "Finance & Investment",
+  operations: "Operations & Supply Chain",
+  product: "Product & Innovation",
+  tech: "Tech & Transformation",
+  sustainability: "Sustainability & ESG",
+  unsure: "Not Sure Yet / General",
 };
 
 const DATABASE_TO_FORM_MAPPING: Record<string, string> = {
-	"strategy-business-design": "strategy",
-	"finance-investment": "finance",
-	"sales-client-success": "sales",
-	"marketing-growth": "marketing",
-	"data-analytics": "data",
-	"operations-supply-chain": "operations",
-	"product-innovation": "product",
-	"tech-transformation": "tech",
-	"sustainability-esg": "sustainability",
-	"retail-luxury": "retail-luxury",
-	entrepreneurship: "entrepreneurship",
-	technology: "tech",
+  "strategy-business-design": "strategy",
+  "finance-investment": "finance",
+  "sales-client-success": "sales",
+  "marketing-growth": "marketing",
+  "data-analytics": "data",
+  "operations-supply-chain": "operations",
+  "product-innovation": "product",
+  "tech-transformation": "tech",
+  "sustainability-esg": "sustainability",
+  "retail-luxury": "retail-luxury",
+  entrepreneurship: "entrepreneurship",
+  technology: "tech",
 };
 
 // Helper function to get career path label
 const getCareerPathLabel = (value: string): string => {
-	return CAREER_PATH_LABELS[value] || value;
+  return CAREER_PATH_LABELS[value] || value;
 };
 
 // Helper function to map database category to form value
 const mapDatabaseToForm = (databaseCategory: string): string => {
-	return DATABASE_TO_FORM_MAPPING[databaseCategory] || databaseCategory;
+  return DATABASE_TO_FORM_MAPPING[databaseCategory] || databaseCategory;
 };
 
 const COLORS = {
-	bg: "#0a0a0a",
-	panel: "#000000",
-	white: "#ffffff",
-	gray100: "#f4f4f5",
-	gray200: "#e4e4e7",
-	gray300: "#d4d4d8",
-	gray400: "#a1a1aa",
-	gray500: "#71717a",
-	gray600: "#52525b",
-	purple: "#5B21B6", // brand-600 - darker purple
-	indigo: "#5B21B6", // brand-600 - darker purple (consistent with brand)
-	emerald: "#10b981",
-	// Better contrast colors for text on dark backgrounds
-	textPrimary: "#e4e4e7", // gray200 - WCAG AA compliant for main text
-	textSecondary: "#d4d4d8", // gray300 - acceptable for secondary text
-	textMuted: "#a1a1aa", // gray400 - only for very subtle elements
+  bg: "#0a0a0a",
+  panel: "#000000",
+  white: "#ffffff",
+  gray100: "#f4f4f5",
+  gray200: "#e4e4e7",
+  gray300: "#d4d4d8",
+  gray400: "#a1a1aa",
+  gray500: "#71717a",
+  gray600: "#52525b",
+  purple: "#5B21B6", // brand-600 - darker purple
+  indigo: "#5B21B6", // brand-600 - darker purple (consistent with brand)
+  emerald: "#10b981",
+  // Better contrast colors for text on dark backgrounds
+  textPrimary: "#e4e4e7", // gray200 - WCAG AA compliant for main text
+  textSecondary: "#d4d4d8", // gray300 - acceptable for secondary text
+  textMuted: "#a1a1aa", // gray400 - only for very subtle elements
 };
 
 // Premium VML button for Outlook
 function vmlButton(
-	href: string,
-	label: string,
-	gradientFrom: string,
-	gradientTo: string,
+  href: string,
+  label: string,
+  gradientFrom: string,
+  gradientTo: string,
 ) {
-	return `
+  return `
   <!--[if mso]>
   <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${href}" style="height:50px;v-text-anchor:middle;width:300px;" arcsize="10%" fillcolor="${gradientFrom}" strokecolor="${gradientFrom}">
     <w:anchorlock/>
@@ -100,12 +100,12 @@ ${label}
 // Premium feedback button
 // Kept for future use - exported to avoid unused function warning
 export function _vmlFeedbackButton(
-	href: string,
-	label: string,
-	gradientFrom: string,
-	gradientTo: string,
+  href: string,
+  label: string,
+  gradientFrom: string,
+  gradientTo: string,
 ) {
-	return `
+  return `
   <!--[if mso]>
   <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${href}" style="height:44px;v-text-anchor:middle;width:150px;" arcsize="12%" fillcolor="${gradientFrom}" strokecolor="${gradientFrom}">
     <w:anchorlock/>
@@ -122,22 +122,22 @@ ${label}
 
 // Per-job feedback buttons (thumbs up/down)
 function vmlJobFeedbackButtons(
-	jobHash: string,
-	email: string,
-	baseUrl: string,
-	campaign: string,
+  jobHash: string,
+  email: string,
+  baseUrl: string,
+  campaign: string,
 ) {
-	if (!jobHash) return "";
+  if (!jobHash) return "";
 
-	const feedbackBase = `${baseUrl}/api/feedback/enhanced`;
-	const feedbackParams = `utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=job_feedback`;
+  const feedbackBase = `${baseUrl}/api/feedback/enhanced`;
+  const feedbackParams = `utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=job_feedback`;
 
-	// Create POST request URLs - these will need to be handled via a redirect page or API
-	// For email compatibility, we'll use GET with a redirect handler
-	const thumbsUpUrl = `${feedbackBase}?jobHash=${encodeURIComponent(jobHash)}&email=${encodeURIComponent(email)}&feedbackType=thumbs_up&source=email&${feedbackParams}`;
-	const thumbsDownUrl = `${feedbackBase}?jobHash=${encodeURIComponent(jobHash)}&email=${encodeURIComponent(email)}&feedbackType=thumbs_down&source=email&${feedbackParams}`;
+  // Create POST request URLs - these will need to be handled via a redirect page or API
+  // For email compatibility, we'll use GET with a redirect handler
+  const thumbsUpUrl = `${feedbackBase}?jobHash=${encodeURIComponent(jobHash)}&email=${encodeURIComponent(email)}&feedbackType=thumbs_up&source=email&${feedbackParams}`;
+  const thumbsDownUrl = `${feedbackBase}?jobHash=${encodeURIComponent(jobHash)}&email=${encodeURIComponent(email)}&feedbackType=thumbs_down&source=email&${feedbackParams}`;
 
-	return `
+  return `
   <div class="feedback-buttons-mobile">
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0 0 0; width:100%;">
       <tr>
@@ -165,156 +165,156 @@ function vmlJobFeedbackButtons(
 
 // Premium wrapper with enhanced styling
 function formatSource(source?: string): string | undefined {
-	if (!source) return undefined;
-	const cleaned = String(source).replace(/[_-]/g, " ");
-	return cleaned.slice(0, 1).toUpperCase() + cleaned.slice(1);
+  if (!source) return undefined;
+  const cleaned = String(source).replace(/[_-]/g, " ");
+  return cleaned.slice(0, 1).toUpperCase() + cleaned.slice(1);
 }
 
 function formatSalary(job: Record<string, any>): string | undefined {
-	const min =
-		job.salary_min ?? job.salaryMin ?? job.salary ?? job.compensation_min;
-	const max = job.salary_max ?? job.salaryMax ?? job.compensation_max;
-	const currency = job.salary_currency ?? job.currency ?? "€";
-	if (!min && !max) return undefined;
-	const formatNumber = (raw: number) => {
-		if (raw === null || raw === undefined) return undefined;
-		const value = Number(raw);
-		if (!Number.isFinite(value)) return undefined;
-		if (value >= 1000) return `${Math.round(value / 1000)}k`;
-		if (value % 1 === 0) return value.toString();
-		return value.toFixed(0);
-	};
-	const formattedMin = formatNumber(Number(min));
-	const formattedMax = formatNumber(Number(max));
-	if (formattedMin && formattedMax)
-		return `${currency}${formattedMin}–${formattedMax}`;
-	if (formattedMin) return `${currency}${formattedMin}+`;
-	if (formattedMax) return `Up to ${currency}${formattedMax}`;
-	return undefined;
+  const min =
+    job.salary_min ?? job.salaryMin ?? job.salary ?? job.compensation_min;
+  const max = job.salary_max ?? job.salaryMax ?? job.compensation_max;
+  const currency = job.salary_currency ?? job.currency ?? "€";
+  if (!min && !max) return undefined;
+  const formatNumber = (raw: number) => {
+    if (raw === null || raw === undefined) return undefined;
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return undefined;
+    if (value >= 1000) return `${Math.round(value / 1000)}k`;
+    if (value % 1 === 0) return value.toString();
+    return value.toFixed(0);
+  };
+  const formattedMin = formatNumber(Number(min));
+  const formattedMax = formatNumber(Number(max));
+  if (formattedMin && formattedMax)
+    return `${currency}${formattedMin}–${formattedMax}`;
+  if (formattedMin) return `${currency}${formattedMin}+`;
+  if (formattedMax) return `Up to ${currency}${formattedMax}`;
+  return undefined;
 }
 
 function formatJobTags(job: Record<string, any>): string[] {
-	const tags = new Set<string>();
-	const addTag = (value?: string) => {
-		if (!value) return;
-		const trimmed = value.toString().trim();
-		if (trimmed.length === 0) return;
-		tags.add(trimmed);
-	};
+  const tags = new Set<string>();
+  const addTag = (value?: string) => {
+    if (!value) return;
+    const trimmed = value.toString().trim();
+    if (trimmed.length === 0) return;
+    tags.add(trimmed);
+  };
 
-	// Helper function to convert database category to readable tag
-	// Uses shared label mapping for consistency with rest of application
-	const formatCategoryTag = (category: string): string => {
-		if (!category) return "";
-		// Skip non-career-path categories like "early-career", "internship"
-		if (
-			["early-career", "internship", "graduate", "experienced"].includes(
-				category.toLowerCase(),
-			)
-		) {
-			return "";
-		}
+  // Helper function to convert database category to readable tag
+  // Uses shared label mapping for consistency with rest of application
+  const formatCategoryTag = (category: string): string => {
+    if (!category) return "";
+    // Skip non-career-path categories like "early-career", "internship"
+    if (
+      ["early-career", "internship", "graduate", "experienced"].includes(
+        category.toLowerCase(),
+      )
+    ) {
+      return "";
+    }
 
-		// Use shared label mapping for better-worded labels (e.g., "Tech & Transformation")
-		// First try to get label for simple form value
-		let label = getCareerPathLabel(category);
-		if (label !== category) return label;
+    // Use shared label mapping for better-worded labels (e.g., "Tech & Transformation")
+    // First try to get label for simple form value
+    let label = getCareerPathLabel(category);
+    if (label !== category) return label;
 
-		// If not found, might be a database category (hyphenated) - convert to form value first
-		const formValue = mapDatabaseToForm(category);
-		label = getCareerPathLabel(formValue);
-		if (label !== formValue) return label;
+    // If not found, might be a database category (hyphenated) - convert to form value first
+    const formValue = mapDatabaseToForm(category);
+    label = getCareerPathLabel(formValue);
+    if (label !== formValue) return label;
 
-		// Fallback: if still not found, use simple capitalization
-		return category.charAt(0).toUpperCase() + category.slice(1);
-	};
+    // Fallback: if still not found, use simple capitalization
+    return category.charAt(0).toUpperCase() + category.slice(1);
+  };
 
-	// Extract career path from multiple possible sources
-	// Priority: career_path > careerPath > primary_category > categories array
-	let careerPath = job.career_path ?? job.careerPath ?? job.primary_category;
+  // Extract career path from multiple possible sources
+  // Priority: career_path > careerPath > primary_category > categories array
+  let careerPath = job.career_path ?? job.careerPath ?? job.primary_category;
 
-	// If no direct career path, try to extract from categories array
-	if (
-		!careerPath &&
-		Array.isArray(job.categories) &&
-		job.categories.length > 0
-	) {
-		// Find first career-path category (skip "early-career", "internship", etc.)
-		const categoryWithCareerPath = job.categories.find(
-			(cat: string) =>
-				cat?.includes("-") &&
-				!["early-career", "internship", "graduate", "experienced"].includes(
-					cat.toLowerCase(),
-				),
-		);
-		if (categoryWithCareerPath) {
-			careerPath = formatCategoryTag(categoryWithCareerPath);
-		}
-	}
-	if (careerPath) {
-		const formatted = formatCategoryTag(careerPath);
-		if (formatted) addTag(formatted);
-	}
+  // If no direct career path, try to extract from categories array
+  if (
+    !careerPath &&
+    Array.isArray(job.categories) &&
+    job.categories.length > 0
+  ) {
+    // Find first career-path category (skip "early-career", "internship", etc.)
+    const categoryWithCareerPath = job.categories.find(
+      (cat: string) =>
+        cat?.includes("-") &&
+        !["early-career", "internship", "graduate", "experienced"].includes(
+          cat.toLowerCase(),
+        ),
+    );
+    if (categoryWithCareerPath) {
+      careerPath = formatCategoryTag(categoryWithCareerPath);
+    }
+  }
+  if (careerPath) {
+    const formatted = formatCategoryTag(careerPath);
+    if (formatted) addTag(formatted);
+  }
 
-	// Add additional career paths from array (limit to 1 more to keep tags concise)
-	if (Array.isArray(job.career_paths)) {
-		job.career_paths.slice(0, 1).forEach((path: string) => {
-			const formatted = formatCategoryTag(path);
-			if (formatted) addTag(formatted);
-		});
-	} else if (Array.isArray(job.categories) && careerPath) {
-		// Add one more category if available (skip if already added)
-		const additionalCategory = job.categories.find(
-			(cat: string) =>
-				cat?.includes("-") &&
-				!["early-career", "internship", "graduate", "experienced"].includes(
-					cat.toLowerCase(),
-				) &&
-				formatCategoryTag(cat) !== formatCategoryTag(careerPath),
-		);
-		if (additionalCategory) {
-			const formatted = formatCategoryTag(additionalCategory);
-			if (formatted) addTag(formatted);
-		}
-	}
+  // Add additional career paths from array (limit to 1 more to keep tags concise)
+  if (Array.isArray(job.career_paths)) {
+    job.career_paths.slice(0, 1).forEach((path: string) => {
+      const formatted = formatCategoryTag(path);
+      if (formatted) addTag(formatted);
+    });
+  } else if (Array.isArray(job.categories) && careerPath) {
+    // Add one more category if available (skip if already added)
+    const additionalCategory = job.categories.find(
+      (cat: string) =>
+        cat?.includes("-") &&
+        !["early-career", "internship", "graduate", "experienced"].includes(
+          cat.toLowerCase(),
+        ) &&
+        formatCategoryTag(cat) !== formatCategoryTag(careerPath),
+    );
+    if (additionalCategory) {
+      const formatted = formatCategoryTag(additionalCategory);
+      if (formatted) addTag(formatted);
+    }
+  }
 
-	const workEnv = job.work_arrangement ?? job.work_environment ?? job.work_mode;
-	if (workEnv) {
-		addTag(
-			workEnv
-				.toString()
-				.replace(/_/g, " ")
-				.replace(/\b\w/g, (char: string) => char.toUpperCase()),
-		);
-	}
+  const workEnv = job.work_arrangement ?? job.work_environment ?? job.work_mode;
+  if (workEnv) {
+    addTag(
+      workEnv
+        .toString()
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (char: string) => char.toUpperCase()),
+    );
+  }
 
-	const employment = job.employment_type ?? job.job_type ?? job.contract_type;
-	if (employment) {
-		addTag(
-			employment
-				.toString()
-				.replace(/_/g, " ")
-				.replace(/\b\w/g, (char: string) => char.toUpperCase()),
-		);
-	}
+  const employment = job.employment_type ?? job.job_type ?? job.contract_type;
+  if (employment) {
+    addTag(
+      employment
+        .toString()
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (char: string) => char.toUpperCase()),
+    );
+  }
 
-	const source = formatSource(job.source);
-	if (source) addTag(`via ${source}`);
+  const source = formatSource(job.source);
+  if (source) addTag(`via ${source}`);
 
-	const language =
-		job.language_requirement ?? job.language ?? job.primary_language;
-	if (language) addTag(`${language.toString()} role`);
+  const language =
+    job.language_requirement ?? job.language ?? job.primary_language;
+  if (language) addTag(`${language.toString()} role`);
 
-	const salaryTag = formatSalary(job);
-	if (salaryTag) addTag(salaryTag);
+  const salaryTag = formatSalary(job);
+  if (salaryTag) addTag(salaryTag);
 
-	return Array.from(tags).slice(0, 3);
+  return Array.from(tags).slice(0, 3);
 }
 
 function wrapEmail(title: string, body: string, footerEmail?: string): string {
-	const baseUrl = getBaseUrl();
-	const preferencesLink = buildPreferencesLink(footerEmail);
-	return `
+  const baseUrl = getBaseUrl();
+  const preferencesLink = buildPreferencesLink(footerEmail);
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -493,14 +493,14 @@ function wrapEmail(title: string, body: string, footerEmail?: string): string {
 }
 
 export function createWelcomeEmail(
-	userName?: string,
-	matchCount: number = 5,
-	userEmail?: string,
+  userName?: string,
+  matchCount: number = 5,
+  userEmail?: string,
 ): string {
-	const displayName = userName?.trim() ? userName.trim() : "there";
-	const friendName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
-	const matchesLabel = matchCount === 1 ? "match" : "matches";
-	const body = `
+  const displayName = userName?.trim() ? userName.trim() : "there";
+  const friendName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+  const matchesLabel = matchCount === 1 ? "match" : "matches";
+  const body = `
   <tr>
     <td class="content" align="center">
       <div class="pill">${matchCount} new ${matchesLabel} already picked for you <span role="img" aria-label="target">🎯</span></div>
@@ -517,7 +517,7 @@ export function createWelcomeEmail(
       <p class="text" style="color:${COLORS.textSecondary}; font-size:14px; margin-top:28px;">Need to tweak anything? <a href="${buildPreferencesLink(userEmail)}" style="color:#5B21B6; text-decoration:underline;">Update your preferences</a> any time - or reply to this email and we'll handle it for you.</p>
     </td>
   </tr>`;
-	return wrapEmail("Welcome to JobPing", body, userEmail);
+  return wrapEmail("Welcome to JobPing", body, userEmail);
 }
 
 /**
@@ -532,102 +532,102 @@ export function createWelcomeEmail(
  * @param userPreferences - Optional user preferences for profile section
  */
 export function createJobMatchesEmail(
-	jobCards: EmailJobCard[],
-	userName?: string,
-	subscriptionTier: "free" | "premium" = "premium", // Default to premium since free users don't get emails
-	isSignupEmail: boolean = false,
-	userEmail?: string,
-	userPreferences?: {
-		career_path?: string | string[];
-		target_cities?: string[];
-		visa_status?: string;
-		entry_level_preference?: string;
-		work_environment?: string | string[];
-	},
+  jobCards: EmailJobCard[],
+  userName?: string,
+  subscriptionTier: "free" | "premium" = "premium", // Default to premium since free users don't get emails
+  isSignupEmail: boolean = false,
+  userEmail?: string,
+  userPreferences?: {
+    career_path?: string | string[];
+    target_cities?: string[];
+    visa_status?: string;
+    entry_level_preference?: string;
+    work_environment?: string | string[];
+  },
 ): string {
-	const matchesCount = jobCards.length;
-	const title = isSignupEmail
-		? `Your first ${matchesCount} matches just landed!`
-		: `Your ${matchesCount} new ${matchesCount === 1 ? "match" : "matches"} are ready`;
-	const campaign = `${subscriptionTier}-${isSignupEmail ? "signup" : "weekly"}-matches`;
-	const baseUrl = getBaseUrl();
-	// Build personalized profile section
-	const buildProfileSection = (): string => {
-		if (!userPreferences) return "";
+  const matchesCount = jobCards.length;
+  const title = isSignupEmail
+    ? `Your first ${matchesCount} matches just landed!`
+    : `Your ${matchesCount} new ${matchesCount === 1 ? "match" : "matches"} are ready`;
+  const campaign = `${subscriptionTier}-${isSignupEmail ? "signup" : "weekly"}-matches`;
+  const baseUrl = getBaseUrl();
+  // Build personalized profile section
+  const buildProfileSection = (): string => {
+    if (!userPreferences) return "";
 
-		const profileItems: string[] = [];
+    const profileItems: string[] = [];
 
-		// Career path
-		if (userPreferences.career_path) {
-			const careerPaths = Array.isArray(userPreferences.career_path)
-				? userPreferences.career_path
-				: [userPreferences.career_path];
-			const careerPathLabels = careerPaths
-				.map((path) => getCareerPathLabel(path))
-				.filter(Boolean);
-			if (careerPathLabels.length > 0) {
-				profileItems.push(
-					`<strong>Career Path:</strong> ${careerPathLabels.join(", ")}`,
-				);
-			}
-		}
+    // Career path
+    if (userPreferences.career_path) {
+      const careerPaths = Array.isArray(userPreferences.career_path)
+        ? userPreferences.career_path
+        : [userPreferences.career_path];
+      const careerPathLabels = careerPaths
+        .map((path) => getCareerPathLabel(path))
+        .filter(Boolean);
+      if (careerPathLabels.length > 0) {
+        profileItems.push(
+          `<strong>Career Path:</strong> ${careerPathLabels.join(", ")}`,
+        );
+      }
+    }
 
-		// Cities
-		if (
-			userPreferences.target_cities &&
-			userPreferences.target_cities.length > 0
-		) {
-			const cities = userPreferences.target_cities.slice(0, 5).join(", ");
-			const moreCities =
-				userPreferences.target_cities.length > 5
-					? ` + ${userPreferences.target_cities.length - 5} more`
-					: "";
-			profileItems.push(`<strong>Cities:</strong> ${cities}${moreCities}`);
-		}
+    // Cities
+    if (
+      userPreferences.target_cities &&
+      userPreferences.target_cities.length > 0
+    ) {
+      const cities = userPreferences.target_cities.slice(0, 5).join(", ");
+      const moreCities =
+        userPreferences.target_cities.length > 5
+          ? ` + ${userPreferences.target_cities.length - 5} more`
+          : "";
+      profileItems.push(`<strong>Cities:</strong> ${cities}${moreCities}`);
+    }
 
-		// Visa status
-		if (userPreferences.visa_status) {
-			const visaLabels: Record<string, string> = {
-				"eu-citizen": "EU Citizen",
-				"non-eu-visa-required": "Visa Sponsorship Required",
-				"non-eu-no-visa": "No Visa Required",
-			};
-			const visaLabel =
-				visaLabels[userPreferences.visa_status] || userPreferences.visa_status;
-			profileItems.push(`<strong>Visa:</strong> ${visaLabel}`);
-		}
+    // Visa status
+    if (userPreferences.visa_status) {
+      const visaLabels: Record<string, string> = {
+        "eu-citizen": "EU Citizen",
+        "non-eu-visa-required": "Visa Sponsorship Required",
+        "non-eu-no-visa": "No Visa Required",
+      };
+      const visaLabel =
+        visaLabels[userPreferences.visa_status] || userPreferences.visa_status;
+      profileItems.push(`<strong>Visa:</strong> ${visaLabel}`);
+    }
 
-		// Entry level preference
-		if (userPreferences.entry_level_preference) {
-			const entryLabels: Record<string, string> = {
-				internship: "Internships",
-				graduate: "Graduate Programs",
-				"entry-level": "Entry Level",
-				junior: "Junior Roles",
-			};
-			const entryLabel =
-				entryLabels[userPreferences.entry_level_preference] ||
-				userPreferences.entry_level_preference;
-			profileItems.push(`<strong>Level:</strong> ${entryLabel}`);
-		}
+    // Entry level preference
+    if (userPreferences.entry_level_preference) {
+      const entryLabels: Record<string, string> = {
+        internship: "Internships",
+        graduate: "Graduate Programs",
+        "entry-level": "Entry Level",
+        junior: "Junior Roles",
+      };
+      const entryLabel =
+        entryLabels[userPreferences.entry_level_preference] ||
+        userPreferences.entry_level_preference;
+      profileItems.push(`<strong>Level:</strong> ${entryLabel}`);
+    }
 
-		// Work environment
-		if (userPreferences.work_environment) {
-			const workEnvs = Array.isArray(userPreferences.work_environment)
-				? userPreferences.work_environment
-				: typeof userPreferences.work_environment === "string"
-					? userPreferences.work_environment.split(",").map((e) => e.trim())
-					: [];
-			if (workEnvs.length > 0) {
-				profileItems.push(
-					`<strong>Work Style:</strong> ${workEnvs.join(", ")}`,
-				);
-			}
-		}
+    // Work environment
+    if (userPreferences.work_environment) {
+      const workEnvs = Array.isArray(userPreferences.work_environment)
+        ? userPreferences.work_environment
+        : typeof userPreferences.work_environment === "string"
+          ? userPreferences.work_environment.split(",").map((e) => e.trim())
+          : [];
+      if (workEnvs.length > 0) {
+        profileItems.push(
+          `<strong>Work Style:</strong> ${workEnvs.join(", ")}`,
+        );
+      }
+    }
 
-		if (profileItems.length === 0) return "";
+    if (profileItems.length === 0) return "";
 
-		return `
+    return `
       <div style="background:rgba(91,33,182,0.15); border:1px solid rgba(91,33,182,0.35); border-radius:12px; padding:24px; margin:28px 0; font-size:14px; line-height:1.8;">
         <div style="color:${COLORS.textPrimary}; font-weight:600; margin-bottom:16px; font-size:15px; letter-spacing:0.2px;">📋 Your Profile</div>
         <div style="color:${COLORS.textSecondary}; line-height:1.9;">
@@ -635,9 +635,9 @@ export function createJobMatchesEmail(
         </div>
       </div>
     `;
-	};
+  };
 
-	const header = `
+  const header = `
   <tr>
     <td class="content" align="left">
       ${subscriptionTier === "premium" ? '<div class="badge" style="margin-bottom:28px;">⭐ Premium Member</div>' : ""}
@@ -647,198 +647,198 @@ export function createJobMatchesEmail(
       <p class="text" style="color:${COLORS.textSecondary}; font-size:15px;">Review the highlights, tap through to apply, and let us know if anything feels off - your feedback powers the next batch.</p>
     </td>
   </tr>`;
-	// const _formatTagsMarkup = (job: Record<string, any>) => {
-	// 	const tags = formatJobTags(job);
+  // const _formatTagsMarkup = (job: Record<string, any>) => {
+  // 	const tags = formatJobTags(job);
 
-	// 	// Add visa confidence tag if available
-	// 	if (job.visa_confidence && job.visa_confidence !== "unknown") {
-	// 		const visaLabel =
-	// 			job.visa_confidence_label ||
-	// 			getVisaConfidenceLabel(job.visa_confidence);
-	// 		const style = getVisaConfidenceStyle(job.visa_confidence);
+  // 	// Add visa confidence tag if available
+  // 	if (job.visa_confidence && job.visa_confidence !== "unknown") {
+  // 		const visaLabel =
+  // 			job.visa_confidence_label ||
+  // 			getVisaConfidenceLabel(job.visa_confidence);
+  // 		const style = getVisaConfidenceStyle(job.visa_confidence);
 
-	// 		// Use hex codes directly for email compatibility
-	// 		const visaTag = `<span style="display:inline-block; margin:0 8px 8px 0; padding:6px 12px; border-radius:999px; background-color:${style.emailBgColor}; color:${style.emailTextColor}; font-size:13px; font-weight:600; letter-spacing:0.2px; border:1px solid ${style.emailBorderColor};">${style.icon} ${visaLabel}</span>`;
-	// 		tags.push(visaTag);
-	// 	}
+  // 		// Use hex codes directly for email compatibility
+  // 		const visaTag = `<span style="display:inline-block; margin:0 8px 8px 0; padding:6px 12px; border-radius:999px; background-color:${style.emailBgColor}; color:${style.emailTextColor}; font-size:13px; font-weight:600; letter-spacing:0.2px; border:1px solid ${style.emailBorderColor};">${style.icon} ${visaLabel}</span>`;
+  // 		tags.push(visaTag);
+  // 	}
 
-	// 	if (!tags.length) return "";
-	// 	const tagItems = tags
-	// 		.map(
-	// 			(tag) =>
-	// 				`<li style="display:inline-block; margin:0 8px 8px 0; padding:6px 12px; border-radius:999px; background:rgba(91,33,182,0.15); color:${COLORS.gray300}; font-size:13px; font-weight:600; letter-spacing:0.2px;">${tag}</li>`,
-	// 		)
-	// 		.join("");
-	// 	return `<ul style="margin:16px 0 12px 0; padding:0; list-style:none;">${tagItems}</ul>`;
-	// };
+  // 	if (!tags.length) return "";
+  // 	const tagItems = tags
+  // 		.map(
+  // 			(tag) =>
+  // 				`<li style="display:inline-block; margin:0 8px 8px 0; padding:6px 12px; border-radius:999px; background:rgba(91,33,182,0.15); color:${COLORS.gray300}; font-size:13px; font-weight:600; letter-spacing:0.2px;">${tag}</li>`,
+  // 		)
+  // 		.join("");
+  // 	return `<ul style="margin:16px 0 12px 0; padding:0; list-style:none;">${tagItems}</ul>`;
+  // };
 
-	// Function to generate unique match reason for each job - uses REAL user preferences
-	const generateUniqueMatchReason = (
-		job: Record<string, any>,
-		matchResult: any,
-		index: number,
-	): string => {
-		// Use database reasoning if available (from AI matching) - this is already personalized
-		if (matchResult?.reasoning || matchResult?.match_reason) {
-			return matchResult.reasoning || matchResult.match_reason;
-		}
+  // Function to generate unique match reason for each job - uses REAL user preferences
+  const generateUniqueMatchReason = (
+    job: Record<string, any>,
+    matchResult: any,
+    index: number,
+  ): string => {
+    // Use database reasoning if available (from AI matching) - this is already personalized
+    if (matchResult?.reasoning || matchResult?.match_reason) {
+      return matchResult.reasoning || matchResult.match_reason;
+    }
 
-		// Generate unique reason based on job details AND user's actual preferences
-		const company = job.company || "This company";
-		const location = job.location
-			? job.location.split(",")[0]
-			: "your preferred location";
-		const workEnv =
-			job.work_arrangement || job.work_environment || job.work_mode || "hybrid";
-		const isGraduate = job.is_graduate || job.isGraduate || false;
-		// const _isInternship = job.is_internship || job.isInternship || false;
+    // Generate unique reason based on job details AND user's actual preferences
+    const company = job.company || "This company";
+    const location = job.location
+      ? job.location.split(",")[0]
+      : "your preferred location";
+    const workEnv =
+      job.work_arrangement || job.work_environment || job.work_mode || "hybrid";
+    const isGraduate = job.is_graduate || job.isGraduate || false;
+    // const _isInternship = job.is_internship || job.isInternship || false;
 
-		// Get user's actual career path from preferences
-		const userCareerPath = userPreferences?.career_path
-			? Array.isArray(userPreferences.career_path)
-				? userPreferences.career_path[0]
-				: userPreferences.career_path
-			: "Strategy"; // Fallback to Strategy if not provided
+    // Get user's actual career path from preferences
+    const userCareerPath = userPreferences?.career_path
+      ? Array.isArray(userPreferences.career_path)
+        ? userPreferences.career_path[0]
+        : userPreferences.career_path
+      : "Strategy"; // Fallback to Strategy if not provided
 
-		const careerPathLabel =
-			getCareerPathLabel(userCareerPath) || "your career path";
+    const careerPathLabel =
+      getCareerPathLabel(userCareerPath) || "your career path";
 
-		// Get user's actual entry level preference
-		const entryLevel = userPreferences?.entry_level_preference || "entry-level";
-		const entryLevelText =
-			entryLevel === "graduate"
-				? "recent graduates"
-				: entryLevel === "internship"
-					? "interns"
-					: "entry-level candidates";
+    // Get user's actual entry level preference
+    const entryLevel = userPreferences?.entry_level_preference || "entry-level";
+    const entryLevelText =
+      entryLevel === "graduate"
+        ? "recent graduates"
+        : entryLevel === "internship"
+          ? "interns"
+          : "entry-level candidates";
 
-		// Get user's actual visa status
-		const visaStatus = userPreferences?.visa_status || "non-eu-visa-required";
-		const visaText =
-			visaStatus === "eu-citizen"
-				? "EU citizen-friendly"
-				: "visa sponsorship available";
+    // Get user's actual visa status
+    const visaStatus = userPreferences?.visa_status || "non-eu-visa-required";
+    const visaText =
+      visaStatus === "eu-citizen"
+        ? "EU citizen-friendly"
+        : "visa sponsorship available";
 
-		// Generate personalized reasons based on user's actual preferences
-		const reasons = [
-			`Perfect for your ${careerPathLabel} career path. ${company}'s practice focuses on projects that align with your interests. Located in ${location}, ${visaText}, and requires no prior experience - ideal for ${entryLevelText}.`,
-			`Hot match! ${company}'s ${isGraduate ? "Graduate Programme" : "program"} is specifically designed for ${entryLevelText} like you. The ${workEnv.toLowerCase()} work arrangement fits your preferences, and the role is in ${location} with ${visaText}. Perfect entry point into ${careerPathLabel}.`,
-			`${company}'s team specializes in work that matches your ${careerPathLabel} career path. The role is based in ${location} with ${visaText}, and the ${workEnv.toLowerCase()} setup aligns with your preferences. ${isGraduate ? "Graduate-friendly" : "Entry-level friendly"} with comprehensive training.`,
-			`Great match for ${careerPathLabel}. ${company} offers structured training for ${entryLevelText}, located in ${location} with ${visaText}. The ${workEnv.toLowerCase()} arrangement provides flexibility, and the role focuses on projects you're interested in.`,
-			`Strong alignment with your ${careerPathLabel} goals. ${company}'s team offers clear progression paths for ${entryLevelText}. Located in ${location} with ${visaText}, ${workEnv.toLowerCase()} work style, and ${isGraduate ? "graduate-friendly" : "entry-level friendly"} with excellent training support.`,
-		];
+    // Generate personalized reasons based on user's actual preferences
+    const reasons = [
+      `Perfect for your ${careerPathLabel} career path. ${company}'s practice focuses on projects that align with your interests. Located in ${location}, ${visaText}, and requires no prior experience - ideal for ${entryLevelText}.`,
+      `Hot match! ${company}'s ${isGraduate ? "Graduate Programme" : "program"} is specifically designed for ${entryLevelText} like you. The ${workEnv.toLowerCase()} work arrangement fits your preferences, and the role is in ${location} with ${visaText}. Perfect entry point into ${careerPathLabel}.`,
+      `${company}'s team specializes in work that matches your ${careerPathLabel} career path. The role is based in ${location} with ${visaText}, and the ${workEnv.toLowerCase()} setup aligns with your preferences. ${isGraduate ? "Graduate-friendly" : "Entry-level friendly"} with comprehensive training.`,
+      `Great match for ${careerPathLabel}. ${company} offers structured training for ${entryLevelText}, located in ${location} with ${visaText}. The ${workEnv.toLowerCase()} arrangement provides flexibility, and the role focuses on projects you're interested in.`,
+      `Strong alignment with your ${careerPathLabel} goals. ${company}'s team offers clear progression paths for ${entryLevelText}. Located in ${location} with ${visaText}, ${workEnv.toLowerCase()} work style, and ${isGraduate ? "graduate-friendly" : "entry-level friendly"} with excellent training support.`,
+    ];
 
-		return (
-			reasons[index % reasons.length] ||
-			`Matches your preferences: ${location}, ${careerPathLabel} career path, ${visaText}, and ${isGraduate ? "graduate" : "entry-level"} friendly.`
-		);
-	};
+    return (
+      reasons[index % reasons.length] ||
+      `Matches your preferences: ${location}, ${careerPathLabel} career path, ${visaText}, and ${isGraduate ? "graduate" : "entry-level"} friendly.`
+    );
+  };
 
-	const items = jobCards
-		.map((c, index) => {
-			// Handle score as decimal (0.97) or percentage (97)
-			const rawScore = c.matchResult?.match_score ?? 85;
-			const score =
-				rawScore < 1 ? Math.round(rawScore * 100) : Math.round(rawScore);
-			const hot = score >= 92;
-			const currentJobHash = c.job.job_hash || "";
-			const jobUrl = c.job.job_url || c.job.url || c.job.apply_url || "";
+  const items = jobCards
+    .map((c, index) => {
+      // Handle score as decimal (0.97) or percentage (97)
+      const rawScore = c.matchResult?.match_score ?? 85;
+      const score =
+        rawScore < 1 ? Math.round(rawScore * 100) : Math.round(rawScore);
+      const hot = score >= 92;
+      const currentJobHash = c.job.job_hash || "";
+      const jobUrl = c.job.job_url || c.job.url || c.job.apply_url || "";
 
-			// Generate evidence page link with JWT token (7-day expiry)
-			let evidenceHref = "";
-			if (currentJobHash && userEmail) {
-				try {
-					const token = issueSecureToken(userEmail, "match_evidence", {
-						ttlMinutes: 7 * 24 * 60,
-					}); // 7 days
-					evidenceHref = `${baseUrl}/matches/${encodeURIComponent(currentJobHash)}?email=${encodeURIComponent(userEmail)}&token=${encodeURIComponent(token)}&utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=evidence_page`;
-				} catch (error) {
-					console.warn(
-						"Failed to generate evidence token, falling back to direct link",
-						error,
-					);
-					// Fallback to direct job URL if token generation fails
-					evidenceHref = jobUrl
-						? `${jobUrl}${jobUrl.includes("?") ? "&" : "?"}utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=apply_button`
-						: "";
-				}
-			} else {
-				// Fallback to direct job URL if no job hash
-				evidenceHref = jobUrl
-					? `${jobUrl}${jobUrl.includes("?") ? "&" : "?"}utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=apply_button`
-					: "";
-			}
+      // Generate evidence page link with JWT token (7-day expiry)
+      let evidenceHref = "";
+      if (currentJobHash && userEmail) {
+        try {
+          const token = issueSecureToken(userEmail, "match_evidence", {
+            ttlMinutes: 7 * 24 * 60,
+          }); // 7 days
+          evidenceHref = `${baseUrl}/matches/${encodeURIComponent(currentJobHash)}?email=${encodeURIComponent(userEmail)}&token=${encodeURIComponent(token)}&utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=evidence_page`;
+        } catch (error) {
+          console.warn(
+            "Failed to generate evidence token, falling back to direct link",
+            error,
+          );
+          // Fallback to direct job URL if token generation fails
+          evidenceHref = jobUrl
+            ? `${jobUrl}${jobUrl.includes("?") ? "&" : "?"}utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=apply_button`
+            : "";
+        }
+      } else {
+        // Fallback to direct job URL if no job hash
+        evidenceHref = jobUrl
+          ? `${jobUrl}${jobUrl.includes("?") ? "&" : "?"}utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=apply_button`
+          : "";
+      }
 
-			const apply = evidenceHref
-				? vmlButton(
-						evidenceHref,
-						"View Match Evidence →",
-						COLORS.indigo,
-						COLORS.purple,
-					)
-				: "";
-			const plainLink = evidenceHref
-				? `<p class="text" style="color:${COLORS.textSecondary}; font-size:13px; margin-top:20px; line-height:1.6;">Button not working? Paste this link:<br /><a href="${evidenceHref}" style="color:#5B21B6; text-decoration:underline; word-break:break-all; font-size:12px;">${evidenceHref.substring(0, 80)}...</a></p>`
-				: "";
+      const apply = evidenceHref
+        ? vmlButton(
+            evidenceHref,
+            "View Match Evidence →",
+            COLORS.indigo,
+            COLORS.purple,
+          )
+        : "";
+      const plainLink = evidenceHref
+        ? `<p class="text" style="color:${COLORS.textSecondary}; font-size:13px; margin-top:20px; line-height:1.6;">Button not working? Paste this link:<br /><a href="${evidenceHref}" style="color:#5B21B6; text-decoration:underline; word-break:break-all; font-size:12px;">${evidenceHref.substring(0, 80)}...</a></p>`
+        : "";
 
-			// Calculate visa confidence for this job (still need description for visa detection)
-			const visaConfidence = calculateVisaConfidence({
-				description: c.job.description || "",
-				title: c.job.title,
-				company: c.job.company,
-				visa_friendly: c.job.visa_friendly,
-				visa_sponsorship: c.job.visa_sponsorship,
-			});
+      // Calculate visa confidence for this job (still need description for visa detection)
+      const visaConfidence = calculateVisaConfidence({
+        description: c.job.description || "",
+        title: c.job.title,
+        company: c.job.company,
+        visa_friendly: c.job.visa_friendly,
+        visa_sponsorship: c.job.visa_sponsorship,
+      });
 
-			// Add visa confidence to job object for formatTagsMarkup
-			const jobWithVisaConfidence = {
-				...c.job,
-				visa_confidence: visaConfidence.confidence,
-				visa_confidence_label: getVisaConfidenceLabel(
-					visaConfidence.confidence,
-				),
-			};
+      // Add visa confidence to job object for formatTagsMarkup
+      const jobWithVisaConfidence = {
+        ...c.job,
+        visa_confidence: visaConfidence.confidence,
+        visa_confidence_label: getVisaConfidenceLabel(
+          visaConfidence.confidence,
+        ),
+      };
 
-			// Short description (max 120 chars)
-			const shortDesc = c.job.description
-				? c.job.description.length > 120
-					? `${c.job.description.slice(0, 120)}…`
-					: c.job.description
-				: "";
-			const descMarkup = shortDesc
-				? `<div style="color:${COLORS.textSecondary}; font-size:15px; line-height:1.75; margin:16px 0 20px 0;">${shortDesc}</div>`
-				: "";
+      // Short description (max 120 chars)
+      const shortDesc = c.job.description
+        ? c.job.description.length > 120
+          ? `${c.job.description.slice(0, 120)}…`
+          : c.job.description
+        : "";
+      const descMarkup = shortDesc
+        ? `<div style="color:${COLORS.textSecondary}; font-size:15px; line-height:1.75; margin:16px 0 20px 0;">${shortDesc}</div>`
+        : "";
 
-			// Limit tags to 2 most important
-			const tags = formatJobTags(jobWithVisaConfidence).slice(0, 2);
-			const tagsMarkup =
-				tags.length > 0
-					? `<div style="margin:16px 0 20px 0;">
+      // Limit tags to 2 most important
+      const tags = formatJobTags(jobWithVisaConfidence).slice(0, 2);
+      const tagsMarkup =
+        tags.length > 0
+          ? `<div style="margin:16px 0 20px 0;">
           ${tags.map((tag) => `<span style="display:inline-block; margin:0 8px 8px 0; padding:7px 14px; border-radius:6px; background:rgba(91,33,182,0.25); color:${COLORS.textPrimary}; font-size:12px; font-weight:600; border:1px solid rgba(91,33,182,0.3);">${tag}</span>`).join("")}
         </div>`
-					: "";
+          : "";
 
-			// Get job_hash and email for feedback buttons
-			const jobHash = c.job.job_hash || c.job.jobHash || "";
-			const emailForFeedback = userEmail || c.job.user_email || "";
-			const feedbackButtons = jobHash
-				? vmlJobFeedbackButtons(jobHash, emailForFeedback, baseUrl, campaign)
-				: "";
+      // Get job_hash and email for feedback buttons
+      const jobHash = c.job.job_hash || c.job.jobHash || "";
+      const emailForFeedback = userEmail || c.job.user_email || "";
+      const feedbackButtons = jobHash
+        ? vmlJobFeedbackButtons(jobHash, emailForFeedback, baseUrl, campaign)
+        : "";
 
-			// Add tracking pixel for email impressions (shown signal)
-			let trackingPixel = "";
-			if (jobHash && emailForFeedback) {
-				try {
-					const token = issueSecureToken(emailForFeedback, "match_evidence", {
-						ttlMinutes: 7 * 24 * 60,
-					});
-					trackingPixel = `<img src="${baseUrl}/api/tracking/pixel?jobHash=${encodeURIComponent(jobHash)}&email=${encodeURIComponent(emailForFeedback)}&token=${encodeURIComponent(token)}" width="1" height="1" style="display:none;" alt="" />`;
-				} catch (_error) {
-					// Fail silently - tracking pixel is optional
-				}
-			}
+      // Add tracking pixel for email impressions (shown signal)
+      let trackingPixel = "";
+      if (jobHash && emailForFeedback) {
+        try {
+          const token = issueSecureToken(emailForFeedback, "match_evidence", {
+            ttlMinutes: 7 * 24 * 60,
+          });
+          trackingPixel = `<img src="${baseUrl}/api/tracking/pixel?jobHash=${encodeURIComponent(jobHash)}&email=${encodeURIComponent(emailForFeedback)}&token=${encodeURIComponent(token)}" width="1" height="1" style="display:none;" alt="" />`;
+        } catch (_error) {
+          // Fail silently - tracking pixel is optional
+        }
+      }
 
-			return `
+      return `
     <tr><td class="content">
       <div class="card${hot ? " hot" : ""}" style="background:${hot ? "linear-gradient(135deg,rgba(16,185,129,0.15),rgba(16,185,129,0.08))" : "#1a1a1a"}; border:1px solid ${hot ? "rgba(16,185,129,0.4)" : "rgba(91,33,182,0.25)"}; border-radius:12px; padding:28px; margin-bottom:32px;">
         <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;">
@@ -852,19 +852,19 @@ export function createJobMatchesEmail(
                     ${hot ? "🔥 " : ""}${score}% Match
                   </span>
                       ${(() => {
-												const matchReason = generateUniqueMatchReason(
-													c.job,
-													c.matchResult,
-													index,
-												);
-												if (matchReason) {
-													// "Why this score?" link - shows personalization is happening
-													// In email, this links to the match reason section below (which is always shown)
-													// The match reason section makes it clear we're personalizing for them
-													return `<a href="#match-reason-${index}" style="color:${COLORS.textSecondary}; font-size:11px; text-decoration:underline; text-decoration-style:dotted; text-underline-offset:3px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; white-space:nowrap;" title="See why this job matches your profile">Why this score?</a>`;
-												}
-												return "";
-											})()}
+                        const matchReason = generateUniqueMatchReason(
+                          c.job,
+                          c.matchResult,
+                          index,
+                        );
+                        if (matchReason) {
+                          // "Why this score?" link - shows personalization is happening
+                          // In email, this links to the match reason section below (which is always shown)
+                          // The match reason section makes it clear we're personalizing for them
+                          return `<a href="#match-reason-${index}" style="color:${COLORS.textSecondary}; font-size:11px; text-decoration:underline; text-decoration-style:dotted; text-underline-offset:3px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; white-space:nowrap;" title="See why this job matches your profile">Why this score?</a>`;
+                        }
+                        return "";
+                      })()}
                     </div>
                   </td>
                   <td class="company-name-mobile" style="padding:0; vertical-align:top; text-align:right;">
@@ -878,32 +878,32 @@ export function createJobMatchesEmail(
                 <span style="color:${COLORS.textSecondary}; font-size:14px;">${c.job.location || "Location"}</span>
               </div>
               ${(() => {
-								// Display AI match reason prominently - CRITICAL: Shows personalization
-								// Always show match reason to demonstrate we're personalizing for them
-								const matchReason = generateUniqueMatchReason(
-									c.job,
-									c.matchResult,
-									index,
-								);
-								if (matchReason) {
-									// Format match reason - convert bullet points to proper list items
-									const formattedReason = matchReason
-										.split(/[•·]/)
-										.map((item) => item.trim())
-										.filter((item) => item.length > 0)
-										.map(
-											(item) =>
-												`<div style="margin:4px 0; color:${COLORS.textPrimary}; font-size:14px; line-height:1.7;">✓ ${item}</div>`,
-										)
-										.join("");
+                // Display AI match reason prominently - CRITICAL: Shows personalization
+                // Always show match reason to demonstrate we're personalizing for them
+                const matchReason = generateUniqueMatchReason(
+                  c.job,
+                  c.matchResult,
+                  index,
+                );
+                if (matchReason) {
+                  // Format match reason - convert bullet points to proper list items
+                  const formattedReason = matchReason
+                    .split(/[•·]/)
+                    .map((item) => item.trim())
+                    .filter((item) => item.length > 0)
+                    .map(
+                      (item) =>
+                        `<div style="margin:4px 0; color:${COLORS.textPrimary}; font-size:14px; line-height:1.7;">✓ ${item}</div>`,
+                    )
+                    .join("");
 
-									return `<div id="match-reason-${index}" style="background:rgba(91,33,182,0.2); border-left:4px solid ${COLORS.purple}; padding:18px 20px; margin:18px 0; border-radius:8px;">
+                  return `<div id="match-reason-${index}" style="background:rgba(91,33,182,0.2); border-left:4px solid ${COLORS.purple}; padding:18px 20px; margin:18px 0; border-radius:8px;">
                     <div style="color:${COLORS.purple}; font-size:12px; font-weight:600; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">🤖 Why This Matches</div>
                     <div style="color:${COLORS.textPrimary}; font-size:14px; line-height:1.75;">${formattedReason || matchReason}</div>
                   </div>`;
-								}
-								return "";
-							})()}
+                }
+                return "";
+              })()}
               ${descMarkup}
         ${tagsMarkup}
         ${feedbackButtons}
@@ -915,14 +915,14 @@ export function createJobMatchesEmail(
         </table>
       </div>
     </td></tr>`;
-		})
-		.join("");
+    })
+    .join("");
 
-	// Premium upgrade CTA
-	const upgradeUrl = `${baseUrl}/billing?utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=upgrade_cta`;
-	const upgradeCta =
-		subscriptionTier === "free"
-			? `
+  // Premium upgrade CTA
+  const upgradeUrl = `${baseUrl}/billing?utm_source=jobping&utm_medium=email&utm_campaign=${campaign}&utm_content=upgrade_cta`;
+  const upgradeCta =
+    subscriptionTier === "free"
+      ? `
   <tr>
     <td class="content" align="center" style="padding-top:32px;">
       <div style="background:linear-gradient(135deg,rgba(91,33,182,0.15),rgba(91,33,182,0.1)); border:2px solid rgba(91,33,182,0.3); border-radius:16px; padding:36px 28px; margin-top:12px;">
@@ -939,16 +939,16 @@ export function createJobMatchesEmail(
       </div>
     </td>
   </tr>`
-			: "";
+      : "";
 
-	return wrapEmail("Your Job Matches", header + items + upgradeCta, userEmail);
+  return wrapEmail("Your Job Matches", header + items + upgradeCta, userEmail);
 }
 
 export function createVerificationEmail(
-	verificationLink: string,
-	userEmail?: string,
+  verificationLink: string,
+  userEmail?: string,
 ): string {
-	const body = `
+  const body = `
   <tr>
     <td class="content" align="center">
       <h1 class="title">Verify your email address <span role="img" aria-label="email">✉️</span></h1>
@@ -967,19 +967,19 @@ export function createVerificationEmail(
       </p>
     </td>
   </tr>`;
-	return wrapEmail("Verify Your Email", body, userEmail);
+  return wrapEmail("Verify Your Email", body, userEmail);
 }
 
 export function createReEngagementEmailTemplate(
-	userName: string,
-	unsubscribeUrl: string,
-	userEmail?: string,
+  userName: string,
+  unsubscribeUrl: string,
+  userEmail?: string,
 ): string {
-	const name = userName || "there";
-	const friendName = name.charAt(0).toUpperCase() + name.slice(1);
-	const baseUrl = getBaseUrl();
+  const name = userName || "there";
+  const friendName = name.charAt(0).toUpperCase() + name.slice(1);
+  const baseUrl = getBaseUrl();
 
-	const body = `
+  const body = `
   <tr>
     <td class="content" align="center">
       <h1 class="title">Hey ${friendName}! <span role="img" aria-label="wave">👋</span></h1>
@@ -1003,5 +1003,5 @@ export function createReEngagementEmailTemplate(
       </p>
     </td>
   </tr>`;
-	return wrapEmail("We Miss You - JobPing", body, userEmail);
+  return wrapEmail("We Miss You - JobPing", body, userEmail);
 }

@@ -17,6 +17,7 @@ If you discover a security vulnerability in JobPing, please do **NOT** open a pu
 Email security concerns to: **security@getjobping.com**
 
 Include the following information:
+
 - A clear description of the vulnerability
 - Steps to reproduce the issue
 - Potential impact and severity assessment
@@ -29,6 +30,7 @@ We will acknowledge your report within **72 hours** and provide a more detailed 
 ### 3. Responsible Disclosure
 
 We kindly ask that you:
+
 - Allow us reasonable time to fix the issue before public disclosure
 - Avoid accessing or modifying user data
 - Avoid conducting denial of service attacks
@@ -39,18 +41,21 @@ We kindly ask that you:
 JobPing implements multiple layers of security:
 
 ### Authentication & Authorization
+
 - HMAC-based API authentication
 - Row-Level Security (RLS) on all database tables
 - JWT token validation with proper expiration
 - Rate limiting on all public endpoints
 
 ### Data Protection
+
 - GDPR compliance with user data controls
 - Encrypted data transmission (HTTPS/TLS)
 - Secure environment variable management
 - Input sanitization and validation
 
 ### Infrastructure Security
+
 - Content Security Policy (CSP) headers
 - Strict Transport Security (HSTS)
 - XSS protection headers
@@ -58,12 +63,14 @@ JobPing implements multiple layers of security:
 - Security-focused Next.js configuration
 
 ### Monitoring & Logging
+
 - Sentry error tracking and monitoring
 - Structured logging for security events
 - Automated security scanning in CI/CD
 - Performance monitoring and alerting
 
 ### API Security
+
 - Input validation using Zod schemas
 - Rate limiting with configurable thresholds
 - Request/response size limits

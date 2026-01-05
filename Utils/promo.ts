@@ -1,6 +1,6 @@
 export type PromoValidation = {
-	isValid: boolean;
-	reason?: string;
+  isValid: boolean;
+  reason?: string;
 };
 
 /**
@@ -9,27 +9,27 @@ export type PromoValidation = {
  * - PROMO_EMAIL_ALLOWLIST (optional): regex to restrict eligible emails
  */
 export function validatePromoCode(
-	code: string | undefined | null,
-	email: string,
+  code: string | undefined | null,
+  email: string,
 ): PromoValidation {
-	const configured = (process.env.PROMO_CODE || "rhys").toLowerCase();
-	const provided = (code || "").toLowerCase().trim();
+  const configured = (process.env.PROMO_CODE || "rhys").toLowerCase();
+  const provided = (code || "").toLowerCase().trim();
 
-	if (!provided) return { isValid: false, reason: "missing_code" };
-	if (provided !== configured)
-		return { isValid: false, reason: "invalid_code" };
+  if (!provided) return { isValid: false, reason: "missing_code" };
+  if (provided !== configured)
+    return { isValid: false, reason: "invalid_code" };
 
-	const allowRegex = process.env.PROMO_EMAIL_ALLOWLIST;
-	if (allowRegex) {
-		try {
-			const re = new RegExp(allowRegex);
-			if (!re.test(email))
-				return { isValid: false, reason: "email_not_allowed" };
-		} catch {
-			// If regex is bad, fail closed
-			return { isValid: false, reason: "invalid_allowlist_regex" };
-		}
-	}
+  const allowRegex = process.env.PROMO_EMAIL_ALLOWLIST;
+  if (allowRegex) {
+    try {
+      const re = new RegExp(allowRegex);
+      if (!re.test(email))
+        return { isValid: false, reason: "email_not_allowed" };
+    } catch {
+      // If regex is bad, fail closed
+      return { isValid: false, reason: "invalid_allowlist_regex" };
+    }
+  }
 
-	return { isValid: true };
+  return { isValid: true };
 }

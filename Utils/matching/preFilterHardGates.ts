@@ -19,36 +19,29 @@ import type { UserPreferences } from "./types";
  * - Language requirements
  */
 export function preFilterByHardGates(
-	jobs: Job[],
-	userPrefs: UserPreferences,
+  jobs: Job[],
+  userPrefs: UserPreferences,
 ): Job[] {
-	const eligibleJobs: Job[] = [];
-	const rejectionReasons: Record<string, number> = {};
+  const eligibleJobs: Job[] = [];
+  const rejectionReasons: Record<string, number> = {};
 
-	for (const job of jobs) {
-		const gateResult = applyHardGates(job, userPrefs);
-		if (gateResult.passed) {
-			eligibleJobs.push(job);
-		} else {
-			// Track rejection reasons for debugging
-			const primaryReason =
-				gateResult.reason || gateResult.reasons?.[0] || "Unknown";
-			rejectionReasons[primaryReason] =
-				(rejectionReasons[primaryReason] || 0) + 1;
-		}
-	}
+  for (const job of jobs) {
+    const gateResult = applyHardGates(job, userPrefs);
+    if (gateResult.passed) {
+      eligibleJobs.push(job);
+    } else {
+      // Track rejection reasons for debugging
+      const primaryReason =
+        gateResult.reason || gateResult.reasons?.[0] || "Unknown";
+      rejectionReasons[primaryReason] =
+        (rejectionReasons[primaryReason] || 0) + 1;
+    }
+  }
 
-	// Log rejection analysis (only if we have jobs to analyze)
-	if (jobs.length > 0) {
-		console.error("🔍 HARDFILTER: Rejection analysis", {
-			totalJobs: jobs.length,
-			eligibleJobs: eligibleJobs.length,
-			filteredOut: jobs.length - eligibleJobs.length,
-			rejectionReasons: Object.entries(rejectionReasons)
-				.sort(([, a], [, b]) => b - a)
-				.slice(0, 5), // Top 5 reasons
-		});
-	}
+  // Log rejection analysis (only if we have jobs to analyze)
+  if (jobs.length > 0) {
+    });
+  }
 
-	return eligibleJobs;
+  return eligibleJobs;
 }

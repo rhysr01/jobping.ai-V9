@@ -4,110 +4,110 @@
  */
 
 jest.mock("@supabase/supabase-js", () => ({
-	createClient: jest.fn(),
+  createClient: jest.fn(),
 }));
 
 jest.mock("resend", () => ({
-	Resend: jest.fn(),
+  Resend: jest.fn(),
 }));
 
 import { HealthChecker } from "@/Utils/monitoring/healthChecker";
 
 describe("HealthChecker", () => {
-	let healthChecker: HealthChecker;
-	let mockSupabase: any;
-	let mockResendInstance: any;
-	let mockCreateClient: any;
-	let mockResend: any;
+  let healthChecker: HealthChecker;
+  let mockSupabase: any;
+  let mockResendInstance: any;
+  let mockCreateClient: any;
+  let mockResend: any;
 
-	beforeEach(() => {
-		jest.clearAllMocks();
+  beforeEach(() => {
+    jest.clearAllMocks();
 
-		const { createClient } = require("@supabase/supabase-js");
-		const { Resend } = require("resend");
-		mockCreateClient = createClient;
-		mockResend = Resend;
+    const { createClient } = require("@supabase/supabase-js");
+    const { Resend } = require("resend");
+    mockCreateClient = createClient;
+    mockResend = Resend;
 
-		const createQuery = () => {
-			const query: any = {
-				select: jest.fn(() => query),
-				limit: jest.fn(() =>
-					Promise.resolve({
-						data: [{ created_at: new Date().toISOString() }],
-						error: null,
-					}),
-				),
-				gte: jest.fn(() => query),
-				eq: jest.fn(() => query),
-				then: (resolve: any) =>
-					Promise.resolve(
-						resolve({ data: [{ status: "completed" }], error: null }),
-					),
-				catch: () => Promise.resolve(),
-			};
-			return query;
-		};
+    const createQuery = () => {
+      const query: any = {
+        select: jest.fn(() => query),
+        limit: jest.fn(() =>
+          Promise.resolve({
+            data: [{ created_at: new Date().toISOString() }],
+            error: null,
+          }),
+        ),
+        gte: jest.fn(() => query),
+        eq: jest.fn(() => query),
+        then: (resolve: any) =>
+          Promise.resolve(
+            resolve({ data: [{ status: "completed" }], error: null }),
+          ),
+        catch: () => Promise.resolve(),
+      };
+      return query;
+    };
 
-		mockSupabase = {
-			from: jest.fn(() => createQuery()),
-			storage: {
-				listBuckets: jest
-					.fn()
-					.mockResolvedValue({ data: ["public"], error: null }),
-			},
-		};
+    mockSupabase = {
+      from: jest.fn(() => createQuery()),
+      storage: {
+        listBuckets: jest
+          .fn()
+          .mockResolvedValue({ data: ["public"], error: null }),
+      },
+    };
 
-		mockResendInstance = {
-			emails: {
-				send: jest
-					.fn()
-					.mockResolvedValue({ data: { id: "test" }, error: null }),
-			},
-		};
+    mockResendInstance = {
+      emails: {
+        send: jest
+          .fn()
+          .mockResolvedValue({ data: { id: "test" }, error: null }),
+      },
+    };
 
-		mockCreateClient.mockReturnValue(mockSupabase);
-		mockResend.mockImplementation(() => mockResendInstance);
+    mockCreateClient.mockReturnValue(mockSupabase);
+    mockResend.mockImplementation(() => mockResendInstance);
 
-		process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
-		process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
-		process.env.RESEND_API_KEY = "re_test_key";
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
+    process.env.RESEND_API_KEY = "re_test_key";
 
-		global.fetch = jest.fn().mockResolvedValue({ ok: true });
+    global.fetch = jest.fn().mockResolvedValue({ ok: true });
 
-		healthChecker = new HealthChecker();
-	});
+    healthChecker = new HealthChecker();
+  });
 
-	describe("performHealthCheck", () => {
-		it("should perform comprehensive health check", async () => {
-			const result = await healthChecker.performHealthCheck();
+  describe("performHealthCheck", () => {
+    it("should perform comprehensive health check", async () => {
+      const result = await healthChecker.performHealthCheck();
 
-			expect(result).toHaveProperty("status");
-			expect(result).toHaveProperty("timestamp");
-			expect(result).toHaveProperty("duration");
-			expect(result).toHaveProperty("components");
-			expect(result).toHaveProperty("metrics");
-		});
+      expect(result).toHaveProperty("status");
+      expect(result).toHaveProperty("timestamp");
+      expect(result).toHaveProperty("duration");
+      expect(result).toHaveProperty("components");
+      expect(result).toHaveProperty("metrics");
+    });
 
-		it("should check database health", async () => {
-			const result = await healthChecker.performHealthCheck();
+    it("should check database health", async () => {
+      const result = await healthChecker.performHealthCheck();
 
-			expect(result.components.database).toBeDefined();
-			expect(result.components.database).toHaveProperty("status");
-		});
+      expect(result.components.database).toBeDefined();
+      expect(result.components.database).toHaveProperty("status");
+    });
 
-		it("should check email service health", async () => {
-			const result = await healthChecker.performHealthCheck();
+    it("should check email service health", async () => {
+      const result = await healthChecker.performHealthCheck();
 
-			expect(result.components.email).toBeDefined();
-			expect(result.components.email).toHaveProperty("status");
-		});
+      expect(result.components.email).toBeDefined();
+      expect(result.components.email).toHaveProperty("status");
+    });
 
-		it("should include performance metrics", async () => {
-			const result = await healthChecker.performHealthCheck();
+    it("should include performance metrics", async () => {
+      const result = await healthChecker.performHealthCheck();
 
-			expect(result.metrics).toHaveProperty("response_time");
-			expect(result.metrics).toHaveProperty("memory_usage");
-			expect(result.metrics).toHaveProperty("uptime");
-		});
-	});
+      expect(result.metrics).toHaveProperty("response_time");
+      expect(result.metrics).toHaveProperty("memory_usage");
+      expect(result.metrics).toHaveProperty("uptime");
+    });
+  });
 });

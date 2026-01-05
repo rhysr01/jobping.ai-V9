@@ -19,72 +19,72 @@ import type { Job } from "@/scrapers/types";
  * This includes both scraped fields and AI-calculated fields
  */
 export interface JobWithMetadata extends Job {
-	// Visa & Sponsorship Fields (used in rule-based-matcher.service.ts)
-	visa_friendly?: boolean;
-	visa_sponsorship?: boolean;
-	visa_confidence?: "verified" | "likely" | "local-only" | "unknown";
-	visa_confidence_label?: string;
-	visa_confidence_reason?: string;
-	visa_confidence_percentage?: number;
+  // Visa & Sponsorship Fields (used in rule-based-matcher.service.ts)
+  visa_friendly?: boolean;
+  visa_sponsorship?: boolean;
+  visa_confidence?: "verified" | "likely" | "local-only" | "unknown";
+  visa_confidence_label?: string;
+  visa_confidence_reason?: string;
+  visa_confidence_percentage?: number;
 
-	// Experience Level Fields (used in matching calculations)
-	min_yoe?: number | null; // Years of Experience (null if regex extraction failed)
-	max_yoe?: number | null;
-	experience_level?:
-		| "internship"
-		| "graduate"
-		| "junior"
-		| "mid"
-		| "senior"
-		| null;
+  // Experience Level Fields (used in matching calculations)
+  min_yoe?: number | null; // Years of Experience (null if regex extraction failed)
+  max_yoe?: number | null;
+  experience_level?:
+    | "internship"
+    | "graduate"
+    | "junior"
+    | "mid"
+    | "senior"
+    | null;
 
-	// Matching Metadata (calculated by matching engine)
-	match_score?: number;
-	match_reason?: string;
-	match_quality?: "excellent" | "very good" | "good" | "fair" | "poor";
-	confidence_score?: number;
-	score_breakdown?: {
-		overall: number;
-		eligibility: number;
-		careerPath: number;
-		location: number;
-		workEnvironment: number;
-		roleFit: number;
-		experienceLevel: number;
-		companyCulture: number;
-		skills: number;
-		timing: number;
-		semanticBoost?: number;
-	};
+  // Matching Metadata (calculated by matching engine)
+  match_score?: number;
+  match_reason?: string;
+  match_quality?: "excellent" | "very good" | "good" | "fair" | "poor";
+  confidence_score?: number;
+  score_breakdown?: {
+    overall: number;
+    eligibility: number;
+    careerPath: number;
+    location: number;
+    workEnvironment: number;
+    roleFit: number;
+    experienceLevel: number;
+    companyCulture: number;
+    skills: number;
+    timing: number;
+    semanticBoost?: number;
+  };
 
-	// Provenance & Algorithm Tracking
-	provenance?: {
-		match_algorithm: "rules" | "hybrid" | "ai" | "fallback";
-		fallback_reason?: string;
-	};
+  // Provenance & Algorithm Tracking
+  provenance?: {
+    match_algorithm: "rules" | "hybrid" | "ai" | "fallback";
+    fallback_reason?: string;
+  };
 
-	// Distribution & Guaranteed Matching Fields
-	relaxationLevel?: number;
-	job_snapshot?: Record<string, unknown>; // For historical matching
+  // Distribution & Guaranteed Matching Fields
+  relaxationLevel?: number;
+  job_snapshot?: Record<string, unknown>; // For historical matching
 
-	// Additional Metadata Fields
-	ai_labels?: string[];
-	dedupe_key?: string | null;
-	board?: string | null;
-	company_name?: string | null;
+  // Additional Metadata Fields
+  ai_labels?: string[];
+  dedupe_key?: string | null;
+  board?: string | null;
+  company_name?: string | null;
 }
 
 /**
  * Type guard to check if an object is a JobWithMetadata
  */
 export function isJobWithMetadata(obj: unknown): obj is JobWithMetadata {
-	if (!obj || typeof obj !== "object") return false;
-	const job = obj as Record<string, unknown>;
-	return (
-		typeof job.job_hash === "string" &&
-		typeof job.title === "string" &&
-		typeof job.company === "string"
-	);
+  if (!obj || typeof obj !== "object") return false;
+  const job = obj as Record<string, unknown>;
+  return (
+    typeof job.job_hash === "string" &&
+    typeof job.title === "string" &&
+    typeof job.company === "string"
+  );
 }
 
 /**
@@ -92,12 +92,12 @@ export function isJobWithMetadata(obj: unknown): obj is JobWithMetadata {
  * Use this instead of `(job as any)` throughout the codebase
  */
 export function asJobWithMetadata(job: unknown): JobWithMetadata {
-	if (isJobWithMetadata(job)) {
-		return job;
-	}
-	// If it's a basic Job, extend it
-	if (job && typeof job === "object" && "job_hash" in job) {
-		return job as JobWithMetadata;
-	}
-	throw new Error("Invalid job object - cannot cast to JobWithMetadata");
+  if (isJobWithMetadata(job)) {
+    return job;
+  }
+  // If it's a basic Job, extend it
+  if (job && typeof job === "object" && "job_hash" in job) {
+    return job as JobWithMetadata;
+  }
+  throw new Error("Invalid job object - cannot cast to JobWithMetadata");
 }

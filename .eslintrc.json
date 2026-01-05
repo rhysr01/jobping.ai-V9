@@ -1,51 +1,51 @@
 {
-	"extends": "next/core-web-vitals",
-	"rules": {
-		"no-unused-vars": "off",
-		"react/no-unescaped-entities": "off",
-		"no-restricted-imports": [
-			"warn",
-			{
-				"paths": [
-					{
-						"name": "@/Utils/supabase",
-						"importNames": ["getSupabaseClient", "createSupabaseClient"],
-						"message": "Use getDatabaseClient() from '@/Utils/databasePool' instead. getSupabaseClient() is deprecated."
-					},
-					{
-						"name": "@/lib/supabase-client",
-						"importNames": ["getServerSupabaseClient"],
-						"message": "Use getDatabaseClient() from '@/Utils/databasePool' instead. getServerSupabaseClient() is deprecated."
-					}
-				]
-			}
-		],
-		"no-restricted-syntax": [
-			"off",
-			{
-				"selector": "CallExpression[callee.property.name='json'] > MemberExpression[object.name='NextResponse']",
-				"message": "Prefer using createSuccessResponse() or createErrorResponse() from '@/lib/api-types' for consistent API responses. Use asyncHandler() from '@/lib/errors' for error handling."
-			}
-		]
-	},
-	"overrides": [
-		{
-			"files": [
-				"**/__mocks__/**/*",
-				"**/__tests__/**/*",
-				"*.test.ts",
-				"*.test.tsx",
-				"*.spec.ts"
-			],
-			"rules": {
-				"no-unused-vars": "off"
-			}
-		},
-		{
-			"files": ["app/api/health/route.ts", "app/api/dashboard/route.ts"],
-			"rules": {
-				"no-restricted-syntax": "off"
-			}
-		}
-	]
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "no-unused-vars": "off",
+    "react/no-unescaped-entities": "off",
+    "no-restricted-imports": [
+      "warn",
+      {
+        "paths": [
+          {
+            "name": "@/Utils/supabase",
+            "importNames": ["getSupabaseClient", "createSupabaseClient"],
+            "message": "Use getDatabaseClient() from '@/Utils/databasePool' instead. getSupabaseClient() is deprecated."
+          },
+          {
+            "name": "@/lib/supabase-client",
+            "importNames": ["getServerSupabaseClient"],
+            "message": "Use getDatabaseClient() from '@/Utils/databasePool' instead. getServerSupabaseClient() is deprecated."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "off",
+      {
+        "selector": "CallExpression[callee.property.name='json'] > MemberExpression[object.name='NextResponse']",
+        "message": "Prefer using createSuccessResponse() or createErrorResponse() from '@/lib/api-types' for consistent API responses. Use asyncHandler() from '@/lib/errors' for error handling."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/__mocks__/**/*",
+        "**/__tests__/**/*",
+        "*.test.ts",
+        "*.test.tsx",
+        "*.spec.ts"
+      ],
+      "rules": {
+        "no-unused-vars": "off"
+      }
+    },
+    {
+      "files": ["app/api/health/route.ts", "app/api/dashboard/route.ts"],
+      "rules": {
+        "no-restricted-syntax": "off"
+      }
+    }
+  ]
 }

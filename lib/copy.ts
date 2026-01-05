@@ -7,7 +7,7 @@ import { FREE_ROLES_PER_SEND, PREMIUM_SENDS_PER_WEEK } from "./productMetrics";
 export const CTA_FREE = `Get ${FREE_ROLES_PER_SEND} matches Free`;
 export const CTA_PREMIUM = "Upgrade to Premium";
 export const VP_TAGLINE =
-	"Stop searching. Start applying.\nNo logins. Zero scrolling. Jobs in your inbox.";
+  "Stop searching. Start applying.\nNo logins. Zero scrolling. Jobs in your inbox.";
 
 // Standardized CTA text (used across multiple components)
 export const CTA_GET_MY_5_FREE_MATCHES = "Get My 5 Free Matches";
@@ -15,17 +15,17 @@ export const CTA_GET_MY_5_FREE_MATCHES_ARIA = "Get my 5 free matches";
 
 // Standardized trust/reassurance text
 export const TRUST_TEXT_INSTANT_SETUP =
-	"⚡ Instant matches • No credit card • 2-minute setup";
+  "⚡ Instant matches • No credit card • 2-minute setup";
 export const TRUST_TEXT_NO_CARD_SETUP = "No credit card • 2-minute setup";
 
 // Hero section
 export const HERO_TITLE = "JobPing";
 export const HERO_HEADLINE =
-	"Get hand-picked early-career jobs across Europe without wasting hours searching";
+  "Get hand-picked early-career jobs across Europe without wasting hours searching";
 export const HERO_SUBLINE =
-	"We scan 4,000+ EU companies daily and send you only roles you're qualified for - filtered by location, visa status, and experience.";
+  "We scan 4,000+ EU companies daily and send you only roles you're qualified for - filtered by location, visa status, and experience.";
 export const HERO_SUBLINE_MICRO =
-	"No dashboards. No job boards. Just roles you can actually apply for.";
+  "No dashboards. No job boards. Just roles you can actually apply for.";
 export const HERO_CTA = "Get my first 5 matches";
 export const HERO_PRIMARY_CTA = "Start Free - See Your First 5 Matches";
 export const HERO_SECONDARY_CTA = "View Instant Matches";
@@ -36,69 +36,69 @@ export const HERO_SOCIAL_PROOF = "Trusted by students in 7 countries";
 export const HOW_IT_WORKS_TITLE = "How it works";
 export const HOW_IT_WORKS_SUMMARY = "We do the searching. You do the applying.";
 export const HOW_IT_WORKS_STEPS = [
-	{
-		title: "1. Tell us your preferences",
-		description:
-			"Choose your cities, career path, and visa status. We'll only show roles you qualify for - no time wasters. Only junior-friendly roles: internships, graduate programmes, and entry-level positions.",
-	},
-	{
-		title: "2. We search 4,000+ companies daily",
-		description:
-			"Our AI scans job boards and career pages across Europe - you get the best matches in your inbox. Every email includes salary hints, visa notes, and why the role fits you.",
-	},
-	{
-		title: "3. Get matched roles instantly (Free) or weekly (Premium)",
-		description:
-			"Free: See 5 matches right away (one-time). Premium: Get 5 fresh roles every Monday, Wednesday, and Friday (15 per week). No dashboards. Open the email and apply when you like a role.",
-	},
+  {
+    title: "1. Tell us your preferences",
+    description:
+      "Choose your cities, career path, and visa status. We'll only show roles you qualify for - no time wasters. Only junior-friendly roles: internships, graduate programmes, and entry-level positions.",
+  },
+  {
+    title: "2. We search 4,000+ companies daily",
+    description:
+      "Our AI scans job boards and career pages across Europe - you get the best matches in your inbox. Every email includes salary hints, visa notes, and why the role fits you.",
+  },
+  {
+    title: "3. Get matched roles instantly (Free) or weekly (Premium)",
+    description:
+      "Free: See 5 matches right away (one-time). Premium: Get 5 fresh roles every Monday, Wednesday, and Friday (15 per week). No dashboards. Open the email and apply when you like a role.",
+  },
 ];
 
 // What Happens Next section
 export const WHAT_HAPPENS_NEXT_TITLE = "What Happens Next";
 export const WHAT_HAPPENS_NEXT_STEPS = [
-	{
-		title: "Tell us your preferences",
-		time: "2 minutes",
-		description: "Choose your cities, career path, and visa status.",
-	},
-	{
-		title: "We hand-pick jobs for you",
-		time: "Daily",
-		description:
-			"Our AI scans 4,000+ companies and matches roles to your profile.",
-	},
-	{
-		title: "Get matches instantly (Free) or weekly (Premium)",
-		time: "Instant / Mon/Wed/Fri",
-		description:
-			"Free: See 5 matches right away (one-time). Premium: 5 fresh matches every Monday, Wednesday, and Friday (15 per week).",
-	},
+  {
+    title: "Tell us your preferences",
+    time: "2 minutes",
+    description: "Choose your cities, career path, and visa status.",
+  },
+  {
+    title: "We hand-pick jobs for you",
+    time: "Daily",
+    description:
+      "Our AI scans 4,000+ companies and matches roles to your profile.",
+  },
+  {
+    title: "Get matches instantly (Free) or weekly (Premium)",
+    time: "Instant / Mon/Wed/Fri",
+    description:
+      "Free: See 5 matches right away (one-time). Premium: 5 fresh matches every Monday, Wednesday, and Friday (15 per week).",
+  },
 ];
 
 // Built for students
 export const BUILT_FOR_STUDENTS_TITLE = "Why Students Choose JobPing";
 export const BUILT_FOR_STUDENTS_SUBTITLE =
-	"We help first-time jobseekers land early-career roles they actually qualify for.";
+  "We help first-time jobseekers land early-career roles they actually qualify for.";
 export const BUILT_FOR_STUDENTS_KICKER = "For early-career jobseekers";
 export const BUILT_FOR_STUDENTS_FEATURES = [
-	{
-		num: 1,
-		title: "Only junior-friendly roles",
-		body: "Internships, graduate programmes, and working student roles. Nothing senior.",
-		meta: "No bait-and-switch senior jobs.",
-	},
-	{
-		num: 2,
-		title: "Useful context in every email",
-		body: "Every email includes salary hints, visa notes, and why the role fits you.",
-		meta: "Everything you need to decide in seconds.",
-	},
-	{
-		num: 3,
-		title: "Inbox-first experience",
-		body: "No dashboards. Open the email and apply when you like a role.",
-		meta: "No login. Just open your email and apply.",
-	},
+  {
+    num: 1,
+    title: "Only junior-friendly roles",
+    body: "Internships, graduate programmes, and working student roles. Nothing senior.",
+    meta: "No bait-and-switch senior jobs.",
+  },
+  {
+    num: 2,
+    title: "Useful context in every email",
+    body: "Every email includes salary hints, visa notes, and why the role fits you.",
+    meta: "Everything you need to decide in seconds.",
+  },
+  {
+    num: 3,
+    title: "Inbox-first experience",
+    body: "No dashboards. Open the email and apply when you like a role.",
+    meta: "No login. Just open your email and apply.",
+  },
 ];
 
 // Pricing
@@ -110,11 +110,11 @@ export const PRICING_BADGE = "Simple pricing • Cancel anytime";
 export const FREE_PLAN_TITLE = "Free";
 export const FREE_PLAN_SUBTITLE = "Try it out";
 export const FREE_PLAN_FEATURES = [
-	`Get 5 instant matches`,
-	"View matches on website",
-	"No credit card required",
-	"Takes under 2 minutes",
-	"No recurring fees",
+  `Get 5 instant matches`,
+  "View matches on website",
+  "No credit card required",
+  "Takes under 2 minutes",
+  "No recurring fees",
 ];
 export const FREE_PLAN_DESCRIPTION = `See your first 5 matches on your personalized dashboard. This is a one-time preview to see how JobPing works. No credit card required.`;
 
@@ -130,27 +130,27 @@ export const PREMIUM_PLAN_PRICE_UNIT = "/mo";
 export const PREMIUM_PLAN_ANNUAL = "€20 for 3 months (save €1)";
 export const PREMIUM_PLAN_DESCRIPTION = `Matches delivered to your inbox every Monday, Wednesday, and Friday - so you never miss an opportunity.`;
 export const PREMIUM_PLAN_FEATURES = [
-	`15 curated roles per week (3 emails: Mon / Wed / Fri)`,
-	"Priority curation",
-	"Cancel anytime",
+  `15 curated roles per week (3 emails: Mon / Wed / Fri)`,
+  "Priority curation",
+  "Cancel anytime",
 ];
 
 // Reassurance
 export const REASSURANCE_ITEMS = [
-	"No CV required",
-	"Cancel anytime",
-	"GDPR compliant",
+  "No CV required",
+  "Cancel anytime",
+  "GDPR compliant",
 ];
 
 // Email showcase
 export const EMAIL_SHOWCASE_KICKER = "What your emails look like";
 export const EMAIL_SHOWCASE_TITLE = "Your Matches, Delivered";
 export const EMAIL_SHOWCASE_SUBTITLE =
-	"Every role includes salary range, visa info, and why it's a match for you - so you can decide in seconds.";
+  "Every role includes salary range, visa info, and why it's a match for you - so you can decide in seconds.";
 export const EMAIL_SHOWCASE_POINTS = [
-	`✓ 5 roles you actually qualify for (filtered by visa, location, experience)`,
-	"✓ Salary range and visa status upfront - no surprises",
-	"✓ One-click feedback to improve future matches",
+  `✓ 5 roles you actually qualify for (filtered by visa, location, experience)`,
+  "✓ Salary range and visa status upfront - no surprises",
+  "✓ One-click feedback to improve future matches",
 ];
 
 // Weekly stats prefix for dynamic display
@@ -159,21 +159,21 @@ export const ACTIVE_JOBS_PREFIX = "active opportunities right now";
 
 // FAQ for inline display
 export const INLINE_FAQ_ITEMS = [
-	{
-		icon: "❓",
-		question: "Do you apply for me?",
-		answer:
-			"No. We send matches, you apply directly to companies via their portals.",
-	},
-	{
-		icon: "🔍",
-		question: "How do you find these jobs?",
-		answer:
-			"We scan company career pages and 7+ EU job boards daily, including Indeed, Adzuna, Reed, and more.",
-	},
-	{
-		icon: "✖️",
-		question: "Can I cancel anytime?",
-		answer: "Yes. One click, no questions asked. Cancel from any email.",
-	},
+  {
+    icon: "❓",
+    question: "Do you apply for me?",
+    answer:
+      "No. We send matches, you apply directly to companies via their portals.",
+  },
+  {
+    icon: "🔍",
+    question: "How do you find these jobs?",
+    answer:
+      "We scan company career pages and 7+ EU job boards daily, including Indeed, Adzuna, Reed, and more.",
+  },
+  {
+    icon: "✖️",
+    question: "Can I cancel anytime?",
+    answer: "Yes. One click, no questions asked. Cancel from any email.",
+  },
 ];

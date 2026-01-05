@@ -9,6 +9,7 @@ Configure these in: **Settings → Secrets and variables → Actions**
 ### CI/CD Pipeline Secrets
 
 #### Vercel Deployment (Production)
+
 ```
 VERCEL_TOKEN          # Vercel API token for deployments
 VERCEL_ORG_ID         # Vercel organization ID
@@ -16,12 +17,14 @@ VERCEL_PROJECT_ID     # Vercel project ID for jobping
 ```
 
 #### Supabase Integration
+
 ```
 SUPABASE_ACCESS_TOKEN # Supabase CLI access token (for migrations)
 SUPABASE_PROJECT_REF  # Supabase project reference
 ```
 
 #### External Service API Keys (for E2E Testing)
+
 ```
 TEST_SUPABASE_URL           # Test database URL
 TEST_SUPABASE_ANON_KEY      # Test database anonymous key
@@ -32,11 +35,13 @@ TEST_OPENAI_API_KEY         # Test OpenAI API key
 ### Code Quality & Security
 
 #### CodeQL/Security Scanning
+
 ```
 GITHUB_TOKEN               # Auto-provided by GitHub Actions
 ```
 
 #### Dependency Management
+
 ```
 NPM_TOKEN                   # NPM registry token (if publishing packages)
 ```
@@ -46,6 +51,7 @@ NPM_TOKEN                   # NPM registry token (if publishing packages)
 These should be configured in your deployment platform (Vercel, etc.):
 
 ### Required for All Environments
+
 ```bash
 # Database
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
@@ -65,6 +71,7 @@ EMAIL_DOMAIN=getjobping.com
 ```
 
 ### Optional Services
+
 ```bash
 # AI Features
 OPENAI_API_KEY=sk-your-openai-key
@@ -91,16 +98,19 @@ ADZUNA_APP_KEY=your-adzuna-app-key
 ### 1. Generate Required Tokens
 
 #### Vercel Token
+
 1. Go to [Vercel Account Settings → Tokens](https://vercel.com/account/tokens)
 2. Create a new token with appropriate permissions
 3. Copy the token value
 
 #### Supabase Access Token
+
 1. Go to [Supabase Account Settings → Access Tokens](https://supabase.com/dashboard/account/tokens)
 2. Generate a new access token
 3. Copy the token value
 
 #### NPM Token (if publishing)
+
 1. Go to [NPM Account → Access Tokens](https://www.npmjs.com/settings/tokens)
 2. Generate a new token
 3. Copy the token value
@@ -127,6 +137,7 @@ git push origin main
 ## Security Best Practices
 
 ### Secret Management
+
 - ✅ **Never commit secrets to code**
 - ✅ **Use environment-specific secrets**
 - ✅ **Rotate secrets regularly**
@@ -134,11 +145,13 @@ git push origin main
 - ✅ **Monitor secret usage in logs**
 
 ### Access Control
+
 - 🔒 **Repository admins only** can manage secrets
 - 🔒 **Use personal access tokens** with minimal permissions
 - 🔒 **Enable branch protection** to prevent direct pushes to main
 
 ### Rotation Guidelines
+
 - **API Keys**: Rotate every 90 days or on compromise
 - **Access Tokens**: Rotate every 30 days
 - **Database Credentials**: Rotate on any security incident
@@ -148,16 +161,19 @@ git push origin main
 ### Common Issues
 
 **"Secret not found" error:**
+
 - Verify secret name matches exactly (case-sensitive)
 - Check secret is added to repository, not organization
 - Ensure workflow has permission to access secrets
 
 **"Invalid token" error:**
+
 - Regenerate token if expired
 - Verify token has correct permissions
 - Check token format (some require prefixes like `sk-`, `re_`)
 
 **Deployment fails:**
+
 - Verify Vercel tokens are valid and have deployment permissions
 - Check Supabase project access and permissions
 - Ensure environment variables are properly configured in deployment platform

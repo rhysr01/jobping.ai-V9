@@ -1,0 +1,530 @@
+instrumentation.ts:8 - register
+middleware.ts:5 - middleware
+middleware.ts:227 - config
+next.config.ts:137 - default
+playwright.config.ts:9 - default
+tailwind.config.ts:3 - default (used in module)
+app/global-error.tsx:6 - default
+app/layout.tsx:99 - default
+app/layout.tsx:16 - metadata
+app/layout.tsx:91 - viewport
+app/manifest.ts:3 - default
+app/not-found.tsx:5 - default
+app/page.tsx:20 - default
+app/robots.ts:4 - default
+app/sitemap.ts:4 - default
+hooks/useMapProjection.ts:12 - MapProjectionConfig (used in module)
+lib/api-client.ts:5 - ApiCallOptions (used in module)
+lib/api-types.ts:46 - isSuccessResponse
+lib/api-types.ts:57 - isErrorResponse
+lib/api-types.ts:10 - BaseApiResponse (used in module)
+lib/api-types.ts:16 - SuccessResponse (used in module)
+lib/api-types.ts:22 - ErrorResponse (used in module)
+lib/api-types.ts:34 - EmailFeedbackRequest
+lib/companyLogos.ts:7 - CompanyLogo (used in module)
+lib/config.ts:68 - targetCities
+lib/copy.ts:7 - CTA_FREE
+lib/copy.ts:8 - CTA_PREMIUM
+lib/copy.ts:9 - VP_TAGLINE
+lib/copy.ts:22 - HERO_TITLE
+lib/copy.ts:23 - HERO_HEADLINE
+lib/copy.ts:25 - HERO_SUBLINE
+lib/copy.ts:27 - HERO_SUBLINE_MICRO
+lib/copy.ts:29 - HERO_CTA
+lib/copy.ts:30 - HERO_PRIMARY_CTA
+lib/copy.ts:31 - HERO_SECONDARY_CTA
+lib/copy.ts:32 - HERO_PILL
+lib/copy.ts:33 - HERO_SOCIAL_PROOF
+lib/copy.ts:36 - HOW_IT_WORKS_TITLE
+lib/copy.ts:37 - HOW_IT_WORKS_SUMMARY
+lib/copy.ts:38 - HOW_IT_WORKS_STEPS
+lib/copy.ts:57 - WHAT_HAPPENS_NEXT_TITLE
+lib/copy.ts:58 - WHAT_HAPPENS_NEXT_STEPS
+lib/copy.ts:79 - BUILT_FOR_STUDENTS_TITLE
+lib/copy.ts:80 - BUILT_FOR_STUDENTS_SUBTITLE
+lib/copy.ts:82 - BUILT_FOR_STUDENTS_KICKER
+lib/copy.ts:83 - BUILT_FOR_STUDENTS_FEATURES
+lib/copy.ts:111 - FREE_PLAN_SUBTITLE
+lib/copy.ts:123 - PREMIUM_TIME_TO_APPLY_HOURS
+lib/copy.ts:124 - FREE_TIME_TO_APPLY_HOURS
+lib/copy.ts:127 - PREMIUM_PLAN_SUBTITLE
+lib/copy.ts:146 - EMAIL_SHOWCASE_KICKER
+lib/copy.ts:147 - EMAIL_SHOWCASE_TITLE
+lib/copy.ts:148 - EMAIL_SHOWCASE_SUBTITLE
+lib/copy.ts:150 - EMAIL_SHOWCASE_POINTS
+lib/copy.ts:157 - WEEKLY_STATS_PREFIX
+lib/copy.ts:158 - ACTIVE_JOBS_PREFIX
+lib/copy.ts:161 - INLINE_FAQ_ITEMS
+lib/database.types.ts:1 - Json (used in module)
+lib/database.types.ts:346 - TablesInsert
+lib/database.types.ts:348 - TablesUpdate
+lib/discover.ts:13 - discoverCompanies
+lib/discover.ts:6 - DiscoverParams (used in module)
+lib/env.ts:349 - isProduction
+lib/env.ts:350 - isDevelopment
+lib/errors.ts:68 - handleError (used in module)
+lib/errors.ts:46 - NotFoundError
+lib/errors.ts:58 - RateLimitError
+lib/locationNormalizer.ts:515 - normalizeLocation (used in module)
+lib/locations.ts:5 - resolveLocationId
+lib/matchAccuracy.ts:13 - MatchAccuracyResult (used in module)
+lib/normalize.ts:15 - inferTrack (used in module)
+lib/normalize.ts:29 - scoreJob (used in module)
+lib/normalize.ts:72 - normalize
+lib/productMetrics.ts:4 - FREE_SEND_DAYS (used in module)
+lib/productMetrics.ts:5 - FREE_SEND_DAY_LABEL
+lib/productMetrics.ts:7 - PREMIUM_ROLES_PER_SEND (used in module)
+lib/productMetrics.ts:9 - PREMIUM_SEND_DAYS (used in module)
+lib/productMetrics.ts:14 - WEEKS_PER_MONTH (used in module)
+lib/productMetrics.ts:16 - PREMIUM_ROLES_PER_YEAR
+lib/redis-client.ts:223 - getRedisClient (used in module)
+lib/redis-client.ts:237 - closeRedisClient (used in module)
+lib/redis-client.ts:244 - getRedisStatus
+lib/schemas.ts:12 - subscribeSchema (used in module)
+lib/schemas.ts:18 - SubscribeInput
+lib/string-helpers.ts:10 - normalizeStringToArray
+lib/string-helpers.ts:42 - truncate
+lib/string-helpers.ts:50 - capitalize
+lib/string-helpers.ts:58 - toKebabCase
+lib/supabase-client.ts:26 - getServerSupabaseClient (used in module)
+lib/supabase-client.ts:51 - getClientSupabaseClient (used in module)
+lib/supabase-client.ts:96 - supabase
+lib/types.ts:124 - isMatchMetrics
+lib/types.ts:134 - isEmailWebhookEvent
+lib/types.ts:10 - DatabaseResponse
+lib/types.ts:60 - EmailWebhookEvent (used in module)
+lib/types.ts:92 - CleanupContext (used in module)
+lib/types.ts:100 - CleanupMetrics (used in module)
+lib/types.ts:113 - CacheEntry
+scrapers/types.ts:32 - isValidJob
+scrapers/types.ts:251 - normalizeCareerPath (used in module)
+scrapers/types.ts:344 - createJobCategories (used in module)
+scrapers/types.ts:361 - extractCareerPathFromCategories (used in module)
+scrapers/types.ts:385 - addTagToCategories
+scrapers/types.ts:401 - calculateCareerPathTelemetry
+scrapers/types.ts:45 - CAREER_TAXONOMY_VERSION (used in module)
+scrapers/types.ts:48 - CANONICAL_CAREER_PATHS (used in module)
+scrapers/types.ts:65 - CAREER_PATH_PRIORITY (used in module)
+scrapers/types.ts:82 - CAREER_PATH_SYNONYMS (used in module)
+scrapers/types.ts:189 - WORK_ENVIRONMENTS (used in module)
+scrapers/types.ts:196 - VISA_STATUS_OPTIONS (used in module)
+scrapers/types.ts:202 - CAREER_PATHS (used in module)
+scrapers/types.ts:215 - TARGET_CITIES (used in module)
+scrapers/types.ts:244 - WorkEnvironment
+scrapers/types.ts:245 - VisaStatus
+scrapers/types.ts:246 - CareerPath
+scrapers/types.ts:247 - CanonicalCareerPath (used in module)
+scrapers/types.ts:248 - TargetCity
+scrapers/types.ts:392 - CareerPathTelemetry (used in module)
+scrapers/types.ts:433 - IngestJob
+scripts/generate_all_embeddings.ts:170 - generateAllEmbeddings (used in module)
+Utils/ai-cost-manager.ts:22 - AICostManager (used in module)
+Utils/ai-cost-manager.ts:212 - aiCostManager
+Utils/constants.ts:13 - TIMING
+Utils/constants.ts:65 - UI
+Utils/constants.ts:97 - HTTP_STATUS
+Utils/constants.ts:116 - HttpStatusCode
+Utils/constants.ts:121 - ERROR_CODES
+Utils/constants.ts:150 - ErrorCode
+Utils/countryLanguageMap.ts:43 - getCountryLanguage (used in module)
+Utils/countryLanguageMap.ts:55 - getEarlyCareerTerms (used in module)
+Utils/countryLanguageMap.ts:78 - hasEarlyCareerTerms (used in module)
+Utils/countryLanguageMap.ts:90 - smartEarlyCareerDetection
+Utils/countryLanguageMap.ts:8 - COUNTRY_LANGUAGE_MAP (used in module)
+Utils/emailVerification.ts:17 - generateVerificationToken (used in module)
+Utils/emailVerification.ts:24 - persistVerificationToken (used in module)
+Utils/emailVerification.ts:145 - checkEmailVerificationStatus
+Utils/engagementTracker.ts:30 - isUserEngaged (used in module)
+Utils/engagementTracker.ts:127 - getEngagementStats
+Utils/engagementTracker.ts:177 - shouldSendEmailToUser
+Utils/engagementTracker.ts:204 - getEngagedUsersForDelivery
+Utils/engagementTracker.ts:225 - resetUserEngagement
+Utils/engagementTracker.ts:8 - UserEngagement (used in module)
+Utils/engagementTracker.ts:19 - EngagementStats (used in module)
+Utils/errorResponse.ts:42 - getRequestId (used in module)
+Utils/errorResponse.ts:47 - errorJson (used in module)
+Utils/errorResponse.ts:35 - ApiErrorBody (used in module)
+Utils/errorResponse.ts:62 - errorResponse
+Utils/productionRateLimiter.ts:711 - withRateLimit
+Utils/productionRateLimiter.ts:720 - getScraperDelay (used in module)
+Utils/productionRateLimiter.ts:728 - shouldThrottleScraper (used in module)
+Utils/productionRateLimiter.ts:755 - resetLimiterForTests
+Utils/productionRateLimiter.ts:25 - RATE_LIMIT_CONFIG (used in module)
+Utils/productionRateLimiter.ts:96 - SCRAPER_RATE_LIMITS (used in module)
+Utils/productionRateLimiter.ts:216 - ProductionRateLimiter (used in module)
+Utils/promo.ts:11 - validatePromoCode
+Utils/promo.ts:1 - PromoValidation (used in module)
+Utils/sendConfiguration.ts:60 - canUserReceiveSend
+Utils/sendConfiguration.ts:77 - shouldSkipSend
+Utils/sendConfiguration.ts:118 - getJobsPerSend
+Utils/sendConfiguration.ts:125 - getSignupBonusJobs
+Utils/sendConfiguration.ts:132 - getEarlyAccessCutoff
+Utils/sendConfiguration.ts:23 - SEND_PLAN (used in module)
+Utils/sendConfiguration.ts:48 - SendLedgerEntry (used in module)
+Utils/supabase.ts:29 - getSupabaseClient
+Utils/supabase.ts:55 - createSupabaseClient
+Utils/supabase.ts:85 - wrapDatabaseResponse (used in module)
+Utils/supabase.ts:117 - executeWithRetry
+Utils/supabase.ts:194 - checkDatabaseHealth
+Utils/supabase.ts:76 - DatabaseResponse (used in module)
+Utils/url-helpers.ts:33 - getCanonicalDomain
+.next/types/routes.d.ts:109 - ParamsOf
+.next/types/routes.d.ts:117 - PageRoutes (used in module)
+.next/types/routes.d.ts:117 - RedirectRoutes (used in module)
+.next/types/routes.d.ts:117 - RewriteRoutes (used in module)
+app/about/page.tsx:10 - default
+app/about/page.tsx:4 - metadata
+app/admin/page.tsx:29 - default
+app/billing/page.tsx:57 - default
+app/contact/page.tsx:9 - default
+app/contact/page.tsx:4 - metadata
+app/dashboard/page.tsx:250 - default
+app/matches/page.tsx:1072 - default
+app/onboard/page.tsx:104 - default
+app/preferences/page.tsx:390 - default
+app/pricing/page.tsx:12 - default
+app/pricing/page.tsx:6 - metadata
+app/signup/page.tsx:1510 - default
+app/success/page.tsx:188 - default
+components/signup/FreeSuccessOverlay.tsx:13 - FreeSuccessOverlay
+components/ui/GlassCard.tsx:30 - GlassCardProps (used in module)
+components/ui/GradientText.tsx:24 - GradientTextProps (used in module)
+components/ui/Heading.tsx:36 - HeadingProps (used in module)
+lib/inngest/matching-helpers.ts:56 - triggerMatchingAndWait
+lib/inngest/matching-helpers.ts:9 - MatchingEventData (used in module)
+lib/types/job.ts:80 - isJobWithMetadata (used in module)
+lib/types/job.ts:94 - asJobWithMetadata
+Utils/auth/apiAuth.ts:5 - AuthConfig (used in module)
+Utils/auth/hmac.ts:21 - hmacSign (used in module)
+Utils/auth/hmac.ts:36 - hmacVerify
+Utils/auth/hmac.ts:114 - generateHMAC
+Utils/auth/hmac.ts:10 - HMACVerificationResult (used in module)
+Utils/auth/secureTokens.ts:175 - describeTokenPurpose
+Utils/auth/withAuth.ts:10 - requireSystemKey (used in module)
+Utils/auth/withAuth.ts:4 - AuthConfig (used in module)
+Utils/business-rules/job-filtering.ts:40 - isJobBoard (used in module)
+Utils/business-rules/job-filtering.ts:14 - JOB_BOARD_COMPANIES (used in module)
+Utils/business-rules/match-distribution.ts:26 - getMaxJobsForTier
+Utils/business-rules/match-distribution.ts:15 - JOBS_PER_TIER (used in module)
+Utils/config/matching.ts:127 - getConfig
+Utils/config/matching.ts:134 - getTierConfig
+Utils/config/matching.ts:154 - validateConfig (used in module)
+Utils/config/matching.ts:199 - getConfigSection
+Utils/config/matching.ts:209 - getMatchingConfig
+Utils/config/matching.ts:213 - validateMatchingConfig
+Utils/config/matching.ts:7 - isTestOrPerfMode (used in module)
+Utils/config/matching.ts:206 - MatchingConfig (used in module)
+Utils/cv/parser.service.ts:254 - getCVParser
+Utils/cv/parser.service.ts:8 - CVData (used in module)
+Utils/cv/parser.service.ts:46 - CVParserService (used in module)
+Utils/database/columns.ts:18 - JOB_COLUMNS (used in module)
+Utils/database/columns.ts:75 - USER_COLUMNS
+Utils/database/columns.ts:95 - COMPANY_COLUMNS
+Utils/database/columns.ts:115 - MATCH_COLUMNS
+Utils/database/queryOptimizer.ts:440 - createQueryOptimizer
+Utils/database/queryOptimizer.ts:446 - createRecommendedIndexes
+Utils/database/queryOptimizer.ts:10 - QueryConfig
+Utils/database/queryOptimizer.ts:17 - OptimizedQueryResult (used in module)
+Utils/database/queryOptimizer.ts:29 - DatabaseQueryOptimizer (used in module)
+Utils/database/queryOptimizer.ts:409 - RECOMMENDED_INDEXES (used in module)
+Utils/email/deliverability.ts:39 - validateEmailDeliverability
+Utils/email/deliverability.ts:179 - addToBounceSuppressionList (used in module)
+Utils/email/deliverability.ts:247 - isInBounceSuppressionList (used in module)
+Utils/email/deliverability.ts:291 - unsubscribeUser (used in module)
+Utils/email/deliverability.ts:338 - isUserUnsubscribed (used in module)
+Utils/email/deliverability.ts:360 - getBounceSuppressionListSize (used in module)
+Utils/email/deliverability.ts:378 - getComplaintRate (used in module)
+Utils/email/deliverability.ts:410 - getEmailDeliverabilityMetrics
+Utils/email/deliverability.ts:476 - generateListUnsubscribeHeader
+Utils/email/deliverability.ts:483 - validateEmailBeforeSend
+Utils/email/deliverability.ts:527 - processEmailWebhook
+Utils/email/deliverability.ts:9 - EmailDeliverabilityMetrics (used in module)
+Utils/email/deliverability.ts:18 - BounceRecord
+Utils/email/deliverability.ts:26 - UnsubscribeRecord
+Utils/email/index.ts:4 - EMAIL_CONFIG
+Utils/email/index.ts:4 - getResendClient
+Utils/email/index.ts:4 - getSupabaseClient
+Utils/email/index.ts:7 - createJobMatchesEmail
+Utils/email/index.ts:8 - createWelcomeEmail
+Utils/email/index.ts:13 - EMAIL_PERFORMANCE_METRICS (used in module)
+Utils/email/index.ts:14 - performanceMetrics
+Utils/email/index.ts:15 - sendBatchEmails
+Utils/email/index.ts:16 - sendMatchedJobsEmail
+Utils/email/index.ts:17 - sendWelcomeEmail
+Utils/email/index.ts:3 - EmailJobCard
+Utils/email/index.ts:23 - EmailDeliveryMetrics
+Utils/email/index.ts:35 - EmailFeedback
+Utils/email/index.ts:43 - DeliverySafeguards
+Utils/email/index.ts:50 - EmailFeatureFlags
+Utils/email/index.ts:57 - EmailConfig
+Utils/email/productionReadyTemplates.ts:102 - _vmlFeedbackButton
+Utils/email/reEngagementService.ts:108 - shouldRunReEngagement
+Utils/email/reEngagementService.ts:14 - ReEngagementResult (used in module)
+Utils/email/sender.ts:139 - SendMatchedJobsEmailArgs (used in module)
+Utils/email/sender.ts:525 - trackEmailSend (used in module)
+Utils/email/subjectBuilder.ts:44 - buildPersonalizedSubject
+Utils/email/subjectBuilder.ts:96 - UserPreferencesLike (used in module)
+Utils/email/subjectBuilder.ts:96 - BasicJob (used in module)
+Utils/matching/ai-matching.service.ts:86 - AIMatchingCache (used in module)
+Utils/matching/ai-matching.service.ts:110 - AIMatchingService
+Utils/matching/batch-processor.service.ts:12 - UserMatchResult (used in module)
+Utils/matching/batch-processor.service.ts:26 - UserSegment (used in module)
+Utils/matching/batch-processor.service.ts:38 - BatchMatchingProcessor (used in module)
+Utils/matching/fallback.service.ts:14 - generateRobustFallbackMatches (used in module)
+Utils/matching/fallback.service.ts:148 - performFallbackMatching (used in module)
+Utils/matching/fallback.service.ts:176 - getFallbackMatches
+Utils/matching/fallback.service.ts:6 - FallbackMatch (used in module)
+Utils/matching/fallback.service.ts:28 - FallbackMatchingService
+Utils/matching/integrated-matching.service.ts:11 - BatchProcessingOptions (used in module)
+Utils/matching/integrated-matching.service.ts:21 - IntegratedMatchingService (used in module)
+Utils/matching/integrated-matching.service.ts:116 - integratedMatchingService
+Utils/matching/job-enrichment.service.ts:270 - extractPostingDate
+Utils/matching/job-enrichment.service.ts:310 - extractProfessionalExpertise
+Utils/matching/job-enrichment.service.ts:346 - extractCareerPath
+Utils/matching/job-enrichment.service.ts:376 - extractStartDate
+Utils/matching/jobDistribution.ts:10 - matchesCity
+Utils/matching/jobDistribution.ts:15 - checkCityBalance
+Utils/matching/jobDistribution.ts:16 - checkSourceDiversity
+Utils/matching/jobDistribution.ts:17 - checkWorkEnvironmentBalance
+Utils/matching/jobDistribution.ts:22 - DistributionOptions
+Utils/matching/jobDistribution.ts:23 - JobWithSource
+Utils/matching/jobDistribution.ts:26 - getJobWorkEnv
+Utils/matching/jobDistribution.ts:27 - matchesWorkEnvironment
+Utils/matching/jobDistribution.ts:28 - normalizeWorkEnv
+Utils/matching/jobSearchService.ts:14 - FetchJobsResult (used in module)
+Utils/matching/locationMatcher.ts:168 - matchesLocation (used in module)
+Utils/matching/locationMatcher.ts:298 - validateLocationCompatibilityEnhanced
+Utils/matching/logging.service.ts:62 - getMatchSessionStats
+Utils/matching/logging.service.ts:11 - MatchSessionLog (used in module)
+Utils/matching/metrics.service.ts:21 - calculateRecallAt50
+Utils/matching/metrics.service.ts:39 - calculateNDCGAt5
+Utils/matching/metrics.service.ts:66 - logMatchMetrics
+Utils/matching/metrics.service.ts:106 - getMetricsSummary
+Utils/matching/metrics.service.ts:155 - recordMatchMetrics
+Utils/matching/metrics.service.ts:162 - getMatchMetricsSummary
+Utils/matching/metrics.service.ts:192 - resetMatchMetrics
+Utils/matching/metrics.service.ts:9 - MatchMetrics (used in module)
+Utils/matching/normalizers.ts:89 - isJob
+Utils/matching/normalizers.ts:157 - normalizeJobForMatching
+Utils/matching/normalizers.ts:12 - toStringArray (used in module)
+Utils/matching/normalizers.ts:30 - toOptString (used in module)
+Utils/matching/normalizers.ts:57 - reqString (used in module)
+Utils/matching/normalizers.ts:62 - reqFirst (used in module)
+Utils/matching/normalizers.ts:74 - normalizeCategoriesForRead (used in module)
+Utils/matching/normalizers.ts:77 - mapCategories
+Utils/matching/normalizers.ts:82 - anyIndex
+Utils/matching/normalizers.ts:107 - mapCats
+Utils/matching/normalizers.ts:110 - mapCities
+Utils/matching/normalizers.ts:113 - idx
+Utils/matching/normalizers.ts:119 - normalizeUser
+Utils/matching/normalizers.ts:135 - normalizeUserPreferences
+Utils/matching/normalizers.ts:183 - careerSlugs
+Utils/matching/normalizers.ts:185 - locTag
+Utils/matching/normalizers.ts:199 - isTestOrPerfMode
+Utils/matching/preFilterJobs.ts:10 - preFilterJobsByUserPreferencesEnhanced
+Utils/matching/rule-based-matcher.service.ts:646 - calculateConfidenceScore (used in module)
+Utils/matching/rule-based-matcher.service.ts:776 - categorizeMatches
+Utils/matching/rule-based-matcher.service.ts:794 - performRobustMatching (used in module)
+Utils/matching/scoring.service.ts:124 - calculateJobScore
+Utils/matching/scoring.service.ts:135 - normalizeScore
+Utils/matching/scoring.service.ts:148 - getScoreBreakdown
+Utils/matching/semanticRetrieval.ts:9 - SemanticJob (used in module)
+Utils/matching/semanticRetrieval.ts:18 - SemanticRetrievalService (used in module)
+Utils/matching/types.ts:14 - JobRow
+Utils/matching/userBatchService.ts:9 - TransformedUser (used in module)
+Utils/matching/validators.ts:14 - applyHardGates (used in module)
+Utils/matching/validators.ts:56 - validateJobData
+Utils/matching/validators.ts:69 - validateUserPreferences
+Utils/matching/validators.ts:82 - validateMatchResult
+Utils/matching/validators.ts:103 - validateUserEligibility (used in module)
+Utils/matching/validators.ts:130 - validateJobAge
+Utils/matching/validators.ts:181 - validateCareerPathCompatibility (used in module)
+Utils/matching/validators.ts:275 - validateWorkEnvironmentCompatibility (used in module)
+Utils/matching/validators.ts:348 - validateJobUserCompatibility
+Utils/matching/validators.ts:433 - validateMatchingConfig
+Utils/matching/visa-confidence.ts:293 - getVisaProTip
+Utils/matching/visa-confidence.ts:12 - VisaConfidence (used in module)
+Utils/monitoring/healthChecker.ts:9 - HealthCheckResult (used in module)
+Utils/monitoring/healthChecker.ts:27 - ComponentHealth (used in module)
+Utils/monitoring/healthChecker.ts:35 - HealthChecker (used in module)
+Utils/monitoring/logger.ts:270 - createRequestLogger
+Utils/monitoring/logger.ts:6 - LogEntry (used in module)
+Utils/monitoring/logger.ts:21 - Logger (used in module)
+Utils/monitoring/logger.ts:261 - logger
+Utils/monitoring/logger.ts:262 - apiLogger
+Utils/monitoring/logger.ts:263 - dbLogger
+Utils/monitoring/logger.ts:264 - emailLogger
+Utils/monitoring/logger.ts:265 - queueLogger
+Utils/monitoring/logger.ts:266 - authLogger
+Utils/monitoring/logger.ts:267 - monitoringLogger
+Utils/monitoring/metricsCollector.ts:9 - SystemMetrics (used in module)
+Utils/monitoring/metricsCollector.ts:47 - MetricsCollector (used in module)
+Utils/performance/responseOptimizer.ts:360 - createOptimizedResponse (used in module)
+Utils/performance/responseOptimizer.ts:367 - createErrorResponse (used in module)
+Utils/performance/responseOptimizer.ts:375 - createSuccessResponse (used in module)
+Utils/performance/responseOptimizer.ts:383 - createPaginatedResponse (used in module)
+Utils/performance/responseOptimizer.ts:8 - CacheConfig (used in module)
+Utils/performance/responseOptimizer.ts:14 - ResponseOptimizationOptions (used in module)
+Utils/performance/responseOptimizer.ts:22 - ResponseOptimizer (used in module)
+Utils/performance/responseOptimizer.ts:357 - responseOptimizer (used in module)
+.next/dev/types/routes.d.ts:108 - ParamsOf
+.next/dev/types/routes.d.ts:116 - PageRoutes (used in module)
+.next/dev/types/routes.d.ts:116 - RedirectRoutes (used in module)
+.next/dev/types/routes.d.ts:116 - RewriteRoutes (used in module)
+app/api/apply-promo/route.ts:6 - POST
+app/api/billing/route.ts:6 - GET
+app/api/billing/route.ts:53 - POST
+app/api/billing/route.ts:82 - PUT
+app/api/checkout/route.ts:25 - POST
+app/api/checkout/route.ts:8 - GET
+app/api/cleanup-jobs/route.ts:6 - POST (used in module)
+app/api/cleanup-jobs/route.ts:98 - GET (used in module)
+app/api/companies/route.ts:13 - dynamic
+app/api/companies/route.ts:14 - revalidate
+app/api/companies/route.ts:194 - GET
+app/api/countries/route.ts:23 - dynamic
+app/api/countries/route.ts:24 - revalidate
+app/api/countries/route.ts:171 - GET
+app/api/dashboard/route.ts:167 - GET
+app/api/featured-jobs/route.ts:14 - dynamic
+app/api/featured-jobs/route.ts:15 - revalidate
+app/api/featured-jobs/route.ts:158 - GET
+app/api/generate-embeddings/route.ts:13 - POST
+app/api/generate-embeddings/route.ts:97 - GET
+app/api/health/route.ts:34 - GET
+app/api/inngest/route.ts:10 - GET
+app/api/inngest/route.ts:10 - POST
+app/api/inngest/route.ts:10 - PUT
+app/api/match-users/route.ts:17 - GET
+app/api/match-users/route.ts:14 - POST
+app/api/metrics/route.ts:32 - GET
+app/api/og/route.tsx:6 - GET
+app/api/og/route.tsx:4 - runtime
+app/api/performance/route.ts:193 - HEAD
+app/api/performance/route.ts:189 - GET
+app/api/performance/route.ts:190 - POST
+app/api/preferences/route.ts:6 - GET
+app/api/preferences/route.ts:49 - POST
+app/api/preview-matches/route.ts:8 - POST
+app/api/process-embedding-queue/route.ts:12 - POST
+app/api/process-embedding-queue/route.ts:133 - GET (used in module)
+app/api/recent-matches/route.ts:22 - GET
+app/api/recent-matches/route.ts:6 - dynamic
+app/api/resend-email/route.ts:6 - POST
+app/api/resend-verification/route.ts:6 - POST
+app/api/resend-webhook/route.ts:4 - POST
+app/api/sample-jobs/route.ts:14 - dynamic
+app/api/sample-jobs/route.ts:15 - revalidate
+app/api/sample-jobs/route.ts:1265 - GET
+app/api/scrape/route.ts:7 - POST
+app/api/scrape/route.ts:24 - GET
+app/api/send-re-engagement/route.ts:79 - POST
+app/api/send-re-engagement/route.ts:84 - GET
+app/api/send-scheduled-emails/route.ts:421 - POST
+app/api/signup/route.ts:58 - POST
+app/api/stats/route.ts:45 - dynamic
+app/api/stats/route.ts:46 - revalidate
+app/api/stats/route.ts:48 - GET
+app/api/status/route.ts:11 - GET
+app/api/subscribe/route.ts:6 - POST
+app/api/track-engagement/route.ts:11 - POST
+app/api/track-engagement/route.ts:33 - GET
+app/api/user-matches/route.ts:41 - GET
+app/api/verify-email/route.ts:14 - POST
+app/api/verify-email/route.ts:50 - GET
+app/demo/background/page.tsx:3 - default
+app/demo/sparkles/page.tsx:7 - default
+app/legal/delete-data/page.tsx:6 - default
+app/legal/privacy/page.tsx:1 - default
+app/legal/terms/page.tsx:1 - default
+app/legal/unsubscribe/page.tsx:1 - default
+app/matches/[jobHash]/page.tsx:366 - default
+app/signup/free/page.tsx:6 - default
+app/signup/success/layout.tsx:7 - default
+app/signup/success/layout.tsx:3 - metadata
+app/signup/success/page.tsx:393 - default
+app/store/[accountId]/page.tsx:21 - default
+Utils/matching/consolidated/cache.ts:116 - SHARED_MATCH_CACHE
+Utils/matching/consolidated/prompts.ts:20 - buildStablePrompt (used in module)
+Utils/matching/consolidated/prompts.ts:179 - calculateAICost (used in module)
+Utils/matching/consolidated/prompts.ts:193 - getSystemMessage (used in module)
+Utils/matching/consolidated/scoring.ts:302 - calculateColdStartScore (used in module)
+Utils/matching/consolidated/scoring.ts:378 - calculateEarlyCareerScore (used in module)
+Utils/matching/consolidated/scoring.ts:539 - calculateEULocationScore (used in module)
+Utils/matching/consolidated/scoring.ts:599 - calculateSkillOverlapScore (used in module)
+Utils/matching/consolidated/validation.ts:18 - isValidMatch (used in module)
+Utils/matching/distribution/feasibility.ts:9 - FeasibilityResult
+Utils/matching/guaranteed/index.ts:26 - GuaranteedMatchResult (used in module)
+Utils/matching/guaranteed/location-proximity.ts:79 - calculateLocationExpansion
+Utils/matching/guaranteed/location-proximity.ts:130 - buildLocationProximityQuery
+Utils/matching/guaranteed/location-proximity.ts:9 - LocationExpansionLevel (used in module)
+Utils/matching/guaranteed/location-proximity.ts:16 - LocationExpansion (used in module)
+Utils/matching/guaranteed/single-pass-scoring.ts:14 - RelaxationPenalties (used in module)
+Utils/matching/guaranteed/single-pass-scoring.ts:24 - GuaranteedMatchScore (used in module)
+Utils/matching/guaranteed/visa-provenance.ts:29 - calculateVisaConfidenceWithProvenance
+Utils/matching/guaranteed/visa-provenance.ts:15 - VisaProvenance (used in module)
+Utils/matching/guaranteed/visa-provenance.ts:22 - EnhancedVisaConfidence (used in module)
+Utils/matching/prefilter/index.ts:20 - preFilterJobsByUserPreferencesEnhanced
+Utils/matching/prefilter/location.ts:57 - matchesLocationStrict (used in module)
+Utils/matching/prefilter/quality.ts:13 - calculateQualityThresholds (used in module)
+Utils/matching/prefilter/scoring.ts:14 - scoreJob (used in module)
+app/api/admin/cleanup-jobs/route.ts:351 - POST
+app/api/admin/cleanup-jobs/route.ts:413 - GET
+app/api/admin/verify/route.ts:27 - GET
+app/api/admin/verify/route.ts:35 - POST
+app/api/analytics/track/route.ts:5 - POST
+app/api/apply/[jobHash]/route.ts:191 - GET
+app/api/apply/[jobHash]/route.ts:6 - dynamic
+app/api/cron/check-link-health/route.ts:117 - POST
+app/api/cron/cleanup-free-users/route.ts:5 - GET
+app/api/cron/process-digests/route.ts:13 - POST
+app/api/cron/process-digests/route.ts:317 - GET
+app/api/cron/process-scraping-queue/route.ts:211 - GET
+app/api/cron/process-scraping-queue/route.ts:214 - HEAD (used in module)
+app/api/feedback/email/route.ts:8 - POST
+app/api/feedback/email/route.ts:174 - GET
+app/api/feedback/enhanced/route.ts:33 - POST
+app/api/feedback/enhanced/route.ts:155 - GET
+app/api/match-users/handlers/helpers.ts:42 - matchesLocation
+app/api/match-users/handlers/helpers.ts:54 - queryWithTimeout
+app/api/match-users/handlers/index.ts:33 - matchUsersHandler
+app/api/match-users/handlers/orchestration.ts:131 - processUserMatching (used in module)
+app/api/match-users/handlers/types.ts:32 - MatchMetrics (used in module)
+app/api/match-users/handlers/types.ts:32 - MatchProvenance (used in module)
+app/api/matches/evidence/route.ts:6 - GET
+app/api/matches/free/route.ts:54 - GET
+app/api/matches/ghost/route.ts:17 - GET
+app/api/monitoring/dashboard/route.ts:61 - HEAD
+app/api/monitoring/dashboard/route.ts:58 - GET
+app/api/monitoring/zero-matches/route.ts:12 - GET
+app/api/monitoring/zero-matches/route.ts:10 - dynamic
+app/api/signup/free/route.ts:37 - POST
+app/api/signup/metadata/route.ts:7 - GET
+app/api/stats/eu-jobs/route.ts:35 - dynamic
+app/api/stats/eu-jobs/route.ts:36 - revalidate
+app/api/stats/eu-jobs/route.ts:38 - GET
+app/api/stats/signups/route.ts:24 - dynamic
+app/api/stats/signups/route.ts:25 - revalidate
+app/api/stats/signups/route.ts:27 - GET
+app/api/stripe-connect/billing-portal/route.ts:15 - POST
+app/api/stripe-connect/create-account/route.ts:15 - POST
+app/api/stripe-connect/create-account-link/route.ts:15 - POST
+app/api/stripe-connect/create-checkout/route.ts:18 - POST
+app/api/stripe-connect/create-product/route.ts:14 - POST
+app/api/stripe-connect/create-subscription/route.ts:14 - POST
+app/api/stripe-connect/get-account/route.ts:13 - GET
+app/api/stripe-connect/health/route.ts:15 - GET
+app/api/stripe-connect/list-products/route.ts:13 - GET
+app/api/tracking/implicit/route.ts:22 - POST
+app/api/tracking/implicit/route.ts:131 - GET
+app/api/tracking/pixel/route.ts:18 - GET
+app/api/unsubscribe/one-click/route.ts:47 - POST
+app/api/unsubscribe/one-click/route.ts:102 - GET
+app/api/user/delete-data/route.ts:6 - POST
+app/api/user/delete-data/route.ts:119 - GET
+app/api/webhooks/polar/route.ts:328 - GET
+app/api/webhooks/polar/route.ts:232 - POST
+app/api/webhooks/resend/route.ts:114 - POST
+app/api/webhooks/resend/route.ts:194 - GET
+app/api/webhooks/stripe-billing/route.ts:21 - POST
+app/api/webhooks/stripe-connect/route.ts:19 - POST

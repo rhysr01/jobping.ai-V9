@@ -7,27 +7,27 @@ import type { EmailWebhookDetails } from "@/lib/types";
 import { getListUnsubscribeHeader } from "../url-helpers";
 
 export interface EmailDeliverabilityMetrics {
-	deliveryRate: number;
-	bounceRate: number;
-	complaintRate: number;
-	unsubscribeRate: number;
-	spamRate: number;
-	lastChecked: Date;
+  deliveryRate: number;
+  bounceRate: number;
+  complaintRate: number;
+  unsubscribeRate: number;
+  spamRate: number;
+  lastChecked: Date;
 }
 
 export interface BounceRecord {
-	email: string;
-	bounceType: "hard" | "soft" | "complaint";
-	reason: string;
-	timestamp: Date;
-	retryCount: number;
+  email: string;
+  bounceType: "hard" | "soft" | "complaint";
+  reason: string;
+  timestamp: Date;
+  retryCount: number;
 }
 
 export interface UnsubscribeRecord {
-	email: string;
-	reason?: string;
-	timestamp: Date;
-	source: "email_link" | "dashboard" | "complaint" | "bounce";
+  email: string;
+  reason?: string;
+  timestamp: Date;
+  source: "email_link" | "dashboard" | "complaint" | "bounce";
 }
 
 // Import centralized database client
@@ -37,534 +37,534 @@ import { getDatabaseClient } from "../databasePool";
  * Validate email deliverability setup
  */
 export async function validateEmailDeliverability(): Promise<{
-	isValid: boolean;
-	issues: string[];
-	recommendations: string[];
+  isValid: boolean;
+  issues: string[];
+  recommendations: string[];
 }> {
-	const issues: string[] = [];
-	const recommendations: string[] = [];
+  const issues: string[] = [];
+  const recommendations: string[] = [];
 
-	// Check domain configuration
-	const domain = process.env.EMAIL_DOMAIN || "getjobping.com";
+  // Check domain configuration
+  const domain = process.env.EMAIL_DOMAIN || "getjobping.com";
 
-	// Validate SPF record
-	const spfValid = await validateSPFRecord(domain);
-	if (!spfValid) {
-		issues.push("SPF record not properly configured");
-		recommendations.push("Add SPF record: v=spf1 include:_spf.google.com ~all");
-	}
+  // Validate SPF record
+  const spfValid = await validateSPFRecord(domain);
+  if (!spfValid) {
+    issues.push("SPF record not properly configured");
+    recommendations.push("Add SPF record: v=spf1 include:_spf.google.com ~all");
+  }
 
-	// Validate DKIM
-	const dkimValid = await validateDKIMRecord(domain);
-	if (!dkimValid) {
-		issues.push("DKIM not properly configured");
-		recommendations.push("Set up DKIM signing with your email provider");
-	}
+  // Validate DKIM
+  const dkimValid = await validateDKIMRecord(domain);
+  if (!dkimValid) {
+    issues.push("DKIM not properly configured");
+    recommendations.push("Set up DKIM signing with your email provider");
+  }
 
-	// Validate DMARC
-	const dmarcValid = await validateDMARCRecord(domain);
-	if (!dmarcValid) {
-		issues.push("DMARC policy not configured");
-		recommendations.push(
-			"Add DMARC record: v=DMARC1; p=quarantine; rua=mailto:dmarc@getjobping.com",
-		);
-	}
+  // Validate DMARC
+  const dmarcValid = await validateDMARCRecord(domain);
+  if (!dmarcValid) {
+    issues.push("DMARC policy not configured");
+    recommendations.push(
+      "Add DMARC record: v=DMARC1; p=quarantine; rua=mailto:dmarc@getjobping.com",
+    );
+  }
 
-	// Check bounce suppression list
-	const bounceListSize = await getBounceSuppressionListSize();
-	if (bounceListSize > 100) {
-		issues.push(
-			`High bounce rate: ${bounceListSize} emails in suppression list`,
-		);
-		recommendations.push(
-			"Review email list quality and implement better validation",
-		);
-	}
+  // Check bounce suppression list
+  const bounceListSize = await getBounceSuppressionListSize();
+  if (bounceListSize > 100) {
+    issues.push(
+      `High bounce rate: ${bounceListSize} emails in suppression list`,
+    );
+    recommendations.push(
+      "Review email list quality and implement better validation",
+    );
+  }
 
-	// Check complaint rate
-	const complaintRate = await getComplaintRate();
-	if (complaintRate > 0.1) {
-		issues.push(`High complaint rate: ${(complaintRate * 100).toFixed(2)}%`);
-		recommendations.push("Improve email relevance and frequency controls");
-	}
+  // Check complaint rate
+  const complaintRate = await getComplaintRate();
+  if (complaintRate > 0.1) {
+    issues.push(`High complaint rate: ${(complaintRate * 100).toFixed(2)}%`);
+    recommendations.push("Improve email relevance and frequency controls");
+  }
 
-	return {
-		isValid: issues.length === 0,
-		issues,
-		recommendations,
-	};
+  return {
+    isValid: issues.length === 0,
+    issues,
+    recommendations,
+  };
 }
 
 /**
  * Validate SPF record using DNS lookup
  */
 async function validateSPFRecord(domain: string): Promise<boolean> {
-	try {
-		const dns = require("node:dns").promises;
-		const spfRecord = await dns.resolveTxt(`_spf.${domain}`);
+  try {
+    const dns = require("node:dns").promises;
+    const spfRecord = await dns.resolveTxt(`_spf.${domain}`);
 
-		if (!spfRecord || spfRecord.length === 0) {
-			return false;
-		}
+    if (!spfRecord || spfRecord.length === 0) {
+      return false;
+    }
 
-		// Check if any SPF record contains the expected Resend include
-		const spfText = spfRecord.flat().join(" ");
-		return (
-			spfText.includes("include:_spf.resend.com") ||
-			spfText.includes("include:resend.com")
-		);
-	} catch (error) {
-		console.error("Error validating SPF record:", error);
-		return false;
-	}
+    // Check if any SPF record contains the expected Resend include
+    const spfText = spfRecord.flat().join(" ");
+    return (
+      spfText.includes("include:_spf.resend.com") ||
+      spfText.includes("include:resend.com")
+    );
+  } catch (error) {
+    console.error("Error validating SPF record:", error);
+    return false;
+  }
 }
 
 /**
  * Validate DKIM record using DNS lookup
  */
 async function validateDKIMRecord(domain: string): Promise<boolean> {
-	try {
-		const dns = require("node:dns").promises;
-		// Check for common DKIM selectors
-		const selectors = ["default", "resend", "k1", "selector1", "selector2"];
+  try {
+    const dns = require("node:dns").promises;
+    // Check for common DKIM selectors
+    const selectors = ["default", "resend", "k1", "selector1", "selector2"];
 
-		for (const selector of selectors) {
-			try {
-				const dkimRecord = await dns.resolveTxt(
-					`${selector}._domainkey.${domain}`,
-				);
-				if (dkimRecord && dkimRecord.length > 0) {
-					const dkimText = dkimRecord.flat().join(" ");
-					if (dkimText.includes("v=DKIM1") && dkimText.includes("k=rsa")) {
-						return true;
-					}
-				}
-			} catch (_selectorError) {}
-		}
+    for (const selector of selectors) {
+      try {
+        const dkimRecord = await dns.resolveTxt(
+          `${selector}._domainkey.${domain}`,
+        );
+        if (dkimRecord && dkimRecord.length > 0) {
+          const dkimText = dkimRecord.flat().join(" ");
+          if (dkimText.includes("v=DKIM1") && dkimText.includes("k=rsa")) {
+            return true;
+          }
+        }
+      } catch (_selectorError) {}
+    }
 
-		return false;
-	} catch (error) {
-		console.error("Error validating DKIM record:", error);
-		return false;
-	}
+    return false;
+  } catch (error) {
+    console.error("Error validating DKIM record:", error);
+    return false;
+  }
 }
 
 /**
  * Validate DMARC record using DNS lookup
  */
 async function validateDMARCRecord(domain: string): Promise<boolean> {
-	try {
-		const dns = require("node:dns").promises;
-		const dmarcRecord = await dns.resolveTxt(`_dmarc.${domain}`);
+  try {
+    const dns = require("node:dns").promises;
+    const dmarcRecord = await dns.resolveTxt(`_dmarc.${domain}`);
 
-		if (!dmarcRecord || dmarcRecord.length === 0) {
-			return false;
-		}
+    if (!dmarcRecord || dmarcRecord.length === 0) {
+      return false;
+    }
 
-		// Check if DMARC record is properly configured
-		const dmarcText = dmarcRecord.flat().join(" ");
-		return (
-			dmarcText.includes("v=DMARC1") &&
-			(dmarcText.includes("p=quarantine") || dmarcText.includes("p=reject"))
-		);
-	} catch (error) {
-		console.error("Error validating DMARC record:", error);
-		return false;
-	}
+    // Check if DMARC record is properly configured
+    const dmarcText = dmarcRecord.flat().join(" ");
+    return (
+      dmarcText.includes("v=DMARC1") &&
+      (dmarcText.includes("p=quarantine") || dmarcText.includes("p=reject"))
+    );
+  } catch (error) {
+    console.error("Error validating DMARC record:", error);
+    return false;
+  }
 }
 
 /**
  * Add email to bounce suppression list
  */
 export async function addToBounceSuppressionList(
-	email: string,
-	bounceType: "hard" | "soft" | "complaint",
-	reason: string,
+  email: string,
+  bounceType: "hard" | "soft" | "complaint",
+  reason: string,
 ): Promise<boolean> {
-	try {
-		const supabase = getDatabaseClient();
+  try {
+    const supabase = getDatabaseClient();
 
-		// Check if email is already in suppression list
-		const { data: existing } = await supabase
-			.from("email_suppression")
-			.select("*")
-			.eq("email", email)
-			.single();
+    // Check if email is already in suppression list
+    const { data: existing } = await supabase
+      .from("email_suppression")
+      .select("*")
+      .eq("email", email)
+      .single();
 
-		if (existing) {
-			// Update existing record
-			const { error } = await supabase
-				.from("email_suppression")
-				.update({
-					bounce_type: bounceType,
-					reason,
-					retry_count: existing.retry_count + 1,
-					last_bounce_at: new Date().toISOString(),
-					updated_at: new Date().toISOString(),
-				})
-				.eq("email", email);
+    if (existing) {
+      // Update existing record
+      const { error } = await supabase
+        .from("email_suppression")
+        .update({
+          bounce_type: bounceType,
+          reason,
+          retry_count: existing.retry_count + 1,
+          last_bounce_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("email", email);
 
-			if (error) {
-				console.error("Error updating bounce suppression:", error);
-				return false;
-			}
-		} else {
-			// Create new suppression record
-			const { error } = await supabase.from("email_suppression").insert({
-				email,
-				bounce_type: bounceType,
-				reason,
-				retry_count: 1,
-				first_bounce_at: new Date().toISOString(),
-				last_bounce_at: new Date().toISOString(),
-				created_at: new Date().toISOString(),
-			});
+      if (error) {
+        console.error("Error updating bounce suppression:", error);
+        return false;
+      }
+    } else {
+      // Create new suppression record
+      const { error } = await supabase.from("email_suppression").insert({
+        email,
+        bounce_type: bounceType,
+        reason,
+        retry_count: 1,
+        first_bounce_at: new Date().toISOString(),
+        last_bounce_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      });
 
-			if (error) {
-				console.error("Error adding to bounce suppression:", error);
-				return false;
-			}
-		}
+      if (error) {
+        console.error("Error adding to bounce suppression:", error);
+        return false;
+      }
+    }
 
-		// If it's a hard bounce or complaint, also unsubscribe the user
-		if (bounceType === "hard" || bounceType === "complaint") {
-			await unsubscribeUser(
-				email,
-				`Automatic unsubscribe due to ${bounceType} bounce`,
-			);
-		}
+    // If it's a hard bounce or complaint, also unsubscribe the user
+    if (bounceType === "hard" || bounceType === "complaint") {
+      await unsubscribeUser(
+        email,
+        `Automatic unsubscribe due to ${bounceType} bounce`,
+      );
+    }
 
-		return true;
-	} catch (error) {
-		console.error("Error adding to bounce suppression list:", error);
-		return false;
-	}
+    return true;
+  } catch (error) {
+    console.error("Error adding to bounce suppression list:", error);
+    return false;
+  }
 }
 
 /**
  * Check if email is in bounce suppression list
  */
 export async function isInBounceSuppressionList(
-	email: string,
+  email: string,
 ): Promise<boolean> {
-	try {
-		const supabase = getDatabaseClient();
+  try {
+    const supabase = getDatabaseClient();
 
-		const { data } = await supabase
-			.from("email_suppression")
-			.select("*")
-			.eq("email", email)
-			.single();
+    const { data } = await supabase
+      .from("email_suppression")
+      .select("*")
+      .eq("email", email)
+      .single();
 
-		if (!data) return false;
+    if (!data) return false;
 
-		// Check if it's a hard bounce (permanent)
-		if (data.bounce_type === "hard") {
-			return true;
-		}
+    // Check if it's a hard bounce (permanent)
+    if (data.bounce_type === "hard") {
+      return true;
+    }
 
-		// Check if it's a soft bounce and we've retried too many times
-		if (data.bounce_type === "soft" && data.retry_count >= 3) {
-			return true;
-		}
+    // Check if it's a soft bounce and we've retried too many times
+    if (data.bounce_type === "soft" && data.retry_count >= 3) {
+      return true;
+    }
 
-		// Check if it's been more than 30 days since last bounce (for soft bounces)
-		if (data.bounce_type === "soft") {
-			const daysSinceBounce =
-				(Date.now() - new Date(data.last_bounce_at).getTime()) /
-				(1000 * 60 * 60 * 24);
-			if (daysSinceBounce > 30) {
-				return false; // Can try again
-			}
-		}
+    // Check if it's been more than 30 days since last bounce (for soft bounces)
+    if (data.bounce_type === "soft") {
+      const daysSinceBounce =
+        (Date.now() - new Date(data.last_bounce_at).getTime()) /
+        (1000 * 60 * 60 * 24);
+      if (daysSinceBounce > 30) {
+        return false; // Can try again
+      }
+    }
 
-		return true;
-	} catch (error) {
-		console.error("Error checking bounce suppression list:", error);
-		return false;
-	}
+    return true;
+  } catch (error) {
+    console.error("Error checking bounce suppression list:", error);
+    return false;
+  }
 }
 
 /**
  * Unsubscribe user from emails
  */
 export async function unsubscribeUser(
-	email: string,
-	reason?: string,
+  email: string,
+  reason?: string,
 ): Promise<boolean> {
-	try {
-		const supabase = getDatabaseClient();
+  try {
+    const supabase = getDatabaseClient();
 
-		// Update user record
-		const { error: userError } = await supabase
-			.from("users")
-			.update({
-				email_cadence: "paused",
-				email_unsubscribed: true,
-				email_unsubscribed_at: new Date().toISOString(),
-				email_unsubscribe_reason: reason || "User requested",
-			})
-			.eq("email", email);
+    // Update user record
+    const { error: userError } = await supabase
+      .from("users")
+      .update({
+        email_cadence: "paused",
+        email_unsubscribed: true,
+        email_unsubscribed_at: new Date().toISOString(),
+        email_unsubscribe_reason: reason || "User requested",
+      })
+      .eq("email", email);
 
-		if (userError) {
-			console.error("Error updating user unsubscribe status:", userError);
-		}
+    if (userError) {
+      console.error("Error updating user unsubscribe status:", userError);
+    }
 
-		// Record unsubscribe
-		const { error: unsubscribeError } = await supabase
-			.from("unsubscribes")
-			.insert({
-				email,
-				reason: reason || "User requested",
-				source: "email_link",
-				timestamp: new Date().toISOString(),
-				created_at: new Date().toISOString(),
-			});
+    // Record unsubscribe
+    const { error: unsubscribeError } = await supabase
+      .from("unsubscribes")
+      .insert({
+        email,
+        reason: reason || "User requested",
+        source: "email_link",
+        timestamp: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      });
 
-		if (unsubscribeError) {
-			console.error("Error recording unsubscribe:", unsubscribeError);
-		}
+    if (unsubscribeError) {
+      console.error("Error recording unsubscribe:", unsubscribeError);
+    }
 
-		return !userError && !unsubscribeError;
-	} catch (error) {
-		console.error("Error unsubscribing user:", error);
-		return false;
-	}
+    return !userError && !unsubscribeError;
+  } catch (error) {
+    console.error("Error unsubscribing user:", error);
+    return false;
+  }
 }
 
 /**
  * Check if user is unsubscribed
  */
 export async function isUserUnsubscribed(email: string): Promise<boolean> {
-	try {
-		const supabase = getDatabaseClient();
+  try {
+    const supabase = getDatabaseClient();
 
-		const { data: user } = await supabase
-			.from("users")
-			.select("email_unsubscribed, email_cadence")
-			.eq("email", email)
-			.single();
+    const { data: user } = await supabase
+      .from("users")
+      .select("email_unsubscribed, email_cadence")
+      .eq("email", email)
+      .single();
 
-		return (
-			user?.email_unsubscribed === true || user?.email_cadence === "paused"
-		);
-	} catch (error) {
-		console.error("Error checking unsubscribe status:", error);
-		return false;
-	}
+    return (
+      user?.email_unsubscribed === true || user?.email_cadence === "paused"
+    );
+  } catch (error) {
+    console.error("Error checking unsubscribe status:", error);
+    return false;
+  }
 }
 
 /**
  * Get bounce suppression list size
  */
 export async function getBounceSuppressionListSize(): Promise<number> {
-	try {
-		const supabase = getDatabaseClient();
+  try {
+    const supabase = getDatabaseClient();
 
-		const { count } = await supabase
-			.from("email_suppression")
-			.select("*", { count: "exact", head: true });
+    const { count } = await supabase
+      .from("email_suppression")
+      .select("*", { count: "exact", head: true });
 
-		return count || 0;
-	} catch (error) {
-		console.error("Error getting bounce suppression list size:", error);
-		return 0;
-	}
+    return count || 0;
+  } catch (error) {
+    console.error("Error getting bounce suppression list size:", error);
+    return 0;
+  }
 }
 
 /**
  * Get complaint rate
  */
 export async function getComplaintRate(): Promise<number> {
-	try {
-		const supabase = getDatabaseClient();
+  try {
+    const supabase = getDatabaseClient();
 
-		// Get total emails sent in last 30 days
-		const thirtyDaysAgo = new Date();
-		thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // Get total emails sent in last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-		const { count: totalSent } = await supabase
-			.from("email_sends")
-			.select("*", { count: "exact", head: true })
-			.gte("sent_at", thirtyDaysAgo.toISOString());
+    const { count: totalSent } = await supabase
+      .from("email_sends")
+      .select("*", { count: "exact", head: true })
+      .gte("sent_at", thirtyDaysAgo.toISOString());
 
-		// Get complaint count
-		const { count: complaints } = await supabase
-			.from("email_suppression")
-			.select("*", { count: "exact", head: true })
-			.eq("bounce_type", "complaint")
-			.gte("created_at", thirtyDaysAgo.toISOString());
+    // Get complaint count
+    const { count: complaints } = await supabase
+      .from("email_suppression")
+      .select("*", { count: "exact", head: true })
+      .eq("bounce_type", "complaint")
+      .gte("created_at", thirtyDaysAgo.toISOString());
 
-		if (!totalSent || totalSent === 0) return 0;
+    if (!totalSent || totalSent === 0) return 0;
 
-		return (complaints || 0) / totalSent;
-	} catch (error) {
-		console.error("Error getting complaint rate:", error);
-		return 0;
-	}
+    return (complaints || 0) / totalSent;
+  } catch (error) {
+    console.error("Error getting complaint rate:", error);
+    return 0;
+  }
 }
 
 /**
  * Get email deliverability metrics
  */
 export async function getEmailDeliverabilityMetrics(): Promise<EmailDeliverabilityMetrics> {
-	try {
-		const supabase = getDatabaseClient();
+  try {
+    const supabase = getDatabaseClient();
 
-		const thirtyDaysAgo = new Date();
-		thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-		// Get total emails sent
-		const { count: totalSent } = await supabase
-			.from("email_sends")
-			.select("*", { count: "exact", head: true })
-			.gte("sent_at", thirtyDaysAgo.toISOString());
+    // Get total emails sent
+    const { count: totalSent } = await supabase
+      .from("email_sends")
+      .select("*", { count: "exact", head: true })
+      .gte("sent_at", thirtyDaysAgo.toISOString());
 
-		// Get bounce count
-		const { count: bounces } = await supabase
-			.from("email_suppression")
-			.select("*", { count: "exact", head: true })
-			.gte("created_at", thirtyDaysAgo.toISOString());
+    // Get bounce count
+    const { count: bounces } = await supabase
+      .from("email_suppression")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", thirtyDaysAgo.toISOString());
 
-		// Get complaint count
-		const { count: complaints } = await supabase
-			.from("email_suppression")
-			.select("*", { count: "exact", head: true })
-			.eq("bounce_type", "complaint")
-			.gte("created_at", thirtyDaysAgo.toISOString());
+    // Get complaint count
+    const { count: complaints } = await supabase
+      .from("email_suppression")
+      .select("*", { count: "exact", head: true })
+      .eq("bounce_type", "complaint")
+      .gte("created_at", thirtyDaysAgo.toISOString());
 
-		// Get unsubscribe count
-		const { count: unsubscribes } = await supabase
-			.from("unsubscribes")
-			.select("*", { count: "exact", head: true })
-			.gte("timestamp", thirtyDaysAgo.toISOString());
+    // Get unsubscribe count
+    const { count: unsubscribes } = await supabase
+      .from("unsubscribes")
+      .select("*", { count: "exact", head: true })
+      .gte("timestamp", thirtyDaysAgo.toISOString());
 
-		const totalSentCount = totalSent || 0;
-		const bounceCount = bounces || 0;
-		const complaintCount = complaints || 0;
-		const unsubscribeCount = unsubscribes || 0;
+    const totalSentCount = totalSent || 0;
+    const bounceCount = bounces || 0;
+    const complaintCount = complaints || 0;
+    const unsubscribeCount = unsubscribes || 0;
 
-		return {
-			deliveryRate:
-				totalSentCount > 0
-					? ((totalSentCount - bounceCount) / totalSentCount) * 100
-					: 100,
-			bounceRate: totalSentCount > 0 ? (bounceCount / totalSentCount) * 100 : 0,
-			complaintRate:
-				totalSentCount > 0 ? (complaintCount / totalSentCount) * 100 : 0,
-			unsubscribeRate:
-				totalSentCount > 0 ? (unsubscribeCount / totalSentCount) * 100 : 0,
-			spamRate: 0, // Would need external spam monitoring service
-			lastChecked: new Date(),
-		};
-	} catch (error) {
-		console.error("Error getting email deliverability metrics:", error);
-		return {
-			deliveryRate: 0,
-			bounceRate: 0,
-			complaintRate: 0,
-			unsubscribeRate: 0,
-			spamRate: 0,
-			lastChecked: new Date(),
-		};
-	}
+    return {
+      deliveryRate:
+        totalSentCount > 0
+          ? ((totalSentCount - bounceCount) / totalSentCount) * 100
+          : 100,
+      bounceRate: totalSentCount > 0 ? (bounceCount / totalSentCount) * 100 : 0,
+      complaintRate:
+        totalSentCount > 0 ? (complaintCount / totalSentCount) * 100 : 0,
+      unsubscribeRate:
+        totalSentCount > 0 ? (unsubscribeCount / totalSentCount) * 100 : 0,
+      spamRate: 0, // Would need external spam monitoring service
+      lastChecked: new Date(),
+    };
+  } catch (error) {
+    console.error("Error getting email deliverability metrics:", error);
+    return {
+      deliveryRate: 0,
+      bounceRate: 0,
+      complaintRate: 0,
+      unsubscribeRate: 0,
+      spamRate: 0,
+      lastChecked: new Date(),
+    };
+  }
 }
 
 /**
  * Generate List-Unsubscribe header
  */
 export function generateListUnsubscribeHeader(): string {
-	return getListUnsubscribeHeader();
+  return getListUnsubscribeHeader();
 }
 
 /**
  * Validate email before sending
  */
 export async function validateEmailBeforeSend(email: string): Promise<{
-	canSend: boolean;
-	reasons: string[];
+  canSend: boolean;
+  reasons: string[];
 }> {
-	const reasons: string[] = [];
+  const reasons: string[] = [];
 
-	// Check if email is unsubscribed
-	const isUnsubscribed = await isUserUnsubscribed(email);
-	if (isUnsubscribed) {
-		reasons.push("User has unsubscribed");
-	}
+  // Check if email is unsubscribed
+  const isUnsubscribed = await isUserUnsubscribed(email);
+  if (isUnsubscribed) {
+    reasons.push("User has unsubscribed");
+  }
 
-	// Check if email is in bounce suppression list
-	const isBounced = await isInBounceSuppressionList(email);
-	if (isBounced) {
-		reasons.push("Email is in bounce suppression list");
-	}
+  // Check if email is in bounce suppression list
+  const isBounced = await isInBounceSuppressionList(email);
+  if (isBounced) {
+    reasons.push("Email is in bounce suppression list");
+  }
 
-	// Basic email format validation
-	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-	if (!emailRegex.test(email)) {
-		reasons.push("Invalid email format");
-	}
+  // Basic email format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    reasons.push("Invalid email format");
+  }
 
-	// Check for disposable email domains
-	const disposableDomains = [
-		"10minutemail.com",
-		"tempmail.org",
-		"guerrillamail.com",
-	];
-	const domain = email.split("@")[1];
-	if (disposableDomains.includes(domain)) {
-		reasons.push("Disposable email domain");
-	}
+  // Check for disposable email domains
+  const disposableDomains = [
+    "10minutemail.com",
+    "tempmail.org",
+    "guerrillamail.com",
+  ];
+  const domain = email.split("@")[1];
+  if (disposableDomains.includes(domain)) {
+    reasons.push("Disposable email domain");
+  }
 
-	return {
-		canSend: reasons.length === 0,
-		reasons,
-	};
+  return {
+    canSend: reasons.length === 0,
+    reasons,
+  };
 }
 
 /**
  * Process email delivery webhook (for bounce/complaint handling)
  */
 export async function processEmailWebhook(
-	eventType: "bounce" | "complaint" | "delivery",
-	email: string,
-	details: EmailWebhookDetails,
+  eventType: "bounce" | "complaint" | "delivery",
+  email: string,
+  details: EmailWebhookDetails,
 ): Promise<boolean> {
-	try {
-		switch (eventType) {
-			case "bounce": {
-				const bounceType = details.bounceType === "Permanent" ? "hard" : "soft";
-				await addToBounceSuppressionList(
-					email,
-					bounceType,
-					details.reason || "Bounce",
-				);
-				break;
-			}
+  try {
+    switch (eventType) {
+      case "bounce": {
+        const bounceType = details.bounceType === "Permanent" ? "hard" : "soft";
+        await addToBounceSuppressionList(
+          email,
+          bounceType,
+          details.reason || "Bounce",
+        );
+        break;
+      }
 
-			case "complaint":
-				await addToBounceSuppressionList(
-					email,
-					"complaint",
-					details.reason || "Complaint",
-				);
-				break;
+      case "complaint":
+        await addToBounceSuppressionList(
+          email,
+          "complaint",
+          details.reason || "Complaint",
+        );
+        break;
 
-			case "delivery": {
-				// Log successful delivery
-				const supabase = getDatabaseClient();
-				await supabase.from("email_deliveries").insert({
-					email,
-					delivered_at: new Date().toISOString(),
-					message_id: details.messageId,
-					created_at: new Date().toISOString(),
-				});
-				break;
-			}
-		}
+      case "delivery": {
+        // Log successful delivery
+        const supabase = getDatabaseClient();
+        await supabase.from("email_deliveries").insert({
+          email,
+          delivered_at: new Date().toISOString(),
+          message_id: details.messageId,
+          created_at: new Date().toISOString(),
+        });
+        break;
+      }
+    }
 
-		return true;
-	} catch (error) {
-		console.error("Error processing email webhook:", error);
-		return false;
-	}
+    return true;
+  } catch (error) {
+    console.error("Error processing email webhook:", error);
+    return false;
+  }
 }

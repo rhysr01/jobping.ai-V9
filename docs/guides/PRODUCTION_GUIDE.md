@@ -29,16 +29,16 @@ Maintain a single `.env.production` (or Vercel environment values) covering **al
 
 ### Required Variables
 
-| Purpose | Key | Notes |
-| --- | --- | --- |
-| Application | `NODE_ENV`, `NEXT_PUBLIC_URL`, `NEXT_PUBLIC_DOMAIN` | `NODE_ENV` must be `production`. |
-| Supabase | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY` | Service role key is used for server-only operations. |
-| Email | `RESEND_API_KEY`, `EMAIL_DOMAIN`, `EMAIL_VERIFICATION_SECRET`, `PREFERENCES_SECRET` | Secrets must be ≥32 chars. See `SECURITY_SECRETS_SETUP.md` for generation. |
-| Auth & Security | `SYSTEM_API_KEY`, `INTERNAL_API_HMAC_SECRET`, `ADMIN_API_KEY` | Rotate quarterly; store in secrets manager. See `SECURITY_SECRETS_SETUP.md` for setup. |
-| AI Matching | `OPENAI_API_KEY`, optional overrides (`AI_TIMEOUT_MS`, etc.) | Ensure OpenAI usage quotas are monitored. |
-| Billing | Polar configuration | Configure Polar webhook secret in Vercel environment (used in route handlers). |
-| Observability | Logging via structured logs | Error tracking via application logs. |
-| Axiom | `NEXT_PUBLIC_AXIOM_INGEST_ENDPOINT` | Required for next-axiom integration and full-stack observability. |
+| Purpose         | Key                                                                                 | Notes                                                                                  |
+| --------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Application     | `NODE_ENV`, `NEXT_PUBLIC_URL`, `NEXT_PUBLIC_DOMAIN`                                 | `NODE_ENV` must be `production`.                                                       |
+| Supabase        | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`        | Service role key is used for server-only operations.                                   |
+| Email           | `RESEND_API_KEY`, `EMAIL_DOMAIN`, `EMAIL_VERIFICATION_SECRET`, `PREFERENCES_SECRET` | Secrets must be ≥32 chars. See `SECURITY_SECRETS_SETUP.md` for generation.             |
+| Auth & Security | `SYSTEM_API_KEY`, `INTERNAL_API_HMAC_SECRET`, `ADMIN_API_KEY`                       | Rotate quarterly; store in secrets manager. See `SECURITY_SECRETS_SETUP.md` for setup. |
+| AI Matching     | `OPENAI_API_KEY`, optional overrides (`AI_TIMEOUT_MS`, etc.)                        | Ensure OpenAI usage quotas are monitored.                                              |
+| Billing         | Polar configuration                                                                 | Configure Polar webhook secret in Vercel environment (used in route handlers).         |
+| Observability   | Logging via structured logs                                                         | Error tracking via application logs.                                                   |
+| Axiom           | `NEXT_PUBLIC_AXIOM_INGEST_ENDPOINT`                                                 | Required for next-axiom integration and full-stack observability.                      |
 
 Optional values (`REDIS_URL`, scraper knobs, etc.) are already typed and defaulted in `lib/env.ts`. Review before enabling experimental modes.
 
@@ -85,16 +85,19 @@ Alerts should be configured for:
 ## 5. Operational Playbooks
 
 ### Email Verification & Preferences Links
+
 - Tokens issued via `Utils/auth/secureTokens.ts` expire automatically (default: 24h for verification, 7d for preferences).
 - Links embedded in all outbound email copy; no hard-coded placeholders remain.
 - To invalidate all tokens (breach rotation), rotate `EMAIL_VERIFICATION_SECRET`/`PREFERENCES_SECRET` and run the cleanup script (future enhancement).
 
 ### Scraper & Matching Jobs
+
 - Scripts in `scripts/` and `automation/` authenticate via `SYSTEM_API_KEY` or HMAC.
 - Monitor jobs via metrics in `Utils/monitoring/logger.ts`.
 - Ensure rate-limits (`SCRAPER_RATE_LIMITS`) align with provider ToS before scaling up.
 
 ### Billing & Support Tools
+
 - Admin endpoints require `SYSTEM_API_KEY` headers (`Utils/auth/withAuth.ts`).
 - Polar webhook handler (to be implemented); verify signing secret on each deploy.
 - Dashboard functionality is exposed via `/api/dashboard`; the UI is an internal Next.js page.
@@ -123,5 +126,3 @@ Escalation contacts and detailed steps live in `RUNBOOK.md`; keep them updated.
 
 **Last reviewed:** _(update on each release)_  
 **Owner:** JobPing Platform Engineering
-
-

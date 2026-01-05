@@ -18,10 +18,10 @@ export { LRUMatchCache } from "./matching/consolidated/cache";
 export { CircuitBreaker } from "./matching/consolidated/circuitBreaker";
 // Re-export everything from the refactored engine
 export {
-	BUILD_TIMESTAMP,
-	BUILD_VERSION,
-	ConsolidatedMatchingEngine,
-	createConsolidatedMatcher,
+  BUILD_TIMESTAMP,
+  BUILD_VERSION,
+  ConsolidatedMatchingEngine,
+  createConsolidatedMatcher,
 } from "./matching/consolidated/engine";
 // Re-export types
 export type { ConsolidatedMatchResult } from "./matching/consolidated/types";

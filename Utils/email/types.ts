@@ -1,4 +1,4 @@
-// ¯ EMAIL TYPES & INTERFACES - WITH FEEDBACK SYSTEM INTEGRATION
+// ï¿½ EMAIL TYPES & INTERFACES - WITH FEEDBACK SYSTEM INTEGRATION
 
 export interface EmailJobCard {
   job: {
@@ -35,7 +35,7 @@ export interface EmailDeliveryMetrics {
 export interface EmailFeedback {
   userEmail: string;
   jobHash: string;
-  verdict: 'relevant' | 'not_relevant';
+  verdict: "relevant" | "not_relevant";
   timestamp: Date;
   reason?: string;
 }

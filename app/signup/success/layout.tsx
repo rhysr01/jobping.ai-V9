@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	robots: { index: false, follow: false },
+  robots: { index: false, follow: false },
 };
 
 export default function SuccessLayout({
-	children,
+  children,
 }: {
-	children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-	return children;
+  return children;
 }

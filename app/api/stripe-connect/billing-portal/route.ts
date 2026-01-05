@@ -13,63 +13,63 @@ import { ENV } from "@/lib/env";
 import { getStripeClientForAccount, isStripeConfigured } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
-	try {
-		if (!isStripeConfigured()) {
-			return NextResponse.json(
-				{ error: "Stripe Connect is not configured" },
-				{ status: 503 },
-			);
-		}
+  try {
+    if (!isStripeConfigured()) {
+      return NextResponse.json(
+        { error: "Stripe Connect is not configured" },
+        { status: 503 },
+      );
+    }
 
-		const { accountId, customerId, returnUrl } = await req.json();
+    const { accountId, customerId, returnUrl } = await req.json();
 
-		if (!accountId || !customerId) {
-			return NextResponse.json(
-				{ error: "accountId and customerId are required" },
-				{ status: 400 },
-			);
-		}
+    if (!accountId || !customerId) {
+      return NextResponse.json(
+        { error: "accountId and customerId are required" },
+        { status: 400 },
+      );
+    }
 
-		const stripe = getStripeClientForAccount(accountId);
-		const baseUrl =
-			ENV.NEXT_PUBLIC_URL ||
-			(process.env.VERCEL_URL
-				? `https://${process.env.VERCEL_URL}`
-				: "http://localhost:3000");
+    const stripe = getStripeClientForAccount(accountId);
+    const baseUrl =
+      ENV.NEXT_PUBLIC_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000");
 
-		// Create billing portal session
-		const session = await stripe.billingPortal.sessions.create(
-			{
-				customer: customerId,
-				return_url: returnUrl || `${baseUrl}/store/${accountId}`,
-			},
-			{
-				stripeAccount: accountId,
-			},
-		);
+    // Create billing portal session
+    const session = await stripe.billingPortal.sessions.create(
+      {
+        customer: customerId,
+        return_url: returnUrl || `${baseUrl}/store/${accountId}`,
+      },
+      {
+        stripeAccount: accountId,
+      },
+    );
 
-		apiLogger.info("Billing portal session created", {
-			accountId,
-			customerId,
-			sessionId: session.id,
-		});
+    apiLogger.info("Billing portal session created", {
+      accountId,
+      customerId,
+      sessionId: session.id,
+    });
 
-		return NextResponse.json({
-			success: true,
-			url: session.url,
-		});
-	} catch (error: any) {
-		apiLogger.error("Failed to create billing portal session", error as Error, {
-			errorType: error.type,
-			errorCode: error.code,
-		});
+    return NextResponse.json({
+      success: true,
+      url: session.url,
+    });
+  } catch (error: any) {
+    apiLogger.error("Failed to create billing portal session", error as Error, {
+      errorType: error.type,
+      errorCode: error.code,
+    });
 
-		return NextResponse.json(
-			{
-				error: "Failed to create billing portal session",
-				details: error.message,
-			},
-			{ status: 500 },
-		);
-	}
+    return NextResponse.json(
+      {
+        error: "Failed to create billing portal session",
+        details: error.message,
+      },
+      { status: 500 },
+    );
+  }
 }

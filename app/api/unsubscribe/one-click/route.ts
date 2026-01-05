@@ -8,107 +8,113 @@ import { apiLogger } from "@/lib/api-logger";
 
 // Verify unsubscribe token
 function verifyUnsubscribeToken(email: string, token: string): boolean {
-	const secret = process.env.UNSUBSCRIBE_SECRET || "fallback-secret";
-	const expectedToken = crypto
-		.createHmac("sha256", secret)
-		.update(email)
-		.digest("hex")
-		.slice(0, 16);
+  const secret = process.env.UNSUBSCRIBE_SECRET || "fallback-secret";
+  const expectedToken = crypto
+    .createHmac("sha256", secret)
+    .update(email)
+    .digest("hex")
+    .slice(0, 16);
 
-	return token === expectedToken;
+  return token === expectedToken;
 }
 
 // Add email to suppression list for unsubscribe
 async function suppressEmailForUnsubscribe(email: string): Promise<void> {
-	const supabase = getDatabaseClient();
+  const supabase = getDatabaseClient();
 
-	try {
-		// Insert suppression record
-		const { error } = await supabase.from("email_suppression").upsert({
-			user_email: email,
-			reason: "unsubscribe_one_click",
-			created_at: new Date().toISOString(),
-			event_data: { method: "one_click", timestamp: new Date().toISOString() },
-		});
+  try {
+    // Insert suppression record
+    const { error } = await supabase.from("email_suppression").upsert({
+      user_email: email,
+      reason: "unsubscribe_one_click",
+      created_at: new Date().toISOString(),
+      event_data: { method: "one_click", timestamp: new Date().toISOString() },
+    });
 
-		if (error) {
-			apiLogger.error("Failed to insert unsubscribe suppression:", error as Error);
-			throw error;
-		}
+    if (error) {
+      apiLogger.error(
+        "Failed to insert unsubscribe suppression:",
+        error as Error,
+      );
+      throw error;
+    }
 
-		apiLogger.info(` Email unsubscribed: ${email}`);
-	} catch (error) {
-		// If table doesn't exist, fail gracefully
-		apiLogger.warn("Failed to suppress email for unsubscribe:", error instanceof Error ? error : { error });
-		throw error;
-	}
+    apiLogger.info(` Email unsubscribed: ${email}`);
+  } catch (error) {
+    // If table doesn't exist, fail gracefully
+    apiLogger.warn(
+      "Failed to suppress email for unsubscribe:",
+      error instanceof Error ? error : { error },
+    );
+    throw error;
+  }
 }
 
 export async function POST(req: NextRequest) {
-	try {
-		// Parse form data (List-Unsubscribe-Post sends form data)
-		const formData = await req.formData();
-		const listUnsubscribe = formData.get("List-Unsubscribe");
+  try {
+    // Parse form data (List-Unsubscribe-Post sends form data)
+    const formData = await req.formData();
+    const listUnsubscribe = formData.get("List-Unsubscribe");
 
-		// Get email and token from query params
-		const { searchParams } = new URL(req.url);
-		const email = searchParams.get("u");
-		const token = searchParams.get("t");
+    // Get email and token from query params
+    const { searchParams } = new URL(req.url);
+    const email = searchParams.get("u");
+    const token = searchParams.get("t");
 
-		if (!email || !token) {
-			return NextResponse.json(
-				{ error: "Missing email or token" },
-				{ status: 400 },
-			);
-		}
+    if (!email || !token) {
+      return NextResponse.json(
+        { error: "Missing email or token" },
+        { status: 400 },
+      );
+    }
 
-		// Verify token
-		if (!verifyUnsubscribeToken(email, token)) {
-			return NextResponse.json(
-				{ error: "Invalid unsubscribe token" },
-				{ status: 401 },
-			);
-		}
+    // Verify token
+    if (!verifyUnsubscribeToken(email, token)) {
+      return NextResponse.json(
+        { error: "Invalid unsubscribe token" },
+        { status: 401 },
+      );
+    }
 
-		// Validate that this is a one-click unsubscribe request
-		if (listUnsubscribe !== "One-Click") {
-			return NextResponse.json(
-				{ error: "Invalid List-Unsubscribe value" },
-				{ status: 400 },
-			);
-		}
+    // Validate that this is a one-click unsubscribe request
+    if (listUnsubscribe !== "One-Click") {
+      return NextResponse.json(
+        { error: "Invalid List-Unsubscribe value" },
+        { status: 400 },
+      );
+    }
 
-		// Add to suppression list
-		await suppressEmailForUnsubscribe(email);
+    // Add to suppression list
+    await suppressEmailForUnsubscribe(email);
 
-		// Track unsubscribe event for analytics
-		const { apiLogger } = await import("@/lib/api-logger");
-		apiLogger.info("user_unsubscribed", {
-			event: "user_unsubscribed",
-			email,
-			method: "one_click",
-			source: "email_footer",
-			timestamp: new Date().toISOString(),
-		});
+    // Track unsubscribe event for analytics
+    const { apiLogger } = await import("@/lib/api-logger");
+    apiLogger.info("user_unsubscribed", {
+      event: "user_unsubscribed",
+      email,
+      method: "one_click",
+      source: "email_footer",
+      timestamp: new Date().toISOString(),
+    });
 
-		// Return success (no body required for one-click unsubscribe)
-		return new NextResponse(null, { status: 200 });
-	} catch (error) {
-		apiLogger.error("One-click unsubscribe failed:", error as Error);
-		return NextResponse.json({ error: "Unsubscribe failed" }, { status: 500 });
-	}
+    // Return success (no body required for one-click unsubscribe)
+    return new NextResponse(null, { status: 200 });
+  } catch (error) {
+    apiLogger.error("One-click unsubscribe failed:", error as Error);
+    return NextResponse.json({ error: "Unsubscribe failed" }, { status: 500 });
+  }
 }
 
 export async function GET(req: NextRequest) {
-	try {
-		// Handle GET requests for manual unsubscribe links
-		const { searchParams } = new URL(req.url);
-		const email = searchParams.get("u");
-		const token = searchParams.get("t");
+  try {
+    // Handle GET requests for manual unsubscribe links
+    const { searchParams } = new URL(req.url);
+    const email = searchParams.get("u");
+    const token = searchParams.get("t");
 
-		if (!email || !token) {
-			return new NextResponse(
-				`
+    if (!email || !token) {
+      return new NextResponse(
+        `
         <!DOCTYPE html>
         <html>
         <head><title>Unsubscribe - JobPing</title></head>
@@ -118,17 +124,17 @@ export async function GET(req: NextRequest) {
         </body>
         </html>
       `,
-				{
-					status: 400,
-					headers: { "Content-Type": "text/html" },
-				},
-			);
-		}
+        {
+          status: 400,
+          headers: { "Content-Type": "text/html" },
+        },
+      );
+    }
 
-		// Verify token
-		if (!verifyUnsubscribeToken(email, token)) {
-			return new NextResponse(
-				`
+    // Verify token
+    if (!verifyUnsubscribeToken(email, token)) {
+      return new NextResponse(
+        `
         <!DOCTYPE html>
         <html>
         <head><title>Unsubscribe - JobPing</title></head>
@@ -138,31 +144,31 @@ export async function GET(req: NextRequest) {
         </body>
         </html>
       `,
-				{
-					status: 401,
-					headers: { "Content-Type": "text/html" },
-				},
-			);
-		}
+        {
+          status: 401,
+          headers: { "Content-Type": "text/html" },
+        },
+      );
+    }
 
-		// Add to suppression list
-		await suppressEmailForUnsubscribe(email);
+    // Add to suppression list
+    await suppressEmailForUnsubscribe(email);
 
-		// Track unsubscribe event for analytics
-		const { apiLogger } = await import("@/lib/api-logger");
-		const reason = searchParams.get("reason") || "user_requested";
-		apiLogger.info("user_unsubscribed", {
-			event: "user_unsubscribed",
-			email,
-			method: "manual_link",
-			source: "email_footer",
-			reason,
-			timestamp: new Date().toISOString(),
-		});
+    // Track unsubscribe event for analytics
+    const { apiLogger } = await import("@/lib/api-logger");
+    const reason = searchParams.get("reason") || "user_requested";
+    apiLogger.info("user_unsubscribed", {
+      event: "user_unsubscribed",
+      email,
+      method: "manual_link",
+      source: "email_footer",
+      reason,
+      timestamp: new Date().toISOString(),
+    });
 
-		// Return success page
-		return new NextResponse(
-			`
+    // Return success page
+    return new NextResponse(
+      `
       <!DOCTYPE html>
       <html>
       <head>
@@ -187,15 +193,15 @@ export async function GET(req: NextRequest) {
       </body>
       </html>
     `,
-			{
-				status: 200,
-				headers: { "Content-Type": "text/html" },
-			},
-		);
-	} catch (error) {
-		apiLogger.error("Unsubscribe page failed:", error as Error);
-		return new NextResponse(
-			`
+      {
+        status: 200,
+        headers: { "Content-Type": "text/html" },
+      },
+    );
+  } catch (error) {
+    apiLogger.error("Unsubscribe page failed:", error as Error);
+    return new NextResponse(
+      `
       <!DOCTYPE html>
       <html>
       <head><title>Error - JobPing</title></head>
@@ -205,10 +211,10 @@ export async function GET(req: NextRequest) {
       </body>
       </html>
     `,
-			{
-				status: 500,
-				headers: { "Content-Type": "text/html" },
-			},
-		);
-	}
+      {
+        status: 500,
+        headers: { "Content-Type": "text/html" },
+      },
+    );
+  }
 }

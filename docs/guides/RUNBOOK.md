@@ -54,14 +54,14 @@ Store the dump in a secure bucket (never commit raw dumps).
 
 ### Emergency Restore Checklist
 
-| Step | Owner | Notes |
-| --- | --- | --- |
-| Notify incident channel | On-call engineer | Include timeline + blast radius |
-| Freeze deploys | Tech lead | Lock Vercel / GitHub merges |
-| Initiate PITR | DBA / On-call | Record timestamp |
-| Validate recovery | QA | Run pilot smoke against restore URL |
-| Promote & rotate secrets | On-call | Update Supabase env secrets in Vercel |
-| Postmortem | Team | File report in ops log |
+| Step                     | Owner            | Notes                                 |
+| ------------------------ | ---------------- | ------------------------------------- |
+| Notify incident channel  | On-call engineer | Include timeline + blast radius       |
+| Freeze deploys           | Tech lead        | Lock Vercel / GitHub merges           |
+| Initiate PITR            | DBA / On-call    | Record timestamp                      |
+| Validate recovery        | QA               | Run pilot smoke against restore URL   |
+| Promote & rotate secrets | On-call          | Update Supabase env secrets in Vercel |
+| Postmortem               | Team             | File report in ops log                |
 
 ---
 
@@ -79,14 +79,12 @@ Store the dump in a secure bucket (never commit raw dumps).
 
 ## Incident Response Contacts
 
-| Role | Name | Contact |
-| --- | --- | --- |
-| Product | — | — |
-| Engineering lead | — | — |
-| On-call engineer | PagerDuty → JobPing Rotation |
-| Email provider | Resend Support (`support@resend.com`) |
-| Payments | Polar Support |
+| Role             | Name                                  | Contact |
+| ---------------- | ------------------------------------- | ------- |
+| Product          | —                                     | —       |
+| Engineering lead | —                                     | —       |
+| On-call engineer | PagerDuty → JobPing Rotation          |
+| Email provider   | Resend Support (`support@resend.com`) |
+| Payments         | Polar Support                         |
 
 Populate blanks with the current rotation each time ownership changes. Keep the master contact list in the secure ops vault.
-
-

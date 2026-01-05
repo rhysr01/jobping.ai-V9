@@ -7,17 +7,19 @@
 
 ## 🟡 IN-PROGRESS: Database Optimization
 
-### SELECT * Query Replacement
+### SELECT \* Query Replacement
 
 **Status:** Partially complete
 
 **Completed:**
+
 - ✅ Fixed count queries in `app/api/dashboard/route.ts` (3 queries)
 - ✅ Fixed count queries in `app/api/stats/route.ts` (4 queries)
 - ✅ Created `Utils/database/columns.ts` with column definitions
 
 **Remaining:**
-- 🟡 13 files still have SELECT * in data queries
+
+- 🟡 13 files still have SELECT \* in data queries
 - See `DATABASE_OPTIMIZATION_PROGRESS.md` for details
 
 **Impact:** Performance improvement (reduced data transfer)  
@@ -31,11 +33,13 @@
 **Status:** Not started
 
 **Action Required:**
+
 - Audit matching queries for N+1 patterns
 - Refactor to use Supabase joins
 - Add query performance monitoring
 
 **Files to Review:**
+
 - `Utils/matching/consolidated/engine.ts`
 - `app/api/match-users/handlers/orchestration.ts`
 - `Utils/matching/semanticRetrieval.ts`
@@ -53,16 +57,19 @@
 **Status:** Non-blocking (already removed in production)
 
 **Current State:**
+
 - 157 console.log statements in API routes
 - Already handled: `next.config.ts` removes console.log in production
 - Should be replaced with structured logging for better observability
 
 **Action Required:**
+
 - Replace `console.log` with `apiLogger.info/debug/error`
 - Replace `console.error` with `apiLogger.error`
 - Replace `console.warn` with `apiLogger.warn`
 
 **Files with Most:**
+
 - `app/api/stats/route.ts` - 8 instances
 - `app/api/signup/route.ts` - 20 instances
 - `app/api/sample-jobs/route.ts` - 20 instances
@@ -78,10 +85,12 @@
 **Status:** Tools ready
 
 **Current State:**
+
 - 18 TODO/FIXME/HACK comments found
 - Tools created: `scripts/extract-todos.ts`
 
 **Action Required:**
+
 1. Run `npx tsx scripts/extract-todos.ts` for full list
 2. Categorize: Delete / Fix Now / Issue-ify / Keep
 3. Create GitHub issues for valid TODOs
@@ -98,10 +107,12 @@
 ## 📊 Summary
 
 ### In-Progress Items
-- 🟡 **SELECT * Replacement** - 7/20 queries fixed (35% complete)
+
+- 🟡 **SELECT \* Replacement** - 7/20 queries fixed (35% complete)
 - 🟡 **N+1 Query Audit** - Not started
 
 ### Pending Items
+
 - ⏳ **Console.log Replacement** - 157 instances (non-blocking)
 - ⏳ **TODO Triage** - 18 TODOs (tools ready)
 
@@ -110,11 +121,13 @@
 **Status:** ✅ **READY FOR PRODUCTION**
 
 **All Critical Items:** ✅ Complete
+
 - TypeScript strictness ✅
 - API route authentication ✅
 - Sentry integration ✅
 
 **Remaining Items:** All non-blocking
+
 - Performance optimizations (database queries)
 - Code quality improvements (logging, TODOs)
 
@@ -123,15 +136,18 @@
 ## 🎯 Recommended Approach
 
 ### Before Production
+
 - ✅ All critical fixes complete
 - ✅ Production-ready
 
 ### First Sprint Post-Launch
-1. Complete SELECT * replacement (2-3 hours)
+
+1. Complete SELECT \* replacement (2-3 hours)
 2. Audit N+1 queries (3-4 hours)
 3. Add query performance monitoring (1 hour)
 
 ### Ongoing (Code Quality)
+
 1. Replace console.log incrementally (2-3 hours)
 2. Triage TODOs (1-2 hours)
 3. Monitor and optimize
@@ -141,11 +157,13 @@
 ## 📝 Documentation
 
 **Created:**
+
 - `REMAINING_WORK_SUMMARY.md` - Detailed remaining work
 - `DATABASE_OPTIMIZATION_PROGRESS.md` - Database optimization status
 - `IN_PROGRESS_AND_PENDING_SUMMARY.md` - This document
 
 **Tools Created:**
+
 - `Utils/database/columns.ts` - Column definitions
 - `scripts/extract-todos.ts` - TODO extractor
 - `scripts/fix-unused-vars.ts` - Unused variable fixer
@@ -154,4 +172,3 @@
 
 **Last Updated:** January 2025  
 **Recommendation:** ✅ **PROCEED TO PRODUCTION** - All blocking items resolved
-

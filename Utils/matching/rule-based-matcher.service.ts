@@ -7,21 +7,21 @@ import type { JobWithMetadata } from "@/lib/types/job";
 import type { Job } from "../../scrapers/types";
 import { getScoringWeights } from "../config/matching";
 import {
-	getDatabaseCategoriesForForm,
-	WORK_TYPE_CATEGORIES,
+  getDatabaseCategoriesForForm,
+  WORK_TYPE_CATEGORIES,
 } from "./categoryMapper";
 import {
-	// careerSlugs, // Kept for future use
-	cats,
-	hasEligibility,
-	normalizeToString,
-	toWorkEnv,
+  // careerSlugs, // Kept for future use
+  cats,
+  hasEligibility,
+  normalizeToString,
+  toWorkEnv,
 } from "./normalizers";
 import type {
-	AiProvenance,
-	MatchResult,
-	MatchScore,
-	UserPreferences,
+  AiProvenance,
+  MatchResult,
+  MatchScore,
+  UserPreferences,
 } from "./types";
 import { validateLocationCompatibility } from "./validators";
 
@@ -30,838 +30,838 @@ import { validateLocationCompatibility } from "./validators";
 // ================================
 
 export function applyHardGates(
-	job: Job,
-	userPrefs: UserPreferences,
+  job: Job,
+  userPrefs: UserPreferences,
 ): { passed: boolean; reason: string; reasons?: string[] } {
-	const categories = normalizeToString(job.categories);
-	// const _tags = cats(categories); // Kept for future use
+  const categories = normalizeToString(job.categories);
+  // const _tags = cats(categories); // Kept for future use
 
-	// Note: All users get strict matching - quality is consistent
-	// Differentiation is quantity (5 vs 10 matches) and frequency (one-time vs weekly)
-	const isFreeTier =
-		userPrefs.subscription_tier === "free" || !userPrefs.subscription_tier;
-	// const _isPremiumTier = userPrefs.subscription_tier === "premium";
+  // Note: All users get strict matching - quality is consistent
+  // Differentiation is quantity (5 vs 10 matches) and frequency (one-time vs weekly)
+  const isFreeTier =
+    userPrefs.subscription_tier === "free" || !userPrefs.subscription_tier;
+  // const _isPremiumTier = userPrefs.subscription_tier === "premium";
 
-	// Collect all failures instead of returning on first failure
-	const failures: string[] = [];
+  // Collect all failures instead of returning on first failure
+  const failures: string[] = [];
 
-	// Check if job is eligible for early career
-	// FREE TIER: More lenient - accept jobs with is_internship/is_graduate flags even without categories
-	// This matches the SQL query which filters for: is_internship=true OR is_graduate=true OR categories.cs.{early-career}
-	const isEarlyCareerFromFlags =
-		job.is_internship === true || job.is_graduate === true;
-	const isEarlyCareerFromCategories = hasEligibility(categories);
+  // Check if job is eligible for early career
+  // FREE TIER: More lenient - accept jobs with is_internship/is_graduate flags even without categories
+  // This matches the SQL query which filters for: is_internship=true OR is_graduate=true OR categories.cs.{early-career}
+  const isEarlyCareerFromFlags =
+    job.is_internship === true || job.is_graduate === true;
+  const isEarlyCareerFromCategories = hasEligibility(categories);
 
-	if (!isEarlyCareerFromCategories && !isEarlyCareerFromFlags) {
-		failures.push("Not eligible for early career");
-	}
+  if (!isEarlyCareerFromCategories && !isEarlyCareerFromFlags) {
+    failures.push("Not eligible for early career");
+  }
 
-	// Check location compatibility - STRICT for all users
-	// ALL USERS: Must match exact cities or be remote/hybrid
-	// Quality is consistent - differentiation is quantity/frequency, not quality
-	if (userPrefs.target_cities && userPrefs.target_cities.length > 0) {
-		// Enhanced location matching using structured data
-		const locationValidation = validateLocationCompatibility(
-			[job.location || ""],
-			userPrefs.target_cities,
-			job.city || undefined,
-			job.country || undefined,
-		);
+  // Check location compatibility - STRICT for all users
+  // ALL USERS: Must match exact cities or be remote/hybrid
+  // Quality is consistent - differentiation is quantity/frequency, not quality
+  if (userPrefs.target_cities && userPrefs.target_cities.length > 0) {
+    // Enhanced location matching using structured data
+    const locationValidation = validateLocationCompatibility(
+      [job.location || ""],
+      userPrefs.target_cities,
+      job.city || undefined,
+      job.country || undefined,
+    );
 
-		// Allow remote/hybrid jobs even if they don't match exact cities
-		const isRemoteOrHybrid =
-			(job.location || "").toLowerCase().includes("remote") ||
-			(job.location || "").toLowerCase().includes("hybrid") ||
-			(job.location || "").toLowerCase().includes("work from home");
+    // Allow remote/hybrid jobs even if they don't match exact cities
+    const isRemoteOrHybrid =
+      (job.location || "").toLowerCase().includes("remote") ||
+      (job.location || "").toLowerCase().includes("hybrid") ||
+      (job.location || "").toLowerCase().includes("work from home");
 
-		// ALL USERS: Must match exact cities or be remote/hybrid
-		if (!locationValidation.compatible && !isRemoteOrHybrid) {
-			failures.push(
-				`Location mismatch: ${locationValidation.reasons[0] || "Location does not match user preferences"}`,
-			);
-		}
-	}
+    // ALL USERS: Must match exact cities or be remote/hybrid
+    if (!locationValidation.compatible && !isRemoteOrHybrid) {
+      failures.push(
+        `Location mismatch: ${locationValidation.reasons[0] || "Location does not match user preferences"}`,
+      );
+    }
+  }
 
-	// Check work environment preference - flexible matching for all users
-	// Remote and hybrid are compatible with each other
-	if (userPrefs.work_environment && userPrefs.work_environment !== "unclear") {
-		const jobWorkEnv =
-			job.work_environment?.toLowerCase() || (job.location || "").toLowerCase();
-		const userWorkEnv = userPrefs.work_environment.toLowerCase();
+  // Check work environment preference - flexible matching for all users
+  // Remote and hybrid are compatible with each other
+  if (userPrefs.work_environment && userPrefs.work_environment !== "unclear") {
+    const jobWorkEnv =
+      job.work_environment?.toLowerCase() || (job.location || "").toLowerCase();
+    const userWorkEnv = userPrefs.work_environment.toLowerCase();
 
-		// Flexible matching (same for all users):
-		// - Remote jobs are acceptable for hybrid preference
-		// - Hybrid jobs are acceptable for remote preference
-		// - Only reject if user wants remote but job is strictly on-site
-		if (jobWorkEnv) {
-			const isJobRemote =
-				jobWorkEnv.includes("remote") || jobWorkEnv.includes("work from home");
-			const isJobHybrid = jobWorkEnv.includes("hybrid");
-			const isJobOnSite = !isJobRemote && !isJobHybrid;
+    // Flexible matching (same for all users):
+    // - Remote jobs are acceptable for hybrid preference
+    // - Hybrid jobs are acceptable for remote preference
+    // - Only reject if user wants remote but job is strictly on-site
+    if (jobWorkEnv) {
+      const isJobRemote =
+        jobWorkEnv.includes("remote") || jobWorkEnv.includes("work from home");
+      const isJobHybrid = jobWorkEnv.includes("hybrid");
+      const isJobOnSite = !isJobRemote && !isJobHybrid;
 
-			// All users: Only reject if they want remote and job is strictly on-site
-			if (userWorkEnv === "remote" && isJobOnSite) {
-				failures.push(
-					"Work environment mismatch: user wants remote but job is on-site",
-				);
-			}
-			// Hybrid and remote are compatible with each other
-			// On-site is acceptable if user didn't specify remote preference
-		}
-	}
+      // All users: Only reject if they want remote and job is strictly on-site
+      if (userWorkEnv === "remote" && isJobOnSite) {
+        failures.push(
+          "Work environment mismatch: user wants remote but job is on-site",
+        );
+      }
+      // Hybrid and remote are compatible with each other
+      // On-site is acceptable if user didn't specify remote preference
+    }
+  }
 
-	// Check visa sponsorship requirement (CRITICAL HARD GATE)
-	// ALL USERS: Must have clear visa sponsorship indicators
-	if (userPrefs.visa_status) {
-		const visaStatus = userPrefs.visa_status.toLowerCase();
-		// Explicit check for sponsorship requirement
-		// Handles: "Non-EU (require sponsorship)", "Non-UK (require sponsorship)",
-		// "EU citizen", etc.
-		const needsVisaSponsorship =
-			visaStatus.includes("non-eu") ||
-			visaStatus.includes("non-uk") ||
-			visaStatus.includes("require sponsorship") ||
-			(visaStatus.includes("sponsorship") && !visaStatus.includes("eu")) ||
-			(!visaStatus.includes("eu-citizen") &&
-				!visaStatus.includes("eu citizen") &&
-				!visaStatus.includes("citizen") &&
-				!visaStatus.includes("permanent") &&
-				visaStatus.length > 0);
+  // Check visa sponsorship requirement (CRITICAL HARD GATE)
+  // ALL USERS: Must have clear visa sponsorship indicators
+  if (userPrefs.visa_status) {
+    const visaStatus = userPrefs.visa_status.toLowerCase();
+    // Explicit check for sponsorship requirement
+    // Handles: "Non-EU (require sponsorship)", "Non-UK (require sponsorship)",
+    // "EU citizen", etc.
+    const needsVisaSponsorship =
+      visaStatus.includes("non-eu") ||
+      visaStatus.includes("non-uk") ||
+      visaStatus.includes("require sponsorship") ||
+      (visaStatus.includes("sponsorship") && !visaStatus.includes("eu")) ||
+      (!visaStatus.includes("eu-citizen") &&
+        !visaStatus.includes("eu citizen") &&
+        !visaStatus.includes("citizen") &&
+        !visaStatus.includes("permanent") &&
+        visaStatus.length > 0);
 
-		if (needsVisaSponsorship) {
-			// User needs visa sponsorship - check if job offers it
-			const jobLocation = (job.location || "").toLowerCase();
-			const jobDesc = (job.description || "").toLowerCase();
-			const jobTitle = (job.title || "").toLowerCase();
-			const jobText = `${jobDesc} ${jobTitle} ${jobLocation}`.toLowerCase();
+    if (needsVisaSponsorship) {
+      // User needs visa sponsorship - check if job offers it
+      const jobLocation = (job.location || "").toLowerCase();
+      const jobDesc = (job.description || "").toLowerCase();
+      const jobTitle = (job.title || "").toLowerCase();
+      const jobText = `${jobDesc} ${jobTitle} ${jobLocation}`.toLowerCase();
 
-			const visaKeywords = [
-				"visa sponsorship",
-				"sponsor visa",
-				"work permit",
-				"relocation support",
-				"visa support",
-				"immigration support",
-				"work authorization",
-				"sponsorship available",
-				"will sponsor",
-				"can sponsor",
-				"visa assistance",
-				"relocation package",
-				"international candidates",
-				"global talent",
-			];
+      const visaKeywords = [
+        "visa sponsorship",
+        "sponsor visa",
+        "work permit",
+        "relocation support",
+        "visa support",
+        "immigration support",
+        "work authorization",
+        "sponsorship available",
+        "will sponsor",
+        "can sponsor",
+        "visa assistance",
+        "relocation package",
+        "international candidates",
+        "global talent",
+      ];
 
-			const offersVisaSponsorship = visaKeywords.some((keyword) =>
-				jobText.includes(keyword),
-			);
+      const offersVisaSponsorship = visaKeywords.some((keyword) =>
+        jobText.includes(keyword),
+      );
 
-			// Also check structured field if available (from database)
-			// TYPE SHIM: Now properly typed with JobWithMetadata
-			const jobWithMeta = job as JobWithMetadata;
-			// Check visa_friendly field from database (set by visa detection filter)
-			const jobVisaFriendly =
-				jobWithMeta.visa_friendly === true ||
-				jobWithMeta.visa_sponsorship === true;
+      // Also check structured field if available (from database)
+      // TYPE SHIM: Now properly typed with JobWithMetadata
+      const jobWithMeta = job as JobWithMetadata;
+      // Check visa_friendly field from database (set by visa detection filter)
+      const jobVisaFriendly =
+        jobWithMeta.visa_friendly === true ||
+        jobWithMeta.visa_sponsorship === true;
 
-			// FREE TIER: More lenient - also check for international/global company indicators
-			if (isFreeTier) {
-				// For free users, also check for international company indicators
-				const internationalIndicators = [
-					"international",
-					"global",
-					"multinational",
-					"worldwide",
-					"cross-border",
-					"relocation",
-					"relocate",
-					"international candidates welcome",
-				];
-				const hasInternationalIndicator = internationalIndicators.some(
-					(indicator) => jobText.includes(indicator),
-				);
+      // FREE TIER: More lenient - also check for international/global company indicators
+      if (isFreeTier) {
+        // For free users, also check for international company indicators
+        const internationalIndicators = [
+          "international",
+          "global",
+          "multinational",
+          "worldwide",
+          "cross-border",
+          "relocation",
+          "relocate",
+          "international candidates welcome",
+        ];
+        const hasInternationalIndicator = internationalIndicators.some(
+          (indicator) => jobText.includes(indicator),
+        );
 
-				// Free tier: Pass if visa keywords found OR structured field OR international indicators
-				if (
-					!offersVisaSponsorship &&
-					!jobVisaFriendly &&
-					!hasInternationalIndicator
-				) {
-					failures.push(
-						"Job does not offer visa sponsorship (required for user)",
-					);
-				}
-			} else {
-				// PREMIUM TIER: Stricter - must have clear visa sponsorship
-				if (!offersVisaSponsorship && !jobVisaFriendly) {
-					failures.push(
-						"Job does not offer visa sponsorship (required for user)",
-					);
-				}
-			}
-		}
-	}
+        // Free tier: Pass if visa keywords found OR structured field OR international indicators
+        if (
+          !offersVisaSponsorship &&
+          !jobVisaFriendly &&
+          !hasInternationalIndicator
+        ) {
+          failures.push(
+            "Job does not offer visa sponsorship (required for user)",
+          );
+        }
+      } else {
+        // PREMIUM TIER: Stricter - must have clear visa sponsorship
+        if (!offersVisaSponsorship && !jobVisaFriendly) {
+          failures.push(
+            "Job does not offer visa sponsorship (required for user)",
+          );
+        }
+      }
+    }
+  }
 
-	// ALL USERS: Career path matching (must match exact categories)
-	// Jobs without work-type categories cannot be matched to users with career path preferences
-	if (userPrefs.career_path && userPrefs.career_path.length > 0) {
-		// Use category mapper imported at top of file
-		const userDatabaseCategories = new Set<string>();
-		userPrefs.career_path.forEach((path) => {
-			getDatabaseCategoriesForForm(path).forEach((cat: string) => {
-				userDatabaseCategories.add(cat.toLowerCase());
-			});
-		});
+  // ALL USERS: Career path matching (must match exact categories)
+  // Jobs without work-type categories cannot be matched to users with career path preferences
+  if (userPrefs.career_path && userPrefs.career_path.length > 0) {
+    // Use category mapper imported at top of file
+    const userDatabaseCategories = new Set<string>();
+    userPrefs.career_path.forEach((path) => {
+      getDatabaseCategoriesForForm(path).forEach((cat: string) => {
+        userDatabaseCategories.add(cat.toLowerCase());
+      });
+    });
 
-		const jobCategories = cats(categories).map((c: string) => c.toLowerCase());
+    const jobCategories = cats(categories).map((c: string) => c.toLowerCase());
 
-		// Check if job has any work-type category (not just seniority levels)
-		const workTypeCategories = WORK_TYPE_CATEGORIES.map((wt: string) =>
-			wt.toLowerCase(),
-		);
-		const hasWorkTypeCategory = jobCategories.some((cat) =>
-			workTypeCategories.includes(cat),
-		);
+    // Check if job has any work-type category (not just seniority levels)
+    const workTypeCategories = WORK_TYPE_CATEGORIES.map((wt: string) =>
+      wt.toLowerCase(),
+    );
+    const hasWorkTypeCategory = jobCategories.some((cat) =>
+      workTypeCategories.includes(cat),
+    );
 
-		// If job has no work-type category, it cannot be matched to users with career path preferences
-		if (!hasWorkTypeCategory) {
-			failures.push(
-				`Job has no work-type category: job only has seniority categories [${jobCategories.join(", ")}] but user has career path preferences [${Array.from(userDatabaseCategories).join(", ")}]`,
-			);
-		} else {
-			// Job has work-type category, check if it matches user's career path
-			const hasCareerPathMatch = jobCategories.some((cat) =>
-				userDatabaseCategories.has(cat),
-			);
+    // If job has no work-type category, it cannot be matched to users with career path preferences
+    if (!hasWorkTypeCategory) {
+      failures.push(
+        `Job has no work-type category: job only has seniority categories [${jobCategories.join(", ")}] but user has career path preferences [${Array.from(userDatabaseCategories).join(", ")}]`,
+      );
+    } else {
+      // Job has work-type category, check if it matches user's career path
+      const hasCareerPathMatch = jobCategories.some((cat) =>
+        userDatabaseCategories.has(cat),
+      );
 
-			if (!hasCareerPathMatch) {
-				// PREMIUM TIER: Strict - must match exactly
-				// FREE TIER: More lenient - allow if job has any work-type category (will be scored lower)
-				if (!isFreeTier) {
-					failures.push(
-						`Career path mismatch: job categories [${jobCategories.join(", ")}] do not match user's career path [${Array.from(userDatabaseCategories).join(", ")}]`,
-					);
-				}
-				// For free tier, we allow it but it will score lower (handled in scoring logic)
-			}
-		}
-	}
+      if (!hasCareerPathMatch) {
+        // PREMIUM TIER: Strict - must match exactly
+        // FREE TIER: More lenient - allow if job has any work-type category (will be scored lower)
+        if (!isFreeTier) {
+          failures.push(
+            `Career path mismatch: job categories [${jobCategories.join(", ")}] do not match user's career path [${Array.from(userDatabaseCategories).join(", ")}]`,
+          );
+        }
+        // For free tier, we allow it but it will score lower (handled in scoring logic)
+      }
+    }
+  }
 
-	// Check language requirements (CRITICAL HARD GATE)
-	// ALL USERS: Must match user's specified languages (defaults to English if not specified)
-	const userLanguages =
-		userPrefs.languages_spoken &&
-		Array.isArray(userPrefs.languages_spoken) &&
-		userPrefs.languages_spoken.length > 0
-			? userPrefs.languages_spoken
-			: ["English"]; // Default to English if not specified
+  // Check language requirements (CRITICAL HARD GATE)
+  // ALL USERS: Must match user's specified languages (defaults to English if not specified)
+  const userLanguages =
+    userPrefs.languages_spoken &&
+    Array.isArray(userPrefs.languages_spoken) &&
+    userPrefs.languages_spoken.length > 0
+      ? userPrefs.languages_spoken
+      : ["English"]; // Default to English if not specified
 
-	if (userLanguages && userLanguages.length > 0) {
-		// TYPE SHIM: Now properly typed
-		const jobLanguages = (job as JobWithMetadata).language_requirements;
+  if (userLanguages && userLanguages.length > 0) {
+    // TYPE SHIM: Now properly typed
+    const jobLanguages = (job as JobWithMetadata).language_requirements;
 
-		// If job has explicit language requirements, check if user speaks any of them
-		if (
-			jobLanguages &&
-			Array.isArray(jobLanguages) &&
-			jobLanguages.length > 0
-		) {
-			const userLanguagesLower = userLanguages.map((lang) =>
-				lang.toLowerCase(),
-			);
-			const jobLanguagesLower = jobLanguages.map((lang: string) =>
-				lang.toLowerCase(),
-			);
+    // If job has explicit language requirements, check if user speaks any of them
+    if (
+      jobLanguages &&
+      Array.isArray(jobLanguages) &&
+      jobLanguages.length > 0
+    ) {
+      const userLanguagesLower = userLanguages.map((lang) =>
+        lang.toLowerCase(),
+      );
+      const jobLanguagesLower = jobLanguages.map((lang: string) =>
+        lang.toLowerCase(),
+      );
 
-			// Check if user speaks any of the required languages
-			const hasMatchingLanguage = jobLanguagesLower.some((jobLang: string) =>
-				userLanguagesLower.some(
-					(userLang) =>
-						userLang.includes(jobLang) ||
-						jobLang.includes(userLang) ||
-						// Handle common language name variations
-						(userLang === "english" &&
-							(jobLang.includes("english") || jobLang.includes("eng"))) ||
-						(userLang === "spanish" &&
-							(jobLang.includes("spanish") ||
-								jobLang.includes("español") ||
-								jobLang.includes("castellano"))) ||
-						(userLang === "french" &&
-							(jobLang.includes("french") ||
-								jobLang.includes("français") ||
-								jobLang.includes("francais"))) ||
-						(userLang === "german" &&
-							(jobLang.includes("german") || jobLang.includes("deutsch"))) ||
-						(userLang === "italian" &&
-							(jobLang.includes("italian") || jobLang.includes("italiano"))) ||
-						(userLang === "portuguese" &&
-							(jobLang.includes("portuguese") ||
-								jobLang.includes("português") ||
-								jobLang.includes("portugues"))) ||
-						(userLang === "dutch" &&
-							(jobLang.includes("dutch") || jobLang.includes("nederlands"))) ||
-						(userLang === "japanese" &&
-							(jobLang.includes("japanese") ||
-								jobLang.includes("日本語") ||
-								jobLang.includes("nihongo"))) ||
-						(userLang === "chinese" &&
-							(jobLang.includes("chinese") ||
-								jobLang.includes("中文") ||
-								jobLang.includes("mandarin") ||
-								jobLang.includes("cantonese"))) ||
-						(userLang === "korean" &&
-							(jobLang.includes("korean") || jobLang.includes("한국어"))) ||
-						(userLang === "mandarin" &&
-							(jobLang.includes("chinese") ||
-								jobLang.includes("mandarin") ||
-								jobLang.includes("中文"))) ||
-						(userLang === "cantonese" &&
-							(jobLang.includes("chinese") || jobLang.includes("cantonese"))) ||
-						// Additional EU languages
-						(userLang === "polish" &&
-							(jobLang.includes("polish") || jobLang.includes("polski"))) ||
-						(userLang === "swedish" &&
-							(jobLang.includes("swedish") || jobLang.includes("svenska"))) ||
-						(userLang === "danish" &&
-							(jobLang.includes("danish") || jobLang.includes("dansk"))) ||
-						(userLang === "finnish" &&
-							(jobLang.includes("finnish") || jobLang.includes("suomi"))) ||
-						(userLang === "czech" &&
-							(jobLang.includes("czech") || jobLang.includes("čeština"))) ||
-						(userLang === "romanian" &&
-							(jobLang.includes("romanian") || jobLang.includes("română"))) ||
-						(userLang === "hungarian" &&
-							(jobLang.includes("hungarian") || jobLang.includes("magyar"))) ||
-						(userLang === "greek" &&
-							(jobLang.includes("greek") || jobLang.includes("ελληνικά"))) ||
-						(userLang === "bulgarian" &&
-							(jobLang.includes("bulgarian") ||
-								jobLang.includes("български"))) ||
-						(userLang === "croatian" &&
-							(jobLang.includes("croatian") || jobLang.includes("hrvatski"))) ||
-						(userLang === "serbian" &&
-							(jobLang.includes("serbian") || jobLang.includes("српски"))) ||
-						(userLang === "russian" &&
-							(jobLang.includes("russian") || jobLang.includes("русский"))) ||
-						(userLang === "ukrainian" &&
-							(jobLang.includes("ukrainian") ||
-								jobLang.includes("українська"))) ||
-						// Middle Eastern & Central Asian
-						(userLang === "arabic" &&
-							(jobLang.includes("arabic") || jobLang.includes("العربية"))) ||
-						(userLang === "turkish" &&
-							(jobLang.includes("turkish") || jobLang.includes("türkçe"))) ||
-						(userLang === "hebrew" &&
-							(jobLang.includes("hebrew") || jobLang.includes("עברית"))) ||
-						(userLang === "persian" &&
-							(jobLang.includes("persian") ||
-								jobLang.includes("farsi") ||
-								jobLang.includes("فارسی"))) ||
-						(userLang === "farsi" &&
-							(jobLang.includes("persian") ||
-								jobLang.includes("farsi") ||
-								jobLang.includes("فارسی"))) ||
-						(userLang === "urdu" &&
-							(jobLang.includes("urdu") || jobLang.includes("اردو"))) ||
-						// Asian languages
-						(userLang === "hindi" &&
-							(jobLang.includes("hindi") || jobLang.includes("हिन्दी"))) ||
-						(userLang === "thai" &&
-							(jobLang.includes("thai") || jobLang.includes("ไทย"))) ||
-						(userLang === "vietnamese" &&
-							(jobLang.includes("vietnamese") ||
-								jobLang.includes("tiếng việt"))) ||
-						(userLang === "indonesian" &&
-							(jobLang.includes("indonesian") ||
-								jobLang.includes("bahasa indonesia"))) ||
-						(userLang === "tagalog" &&
-							(jobLang.includes("tagalog") || jobLang.includes("filipino"))) ||
-						(userLang === "malay" &&
-							(jobLang.includes("malay") ||
-								jobLang.includes("bahasa melayu"))) ||
-						(userLang === "bengali" &&
-							(jobLang.includes("bengali") || jobLang.includes("বাংলা"))) ||
-						(userLang === "tamil" &&
-							(jobLang.includes("tamil") || jobLang.includes("தமிழ்"))) ||
-						(userLang === "telugu" &&
-							(jobLang.includes("telugu") || jobLang.includes("తెలుగు"))),
-				),
-			);
+      // Check if user speaks any of the required languages
+      const hasMatchingLanguage = jobLanguagesLower.some((jobLang: string) =>
+        userLanguagesLower.some(
+          (userLang) =>
+            userLang.includes(jobLang) ||
+            jobLang.includes(userLang) ||
+            // Handle common language name variations
+            (userLang === "english" &&
+              (jobLang.includes("english") || jobLang.includes("eng"))) ||
+            (userLang === "spanish" &&
+              (jobLang.includes("spanish") ||
+                jobLang.includes("español") ||
+                jobLang.includes("castellano"))) ||
+            (userLang === "french" &&
+              (jobLang.includes("french") ||
+                jobLang.includes("français") ||
+                jobLang.includes("francais"))) ||
+            (userLang === "german" &&
+              (jobLang.includes("german") || jobLang.includes("deutsch"))) ||
+            (userLang === "italian" &&
+              (jobLang.includes("italian") || jobLang.includes("italiano"))) ||
+            (userLang === "portuguese" &&
+              (jobLang.includes("portuguese") ||
+                jobLang.includes("português") ||
+                jobLang.includes("portugues"))) ||
+            (userLang === "dutch" &&
+              (jobLang.includes("dutch") || jobLang.includes("nederlands"))) ||
+            (userLang === "japanese" &&
+              (jobLang.includes("japanese") ||
+                jobLang.includes("日本語") ||
+                jobLang.includes("nihongo"))) ||
+            (userLang === "chinese" &&
+              (jobLang.includes("chinese") ||
+                jobLang.includes("中文") ||
+                jobLang.includes("mandarin") ||
+                jobLang.includes("cantonese"))) ||
+            (userLang === "korean" &&
+              (jobLang.includes("korean") || jobLang.includes("한국어"))) ||
+            (userLang === "mandarin" &&
+              (jobLang.includes("chinese") ||
+                jobLang.includes("mandarin") ||
+                jobLang.includes("中文"))) ||
+            (userLang === "cantonese" &&
+              (jobLang.includes("chinese") || jobLang.includes("cantonese"))) ||
+            // Additional EU languages
+            (userLang === "polish" &&
+              (jobLang.includes("polish") || jobLang.includes("polski"))) ||
+            (userLang === "swedish" &&
+              (jobLang.includes("swedish") || jobLang.includes("svenska"))) ||
+            (userLang === "danish" &&
+              (jobLang.includes("danish") || jobLang.includes("dansk"))) ||
+            (userLang === "finnish" &&
+              (jobLang.includes("finnish") || jobLang.includes("suomi"))) ||
+            (userLang === "czech" &&
+              (jobLang.includes("czech") || jobLang.includes("čeština"))) ||
+            (userLang === "romanian" &&
+              (jobLang.includes("romanian") || jobLang.includes("română"))) ||
+            (userLang === "hungarian" &&
+              (jobLang.includes("hungarian") || jobLang.includes("magyar"))) ||
+            (userLang === "greek" &&
+              (jobLang.includes("greek") || jobLang.includes("ελληνικά"))) ||
+            (userLang === "bulgarian" &&
+              (jobLang.includes("bulgarian") ||
+                jobLang.includes("български"))) ||
+            (userLang === "croatian" &&
+              (jobLang.includes("croatian") || jobLang.includes("hrvatski"))) ||
+            (userLang === "serbian" &&
+              (jobLang.includes("serbian") || jobLang.includes("српски"))) ||
+            (userLang === "russian" &&
+              (jobLang.includes("russian") || jobLang.includes("русский"))) ||
+            (userLang === "ukrainian" &&
+              (jobLang.includes("ukrainian") ||
+                jobLang.includes("українська"))) ||
+            // Middle Eastern & Central Asian
+            (userLang === "arabic" &&
+              (jobLang.includes("arabic") || jobLang.includes("العربية"))) ||
+            (userLang === "turkish" &&
+              (jobLang.includes("turkish") || jobLang.includes("türkçe"))) ||
+            (userLang === "hebrew" &&
+              (jobLang.includes("hebrew") || jobLang.includes("עברית"))) ||
+            (userLang === "persian" &&
+              (jobLang.includes("persian") ||
+                jobLang.includes("farsi") ||
+                jobLang.includes("فارسی"))) ||
+            (userLang === "farsi" &&
+              (jobLang.includes("persian") ||
+                jobLang.includes("farsi") ||
+                jobLang.includes("فارسی"))) ||
+            (userLang === "urdu" &&
+              (jobLang.includes("urdu") || jobLang.includes("اردو"))) ||
+            // Asian languages
+            (userLang === "hindi" &&
+              (jobLang.includes("hindi") || jobLang.includes("हिन्दी"))) ||
+            (userLang === "thai" &&
+              (jobLang.includes("thai") || jobLang.includes("ไทย"))) ||
+            (userLang === "vietnamese" &&
+              (jobLang.includes("vietnamese") ||
+                jobLang.includes("tiếng việt"))) ||
+            (userLang === "indonesian" &&
+              (jobLang.includes("indonesian") ||
+                jobLang.includes("bahasa indonesia"))) ||
+            (userLang === "tagalog" &&
+              (jobLang.includes("tagalog") || jobLang.includes("filipino"))) ||
+            (userLang === "malay" &&
+              (jobLang.includes("malay") ||
+                jobLang.includes("bahasa melayu"))) ||
+            (userLang === "bengali" &&
+              (jobLang.includes("bengali") || jobLang.includes("বাংলা"))) ||
+            (userLang === "tamil" &&
+              (jobLang.includes("tamil") || jobLang.includes("தமிழ்"))) ||
+            (userLang === "telugu" &&
+              (jobLang.includes("telugu") || jobLang.includes("తెలుగు"))),
+        ),
+      );
 
-			// FREE TIER: More lenient - if user speaks English, allow jobs even if they require other languages (many EU jobs are multilingual)
-			// PREMIUM TIER: Stricter - must match at least one required language
-			if (!hasMatchingLanguage) {
-				if (isFreeTier && userLanguagesLower.includes("english")) {
-					// Free users with English: Allow if job doesn't explicitly require non-English languages
-					// Many EU jobs accept English speakers even if they list other languages
-					const requiresOnlyNonEnglish = jobLanguagesLower.every(
-						(jobLang: string) =>
-							!jobLang.includes("english") && !jobLang.includes("eng"),
-					);
+      // FREE TIER: More lenient - if user speaks English, allow jobs even if they require other languages (many EU jobs are multilingual)
+      // PREMIUM TIER: Stricter - must match at least one required language
+      if (!hasMatchingLanguage) {
+        if (isFreeTier && userLanguagesLower.includes("english")) {
+          // Free users with English: Allow if job doesn't explicitly require non-English languages
+          // Many EU jobs accept English speakers even if they list other languages
+          const requiresOnlyNonEnglish = jobLanguagesLower.every(
+            (jobLang: string) =>
+              !jobLang.includes("english") && !jobLang.includes("eng"),
+          );
 
-					// If job requires only non-English languages, still reject for free users
-					// But if job mentions English OR doesn't have explicit requirements, allow
-					if (requiresOnlyNonEnglish) {
-						failures.push(
-							`Job requires languages user doesn't speak: ${jobLanguages.join(", ")}`,
-						);
-					}
-					// Otherwise, allow (job likely accepts English speakers)
-				} else {
-					// Premium tier or free user without English: Must match
-					failures.push(
-						`Job requires languages user doesn't speak: ${jobLanguages.join(", ")}`,
-					);
-				}
-			}
-		}
+          // If job requires only non-English languages, still reject for free users
+          // But if job mentions English OR doesn't have explicit requirements, allow
+          if (requiresOnlyNonEnglish) {
+            failures.push(
+              `Job requires languages user doesn't speak: ${jobLanguages.join(", ")}`,
+            );
+          }
+          // Otherwise, allow (job likely accepts English speakers)
+        } else {
+          // Premium tier or free user without English: Must match
+          failures.push(
+            `Job requires languages user doesn't speak: ${jobLanguages.join(", ")}`,
+          );
+        }
+      }
+    }
 
-		// Also check description for language requirements (fallback)
-		// FREE TIER: More lenient - only reject if job explicitly requires non-English languages
-		// PREMIUM TIER: Stricter - must match language requirements found in description
-		const jobDesc = (job.description || "").toLowerCase();
-		const jobTitle = (job.title || "").toLowerCase();
-		const jobText = `${jobDesc} ${jobTitle}`.toLowerCase();
+    // Also check description for language requirements (fallback)
+    // FREE TIER: More lenient - only reject if job explicitly requires non-English languages
+    // PREMIUM TIER: Stricter - must match language requirements found in description
+    const jobDesc = (job.description || "").toLowerCase();
+    const jobTitle = (job.title || "").toLowerCase();
+    const jobText = `${jobDesc} ${jobTitle}`.toLowerCase();
 
-		// Common language requirement patterns
-		const languageRequirementKeywords = [
-			"japanese speaker",
-			"chinese speaker",
-			"mandarin speaker",
-			"korean speaker",
-			"arabic speaker",
-			"hindi speaker",
-			"thai speaker",
-			"russian speaker",
-			"polish speaker",
-			"czech speaker",
-			"hungarian speaker",
-			"romanian speaker",
-			"greek speaker",
-			"turkish speaker",
-			"fluent japanese",
-			"fluent chinese",
-			"fluent mandarin",
-			"fluent korean",
-			"native japanese",
-			"native chinese",
-			"native mandarin",
-			"native korean",
-			"must speak japanese",
-			"must speak chinese",
-			"must speak mandarin",
-			"must speak korean",
-			"requires japanese",
-			"requires chinese",
-			"requires mandarin",
-			"requires korean",
-			"japanese language",
-			"chinese language",
-			"mandarin language",
-			"korean language",
-			"japanese proficiency",
-			"chinese proficiency",
-			"mandarin proficiency",
-			"korean proficiency",
-		];
+    // Common language requirement patterns
+    const languageRequirementKeywords = [
+      "japanese speaker",
+      "chinese speaker",
+      "mandarin speaker",
+      "korean speaker",
+      "arabic speaker",
+      "hindi speaker",
+      "thai speaker",
+      "russian speaker",
+      "polish speaker",
+      "czech speaker",
+      "hungarian speaker",
+      "romanian speaker",
+      "greek speaker",
+      "turkish speaker",
+      "fluent japanese",
+      "fluent chinese",
+      "fluent mandarin",
+      "fluent korean",
+      "native japanese",
+      "native chinese",
+      "native mandarin",
+      "native korean",
+      "must speak japanese",
+      "must speak chinese",
+      "must speak mandarin",
+      "must speak korean",
+      "requires japanese",
+      "requires chinese",
+      "requires mandarin",
+      "requires korean",
+      "japanese language",
+      "chinese language",
+      "mandarin language",
+      "korean language",
+      "japanese proficiency",
+      "chinese proficiency",
+      "mandarin proficiency",
+      "korean proficiency",
+    ];
 
-		const userLanguagesLower = userLanguages.map((lang) => lang.toLowerCase());
-		const requiresUnknownLanguage = languageRequirementKeywords.some(
-			(keyword) => {
-				if (!jobText.includes(keyword)) return false;
+    const userLanguagesLower = userLanguages.map((lang) => lang.toLowerCase());
+    const requiresUnknownLanguage = languageRequirementKeywords.some(
+      (keyword) => {
+        if (!jobText.includes(keyword)) return false;
 
-				// Extract language from keyword
-				const langInKeyword = keyword
-					.split(" ")
-					.find((word) =>
-						[
-							"japanese",
-							"chinese",
-							"mandarin",
-							"cantonese",
-							"korean",
-							"hindi",
-							"thai",
-							"vietnamese",
-							"indonesian",
-							"tagalog",
-							"malay",
-							"bengali",
-							"tamil",
-							"telugu",
-							"arabic",
-							"turkish",
-							"hebrew",
-							"persian",
-							"farsi",
-							"urdu",
-							"russian",
-							"polish",
-							"czech",
-							"hungarian",
-							"romanian",
-							"greek",
-							"bulgarian",
-							"croatian",
-							"serbian",
-							"ukrainian",
-						].includes(word),
-					);
+        // Extract language from keyword
+        const langInKeyword = keyword
+          .split(" ")
+          .find((word) =>
+            [
+              "japanese",
+              "chinese",
+              "mandarin",
+              "cantonese",
+              "korean",
+              "hindi",
+              "thai",
+              "vietnamese",
+              "indonesian",
+              "tagalog",
+              "malay",
+              "bengali",
+              "tamil",
+              "telugu",
+              "arabic",
+              "turkish",
+              "hebrew",
+              "persian",
+              "farsi",
+              "urdu",
+              "russian",
+              "polish",
+              "czech",
+              "hungarian",
+              "romanian",
+              "greek",
+              "bulgarian",
+              "croatian",
+              "serbian",
+              "ukrainian",
+            ].includes(word),
+          );
 
-				if (!langInKeyword) return false;
+        if (!langInKeyword) return false;
 
-				// Check if user speaks this language
-				return !userLanguagesLower.some(
-					(userLang) =>
-						userLang.includes(langInKeyword) ||
-						langInKeyword.includes(userLang) ||
-						(userLang === "mandarin" && langInKeyword === "chinese") ||
-						(userLang === "chinese" && langInKeyword === "mandarin") ||
-						(userLang === "cantonese" && langInKeyword === "chinese"),
-				);
-			},
-		);
+        // Check if user speaks this language
+        return !userLanguagesLower.some(
+          (userLang) =>
+            userLang.includes(langInKeyword) ||
+            langInKeyword.includes(userLang) ||
+            (userLang === "mandarin" && langInKeyword === "chinese") ||
+            (userLang === "chinese" && langInKeyword === "mandarin") ||
+            (userLang === "cantonese" && langInKeyword === "chinese"),
+        );
+      },
+    );
 
-		if (requiresUnknownLanguage) {
-			failures.push("Job description requires languages user doesn't speak");
-		}
-	}
+    if (requiresUnknownLanguage) {
+      failures.push("Job description requires languages user doesn't speak");
+    }
+  }
 
-	// Years of Experience (YoE) check: Only gate if numeric values are available
-	// If YoE extraction returned null (regex miss), DEFAULT TO ALLOWING JOB TO PASS
-	// This ensures we don't accidentally block perfect jobs due to weirdly worded descriptions
-	// Better to spend $0.01 on an AI check than hide a perfect job
-	// TYPE SHIM: Now properly typed
-	const jobWithMeta = job as JobWithMetadata;
-	if (
-		jobWithMeta.min_yoe !== null &&
-		jobWithMeta.min_yoe !== undefined &&
-		typeof jobWithMeta.min_yoe === "number"
-	) {
-		// YoE regex extraction succeeded - could add hard gate here in future
-		// For now, we let all jobs pass through (including those with numeric YoE)
-		// This is intentional: let AI make the final decision on experience matching
-	}
-	// If min_yoe is null/undefined (regex miss), job automatically passes through
+  // Years of Experience (YoE) check: Only gate if numeric values are available
+  // If YoE extraction returned null (regex miss), DEFAULT TO ALLOWING JOB TO PASS
+  // This ensures we don't accidentally block perfect jobs due to weirdly worded descriptions
+  // Better to spend $0.01 on an AI check than hide a perfect job
+  // TYPE SHIM: Now properly typed
+  const jobWithMeta = job as JobWithMetadata;
+  if (
+    jobWithMeta.min_yoe !== null &&
+    jobWithMeta.min_yoe !== undefined &&
+    typeof jobWithMeta.min_yoe === "number"
+  ) {
+    // YoE regex extraction succeeded - could add hard gate here in future
+    // For now, we let all jobs pass through (including those with numeric YoE)
+    // This is intentional: let AI make the final decision on experience matching
+  }
+  // If min_yoe is null/undefined (regex miss), job automatically passes through
 
-	// Return result with all failures collected
-	if (failures.length > 0) {
-		// Prioritize location mismatch as primary reason if it exists (more user-visible)
-		const locationFailure = failures.find((f) =>
-			f.includes("Location mismatch"),
-		);
-		const primaryReason = locationFailure || failures[0];
+  // Return result with all failures collected
+  if (failures.length > 0) {
+    // Prioritize location mismatch as primary reason if it exists (more user-visible)
+    const locationFailure = failures.find((f) =>
+      f.includes("Location mismatch"),
+    );
+    const primaryReason = locationFailure || failures[0];
 
-		return {
-			passed: false,
-			reason: primaryReason,
-			reasons: failures,
-		};
-	}
+    return {
+      passed: false,
+      reason: primaryReason,
+      reasons: failures,
+    };
+  }
 
-	return { passed: true, reason: "Passed all hard gates" };
+  return { passed: true, reason: "Passed all hard gates" };
 }
 
 export function calculateMatchScore(
-	job: Job,
-	userPrefs: UserPreferences,
-	semanticScore?: number,
+  job: Job,
+  userPrefs: UserPreferences,
+  semanticScore?: number,
 ): MatchScore {
-	const categories = normalizeToString(job.categories);
-	// const _tags = cats(categories); // Kept for future use
+  const categories = normalizeToString(job.categories);
+  // const _tags = cats(categories); // Kept for future use
 
-	// Career path score (0-100) - MOST IMPORTANT
-	const careerPathScore = calculateCareerPathScore(job, userPrefs, categories);
+  // Career path score (0-100) - MOST IMPORTANT
+  const careerPathScore = calculateCareerPathScore(job, userPrefs, categories);
 
-	// Location score (0-100) - Hard requirement
-	const locationScore = calculateLocationScore(job, userPrefs);
+  // Location score (0-100) - Hard requirement
+  const locationScore = calculateLocationScore(job, userPrefs);
 
-	// Work environment score (0-100) - Form options only: Office/Hybrid/Remote
-	const workEnvironmentScore = calculateWorkEnvironmentScore(job, userPrefs);
+  // Work environment score (0-100) - Form options only: Office/Hybrid/Remote
+  const workEnvironmentScore = calculateWorkEnvironmentScore(job, userPrefs);
 
-	// Role fit score (0-100) - Specific role within career path
-	const roleFitScore = calculateRoleFitScore(job, userPrefs);
+  // Role fit score (0-100) - Specific role within career path
+  const roleFitScore = calculateRoleFitScore(job, userPrefs);
 
-	// Experience level score (0-100)
-	const experienceLevelScore = calculateExperienceScore(job, userPrefs);
+  // Experience level score (0-100)
+  const experienceLevelScore = calculateExperienceScore(job, userPrefs);
 
-	// Company culture score (0-100) - Company type preference
-	const companyCultureScore = calculateCompanyScore(job, userPrefs);
+  // Company culture score (0-100) - Company type preference
+  const companyCultureScore = calculateCompanyScore(job, userPrefs);
 
-	// Skills score (0-100) - Technical/soft skills alignment
-	const skillsScore = calculateSkillsScore(job, userPrefs);
+  // Skills score (0-100) - Technical/soft skills alignment
+  const skillsScore = calculateSkillsScore(job, userPrefs);
 
-	// Timing score (0-100) - Job freshness
-	const timingScore = calculateTimingScore(job);
+  // Timing score (0-100) - Job freshness
+  const timingScore = calculateTimingScore(job);
 
-	// Get weights from config
-	const weights = getScoringWeights();
+  // Get weights from config
+  const weights = getScoringWeights();
 
-	// Calculate overall score (weighted average)
-	// Cap at 100 to prevent scores over 100
-	let overallScore = Math.min(
-		100,
-		Math.round(
-			careerPathScore * weights.careerPath +
-				locationScore * weights.location +
-				workEnvironmentScore * weights.workEnvironment +
-				roleFitScore * weights.roleFit +
-				experienceLevelScore * weights.experienceLevel +
-				companyCultureScore * weights.companyCulture +
-				skillsScore * weights.skills +
-				timingScore * weights.timing,
-		),
-	);
+  // Calculate overall score (weighted average)
+  // Cap at 100 to prevent scores over 100
+  let overallScore = Math.min(
+    100,
+    Math.round(
+      careerPathScore * weights.careerPath +
+        locationScore * weights.location +
+        workEnvironmentScore * weights.workEnvironment +
+        roleFitScore * weights.roleFit +
+        experienceLevelScore * weights.experienceLevel +
+        companyCultureScore * weights.companyCulture +
+        skillsScore * weights.skills +
+        timingScore * weights.timing,
+    ),
+  );
 
-	// Apply semantic boost if provided (hybrid approach)
-	let semanticBoost = 0;
-	if (semanticScore !== undefined && semanticScore > 0.65) {
-		// Semantic boost: (similarity - 0.65) * 0.15 = max 5.25% boost at 1.0 similarity
-		semanticBoost =
-			Math.min(10, Math.round((semanticScore - 0.65) * 0.15 * 100)) / 100;
-		overallScore = Math.min(
-			100,
-			Math.round(overallScore * (1 + semanticBoost)),
-		);
-	}
+  // Apply semantic boost if provided (hybrid approach)
+  let semanticBoost = 0;
+  if (semanticScore !== undefined && semanticScore > 0.65) {
+    // Semantic boost: (similarity - 0.65) * 0.15 = max 5.25% boost at 1.0 similarity
+    semanticBoost =
+      Math.min(10, Math.round((semanticScore - 0.65) * 0.15 * 100)) / 100;
+    overallScore = Math.min(
+      100,
+      Math.round(overallScore * (1 + semanticBoost)),
+    );
+  }
 
-	// Calculate eligibility score (100 if eligible for early career, 0 otherwise)
-	const eligibilityScore = hasEligibility(categories) ? 100 : 0;
+  // Calculate eligibility score (100 if eligible for early career, 0 otherwise)
+  const eligibilityScore = hasEligibility(categories) ? 100 : 0;
 
-	return {
-		overall: overallScore,
-		eligibility: eligibilityScore,
-		careerPath: careerPathScore,
-		location: locationScore,
-		workEnvironment: workEnvironmentScore,
-		roleFit: roleFitScore,
-		experienceLevel: experienceLevelScore,
-		companyCulture: companyCultureScore,
-		skills: skillsScore,
-		timing: timingScore,
-		semanticBoost: semanticBoost > 0 ? semanticBoost : undefined,
-	};
+  return {
+    overall: overallScore,
+    eligibility: eligibilityScore,
+    careerPath: careerPathScore,
+    location: locationScore,
+    workEnvironment: workEnvironmentScore,
+    roleFit: roleFitScore,
+    experienceLevel: experienceLevelScore,
+    companyCulture: companyCultureScore,
+    skills: skillsScore,
+    timing: timingScore,
+    semanticBoost: semanticBoost > 0 ? semanticBoost : undefined,
+  };
 }
 
 export function calculateConfidenceScore(
-	job: Job,
-	userPrefs: UserPreferences,
+  job: Job,
+  userPrefs: UserPreferences,
 ): number {
-	const categories = normalizeToString(job.categories);
-	// const _tags = cats(categories); // Kept for future use
+  const categories = normalizeToString(job.categories);
+  // const _tags = cats(categories); // Kept for future use
 
-	let confidence = 0.5; // Base confidence
+  let confidence = 0.5; // Base confidence
 
-	// Increase confidence for clear eligibility
-	if (hasEligibility(categories)) {
-		confidence += 0.2;
-	}
+  // Increase confidence for clear eligibility
+  if (hasEligibility(categories)) {
+    confidence += 0.2;
+  }
 
-	// Increase confidence for location match
-	if (userPrefs.target_cities && userPrefs.target_cities.length > 0) {
-		const jobLocation = job.location?.toLowerCase() || "";
-		const userCities = userPrefs.target_cities.map((city) =>
-			city.toLowerCase(),
-		);
+  // Increase confidence for location match
+  if (userPrefs.target_cities && userPrefs.target_cities.length > 0) {
+    const jobLocation = job.location?.toLowerCase() || "";
+    const userCities = userPrefs.target_cities.map((city) =>
+      city.toLowerCase(),
+    );
 
-		if (userCities.some((city) => jobLocation.includes(city))) {
-			confidence += 0.15;
-		}
-	}
+    if (userCities.some((city) => jobLocation.includes(city))) {
+      confidence += 0.15;
+    }
+  }
 
-	// Increase confidence for career path match
-	// STANDARDIZED: Use database category mapping
-	const userCareerPaths = userPrefs.career_path || [];
-	if (userCareerPaths.length > 0) {
-		// Use category mapper imported at top of file
-		const userDatabaseCategories = new Set<string>();
-		userCareerPaths.forEach((path) => {
-			getDatabaseCategoriesForForm(path).forEach((cat: string) => {
-				userDatabaseCategories.add(cat.toLowerCase());
-			});
-		});
+  // Increase confidence for career path match
+  // STANDARDIZED: Use database category mapping
+  const userCareerPaths = userPrefs.career_path || [];
+  if (userCareerPaths.length > 0) {
+    // Use category mapper imported at top of file
+    const userDatabaseCategories = new Set<string>();
+    userCareerPaths.forEach((path) => {
+      getDatabaseCategoriesForForm(path).forEach((cat: string) => {
+        userDatabaseCategories.add(cat.toLowerCase());
+      });
+    });
 
-		const jobCategories = cats(categories).map((c: string) => c.toLowerCase());
-		const hasCareerMatch = jobCategories.some((cat) =>
-			userDatabaseCategories.has(cat),
-		);
+    const jobCategories = cats(categories).map((c: string) => c.toLowerCase());
+    const hasCareerMatch = jobCategories.some((cat) =>
+      userDatabaseCategories.has(cat),
+    );
 
-		if (hasCareerMatch) {
-			confidence += 0.15;
-		}
-	}
+    if (hasCareerMatch) {
+      confidence += 0.15;
+    }
+  }
 
-	return Math.min(1.0, confidence);
+  return Math.min(1.0, confidence);
 }
 
 export function generateMatchExplanation(
-	job: Job,
-	scoreBreakdown: MatchScore,
-	_userPrefs: UserPreferences,
+  job: Job,
+  scoreBreakdown: MatchScore,
+  _userPrefs: UserPreferences,
 ): { reason: string; tags: string } {
-	const categories = normalizeToString(job.categories);
-	// const _tags = cats(categories); // Kept for future use
+  const categories = normalizeToString(job.categories);
+  // const _tags = cats(categories); // Kept for future use
 
-	const reasons: string[] = [];
-	const matchTags: string[] = [];
+  const reasons: string[] = [];
+  const matchTags: string[] = [];
 
-	// Early career eligibility (always checked in hard gates, so just note it)
-	if (hasEligibility(categories)) {
-		reasons.push("Perfect for early career");
-		matchTags.push("early-career");
-	}
+  // Early career eligibility (always checked in hard gates, so just note it)
+  if (hasEligibility(categories)) {
+    reasons.push("Perfect for early career");
+    matchTags.push("early-career");
+  }
 
-	// Career path
-	if (scoreBreakdown.careerPath > 80) {
-		reasons.push("Perfect career path match");
-		matchTags.push("career-match");
-	}
+  // Career path
+  if (scoreBreakdown.careerPath > 80) {
+    reasons.push("Perfect career path match");
+    matchTags.push("career-match");
+  }
 
-	// Location
-	if (scoreBreakdown.location > 80) {
-		reasons.push("Great location match");
-		matchTags.push("location-match");
-	}
+  // Location
+  if (scoreBreakdown.location > 80) {
+    reasons.push("Great location match");
+    matchTags.push("location-match");
+  }
 
-	// Work environment
-	if (scoreBreakdown.workEnvironment > 80) {
-		reasons.push("Preferred work environment");
-		matchTags.push("work-env-match");
-	}
+  // Work environment
+  if (scoreBreakdown.workEnvironment > 80) {
+    reasons.push("Preferred work environment");
+    matchTags.push("work-env-match");
+  }
 
-	// Role fit
-	if (scoreBreakdown.roleFit > 80) {
-		reasons.push("Ideal role match");
-		matchTags.push("role-match");
-	}
+  // Role fit
+  if (scoreBreakdown.roleFit > 80) {
+    reasons.push("Ideal role match");
+    matchTags.push("role-match");
+  }
 
-	// Experience level
-	if (scoreBreakdown.experienceLevel > 80) {
-		reasons.push("Right experience level");
-		matchTags.push("experience-match");
-	}
+  // Experience level
+  if (scoreBreakdown.experienceLevel > 80) {
+    reasons.push("Right experience level");
+    matchTags.push("experience-match");
+  }
 
-	// Company culture
-	if (scoreBreakdown.companyCulture > 80) {
-		reasons.push("Preferred company type");
-		matchTags.push("company-match");
-	}
+  // Company culture
+  if (scoreBreakdown.companyCulture > 80) {
+    reasons.push("Preferred company type");
+    matchTags.push("company-match");
+  }
 
-	// Skills
-	if (scoreBreakdown.skills > 80) {
-		reasons.push("Strong skill alignment");
-		matchTags.push("skill-match");
-	}
+  // Skills
+  if (scoreBreakdown.skills > 80) {
+    reasons.push("Strong skill alignment");
+    matchTags.push("skill-match");
+  }
 
-	// Timing
-	if (scoreBreakdown.timing > 80) {
-		reasons.push("Fresh opportunity");
-		matchTags.push("fresh");
-	}
+  // Timing
+  if (scoreBreakdown.timing > 80) {
+    reasons.push("Fresh opportunity");
+    matchTags.push("fresh");
+  }
 
-	// Semantic boost indicator
-	if (scoreBreakdown.semanticBoost && scoreBreakdown.semanticBoost > 0) {
-		reasons.push("Strong semantic match");
-		matchTags.push("semantic-boost");
-	}
+  // Semantic boost indicator
+  if (scoreBreakdown.semanticBoost && scoreBreakdown.semanticBoost > 0) {
+    reasons.push("Strong semantic match");
+    matchTags.push("semantic-boost");
+  }
 
-	const reason = reasons.length > 0 ? reasons.join(", ") : "Good overall match";
+  const reason = reasons.length > 0 ? reasons.join(", ") : "Good overall match";
 
-	return {
-		reason,
-		tags: matchTags.join(", "),
-	};
+  return {
+    reason,
+    tags: matchTags.join(", "),
+  };
 }
 
 export function categorizeMatches(matches: MatchResult[]): {
-	confident: MatchResult[];
-	promising: MatchResult[];
+  confident: MatchResult[];
+  promising: MatchResult[];
 } {
-	const confident: MatchResult[] = [];
-	const promising: MatchResult[] = [];
+  const confident: MatchResult[] = [];
+  const promising: MatchResult[] = [];
 
-	matches.forEach((match) => {
-		if (match.confidence_score >= 0.7 && match.match_score >= 80) {
-			confident.push(match);
-		} else if (match.match_score >= 60) {
-			promising.push(match);
-		}
-	});
+  matches.forEach((match) => {
+    if (match.confidence_score >= 0.7 && match.match_score >= 80) {
+      confident.push(match);
+    } else if (match.match_score >= 60) {
+      promising.push(match);
+    }
+  });
 
-	return { confident, promising };
+  return { confident, promising };
 }
 
 export function performRobustMatching(
-	jobs: Job[],
-	userPrefs: UserPreferences,
-	semanticScores?: Map<string, number>, // Optional: job_hash -> semantic_score
+  jobs: Job[],
+  userPrefs: UserPreferences,
+  semanticScores?: Map<string, number>, // Optional: job_hash -> semantic_score
 ): MatchResult[] {
-	const matches: MatchResult[] = [];
+  const matches: MatchResult[] = [];
 
-	for (const job of jobs) {
-		// Apply hard gates
-		const gateResult = applyHardGates(job, userPrefs);
-		if (!gateResult.passed) {
-			continue;
-		}
+  for (const job of jobs) {
+    // Apply hard gates
+    const gateResult = applyHardGates(job, userPrefs);
+    if (!gateResult.passed) {
+      continue;
+    }
 
-		// Get semantic score if available (for hybrid approach)
-		const semanticScore = semanticScores?.get(job.job_hash);
+    // Get semantic score if available (for hybrid approach)
+    const semanticScore = semanticScores?.get(job.job_hash);
 
-		// Calculate match score with optional semantic boost
-		const scoreBreakdown = calculateMatchScore(job, userPrefs, semanticScore);
+    // Calculate match score with optional semantic boost
+    const scoreBreakdown = calculateMatchScore(job, userPrefs, semanticScore);
 
-		// Skip low-scoring matches
-		if (scoreBreakdown.overall < 50) {
-			continue;
-		}
+    // Skip low-scoring matches
+    if (scoreBreakdown.overall < 50) {
+      continue;
+    }
 
-		// Calculate confidence
-		const confidenceScore = calculateConfidenceScore(job, userPrefs);
+    // Calculate confidence
+    const confidenceScore = calculateConfidenceScore(job, userPrefs);
 
-		// Generate explanation
-		const explanation = generateMatchExplanation(
-			job,
-			scoreBreakdown,
-			userPrefs,
-		);
+    // Generate explanation
+    const explanation = generateMatchExplanation(
+      job,
+      scoreBreakdown,
+      userPrefs,
+    );
 
-		// Determine match quality
-		const matchQuality = getMatchQuality(scoreBreakdown.overall);
+    // Determine match quality
+    const matchQuality = getMatchQuality(scoreBreakdown.overall);
 
-		// Create provenance
-		const provenance: AiProvenance = {
-			match_algorithm: semanticScore ? "hybrid" : "rules",
-			fallback_reason: semanticScore
-				? "Hybrid matching (rule-based + semantic)"
-				: "Rule-based matching",
-		};
+    // Create provenance
+    const provenance: AiProvenance = {
+      match_algorithm: semanticScore ? "hybrid" : "rules",
+      fallback_reason: semanticScore
+        ? "Hybrid matching (rule-based + semantic)"
+        : "Rule-based matching",
+    };
 
-		matches.push({
-			job,
-			match_score: scoreBreakdown.overall,
-			match_reason: explanation.reason,
-			confidence_score: confidenceScore,
-			match_quality: matchQuality,
-			score_breakdown: scoreBreakdown,
-			provenance,
-		});
-	}
+    matches.push({
+      job,
+      match_score: scoreBreakdown.overall,
+      match_reason: explanation.reason,
+      confidence_score: confidenceScore,
+      match_quality: matchQuality,
+      score_breakdown: scoreBreakdown,
+      provenance,
+    });
+  }
 
-	// Sort by match score (descending)
-	matches.sort((a, b) => b.match_score - a.match_score);
+  // Sort by match score (descending)
+  matches.sort((a, b) => b.match_score - a.match_score);
 
-	return matches;
+  return matches;
 }
 
 export function generateRobustFallbackMatches(
-	jobs: Job[],
-	userPrefs: UserPreferences,
+  jobs: Job[],
+  userPrefs: UserPreferences,
 ): MatchResult[] {
-	console.log(" Using rule-based fallback matching");
-	console.log(` Using legacy robust fallback for ${userPrefs.email}`);
+  console.log(" Using rule-based fallback matching");
+  console.log(` Using legacy robust fallback for ${userPrefs.email}`);
 
-	return performRobustMatching(jobs, userPrefs);
+  return performRobustMatching(jobs, userPrefs);
 }
 
 // ================================
@@ -869,177 +869,177 @@ export function generateRobustFallbackMatches(
 // ================================
 
 function calculateLocationScore(job: Job, userPrefs: UserPreferences): number {
-	if (!userPrefs.target_cities || userPrefs.target_cities.length === 0) {
-		return 70; // Neutral score if no location preference
-	}
+  if (!userPrefs.target_cities || userPrefs.target_cities.length === 0) {
+    return 70; // Neutral score if no location preference
+  }
 
-	const jobLocation = job.location?.toLowerCase() || "";
-	const userCities = userPrefs.target_cities.map((city) => city.toLowerCase());
+  const jobLocation = job.location?.toLowerCase() || "";
+  const userCities = userPrefs.target_cities.map((city) => city.toLowerCase());
 
-	// Exact city match
-	if (userCities.some((city) => jobLocation.includes(city))) {
-		return 100;
-	}
+  // Exact city match
+  if (userCities.some((city) => jobLocation.includes(city))) {
+    return 100;
+  }
 
-	// Remote/hybrid options
-	if (jobLocation.includes("remote") || jobLocation.includes("hybrid")) {
-		return 90;
-	}
+  // Remote/hybrid options
+  if (jobLocation.includes("remote") || jobLocation.includes("hybrid")) {
+    return 90;
+  }
 
-	// Country match
-	const euCountries = [
-		"germany",
-		"france",
-		"spain",
-		"netherlands",
-		"denmark",
-		"sweden",
-	];
-	if (euCountries.some((country) => jobLocation.includes(country))) {
-		return 60;
-	}
+  // Country match
+  const euCountries = [
+    "germany",
+    "france",
+    "spain",
+    "netherlands",
+    "denmark",
+    "sweden",
+  ];
+  if (euCountries.some((country) => jobLocation.includes(country))) {
+    return 60;
+  }
 
-	return 30; // Low score for other locations
+  return 30; // Low score for other locations
 }
 
 function calculateExperienceScore(
-	job: Job,
-	userPrefs: UserPreferences,
+  job: Job,
+  userPrefs: UserPreferences,
 ): number {
-	const userExperience =
-		userPrefs.entry_level_preference?.toLowerCase() || "entry";
-	const jobDescription = job.description?.toLowerCase() || "";
-	const jobTitle = job.title?.toLowerCase() || "";
-	const combinedText = `${jobDescription} ${jobTitle}`;
+  const userExperience =
+    userPrefs.entry_level_preference?.toLowerCase() || "entry";
+  const jobDescription = job.description?.toLowerCase() || "";
+  const jobTitle = job.title?.toLowerCase() || "";
+  const combinedText = `${jobDescription} ${jobTitle}`;
 
-	// Check for working student terms
-	const workingStudentTerms = [
-		"werkstudent",
-		"working student",
-		"part-time student",
-		"student worker",
-		"student job",
-	];
-	const isWorkingStudentJob = workingStudentTerms.some((term) =>
-		combinedText.includes(term),
-	);
+  // Check for working student terms
+  const workingStudentTerms = [
+    "werkstudent",
+    "working student",
+    "part-time student",
+    "student worker",
+    "student job",
+  ];
+  const isWorkingStudentJob = workingStudentTerms.some((term) =>
+    combinedText.includes(term),
+  );
 
-	// Use flags first (most accurate)
-	if (job.is_internship) {
-		if (userExperience.includes("intern")) {
-			return 100; // Perfect match
-		}
-		// Working Student preference: boost internships, especially those with working student terms
-		if (userExperience.includes("working student")) {
-			return isWorkingStudentJob ? 100 : 85; // Perfect match if explicitly working student, otherwise good match
-		}
-		return 60; // Still early-career, but not user's preference
-	}
+  // Use flags first (most accurate)
+  if (job.is_internship) {
+    if (userExperience.includes("intern")) {
+      return 100; // Perfect match
+    }
+    // Working Student preference: boost internships, especially those with working student terms
+    if (userExperience.includes("working student")) {
+      return isWorkingStudentJob ? 100 : 85; // Perfect match if explicitly working student, otherwise good match
+    }
+    return 60; // Still early-career, but not user's preference
+  }
 
-	if (job.is_graduate) {
-		if (
-			userExperience.includes("graduate") ||
-			userExperience.includes("grad")
-		) {
-			return 100; // Perfect match
-		}
-		return 60; // Still early-career, but not user's preference
-	}
+  if (job.is_graduate) {
+    if (
+      userExperience.includes("graduate") ||
+      userExperience.includes("grad")
+    ) {
+      return 100; // Perfect match
+    }
+    return 60; // Still early-career, but not user's preference
+  }
 
-	// Check for experience level indicators in text
-	if (combinedText.includes("senior") || combinedText.includes("lead")) {
-		return userExperience.includes("senior") ? 100 : 20;
-	}
+  // Check for experience level indicators in text
+  if (combinedText.includes("senior") || combinedText.includes("lead")) {
+    return userExperience.includes("senior") ? 100 : 20;
+  }
 
-	if (
-		combinedText.includes("mid-level") ||
-		combinedText.includes("intermediate")
-	) {
-		return userExperience.includes("mid") ? 100 : 40;
-	}
+  if (
+    combinedText.includes("mid-level") ||
+    combinedText.includes("intermediate")
+  ) {
+    return userExperience.includes("mid") ? 100 : 40;
+  }
 
-	if (combinedText.includes("junior") || combinedText.includes("associate")) {
-		return userExperience.includes("entry") ? 100 : 60;
-	}
+  if (combinedText.includes("junior") || combinedText.includes("associate")) {
+    return userExperience.includes("entry") ? 100 : 60;
+  }
 
-	// Working Student preference: check text for working student terms even if not flagged as internship
-	if (userExperience.includes("working student") && isWorkingStudentJob) {
-		return 90; // Good match for working student roles
-	}
+  // Working Student preference: check text for working student terms even if not flagged as internship
+  if (userExperience.includes("working student") && isWorkingStudentJob) {
+    return 90; // Good match for working student roles
+  }
 
-	// Default to entry level (all jobs are early-career)
-	return userExperience.includes("entry") || !userExperience ? 80 : 50;
+  // Default to entry level (all jobs are early-career)
+  return userExperience.includes("entry") || !userExperience ? 80 : 50;
 }
 
 function calculateSkillsScore(job: Job, userPrefs: UserPreferences): number {
-	const userRoles = userPrefs.roles_selected || [];
-	const userCompanyTypes = userPrefs.company_types || [];
+  const userRoles = userPrefs.roles_selected || [];
+  const userCompanyTypes = userPrefs.company_types || [];
 
-	if (userRoles.length === 0 && userCompanyTypes.length === 0) {
-		return 70; // Neutral score
-	}
+  if (userRoles.length === 0 && userCompanyTypes.length === 0) {
+    return 70; // Neutral score
+  }
 
-	const jobDescription = job.description?.toLowerCase() || "";
-	const jobTitle = job.title?.toLowerCase() || "";
-	const combinedText = `${jobDescription} ${jobTitle}`;
+  const jobDescription = job.description?.toLowerCase() || "";
+  const jobTitle = job.title?.toLowerCase() || "";
+  const combinedText = `${jobDescription} ${jobTitle}`;
 
-	let score = 50; // Base score
+  let score = 50; // Base score
 
-	// Check role alignment
-	userRoles.forEach((role) => {
-		if (combinedText.includes(role.toLowerCase())) {
-			score += 15;
-		}
-	});
+  // Check role alignment
+  userRoles.forEach((role) => {
+    if (combinedText.includes(role.toLowerCase())) {
+      score += 15;
+    }
+  });
 
-	// Check company type alignment
-	userCompanyTypes.forEach((companyType) => {
-		if (combinedText.includes(companyType.toLowerCase())) {
-			score += 10;
-		}
-	});
+  // Check company type alignment
+  userCompanyTypes.forEach((companyType) => {
+    if (combinedText.includes(companyType.toLowerCase())) {
+      score += 10;
+    }
+  });
 
-	return Math.min(100, score);
+  return Math.min(100, score);
 }
 
 function calculateCompanyScore(job: Job, userPrefs: UserPreferences): number {
-	const userCompanyTypes = userPrefs.company_types || [];
+  const userCompanyTypes = userPrefs.company_types || [];
 
-	if (userCompanyTypes.length === 0) {
-		return 70; // Neutral score
-	}
+  if (userCompanyTypes.length === 0) {
+    return 70; // Neutral score
+  }
 
-	const jobDescription = job.description?.toLowerCase() || "";
-	const companyName = job.company?.toLowerCase() || "";
-	const combinedText = `${jobDescription} ${companyName}`;
+  const jobDescription = job.description?.toLowerCase() || "";
+  const companyName = job.company?.toLowerCase() || "";
+  const combinedText = `${jobDescription} ${companyName}`;
 
-	let score = 50; // Base score
+  let score = 50; // Base score
 
-	userCompanyTypes.forEach((companyType) => {
-		if (combinedText.includes(companyType.toLowerCase())) {
-			score += 20;
-		}
-	});
+  userCompanyTypes.forEach((companyType) => {
+    if (combinedText.includes(companyType.toLowerCase())) {
+      score += 20;
+    }
+  });
 
-	return Math.min(100, score);
+  return Math.min(100, score);
 }
 
 function calculateTimingScore(job: Job): number {
-	if (!job.posted_at) {
-		return 50; // Neutral score
-	}
+  if (!job.posted_at) {
+    return 50; // Neutral score
+  }
 
-	const postedDate = new Date(job.posted_at);
-	const now = new Date();
-	const daysSincePosted =
-		(now.getTime() - postedDate.getTime()) / (1000 * 60 * 60 * 24);
+  const postedDate = new Date(job.posted_at);
+  const now = new Date();
+  const daysSincePosted =
+    (now.getTime() - postedDate.getTime()) / (1000 * 60 * 60 * 24);
 
-	if (daysSincePosted < 1) return 100; // Very fresh
-	if (daysSincePosted < 3) return 90; // Fresh
-	if (daysSincePosted < 7) return 70; // Recent
-	if (daysSincePosted < 14) return 50; // Older
+  if (daysSincePosted < 1) return 100; // Very fresh
+  if (daysSincePosted < 3) return 90; // Fresh
+  if (daysSincePosted < 7) return 70; // Recent
+  if (daysSincePosted < 14) return 50; // Older
 
-	return 30; // Stale
+  return 30; // Stale
 }
 
 /**
@@ -1048,59 +1048,59 @@ function calculateTimingScore(job: Job): number {
  * STANDARDIZED: Uses getDatabaseCategoriesForForm for consistent category mapping
  */
 function calculateCareerPathScore(
-	job: Job,
-	userPrefs: UserPreferences,
-	categories: string,
+  job: Job,
+  userPrefs: UserPreferences,
+  categories: string,
 ): number {
-	const userCareerPaths = userPrefs.career_path || [];
+  const userCareerPaths = userPrefs.career_path || [];
 
-	if (userCareerPaths.length === 0) {
-		return 70; // Neutral score if no preference
-	}
+  if (userCareerPaths.length === 0) {
+    return 70; // Neutral score if no preference
+  }
 
-	// STANDARDIZED: Use database category mapping for consistent matching
-	// Category mapper imported at top of file
-	const userDatabaseCategories = new Set<string>();
-	userCareerPaths.forEach((path) => {
-		getDatabaseCategoriesForForm(path).forEach((cat: string) => {
-			userDatabaseCategories.add(cat.toLowerCase());
-		});
-	});
+  // STANDARDIZED: Use database category mapping for consistent matching
+  // Category mapper imported at top of file
+  const userDatabaseCategories = new Set<string>();
+  userCareerPaths.forEach((path) => {
+    getDatabaseCategoriesForForm(path).forEach((cat: string) => {
+      userDatabaseCategories.add(cat.toLowerCase());
+    });
+  });
 
-	// Normalize job categories to array
-	const jobCategories = cats(categories).map((c: string) => c.toLowerCase());
+  // Normalize job categories to array
+  const jobCategories = cats(categories).map((c: string) => c.toLowerCase());
 
-	// Check for exact career path match using database categories
-	const hasCareerMatch = jobCategories.some((cat) =>
-		userDatabaseCategories.has(cat),
-	);
+  // Check for exact career path match using database categories
+  const hasCareerMatch = jobCategories.some((cat) =>
+    userDatabaseCategories.has(cat),
+  );
 
-	if (hasCareerMatch) {
-		return 100; // Perfect match
-	}
+  if (hasCareerMatch) {
+    return 100; // Perfect match
+  }
 
-	// TIER-AWARE: Premium users don't get partial matches (strict matching)
-	const isPremiumTier = userPrefs.subscription_tier === "premium";
-	if (isPremiumTier) {
-		return 30; // No match for premium users (strict)
-	}
+  // TIER-AWARE: Premium users don't get partial matches (strict matching)
+  const isPremiumTier = userPrefs.subscription_tier === "premium";
+  if (isPremiumTier) {
+    return 30; // No match for premium users (strict)
+  }
 
-	// Partial match (related career paths) - only for free users
-	const hasPartialMatch = userCareerPaths.some((userPath) => {
-		const userPathLower = userPath.toLowerCase();
-		const jobText = `${job.title || ""} ${job.description || ""}`.toLowerCase();
-		// Only match if keyword appears AND it's not a false positive
-		// Check that the keyword isn't part of a different word
-		// Escape regex special characters to prevent invalid regex patterns
-		const escapedUserPath = userPathLower.replace(
-			/[.*+?^${}()|[\]\\]/g,
-			"\\$&",
-		);
-		const wordBoundaryRegex = new RegExp(`\\b${escapedUserPath}\\b`, "i");
-		return wordBoundaryRegex.test(jobText);
-	});
+  // Partial match (related career paths) - only for free users
+  const hasPartialMatch = userCareerPaths.some((userPath) => {
+    const userPathLower = userPath.toLowerCase();
+    const jobText = `${job.title || ""} ${job.description || ""}`.toLowerCase();
+    // Only match if keyword appears AND it's not a false positive
+    // Check that the keyword isn't part of a different word
+    // Escape regex special characters to prevent invalid regex patterns
+    const escapedUserPath = userPathLower.replace(
+      /[.*+?^${}()|[\]\\]/g,
+      "\\$&",
+    );
+    const wordBoundaryRegex = new RegExp(`\\b${escapedUserPath}\\b`, "i");
+    return wordBoundaryRegex.test(jobText);
+  });
 
-	return hasPartialMatch ? 60 : 30; // Partial match or no match
+  return hasPartialMatch ? 60 : 30; // Partial match or no match
 }
 
 /**
@@ -1109,80 +1109,80 @@ function calculateCareerPathScore(
  * Normalized to: on-site, hybrid, remote
  */
 function calculateWorkEnvironmentScore(
-	job: Job,
-	userPrefs: UserPreferences,
+  job: Job,
+  userPrefs: UserPreferences,
 ): number {
-	// Normalize user preference (form values: 'Office', 'Hybrid', 'Remote')
-	// Handle comma-separated strings from premium form (e.g., "Office, Hybrid")
-	const workEnvRaw = userPrefs.work_environment;
-	let userWorkEnvs: ("remote" | "hybrid" | "on-site")[] = [];
+  // Normalize user preference (form values: 'Office', 'Hybrid', 'Remote')
+  // Handle comma-separated strings from premium form (e.g., "Office, Hybrid")
+  const workEnvRaw = userPrefs.work_environment;
+  let userWorkEnvs: ("remote" | "hybrid" | "on-site")[] = [];
 
-	if (workEnvRaw) {
-		if (typeof workEnvRaw === "string" && workEnvRaw.includes(",")) {
-			// Multiple selections: parse each value
-			const values = workEnvRaw.split(",").map((v) => v.trim());
-			userWorkEnvs = values
-				.map((v) => toWorkEnv(v))
-				.filter((v): v is "remote" | "hybrid" | "on-site" => v !== null);
-		} else {
-			// Single selection
-			const env = toWorkEnv(workEnvRaw);
-			if (env) userWorkEnvs = [env];
-		}
-	}
+  if (workEnvRaw) {
+    if (typeof workEnvRaw === "string" && workEnvRaw.includes(",")) {
+      // Multiple selections: parse each value
+      const values = workEnvRaw.split(",").map((v) => v.trim());
+      userWorkEnvs = values
+        .map((v) => toWorkEnv(v))
+        .filter((v): v is "remote" | "hybrid" | "on-site" => v !== null);
+    } else {
+      // Single selection
+      const env = toWorkEnv(workEnvRaw);
+      if (env) userWorkEnvs = [env];
+    }
+  }
 
-	const jobWorkEnv = toWorkEnv(job.work_environment);
+  const jobWorkEnv = toWorkEnv(job.work_environment);
 
-	// If no preference specified, neutral score
-	if (userWorkEnvs.length === 0) {
-		return 50;
-	}
+  // If no preference specified, neutral score
+  if (userWorkEnvs.length === 0) {
+    return 50;
+  }
 
-	// If job work environment is unclear, neutral score
-	if (!jobWorkEnv) {
-		return 50;
-	}
+  // If job work environment is unclear, neutral score
+  if (!jobWorkEnv) {
+    return 50;
+  }
 
-	// Check if job matches any of user's selected environments
-	const exactMatch = userWorkEnvs.includes(jobWorkEnv);
-	if (exactMatch) {
-		return 100;
-	}
+  // Check if job matches any of user's selected environments
+  const exactMatch = userWorkEnvs.includes(jobWorkEnv);
+  if (exactMatch) {
+    return 100;
+  }
 
-	// Compatibility rules: Only apply if user explicitly selected a compatible environment
-	// Example: User selects "Office, Hybrid" → can match Hybrid jobs (compatibility) but NOT Remote jobs
-	// Example: User selects "Hybrid" → can match Remote jobs (compatibility) but NOT Office-only jobs
-	let bestScore = 0;
+  // Compatibility rules: Only apply if user explicitly selected a compatible environment
+  // Example: User selects "Office, Hybrid" → can match Hybrid jobs (compatibility) but NOT Remote jobs
+  // Example: User selects "Hybrid" → can match Remote jobs (compatibility) but NOT Office-only jobs
+  let bestScore = 0;
 
-	for (const userWorkEnv of userWorkEnvs) {
-		let score = 0;
+  for (const userWorkEnv of userWorkEnvs) {
+    let score = 0;
 
-		if (userWorkEnv === "remote") {
-			// Remote users accept: remote (100), hybrid (60) - compatibility allowed
-			if (jobWorkEnv === "hybrid") score = 60;
-			else if (jobWorkEnv === "on-site") score = 20;
-		} else if (userWorkEnv === "hybrid") {
-			// Hybrid users accept: hybrid (100), remote (90), on-site (40) - compatibility allowed
-			if (jobWorkEnv === "remote") score = 90;
-			else if (jobWorkEnv === "on-site") score = 40;
-		} else if (userWorkEnv === "on-site") {
-			// Office users accept: on-site (100), hybrid (70) - compatibility allowed
-			// BUT: Do NOT match Remote jobs if user only selected Office (no Remote in selection)
-			if (jobWorkEnv === "hybrid") score = 70;
-			// Only allow Remote compatibility if user also selected Remote or Hybrid
-			else if (jobWorkEnv === "remote" && userWorkEnvs.includes("remote")) {
-				score = 20; // User selected both Office and Remote
-			} else if (jobWorkEnv === "remote" && userWorkEnvs.includes("hybrid")) {
-				score = 20; // User selected Office and Hybrid (Hybrid can be remote-compatible)
-			} else if (jobWorkEnv === "remote") {
-				score = 0; // User only selected Office, don't match Remote jobs
-			}
-		}
+    if (userWorkEnv === "remote") {
+      // Remote users accept: remote (100), hybrid (60) - compatibility allowed
+      if (jobWorkEnv === "hybrid") score = 60;
+      else if (jobWorkEnv === "on-site") score = 20;
+    } else if (userWorkEnv === "hybrid") {
+      // Hybrid users accept: hybrid (100), remote (90), on-site (40) - compatibility allowed
+      if (jobWorkEnv === "remote") score = 90;
+      else if (jobWorkEnv === "on-site") score = 40;
+    } else if (userWorkEnv === "on-site") {
+      // Office users accept: on-site (100), hybrid (70) - compatibility allowed
+      // BUT: Do NOT match Remote jobs if user only selected Office (no Remote in selection)
+      if (jobWorkEnv === "hybrid") score = 70;
+      // Only allow Remote compatibility if user also selected Remote or Hybrid
+      else if (jobWorkEnv === "remote" && userWorkEnvs.includes("remote")) {
+        score = 20; // User selected both Office and Remote
+      } else if (jobWorkEnv === "remote" && userWorkEnvs.includes("hybrid")) {
+        score = 20; // User selected Office and Hybrid (Hybrid can be remote-compatible)
+      } else if (jobWorkEnv === "remote") {
+        score = 0; // User only selected Office, don't match Remote jobs
+      }
+    }
 
-		bestScore = Math.max(bestScore, score);
-	}
+    bestScore = Math.max(bestScore, score);
+  }
 
-	return bestScore > 0 ? bestScore : 30; // Return best compatibility score or mismatch
+  return bestScore > 0 ? bestScore : 30; // Return best compatibility score or mismatch
 }
 
 /**
@@ -1190,41 +1190,41 @@ function calculateWorkEnvironmentScore(
  * Specific role within career path (e.g., "Analyst" within "Finance")
  */
 function calculateRoleFitScore(job: Job, userPrefs: UserPreferences): number {
-	const userRoles = userPrefs.roles_selected || [];
+  const userRoles = userPrefs.roles_selected || [];
 
-	if (userRoles.length === 0) {
-		return 70; // Neutral score if no role preference
-	}
+  if (userRoles.length === 0) {
+    return 70; // Neutral score if no role preference
+  }
 
-	const jobTitle = (job.title || "").toLowerCase();
-	const jobDescription = (job.description || "").toLowerCase();
-	const combinedText = `${jobTitle} ${jobDescription}`;
+  const jobTitle = (job.title || "").toLowerCase();
+  const jobDescription = (job.description || "").toLowerCase();
+  const combinedText = `${jobTitle} ${jobDescription}`;
 
-	// Check for exact role match
-	const hasExactMatch = userRoles.some((role) => {
-		const roleLower = role.toLowerCase();
-		return jobTitle.includes(roleLower) || jobDescription.includes(roleLower);
-	});
+  // Check for exact role match
+  const hasExactMatch = userRoles.some((role) => {
+    const roleLower = role.toLowerCase();
+    return jobTitle.includes(roleLower) || jobDescription.includes(roleLower);
+  });
 
-	if (hasExactMatch) {
-		return 100; // Perfect match
-	}
+  if (hasExactMatch) {
+    return 100; // Perfect match
+  }
 
-	// Check for partial match (role keywords)
-	const hasPartialMatch = userRoles.some((role) => {
-		const roleKeywords = role.toLowerCase().split(" ");
-		return roleKeywords.some(
-			(keyword) => keyword.length > 3 && combinedText.includes(keyword),
-		);
-	});
+  // Check for partial match (role keywords)
+  const hasPartialMatch = userRoles.some((role) => {
+    const roleKeywords = role.toLowerCase().split(" ");
+    return roleKeywords.some(
+      (keyword) => keyword.length > 3 && combinedText.includes(keyword),
+    );
+  });
 
-	return hasPartialMatch ? 60 : 40; // Partial match or no match
+  return hasPartialMatch ? 60 : 40; // Partial match or no match
 }
 
 function getMatchQuality(score: number): string {
-	if (score >= 90) return "excellent";
-	if (score >= 80) return "very good";
-	if (score >= 70) return "good";
-	if (score >= 60) return "fair";
-	return "poor";
+  if (score >= 90) return "excellent";
+  if (score >= 80) return "very good";
+  if (score >= 70) return "good";
+  if (score >= 60) return "fair";
+  return "poor";
 }

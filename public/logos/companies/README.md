@@ -57,4 +57,3 @@ Add these SVG files to this directory:
 - Broken/missing logos are automatically hidden (no text fallback)
 - Logos are cached for 1 hour via API
 - System automatically shows top 30 companies by match frequency
-

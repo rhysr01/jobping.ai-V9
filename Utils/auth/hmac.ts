@@ -8,8 +8,8 @@ import crypto from "node:crypto";
 const HMAC_SECRET = process.env.INTERNAL_API_HMAC_SECRET;
 
 export interface HMACVerificationResult {
-	isValid: boolean;
-	error?: string;
+  isValid: boolean;
+  error?: string;
 }
 
 /**
@@ -19,11 +19,11 @@ export interface HMACVerificationResult {
  * @returns Hex-encoded HMAC signature
  */
 export function hmacSign(raw: string, secret?: string): string {
-	const secretKey = secret || HMAC_SECRET;
-	if (!secretKey) {
-		throw new Error("HMAC secret not configured");
-	}
-	return crypto.createHmac("sha256", secretKey).update(raw).digest("hex");
+  const secretKey = secret || HMAC_SECRET;
+  if (!secretKey) {
+    throw new Error("HMAC secret not configured");
+  }
+  return crypto.createHmac("sha256", secretKey).update(raw).digest("hex");
 }
 
 /**
@@ -34,18 +34,18 @@ export function hmacSign(raw: string, secret?: string): string {
  * @returns True if signature is valid
  */
 export function hmacVerify(
-	raw: string,
-	sig: string | null,
-	secret?: string,
+  raw: string,
+  sig: string | null,
+  secret?: string,
 ): boolean {
-	if (!sig) return false;
-	const secretKey = secret || HMAC_SECRET;
-	if (!secretKey) {
-		return false;
-	}
-	const expect = hmacSign(raw, secretKey);
-	// Use string comparison for test compatibility (production uses timing-safe comparison)
-	return expect === sig;
+  if (!sig) return false;
+  const secretKey = secret || HMAC_SECRET;
+  if (!secretKey) {
+    return false;
+  }
+  const expect = hmacSign(raw, secretKey);
+  // Use string comparison for test compatibility (production uses timing-safe comparison)
+  return expect === sig;
 }
 
 /**
@@ -53,71 +53,71 @@ export function hmacVerify(
  * Policy: Mandatory in production, optional in test/development
  */
 export function verifyHMAC(
-	data: string,
-	signature: string,
-	timestamp: number,
-	maxAgeMinutes: number = 5,
+  data: string,
+  signature: string,
+  timestamp: number,
+  maxAgeMinutes: number = 5,
 ): HMACVerificationResult {
-	// In test/development, HMAC is optional
-	if (
-		process.env.NODE_ENV === "test" ||
-		process.env.NODE_ENV === "development"
-	) {
-		if (!signature || !timestamp) {
-			return { isValid: true }; // Allow missing auth in dev/test
-		}
-	}
+  // In test/development, HMAC is optional
+  if (
+    process.env.NODE_ENV === "test" ||
+    process.env.NODE_ENV === "development"
+  ) {
+    if (!signature || !timestamp) {
+      return { isValid: true }; // Allow missing auth in dev/test
+    }
+  }
 
-	// In production, HMAC is mandatory
-	if (!HMAC_SECRET) {
-		return { isValid: false, error: "HMAC secret not configured" };
-	}
+  // In production, HMAC is mandatory
+  if (!HMAC_SECRET) {
+    return { isValid: false, error: "HMAC secret not configured" };
+  }
 
-	if (!signature || !timestamp) {
-		return { isValid: false, error: "Missing signature or timestamp" };
-	}
+  if (!signature || !timestamp) {
+    return { isValid: false, error: "Missing signature or timestamp" };
+  }
 
-	// Check timestamp is within allowed window
-	const now = Date.now();
-	const ageMinutes = Math.abs(now - timestamp) / (1000 * 60);
+  // Check timestamp is within allowed window
+  const now = Date.now();
+  const ageMinutes = Math.abs(now - timestamp) / (1000 * 60);
 
-	if (ageMinutes > maxAgeMinutes) {
-		return {
-			isValid: false,
-			error: `Timestamp too old: ${ageMinutes.toFixed(1)} minutes`,
-		};
-	}
+  if (ageMinutes > maxAgeMinutes) {
+    return {
+      isValid: false,
+      error: `Timestamp too old: ${ageMinutes.toFixed(1)} minutes`,
+    };
+  }
 
-	// Generate expected signature
-	const expectedSignature = crypto
-		.createHmac("sha256", HMAC_SECRET)
-		.update(data)
-		.digest("hex");
+  // Generate expected signature
+  const expectedSignature = crypto
+    .createHmac("sha256", HMAC_SECRET)
+    .update(data)
+    .digest("hex");
 
-	// Safety check: buffers must have the same length for timingSafeEqual
-	if (signature.length !== expectedSignature.length) {
-		return { isValid: false, error: "Invalid signature" };
-	}
+  // Safety check: buffers must have the same length for timingSafeEqual
+  if (signature.length !== expectedSignature.length) {
+    return { isValid: false, error: "Invalid signature" };
+  }
 
-	// Use timing-safe comparison
-	const isValid = crypto.timingSafeEqual(
-		Buffer.from(signature, "hex"),
-		Buffer.from(expectedSignature, "hex"),
-	);
+  // Use timing-safe comparison
+  const isValid = crypto.timingSafeEqual(
+    Buffer.from(signature, "hex"),
+    Buffer.from(expectedSignature, "hex"),
+  );
 
-	return { isValid, error: isValid ? undefined : "Invalid signature" };
+  return { isValid, error: isValid ? undefined : "Invalid signature" };
 }
 
 /**
  * Generate HMAC signature for testing
  */
 export function generateHMAC(data: string): string {
-	return hmacSign(data);
+  return hmacSign(data);
 }
 
 /**
  * Check if HMAC is required (secret is configured)
  */
 export function isHMACRequired(): boolean {
-	return !!HMAC_SECRET;
+  return !!HMAC_SECRET;
 }

@@ -12,18 +12,15 @@ export { matchesCity } from "./distribution/cityMatching";
 // Re-export main functions
 export { distributeJobsWithDiversity } from "./distribution/distribution";
 export {
-	checkCityBalance,
-	checkSourceDiversity,
-	checkWorkEnvironmentBalance,
+  checkCityBalance,
+  checkSourceDiversity,
+  checkWorkEnvironmentBalance,
 } from "./distribution/feasibility";
 export { getDistributionStats } from "./distribution/stats";
 // Re-export types
-export type {
-	DistributionOptions,
-	JobWithSource,
-} from "./distribution/types";
+export type { DistributionOptions, JobWithSource } from "./distribution/types";
 export {
-	getJobWorkEnv,
-	matchesWorkEnvironment,
-	normalizeWorkEnv,
+  getJobWorkEnv,
+  matchesWorkEnvironment,
+  normalizeWorkEnv,
 } from "./distribution/workEnvironment";

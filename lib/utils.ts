@@ -8,5 +8,5 @@ import { twMerge } from "tailwind-merge";
  * the classes are being merged correctly - twMerge keeps the last one in the array.
  */
 export function cn(...inputs: ClassValue[]) {
-	return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs));
 }

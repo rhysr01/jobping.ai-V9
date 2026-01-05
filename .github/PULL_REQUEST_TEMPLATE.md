@@ -16,16 +16,19 @@ Brief description of what this PR does.
 ## Changes Made
 
 ### Frontend Changes
+
 - [ ] UI/UX updates
 - [ ] Component modifications
 - [ ] Styling changes
 
 ### Backend Changes
+
 - [ ] API endpoint modifications
 - [ ] Database schema changes
 - [ ] Business logic updates
 
 ### Infrastructure Changes
+
 - [ ] Environment variable additions
 - [ ] Build/CI configuration updates
 - [ ] Dependency updates
@@ -33,12 +36,14 @@ Brief description of what this PR does.
 ## Testing
 
 ### Manual Testing
+
 - [ ] Tested on desktop (Chrome, Firefox, Safari)
 - [ ] Tested on mobile (iOS Safari, Android Chrome)
 - [ ] Tested accessibility (screen reader, keyboard navigation)
 - [ ] Tested error states and edge cases
 
 ### Automated Testing
+
 - [ ] Unit tests pass (`npm test`)
 - [ ] Integration tests pass
 - [ ] E2E tests pass (`npm run test:e2e`)
@@ -46,6 +51,7 @@ Brief description of what this PR does.
 - [ ] Linting passes (`npm run lint`)
 
 ### Performance Testing
+
 - [ ] No performance regressions
 - [ ] Bundle size impact assessed
 - [ ] Database query performance verified
