@@ -112,12 +112,14 @@ export async function POST(request: NextRequest) {
 	});
 
 	// INFO level log that should definitely show in Vercel
-	apiLogger.info("Preview matches requested", {
+	console.error("🚨 ABOUT TO CALL APILOGGER.INFO");
+	console.log("📊 PREVIEW MATCHES REQUESTED:", {
 		cities: cities?.length || 0,
 		careerPath,
 		visaSponsorship,
 		jobsAvailable: sampleJobs?.length || 0
 	});
+	console.error("🚨 FINISHED LOGGING");
 
 		// If no jobs found in sample, return early
 		if (!sampleJobs || sampleJobs.length === 0) {
