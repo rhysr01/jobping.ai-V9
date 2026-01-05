@@ -114,12 +114,12 @@ export async function POST(request: NextRequest) {
 
 	if (sampleJobs && sampleJobs.length > 0) {
 		// Analyze city distribution
-		const cityCounts = {};
-		const categoryCounts = {};
+		const cityCounts: Record<string, number> = {};
+		const categoryCounts: Record<string, number> = {};
 		sampleJobs.forEach(job => {
 			cityCounts[job.city] = (cityCounts[job.city] || 0) + 1;
 			if (job.categories && Array.isArray(job.categories)) {
-				job.categories.forEach(cat => {
+				job.categories.forEach((cat: string) => {
 					categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
 				});
 			}
