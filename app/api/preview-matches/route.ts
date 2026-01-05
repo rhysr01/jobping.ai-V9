@@ -140,9 +140,6 @@ export async function POST(request: NextRequest) {
 	const eligibleJobs = preFilterByHardGates(sampleJobs, userPrefs);
 	const realisticCount = eligibleJobs.length;
 
-	// TEMPORARY: For debugging, also return count without hard gates
-	const rawEligibleCount = sampleJobs.length;
-
 		// Calculate pass rate to estimate total realistic count
 		// If we sampled 1000 jobs and 100 passed, we estimate ~10% pass rate
 		const passRate =

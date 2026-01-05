@@ -8,7 +8,7 @@ const {
 	makeJobHash,
 	CAREER_PATH_KEYWORDS,
 } = require("./shared/helpers.cjs");
-const { recordScraperRun } = require("./shared/telemetry.cjs");
+const { recordScraperRun, recordApiRequest } = require("./shared/telemetry.cjs");
 const { processIncomingJob } = require("./shared/processor.cjs");
 
 // Parse location to extract city and country
@@ -471,6 +471,9 @@ async function fetchReedPage(params) {
 		const len = Array.isArray(resp.data?.results) ? resp.data.results.length : 0;
 		console.log(`   ← got ${len} results`);
 
+		// Record successful API request
+		recordApiRequest("reed", REED_API, true);
+
 		// Log API response details for debugging
 		if (resp.data && typeof resp.data === 'object') {
 			console.log(`   📊 API response summary:`, {
@@ -483,6 +486,9 @@ async function fetchReedPage(params) {
 
 		return resp.data;
 	} catch (error) {
+		// Record failed API request
+		recordApiRequest("reed", REED_API, false);
+
 		console.error(`   ❌ Reed API error:`, {
 			status: error.response?.status,
 			statusText: error.response?.statusText,
