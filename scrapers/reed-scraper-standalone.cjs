@@ -459,16 +459,45 @@ async function fetchReedPage(params) {
 		loc: params.locationName,
 		skip: params.resultsToSkip,
 	});
-	const headers = {
-		Authorization: buildAuthHeader(),
-		Accept: "application/json",
-		"User-Agent":
-			"JobPingBot/1.0 (+https://getjobping.com/bot; contact: support@getjobping.com)",
-	};
-	const resp = await axios.get(REED_API, { params, headers, timeout: 20000 });
-	const len = Array.isArray(resp.data?.results) ? resp.data.results.length : 0;
-	console.log(`   ← got ${len} results`);
-	return resp.data;
+
+	try {
+		const headers = {
+			Authorization: buildAuthHeader(),
+			Accept: "application/json",
+			"User-Agent":
+				"JobPingBot/1.0 (+https://getjobping.com/bot; contact: support@getjobping.com)",
+		};
+		const resp = await axios.get(REED_API, { params, headers, timeout: 20000 });
+		const len = Array.isArray(resp.data?.results) ? resp.data.results.length : 0;
+		console.log(`   ← got ${len} results`);
+
+		// Log API response details for debugging
+		if (resp.data && typeof resp.data === 'object') {
+			console.log(`   📊 API response summary:`, {
+				totalResults: resp.data.totalResults || 'N/A',
+				resultsCount: len,
+				hasResults: Array.isArray(resp.data.results),
+				status: resp.status
+			});
+		}
+
+		return resp.data;
+	} catch (error) {
+		console.error(`   ❌ Reed API error:`, {
+			status: error.response?.status,
+			statusText: error.response?.statusText,
+			message: error.message,
+			url: REED_API,
+			params: params
+		});
+
+		// If unauthorized, the API key is likely invalid
+		if (error.response?.status === 401) {
+			console.error(`   🔑 API key appears to be invalid or expired!`);
+		}
+
+		throw error;
+	}
 }
 
 function toIngestJob(reedJob) {

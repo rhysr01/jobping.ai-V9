@@ -18,28 +18,16 @@ const { processIncomingJob } = require("./shared/processor.cjs");
 
 const BASE_URL = "https://www.arbeitnow.com/api/job-board-api";
 
-// DACH region cities (Germany, Austria, Switzerland) - expanded coverage
+// DACH region cities (Germany, Austria, Switzerland) - REDUCED for timeout prevention
 const CITIES = [
-	// Germany (major cities)
+	// Germany (top 3 major cities)
 	{ name: "Berlin", country: "de" },
-	{ name: "Hamburg", country: "de" },
 	{ name: "Munich", country: "de" },
-	{ name: "Frankfurt", country: "de" },
-	{ name: "Stuttgart", country: "de" },
-	{ name: "Cologne", country: "de" },
-	{ name: "Düsseldorf", country: "de" },
-	{ name: "Dresden", country: "de" },
-	{ name: "Leipzig", country: "de" },
-	{ name: "Hannover", country: "de" },
-	// Austria
+	{ name: "Hamburg", country: "de" },
+	// Austria (top city)
 	{ name: "Vienna", country: "at" },
-	{ name: "Graz", country: "at" },
-	{ name: "Salzburg", country: "at" },
-	// Switzerland
+	// Switzerland (top city)
 	{ name: "Zurich", country: "ch" },
-	{ name: "Bern", country: "ch" },
-	{ name: "Geneva", country: "ch" },
-	{ name: "Basel", country: "ch" },
 ];
 
 /**
@@ -716,11 +704,11 @@ async function scrapeArbeitnow() {
 
 	const queries = generateSearchQueries();
 
-	// EXPANDED: More queries for comprehensive DACH coverage
-	// 17 cities × 40 queries × 5 pages = 3,400 requests max
-	// But with rate limiting (2s between queries, 1s between pages), this is manageable
-	// INCREASED from 30 to 40 queries to maximize coverage
-	const limitedQueries = queries.slice(0, 40); // Increased from 30 to maximize coverage
+	// REDUCED: Fewer queries to prevent 600s timeouts
+	// 5 cities × 15 queries × 3 pages avg = ~225 requests max
+	// With rate limiting (2s between queries), this completes in ~7.5 minutes
+	// REDUCED from 40 to 15 queries to prevent timeouts
+	const limitedQueries = queries.slice(0, 15); // Reduced from 40 to prevent timeouts
 	
 	const MAX_PAGES = parseInt(process.env.ARBEITNOW_MAX_PAGES || "1000", 10);
 	console.log(

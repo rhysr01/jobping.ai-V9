@@ -257,10 +257,10 @@ class RealJobRunner {
 			const { stdout, stderr } = await this.withTimeout(
 				execAsync("node scrapers/wrappers/adzuna-wrapper.cjs", {
 					cwd: process.cwd(),
-					timeout: 600000, // 10 minutes for full scraper suite
+					timeout: 120000, // 2 minutes - reduced from 10min, if API doesn't respond in 2min it's broken
 					env,
 				}),
-				600000,
+				120000, // Reduced from 600000 (10min) to 120000 (2min)
 				"Adzuna scraper",
 			);
 
@@ -368,7 +368,7 @@ class RealJobRunner {
 						env: { ...process.env },
 					},
 				),
-				600000,
+				120000, // Reduced from 600000 (10min) to 120000 (2min)
 				"JobSpy scraper",
 			);
 
@@ -471,7 +471,7 @@ class RealJobRunner {
 						env: { ...process.env },
 					},
 				),
-				600000,
+				120000, // Reduced from 600000 (10min) to 120000 (2min)
 				"JobSpy Internships scraper",
 			);
 
@@ -573,7 +573,7 @@ class RealJobRunner {
 						env,
 					},
 				),
-				600000,
+				120000, // Reduced from 600000 (10min) to 120000 (2min)
 				"Career Path Roles scraper",
 			);
 
@@ -730,7 +730,7 @@ class RealJobRunner {
 					timeout: 600000, // 10 minutes timeout
 					env: { ...process.env },
 				}),
-				600000,
+				120000, // Reduced from 600000 (10min) to 120000 (2min)
 				"CareerJet scraper",
 			);
 
@@ -830,7 +830,7 @@ class RealJobRunner {
 					timeout: 600000, // 10 minutes timeout
 					env: { ...process.env },
 				}),
-				600000,
+				120000, // Reduced from 600000 (10min) to 120000 (2min)
 				"Arbeitnow scraper",
 			);
 
@@ -923,7 +923,7 @@ class RealJobRunner {
 					timeout: 600000, // 10 minutes timeout
 					env: { ...process.env },
 				}),
-				600000,
+				120000, // Reduced from 600000 (10min) to 120000 (2min)
 				"Jooble scraper",
 			);
 

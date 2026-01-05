@@ -475,7 +475,7 @@ function inferCategories(title, description) {
 async function scrapeCareerJetQuery(city, keyword, supabase) {
 	const BATCH_SIZE = 50; // Batch size for database saves
 	const jobBatch = []; // Accumulate jobs for batch saving
-	
+
 	// UNLIMITED: Fetch as many pages as available (no artificial limit)
 	// Only stop when API indicates no more pages or returns empty results
 	const MAX_PAGES = parseInt(process.env.CAREERJET_MAX_PAGES || "1000", 10); // Very high limit, effectively unlimited
@@ -484,7 +484,8 @@ async function scrapeCareerJetQuery(city, keyword, supabase) {
 	let savedCount = 0;
 	let totalResponseTime = 0;
 
-	while (hasMorePages && page <= MAX_PAGES) {
+	try {
+		while (hasMorePages && page <= MAX_PAGES) {
 		try {
 			const params = new URLSearchParams({
 				locale_code: city.locale,

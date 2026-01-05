@@ -19,31 +19,15 @@ const { processIncomingJob } = require("./shared/processor.cjs");
 // Note: Jooble may require API key registration for production use
 const BASE_URL = "https://jooble.org/api/";
 
-// EU Cities - matching target cities from signup form
+// EU Cities - REDUCED for timeout prevention
 // Jooble supports 71 countries including all EU countries
 const CITIES = [
 	{ name: "London", country: "gb", locale: "en" },
-	{ name: "Manchester", country: "gb", locale: "en" },
-	{ name: "Birmingham", country: "gb", locale: "en" },
-	{ name: "Dublin", country: "ie", locale: "en" },
-	{ name: "Cork", country: "ie", locale: "en" },
-	{ name: "Belfast", country: "gb", locale: "en" },
-	{ name: "Paris", country: "fr", locale: "fr" },
 	{ name: "Berlin", country: "de", locale: "de" },
-	{ name: "Hamburg", country: "de", locale: "de" },
-	{ name: "Munich", country: "de", locale: "de" },
+	{ name: "Paris", country: "fr", locale: "fr" },
 	{ name: "Amsterdam", country: "nl", locale: "nl" },
-	{ name: "Brussels", country: "be", locale: "fr" },
-	{ name: "Madrid", country: "es", locale: "es" },
-	{ name: "Barcelona", country: "es", locale: "es" },
-	{ name: "Milan", country: "it", locale: "it" },
-	{ name: "Rome", country: "it", locale: "it" },
-	{ name: "Zurich", country: "ch", locale: "de" },
-	{ name: "Stockholm", country: "se", locale: "sv" },
-	{ name: "Copenhagen", country: "dk", locale: "da" },
-	{ name: "Vienna", country: "at", locale: "de" },
-	{ name: "Prague", country: "cz", locale: "cs" },
-	{ name: "Warsaw", country: "pl", locale: "pl" },
+	{ name: "Dublin", country: "ie", locale: "en" },
+	{ name: "Munich", country: "de", locale: "de" },
 ];
 
 /**
@@ -292,20 +276,22 @@ async function scrapeJoobleQuery(keyword, location, supabase, apiKey) {
 
 	while (hasMorePages && page <= MAX_PAGES) {
 		try {
-			const url = new URL(`${BASE_URL}search`);
+			// Jooble API requires POST requests to /api/{api_key} endpoint
+			const url = `${BASE_URL}${apiKey}`;
 
-			// Add query parameters
-			url.searchParams.set("keywords", keyword);
-			url.searchParams.set("location", location.name);
-			url.searchParams.set("page", String(page));
-			url.searchParams.set("radius", "25");
-			url.searchParams.set("api_key", apiKey);
-
-			const response = await fetch(url.toString(), {
+			const response = await fetch(url, {
+				method: "POST",
 				headers: {
+					"Content-Type": "application/json",
 					"User-Agent": "JobPing/1.0 (job aggregator)",
 					Accept: "application/json",
 				},
+				body: JSON.stringify({
+					keywords: keyword,
+					location: location.name,
+					page: page,
+					radius: 25,
+				}),
 			});
 
 			if (!response.ok) {
@@ -551,7 +537,7 @@ async function scrapeJooble() {
 	// Limit queries to stay within API limits
 	// 22 cities × 20 keywords = 440 requests per run
 	// Rate limiting: 2s between requests = ~15 minutes total
-	const limitedQueries = queries.slice(0, 20);
+	const limitedQueries = queries.slice(0, 12); // Reduced from 20 to prevent timeouts
 
 	let totalSaved = 0;
 	let errors = 0;

@@ -62,6 +62,7 @@ describe("GET /api/user-matches - Contract Tests", () => {
 				method: "GET",
 				url: "http://localhost/api/user-matches?limit=10", // Missing email, signature, timestamp
 				nextUrl: new URL("http://localhost/api/user-matches?limit=10"),
+				headers: new Headers(),
 			} as any;
 
 			const response = await GET(mockRequest);

@@ -63,15 +63,14 @@ describe("POST /api/tracking/implicit - Contract Tests", () => {
 		});
 
 		it("should return 400 for missing email", async () => {
-			const { req } = createMocks({
-				method: "POST",
-				body: {
+			const mockRequest = {
+				json: jest.fn().mockResolvedValue({
 					jobHash: "job123",
 					signalType: "click",
-				},
-			});
+				}),
+			} as any;
 
-			const response = await POST(req as any);
+			const response = await POST(mockRequest);
 			expect(response.status).toBe(400);
 
 			const data = await response.json();
@@ -79,15 +78,14 @@ describe("POST /api/tracking/implicit - Contract Tests", () => {
 		});
 
 		it("should return 400 for missing signalType", async () => {
-			const { req } = createMocks({
-				method: "POST",
-				body: {
+			const mockRequest = {
+				json: jest.fn().mockResolvedValue({
 					jobHash: "job123",
 					email: "user@example.com",
-				},
-			});
+				}),
+			} as any;
 
-			const response = await POST(req as any);
+			const response = await POST(mockRequest);
 			expect(response.status).toBe(400);
 
 			const data = await response.json();
@@ -321,12 +319,13 @@ describe("GET /api/tracking/implicit - Contract Tests", () => {
 
 	describe("Query Parameters", () => {
 		it("should return 400 for missing email", async () => {
-			const { req } = createMocks({
+			const mockRequest = {
 				method: "GET",
-				url: "/api/tracking/implicit",
-			});
+				url: "http://localhost/api/tracking/implicit",
+				nextUrl: new URL("http://localhost/api/tracking/implicit"),
+			} as any;
 
-			const response = await GET(req as any);
+			const response = await GET(mockRequest);
 			expect(response.status).toBe(400);
 
 			const data = await response.json();

@@ -766,8 +766,16 @@ async function main() {
 		(j.job_url || j.url || "").trim().startsWith("http");
 
 	function filterInternshipJobs(jobs) {
-		return jobs.filter((j) => {
-			if (!hasFields(j)) return false;
+		let kept = 0;
+		let filteredOut = 0;
+		let noFields = 0;
+		let notInternship = 0;
+
+		const result = jobs.filter((j) => {
+			if (!hasFields(j)) {
+				noFields++;
+				return false;
+			}
 
 			// CRITICAL: Must be classified as internship
 			const { isInternship } = _classifyJobType({
@@ -778,11 +786,22 @@ async function main() {
 			});
 
 			if (!isInternship) {
+				notInternship++;
+				// DEBUG: Log first few non-internship jobs to understand the data
+				if (notInternship <= 3) {
+					console.log(`   🚫 Not internship: "${j.title}" - ${j.company || 'Unknown'}`);
+				}
 				return false; // Reject non-internships
 			}
 
+			kept++;
 			return true;
 		});
+
+		// Log filtering summary
+		console.log(`   📊 Internship filtering: ${kept} kept, ${filteredOut + noFields + notInternship} filtered (${noFields} no fields, ${notInternship} not internships)`);
+
+		return result;
 	}
 
 	let totalSaved = 0;
@@ -898,6 +917,18 @@ print(df[cols].to_csv(index=False))
 		// Save after each city
 		if (cityResults.length > 0) {
 			console.log(`\n💾 Processing ${cityResults.length} jobs for ${city}...`);
+
+			// DEBUG: Log sample job structure
+			if (cityResults.length > 0) {
+				console.log(`   📋 Sample job structure:`, {
+					title: cityResults[0].title,
+					company: cityResults[0].company,
+					description_length: cityResults[0].description?.length || 0,
+					has_description: !!cityResults[0].description,
+					has_company_description: !!cityResults[0].company_description,
+					has_skills: !!cityResults[0].skills
+				});
+			}
 
 			const internshipFiltered = filterInternshipJobs(cityResults);
 			console.log(

@@ -2064,9 +2064,11 @@ async function main() {
 				"Warsaw",
 			];
 			const indeedSites = ["indeed"];
-			if (!GLASSDOOR_BLOCKED_CITIES.includes(city)) {
-				indeedSites.push("glassdoor");
-			}
+			// DISABLED: Glassdoor returns 403 errors due to aggressive anti-bot measures
+			// Keeping only Indeed which is reliable
+			// if (!GLASSDOOR_BLOCKED_CITIES.includes(city)) {
+			// 	indeedSites.push("glassdoor");
+			// }
 
 			const indeedPython = `
 from jobspy import scrape_jobs
