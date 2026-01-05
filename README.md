@@ -60,10 +60,12 @@
 
 ### Key Features
 - **Real-time Job Matching**: Instant matches via AI-powered semantic search
+- **Durable AI Workflows**: Inngest-powered background matching with automatic retries and timeout protection
 - **Weekly Email Digests**: Automated premium email delivery (Mon/Wed/Fri schedule)
+- **Intelligent Feedback Loop**: Multi-signal feedback (thumbs up/down, save, hide) with implicit tracking
 - **Cross-Platform Scraping**: Multi-source job aggregation with deduplication
 - **Performance Optimized**: LRU caching (60-80% hit rate), N+1 query elimination
-- **Production Monitoring**: Sentry error tracking, health checks, performance metrics
+- **Production Monitoring**: Sentry error tracking, health checks, performance metrics, admin dashboard
 
 ### Security & Compliance
 - **TypeScript Strict Mode**: 100% typed codebase with comprehensive validation
@@ -362,6 +364,7 @@ npm run verify:env                      # Verify environment services
 - **Scraping**: 2x daily (8am, 6pm UTC) - 8 scrapers run in parallel
 - **Embeddings**: Every 72 hours - Refresh vector embeddings for semantic search
 - **Email Sends**: Daily at 9am UTC - Scheduled premium emails
+- **Inngest Workflows**: Durable AI matching with 3x retries, handles long-running operations (>60s)
 
 ### Scalability & Reliability
 - **Horizontal Scaling**: Stateless API design supports multiple instances

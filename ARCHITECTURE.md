@@ -414,6 +414,19 @@ Permissions-Policy: camera=(), microphone=(), geolocation=()
 4. Cleanup free users: Daily at 2am
 5. Check link health: Every 6 hours
 
+**Inngest Workflows** - Durable Background Jobs
+- Endpoint: `/api/inngest` (GET, POST, PUT)
+- Functions: `helloWorld`, `performAIMatching`
+- Features:
+  - Automatic retries (3x on failure)
+  - Timeout protection (handles >60s operations)
+  - Step-by-step execution with error recovery
+  - Fallback to rule-based matching if AI fails
+- Use Cases:
+  - Long-running AI matching operations
+  - Premium user onboarding workflows
+  - Bulk matching jobs that exceed Vercel limits
+
 ### Monitoring & Observability
 
 **Sentry** - Error Tracking
@@ -436,9 +449,18 @@ apiLogger.error("Error", error as Error, { context });
 ```
 
 **Health Endpoints**:
-- `/api/health` - Database, email, queue status (<100ms)
+- `/api/health` - Multi-service health checks with SLO tracking (<100ms target)
+  - Status: Database, Redis, OpenAI, Scrapers
+  - Response time monitoring
+  - Automatic degradation detection
 - `/api/metrics` - System metrics (requires SYSTEM_API_KEY)
-- `/api/monitoring/dashboard` - Admin dashboard
+- `/api/monitoring/dashboard` - Admin monitoring dashboard
+- `/api/dashboard` - Comprehensive admin dashboard (rate-limited: 50 req/min)
+  - Real-time database metrics (jobs, users, matches)
+  - Scraper health and performance stats
+  - System resource monitoring
+  - Environment configuration status
+  - Performance metrics with SLO tracking
 
 ---
 
@@ -446,16 +468,62 @@ apiLogger.error("Error", error as Error, { context });
 
 ### API Route Organization
 
-**47 API Routes** across 8 categories:
+**47 API Routes** across 9 categories:
 
 1. **Auth & User** (6 routes)
 2. **Matching** (8 routes)
-3. **Billing** (10 routes - 9 Stripe Connect)
+3. **Billing & Payments** (11 routes - 9 Stripe Connect + Polar)
 4. **Webhooks** (4 routes)
 5. **Cron Jobs** (5 routes)
 6. **Monitoring** (4 routes)
 7. **Admin** (4 routes)
 8. **Email & Engagement** (6 routes)
+9. **Feedback & Tracking** (3 routes)
+
+### Payment Infrastructure
+
+**Stripe Connect** (9 endpoints) - `/api/stripe-connect/*`
+- **Account Management**:
+  - `POST /create-account` - Create connected Stripe accounts
+  - `POST /create-account-link` - Generate account onboarding links
+  - `GET /get-account` - Retrieve account details
+  - `GET /health` - Stripe API connectivity check
+- **Billing & Products**:
+  - `POST /billing-portal` - Customer billing portal access
+  - `POST /create-checkout` - Checkout session creation
+  - `POST /create-product` - Product/price management
+  - `GET /list-products` - Product catalog
+  - `POST /create-subscription` - Subscription management
+- **Webhook Handling**: Signature verification for payment events
+- **Use Cases**: Marketplace features, multi-vendor payments (future)
+
+**Polar** - Subscription Management
+- Handles €5/month premium subscriptions
+- Webhook integration for subscription events
+- Official SDK with signature verification
+
+### Feedback & Analytics
+
+**Advanced Feedback System** - `/api/feedback/enhanced`
+- **Multi-Signal Feedback**:
+  - Explicit: thumbs_up, thumbs_down, save, hide, not_relevant
+  - Implicit: click, open, dwell (tracked separately)
+- **Email-Based Feedback**: One-click feedback links in job emails
+- **Cache Invalidation**: Automatic LRU cache updates based on feedback
+- **Scoring Impact**: Negative feedback applies -20 to -50 penalties
+- **Data Model**: Stored in `job_feedback` table with timestamps
+
+**Implicit Signal Tracking** - `/api/tracking/implicit`
+- **Behavioral Signals**:
+  - Dwell time (time spent on job listing)
+  - Click patterns (job card clicks, apply button clicks)
+  - Scroll depth tracking
+- **Session Management**:
+  - Browser fingerprinting for anonymous users
+  - IP geolocation for regional insights (no PII stored)
+  - Session ID tracking across page views
+- **Privacy-First**: Aggregated data only, no personal tracking
+- **Use Cases**: Improve match scoring, A/B testing, UX optimization
 
 ### Route Patterns
 
