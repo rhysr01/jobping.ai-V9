@@ -57,3 +57,13 @@ next-env.d.ts
 # Ignore AI/Log junk
 *.log
 .cursor/
+
+# Additional build outputs
+dist/
+type-check-output.txt
+
+# Editor directories
+.vscode/
+
+# Cleanup artifacts
+.cleanup-backup/
