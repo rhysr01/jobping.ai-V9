@@ -13,21 +13,32 @@ const {
 	cleanRoleForSearch,
 } = require("./shared/roles.cjs");
 const { recordScraperRun } = require("./shared/telemetry.cjs");
+
+// Check for required API credentials
+if (!process.env.JOOBLE_API_KEY) {
+	console.error("❌ JOOBLE CREDENTIALS MISSING:");
+	console.error(
+		"   - JOOBLE_API_KEY:",
+		process.env.JOOBLE_API_KEY ? "✅ Set" : "❌ Missing",
+	);
+	console.error(
+		"   📝 Add this to your environment variables or GitHub Actions secrets",
+	);
+	console.error("   🔗 Get credentials: https://jooble.org/api");
+	process.exit(1);
+}
 const { processIncomingJob } = require("./shared/processor.cjs");
 
 // Jooble API endpoint - using their public API
 // Note: Jooble may require API key registration for production use
 const BASE_URL = "https://jooble.org/api/";
 
-// EU Cities - REDUCED for timeout prevention
+// EU Cities - MINIMAL for timeout prevention
 // Jooble supports 71 countries including all EU countries
 const CITIES = [
 	{ name: "London", country: "gb", locale: "en" },
 	{ name: "Berlin", country: "de", locale: "de" },
 	{ name: "Paris", country: "fr", locale: "fr" },
-	{ name: "Amsterdam", country: "nl", locale: "nl" },
-	{ name: "Dublin", country: "ie", locale: "en" },
-	{ name: "Munich", country: "de", locale: "de" },
 ];
 
 /**

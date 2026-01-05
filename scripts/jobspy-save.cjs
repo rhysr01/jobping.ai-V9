@@ -1591,29 +1591,17 @@ async function main() {
 		],
 	};
 	// Priority cities: Adzuna doesn't cover these, so JobSpy must prioritize them
+	// REDUCED: Only 8 priority cities to prevent timeouts
 	const PRIORITY_CITIES = [
-		"Stockholm",
-		"Copenhagen",
-		"Vienna",
-		"Prague",
-		"Warsaw",
-		"Belfast",
+		"London",
+		"Berlin",
+		"Paris",
+		"Amsterdam",
+		"Munich",
 	];
 	const OTHER_CITIES = [
-		"London",
-		"Manchester",
-		"Birmingham",
 		"Madrid",
-		"Barcelona",
-		"Berlin",
-		"Hamburg",
-		"Munich",
-		"Amsterdam",
-		"Brussels",
-		"Paris",
-		"Zurich",
 		"Milan",
-		"Rome",
 		"Dublin",
 	];
 	// Process priority cities first, then others

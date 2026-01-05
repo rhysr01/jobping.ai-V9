@@ -80,10 +80,8 @@ export async function POST(request: NextRequest) {
 	// This matches the signup API's approach (signup/free/route.ts lines 332-334)
 	// Database has categories like "strategy-business-design" not "strategy"
 
-	// Filter for early-career roles only
-	query = query.or(
-		"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}",
-	);
+	// DEBUG: Simplify to just check early-career category
+	query = query.contains("categories", ["early-career"]);
 
 		// Order by recency for better sample quality
 		query = query.order("created_at", { ascending: false });

@@ -14,6 +14,15 @@ const {
 	cleanRoleForSearch,
 } = require("./shared/roles.cjs");
 const { recordScraperRun } = require("./shared/telemetry.cjs");
+
+// Check for required API credentials
+if (!process.env.CAREERJET_API_KEY) {
+	console.error("❌ CAREERJET CREDENTIALS MISSING:");
+	console.error("   - CAREERJET_API_KEY:", process.env.CAREERJET_API_KEY ? "✅ Set" : "❌ Missing");
+	console.error("   📝 Add this to your environment variables or GitHub Actions secrets");
+	console.error("   🔗 Get credentials: https://www.careerjet.com/partners/api/");
+	process.exit(1);
+}
 const { processIncomingJob } = require("./shared/processor.cjs");
 
 const CAREERJET_API_KEY = process.env.CAREERJET_API_KEY;

@@ -1,5 +1,15 @@
 require("dotenv").config({ path: ".env.local" });
 const axios = require("axios");
+
+// Check for required API credentials
+if (!process.env.ADZUNA_APP_ID || !process.env.ADZUNA_APP_KEY) {
+	console.error("❌ ADZUNA CREDENTIALS MISSING:");
+	console.error("   - ADZUNA_APP_ID:", process.env.ADZUNA_APP_ID ? "✅ Set" : "❌ Missing");
+	console.error("   - ADZUNA_APP_KEY:", process.env.ADZUNA_APP_KEY ? "✅ Set" : "❌ Missing");
+	console.error("   📝 Add these to your environment variables or GitHub Actions secrets");
+	console.error("   🔗 Get credentials: https://developer.adzuna.com/");
+	process.exit(1);
+}
 const {
 	classifyEarlyCareer,
 	makeJobHash,

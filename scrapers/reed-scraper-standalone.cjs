@@ -9,6 +9,15 @@ const {
 	CAREER_PATH_KEYWORDS,
 } = require("./shared/helpers.cjs");
 const { recordScraperRun, recordApiRequest } = require("./shared/telemetry.cjs");
+
+// Check for required API credentials
+if (!process.env.REED_API_KEY) {
+	console.error("❌ REED CREDENTIALS MISSING:");
+	console.error("   - REED_API_KEY:", process.env.REED_API_KEY ? "✅ Set" : "❌ Missing");
+	console.error("   📝 Add this to your environment variables or GitHub Actions secrets");
+	console.error("   🔗 Get credentials: https://www.reed.co.uk/developers/jobseeker");
+	process.exit(1);
+}
 const { processIncomingJob } = require("./shared/processor.cjs");
 
 // Parse location to extract city and country

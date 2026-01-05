@@ -18,16 +18,11 @@ const { processIncomingJob } = require("./shared/processor.cjs");
 
 const BASE_URL = "https://www.arbeitnow.com/api/job-board-api";
 
-// DACH region cities (Germany, Austria, Switzerland) - REDUCED for timeout prevention
+// DACH region cities (Germany, Austria, Switzerland) - MINIMAL for timeout prevention
 const CITIES = [
-	// Germany (top 3 major cities)
+	// Germany (top 2 major cities only)
 	{ name: "Berlin", country: "de" },
 	{ name: "Munich", country: "de" },
-	{ name: "Hamburg", country: "de" },
-	// Austria (top city)
-	{ name: "Vienna", country: "at" },
-	// Switzerland (top city)
-	{ name: "Zurich", country: "ch" },
 ];
 
 /**
