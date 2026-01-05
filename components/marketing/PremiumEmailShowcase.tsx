@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, GraduationCap, Home, Briefcase } from "lucide-react";
+import { MapPin, Briefcase } from "lucide-react";
 import { IPhoneShell } from "@/components/ui/IPhoneShell";
 import { TiltCard } from "@/components/ui/TiltCard";
 

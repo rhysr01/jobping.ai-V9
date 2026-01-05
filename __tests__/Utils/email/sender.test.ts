@@ -48,6 +48,8 @@ describe("Email Sender", () => {
 
 	afterEach(() => {
 		delete process.env.RESEND_API_KEY;
+		// Ensure real timers are restored to prevent open handles
+		jest.useRealTimers();
 	});
 
 	describe("sendWelcomeEmail", () => {

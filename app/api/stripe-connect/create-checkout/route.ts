@@ -11,7 +11,6 @@ import { type NextRequest, NextResponse } from "next/server";
 import { apiLogger } from "@/lib/api-logger";
 import { ENV } from "@/lib/env";
 import {
-	getStripeClient,
 	getStripeClientForAccount,
 	isStripeConfigured,
 } from "@/lib/stripe";
@@ -41,7 +40,6 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		const _stripe = getStripeClient();
 		const stripeAccount = getStripeClientForAccount(accountId);
 		const baseUrl =
 			ENV.NEXT_PUBLIC_URL ||

@@ -508,7 +508,7 @@ async function invalidateAvoidanceCache(
 		});
 	} catch (error) {
 		// Fail silently - cache invalidation is not critical
-		apiLogger.warn("Failed to invalidate avoidance cache", error);
+		apiLogger.warn("Failed to invalidate avoidance cache", error instanceof Error ? error : { error });
 	}
 }
 

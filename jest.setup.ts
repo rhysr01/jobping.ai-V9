@@ -108,6 +108,15 @@ global.console = {
 	global.console = originalConsole;
 };
 
+// Global test cleanup to prevent resource leaks
+afterEach(() => {
+	// Ensure real timers are restored to prevent open handles
+	jest.useRealTimers();
+
+	// Clear any remaining timers
+	jest.clearAllTimers();
+});
+
 // Global teardown to close all connections
 afterAll(async () => {
 	console.log(" Cleaning up test resources...");

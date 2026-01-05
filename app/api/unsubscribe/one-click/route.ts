@@ -39,7 +39,7 @@ async function suppressEmailForUnsubscribe(email: string): Promise<void> {
 		apiLogger.info(` Email unsubscribed: ${email}`);
 	} catch (error) {
 		// If table doesn't exist, fail gracefully
-		apiLogger.warn("Failed to suppress email for unsubscribe:", error);
+		apiLogger.warn("Failed to suppress email for unsubscribe:", error instanceof Error ? error : { error });
 		throw error;
 	}
 }

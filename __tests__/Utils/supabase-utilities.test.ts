@@ -89,6 +89,8 @@ describe("supabase utilities", () => {
 		});
 
 		it("should respect timeout", async () => {
+			jest.useFakeTimers();
+
 			const fn = jest.fn().mockImplementation(
 				() =>
 					new Promise((resolve) => {
@@ -96,16 +98,23 @@ describe("supabase utilities", () => {
 						setTimeout(() => resolve({ data: "slow", error: null }), 10000);
 					}),
 			);
-			const result = await executeWithRetry(fn, {
+
+			const resultPromise = executeWithRetry(fn, {
 				maxRetries: 1,
 				timeout: 100,
 				retryDelay: 10,
 			});
-			// Wait for timeout to occur
-			await new Promise((resolve) => setTimeout(resolve, 150));
+
+			// Advance timers to trigger timeout
+			jest.advanceTimersByTime(200);
+
+			const result = await resultPromise;
+
 			expect(result.success).toBe(false);
 			expect(result.error?.message).toContain("timeout");
-		}, 10000);
+
+			jest.useRealTimers();
+		});
 	});
 
 	describe("checkDatabaseHealth", () => {

@@ -152,7 +152,7 @@ async function generateAllEmbeddings() {
     console.log(`📊 Results:`);
     console.log(`   - Processed: ${totalProcessed} jobs`);
     console.log(`   - Failed: ${totalFailed} jobs`);
-    console.log(`   - Coverage: ${coverage.percentCovered}% (${coverage.withEmbeddings}/${coverage.totalActive})`);
+    console.log(`   - Coverage: ${(coverage.coverage * 100).toFixed(1)}% (${coverage.withEmbeddings}/${coverage.total})`);
     
     process.exit(0);
   } catch (error) {

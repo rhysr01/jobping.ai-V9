@@ -21,8 +21,6 @@ async function getSampleJobsHandler(req: NextRequest) {
 		// Day parameter available but not currently used in rotation logic
 		// const _day = searchParams.get("day") || "monday";
 		const tier = searchParams.get("tier") || "free"; // 'free' or 'premium'
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const _weekParam = searchParams.get("week");
 
 		// Calculate week number for rotation (changes weekly)
 		// Note: weekNumber calculation kept for future use
@@ -46,7 +44,20 @@ async function getSampleJobsHandler(req: NextRequest) {
 		// Use fictional user profile - jobs MUST be real
 		// Use week number + tier to select different jobs for rotation
 
-		interface SampleJob extends Job {
+		interface SampleJob {
+			// Core job properties needed for API response
+			job_hash: string;
+			title: string;
+			company: string;
+			location: string;
+			city?: string;
+			job_url: string;
+			description: string;
+			categories: string[];
+			work_environment: string;
+			is_internship?: boolean;
+			is_graduate?: boolean;
+			// Matching-specific properties
 			matchScore: number; // camelCase for API response
 			matchReason: string; // camelCase for API response
 			userProfile?: UserPreferences;
@@ -310,10 +321,7 @@ async function getSampleJobsHandler(req: NextRequest) {
 		// Filter by cities in the fictional profile to show diverse locations
 
 		// Map career path to database categories (e.g., 'Tech' → 'tech-transformation')
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const _careerPathCategories = getDatabaseCategoriesForForm(
-			selectedUserProfile.careerPath.toLowerCase(),
-		);
+		// Using careerPathCategories defined earlier in function
 
 		// Get jobs that actually match the career path for better sample quality
 		// Filter by career path at database level for more relevant results

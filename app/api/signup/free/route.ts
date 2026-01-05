@@ -11,7 +11,6 @@ import {
 } from "@/Utils/business-rules/quality-thresholds";
 import { createConsolidatedMatcher } from "@/Utils/consolidatedMatchingV2";
 import { getDatabaseClient } from "@/Utils/databasePool";
-import { getDatabaseCategoriesForForm } from "@/Utils/matching/categoryMapper";
 import { distributeJobsWithDiversity } from "@/Utils/matching/jobDistribution";
 import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
 
@@ -206,12 +205,6 @@ export async function POST(request: NextRequest) {
 		});
 
 		// Fetch jobs (same pattern as existing signup)
-		let _careerPathCategories: string[] = [];
-		if (userData.career_path) {
-			_careerPathCategories = getDatabaseCategoriesForForm(
-				userData.career_path,
-			);
-		}
 
 		// ENTERPRISE-LEVEL FIX: Use country-level matching instead of exact city matching
 		// This is more forgiving and lets pre-filtering handle exact city matching

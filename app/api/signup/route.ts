@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { apiLogger } from "@/lib/api-logger";
 import type { JobWithMetadata } from "@/lib/types/job";
-import { createConsolidatedMatcher } from "@/Utils/consolidatedMatchingV2";
 import { getDatabaseClient } from "@/Utils/databasePool";
 import { sendMatchedJobsEmail, sendWelcomeEmail } from "@/Utils/email/sender";
 // Pre-filtering removed - AI handles semantic matching
@@ -173,7 +172,7 @@ export async function POST(req: NextRequest) {
 			created_at: new Date().toISOString(),
 		};
 
-		const { data: user, error: userError } = await supabase
+		const { error: userError } = await supabase
 			.from("users")
 			.insert([userData])
 			.select()
@@ -211,7 +210,6 @@ export async function POST(req: NextRequest) {
 				const clientKey =
 					process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
 				const clientKeyPrefix = clientKey ? clientKey.substring(0, 20) : "N/A";
-				const _anonKeyPrefix = anonKey ? anonKey.substring(0, 20) : "N/A";
 
 				// Check if service role key looks valid (JWT format, correct length)
 				const looksLikeServiceRole =
@@ -409,8 +407,6 @@ export async function POST(req: NextRequest) {
 					email: data.email,
 				});
 
-				const _matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
-
 				// OPTIMIZED: Fetch jobs using database-level filtering for better performance
 				// Use the same optimized approach as match-users route
 				apiLogger.info("Fetching jobs for matching", {
@@ -506,20 +502,6 @@ export async function POST(req: NextRequest) {
 					// TYPE SHIM: Using JobWithMetadata instead of any[]
 					let distributedJobs: JobWithMetadata[] = [];
 					let coordinatedResult: any = null;
-					let _fallbackMetadata: {
-						targetCompanies?: Array<{
-							company: string;
-							lastMatchedAt: string;
-							matchCount: number;
-							roles: string[];
-						}>;
-						customScan?: {
-							scanId: string;
-							estimatedTime: string;
-							message: string;
-						};
-						relaxationLevel?: number;
-					} | null = null;
 
 					if (jobsForMatching && jobsForMatching.length > 0) {
 						if (process.env.NODE_ENV === "development") {
@@ -570,17 +552,6 @@ export async function POST(req: NextRequest) {
 							);
 						}
 
-						// Store metadata for success page (if fallback was used)
-						if (coordinatedResult.metadata.matchingMethod !== "ai_success") {
-							_fallbackMetadata = {
-								targetCompanies:
-									coordinatedResult.targetCompanies.length > 0
-										? coordinatedResult.targetCompanies
-										: undefined,
-								customScan: coordinatedResult.customScan || undefined,
-								relaxationLevel: coordinatedResult.metadata.relaxationLevel,
-							};
-						}
 
 						// CRITICAL: If no jobs, trigger guaranteed matching with broader query
 						if (distributedJobs.length === 0) {
@@ -625,14 +596,6 @@ export async function POST(req: NextRequest) {
 								}));
 
 								coordinatedResult = guaranteedResult;
-								_fallbackMetadata = {
-									targetCompanies:
-										guaranteedResult.targetCompanies.length > 0
-											? guaranteedResult.targetCompanies
-											: undefined,
-									customScan: guaranteedResult.customScan || undefined,
-									relaxationLevel: guaranteedResult.metadata.relaxationLevel,
-								};
 							}
 
 							// If still no jobs, trigger custom scan
@@ -645,11 +608,6 @@ export async function POST(req: NextRequest) {
 									userPrefs,
 									missingCriteria,
 								);
-
-								_fallbackMetadata = {
-									customScan,
-									relaxationLevel: 7,
-								};
 
 								// Don't throw error - proceed with welcome email and custom scan info
 								apiLogger.warn("No jobs found, custom scan triggered", {

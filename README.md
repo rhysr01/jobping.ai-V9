@@ -230,20 +230,19 @@ npm run pilot:smoke        # Production readiness smoke test
 
 📋 **[Testing Strategy Guide](./TESTING_STRATEGY.md)** - Reference before writing/modifying tests
 
-**Overall Coverage:** 41.05% statements | 29.38% branches | 45.21% functions | 41.07% lines *(coverage report generation pending after test fixes)*
+**Overall Coverage:** 18.27% statements | 11.78% branches | 21.27% functions | 18.27% lines
 
 **Test Suite Stats:**
 - **57 test suites** (56 test files, 1 skipped)
 - **643 total tests** (620 passed, 0 failed, 23 skipped)
 - **Test pass rate:** **100%** ✅
-- Coverage report: `coverage/index.html` (generated after `npm run test:coverage`)
+- Coverage report: `coverage/index.html` (run `npm run test:coverage`)
 
 **Well-Covered Areas (70%+):**
-- ✅ **Utils/matching** - 75.18% statements (core matching engine)
-- ✅ **Utils/monitoring** - 82.37% statements (health checks, logging, metrics)
-- ✅ **Utils/database** - 76.19% statements (database utilities)
-- ✅ **Utils/auth** - 71.03% statements (authentication & HMAC)
-- ✅ **Utils/config** - 76.31% statements (configuration management)
+- ✅ **Utils/monitoring** - 78.54% statements (health checks, logging, metrics)
+- ✅ **Utils/auth** - 37.93% statements (authentication & HMAC - good for critical paths)
+- ✅ **Utils/matching** - 38.73% statements (core matching engine - needs attention)
+- ✅ **Utils/email/sender** - 86.47% statements (email sending - well tested)
 
 **E2E Test Coverage:**
 - ✅ **Free Tier** - Complete signup → matches → email flow (loading, performance, API)
@@ -251,20 +250,21 @@ npm run pilot:smoke        # Production readiness smoke test
 - ✅ **Cross-tier Comparison** - Free vs Premium matching quality, API behavior, limits
 
 **Recent Improvements:**
-- ✅ **Premium E2E Tests Added** - Comprehensive coverage of premium user journeys, matching behavior, and email delivery
+- ✅ **Premium E2E Tests Added** - Comprehensive coverage of premium user journeys
 - ✅ **Tier-specific Testing** - Dedicated test suites for free vs premium feature differences
 
-**Moderately Covered (40-70%):**
-- ⚠️ **Utils/email** - 60.11% statements (email sending & templates)
-- ⚠️ **Utils/matching/prefilter** - 71.85% statements (SQL pre-filtering)
-- ⚠️ **Utils/matching/distribution** - 50.42% statements (job distribution logic)
+**Moderately Covered (20-50%):**
+- ⚠️ **Utils/database** - 39.45% statements (database utilities)
+- ⚠️ **Utils/email** - 26.49% statements (email templates & delivery)
+- ⚠️ **Utils/matching/consolidated** - 37.16% statements (consolidated matching logic)
+- ⚠️ **Utils/matching/guaranteed** - 36.59% statements (guaranteed fallback matching)
 
-**Areas Needing Coverage:**
+**Areas Needing Coverage (0-20%):**
 - ❌ **Utils/business-rules** - 0% (business logic rules)
-- ❌ **Utils/performance** - 3.96% (performance optimizations)
-- ❌ **Utils/cv** - 28.57% (CV parsing)
-- ❌ **Utils/matching/consolidated** - 30.79% (consolidated matching logic)
-- ❌ **Utils/matching/guaranteed** - 38.72% (guaranteed fallback matching)
+- ❌ **Utils/performance** - 0% (performance optimizations)
+- ❌ **Utils/cv** - 0% (CV parsing)
+- ❌ **app/api** - 0% (API routes - critical for user-facing functionality)
+- ❌ **scrapers** - 0% (external data sources)
 
 **Test Categories:**
 - **API Routes** - 43 comprehensive test files covering all endpoints
@@ -281,14 +281,29 @@ npm run pilot:smoke        # Production readiness smoke test
 - **Frontend Bundle**: Tree-shaken and optimized for mobile-first loading
 
 **Coverage Thresholds:**
-- Global minimum: 10% (all metrics)
-- Critical modules have higher thresholds (e.g., `consolidatedMatchingV2.ts` requires 25%+)
+- Global minimum: 10% (current Jest config)
+- Target: 40% overall coverage (industry standard)
+- Critical modules: 60%+ (matching, auth, email)
+- API routes: 30%+ (user-facing endpoints)
 
 **View Coverage:**
 ```bash
-npm run test:coverage      # Generate coverage report
-open coverage/index.html   # View HTML report (macOS)
+npm test                    # Run tests (19s execution time)
+npm run test:coverage       # Generate coverage report
+open coverage/index.html    # View detailed HTML report
 ```
+
+**Coverage Quality Issues:**
+- ⚠️ **8 open handles** - Tests not cleaning up properly (timeouts, resources)
+- ⚠️ **Low branch coverage** (11.78%) - Many conditional paths untested
+- ❌ **app/api coverage** - 0% (critical user-facing APIs untested)
+
+**Next Steps for Coverage:**
+1. **API Routes Testing** - Add comprehensive tests for `/api/matches/free`, `/api/signup`, `/api/stats`
+2. **Fix Resource Leaks** - Address 8 open handles from timeout/promises not being cleaned up
+3. **Branch Coverage** - Add tests for error conditions, edge cases, and conditional logic
+4. **Business Logic** - Test `Utils/business-rules` and `Utils/cv` modules
+5. **Performance Module** - Add tests for `Utils/performance` optimizations
 
 ### Database
 ```bash

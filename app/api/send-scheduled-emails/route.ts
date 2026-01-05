@@ -21,7 +21,6 @@ import { getProductionRateLimiter } from "@/Utils/productionRateLimiter";
 import {
 	getCurrentWeekStart,
 	isSendDay,
-	SEND_PLAN,
 } from "@/Utils/sendConfiguration";
 
 type User = Database["public"]["Tables"]["users"]["Row"];
@@ -167,9 +166,6 @@ async function handleSendScheduledEmails(req: NextRequest) {
 						continue;
 					}
 				}
-
-				const plan = SEND_PLAN[userTier];
-				const _jobsPerSend = plan.perSend;
 
 				// OPTIMIZED: Skip pre-filtering - let AI do semantic matching
 				// AI matching is semantic and can understand relevance even without exact category matches
