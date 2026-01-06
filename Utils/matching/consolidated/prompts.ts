@@ -195,31 +195,26 @@ Your job is to identify CAREER LAUNCHPAD OPPORTUNITIES - transformative first ro
 3. **GROWTH POTENTIAL**: Career advancement paths, progression opportunities, or development focus
 4. **CULTURAL ALIGNMENT**: Environment indicators for early-career success
 
-### EVIDENCE HIERARCHY (Most Reliable to Least):
-**EXPLICIT**: "mentorship program", "training sessions", "career development"
-**STRONG**: "senior team members", "learning environment", "growth opportunities"
-**INFERRED**: "small team" → "likely mentorship", "tech company" → "learning potential"
+### EVIDENCE SCALE:
+**DIRECT**: Explicit mentions ("mentorship program", "training")
+**INDIRECT**: Strong indicators ("senior team", "learning environment")
+**INFERRED**: Reasonable assumptions ("small team" → "likely mentorship")
 
-### CRITICAL ACCURACY RULES:
-1. **Cite Evidence**: Every claim must reference specific job description text
-2. **Label Inferences**: Use "likely", "typically", "suggests" for assumptions
-3. **No Fabrication**: Never invent programs, benefits, or opportunities
-4. **Context Matters**: "Team collaboration" ≠ "mentorship program"
+### ACCURACY REQUIREMENTS:
+- Cite specific job text for all claims
+- Use "likely/typically" for inferences only
+- Never fabricate unmentioned benefits
+- Confidence ≥ 0.6 minimum
 
-### SCORING METHODOLOGY:
-Count explicit + strong evidence, then add inferred bonus:
-- 4+ explicit indicators = 90-100 (Exceptional)
-- 3 explicit + inferred = 80-89 (Excellent)
-- 2 explicit + context = 70-79 (Good)
-- 1 explicit + assumptions = 60-69 (Decent)
-- Context only = 50-59 (Basic)
+### SCORING:
+- 4+ indicators: 90-100
+- 3 indicators: 80-89
+- 2 indicators: 70-79
+- 1 indicator: 60-69
+- None: 50-59
 
-### ENGAGEMENT FRAMEWORK:
-**Transform factual assessments into career insight narratives:**
-- Connect job features to user's specific aspirations
-- Explain why this matters for their professional journey
-- Use aspirational language grounded in evidence
-- Create recognition moments: "This aligns with your goal to..."
+### ENGAGEMENT:
+Connect evidence to user's career goals. Use aspirational language grounded in facts.
 
 ### CONFIDENCE CALIBRATION:
 - **0.9-1.0**: Multiple explicit indicators + strong evidence
@@ -231,23 +226,14 @@ Count explicit + strong evidence, then add inferred bonus:
 
 ## ASSESSMENT REQUIREMENTS:
 
-**EVIDENCE-BASED STORYTELLING:**
-**Structure: Evidence → Insight → Aspiration**
-1. **Evidence**: What the job explicitly offers
-2. **Insight**: Why this matters for their career stage
-3. **Aspiration**: How this connects to their professional goals
+**REASONING STRUCTURE:**
+Evidence → Career Impact → User Goals
 
-**REASONING REQUIREMENTS:**
-- 85+ scores: 35+ words (comprehensive insight with evidence)
-- 75-84 scores: 25+ words (clear reasoning with citations)
+**LENGTH REQUIREMENTS:**
+- 85+ scores: 35+ words (comprehensive insight)
+- 75-84 scores: 25+ words (clear reasoning)
 - 65-74 scores: 20+ words (balanced assessment)
 - <65 scores: 15+ words (honest evaluation)
-
-**QUALITY ASSURANCE:**
-- **Cite Sources**: Reference specific job description text
-- **Label Assumptions**: Use "likely", "typically" for inferences
-- **Evidence Threshold**: Only recommend confidence ≥ 0.6
-- **No Fabrication**: Never invent unmentioned benefits
 
 ---
 
