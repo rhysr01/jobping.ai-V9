@@ -45,7 +45,7 @@ export class AIMonitor {
 	 * Record AI request metrics
 	 */
 	recordRequest(
-		model: string,
+		_model: string,
 		latencyMs: number,
 		tokens: number,
 		cost: number,
@@ -162,20 +162,7 @@ export class AIMonitor {
 		metrics.alertsTriggered.push(alertMessage);
 
 		// Log alert
-		apiLogger.error("AI SYSTEM ALERT", {
-			alert: alertMessage,
-			timestamp: metrics.timestamp,
-			metrics: {
-				requestCount: metrics.requestCount,
-				errorCount: metrics.errorCount,
-				rateLimitHits: metrics.rateLimitHits,
-				averageLatency: Math.round(metrics.averageLatency),
-				averageTokens: Math.round(metrics.averageTokens),
-				averageCost: Math.round(metrics.averageCost * 10000) / 10000, // Round to 4 decimals
-				qualityScore: metrics.qualityScore,
-			},
-			severity: "high",
-		});
+		apiLogger.error(`AI SYSTEM ALERT: ${alertMessage} - Requests: ${metrics.requestCount}, Errors: ${metrics.errorCount}, Latency: ${Math.round(metrics.averageLatency)}ms`);
 
 		// In production, this would trigger external alerts (Slack, PagerDuty, etc.)
 		console.error(`🚨 AI ALERT: ${alertMessage}`);

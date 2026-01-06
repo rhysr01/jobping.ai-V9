@@ -4,7 +4,6 @@
  * AI assesses: "Would this person actually succeed in this role?"
  */
 
-import { apiLogger } from "@/lib/api-logger";
 import type { Job } from "@/scrapers/types";
 import type { UserPreferences } from "../types";
 
@@ -17,8 +16,8 @@ import type { UserPreferences } from "../types";
  * All scoring now happens in AI prompts for holistic assessment
  */
 export async function calculateJobScore(
-	job: Job,
-	userPrefs: UserPreferences,
+	_job: Job,
+	_userPrefs: UserPreferences,
 ): Promise<{ score: number; reasons: string[] }> {
 	// This function is deprecated - scoring is now done holistically by AI
 	console.warn("calculateJobScore is deprecated - scoring happens in AI prompts");

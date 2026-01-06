@@ -134,7 +134,7 @@ export class ConsolidatedMatchingEngine {
 			return this.performWeightedStratifiedMatching(jobsArray, eligibleJobs, userPrefs, targetCities, startTime, forceRulesBased);
 		} else {
 			// Single city: Use enhanced matching with pre-filtering
-			return this.performEnhancedMatching(jobsArray, eligibleJobs, userPrefs, startTime, forceRulesBased);
+			return this.performEnhancedMatching(eligibleJobs, userPrefs, startTime);
 		}
 	}
 
@@ -142,11 +142,9 @@ export class ConsolidatedMatchingEngine {
 	 * Enhanced single-city matching with pre-filtering and quality validation
 	 */
 	private async performEnhancedMatching(
-		jobsArray: Job[],
 		eligibleJobs: Job[],
 		userPrefs: UserPreferences,
 		startTime: number,
-		forceRulesBased: boolean = false,
 	): Promise<ConsolidatedMatchResult> {
 		// STEP 1: Enhanced hard filtering BEFORE AI sees jobs
 		const hardFilteredJobs = this.getHardFilteredJobs(eligibleJobs, userPrefs);
@@ -155,7 +153,7 @@ export class ConsolidatedMatchingEngine {
 			console.warn(`[ENHANCED MATCHING] No jobs passed hard filters for ${userPrefs.email}`);
 			return {
 				matches: [],
-				method: "no_eligible_jobs",
+				method: "ai_failed",
 				processingTime: Date.now() - startTime,
 				confidence: 0.0,
 				aiModel: undefined,
@@ -208,7 +206,7 @@ export class ConsolidatedMatchingEngine {
 
 		return {
 			matches: validatedMatches,
-			method: "enhanced_ai_success",
+			method: "ai_success",
 			processingTime: Date.now() - startTime,
 			confidence: avgConfidence,
 			aiModel: this.lastAIMetadata?.model || "gpt-4o-mini",
@@ -372,7 +370,7 @@ export class ConsolidatedMatchingEngine {
 			console.warn(`[MATCHING] AI unavailable for ${userPrefs.email} - no fallback available`);
 			return {
 				matches: [],
-				method: "ai_unavailable",
+				method: "ai_failed",
 				processingTime: Date.now() - startTime,
 				confidence: 0,
 				aiModel: undefined,
@@ -381,13 +379,7 @@ export class ConsolidatedMatchingEngine {
 			};
 		}
 
-		// STAGE 3: Stratified Matching (if multiple cities)
-		// Use bucketized per-city matching to prevent "Global Top-N" bias
-		const targetCities = Array.isArray(userPrefs.target_cities)
-			? userPrefs.target_cities
-			: userPrefs.target_cities
-				? [userPrefs.target_cities]
-				: [];
+		// STAGE 3: Rank by semantic similarity using embeddings
 
 		// STAGE 3: Rank by semantic similarity using embeddings
 		const { SemanticRetrievalService } = await import("../semanticRetrieval");
@@ -442,7 +434,7 @@ export class ConsolidatedMatchingEngine {
 					this.lastAIMetadata = null;
 					return {
 						matches: [],
-						method: "ai_failed_validation",
+						method: "ai_failed",
 						processingTime: Date.now() - startTime,
 						confidence: 0,
 						aiModel: undefined,
@@ -923,7 +915,7 @@ export class ConsolidatedMatchingEngine {
 	private async performSemanticFallback(
 		jobs: Job[],
 		userPrefs: UserPreferences,
-	): Promise<JobMatch[]> {
+	): Promise<ConsolidatedMatchResult> {
 		try {
 			const { SemanticRetrievalService } = await import("../semanticRetrieval");
 			const semanticService = new SemanticRetrievalService();
@@ -945,11 +937,21 @@ export class ConsolidatedMatchingEngine {
 			}));
 
 			console.warn(`[SEMANTIC FALLBACK] AI failed, using ${matches.length} semantic matches for ${userPrefs.email}`);
-			return matches;
+			return {
+				matches,
+				method: "ai_failed",
+				processingTime: 0, // Not tracking time for fallback
+				confidence: 0.3, // Low confidence for fallback
+			};
 
 		} catch (error) {
 			console.error("[SEMANTIC FALLBACK] Even semantic fallback failed:", error);
-			return []; // Complete failure
+			return {
+				matches: [],
+				method: "ai_failed",
+				processingTime: 0,
+				confidence: 0,
+			};
 		}
 	}
 

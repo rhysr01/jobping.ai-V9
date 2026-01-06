@@ -4,7 +4,6 @@ import { COMPANY_LOGOS } from "@/lib/companyLogos";
 import { withApiAuth } from "@/Utils/auth/apiAuth";
 import { getDatabaseClient } from "@/Utils/databasePool";
 import { getDatabaseCategoriesForForm } from "@/Utils/matching/categoryMapper";
-import { calculateCompanyTierScore } from "@/Utils/matching/consolidated/scoring";
 import {
 	calculateMatchScore,
 	generateMatchExplanation,
@@ -111,18 +110,12 @@ async function getSampleJobsHandler(req: NextRequest) {
 			const normalized = companyName.toLowerCase().trim();
 
 			// Check if company has a logo (premium indicator)
-			const hasLogo = COMPANY_LOGOS.some(
+			return COMPANY_LOGOS.some(
 				(logo) =>
 					logo.name.toLowerCase() === normalized ||
 					normalized.includes(logo.name.toLowerCase()) ||
 					logo.name.toLowerCase().includes(normalized),
 			);
-
-			if (hasLogo) return true;
-
-			// Also check using company tier scoring
-			const tierScore = calculateCompanyTierScore(companyName, "");
-			return tierScore.points >= 12; // Famous companies get 12 points
 		};
 
 		// Create realistic sample user profiles that match actual job categories
