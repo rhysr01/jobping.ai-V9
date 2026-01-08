@@ -94,7 +94,7 @@ export default function Header() {
 				</div>
 				
 				<div className="container-page relative" style={{ overflow: "visible" }}>
-					<div className="h-20 md:h-24 flex items-center justify-between py-2 overflow-visible" style={{ overflow: "visible" }}>
+					<div className="h-24 md:h-28 flex items-center justify-between py-2 overflow-visible" style={{ overflow: "visible" }}>
 						{/* Logo with graduation cap */}
 						<Link
 							href="/"
