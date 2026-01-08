@@ -5,17 +5,22 @@
  */
 
 // Load environment variables BEFORE importing any modules
+// In GitHub Actions/CI, env vars are already set - don't try to load .env.local
 import { config } from 'dotenv';
 import { resolve } from 'path';
 
-const envPath = resolve(process.cwd(), '.env.local');
-const result = config({ path: envPath });
-
-if (result.error) {
-  console.error('⚠️  Failed to load .env.local:', result.error.message);
-  console.log('Trying to use existing environment variables...');
+if (process.env.GITHUB_ACTIONS || process.env.CI) {
+  console.log('✅ CI environment detected - using provided environment variables');
 } else {
-  console.log('✅ Loaded environment from', envPath);
+  const envPath = resolve(process.cwd(), '.env.local');
+  const result = config({ path: envPath });
+
+  if (result.error) {
+    console.error('⚠️  Failed to load .env.local:', result.error.message);
+    console.log('Trying to use existing environment variables...');
+  } else {
+    console.log('✅ Loaded environment from', envPath);
+  }
 }
 
 // Verify required env vars
@@ -42,11 +47,19 @@ async function generateAllEmbeddings() {
     let totalFailed = 0;
     let hasMore = true;
     
-    // Get initial queue count
-    const { count: initialCount } = await supabase
-      .from('embedding_queue')
-      .select('*', { count: 'exact', head: true })
-      .is('processed_at', null);
+    // Get initial queue count with timeout handling
+    let initialCount;
+    try {
+      const result = await supabase
+        .from('embedding_queue')
+        .select('*', { count: 'exact', head: true })
+        .is('processed_at', null);
+      initialCount = result.count;
+    } catch (error) {
+      console.error('❌ Failed to get initial queue count:', error.message);
+      console.log('⚠️  Continuing without initial count...');
+      initialCount = 0;
+    }
     
     console.log(`📊 Found ${initialCount || 0} jobs in queue`);
     
