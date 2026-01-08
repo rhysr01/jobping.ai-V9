@@ -559,7 +559,7 @@ async function scrapeJooble() {
 	// Limit queries to stay within API limits
 	// 22 cities × 20 keywords = 440 requests per run
 	// Rate limiting: 2s between requests = ~15 minutes total
-	const limitedQueries = queries.slice(0, 12); // Reduced from 20 to prevent timeouts
+	const limitedQueries = queries.slice(0, 6); // Emergency reduction: 12->6 to prevent 120s timeout
 
 	let totalSaved = 0;
 	let errors = 0;

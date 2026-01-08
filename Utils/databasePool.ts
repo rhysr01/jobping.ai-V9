@@ -62,6 +62,11 @@ class DatabasePool {
 							"X-Client-Info": "jobping-database-pool",
 						},
 					},
+					// CRITICAL FIX: Increase timeout to prevent GitHub Actions failures
+					// Default 60s timeout is too aggressive for CI environment
+					rest: {
+						timeout: 120000, // 2 minutes instead of 60 seconds
+					},
 				});
 
 				// Perform initial health check (fire and forget - don't block initialization)

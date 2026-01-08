@@ -14,6 +14,34 @@ if (!process.env.ADZUNA_APP_ID || !process.env.ADZUNA_APP_KEY) {
 	console.error("   🔗 Get credentials: https://developer.adzuna.com/");
 	process.exit(1);
 }
+
+// Test API credentials validity before starting
+async function testAdzunaCredentials() {
+	try {
+		const testUrl = `https://api.adzuna.com/v1/api/jobs/gb/search/1?app_id=${process.env.ADZUNA_APP_ID}&app_key=${process.env.ADZUNA_APP_KEY}&what=developer&results_per_page=1`;
+		const response = await axios.get(testUrl, {
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+			},
+			timeout: 10000
+		});
+
+		if (response.status === 200) {
+			console.log("✅ Adzuna API credentials validated successfully");
+			return true;
+		}
+	} catch (error) {
+		console.error("❌ ADZUNA API CREDENTIALS INVALID:");
+		if (error.response?.status === 401) {
+			console.error("   - HTTP 401: Invalid API credentials");
+			console.error("   📝 Check your ADZUNA_APP_ID and ADZUNA_APP_KEY in GitHub secrets");
+			console.error("   🔗 Renew credentials: https://developer.adzuna.com/");
+		} else {
+			console.error("   - API test failed:", error.message);
+		}
+		return false;
+	}
+}
 const {
 	classifyEarlyCareer,
 	makeJobHash,
@@ -805,6 +833,14 @@ async function scrapeCityCategories(
  * Scrape all EU cities with category-focused approach
  */
 async function scrapeAllCitiesCategories(options = {}) {
+	// Test API credentials before starting
+	console.log("🔍 Testing Adzuna API credentials...");
+	const credentialsValid = await testAdzunaCredentials();
+	if (!credentialsValid) {
+		console.error("❌ Adzuna scraper cannot proceed with invalid credentials");
+		return { jobs: [], errors: 1 };
+	}
+
 	const {
 		verbose = false,
 		targetCities = [],

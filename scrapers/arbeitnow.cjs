@@ -703,11 +703,11 @@ async function scrapeArbeitnow() {
 
 	const queries = generateSearchQueries();
 
-	// REDUCED: Fewer queries to prevent 600s timeouts
-	// 5 cities × 15 queries × 3 pages avg = ~225 requests max
-	// With rate limiting (2s between queries), this completes in ~7.5 minutes
-	// REDUCED from 40 to 15 queries to prevent timeouts
-	const limitedQueries = queries.slice(0, 15); // Reduced from 40 to prevent timeouts
+// CRITICAL FIX: Drastically reduce queries to prevent 120s GitHub Actions timeout
+// REDUCED from 40 to 6 queries to prevent timeouts
+// 2 cities × 6 queries × 2 pages avg = ~24 requests max
+// With rate limiting (2s between queries), this completes in ~48 seconds
+const limitedQueries = queries.slice(0, 6); // Emergency reduction for timeout prevention
 	
 	const MAX_PAGES = parseInt(process.env.ARBEITNOW_MAX_PAGES || "1000", 10);
 	console.log(
