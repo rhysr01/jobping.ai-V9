@@ -225,51 +225,7 @@ export default function Hero() {
 								</div>
 							</motion.div>
 
-							<motion.div
-								whileHover={{ scale: 1.02 }}
-								className="flex items-start gap-3 px-3 py-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-brand-400/30 transition-all group"
-							>
-								<div className="p-2 rounded-lg bg-amber-500/20 group-hover:bg-amber-500/30 transition-colors flex-shrink-0 mt-0.5">
-									<BrandIcons.Lightbulb className="h-4 w-4 sm:h-5 sm:w-5 text-amber-400" />
-								</div>
-								<div className="flex-1 min-w-0">
-									<span className="text-sm sm:text-base font-semibold text-white/90 block mb-1">Experience Level</span>
-									<p className="text-xs sm:text-sm text-white/70 leading-relaxed">
-										Graduate, Intern, 0-2 years—your career stage
-									</p>
-								</div>
-							</motion.div>
 						</div>
-					</motion.div>
-
-					{/* Social Proof Stats */}
-					<motion.div
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						transition={{ delay: 0.4, duration: 0.6 }}
-						className="pt-2 sm:pt-3"
-					>
-						{stats ? (
-							<>
-								<p className="text-sm sm:text-base font-semibold text-white/70 mb-1">
-									Join{" "}
-									<strong className="text-white font-bold">
-										{stats.totalUsers > 0
-											? `${stats.totalUsers.toLocaleString("en-US")}+`
-											: "1,500+"}
-									</strong>{" "}
-									job seekers finding roles
-								</p>
-								<p className="text-xs text-white/60">
-									Trusted by students across Europe
-								</p>
-							</>
-						) : (
-							<div className="space-y-2">
-								<div className="h-5 w-48 bg-white/5 rounded" />
-								<div className="h-3 w-32 bg-white/5 rounded" />
-							</div>
-						)}
 					</motion.div>
 				</motion.div>
 			</motion.div>

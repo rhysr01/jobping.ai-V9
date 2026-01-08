@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { BrandIcons } from "@/components/ui/BrandIcons";
+import GradientText from "@/components/ui/GradientText";
 import { apiCallJson } from "@/lib/api-client";
 
 interface Company {
@@ -378,10 +379,15 @@ export default function CompanyLogos() {
 					transition={{ delay: 0.3 }}
 					className="text-center mt-8"
 				>
-					<p className="text-xs text-content-muted">
-						JobPing aggregates jobs from public sources including Indeed, Glassdoor, Adzuna, Jooble, Reed, Arbeitnow, and company pages.
-						We are not affiliated with these companies and match you with available listings.
-					</p>
+					<div className="inline-flex items-center gap-2 px-6 py-3 rounded-full glass-card elevation-1 border border-white/10">
+						<p className="text-lg md:text-xl text-content-secondary">
+							JobPing aggregates jobs from public sources including{" "}
+							<GradientText variant="accent" className="font-semibold">
+								Indeed, Glassdoor, Adzuna, Jooble, Reed, Arbeitnow
+							</GradientText>
+							, and company pages. We are not affiliated with these companies and match you with available listings.
+						</p>
+					</div>
 				</motion.div>
 			</div>
 		</section>

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Brain, CheckCircle2, Cpu, FileJson, BookOpen, MapPin, Award, TrendingUp, Building, Target, Zap, Users, Sparkles } from "lucide-react";
+import { Brain, CheckCircle2, Cpu, FileJson, BookOpen, MapPin, Award, TrendingUp, Building, Target, Zap, Users, Sparkles, Mail } from "lucide-react";
 import { useEffect, useRef } from "react";
 import GradientText from "@/components/ui/GradientText";
 import Heading from "@/components/ui/Heading";
@@ -235,11 +235,11 @@ export default function HowItWorksBento() {
 						</div>
 					</FeatureCard>
 
-					{/* Card 3: Match Intelligence (Wide Card) */}
+					{/* Card 3: What's In Every Email */}
 				<FeatureCard
-					title="Smart Scoring System"
-					description="A 9-signal audit that ensures quality by weighting what matters most to your career."
-					icon={Brain}
+					title="What's In Every Email"
+					description="Every role includes salary range, visa info, and why it's a match for you - so you can decide in seconds."
+					icon={Mail}
 					className="md:col-span-3 min-h-[320px] relative group"
 				>
 					{/* Step Number with Glow */}
@@ -251,161 +251,61 @@ export default function HowItWorksBento() {
 							</div>
 						</div>
 					</div>
-						<div className="mt-4 space-y-4">
-							{/* Primary Signals */}
-							<div className="space-y-2">
-								<div className="flex items-center gap-2 mb-4">
-									<Brain className="w-5 h-5 text-emerald-400" />
-									<span className="text-sm font-semibold text-emerald-300 uppercase tracking-wider">Primary Signals</span>
+					<div className="mt-4 space-y-4">
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+							<motion.div
+								initial={{ opacity: 0, y: 20 }}
+								whileInView={{ opacity: 1, y: 0 }}
+								viewport={{ once: true }}
+								transition={{ duration: 0.5, delay: 0.1 }}
+								whileHover={{ scale: 1.02, y: -4 }}
+								className="flex flex-col gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/15 transition-all duration-300"
+							>
+								<div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/30 to-emerald-600/20 border border-emerald-500/40 flex items-center justify-center shadow-[0_4px_16px_rgba(16,185,129,0.2)]">
+									<Mail className="w-6 h-6 text-emerald-300" />
 								</div>
-								<div className="grid grid-cols-1 gap-2">
-									<motion.div
-										initial={{ opacity: 0, x: -20 }}
-										whileInView={{ opacity: 1, x: 0 }}
-										viewport={{ once: true }}
-										transition={{ duration: 0.5, delay: 0.1 }}
-										className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/15 transition-all duration-300"
-									>
-										<div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-400/50">
-											<MapPin className="w-5 h-5 text-emerald-300" />
-										</div>
-										<div className="flex-1 min-w-0">
-											<div className="font-semibold text-emerald-200 text-sm">Location Match</div>
-											<div className="text-xs text-emerald-300/80 mt-0.5">Your preferred cities and regions</div>
-										</div>
-									</motion.div>
-
-									<motion.div
-										initial={{ opacity: 0, x: -20 }}
-										whileInView={{ opacity: 1, x: 0 }}
-										viewport={{ once: true }}
-										transition={{ duration: 0.5, delay: 0.2 }}
-										className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/15 transition-all duration-300"
-									>
-										<div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-400/50">
-											<Award className="w-5 h-5 text-emerald-300" />
-										</div>
-										<div className="flex-1 min-w-0">
-											<div className="font-semibold text-emerald-200 text-sm">Career Path</div>
-											<div className="text-xs text-emerald-300/80 mt-0.5">Professional alignment and growth</div>
-										</div>
-									</motion.div>
-
-									<motion.div
-										initial={{ opacity: 0, x: -20 }}
-										whileInView={{ opacity: 1, x: 0 }}
-										viewport={{ once: true }}
-										transition={{ duration: 0.5, delay: 0.3 }}
-										className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/15 transition-all duration-300"
-									>
-										<div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-400/50">
-											<BookOpen className="w-5 h-5 text-emerald-300" />
-										</div>
-										<div className="flex-1 min-w-0">
-											<div className="font-semibold text-emerald-200 text-sm">Experience Level</div>
-											<div className="text-xs text-emerald-300/80 mt-0.5">Entry-level and graduate roles</div>
-										</div>
-									</motion.div>
+								<div className="flex-1 min-w-0">
+									<div className="font-semibold text-emerald-200 text-base mb-1">5 roles you actually qualify for</div>
+									<div className="text-sm text-emerald-300/80">Filtered by visa, location, experience</div>
 								</div>
-							</div>
+							</motion.div>
 
-							{/* Secondary Signals */}
-							<div className="space-y-2">
-								<div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Additional Factors</div>
-								<div className="grid grid-cols-2 gap-2">
-									<motion.div
-										initial={{ opacity: 0, y: 10 }}
-										whileInView={{ opacity: 1, y: 0 }}
-										viewport={{ once: true }}
-										transition={{ duration: 0.4, delay: 0.4 }}
-										className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300"
-									>
-										<div className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-500/20 flex items-center justify-center border border-zinc-500/50">
-											<Building className="w-4 h-4 text-zinc-300" />
-										</div>
-										<div className="flex-1 min-w-0">
-											<span className="text-sm font-medium text-zinc-300">Company Quality</span>
-										</div>
-									</motion.div>
-
-									<motion.div
-										initial={{ opacity: 0, y: 10 }}
-										whileInView={{ opacity: 1, y: 0 }}
-										viewport={{ once: true }}
-										transition={{ duration: 0.4, delay: 0.5 }}
-										className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300"
-									>
-										<div className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-500/20 flex items-center justify-center border border-zinc-500/50">
-											<Target className="w-4 h-4 text-zinc-300" />
-										</div>
-										<div className="flex-1 min-w-0">
-											<span className="text-sm font-medium text-zinc-300">Skills Match</span>
-										</div>
-									</motion.div>
-
-									<motion.div
-										initial={{ opacity: 0, y: 10 }}
-										whileInView={{ opacity: 1, y: 0 }}
-										viewport={{ once: true }}
-										transition={{ duration: 0.4, delay: 0.6 }}
-										className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300"
-									>
-										<div className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-500/20 flex items-center justify-center border border-zinc-500/50">
-											<Zap className="w-4 h-4 text-zinc-300" />
-										</div>
-										<div className="flex-1 min-w-0">
-											<span className="text-sm font-medium text-zinc-300">Industry Fit</span>
-										</div>
-									</motion.div>
-
-									<motion.div
-										initial={{ opacity: 0, y: 10 }}
-										whileInView={{ opacity: 1, y: 0 }}
-										viewport={{ once: true }}
-										transition={{ duration: 0.4, delay: 0.7 }}
-										className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300"
-									>
-										<div className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-500/20 flex items-center justify-center border border-zinc-500/50">
-											<Users className="w-4 h-4 text-zinc-300" />
-										</div>
-										<div className="flex-1 min-w-0">
-											<span className="text-sm font-medium text-zinc-300">Company Size</span>
-										</div>
-									</motion.div>
-
-									<motion.div
-										initial={{ opacity: 0, y: 10 }}
-										whileInView={{ opacity: 1, y: 0 }}
-										viewport={{ once: true }}
-										transition={{ duration: 0.4, delay: 0.8 }}
-										className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300"
-									>
-										<div className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-500/20 flex items-center justify-center border border-zinc-500/50">
-											<Sparkles className="w-4 h-4 text-zinc-300" />
-										</div>
-										<div className="flex-1 min-w-0">
-											<span className="text-sm font-medium text-zinc-300">Cold Start</span>
-										</div>
-									</motion.div>
-
-									<motion.div
-										initial={{ opacity: 0, y: 10 }}
-										whileInView={{ opacity: 1, y: 0 }}
-										viewport={{ once: true }}
-										transition={{ duration: 0.4, delay: 0.9 }}
-										className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300"
-									>
-										<div className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-500/20 flex items-center justify-center border border-zinc-500/50">
-											<TrendingUp className="w-4 h-4 text-zinc-300" />
-										</div>
-										<div className="flex-1 min-w-0">
-											<span className="text-sm font-medium text-zinc-300">Feedback Learning</span>
-										</div>
-									</motion.div>
+							<motion.div
+								initial={{ opacity: 0, y: 20 }}
+								whileInView={{ opacity: 1, y: 0 }}
+								viewport={{ once: true }}
+								transition={{ duration: 0.5, delay: 0.2 }}
+								whileHover={{ scale: 1.02, y: -4 }}
+								className="flex flex-col gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/15 transition-all duration-300"
+							>
+								<div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/30 to-emerald-600/20 border border-emerald-500/40 flex items-center justify-center shadow-[0_4px_16px_rgba(16,185,129,0.2)]">
+									<CheckCircle2 className="w-6 h-6 text-emerald-300" />
 								</div>
-							</div>
+								<div className="flex-1 min-w-0">
+									<div className="font-semibold text-emerald-200 text-base mb-1">Salary range and visa status upfront</div>
+									<div className="text-sm text-emerald-300/80">No surprises</div>
+								</div>
+							</motion.div>
+
+							<motion.div
+								initial={{ opacity: 0, y: 20 }}
+								whileInView={{ opacity: 1, y: 0 }}
+								viewport={{ once: true }}
+								transition={{ duration: 0.5, delay: 0.3 }}
+								whileHover={{ scale: 1.02, y: -4 }}
+								className="flex flex-col gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/15 transition-all duration-300"
+							>
+								<div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/30 to-emerald-600/20 border border-emerald-500/40 flex items-center justify-center shadow-[0_4px_16px_rgba(16,185,129,0.2)]">
+									<Target className="w-6 h-6 text-emerald-300" />
+								</div>
+								<div className="flex-1 min-w-0">
+									<div className="font-semibold text-emerald-200 text-base mb-1">One-click feedback</div>
+									<div className="text-sm text-emerald-300/80">Improve future matches</div>
+								</div>
+							</motion.div>
 						</div>
-					</FeatureCard>
+					</div>
+				</FeatureCard>
 				</div>
 			</div>
 		</section>

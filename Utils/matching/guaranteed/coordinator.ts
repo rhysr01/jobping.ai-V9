@@ -210,7 +210,10 @@ export async function coordinatePremiumMatching(
 	// );
 
 	// Step 2: Attempt standard matching (AI + Rule-based)
-	const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
+	// Get OpenAI API key (same validation as embedding service)
+	const openaiKey = process.env.OPENAI_API_KEY;
+	const hasOpenAIKey = openaiKey && openaiKey.startsWith("sk-");
+	const matcher = createConsolidatedMatcher(hasOpenAIKey ? openaiKey : undefined);
 	const matchResult = await matcher.performMatching(allJobs, userPrefs);
 
 	let finalMatches = matchResult.matches.map((m) => ({

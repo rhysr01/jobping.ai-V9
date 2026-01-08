@@ -37,7 +37,10 @@ export interface UserSegment {
  */
 export class BatchMatchingProcessor {
 	private supabase = getDatabaseClient();
-	private matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
+	// Get OpenAI API key (same validation as embedding service)
+	const openaiKey = process.env.OPENAI_API_KEY;
+	const hasOpenAIKey = openaiKey && openaiKey.startsWith("sk-");
+	private matcher = createConsolidatedMatcher(hasOpenAIKey ? openaiKey : undefined);
 	private readonly SIMILARITY_THRESHOLD = 0.85; // Users with 85%+ similar preferences share cache
 
 	/**

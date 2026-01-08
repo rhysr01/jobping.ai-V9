@@ -162,7 +162,10 @@ export async function GET(request: NextRequest) {
 		};
 
 		// Use consolidated matcher with AI matching enabled
-		const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
+		// Get OpenAI API key (same validation as embedding service)
+		const openaiKey = process.env.OPENAI_API_KEY;
+		const hasOpenAIKey = openaiKey && openaiKey.startsWith("sk-");
+		const matcher = createConsolidatedMatcher(hasOpenAIKey ? openaiKey : undefined);
 		const matchResult = await matcher.performMatching(
 			availableJobs,
 			userPrefs,

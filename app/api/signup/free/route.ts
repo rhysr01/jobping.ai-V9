@@ -461,12 +461,17 @@ export async function POST(request: NextRequest) {
 		// Engine handles: Hard Gates → Pre-Ranking → AI Matching
 		let matchedJobsRaw: any[] = [];
 
-		if (!process.env.OPENAI_API_KEY) {
+		// Check if OpenAI API key is available (same way as embedding service)
+		const openaiKey = process.env.OPENAI_API_KEY;
+		const hasOpenAIKey = openaiKey && openaiKey.startsWith("sk-");
+
+		if (!hasOpenAIKey) {
 			apiLogger.warn(
-				"OPENAI_API_KEY not set - using fallback matching without AI",
+				"OPENAI_API_KEY not set or invalid - using fallback matching without AI",
 				{
 					email: normalizedEmail,
 					jobCount: jobsForMatching.length,
+					openaiKeyStatus: openaiKey ? "set but invalid format" : "not set",
 				},
 			);
 
@@ -536,9 +541,9 @@ export async function POST(request: NextRequest) {
 				}
 			}
 
-			// Normal AI matching flow (synchronous for immediate response)
-			// Matching engine handles: Hard Gates → Pre-Ranking → AI Matching
-			const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
+		// Normal AI matching flow (synchronous for immediate response)
+		// Matching engine handles: Hard Gates → Pre-Ranking → AI Matching
+		const matcher = createConsolidatedMatcher(openaiKey);
 
 			apiLogger.info("Starting AI matching", {
 				email: normalizedEmail,

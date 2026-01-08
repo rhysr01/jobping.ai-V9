@@ -117,7 +117,10 @@ async function handleSendScheduledEmails(req: NextRequest) {
 		const transformedUsers = transformUsers(users);
 
 		// Create matcher
-		const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
+		// Get OpenAI API key (same validation as embedding service)
+		const openaiKey = process.env.OPENAI_API_KEY;
+		const hasOpenAIKey = openaiKey && openaiKey.startsWith("sk-");
+		const matcher = createConsolidatedMatcher(hasOpenAIKey ? openaiKey : undefined);
 
 		// Fetch jobs for matching
 		const { jobs, filters } = await fetchCandidateJobs(

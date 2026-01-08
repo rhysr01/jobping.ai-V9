@@ -56,13 +56,17 @@ export const performAIMatching = inngest.createFunction(
 		};
 
 		// Initialize matching engine directly (cannot serialize class instances in step.run)
+		// Get OpenAI API key (same validation as embedding service)
 		const openaiKey = process.env.OPENAI_API_KEY;
-		if (!openaiKey) {
-			logger.warn("OPENAI_API_KEY not set, will use rule-based matching", {
+		const hasOpenAIKey = openaiKey && openaiKey.startsWith("sk-");
+
+		if (!hasOpenAIKey) {
+			logger.warn("OPENAI_API_KEY not set or invalid, will use rule-based matching", {
 				email: userPrefs.email,
+				openaiKeyStatus: openaiKey ? "set but invalid format" : "not set",
 			});
 		}
-		const matcher = new ConsolidatedMatchingEngine(openaiKey);
+		const matcher = new ConsolidatedMatchingEngine(hasOpenAIKey ? openaiKey : undefined);
 
 		// Step 1: Perform matching with timeout protection
 		const matchResult = await step.run("perform-matching", async () => {

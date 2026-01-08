@@ -67,7 +67,10 @@ export class IntegratedMatchingService {
 			const { createConsolidatedMatcher } = await import(
 				"@/Utils/consolidatedMatchingV2"
 			);
-			const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
+			// Get OpenAI API key (same validation as embedding service)
+			const openaiKey = process.env.OPENAI_API_KEY;
+			const hasOpenAIKey = openaiKey && openaiKey.startsWith("sk-");
+			const matcher = createConsolidatedMatcher(hasOpenAIKey ? openaiKey : undefined);
 
 			await Promise.all(
 				users.map(async (user) => {

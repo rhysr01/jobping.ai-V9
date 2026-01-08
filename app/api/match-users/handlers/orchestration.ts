@@ -448,7 +448,10 @@ export async function processUsers(
 			{ userCount: transformedUsers.length },
 		);
 
-		const matcher = createConsolidatedMatcher(process.env.OPENAI_API_KEY);
+		// Get OpenAI API key (same validation as embedding service)
+		const openaiKey = process.env.OPENAI_API_KEY;
+		const hasOpenAIKey = openaiKey && openaiKey.startsWith("sk-");
+		const matcher = createConsolidatedMatcher(hasOpenAIKey ? openaiKey : undefined);
 		const userPromises = transformedUsers.map((user) =>
 			processUserMatching(user, jobs, matcher, supabase, startTime),
 		);
