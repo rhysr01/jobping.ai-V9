@@ -72,7 +72,7 @@ export default function ExitIntentPopup() {
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
 					exit={{ opacity: 0 }}
-					className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+					className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm"
 					onClick={() => setShowPopup(false)}
 					role="dialog"
 					aria-modal="true"
@@ -90,16 +90,16 @@ export default function ExitIntentPopup() {
 						animate={{ scale: 1, opacity: 1 }}
 						exit={{ scale: 0.9, opacity: 0 }}
 						onClick={(e) => e.stopPropagation()}
-						className="bg-white/[0.06] border border-white/10 backdrop-blur-xl rounded-2xl p-8 max-w-md w-full shadow-feature elevation-3"
+						className="relative bg-white/[0.06] border border-white/10 backdrop-blur-xl rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 sm:mx-0 shadow-feature elevation-3"
 					>
 						<button
 							type="button"
 							onClick={() => setShowPopup(false)}
-							className="absolute top-4 right-4 text-content-secondary hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+							className="absolute top-3 right-3 sm:top-4 sm:right-4 text-content-secondary hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center p-2"
 							aria-label="Close popup"
 						>
 							<svg
-								className="w-6 h-6"
+								className="w-5 h-5 sm:w-6 sm:h-6"
 								fill="none"
 								viewBox="0 0 24 24"
 								stroke="currentColor"
@@ -116,38 +116,38 @@ export default function ExitIntentPopup() {
 
 						<div className="text-center">
 							<BrandIcons.Zap
-								className="w-[20.8px] h-[20.8px] mx-auto mb-4 text-emerald-400"
+								className="w-5 h-5 sm:w-[20.8px] sm:h-[20.8px] mx-auto mb-3 sm:mb-4 text-emerald-400"
 								aria-hidden="true"
 							/>
 							<h3
 								id="exit-popup-title"
-								className="text-2xl font-black text-white mb-2"
+								className="text-xl sm:text-2xl font-black text-white mb-2 sm:mb-3 leading-tight px-2 sm:px-0"
 							>
 								{CTA_GET_MY_5_FREE_MATCHES}
 							</h3>
 							<p
 								id="exit-popup-description"
-								className="text-content-heading mb-4"
+								className="text-sm sm:text-base text-content-heading mb-4 sm:mb-5 leading-relaxed px-1 sm:px-0"
 							>
 								See <strong className="text-white">5 hand-picked jobs</strong>{" "}
 								matched to your city, visa status, and career path. Instant
 								results - no credit card needed.
 							</p>
-							<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
-								<BrandIcons.Zap className="h-3 w-3" />
-								{TRUST_TEXT_INSTANT_SETUP.replace("⚡ ", "")}
+							<div className="mb-5 sm:mb-6 inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 sm:px-3 py-1 text-xs font-semibold text-emerald-200">
+								<BrandIcons.Zap className="h-3 w-3 shrink-0" />
+								<span className="whitespace-nowrap">{TRUST_TEXT_INSTANT_SETUP.replace("⚡ ", "")}</span>
 							</div>
 							<Link
 								href="/signup/free"
 								onClick={() => setShowPopup(false)}
-								className="btn-primary w-full"
+								className="btn-primary w-full text-sm sm:text-base py-3 sm:py-3.5 min-h-[44px] sm:min-h-[48px]"
 							>
 								{CTA_GET_MY_5_FREE_MATCHES} →
 							</Link>
 							<button
 								type="button"
 								onClick={() => setShowPopup(false)}
-								className="mt-4 text-xs text-gray-500 opacity-50 hover:opacity-75 min-h-[44px] min-w-[44px] px-4"
+								className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-500 opacity-50 hover:opacity-75 min-h-[44px] min-w-[44px] px-4 py-2"
 							>
 								No thanks
 							</button>
