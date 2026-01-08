@@ -11,7 +11,9 @@ export interface ConsolidatedMatchResult {
 		| "ai_timeout"
 		| "ai_failed"
 		| "rule_based"
-		| "guaranteed_fallback";
+		| "guaranteed_fallback"
+		| "semantic_fallback"
+		| "ai_failed_semantic_fallback";
 	processingTime: number;
 	confidence: number;
 	aiModel?: string; // AI model used (e.g., 'gpt-4o-mini')

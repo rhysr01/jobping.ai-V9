@@ -39,8 +39,9 @@ export function preFilterByHardGates(
 	}
 
 	// Log rejection analysis (only if we have jobs to analyze)
-	if (jobs.length > 0) {
-		console.error("🔍 HARDFILTER: Rejection analysis", {
+	// Note: Using console.debug to avoid Vercel marking as error
+	if (jobs.length > 0 && process.env.NODE_ENV === "development") {
+		console.debug("🔍 HARDFILTER: Rejection analysis", {
 			totalJobs: jobs.length,
 			eligibleJobs: eligibleJobs.length,
 			filteredOut: jobs.length - eligibleJobs.length,

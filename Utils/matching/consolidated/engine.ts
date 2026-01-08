@@ -15,6 +15,7 @@ import {
 	AI_MAX_RETRIES,
 	AI_TIMEOUT_MS,
 	CACHE_TTL_HOURS,
+	CIRCUIT_BREAKER_THRESHOLD,
 	JOBS_TO_ANALYZE_FREE,
 	JOBS_TO_ANALYZE_PREMIUM,
 	MAX_CACHE_SIZE,
@@ -365,23 +366,27 @@ export class ConsolidatedMatchingEngine {
 			};
 		}
 
-		// Skip AI if disabled or circuit breaker open
-		if (forceRulesBased || !this.openai || !this.circuitBreaker.canExecute()) {
-			console.warn(`[MATCHING] AI unavailable for ${userPrefs.email} - no fallback available`);
-			return {
-				matches: [],
-				method: "ai_failed",
-				processingTime: Date.now() - startTime,
-				confidence: 0,
-				aiModel: undefined,
-				aiCostUsd: 0,
-				aiTokensUsed: 0,
-			};
+		// Check why AI might be unavailable and log diagnostics
+		const aiUnavailable = forceRulesBased || !this.openai || !this.circuitBreaker.canExecute();
+		const aiUnavailableReasons: string[] = [];
+		if (forceRulesBased) aiUnavailableReasons.push("forceRulesBased=true");
+		if (!this.openai) aiUnavailableReasons.push("OpenAI client not initialized (missing/invalid API key)");
+		if (!this.circuitBreaker.canExecute()) {
+			const breakerStatus = this.circuitBreaker.getStatus();
+			aiUnavailableReasons.push(`Circuit breaker open (failures: ${breakerStatus.failures}, threshold: ${CIRCUIT_BREAKER_THRESHOLD})`);
 		}
 
-		// STAGE 3: Rank by semantic similarity using embeddings
+		if (aiUnavailable) {
+			// Log with both console and structured logger for visibility
+			const reasonStr = aiUnavailableReasons.join(", ");
+			console.warn(`[MATCHING] AI unavailable for ${userPrefs.email} - Reasons: ${reasonStr}`);
+			apiLogger.warn(`[MATCHING] AI unavailable for ${userPrefs.email}`, {
+				reasons: aiUnavailableReasons,
+				willUseFallback: true,
+			});
+		}
 
-		// STAGE 3: Rank by semantic similarity using embeddings
+		// STAGE 3: Rank by semantic similarity using embeddings (doesn't require AI)
 		const { SemanticRetrievalService } = await import("../semanticRetrieval");
 		const semanticService = new SemanticRetrievalService();
 		const semanticJobs = await semanticService.getSemanticCandidates(
@@ -401,204 +406,270 @@ export class ConsolidatedMatchingEngine {
 			score: job.semantic_score || 85, // Use semantic score or default
 		}));
 
-		// STAGE 4: Send tier-aware number of highest-scoring jobs to AI
-		const isPremiumTier = userPrefs.subscription_tier === "premium";
-		const jobsToAnalyze = isPremiumTier
-			? JOBS_TO_ANALYZE_PREMIUM
-			: JOBS_TO_ANALYZE_FREE;
-		const topJobs = scoredJobs.slice(0, jobsToAnalyze).map((item) => item.job);
+		// STAGE 4: Try AI matching if available, otherwise use semantic fallback
+		if (!aiUnavailable) {
+			// AI is available - proceed with AI matching
+			const isPremiumTier = userPrefs.subscription_tier === "premium";
+			const jobsToAnalyze = isPremiumTier
+				? JOBS_TO_ANALYZE_PREMIUM
+				: JOBS_TO_ANALYZE_FREE;
+			const topJobs = scoredJobs.slice(0, jobsToAnalyze).map((item) => item.job);
 
-		// Try AI matching with timeout and retry
-		try {
-			const aiMatches = await this.performAIMatchingWithRetry(
-				topJobs,
-				userPrefs,
-			);
-			if (aiMatches && aiMatches.length > 0) {
-				const validatedMatches = validation.validateAIMatches(
-					aiMatches,
+			// Try AI matching with timeout and retry
+			try {
+				const aiMatches = await this.performAIMatchingWithRetry(
 					topJobs,
 					userPrefs,
 				);
-
-				if (validatedMatches.length === 0) {
-					console.warn(
-						"All AI matches failed validation - no fallback available",
+				if (aiMatches && aiMatches.length > 0) {
+					const validatedMatches = validation.validateAIMatches(
+						aiMatches,
+						topJobs,
+						userPrefs,
 					);
-					apiLogger.warn("AI matches failed validation", {
-						reason: "all_matches_filtered_out",
-						originalMatchCount: aiMatches.length,
-						validatedMatchCount: 0,
-					});
 
-					this.lastAIMetadata = null;
-					return {
-						matches: [],
-						method: "ai_failed",
-						processingTime: Date.now() - startTime,
-						confidence: 0,
-						aiModel: undefined,
-						aiCostUsd: 0,
-						aiTokensUsed: 0,
-					};
-				}
-
-				// Cache successful AI matches
-				await this.matchCache.set(cacheKey, validatedMatches);
-				this.circuitBreaker.recordSuccess();
-
-				// Evidence verification: Auto-downgrade scores when word count is too low
-				validatedMatches.forEach((match) => {
-					const reason = match.match_reason || "";
-					const wordCount = reason
-						.trim()
-						.split(/\s+/)
-						.filter((w) => w.length > 0).length;
-
-					if (match.match_score >= 90 && wordCount < 20) {
-						const originalScore = match.match_score;
-						match.match_score = Math.max(65, match.match_score - 10);
-						apiLogger.warn("Match score downgraded due to weak evidence", {
-							originalScore,
-							newScore: match.match_score,
-							wordCount,
-							jobHash: match.job_hash,
-							email: userPrefs.email || "unknown",
-						});
-					}
-
-					if (match.match_score > 85 && wordCount < 30) {
-						const originalScore = match.match_score;
-						match.match_score = Math.max(70, match.match_score - 5);
-						apiLogger.warn(
-							"Match score downgraded - insufficient evidence density",
-							{
-								originalScore,
-								newScore: match.match_score,
-								wordCount,
-								required: 30,
-								jobHash: match.job_hash,
-								email: userPrefs.email || "unknown",
-							},
+					if (validatedMatches.length === 0) {
+						console.warn(
+							"All AI matches failed validation - falling back to semantic",
 						);
+						apiLogger.warn("AI matches failed validation", {
+							reason: "all_matches_filtered_out",
+							originalMatchCount: aiMatches.length,
+							validatedMatchCount: 0,
+							willUseSemanticFallback: true,
+						});
+						// Fall through to semantic fallback below
+					} else {
+						// AI succeeded - return results
+						// Cache successful AI matches
+						await this.matchCache.set(cacheKey, validatedMatches);
+						this.circuitBreaker.recordSuccess();
+
+						// Evidence verification: Auto-downgrade scores when word count is too low
+						validatedMatches.forEach((match) => {
+							const reason = match.match_reason || "";
+							const wordCount = reason
+								.trim()
+								.split(/\s+/)
+								.filter((w) => w.length > 0).length;
+
+							if (match.match_score >= 90 && wordCount < 20) {
+								const originalScore = match.match_score;
+								match.match_score = Math.max(65, match.match_score - 10);
+								apiLogger.warn("Match score downgraded due to weak evidence", {
+									originalScore,
+									newScore: match.match_score,
+									wordCount,
+									jobHash: match.job_hash,
+									email: userPrefs.email || "unknown",
+								});
+							}
+
+							if (match.match_score > 85 && wordCount < 30) {
+								const originalScore = match.match_score;
+								match.match_score = Math.max(70, match.match_score - 5);
+								apiLogger.warn(
+									"Match score downgraded - insufficient evidence density",
+									{
+										originalScore,
+										newScore: match.match_score,
+										wordCount,
+										required: 30,
+										jobHash: match.job_hash,
+										email: userPrefs.email || "unknown",
+									},
+								);
+							}
+						});
+
+						// Log match quality metrics
+						const matchQuality = scoring.calculateMatchQualityMetrics(
+							validatedMatches,
+							topJobs,
+							userPrefs,
+						);
+
+						const reasonLengths = validatedMatches.map((m) => {
+							const reason = m.match_reason || "";
+							return reason
+								.trim()
+								.split(/\s+/)
+								.filter((w) => w.length > 0).length;
+						});
+						const avgReasonLength =
+							reasonLengths.length > 0
+								? Math.round(
+										reasonLengths.reduce((sum, len) => sum + len, 0) /
+											reasonLengths.length,
+									)
+								: 0;
+						const minReasonLength =
+							reasonLengths.length > 0 ? Math.min(...reasonLengths) : 0;
+						const shortReasons = reasonLengths.filter((len) => len < 20).length;
+						const insufficientEvidence = reasonLengths.filter(
+							(len) => len < 30,
+						).length;
+
+						apiLogger.info("Match quality metrics", {
+							email: userPrefs.email || "unknown",
+							averageScore: matchQuality.averageScore,
+							scoreDistribution: matchQuality.scoreDistribution,
+							cityCoverage: matchQuality.cityCoverage,
+							sourceDiversity: matchQuality.sourceDiversity,
+							method: "ai_success",
+							matchCount: validatedMatches.length,
+							eligibleJobsAfterHardGates: eligibleJobs.length,
+							topJobsPreRanked: topJobs.length,
+							matchReasonLengths: {
+								average: avgReasonLength,
+								minimum: minReasonLength,
+								all: reasonLengths,
+								shortReasonsCount: shortReasons,
+								insufficientEvidenceCount: insufficientEvidence,
+								hasWeakEvidence: shortReasons > 0,
+								hasInsufficientEvidence: insufficientEvidence > 0,
+							},
+						});
+
+						if (shortReasons > 0) {
+							apiLogger.warn("AI match reasons may lack evidence", {
+								email: userPrefs.email || "unknown",
+								shortReasonsCount: shortReasons,
+								totalMatches: validatedMatches.length,
+								minReasonLength,
+								avgReasonLength,
+								note: "Short match reasons (<20 words) may indicate AI struggled to find strong evidence linking user skills to job requirements",
+							});
+						}
+
+						const aiMetadata = this.lastAIMetadata;
+						this.lastAIMetadata = null;
+
+						return {
+							matches: validatedMatches,
+							method: "ai_success",
+							processingTime: Date.now() - startTime,
+							confidence: 0.9,
+							aiModel: aiMetadata?.model || "gpt-4o-mini",
+							aiCostUsd: aiMetadata?.cost,
+							aiTokensUsed: aiMetadata?.tokens,
+						};
 					}
-				});
-
-				// Log match quality metrics
-				const matchQuality = scoring.calculateMatchQualityMetrics(
-					validatedMatches,
-					topJobs,
-					userPrefs,
-				);
-
-				const reasonLengths = validatedMatches.map((m) => {
-					const reason = m.match_reason || "";
-					return reason
-						.trim()
-						.split(/\s+/)
-						.filter((w) => w.length > 0).length;
-				});
-				const avgReasonLength =
-					reasonLengths.length > 0
-						? Math.round(
-								reasonLengths.reduce((sum, len) => sum + len, 0) /
-									reasonLengths.length,
-							)
-						: 0;
-				const minReasonLength =
-					reasonLengths.length > 0 ? Math.min(...reasonLengths) : 0;
-				const shortReasons = reasonLengths.filter((len) => len < 20).length;
-				const insufficientEvidence = reasonLengths.filter(
-					(len) => len < 30,
-				).length;
-
-				apiLogger.info("Match quality metrics", {
-					email: userPrefs.email || "unknown",
-					averageScore: matchQuality.averageScore,
-					scoreDistribution: matchQuality.scoreDistribution,
-					cityCoverage: matchQuality.cityCoverage,
-					sourceDiversity: matchQuality.sourceDiversity,
-					method: "ai_success",
-					matchCount: validatedMatches.length,
-					eligibleJobsAfterHardGates: eligibleJobs.length,
-					topJobsPreRanked: topJobs.length,
-					matchReasonLengths: {
-						average: avgReasonLength,
-						minimum: minReasonLength,
-						all: reasonLengths,
-						shortReasonsCount: shortReasons,
-						insufficientEvidenceCount: insufficientEvidence,
-						hasWeakEvidence: shortReasons > 0,
-						hasInsufficientEvidence: insufficientEvidence > 0,
-					},
-				});
-
-				if (shortReasons > 0) {
-					apiLogger.warn("AI match reasons may lack evidence", {
-						email: userPrefs.email || "unknown",
-						shortReasonsCount: shortReasons,
-						totalMatches: validatedMatches.length,
-						minReasonLength,
-						avgReasonLength,
-						note: "Short match reasons (<20 words) may indicate AI struggled to find strong evidence linking user skills to job requirements",
-					});
 				}
-
-				const aiMetadata = this.lastAIMetadata;
-				this.lastAIMetadata = null;
-
-				return {
-					matches: validatedMatches,
-					method: "ai_success",
-					processingTime: Date.now() - startTime,
-					confidence: 0.9,
-					aiModel: aiMetadata?.model || "gpt-4o-mini",
-					aiCostUsd: aiMetadata?.cost,
-					aiTokensUsed: aiMetadata?.tokens,
-				};
+			} catch (error) {
+				this.circuitBreaker.recordFailure();
+				console.warn(
+					"AI matching failed, falling back to semantic:",
+					error instanceof Error ? error.message : "Unknown error",
+				);
+				apiLogger.warn("AI matching failed", {
+					error: error instanceof Error ? error.message : String(error),
+					email: userPrefs.email,
+					willUseSemanticFallback: true,
+				});
+				// Fall through to semantic fallback below
 			}
-		} catch (error) {
-			this.circuitBreaker.recordFailure();
-			console.warn(
-				"AI matching failed, falling back to rules:",
-				error instanceof Error ? error.message : "Unknown error",
-			);
 		}
 
-		// No rule-based fallback available - use guaranteed matching if needed
-		const ruleMatches: JobMatch[] = [];
+		// AI unavailable or failed - use semantic matching as fallback
+		const topSemanticJobs = scoredJobs.slice(0, 20).map((item) => item.job);
+			
+			if (topSemanticJobs.length > 0) {
+				// Convert semantic results to JobMatch format
+				const semanticMatches: JobMatch[] = topSemanticJobs.slice(0, 10).map((job, index) => ({
+					job_index: index + 1,
+					job_hash: job.job_hash,
+					match_score: Math.max(60, 85 - (index * 3)), // Decreasing scores: 85, 82, 79, etc.
+					match_reason: `Semantic similarity match - job aligns with your profile based on embedding analysis. ${aiUnavailable ? 'AI analysis unavailable.' : 'AI analysis failed.'}`,
+					confidence_score: 0.5, // Lower confidence for semantic-only matches
+				}));
 
-		// Check if we have enough matches, if not use guaranteed matching
-		const tier = userPrefs.subscription_tier || "free";
-		const minMatches = tier === "premium" ? 10 : 5;
+				apiLogger.info("Using semantic fallback matches", {
+					email: userPrefs.email || "unknown",
+					matchesFound: semanticMatches.length,
+					aiUnavailable,
+					aiUnavailableReasons: aiUnavailable ? aiUnavailableReasons : undefined,
+				});
 
-		if (ruleMatches.length < minMatches) {
-			apiLogger.info("Insufficient matches, trying guaranteed matching", {
-				email: userPrefs.email || "unknown",
-				currentMatches: ruleMatches.length,
-				minRequired: minMatches,
-			});
+				// Try guaranteed matching for better results if we don't have enough
+				const tier = userPrefs.subscription_tier || "free";
+				const minMatches = tier === "premium" ? 10 : 5;
 
+				if (semanticMatches.length < minMatches) {
+					try {
+						const { getGuaranteedMatches } = await import("../guaranteed");
+						const { getDatabaseClient } = await import("@/Utils/databasePool");
+						const supabase = getDatabaseClient();
+
+						const guaranteedResult = await getGuaranteedMatches(
+							jobsArray,
+							userPrefs,
+							supabase,
+						);
+
+						if (guaranteedResult.matches.length >= semanticMatches.length) {
+							apiLogger.info("Guaranteed matching provided better results than semantic", {
+								email: userPrefs.email,
+								guaranteedMatches: guaranteedResult.matches.length,
+								semanticMatches: semanticMatches.length,
+								relaxationLevel: guaranteedResult.metadata.relaxationLevel,
+							});
+
+							const guaranteedMatches: JobMatch[] = guaranteedResult.matches.map(
+								(m) => ({
+									job_index: 0,
+									job_hash: m.job.job_hash,
+									match_score: m.match_score,
+									match_reason: m.match_reason,
+									confidence_score: m.confidence_score,
+								}),
+							);
+
+							this.lastAIMetadata = null;
+							return {
+								matches: guaranteedMatches,
+								method: "guaranteed_fallback",
+								processingTime: Date.now() - startTime,
+								confidence: 0.6,
+								aiModel: undefined,
+								aiCostUsd: 0,
+								aiTokensUsed: 0,
+							};
+						}
+					} catch (error) {
+						apiLogger.warn("Guaranteed matching fallback failed", {
+							error: (error as Error).message,
+							email: userPrefs.email,
+						});
+					}
+				}
+
+				// Return semantic matches
+				this.lastAIMetadata = null;
+				return {
+					matches: semanticMatches,
+					method: aiUnavailable ? "semantic_fallback" : "ai_failed_semantic_fallback",
+					processingTime: Date.now() - startTime,
+					confidence: 0.5,
+					aiModel: undefined,
+					aiCostUsd: 0,
+					aiTokensUsed: 0,
+				};
+			}
+
+			// Last resort: try guaranteed matching even if semantic failed
 			try {
 				const { getGuaranteedMatches } = await import("../guaranteed");
 				const { getDatabaseClient } = await import("@/Utils/databasePool");
 				const supabase = getDatabaseClient();
 
 				const guaranteedResult = await getGuaranteedMatches(
-					jobsArray, // Use all jobs
+					jobsArray,
 					userPrefs,
 					supabase,
 				);
 
-				if (guaranteedResult.matches.length >= ruleMatches.length) {
-					apiLogger.info("Guaranteed matching provided better results", {
-						email: userPrefs.email,
-						guaranteedMatches: guaranteedResult.matches.length,
-						ruleMatches: ruleMatches.length,
-						relaxationLevel: guaranteedResult.metadata.relaxationLevel,
-					});
-
-					// Convert to JobMatch format
+				if (guaranteedResult.matches.length > 0) {
 					const guaranteedMatches: JobMatch[] = guaranteedResult.matches.map(
 						(m) => ({
 							job_index: 0,
@@ -608,6 +679,12 @@ export class ConsolidatedMatchingEngine {
 							confidence_score: m.confidence_score,
 						}),
 					);
+
+					apiLogger.info("Using guaranteed matching as last resort", {
+						email: userPrefs.email,
+						matchesFound: guaranteedMatches.length,
+						relaxationLevel: guaranteedResult.metadata.relaxationLevel,
+					});
 
 					this.lastAIMetadata = null;
 					return {
@@ -621,24 +698,30 @@ export class ConsolidatedMatchingEngine {
 					};
 				}
 			} catch (error) {
-				apiLogger.warn("Guaranteed matching fallback failed", {
+				apiLogger.warn("All fallbacks failed", {
 					error: (error as Error).message,
 					email: userPrefs.email,
 				});
 			}
-		}
 
-		this.lastAIMetadata = null;
+			// Only return empty matches if ALL fallbacks failed
+			this.lastAIMetadata = null;
+			apiLogger.warn("No matches found - all fallbacks exhausted", {
+				email: userPrefs.email,
+				eligibleJobsCount: eligibleJobs.length,
+				aiUnavailable,
+				aiUnavailableReasons: aiUnavailable ? aiUnavailableReasons : undefined,
+			});
 
-		return {
-			matches: ruleMatches,
-			method: "ai_failed",
-			processingTime: Date.now() - startTime,
-			confidence: 0.7,
-			aiModel: undefined,
-			aiCostUsd: 0,
-			aiTokensUsed: 0,
-		};
+			return {
+				matches: [],
+				method: "ai_failed",
+				processingTime: Date.now() - startTime,
+				confidence: 0,
+				aiModel: undefined,
+				aiCostUsd: 0,
+				aiTokensUsed: 0,
+			};
 	}
 
 	/**
