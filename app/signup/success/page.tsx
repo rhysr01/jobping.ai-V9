@@ -235,23 +235,23 @@ function SignupSuccessContent() {
 							<p className="mx-auto max-w-2xl text-lg font-medium leading-relaxed text-zinc-100 sm:text-xl">
 								You're now part of the 1% who get personalized job matches
 								delivered to their inbox. We found{" "}
-								<span className="text-brand-300 font-bold">
+								<span className="text-emerald-300 font-bold">
 									{matchCountNum}
 								</span>{" "}
 								perfect matches for you—check your inbox now!
 							</p>
 
 							{/* Email Status Indicator */}
-							<div className="mx-auto max-w-md rounded-xl border-2 border-brand-500/30 bg-brand-500/10 p-4 text-center">
+							<div className="mx-auto max-w-md rounded-xl border-2 border-emerald-500/30 bg-emerald-500/10 backdrop-blur-sm p-4 text-center">
 								<div className="flex items-center justify-center gap-2 mb-2">
 									{emailStatus.sent ? (
-										<BrandIcons.CheckCircle className="h-5 w-5 text-green-400" />
+										<BrandIcons.CheckCircle className="h-5 w-5 text-emerald-400" />
 									) : emailStatus.error ? (
 										<BrandIcons.AlertCircle className="h-5 w-5 text-yellow-400" />
 									) : (
-										<div className="h-5 w-5 border-2 border-brand-400 border-t-transparent rounded-full animate-spin" />
+										<div className="h-5 w-5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
 									)}
-									<p className="text-sm font-semibold text-brand-200">
+									<p className="text-sm font-semibold text-emerald-200">
 										{emailStatus.sent
 											? "Email sent successfully!"
 											: emailStatus.error
@@ -267,8 +267,8 @@ function SignupSuccessContent() {
 							</div>
 
 							{/* Value Reinforcement */}
-							<div className="mx-auto max-w-md rounded-xl border-2 border-brand-500/30 bg-brand-500/10 p-4 text-center">
-								<p className="text-sm font-semibold text-brand-200 mb-1">
+							<div className="mx-auto max-w-md rounded-xl border-2 border-emerald-500/30 bg-emerald-500/10 backdrop-blur-sm p-4 text-center">
+								<p className="text-sm font-semibold text-emerald-200 mb-1">
 									Premium Value
 								</p>
 								<p className="text-base text-white font-bold">
@@ -279,8 +279,8 @@ function SignupSuccessContent() {
 							</div>
 						</div>
 
-						<div className="mx-auto inline-flex items-center gap-2 rounded-full border-2 border-white/20 bg-white/8 px-5 py-2.5 text-sm font-medium text-zinc-100 backdrop-blur-sm">
-							<BrandIcons.Mail className="h-4 w-4 text-brand-300" />
+						<div className="mx-auto inline-flex items-center gap-2 rounded-full border-2 border-white/20 bg-white/8 px-5 py-2.5 text-sm font-medium text-zinc-100 backdrop-blur-sm hover:border-emerald-500/30 transition-colors">
+							<BrandIcons.Mail className="h-4 w-4 text-emerald-300" />
 							hello@getjobping.com · add us to contacts
 						</div>
 
@@ -377,7 +377,7 @@ function SignupSuccessContent() {
 									transition={{ delay: 0.3 }}
 									className="flex gap-5 sm:gap-6"
 								>
-									<div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-brand-500/25 to-purple-600/20 flex items-center justify-center text-brand-200 font-bold text-lg sm:text-xl shadow-[0_0_20px_rgba(99,102,241,0.3)] border-2 border-brand-500/30">
+									<div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-emerald-500/25 to-emerald-600/20 flex items-center justify-center text-emerald-200 font-bold text-lg sm:text-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] border-2 border-emerald-500/30">
 										1
 									</div>
 									<div className="flex-1 space-y-3">
@@ -401,7 +401,7 @@ function SignupSuccessContent() {
 											disabled={resending || !email}
 											whileHover={{ scale: 1.02 }}
 											whileTap={{ scale: 0.98 }}
-											className="mt-4 px-5 py-2.5 bg-white/[0.08] border-2 border-white/20 hover:border-brand-500/50 hover:bg-white/12 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold transition-all"
+											className="mt-4 px-5 py-2.5 bg-white/[0.08] border-2 border-white/20 hover:border-emerald-500/50 hover:bg-white/12 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold transition-all"
 										>
 											{resending ? "Sending..." : "Resend Email"}
 										</motion.button>
@@ -419,7 +419,7 @@ function SignupSuccessContent() {
 									transition={{ delay: 0.4 }}
 									className="flex gap-5 sm:gap-6"
 								>
-									<div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-brand-500/25 to-purple-600/20 flex items-center justify-center text-brand-200 font-bold text-lg sm:text-xl shadow-[0_0_20px_rgba(99,102,241,0.3)] border-2 border-brand-500/30">
+									<div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-emerald-500/25 to-emerald-600/20 flex items-center justify-center text-emerald-200 font-bold text-lg sm:text-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] border-2 border-emerald-500/30">
 										2
 									</div>
 									<div className="flex-1">
@@ -439,7 +439,7 @@ function SignupSuccessContent() {
 									transition={{ delay: 0.5 }}
 									className="flex gap-5 sm:gap-6"
 								>
-									<div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-brand-500/25 to-purple-600/20 flex items-center justify-center text-brand-200 font-bold text-lg sm:text-xl shadow-[0_0_20px_rgba(99,102,241,0.3)] border-2 border-brand-500/30">
+									<div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-emerald-500/25 to-emerald-600/20 flex items-center justify-center text-emerald-200 font-bold text-lg sm:text-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] border-2 border-emerald-500/30">
 										3
 									</div>
 									<div className="flex-1">
@@ -524,7 +524,7 @@ function SignupSuccessContent() {
 						<div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
 							<Link
 								href="/"
-								className="inline-block border-2 border-white/25 bg-white/[0.08] text-white font-semibold px-8 py-4 rounded-2xl hover:border-brand-500/50 hover:bg-white/12 transition-all"
+								className="inline-block border-2 border-white/25 bg-white/[0.08] text-white font-semibold px-8 py-4 rounded-2xl hover:border-emerald-500/50 hover:bg-white/12 transition-all"
 							>
 								Back to Home
 							</Link>
@@ -534,7 +534,7 @@ function SignupSuccessContent() {
 							Still nothing? Tap resend above or email{" "}
 							<a
 								href="mailto:hello@getjobping.com"
-								className="text-brand-200 hover:text-brand-100 underline"
+								className="text-emerald-200 hover:text-emerald-100 underline"
 							>
 								hello@getjobping.com
 							</a>
