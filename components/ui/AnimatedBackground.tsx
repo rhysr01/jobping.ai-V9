@@ -1,11 +1,10 @@
 "use client";
 
 import { motion, useScroll, useTransform, useMotionValue } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function AnimatedBackground() {
 	const { scrollY } = useScroll();
-	const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
 	// Parallax transforms based on scroll
 	const parallaxSlow = useTransform(scrollY, [0, 1000], [0, 200]);
@@ -24,7 +23,6 @@ export default function AnimatedBackground() {
 			const y = (e.clientY / window.innerHeight - 0.5) * 50;
 			mouseX.set(x);
 			mouseY.set(y);
-			setMousePosition({ x, y });
 		};
 
 		window.addEventListener("mousemove", handleMouseMove);
@@ -53,8 +51,8 @@ export default function AnimatedBackground() {
 			<motion.div
 				className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-emerald-500/20 rounded-full blur-[120px]"
 				style={{
-					x: useTransform([mouseX, scrollY], ([mx, sy]) => mx * 0.3 + (sy / 1000) * 200),
-					y: useTransform([mouseY, parallaxSlow], ([my, ps]) => my * 0.3 + ps),
+					x: useTransform([mouseX, scrollY], ([mx, sy]: number[]) => (mx as number) * 0.3 + ((sy as number) / 1000) * 200),
+					y: useTransform([mouseY, parallaxSlow], ([my, ps]: number[]) => (my as number) * 0.3 + (ps as number)),
 					scale: useTransform(scrollY, [0, 1000], [1, 1.15]),
 				}}
 				animate={{
@@ -69,8 +67,8 @@ export default function AnimatedBackground() {
 			<motion.div
 				className="absolute top-1/3 right-0 w-[500px] h-[500px] bg-blue-500/15 rounded-full blur-[100px]"
 				style={{
-					x: useTransform([mouseX, scrollY], ([mx, sy]) => -mx * 0.2 - (sy / 1000) * 160),
-					y: useTransform([mouseY, parallaxMedium], ([my, pm]) => -my * 0.2 + pm),
+					x: useTransform([mouseX, scrollY], ([mx, sy]: number[]) => -(mx as number) * 0.2 - ((sy as number) / 1000) * 160),
+					y: useTransform([mouseY, parallaxMedium], ([my, pm]: number[]) => -(my as number) * 0.2 + (pm as number)),
 					scale: useTransform(scrollY, [0, 1000], [1, 1.2]),
 				}}
 				animate={{
@@ -86,8 +84,8 @@ export default function AnimatedBackground() {
 			<motion.div
 				className="absolute bottom-0 left-1/2 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[90px]"
 				style={{
-					x: useTransform([mouseX, scrollY], ([mx, sy]) => mx * 0.15 + (sy / 1000) * 120),
-					y: useTransform([mouseY, parallaxFast], ([my, pf]) => my * 0.15 + pf),
+					x: useTransform([mouseX, scrollY], ([mx, sy]: number[]) => (mx as number) * 0.15 + ((sy as number) / 1000) * 120),
+					y: useTransform([mouseY, parallaxFast], ([my, pf]: number[]) => (my as number) * 0.15 + (pf as number)),
 					scale: useTransform(scrollY, [0, 1000], [1, 1.25]),
 				}}
 				animate={{
