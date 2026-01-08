@@ -62,7 +62,7 @@ export default function Hero() {
 	return (
 		<section
 			data-testid="hero-section"
-			className="section-padding-hero pt-16 pb-20 md:pt-20 md:pb-24 relative isolate overflow-visible min-h-[60vh] md:min-h-[65vh] flex items-center bg-black"
+			className="section-padding-hero pt-24 pb-20 md:pt-28 md:pb-24 relative isolate overflow-visible min-h-[60vh] md:min-h-[65vh] flex items-center bg-black"
 		>
 			{/* Layer 1: The Dot Grid (The Foundation) */}
 			<div

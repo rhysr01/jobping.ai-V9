@@ -80,16 +80,22 @@ export default function Header() {
 	return (
 		<>
 			<header
-				className={`sticky top-0 left-0 right-0 z-50 transition-all duration-200 ${
+				className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
 					scrolled
-						? "bg-surface-base/70 backdrop-blur-md border-b border-white/5 shadow-lg"
-						: "bg-transparent border-b border-transparent"
+						? "bg-black/70 backdrop-blur-xl border-b border-white/10 shadow-lg"
+						: "bg-black/50 backdrop-blur-xl border-b border-white/5"
 				}`}
 				style={{ overflow: "visible" }}
 			>
-				<div className="container-page" style={{ overflow: "visible" }}>
+				{/* Glassmorphic background with gradient glow */}
+				<div className="absolute inset-0">
+					{/* Top gradient glow */}
+					<div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
+				</div>
+				
+				<div className="container-page relative" style={{ overflow: "visible" }}>
 					<div className="h-20 md:h-24 flex items-center justify-between py-2 overflow-visible" style={{ overflow: "visible" }}>
-						{/* Logo */}
+						{/* Logo with gradient icon */}
 						<Link
 							href="/"
 							onClick={() => {
@@ -98,27 +104,41 @@ export default function Header() {
 								}
 								trackEvent("logo_clicked", { location: "header" });
 							}}
-							className="flex items-center gap-2 group py-1 overflow-visible"
+							className="flex items-center gap-2.5 group py-1 overflow-visible"
 							aria-label="JobPing Home"
 							style={{ overflow: "visible", paddingRight: "0.5rem" }}
 						>
-							<div className="scale-90 md:scale-100 origin-left overflow-visible pr-2 md:pr-3" style={{ overflow: "visible", minWidth: "fit-content" }}>
-								<LogoWordmark />
+							{/* Icon badge with glow */}
+							<div className="relative">
+								{/* Glow effect */}
+								<div className="absolute inset-0 bg-emerald-500/30 blur-lg rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+								
+								{/* Icon container */}
+								<div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:shadow-xl group-hover:shadow-emerald-500/40 transition-all group-hover:scale-105">
+									<svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+										<path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+									</svg>
+								</div>
 							</div>
+							
+							{/* Brand name with gradient */}
+							<span className="text-xl font-bold bg-gradient-to-r from-emerald-300 via-emerald-400 to-emerald-500 bg-clip-text text-transparent">
+								JobPing
+							</span>
 						</Link>
 
 						{/* Desktop Navigation */}
-						<nav className="hidden md:flex items-center gap-6">
-							{/* Navigation Links - Separate, not grouped */}
+						<nav className="hidden md:flex items-center gap-6 lg:gap-8">
+							{/* Navigation Links with animated underlines */}
 							{navLinks.map((link) => (
 								<Link
 									key={link.href}
 									href={link.href}
 									onClick={(e) => handleNavClick(e, link.href, link.scroll)}
-									className={`text-sm font-semibold transition-all duration-200 relative px-3 py-2 rounded-lg hover:bg-white/5 whitespace-nowrap ${
+									className={`relative text-sm font-medium transition-colors group py-2 whitespace-nowrap ${
 										activeSection === link.href
 											? "text-white"
-											: "text-content-secondary hover:text-white"
+											: "text-zinc-300 hover:text-white"
 									}`}
 									style={{ 
 										overflow: "visible", 
@@ -128,24 +148,43 @@ export default function Header() {
 										wordBreak: "keep-all"
 									}}
 								>
-								<span className="inline-block">{link.label}</span>
-								{activeSection === link.href && (
-									<motion.div
-										layoutId="activeNav"
-										className="absolute -bottom-1 left-0 right-0 h-0.5 bg-brand-600 rounded-full"
-										initial={false}
-										transition={{
-											type: "spring",
-											stiffness: 380,
-											damping: 30,
-										}}
-									/>
-								)}
+									<span className="relative z-10">{link.label}</span>
+									
+									{/* Animated underline */}
+									{activeSection === link.href ? (
+										<motion.div
+											layoutId="activeNav"
+											className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full"
+											initial={false}
+											transition={{
+												type: "spring",
+												stiffness: 380,
+												damping: 30,
+											}}
+										/>
+									) : (
+										<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-emerald-400 to-emerald-500 group-hover:w-full transition-all duration-300 ease-out" />
+									)}
+									
+									{/* Subtle glow on hover */}
+									<span className="absolute inset-0 bg-emerald-500/0 group-hover:bg-emerald-500/5 rounded-lg blur-sm transition-all" />
 								</Link>
 							))}
 
-							{/* CTA Button - Always prominent */}
-							<Button
+							{/* Trust badge - desktop only */}
+							<div className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.03] backdrop-blur-sm border border-white/10 hover:bg-white/[0.05] hover:border-emerald-500/30 transition-all">
+								{/* Pulsing dot */}
+								<div className="relative flex h-2 w-2">
+									<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+									<span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+								</div>
+								<span className="text-xs font-medium text-zinc-300">
+									1,000+ students
+								</span>
+							</div>
+
+							{/* Enhanced CTA Button with shine effect */}
+							<Link
 								href="/signup/free"
 								onClick={() => {
 									trackEvent("cta_clicked", {
@@ -153,22 +192,35 @@ export default function Header() {
 										location: "header",
 									});
 								}}
-								variant="gradient"
-								size="sm"
-								className="shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50"
+								className="group relative px-6 py-3 rounded-xl font-semibold text-white overflow-hidden"
 							>
-								<span className="flex items-center gap-2">
+								{/* Gradient background */}
+								<div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-emerald-600 group-hover:from-emerald-600 group-hover:to-emerald-700 transition-all duration-300" />
+								
+								{/* Shine effect on hover */}
+								<div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+									<div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000" />
+								</div>
+								
+								{/* Shadow that grows on hover */}
+								<div className="absolute inset-0 shadow-lg shadow-emerald-500/30 group-hover:shadow-xl group-hover:shadow-emerald-500/40 rounded-xl transition-all" />
+								
+								{/* Text */}
+								<span className="relative z-10 group-hover:-translate-y-0.5 inline-flex items-center gap-2 transition-transform">
 									{CTA_GET_MY_5_FREE_MATCHES}
 									<BrandIcons.ArrowRight className="h-4 w-4" />
 								</span>
-							</Button>
+								
+								{/* Border glow */}
+								<div className="absolute inset-0 rounded-xl border border-emerald-400/50 group-hover:border-emerald-300 transition-colors" />
+							</Link>
 						</nav>
 
-						{/* Mobile Menu Button */}
+						{/* Mobile Menu Button - Enhanced */}
 						<button
 							type="button"
 							onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-							className="md:hidden p-2 text-content-secondary hover:text-white transition-all duration-200"
+							className="md:hidden p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 text-content-secondary hover:text-white"
 							aria-label="Toggle menu"
 							aria-expanded={mobileMenuOpen}
 						>
