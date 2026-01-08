@@ -107,64 +107,7 @@ export class SemanticRetrievalService {
 		}
 	}
 
-	/**
-	 * Fallback to text-based semantic search if embeddings not available
-	 * NOTE: This function doesn't exist in the database, so we just return empty array
-	 * The matching engine will fall back to rule-based matching instead
-	 */
-	private async getSemanticCandidatesFallback(
-		userPrefs: UserPreferences,
-		limit: number,
-	): Promise<SemanticJob[]> {
-		// The search_jobs_semantic function doesn't exist in the database
-		// Just return empty array - matching engine will use rule-based matching instead
-		console.warn("Semantic search fallback not available - using rule-based matching");
-		return [];
-	}
 
-	/**
-	 * Build a semantic query string from user preferences
-	 * This creates a rich text representation for vector search
-	 */
-	private buildSemanticQuery(userPrefs: UserPreferences): string {
-		const parts: string[] = [];
-
-		// Career path and roles
-		if (userPrefs.career_path && userPrefs.career_path.length > 0) {
-			parts.push(`Career: ${userPrefs.career_path.join(", ")}`);
-		}
-
-		if (userPrefs.roles_selected && userPrefs.roles_selected.length > 0) {
-			parts.push(`Roles: ${userPrefs.roles_selected.join(", ")}`);
-		}
-
-		// Work environment preferences
-		if (userPrefs.work_environment) {
-			parts.push(`Work environment: ${userPrefs.work_environment}`);
-		}
-
-		// Experience level
-		if (userPrefs.entry_level_preference) {
-			parts.push(`Experience level: ${userPrefs.entry_level_preference}`);
-		}
-
-		// Company types
-		if (userPrefs.company_types && userPrefs.company_types.length > 0) {
-			parts.push(`Company types: ${userPrefs.company_types.join(", ")}`);
-		}
-
-		// Languages
-		if (userPrefs.languages_spoken && userPrefs.languages_spoken.length > 0) {
-			parts.push(`Languages: ${userPrefs.languages_spoken.join(", ")}`);
-		}
-
-		// Target cities
-		if (userPrefs.target_cities && userPrefs.target_cities.length > 0) {
-			parts.push(`Location: ${userPrefs.target_cities.join(", ")}`);
-		}
-
-		return parts.join(". ");
-	}
 
 	/**
 	 * Check if semantic search is available
