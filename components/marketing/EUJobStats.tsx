@@ -76,7 +76,7 @@ export function EUJobStats() {
 
 	if (isLoading) {
 		return (
-			<section className="py-32 md:py-40 relative bg-black scroll-snap-section">
+			<section className="py-32 md:py-40 relative bg-gradient-to-b from-zinc-950/50 via-black to-zinc-950/50 scroll-snap-section">
 				<div className="container-page relative z-10">
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 						{[1, 2, 3, 4].map((i) => (
@@ -166,7 +166,7 @@ export function EUJobStats() {
 	};
 
 	return (
-		<section className="py-32 md:py-40 relative bg-black scroll-snap-section">
+		<section className="py-32 md:py-40 relative bg-gradient-to-b from-zinc-950/50 via-black to-zinc-950/50 scroll-snap-section">
 			{/* Scroll momentum fade - consistent with other sections */}
 			<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
 

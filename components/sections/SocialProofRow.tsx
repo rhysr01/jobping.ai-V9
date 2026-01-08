@@ -43,7 +43,7 @@ export default function SocialProofRow() {
 	];
 
 	return (
-		<section className="py-32 md:py-40 scroll-snap-section relative bg-black">
+		<section className="py-32 md:py-40 scroll-snap-section relative bg-gradient-to-b from-zinc-950/50 via-black to-zinc-950/50">
 			{/* Scroll momentum fade */}
 			<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
 			{/* Soft section band */}

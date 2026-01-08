@@ -202,10 +202,28 @@ form select {
 	content: "";
 	position: fixed;
 	inset: 0;
-	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
 	pointer-events: none;
 	z-index: var(--z-background);
 	mix-blend-mode: overlay;
+}
+
+/* Animated grid background */
+@keyframes gridMove {
+	0% { 
+		background-position: 0 0; 
+	}
+	100% { 
+		background-position: 50px 50px; 
+	}
+}
+
+.animated-grid {
+	background-image: 
+		linear-gradient(rgba(16, 185, 129, 0.08) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(16, 185, 129, 0.08) 1px, transparent 1px);
+	background-size: 50px 50px;
+	animation: gridMove 20s linear infinite;
 }
 
 /* Light source system - Top-right corner */

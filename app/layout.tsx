@@ -10,6 +10,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import FAQSchema from "@/components/FAQSchema";
 import StructuredData from "@/components/StructuredData";
 import Header from "@/components/sections/Header";
+import AnimatedBackground from "@/components/ui/AnimatedBackground";
 import CookieBanner from "@/components/ui/CookieBanner";
 import Toaster from "@/components/ui/Toaster";
 
@@ -152,7 +153,10 @@ export default async function RootLayout({
 					}}
 				/>
 			</head>
-			<body className="text-white premium-bg custom-scrollbar relative bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-purple-900/10 via-zinc-950 to-zinc-950">
+			<body className="text-white premium-bg custom-scrollbar relative">
+				{/* Enhanced animated background */}
+				<AnimatedBackground />
+				
 				<a
 					href="#main-content"
 					className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3
