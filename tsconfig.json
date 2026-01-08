@@ -43,7 +43,7 @@
 		"**/*.js",
 		"automation/**",
 		"scrapers/**",
-		"scripts/**/*.cjs",
+		"scripts/**",
 		"**/__tests__/**",
 		"**/*.test.ts",
 		"**/*.spec.ts",

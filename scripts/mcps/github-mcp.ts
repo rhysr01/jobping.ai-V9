@@ -47,7 +47,7 @@ export class GitHubMCP {
         content: [
           {
             type: "text",
-            text: `✅ Created GitHub issue: ${issue.data.html_url}\n\n**Title:** ${issue.data.title}\n**Number:** #${issue.data.number}\n**Labels:** ${issue.data.labels.map((l: any) => l.name).join(", ") || "none"}\n**Assignees:** ${issue.data.assignees.map((a: any) => a.login).join(", ") || "none"}`,
+            text: `✅ Created GitHub issue: ${issue.data.html_url}\n\n**Title:** ${issue.data.title}\n**Number:** #${issue.data.number}\n**Labels:** ${issue.data.labels.map((l: any) => l.name).join(", ") || "none"}\n**Assignees:** ${issue.data.assignees?.map((a: any) => a.login).join(", ") || "none"}`,
           },
         ],
       };
@@ -95,7 +95,7 @@ export class GitHubMCP {
         updated_at: issue.updated_at,
         html_url: issue.html_url,
         labels: issue.labels.map((l: any) => l.name),
-        assignees: issue.assignees.map((a: any) => a.login),
+        assignees: issue.assignees?.map((a: any) => a.login) || [],
       }));
 
       return {

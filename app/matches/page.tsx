@@ -51,7 +51,7 @@ function MatchesPageContent() {
 	const searchParams = useSearchParams();
 	const [jobs, setJobs] = useState<Job[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [loadingMessage, setLoadingMessage] = useState("Finding your perfect matches...");
+	const loadingMessage = "Finding your perfect matches...";
 	const [error, setError] = useState("");
 	const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
 	const [_jobsViewed, setJobsViewed] = useState(0);
