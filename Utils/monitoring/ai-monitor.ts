@@ -20,7 +20,7 @@ interface AIMetrics {
 interface AIQualityThresholds {
 	maxErrorRate: number; // 0.05 = 5% errors
 	maxRateLimitRate: number; // 0.02 = 2% rate limits
-	maxLatencyMs: number; // 10000 = 10 seconds
+	maxLatencyMs: number; // 15000 = 15 seconds
 	minQualityScore: number; // 0.7 = 70% quality
 	maxCostPerRequest: number; // $0.01 per request
 }
@@ -34,7 +34,7 @@ export class AIMonitor {
 		this.thresholds = {
 			maxErrorRate: 0.05,
 			maxRateLimitRate: 0.02,
-			maxLatencyMs: 10000,
+			maxLatencyMs: 15000,
 			minQualityScore: 0.7,
 			maxCostPerRequest: 0.01,
 			...thresholds

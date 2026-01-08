@@ -905,6 +905,12 @@ export class ConsolidatedMatchingEngine {
 	): Promise<JobMatch[]> {
 		const jobsArray = Array.isArray(jobs) ? jobs : [];
 
+		// Prevent calling AI with empty jobs array
+		if (jobsArray.length === 0) {
+			console.warn(`[AI MATCHING] Called with empty jobs array for ${userPrefs.email}`);
+			return [];
+		}
+
 		if (!this.openai) {
 			throw new Error("OpenAI client not initialized");
 		}

@@ -718,10 +718,14 @@ export async function POST(request: NextRequest) {
 		});
 
 		// ENTERPRISE-LEVEL FIX: Use quality-filtered jobs for distribution
+		// Dynamic target count based on available jobs (min 3, max 5)
+		const availableJobsCount = jobsForDistribution.length;
+		const dynamicTargetCount = Math.min(5, Math.max(3, availableJobsCount));
+
 		const distributedJobs = distributeJobsWithDiversity(
 			jobsForDistribution as any[],
 			{
-				targetCount: 5,
+				targetCount: dynamicTargetCount,
 				targetCities: targetCities, // Use normalized array
 				maxPerSource: 2,
 				ensureCityBalance: true,
