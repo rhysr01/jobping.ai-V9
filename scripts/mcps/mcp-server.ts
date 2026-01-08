@@ -199,6 +199,25 @@ class JobPingMCPServer {
               },
             },
           },
+          {
+            name: "supabase_run_maintenance_migrations",
+            description: "Execute database maintenance migrations for data quality and filtering",
+            inputSchema: {
+              type: "object",
+              properties: {
+                run_all: {
+                  type: "boolean",
+                  default: false,
+                  description: "Run all maintenance migrations (true) or just latest (false)"
+                },
+                specific_migration: {
+                  type: "string",
+                  enum: ["latest", "company_names", "location_extraction", "job_board_filter", "ceo_executive", "construction", "medical", "legal", "teaching", "rls_security"],
+                  description: "Run a specific migration type instead of all"
+                },
+              },
+            },
+          },
 
           // Automation workflows
           {
@@ -349,6 +368,8 @@ class JobPingMCPServer {
             return await this.supabase.queryJobs(args);
           case "supabase_get_table_stats":
             return await this.supabase.getTableStats(args);
+          case "supabase_run_maintenance_migrations":
+            return await this.supabase.runMaintenanceMigrations(args);
           case "daily_health_summary":
             return await this.getDailyHealthSummary(args);
           case "bravesearch_web_search":

@@ -58,7 +58,8 @@
 				"supabase_query_users - Query users from database",
 				"supabase_get_user_details - Get detailed user information",
 				"supabase_query_jobs - Query jobs from database",
-				"supabase_get_table_stats - Get database table statistics"
+				"supabase_get_table_stats - Get database table statistics",
+				"supabase_run_maintenance_migrations - Execute database maintenance and filtering"
 			],
 			"bravesearch": [
 				"bravesearch_web_search - General web search",

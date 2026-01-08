@@ -128,6 +128,7 @@ async function startMCPServer() {
 		);
 		console.log("  • supabase_query_jobs - Query jobs from database");
 		console.log("  • supabase_get_table_stats - Get database table statistics");
+		console.log("  • supabase_run_maintenance_migrations - Execute database maintenance");
 		console.log("");
 
 		console.log("🔍 BraveSearch Tools:");

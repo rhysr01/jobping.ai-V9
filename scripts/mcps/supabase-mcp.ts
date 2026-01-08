@@ -1,4 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { spawn } from "child_process";
+import { resolve } from "path";
 
 export class SupabaseMCP {
   private supabase: SupabaseClient;
@@ -296,6 +298,106 @@ export class SupabaseMCP {
           {
             type: "text",
             text: `❌ Failed to get table stats: ${error.message}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+
+  async runMaintenanceMigrations(args: any) {
+    const { run_all = false, specific_migration = null } = args;
+
+    try {
+      if (!this.supabase) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "⚠️  Supabase MCP not configured. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.",
+            },
+          ],
+        };
+      }
+
+      let command: string;
+      let args_array: string[];
+
+      if (specific_migration) {
+        // Run specific migration
+        command = "npx";
+        args_array = ["supabase", "db", "push"];
+        if (specific_migration !== "latest") {
+          args_array.push("--include-all");
+        }
+      } else if (run_all) {
+        // Run all maintenance migrations
+        command = "./run_maintenance_migrations.sh";
+        args_array = [];
+      } else {
+        // Run latest migration only
+        command = "npx";
+        args_array = ["supabase", "db", "push"];
+      }
+
+      return new Promise((resolve) => {
+        const child = spawn(command, args_array, {
+          cwd: resolve(process.cwd()),
+          stdio: ["pipe", "pipe", "pipe"],
+        });
+
+        let stdout = "";
+        let stderr = "";
+
+        child.stdout.on("data", (data) => {
+          stdout += data.toString();
+        });
+
+        child.stderr.on("data", (data) => {
+          stderr += data.toString();
+        });
+
+        child.on("close", (code) => {
+          if (code === 0) {
+            resolve({
+              content: [
+                {
+                  type: "text",
+                  text: `✅ Maintenance migrations completed successfully!\n\n📋 Output:\n${stdout}\n\n${stderr ? `⚠️  Warnings:\n${stderr}` : ""}`,
+                },
+              ],
+            });
+          } else {
+            resolve({
+              content: [
+                {
+                  type: "text",
+                  text: `❌ Maintenance migrations failed with exit code ${code}\n\n📋 Output:\n${stdout}\n\n❌ Errors:\n${stderr}`,
+                },
+              ],
+              isError: true,
+            });
+          }
+        });
+
+        child.on("error", (error) => {
+          resolve({
+            content: [
+              {
+                type: "text",
+                text: `❌ Failed to execute maintenance migrations: ${error.message}`,
+              },
+            ],
+            isError: true,
+          });
+        });
+      });
+    } catch (error: any) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `❌ Failed to run maintenance migrations: ${error.message}`,
           },
         ],
         isError: true,
