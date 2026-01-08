@@ -346,8 +346,8 @@ function wrapEmail(title: string, body: string, footerEmail?: string): string {
     .logo { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; font-weight:700; font-size:38px; color:${COLORS.white}; letter-spacing:-0.8px; text-shadow:0 2px 12px rgba(0,0,0,0.3); margin:0 0 10px 0; position:relative; z-index:1; }
     .tag { color:${COLORS.white}; opacity:0.95; font-size:12px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; position:relative; z-index:1; }
     .content { padding:48px 40px; }
-    .title { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; color:${COLORS.white}; font-size:28px; font-weight:700; letter-spacing:-0.5px; margin:0 0 24px 0; line-height:1.3; }
-    .text { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; color:${COLORS.textPrimary}; font-size:16px; line-height:1.75; margin:0 0 28px 0; }
+    .title { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; color:${COLORS.white}; font-size:28px; font-weight:700; letter-spacing:-0.5px; margin:0 0 28px 0; line-height:1.35; }
+    .text { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; color:${COLORS.textPrimary}; font-size:16px; line-height:1.8; margin:0 0 24px 0; }
     
     /* Gmail-specific optimizations */
     .gmail-fix { min-width: 600px !important; }
@@ -379,15 +379,16 @@ function wrapEmail(title: string, body: string, footerEmail?: string): string {
     .no-link { color: inherit !important; text-decoration: none !important; }
     .pill { display:inline-block; background:rgba(0,0,0,0.3); color:${COLORS.white}; border:1px solid rgba(255,255,255,0.2); padding:10px 22px; border-radius:999px; font-weight:600; font-size:14px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; box-shadow:0 4px 20px rgba(0,0,0,0.2); margin-bottom:28px; backdrop-filter:blur(10px); }
 
-    /* Premium Card Design */
-    .card { background:#1a1a1a; border:1px solid rgba(91,33,182,0.25); border-radius:16px; padding:32px; margin:0 0 32px 0; box-shadow:0 4px 24px rgba(0,0,0,0.3); transition:all 0.2s ease; }
-    .card.hot { border:2px solid rgba(16,185,129,0.4); background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(16,185,129,0.08)); box-shadow:0 8px 40px rgba(16,185,129,0.25); }
-    .badge { display:inline-block; background:linear-gradient(135deg,#10b981,#059669); color:#fff; padding:8px 18px; border-radius:8px; font-weight:600; font-size:12px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; margin-bottom:20px; letter-spacing:0.3px; text-transform:uppercase; box-shadow:0 2px 8px rgba(16,185,129,0.3); }
-    .job { color:${COLORS.white}; font-weight:600; font-size:22px; margin:0 0 12px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; line-height:1.4; letter-spacing:-0.3px; }
-    .company { color:${COLORS.textPrimary}; font-weight:500; font-size:16px; margin:0 0 10px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; }
-    .loc { color:${COLORS.textSecondary}; font-size:14px; margin:0 0 20px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; }
-    .desc { color:${COLORS.textSecondary}; font-size:15px; line-height:1.75; margin:20px 0 28px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; }
-    .score { display:inline-block; background:linear-gradient(135deg,#3b82f6,#2563eb); color:#fff; padding:7px 16px; border-radius:8px; font-weight:600; font-size:12px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; margin-bottom:18px; letter-spacing:0.3px; box-shadow:0 2px 8px rgba(59,130,246,0.3); }
+    /* Premium Card Design - Improved readability */
+    .card { background:#1a1a1a; border:1px solid rgba(91,33,182,0.25); border-radius:16px; padding:36px; margin:0 0 36px 0; box-shadow:0 4px 24px rgba(0,0,0,0.3); transition:all 0.2s ease; }
+    .card.hot { border:2px solid rgba(16,185,129,0.5); background:linear-gradient(135deg,rgba(16,185,129,0.18),rgba(16,185,129,0.1)); box-shadow:0 8px 40px rgba(16,185,129,0.3); }
+    .badge { display:inline-block; background:linear-gradient(135deg,#10b981,#059669); color:#fff; padding:10px 20px; border-radius:8px; font-weight:700; font-size:12px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; margin-bottom:24px; letter-spacing:0.5px; text-transform:uppercase; box-shadow:0 2px 8px rgba(16,185,129,0.3); }
+    .job { color:${COLORS.white}; font-weight:700; font-size:24px; margin:0 0 14px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; line-height:1.35; letter-spacing:-0.4px; }
+    .company { color:${COLORS.textPrimary}; font-weight:600; font-size:17px; margin:0 0 12px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; }
+    .loc { color:${COLORS.textSecondary}; font-size:15px; margin:0 0 24px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; line-height:1.6; }
+    .desc { color:${COLORS.textSecondary}; font-size:15px; line-height:1.8; margin:20px 0 24px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; }
+    .score { display:inline-block; background:linear-gradient(135deg,#5B21B6,#6D28D9); color:#fff; padding:8px 18px; border-radius:8px; font-weight:700; font-size:13px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; margin-bottom:20px; letter-spacing:0.3px; box-shadow:0 2px 8px rgba(91,33,182,0.4); }
+    .score.hot { background:linear-gradient(135deg,#10b981,#059669); box-shadow:0 2px 8px rgba(16,185,129,0.4); }
 
     .footer { border-top:1px solid rgba(91,33,182,0.15); padding:40px 20px; text-align:center; background:#050505; }
     .footer-logo { color:${COLORS.purple}; font-weight:600; font-size:16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; margin-bottom:10px; }
@@ -406,9 +407,9 @@ function wrapEmail(title: string, body: string, footerEmail?: string): string {
       .logo { font-size:32px !important; }
       .tag { font-size:11px !important; }
       .title { font-size:24px !important; line-height: 1.3 !important; margin-bottom:16px !important; }
-      .card { padding:24px 20px !important; margin-bottom: 24px !important; border-radius:12px !important; }
-      .job { font-size:20px !important; line-height: 1.3 !important; }
-      .text { font-size:15px !important; line-height: 1.7 !important; margin-bottom:24px !important; }
+      .card { padding:28px 20px !important; margin-bottom: 28px !important; border-radius:12px !important; }
+      .job { font-size:22px !important; line-height: 1.35 !important; }
+      .text { font-size:15px !important; line-height: 1.8 !important; margin-bottom:20px !important; }
       .badge, .score { font-size:11px !important; padding:7px 14px !important; }
       .pill { font-size:13px !important; padding:10px 20px !important; margin-bottom:24px !important; }
       /* Force company name to wrap on mobile - use class-based approach */
@@ -508,10 +509,10 @@ export function createWelcomeEmail(
       <p class="text">We're here to get you into a high-quality EU early-career role - no job board scrolling, no generic blasts.</p>
       <p class="text">You'll receive your first ${matchesLabel} within the next 24 hours, then fresh, hand-curated drops every week. Each one is filtered against your preferences so you only see roles you can realistically land.</p>
       <p class="text">Quick start:</p>
-      <ul style="color:${COLORS.textSecondary}; font-size:15px; line-height:1.7; text-align:left; margin:0 auto 28px auto; max-width:420px; padding:0 0 0 18px;">
-        <li style="margin-bottom:8px;">Whitelist <strong style="color:${COLORS.white};">hello@getjobping.com</strong> so nothing hits spam</li>
-        <li style="margin-bottom:8px;">Complete your preferences if anything has changed</li>
-        <li>Reply to this email if you want us to refine your matches further</li>
+      <ul style="color:${COLORS.textSecondary}; font-size:15px; line-height:1.8; text-align:left; margin:0 auto 28px auto; max-width:420px; padding:0 0 0 20px;">
+        <li style="margin-bottom:10px; line-height:1.8;">Whitelist <strong style="color:${COLORS.white};">hello@getjobping.com</strong> so nothing hits spam</li>
+        <li style="margin-bottom:10px; line-height:1.8;">Complete your preferences if anything has changed</li>
+        <li style="line-height:1.8;">Reply to this email if you want us to refine your matches further</li>
       </ul>
       <p class="text" style="color:${COLORS.textSecondary}; font-size:13px; margin-top:20px;">Need help? <a href="${getBaseUrl()}" style="color:#5B21B6; text-decoration:underline;">Visit JobPing</a></p>
       <p class="text" style="color:${COLORS.textSecondary}; font-size:14px; margin-top:28px;">Need to tweak anything? <a href="${buildPreferencesLink(userEmail)}" style="color:#5B21B6; text-decoration:underline;">Update your preferences</a> any time - or reply to this email and we'll handle it for you.</p>
@@ -628,10 +629,10 @@ export function createJobMatchesEmail(
 		if (profileItems.length === 0) return "";
 
 		return `
-      <div style="background:rgba(91,33,182,0.15); border:1px solid rgba(91,33,182,0.35); border-radius:12px; padding:24px; margin:28px 0; font-size:14px; line-height:1.8;">
-        <div style="color:${COLORS.textPrimary}; font-weight:600; margin-bottom:16px; font-size:15px; letter-spacing:0.2px;">📋 Your Profile</div>
-        <div style="color:${COLORS.textSecondary}; line-height:1.9;">
-          ${profileItems.join("<br style='margin-bottom:4px;' />")}
+      <div style="background:rgba(91,33,182,0.15); border:1px solid rgba(91,33,182,0.35); border-radius:12px; padding:28px; margin:32px 0; font-size:14px; line-height:1.8;">
+        <div style="color:${COLORS.purple}; font-weight:700; margin-bottom:18px; font-size:15px; letter-spacing:0.3px; text-transform:uppercase;">📋 Your Profile</div>
+        <div style="color:${COLORS.textSecondary}; line-height:2;">
+          ${profileItems.join("<br style='margin-bottom:6px;' />")}
         </div>
       </div>
     `;
@@ -799,22 +800,22 @@ export function createJobMatchesEmail(
 				),
 			};
 
-			// Short description (max 120 chars)
+			// Short description (max 140 chars for better readability)
 			const shortDesc = c.job.description
-				? c.job.description.length > 120
-					? `${c.job.description.slice(0, 120)}…`
+				? c.job.description.length > 140
+					? `${c.job.description.slice(0, 140)}…`
 					: c.job.description
 				: "";
 			const descMarkup = shortDesc
-				? `<div style="color:${COLORS.textSecondary}; font-size:15px; line-height:1.75; margin:16px 0 20px 0;">${shortDesc}</div>`
+				? `<div style="color:${COLORS.textSecondary}; font-size:15px; line-height:1.8; margin:20px 0 24px 0;">${shortDesc}</div>`
 				: "";
 
 			// Limit tags to 2 most important
 			const tags = formatJobTags(jobWithVisaConfidence).slice(0, 2);
 			const tagsMarkup =
 				tags.length > 0
-					? `<div style="margin:16px 0 20px 0;">
-          ${tags.map((tag) => `<span style="display:inline-block; margin:0 8px 8px 0; padding:7px 14px; border-radius:6px; background:rgba(91,33,182,0.25); color:${COLORS.textPrimary}; font-size:12px; font-weight:600; border:1px solid rgba(91,33,182,0.3);">${tag}</span>`).join("")}
+					? `<div style="margin:20px 0 24px 0;">
+          ${tags.map((tag) => `<span style="display:inline-block; margin:0 8px 8px 0; padding:8px 16px; border-radius:6px; background:rgba(91,33,182,0.2); color:${COLORS.textPrimary}; font-size:13px; font-weight:600; border:1px solid rgba(91,33,182,0.35);">${tag}</span>`).join("")}
         </div>`
 					: "";
 
@@ -840,16 +841,16 @@ export function createJobMatchesEmail(
 
 			return `
     <tr><td class="content">
-      <div class="card${hot ? " hot" : ""}" style="background:${hot ? "linear-gradient(135deg,rgba(16,185,129,0.15),rgba(16,185,129,0.08))" : "#1a1a1a"}; border:1px solid ${hot ? "rgba(16,185,129,0.4)" : "rgba(91,33,182,0.25)"}; border-radius:12px; padding:28px; margin-bottom:32px;">
+      <div class="card${hot ? " hot" : ""}" style="background:${hot ? "linear-gradient(135deg,rgba(16,185,129,0.18),rgba(16,185,129,0.1))" : "#1a1a1a"}; border:${hot ? "2px" : "1px"} solid ${hot ? "rgba(16,185,129,0.5)" : "rgba(91,33,182,0.25)"}; border-radius:16px; padding:36px; margin-bottom:36px;">
         <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;">
           <tr>
             <td style="padding:0;">
-              <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%; margin-bottom:16px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%; margin-bottom:20px;">
                 <tr>
                   <td style="padding:0; vertical-align:top;">
-                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                  <span style="display:inline-block; padding:8px 16px; border-radius:8px; background:${hot ? "rgba(16,185,129,0.2)" : "rgba(91,33,182,0.2)"}; color:${hot ? COLORS.emerald : COLORS.purple}; font-size:13px; font-weight:700; border:1px solid ${hot ? "rgba(16,185,129,0.4)" : "rgba(91,33,182,0.35)"}; letter-spacing:0.3px;">
-                    ${hot ? "🔥 " : ""}${score}% Match
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                  <span style="display:inline-block; padding:9px 18px; border-radius:8px; background:${hot ? "linear-gradient(135deg,#10b981,#059669)" : "linear-gradient(135deg,#5B21B6,#6D28D9)"}; color:#fff; font-size:13px; font-weight:700; border:none; letter-spacing:0.3px; box-shadow:0 2px 8px ${hot ? "rgba(16,185,129,0.4)" : "rgba(91,33,182,0.4)"};">
+                    ${score}% Match
                   </span>
                       ${(() => {
 												const matchReason = generateUniqueMatchReason(
@@ -858,24 +859,21 @@ export function createJobMatchesEmail(
 													index,
 												);
 												if (matchReason) {
-													// "Why this score?" link - shows personalization is happening
-													// In email, this links to the match reason section below (which is always shown)
-													// The match reason section makes it clear we're personalizing for them
-													return `<a href="#match-reason-${index}" style="color:${COLORS.textSecondary}; font-size:11px; text-decoration:underline; text-decoration-style:dotted; text-underline-offset:3px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; white-space:nowrap;" title="See why this job matches your profile">Why this score?</a>`;
+													return `<a href="#match-reason-${index}" style="color:${COLORS.textSecondary}; font-size:12px; text-decoration:underline; text-decoration-style:dotted; text-underline-offset:4px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; white-space:nowrap;" title="See why this job matches your profile">Why this score?</a>`;
 												}
 												return "";
 											})()}
                     </div>
                   </td>
                   <td class="company-name-mobile" style="padding:0; vertical-align:top; text-align:right;">
-                    <div style="color:${COLORS.textPrimary}; font-size:15px; font-weight:600;">${c.job.company || "Company"}</div>
+                    <div style="color:${COLORS.textPrimary}; font-size:17px; font-weight:600;">${c.job.company || "Company"}</div>
                   </td>
                 </tr>
               </table>
-              <div style="color:${COLORS.white}; font-size:21px; font-weight:700; margin-bottom:12px; line-height:1.4; letter-spacing:-0.2px;">${c.job.title || "Job Title"}</div>
-              <div style="color:${COLORS.textSecondary}; font-size:14px; margin-bottom:16px; display:flex; align-items:center; gap:6px;">
-                <span style="color:${COLORS.textSecondary}; font-size:14px;">📍</span>
-                <span style="color:${COLORS.textSecondary}; font-size:14px;">${c.job.location || "Location"}</span>
+              <div style="color:${COLORS.white}; font-size:24px; font-weight:700; margin-bottom:14px; line-height:1.35; letter-spacing:-0.4px;">${c.job.title || "Job Title"}</div>
+              <div style="color:${COLORS.textSecondary}; font-size:15px; margin-bottom:24px; line-height:1.6;">
+                <span style="color:${COLORS.textSecondary}; font-size:15px;">📍</span>
+                <span style="color:${COLORS.textSecondary}; font-size:15px; margin-left:4px;">${c.job.location || "Location"}</span>
               </div>
               ${(() => {
 								// Display AI match reason prominently - CRITICAL: Shows personalization
@@ -897,9 +895,9 @@ export function createJobMatchesEmail(
 										)
 										.join("");
 
-									return `<div id="match-reason-${index}" style="background:rgba(91,33,182,0.2); border-left:4px solid ${COLORS.purple}; padding:18px 20px; margin:18px 0; border-radius:8px;">
-                    <div style="color:${COLORS.purple}; font-size:12px; font-weight:600; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">🤖 Why This Matches</div>
-                    <div style="color:${COLORS.textPrimary}; font-size:14px; line-height:1.75;">${formattedReason || matchReason}</div>
+									return `<div id="match-reason-${index}" style="background:rgba(91,33,182,0.15); border-left:4px solid ${COLORS.purple}; padding:20px 24px; margin:20px 0 24px 0; border-radius:8px;">
+                    <div style="color:${COLORS.purple}; font-size:12px; font-weight:700; margin-bottom:12px; text-transform:uppercase; letter-spacing:0.6px;">🤖 Why This Matches</div>
+                    <div style="color:${COLORS.textPrimary}; font-size:15px; line-height:1.8;">${formattedReason || matchReason}</div>
                   </div>`;
 								}
 								return "";
@@ -987,11 +985,11 @@ export function createReEngagementEmailTemplate(
       <p class="text">It's been a while since we last connected, and honestly, <span style="color:#5B21B6; font-weight:600;">we miss having you around!</span> We've been working on something exciting and we're <span style="color:#5B21B6; font-weight:600;">thrilled to share it with you</span>.</p>
       
       <p class="text">Since you last visited, we've:</p>
-      <ul style="color:${COLORS.textSecondary}; font-size:15px; line-height:1.7; text-align:left; margin:0 auto 28px auto; max-width:420px; padding:0 0 0 20px;">
-        <li style="margin-bottom:10px;">🎯 <span style="color:#5B21B6; font-weight:600;">Improved our AI matching</span> - even better job recommendations</li>
-        <li style="margin-bottom:10px;">🚀 <span style="color:#5B21B6; font-weight:600;">Added 2,000+ new opportunities</span> across Europe</li>
-        <li style="margin-bottom:10px;">⚡ <span style="color:#5B21B6; font-weight:600;">Made the experience faster</span> - 60-second job reviews</li>
-        <li style="margin-bottom:10px;">💎 <span style="color:#5B21B6; font-weight:600;">Launched premium features</span> for serious job seekers</li>
+      <ul style="color:${COLORS.textSecondary}; font-size:15px; line-height:1.8; text-align:left; margin:0 auto 28px auto; max-width:420px; padding:0 0 0 20px;">
+        <li style="margin-bottom:12px; line-height:1.8;">🎯 <span style="color:#5B21B6; font-weight:600;">Improved our AI matching</span> - even better job recommendations</li>
+        <li style="margin-bottom:12px; line-height:1.8;">🚀 <span style="color:#5B21B6; font-weight:600;">Added 2,000+ new opportunities</span> across Europe</li>
+        <li style="margin-bottom:12px; line-height:1.8;">⚡ <span style="color:#5B21B6; font-weight:600;">Made the experience faster</span> - 60-second job reviews</li>
+        <li style="margin-bottom:12px; line-height:1.8;">💎 <span style="color:#5B21B6; font-weight:600;">Launched premium features</span> for serious job seekers</li>
       </ul>
       
       <p class="text">We're <span style="color:#5B21B6; font-weight:600;">excited to show you</span> what's new and help you find your next amazing role!</p>

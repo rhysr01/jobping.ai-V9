@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, Briefcase, ChevronLeft, ChevronRight } from "lucide-react";
+import { MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { IPhoneShell } from "@/components/ui/IPhoneShell";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { motion, AnimatePresence } from "framer-motion";
@@ -309,22 +309,15 @@ const renderContent = (email: typeof PREMIUM_DAYS[0]) => {
 				{email.subject}
 			</h1>
 
-			{/* Profile Pill - Fixed layout */}
-			<div className="rounded-full bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1">
-				<div className="flex items-start gap-1 text-[10px]">
-					<div className="flex items-center gap-1 shrink-0">
-						<Briefcase size={10} className="text-emerald-300" />
-						<span className="text-content-heading font-medium whitespace-nowrap">
-							{USER_PROFILE.careerPath}
-						</span>
-					</div>
-					<span className="text-content-muted shrink-0">·</span>
-					<div className="flex items-center gap-1 shrink-0">
-						<MapPin size={10} className="text-emerald-300" />
-						<span className="text-content-heading font-medium whitespace-nowrap">
-							{USER_PROFILE.cities.join(", ")}
-						</span>
-					</div>
+			{/* Profile Section - Matches production detailed box */}
+			<div className="rounded-lg bg-purple-500/15 border border-purple-500/35 px-2.5 py-2 mb-2">
+				<div className="text-[9px] font-bold text-purple-400 uppercase tracking-wider mb-1.5">📋 Your Profile</div>
+				<div className="space-y-0.5 text-[10px] text-content-heading leading-relaxed">
+					<div><strong>Career Path:</strong> {USER_PROFILE.careerPath}</div>
+					<div><strong>Cities:</strong> {USER_PROFILE.cities.join(", ")}</div>
+					<div><strong>Visa:</strong> {USER_PROFILE.visa}</div>
+					<div><strong>Level:</strong> {USER_PROFILE.level}</div>
+					<div><strong>Work Style:</strong> {USER_PROFILE.workStyle}</div>
 				</div>
 			</div>
 
@@ -363,19 +356,19 @@ const renderContent = (email: typeof PREMIUM_DAYS[0]) => {
 				</div>
 
 				{/* Job Title */}
-				<h3 className="text-[12px] font-bold text-white mb-1 leading-tight line-clamp-2">
+				<h3 className="text-[12px] font-bold text-white mb-1.5 leading-tight line-clamp-2">
 					{job.title}
 				</h3>
 
 				{/* Location */}
-				<div className="flex items-center gap-1 text-[10px] text-content-secondary mb-1.5">
+				<div className="flex items-center gap-1 text-[10px] text-content-secondary mb-2">
 					<MapPin size={10} className="shrink-0" />
 					{job.location}
 				</div>
 
 				{/* Match Reason */}
-				<div className="mb-1.5 p-1.5 bg-emerald-500/15 border-l-2 border-emerald-500/40 rounded backdrop-blur-sm">
-					<div className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wider mb-0.5 flex items-center gap-1">
+				<div className="mb-1.5 p-1.5 bg-purple-500/15 border-l-2 border-purple-500/40 rounded backdrop-blur-sm">
+					<div className="text-[9px] font-bold text-purple-400 uppercase tracking-wider mb-0.5 flex items-center gap-1">
 						<svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
 							<path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
 						</svg>
@@ -387,11 +380,11 @@ const renderContent = (email: typeof PREMIUM_DAYS[0]) => {
 				</div>
 
 				{/* Tags */}
-				<div className="flex flex-wrap gap-1 mb-1.5">
+				<div className="flex flex-wrap gap-1 mb-2">
 					{job.tags.map((tag) => (
 						<span
 							key={tag}
-							className="px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/20 text-content-secondary text-[9px] font-semibold"
+							className="px-1.5 py-0.5 rounded bg-purple-500/20 border border-purple-500/35 text-content-heading text-[9px] font-semibold"
 						>
 							{tag}
 						</span>
@@ -412,26 +405,26 @@ const renderContent = (email: typeof PREMIUM_DAYS[0]) => {
 						href={job.jobUrl}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="block w-full bg-gradient-to-r from-emerald-600 to-green-600 text-white font-semibold px-2 py-1.5 rounded-lg text-[10px] text-center hover:from-emerald-500 hover:to-green-500 transition-colors pointer-events-auto cursor-pointer"
+						className="block w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold px-2 py-1.5 rounded-lg text-[10px] text-center hover:from-purple-500 hover:to-purple-600 transition-colors pointer-events-auto cursor-pointer shadow-lg shadow-purple-500/25"
 						onClick={(e) => {
 							e.stopPropagation();
 							window.open(job.jobUrl, '_blank', 'noopener,noreferrer');
 						}}
 					>
-						Apply Now →
+						View Match Evidence →
 					</a>
-					<div className="flex gap-1">
+					<div className="flex gap-1 mt-1">
 						<button
 							type="button"
 							className="flex-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2 py-1 rounded-lg text-[9px] font-semibold pointer-events-auto hover:bg-emerald-500/20 transition-colors"
 						>
-							Good Match
+							👍 Good match
 						</button>
 						<button
 							type="button"
 							className="flex-1 bg-red-500/10 border border-red-500/30 text-red-400 px-2 py-1 rounded-lg text-[9px] font-semibold pointer-events-auto hover:bg-red-500/20 transition-colors"
 						>
-							Not for me
+							👎 Not for me
 						</button>
 					</div>
 				</div>
