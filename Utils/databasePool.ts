@@ -60,8 +60,6 @@ class DatabasePool {
 					global: {
 						headers: {
 							"X-Client-Info": "jobping-database-pool",
-							// Increase timeout for long-running operations
-							"X-Timeout": "120000", // 2 minutes in milliseconds
 						},
 					},
 				});
@@ -111,8 +109,8 @@ class DatabasePool {
 
 			const { error } = await DatabasePool.instance
 				.from("jobs")
-				.select("count")
-				.limit(1);
+				.select("id", { count: "exact", head: true })
+				.limit(0);
 
 			if (error) {
 				console.warn(" Database health check failed:", error.message);
