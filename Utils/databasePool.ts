@@ -60,12 +60,9 @@ class DatabasePool {
 					global: {
 						headers: {
 							"X-Client-Info": "jobping-database-pool",
+							// Increase timeout for long-running operations
+							"X-Timeout": "120000", // 2 minutes in milliseconds
 						},
-					},
-					// CRITICAL FIX: Increase timeout to prevent GitHub Actions failures
-					// Default 60s timeout is too aggressive for CI environment
-					rest: {
-						timeout: 120000, // 2 minutes instead of 60 seconds
 					},
 				});
 
