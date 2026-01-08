@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Brain, CheckCircle2, Cpu, FileJson, BookOpen, MapPin, Award, TrendingUp, Building, Target, Zap, Users, Sparkles, Mail } from "lucide-react";
+import { CheckCircle2, Cpu, FileJson, Target, Mail } from "lucide-react";
 import { useEffect, useRef } from "react";
 import GradientText from "@/components/ui/GradientText";
 import Heading from "@/components/ui/Heading";
