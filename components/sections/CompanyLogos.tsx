@@ -165,7 +165,7 @@ export default function CompanyLogos() {
 
 	if (isLoading) {
 		return (
-			<section className="py-24 md:py-32 bg-black scroll-snap-section relative">
+			<section className="py-24 md:py-32 bg-gradient-to-b from-zinc-950/50 via-black to-zinc-950/50 scroll-snap-section relative">
 				<div className="container-page">
 					<div className="h-[200px] flex items-center justify-center">
 						<motion.div
