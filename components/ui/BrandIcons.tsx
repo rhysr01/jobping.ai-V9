@@ -308,4 +308,71 @@ export const BrandIcons = {
 			<line x1="12" y1="8" x2="12.01" y2="8" />
 		</svg>
 	),
+
+	// JobPing-specific unique icons
+	MapPin: ({ className = "w-5 h-5" }: { className?: string }) => (
+		<svg
+			className={className}
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+		>
+			<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+			<circle cx="12" cy="10" r="3" />
+		</svg>
+	),
+
+	Compass: ({ className = "w-5 h-5" }: { className?: string }) => (
+		<svg
+			className={className}
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+		>
+			<circle cx="12" cy="12" r="10" />
+			<polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+		</svg>
+	),
+
+	Passport: ({ className = "w-5 h-5" }: { className?: string }) => (
+		<svg
+			className={className}
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+		>
+			<path d="M16 4h.01M16 20h.01M10 16V8a2 2 0 0 1 4 0v8M12 2l3 3-3 3-3-3 3-3z" />
+			<path d="M8 16h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2z" />
+		</svg>
+	),
+
+	Lightbulb: ({ className = "w-5 h-5" }: { className?: string }) => (
+		<svg
+			className={className}
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+		>
+			<path d="M9 18h6" />
+			<path d="M10 22h4" />
+			<path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+			<path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z" />
+		</svg>
+	),
 };

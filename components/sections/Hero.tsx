@@ -162,46 +162,74 @@ export default function Hero() {
 						transition={{ delay: 0.42, duration: 0.6 }}
 						className="mt-3 sm:mt-4 p-3 sm:p-4 rounded-xl bg-gradient-to-br from-brand-500/10 via-brand-500/5 to-transparent border border-brand-500/20 backdrop-blur-sm shadow-lg shadow-brand-500/5"
 					>
-						<p className="text-xs sm:text-sm font-bold text-white/90 mb-2 sm:mb-3 flex items-center gap-2">
+						<p className="text-xs sm:text-sm font-bold text-white/90 mb-3 sm:mb-4 flex items-center gap-2">
 							<BrandIcons.Info className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-brand-300 flex-shrink-0" />
 							Here's what we'll ask:
 						</p>
-						<div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+						<div className="grid grid-cols-1 gap-3 sm:gap-3">
 							<motion.div
 								whileHover={{ scale: 1.02 }}
-								className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-brand-400/30 transition-all group min-h-[44px]"
+								className="flex items-start gap-3 px-3 py-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-brand-400/30 transition-all group"
 							>
-								<div className="p-1 sm:p-1.5 rounded-md bg-brand-500/20 group-hover:bg-brand-500/30 transition-colors flex-shrink-0">
-									<BrandIcons.Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-brand-300" />
+								<div className="p-2 rounded-lg bg-emerald-500/20 group-hover:bg-emerald-500/30 transition-colors flex-shrink-0 mt-0.5">
+									<BrandIcons.MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400" />
 								</div>
-								<span className="text-xs sm:text-sm font-semibold text-white/90">Cities</span>
+								<div className="flex-1 min-w-0">
+									<div className="flex items-center gap-2 mb-1">
+										<span className="text-sm sm:text-base font-semibold text-white/90">Cities</span>
+										<span className="text-xs text-emerald-400 font-medium bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
+											Pick up to 3
+										</span>
+									</div>
+									<p className="text-xs sm:text-sm text-white/70 leading-relaxed">
+										London, Paris, Berlin—where you want to work
+									</p>
+								</div>
 							</motion.div>
+
 							<motion.div
 								whileHover={{ scale: 1.02 }}
-								className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-brand-400/30 transition-all group min-h-[44px]"
+								className="flex items-start gap-3 px-3 py-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-brand-400/30 transition-all group"
 							>
-								<div className="p-1 sm:p-1.5 rounded-md bg-brand-500/20 group-hover:bg-brand-500/30 transition-colors flex-shrink-0">
-									<BrandIcons.Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-brand-300" />
+								<div className="p-2 rounded-lg bg-purple-500/20 group-hover:bg-purple-500/30 transition-colors flex-shrink-0 mt-0.5">
+									<BrandIcons.Compass className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
 								</div>
-								<span className="text-xs sm:text-sm font-semibold text-white/90">Career path</span>
+								<div className="flex-1 min-w-0">
+									<span className="text-sm sm:text-base font-semibold text-white/90 block mb-1">Career Path</span>
+									<p className="text-xs sm:text-sm text-white/70 leading-relaxed">
+										Strategy, Product, Data, Marketing, Engineering...
+									</p>
+								</div>
 							</motion.div>
+
 							<motion.div
 								whileHover={{ scale: 1.02 }}
-								className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-brand-400/30 transition-all group min-h-[44px]"
+								className="flex items-start gap-3 px-3 py-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-brand-400/30 transition-all group"
 							>
-								<div className="p-1 sm:p-1.5 rounded-md bg-brand-500/20 group-hover:bg-brand-500/30 transition-colors flex-shrink-0">
-									<BrandIcons.Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-brand-300" />
+								<div className="p-2 rounded-lg bg-blue-500/20 group-hover:bg-blue-500/30 transition-colors flex-shrink-0 mt-0.5">
+									<BrandIcons.Passport className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
 								</div>
-								<span className="text-xs sm:text-sm font-semibold text-white/90">Visa status</span>
+								<div className="flex-1 min-w-0">
+									<span className="text-sm sm:text-base font-semibold text-white/90 block mb-1">Visa Status</span>
+									<p className="text-xs sm:text-sm text-white/70 leading-relaxed">
+										EU citizen or non-EU requiring sponsorship?
+									</p>
+								</div>
 							</motion.div>
+
 							<motion.div
 								whileHover={{ scale: 1.02 }}
-								className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-brand-400/30 transition-all group min-h-[44px]"
+								className="flex items-start gap-3 px-3 py-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-brand-400/30 transition-all group"
 							>
-								<div className="p-1 sm:p-1.5 rounded-md bg-brand-500/20 group-hover:bg-brand-500/30 transition-colors flex-shrink-0">
-									<BrandIcons.GraduationCap className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-brand-300" />
+								<div className="p-2 rounded-lg bg-amber-500/20 group-hover:bg-amber-500/30 transition-colors flex-shrink-0 mt-0.5">
+									<BrandIcons.Lightbulb className="h-4 w-4 sm:h-5 sm:w-5 text-amber-400" />
 								</div>
-								<span className="text-xs sm:text-sm font-semibold text-white/90">Experience</span>
+								<div className="flex-1 min-w-0">
+									<span className="text-sm sm:text-base font-semibold text-white/90 block mb-1">Experience Level</span>
+									<p className="text-xs sm:text-sm text-white/70 leading-relaxed">
+										Graduate, Intern, 0-2 years—your career stage
+									</p>
+								</div>
 							</motion.div>
 						</div>
 					</motion.div>
