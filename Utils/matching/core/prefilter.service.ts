@@ -5,8 +5,8 @@
 
 import { logger } from "@/lib/monitoring";
 import type { Job as ScrapersJob } from "@/scrapers/types";
-import { getDatabaseClient } from "@/Utils/core/database-pool";
-import type { UserPreferences } from "@/Utils/matching/types";
+import { getDatabaseClient } from "@/utils/core/database-pool";
+import type { UserPreferences } from "@/utils/matching/types";
 
 export interface PrefilterResult {
 	jobs: (ScrapersJob & { freshnessTier: string; prefilterScore: number })[];

@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { apiLogger } from "@/lib/api-logger";
-import { getProductionRateLimiter } from "./production-rate-limiter";
+import { getProductionRateLimiter } from "../production-rate-limiter";
 
 interface RedisLockOptions {
 	limiter?: ReturnType<typeof getProductionRateLimiter>;

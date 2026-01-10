@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { issueSecureToken, verifySecureToken } from "./auth/secureTokens";
-import { getDatabaseClient } from "./databasePool";
+import { issueSecureToken, verifySecureToken } from "@/utils/authentication/secureTokens";
+import { getDatabaseClient } from "./core/database-pool";
 import {
 	assertValidFrom,
 	EMAIL_CONFIG,

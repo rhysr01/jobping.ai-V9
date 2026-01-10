@@ -1,7 +1,7 @@
 import { GET } from "@/app/api/cleanup-jobs/route";
-import { getDatabaseClient } from "@/Utils/databasePool";
+import { getDatabaseClient } from "@/utils/databasePool";
 
-jest.mock("@/Utils/databasePool", () => ({
+jest.mock("@/utils/databasePool", () => ({
 	getDatabaseClient: jest.fn(() => ({
 		from: jest.fn(() => ({
 			delete: jest.fn(() => ({
@@ -20,7 +20,7 @@ jest.mock("@/Utils/databasePool", () => ({
 	})),
 }));
 
-jest.mock("@/Utils/auth/hmac", () => ({
+jest.mock("@/utils/authentication/hmac", () => ({
 	verifyHMAC: jest.fn().mockReturnValue({ isValid: true }),
 	isHMACRequired: jest.fn().mockReturnValue(false),
 }));

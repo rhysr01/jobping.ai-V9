@@ -1,9 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getAllCompanyLogos, getCompanyLogo } from "@/lib/companyLogos";
+import { getAllCompanyLogos, getCompanyLogo } from "@/lib/company-logos";
 import { apiLogger } from "@/lib/api-logger";
 import { asyncHandler } from "@/lib/errors";
-import { getDatabaseClient } from "@/Utils/core/database-pool";
-import { withApiAuth } from "@/Utils/auth/apiAuth";
+import { getDatabaseClient } from "@/utils/core/database-pool";
+import { withApiAuth } from "@/utils/authentication/apiAuth";
 
 // Cache for 1 hour
 let cachedCompanies: Array<{ name: string; logoPath: string }> | null = null;

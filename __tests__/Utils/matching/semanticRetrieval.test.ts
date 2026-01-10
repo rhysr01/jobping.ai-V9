@@ -1,7 +1,7 @@
-import { SemanticRetrievalService } from "@/Utils/matching/semanticRetrieval";
-import type { UserPreferences } from "@/Utils/matching/types";
+import { SemanticRetrievalService } from "@/utils/matching/semanticRetrieval";
+import type { UserPreferences } from "@/utils/matching/types";
 
-jest.mock("@/Utils/databasePool", () => ({
+jest.mock("@/utils/databasePool", () => ({
 	getDatabaseClient: jest.fn(() => ({
 		rpc: jest.fn().mockResolvedValue({
 			data: [],
@@ -10,7 +10,7 @@ jest.mock("@/Utils/databasePool", () => ({
 	})),
 }));
 
-jest.mock("@/Utils/matching/embedding.service", () => ({
+jest.mock("@/utils/matching/embedding.service", () => ({
 	embeddingService: {
 		generateUserEmbedding: jest.fn().mockResolvedValue([0.1, 0.2, 0.3]),
 	},
@@ -76,7 +76,7 @@ describe("SemanticRetrievalService", () => {
 		});
 
 		it("should fallback on error", async () => {
-			const { getDatabaseClient } = require("@/Utils/databasePool");
+			const { getDatabaseClient } = require("@/utils/databasePool");
 			getDatabaseClient.mockReturnValue({
 				rpc: jest.fn().mockRejectedValue(new Error("RPC failed")),
 			});

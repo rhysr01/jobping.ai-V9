@@ -9,7 +9,7 @@ import {
 	type SendLedgerEntry,
 	type SendPlan,
 	shouldSkipSend,
-} from "@/Utils/send-configuration";
+} from "@/utils/send-configuration";
 
 describe("sendConfiguration", () => {
 	describe("SEND_PLAN", () => {

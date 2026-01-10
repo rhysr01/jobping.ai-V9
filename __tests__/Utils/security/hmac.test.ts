@@ -3,7 +3,7 @@
  */
 
 import crypto from "crypto";
-import { hmacSign, hmacVerify } from "@/Utils/auth/hmac";
+import { hmacSign, hmacVerify } from "@/utils/authentication/hmac";
 
 describe("HMAC Security Utilities", () => {
 	const testSecret = "super-secret-key";

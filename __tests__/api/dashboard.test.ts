@@ -8,7 +8,7 @@
 
 import { createMocks } from "node-mocks-http";
 import { GET } from "@/app/api/dashboard/route";
-import { getDatabaseClient } from "@/Utils/databasePool";
+import { getDatabaseClient } from "@/utils/databasePool";
 import { apiLogger } from "@/lib/api-logger";
 
 // Mock external dependencies but keep database real
@@ -21,7 +21,7 @@ jest.mock("@/lib/api-logger", () => ({
 }));
 
 // Mock rate limiter to avoid external dependencies
-jest.mock("@/Utils/production-rate-limiter", () => ({
+jest.mock("@/utils/production-rate-limiter", () => ({
 	getProductionRateLimiter: () => ({
 		middleware: jest.fn().mockResolvedValue(null), // No rate limiting for tests
 	}),
@@ -210,8 +210,8 @@ describe("GET /api/dashboard - Contract Tests", () => {
 
 		it("should handle database errors gracefully", async () => {
 			// Mock database to throw error
-			const originalGetDatabaseClient = require("@/Utils/databasePool").getDatabaseClient;
-			jest.mocked(require("@/Utils/databasePool").getDatabaseClient).mockImplementationOnce(() => {
+			const originalGetDatabaseClient = require("@/utils/databasePool").getDatabaseClient;
+			jest.mocked(require("@/utils/databasePool").getDatabaseClient).mockImplementationOnce(() => {
 				throw new Error("Database connection failed");
 			});
 
@@ -227,7 +227,7 @@ describe("GET /api/dashboard - Contract Tests", () => {
 			expect(data.database.error).toBeDefined();
 
 			// Restore original
-			require("@/Utils/databasePool").getDatabaseClient = originalGetDatabaseClient;
+			require("@/utils/databasePool").getDatabaseClient = originalGetDatabaseClient;
 		});
 	});
 
@@ -555,8 +555,8 @@ describe("GET /api/dashboard - Contract Tests", () => {
 
 		it("should log errors appropriately", async () => {
 			// Force database error
-			const originalGetDatabaseClient = require("@/Utils/databasePool").getDatabaseClient;
-			jest.mocked(require("@/Utils/databasePool").getDatabaseClient).mockImplementationOnce(() => {
+			const originalGetDatabaseClient = require("@/utils/databasePool").getDatabaseClient;
+			jest.mocked(require("@/utils/databasePool").getDatabaseClient).mockImplementationOnce(() => {
 				throw new Error("Database connection failed");
 			});
 
@@ -576,7 +576,7 @@ describe("GET /api/dashboard - Contract Tests", () => {
 			);
 
 			// Restore original
-			require("@/Utils/databasePool").getDatabaseClient = originalGetDatabaseClient;
+			require("@/utils/databasePool").getDatabaseClient = originalGetDatabaseClient;
 		});
 	});
 });

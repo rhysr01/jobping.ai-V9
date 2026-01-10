@@ -41,7 +41,7 @@ import type { Job } from "../scrapers/types";
 import {
 	type MatchingOptions,
 	simplifiedMatchingEngine,
-} from "../Utils/matching/core";
+} from "../Utils/matching/core/matching-engine";
 import type { UserPreferences } from "../Utils/matching/types";
 
 // Test data that represents real production scenarios

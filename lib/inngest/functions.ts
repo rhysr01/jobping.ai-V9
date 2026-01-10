@@ -1,8 +1,8 @@
 import { Inngest } from "inngest";
 import { logger } from "@/lib/monitoring";
-import { ConsolidatedMatchingEngine } from "@/Utils/consolidatedMatchingV2";
-import { getDatabaseClient } from "@/Utils/databasePool";
-import type { Job, UserPreferences } from "@/Utils/matching/types";
+import { simplifiedMatchingEngine } from "@/utils/matching/core/matching-engine";
+import { getDatabaseClient } from "@/utils/core/database-pool";
+import type { Job, UserPreferences } from "@/utils/matching/types";
 
 // Create a client to send and receive events
 export const inngest = new Inngest({ id: "my-app" });
@@ -66,8 +66,6 @@ export const performAIMatching = inngest.createFunction(
 				openaiKeyStatus: openaiKey ? "set but invalid format" : "not set",
 			});
 		}
-		const matcher = new ConsolidatedMatchingEngine(hasOpenAIKey ? openaiKey : undefined);
-
 		// Step 1: Perform matching with timeout protection
 		const matchResult = await step.run("perform-matching", async () => {
 			const startTime = Date.now();
@@ -79,9 +77,10 @@ export const performAIMatching = inngest.createFunction(
 					source: context?.source || "unknown",
 				});
 
-				const result = await matcher.performMatching(
-					jobs as any[],
+				const result = await simplifiedMatchingEngine.findMatchesForUser(
 					userPrefs as any,
+					jobs as any[],
+					{ useAI: hasOpenAIKey }
 				);
 
 				const duration = Date.now() - startTime;

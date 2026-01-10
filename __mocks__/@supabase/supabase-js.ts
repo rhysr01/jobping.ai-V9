@@ -112,6 +112,7 @@ if (!global.__SB_MOCK__) {
 		],
 		matches: [],
 		match_logs: [],
+		email_verification_requests: [],
 	};
 }
 
@@ -130,10 +131,26 @@ class MockFilterBuilder implements FilterBuilder {
 
 	constructor(table: string) {
 		this.table = table;
+		console.log(`Creating MockFilterBuilder for table: ${table}`);
 	}
 
-	select(columns: string = "*"): FilterBuilder {
+	select(columns: string = "*", options?: any): FilterBuilder {
 		this.selectedColumns = columns;
+		if (options) {
+			(this as any).countOptions = options;
+		}
+		console.log(`Select called with columns: ${columns}, options:`, options);
+
+		// For count queries, return the result immediately
+		if (columns === "count" && options?.count === "exact") {
+			console.log(`Count query detected, returning result immediately`);
+			const tableData = global.__SB_MOCK__[this.table] || [];
+			return {
+				data: tableData.length,
+				error: null,
+			} as any;
+		}
+
 		return this;
 	}
 
@@ -228,12 +245,17 @@ class MockFilterBuilder implements FilterBuilder {
 		// Debug logging in test mode
 		if (process.env.NODE_ENV === "test") {
 			console.log(`Mock query for table ${this.table}:`, {
+				selectedColumns: this.selectedColumns,
+				countOptions: (this as any).countOptions,
 				filters: this.filters,
 				tableData: tableData.length,
 				orderBy: this.orderBy,
 				limitCount: this.limitCount,
 				isSingle: this.isSingle,
 			});
+			if (this.table === 'users') {
+				console.log(`Users table data:`, tableData);
+			}
 		}
 
 		// Apply filters
@@ -288,6 +310,18 @@ class MockFilterBuilder implements FilterBuilder {
 			filteredData = filteredData.slice(0, this.limitCount);
 		}
 
+		// Handle count queries
+		if ((this as any).countOptions?.count === "exact") {
+			console.log(`Count query for table ${this.table}, filteredData length: ${filteredData.length}, tableData length: ${global.__SB_MOCK__[this.table]?.length || 0}`);
+			const tableData = global.__SB_MOCK__[this.table] || [];
+			const count = tableData.length;
+			console.log(`Returning count ${count} for table ${this.table}`);
+			return {
+				data: count,
+				error: null,
+			};
+		}
+
 		// Return single or array
 		if (this.isSingle) {
 			return {
@@ -323,7 +357,9 @@ class MockFilterBuilder implements FilterBuilder {
 			// Handle single item upsert
 			const existingIndex = tableData.findIndex(
 				(existing) =>
-					existing.job_hash === data.job_hash || existing.id === data.id,
+					existing.job_hash === data.job_hash ||
+					existing.id === data.id ||
+					(existing.email === data.email && existing.token_hash === data.token_hash),
 			);
 
 			if (existingIndex >= 0) {

@@ -5,7 +5,7 @@
 import { apiLogger } from "@/lib/api-logger";
 import { logger } from "@/lib/monitoring";
 import type { Job as ScrapersJob } from "@/scrapers/types";
-import type { JobMatch, UserPreferences } from "@/Utils/matching/types";
+import type { JobMatch, UserPreferences } from "@/utils/matching/types";
 
 /**
  * Score job relevance based on user preferences

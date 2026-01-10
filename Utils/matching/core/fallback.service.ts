@@ -4,7 +4,7 @@
  */
 
 import type { Job } from "@/scrapers/types";
-import type { UserPreferences } from "@/Utils/matching/types";
+import type { UserPreferences } from "@/utils/matching/types";
 import { logger } from "@/lib/monitoring";
 
 export interface FallbackMatch {

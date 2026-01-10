@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import ErrorBoundary from "@/components/ErrorBoundary";
+import ErrorBoundary from "@/components/error-boundary";
 import { GhostMatches } from "@/components/matches/GhostMatches";
 import { FreeMatchingSuite } from "@/components/signup/FreeMatchingSuite";
 import Button from "@/components/ui/Button";
@@ -24,7 +24,7 @@ import { showToast } from "@/lib/toast";
 import {
 	getVisaConfidenceLabel,
 	getVisaConfidenceStyle,
-} from "@/Utils/matching/visa-confidence";
+} from "@/utils/matching/visa-confidence";
 
 interface Job {
 	id: number;

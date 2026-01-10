@@ -1,4 +1,4 @@
-import { assertValidFrom, EMAIL_CONFIG } from "@/Utils/email/clients";
+import { assertValidFrom, EMAIL_CONFIG } from "@/utils/email/clients";
 
 describe("Email Domain Validation", () => {
 	describe("EMAIL_CONFIG.from", () => {

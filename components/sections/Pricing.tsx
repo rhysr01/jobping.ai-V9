@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { memo } from "react";
 import { Check, Zap, Mail, Star, TrendingUp, Shield } from "lucide-react";
 import Link from "next/link";
-import ErrorBoundary from "@/components/ErrorBoundary";
+import ErrorBoundary from "@/components/error-boundary";
 import SocialProofTicker from "@/components/ui/SocialProofTicker";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { useStats } from "@/hooks/useStats";

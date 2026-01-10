@@ -59,7 +59,7 @@ export function errorJson(
 }
 
 // Convenience functions for common error responses
-export const error-response = {
+export const errorResponse = {
 	badRequest: (req: NextRequest, message: string, details?: unknown) =>
 		errorJson(
 			req,

@@ -12,8 +12,8 @@ import {
 	toOptString,
 	toStringArray,
 	toWorkEnv,
-} from "@/Utils/matching/normalizers";
-import type { Job, UserPreferences } from "@/Utils/matching/types";
+} from "@/utils/matching/normalizers";
+import type { Job, UserPreferences } from "@/utils/matching/types";
 
 describe("normalizers", () => {
 	describe("toStringArray", () => {

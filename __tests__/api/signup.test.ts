@@ -8,7 +8,7 @@
 
 import { createMocks } from "node-mocks-http";
 import { POST } from "@/app/api/signup/route";
-import { getDatabaseClient } from "@/Utils/databasePool";
+import { getDatabaseClient } from "@/utils/databasePool";
 import { apiLogger } from "@/lib/api-logger";
 
 // Mock external dependencies but keep database real
@@ -21,20 +21,20 @@ jest.mock("@/lib/api-logger", () => ({
 }));
 
 // Mock rate limiter
-jest.mock("@/Utils/production-rate-limiter", () => ({
+jest.mock("@/utils/production-rate-limiter", () => ({
 	getProductionRateLimiter: () => ({
 		middleware: jest.fn().mockResolvedValue(null), // No rate limiting for tests
 	}),
 }));
 
 // Mock email sender to avoid actual emails
-jest.mock("@/Utils/email/sender", () => ({
+jest.mock("@/utils/email/sender", () => ({
 	sendWelcomeEmail: jest.fn().mockResolvedValue(true),
 	sendMatchedJobsEmail: jest.fn().mockResolvedValue(true),
 }));
 
 // Mock matching engine
-jest.mock("@/Utils/consolidatedMatchingV2", () => ({
+jest.mock("@/utils/matching/core/matching-engine", () => ({
 	createConsolidatedMatcher: jest.fn().mockReturnValue({
 		performMatching: jest.fn().mockResolvedValue({
 			method: "ai_success",
@@ -313,7 +313,7 @@ describe("POST /api/signup - Contract Tests", () => {
 				{ status: 429 }
 			);
 
-			const { getProductionRateLimiter } = require("@/Utils/production-rate-limiter");
+			const { getProductionRateLimiter } = require("@/utils/production-rate-limiter");
 			getProductionRateLimiter().middleware.mockResolvedValue(mockRateLimitResponse);
 
 			const { req } = createMocks({

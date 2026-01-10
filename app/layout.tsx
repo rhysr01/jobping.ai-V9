@@ -6,10 +6,10 @@ import type { Metadata } from "next";
 // export { reportWebVitals } from 'next-axiom';
 import { headers } from "next/headers";
 import Script from "next/script";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import FAQSchema from "@/components/FAQSchema";
-import StructuredData from "@/components/StructuredData";
-import Header from "@/components/sections/Header";
+import ErrorBoundary from "@/components/error-boundary";
+import FAQSchema from "@/components/faq-schema";
+import Header from "@/components/sections/header";
+import StructuredData from "@/components/structured-data";
 import AnimatedBackground from "@/components/ui/AnimatedBackground";
 import CookieBanner from "@/components/ui/CookieBanner";
 import Toaster from "@/components/ui/Toaster";
@@ -111,7 +111,11 @@ export default async function RootLayout({
 			<head>
 				{/* Font preconnect for faster font loading */}
 				<link rel="preconnect" href="https://fonts.googleapis.com" />
-				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+				<link
+					rel="preconnect"
+					href="https://fonts.gstatic.com"
+					crossOrigin="anonymous"
+				/>
 				<link
 					href="https://fonts.googleapis.com/css2?family=Clash+Display:opsz,wght@40..72,400..700&family=Inter:wght@400;500;600;700&display=swap"
 					rel="stylesheet"
@@ -142,7 +146,7 @@ export default async function RootLayout({
 			<body className="text-white premium-bg custom-scrollbar relative">
 				{/* Enhanced animated background */}
 				<AnimatedBackground />
-				
+
 				<a
 					href="#main-content"
 					className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3

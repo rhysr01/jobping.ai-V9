@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getBaseUrl } from "@/Utils/url-helpers";
+import { getBaseUrl } from "@/utils/url-helpers";
 
 export default function sitemap(): MetadataRoute.Sitemap {
 	const baseUrl = getBaseUrl();

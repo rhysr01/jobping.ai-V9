@@ -5,7 +5,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createSuccessResponse, createErrorResponse } from "@/lib/api-response";
 import { asyncHandler } from "@/lib/errors";
 import { apiLogger } from "@/lib/api-logger";
-import { getDatabaseClient } from "@/Utils/core/database-pool";
+import { getDatabaseClient } from "@/utils/core/database-pool";
+import type { StatsCache } from "@/lib/stats-types";
 
 // Helper to get requestId from request
 function getRequestId(req: NextRequest): string {
@@ -25,18 +26,6 @@ function getRequestId(req: NextRequest): string {
 }
 
 // Cache stats for 1 hour
-interface StatsCache {
-	activeJobs: number;
-	activeJobsFormatted: string;
-	internships: number;
-	graduates: number;
-	earlyCareer: number;
-	weeklyNewJobs: number;
-	weeklyNewJobsFormatted: string;
-	totalUsers: number;
-	totalUsersFormatted: string;
-	lastUpdated: string;
-}
 
 let cachedStats: StatsCache | null = null;
 let lastFetch: number = 0;

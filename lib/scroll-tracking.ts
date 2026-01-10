@@ -2,7 +2,7 @@
  * Scroll depth tracking for conversion optimization
  */
 
-export function trackScrollDepth() {
+export function initializeScrollDepthTracking() {
 	if (typeof window === "undefined") return;
 
 	const maxScroll = document.documentElement.scrollHeight - window.innerHeight;

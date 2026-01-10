@@ -1,5 +1,5 @@
-import { getDatabaseClient } from "@/Utils/databasePool";
-import { getSupabaseClient } from "@/Utils/supabase";
+import { getDatabaseClient } from "@/utils/databasePool";
+import { getSupabaseClient } from "@/utils/supabase";
 
 jest.mock("@supabase/supabase-js", () => ({
 	createClient: jest.fn(() => ({

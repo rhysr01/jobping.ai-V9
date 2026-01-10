@@ -2,7 +2,7 @@
  * Tests for AI Cost Management System
  */
 
-import { AICostManager } from "@/Utils/ai-cost-manager";
+import { AICostManager } from "@/utils/ai-cost-manager";
 
 // Mock Supabase
 jest.mock("@supabase/supabase-js", () => ({

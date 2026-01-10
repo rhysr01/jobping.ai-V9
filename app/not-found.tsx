@@ -1,5 +1,5 @@
-import Footer from "@/components/sections/Footer";
-import Header from "@/components/sections/Header";
+import Footer from "@/components/sections/footer";
+import Header from "@/components/sections/header";
 import Button from "@/components/ui/Button";
 
 export default function NotFound() {

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
 import GradientText from "@/components/ui/GradientText";
 import Heading from "@/components/ui/Heading";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/classname-utils";
 
 interface JobStats {
 	internships: number;

@@ -3,10 +3,10 @@
  * Tests distributed locking used by match-users and other APIs
  */
 
-import { withRedisLock } from "@/Utils/core/locks";
+import { withRedisLock } from "@/utils/core/locks";
 
 // Mock Redis client
-jest.mock("@/Utils/databasePool", () => ({
+jest.mock("@/utils/databasePool", () => ({
 	getDatabaseClient: jest.fn(),
 }));
 
@@ -25,7 +25,7 @@ describe("Redis Lock Utilities", () => {
 				expire: jest.fn().mockResolvedValue(1),
 			};
 
-			const { getDatabaseClient } = require("@/Utils/databasePool");
+			const { getDatabaseClient } = require("@/utils/databasePool");
 			getDatabaseClient.mockReturnValue({
 				rpc: jest.fn().mockResolvedValue({ data: "OK", error: null }),
 			});

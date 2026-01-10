@@ -4,7 +4,7 @@
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { requireSystemKey, withAuth } from "@/Utils/auth/withAuth";
+import { requireSystemKey, withAuth } from "@/utils/authentication/withAuth";
 
 describe("withAuth", () => {
 	let mockRequest: NextRequest;

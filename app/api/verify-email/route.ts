@@ -4,9 +4,9 @@ import { asyncHandler, ValidationError } from "@/lib/errors";
 import {
 	markUserVerified,
 	verifyVerificationToken,
-} from "@/Utils/email-verification";
-import { getProductionRateLimiter } from "@/Utils/production-rate-limiter";
-import { getBaseUrl } from "@/Utils/url-helpers";
+} from "@/utils/email-verification";
+import { getProductionRateLimiter } from "@/utils/production-rate-limiter";
+import { getBaseUrl } from "@/utils/url-helpers";
 
 // Test mode helper - using professional pattern
 const isTestMode = () => isTest();

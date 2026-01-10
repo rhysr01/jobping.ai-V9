@@ -10,7 +10,7 @@ import {
 	isJobBoard,
 	JOB_BOARD_COMPANIES,
 	sortJobsByStatus,
-} from "@/Utils/business-rules/job-filtering";
+} from "@/utils/business-rules/job-filtering";
 
 describe("Job Filtering Business Rules", () => {
 	describe("JOB_BOARD_COMPANIES constant", () => {

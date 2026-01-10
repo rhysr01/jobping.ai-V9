@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getProductionRateLimiter } from "@/Utils/production-rate-limiter";
+import { getProductionRateLimiter } from "@/utils/production-rate-limiter";
 import { apiLogger } from "@/lib/api-logger";
 
 export interface AuthConfig {

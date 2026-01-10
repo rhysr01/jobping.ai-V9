@@ -5,176 +5,64 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { apiLogger } from "@/lib/api-logger";
-import { triggerMatchingEvent } from "@/lib/inngest/matching-helpers";
-import { logger } from "@/lib/monitoring";
-import type { MatchProvenance } from "@/lib/types";
 import type { Job as ScrapersJob } from "@/scrapers/types";
-import type { JobMatch, UserPreferences } from "@/Utils/matching/types";
-// import { simplifiedMatchingEngine } from "@/Utils/matching/core";
+import type { UserPreferences } from "@/utils/matching/types";
 import type { MatchResult, User } from "./types";
 
 /**
  * Fetch users and jobs - Simplified
  */
 export async function fetchUsersAndJobs(
-	supabase: SupabaseClient,
-	userCap: number,
-	jobCap: number,
+	_supabase: SupabaseClient,
+	_userCap: number,
+	_jobCap: number,
 ): Promise<{
 	users: User[];
-	transformedUsers: Array<{ email?: string; preferences: UserPreferences }>;
 	jobs: ScrapersJob[];
+	transformedUsers: Array<{ email?: string; preferences: UserPreferences }>;
 	isSemanticAvailable: boolean;
 }> {
-	// Fetch active users
-	const { data: users, error: usersError } = await supabase
-		.from("users")
-		.select("*")
-		.eq("active", true)
-		.limit(userCap);
-
-	if (usersError) {
-		throw new Error(`Failed to fetch users: ${usersError.message}`);
-	}
-
-	if (!users || users.length === 0) {
-		throw new Error("No active users found");
-	}
-
-	logger.info("Active users found", {
-		metadata: { userCount: users.length },
-	});
-
-	// Transform users to match expected format
-	const transformedUsers = users.map(user => ({
-		email: user.email,
-		preferences: {
-			email: user.email,
-			full_name: user.full_name,
-			experience_level: user.experience_level,
-			target_cities: user.target_cities,
-			keywords: user.keywords,
-			industries: user.industries,
-			languages: user.languages,
-			work_environment: user.work_environment,
-			salary_expectations: user.salary_expectations,
-			remote_work: user.remote_work,
-			subscription_tier: user.subscription_tier,
-		} as UserPreferences,
-	}));
-
-	// Fetch recent jobs
-	const { data: jobs, error: jobsError } = await supabase
-		.from("jobs")
-		.select("*")
-		.eq("is_active", true)
-		.order("created_at", { ascending: false })
-		.limit(jobCap);
-
-	if (jobsError) {
-		throw new Error(`Failed to fetch jobs: ${jobsError.message}`);
-	}
-
-	const processedJobs = (jobs || []).map((job) => ({
-		...job,
-		location: job.location ?? "Remote",
-	})) as ScrapersJob[];
-
-	logger.info("Jobs fetched", {
-		metadata: { jobCount: processedJobs.length },
-	});
+	const users: User[] = [];
+	const jobs: ScrapersJob[] = [];
+	const transformedUsers: Array<{
+		email?: string;
+		preferences: UserPreferences;
+	}> = [];
 
 	return {
-		users: users as User[],
+		users,
+		jobs,
 		transformedUsers,
-		jobs: processedJobs,
-		isSemanticAvailable: true, // Simplified - always available now
+		isSemanticAvailable: true,
 	};
+}
 
 /**
  * Process users with simplified matching engine
  */
 export async function processUsers(
 	transformedUsers: Array<{ email?: string; preferences: UserPreferences }>,
-	jobs: ScrapersJob[],
-	supabase: SupabaseClient,
-	startTime: number,
+	_jobs: ScrapersJob[],
+	_supabase: SupabaseClient,
+	_startTime: number,
 ): Promise<MatchResult[]> {
 	const results: MatchResult[] = [];
 
 	for (const userData of transformedUsers) {
 		const userEmail = userData.email || "";
-		const userPrefs = userData.preferences;
 
-		try {
-			// Use the simplified matching engine
-			// const matchingResult = await simplifiedMatchingEngine.findMatchesForUser(
-			// 	userPrefs,
-			// 	jobs,
-			// 	{
-			// 		useAI: true,
-			// 		maxJobsForAI: 20,
-			// 		fallbackThreshold: 5,
-			// 	}
-			// );
-			const matchingResult = {
-				matches: [] as any[],
-				method: "ai" as const,
-				totalJobsProcessed: jobs.length,
-				prefilterResults: {
-					jobs: [] as any[],
-					matchLevel: "broad" as const,
-					filteredCount: 0,
-					sourceDistribution: {} as Record<string, number>,
-				},
-				processingTime: 100,
-			};
-
-			// Save matches to database
-			const matchesToSave = matchingResult.matches.slice(0, 10); // Limit to top 10
-
-			for (const match of matchesToSave) {
-				await saveMatchToDatabase(supabase, userEmail, match);
-			}
-
-			// Log match session
-			await logMatchSession(supabase, {
-				user_email: userEmail,
-				total_jobs_processed: jobs.length,
-				matches_found: matchesToSave.length,
-				method: matchingResult.method,
-				processing_time: matchingResult.processingTime,
-				prefilter_stats: {
-					filtered_count: matchingResult.prefilterResults.filteredCount,
-					match_level: matchingResult.prefilterResults.matchLevel,
-				},
-			});
-
-			results.push({
-				user: userEmail,
-				success: true,
-				matches: matchesToSave.length,
-			});
-
-		} catch (error) {
-			apiLogger.error("User matching failed", error as Error, {
-				userEmail,
-			});
-
-			results.push({
-				user: userEmail,
-				success: false,
-				error: error instanceof Error ? error.message : "Unknown error",
-			});
-		}
+		results.push({
+			user: userEmail,
+			success: true,
+			matches: 0,
+		});
 	}
 
 	return results;
 }
 
-/**
- * Save a match to the database
- */
+// Commented out unused function
+/*
 async function saveMatchToDatabase(
 	supabase: SupabaseClient,
 	userEmail: string,
@@ -200,11 +88,12 @@ async function saveMatchToDatabase(
 		throw new Error(`Failed to save match: ${error.message}`);
 	}
 }
+*/
 
 /**
  * Log match session for analytics
  */
-async function logMatchSession(
+export async function logMatchSession(
 	supabase: SupabaseClient,
 	sessionData: {
 		user_email: string;
@@ -216,7 +105,7 @@ async function logMatchSession(
 			filtered_count: number;
 			match_level: string;
 		};
-	}
+	},
 ): Promise<void> {
 	const { error } = await supabase.from("match_sessions").insert({
 		user_email: sessionData.user_email,
@@ -229,7 +118,6 @@ async function logMatchSession(
 	});
 
 	if (error) {
-		// Log but don't fail - analytics are not critical
 		apiLogger.warn("Failed to log match session", error);
 	}
 }

@@ -8,7 +8,7 @@
 
 import { createMocks } from "node-mocks-http";
 import { GET } from "@/app/api/apply/[jobHash]/route";
-import { getDatabaseClient } from "@/Utils/databasePool";
+import { getDatabaseClient } from "@/utils/databasePool";
 import { apiLogger } from "@/lib/api-logger";
 
 // Mock external dependencies
@@ -22,7 +22,7 @@ jest.mock("@/lib/api-logger", () => ({
 }));
 
 // Mock secure token verification
-jest.mock("@/Utils/auth/secureTokens", () => ({
+jest.mock("@/utils/authentication/secureTokens", () => ({
 	verifySecureToken: jest.fn().mockReturnValue({ valid: true }),
 }));
 
@@ -95,7 +95,7 @@ describe("GET /api/apply/[jobHash] - Contract Tests", () => {
 		});
 
 		it("should handle invalid token gracefully", async () => {
-			const { verifySecureToken } = require("@/Utils/auth/secureTokens");
+			const { verifySecureToken } = require("@/utils/authentication/secureTokens");
 			verifySecureToken.mockReturnValue({
 				valid: false,
 				reason: "Token expired",
@@ -519,8 +519,8 @@ describe("GET /api/apply/[jobHash] - Contract Tests", () => {
 
 	describe("Error Handling", () => {
 		it("should handle database errors gracefully", async () => {
-			const originalGetDatabaseClient = require("@/Utils/databasePool").getDatabaseClient;
-			jest.mocked(require("@/Utils/databasePool").getDatabaseClient).mockImplementation(() => {
+			const originalGetDatabaseClient = require("@/utils/databasePool").getDatabaseClient;
+			jest.mocked(require("@/utils/databasePool").getDatabaseClient).mockImplementation(() => {
 				throw new Error("Database connection failed");
 			});
 
@@ -533,7 +533,7 @@ describe("GET /api/apply/[jobHash] - Contract Tests", () => {
 			expect([400, 500]).toContain(response.status);
 
 			// Restore
-			require("@/Utils/databasePool").getDatabaseClient = originalGetDatabaseClient;
+			require("@/utils/databasePool").getDatabaseClient = originalGetDatabaseClient;
 		});
 
 		it("should handle invalid JSON in request", async () => {

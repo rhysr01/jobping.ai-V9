@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef } from "react";
-import ErrorBoundary from "@/components/ErrorBoundary";
+import ErrorBoundary from "@/components/error-boundary";
 import { CAREER_PATHS } from "@/components/signup/constants";
 import { HeroSection } from "@/components/signup/HeroSection";
 import { ProgressBar } from "@/components/signup/ProgressBar";

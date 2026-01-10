@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { errorJson, error-response, getRequestId } from "@/Utils/core/error-response";
+import { errorJson, error-response, getRequestId } from "@/utils/core/error-response";
 
 describe("Error Response Utilities", () => {
 	let mockRequest: NextRequest;

@@ -3,8 +3,8 @@
  * Tests the core job matching logic
  */
 
-import { ConsolidatedMatchingEngine } from "@/Utils/consolidatedMatchingV2";
-import { JobMatch, type UserPreferences } from "@/Utils/matching/types";
+import { SimplifiedMatchingEngine } from "@/utils/matching/core/matching-engine";
+import { JobMatch, type UserPreferences } from "@/utils/matching/types";
 
 // Mock OpenAI
 const mockOpenAI = {
@@ -21,7 +21,7 @@ jest.mock("openai", () => {
 });
 
 // Mock the CircuitBreaker
-jest.mock("@/Utils/matching/consolidated/circuitBreaker", () => ({
+jest.mock("@/utils/matching/consolidated/circuitBreaker", () => ({
 	CircuitBreaker: jest.fn().mockImplementation(() => ({
 		canExecute: jest.fn(() => true),
 		recordSuccess: jest.fn(),
@@ -30,12 +30,12 @@ jest.mock("@/Utils/matching/consolidated/circuitBreaker", () => ({
 }));
 
 // Mock the hard gates pre-filter to return all jobs as eligible
-jest.mock("@/Utils/matching/preFilterHardGates", () => ({
+jest.mock("@/utils/matching/preFilterHardGates", () => ({
 	preFilterByHardGates: jest.fn((jobs) => jobs), // Return all jobs as eligible
 }));
 
 // Mock the prompts module
-jest.mock("@/Utils/matching/consolidated/prompts", () => ({
+jest.mock("@/utils/matching/consolidated/prompts", () => ({
 	performAIMatching: jest.fn().mockResolvedValue({
 		matches: [
 			{
@@ -53,7 +53,7 @@ jest.mock("@/Utils/matching/consolidated/prompts", () => ({
 }));
 
 // Mock the validation module
-jest.mock("@/Utils/matching/consolidated/validation", () => ({
+jest.mock("@/utils/matching/consolidated/validation", () => ({
 	validateAndNormalizeAIMatches: jest.fn((matches) => matches),
 }));
 

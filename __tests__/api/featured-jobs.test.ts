@@ -8,7 +8,7 @@
 
 import { createMocks } from "node-mocks-http";
 import { GET } from "@/app/api/featured-jobs/route";
-import { getDatabaseClient } from "@/Utils/databasePool";
+import { getDatabaseClient } from "@/utils/databasePool";
 import { apiLogger } from "@/lib/api-logger";
 
 // Mock external dependencies but keep database real
@@ -21,11 +21,11 @@ jest.mock("@/lib/api-logger", () => ({
 }));
 
 // Mock rate limiter and auth
-jest.mock("@/Utils/auth/apiAuth", () => ({
+jest.mock("@/utils/authentication/apiAuth", () => ({
 	withApiAuth: jest.fn((handler) => handler),
 }));
 
-jest.mock("@/Utils/production-rate-limiter", () => ({
+jest.mock("@/utils/production-rate-limiter", () => ({
 	getProductionRateLimiter: () => ({
 		middleware: jest.fn().mockResolvedValue(null), // No rate limiting for tests
 	}),
@@ -174,8 +174,8 @@ describe("GET /api/featured-jobs - Contract Tests", () => {
 	describe("Fallback Logic", () => {
 		it("should return fallback jobs when database fails", async () => {
 			// Mock database to fail
-			const originalGetDatabaseClient = require("@/Utils/databasePool").getDatabaseClient;
-			jest.mocked(require("@/Utils/databasePool").getDatabaseClient).mockImplementation(() => {
+			const originalGetDatabaseClient = require("@/utils/databasePool").getDatabaseClient;
+			jest.mocked(require("@/utils/databasePool").getDatabaseClient).mockImplementation(() => {
 				throw new Error("Database connection failed");
 			});
 
@@ -201,7 +201,7 @@ describe("GET /api/featured-jobs - Contract Tests", () => {
 			});
 
 			// Restore original
-			require("@/Utils/databasePool").getDatabaseClient = originalGetDatabaseClient;
+			require("@/utils/databasePool").getDatabaseClient = originalGetDatabaseClient;
 		});
 
 		it("should use fallback query when no London jobs found", async () => {
@@ -440,8 +440,8 @@ describe("GET /api/featured-jobs - Contract Tests", () => {
 				})),
 			};
 
-			const originalGetDatabaseClient = require("@/Utils/databasePool").getDatabaseClient;
-			jest.mocked(require("@/Utils/databasePool").getDatabaseClient).mockReturnValue(mockSupabase);
+			const originalGetDatabaseClient = require("@/utils/databasePool").getDatabaseClient;
+			jest.mocked(require("@/utils/databasePool").getDatabaseClient).mockReturnValue(mockSupabase);
 
 			const { req } = createMocks({
 				method: "GET",
@@ -456,7 +456,7 @@ describe("GET /api/featured-jobs - Contract Tests", () => {
 			);
 
 			// Restore
-			require("@/Utils/databasePool").getDatabaseClient = originalGetDatabaseClient;
+			require("@/utils/databasePool").getDatabaseClient = originalGetDatabaseClient;
 		});
 
 		it("should handle empty database gracefully", async () => {

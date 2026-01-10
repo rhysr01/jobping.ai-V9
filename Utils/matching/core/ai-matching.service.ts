@@ -6,7 +6,7 @@
 import OpenAI from "openai";
 import { apiLogger } from "@/lib/api-logger";
 import type { Job } from "@/scrapers/types";
-import type { UserPreferences } from "@/Utils/matching/types";
+import type { UserPreferences } from "@/utils/matching/types";
 import { aiMatchingCache } from "@/lib/cache";
 
 export interface AIMatchResult {

@@ -3,7 +3,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { type MotionProps, motion } from "framer-motion";
 import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/classname-utils";
 
 const glassCardVariants = cva(
 	"glass-card rounded-card border transition-all duration-300 backdrop-blur-sm",

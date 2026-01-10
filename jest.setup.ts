@@ -37,6 +37,7 @@ process.env.SYSTEM_API_KEY = "test-system-api-key-12345678901234567890";
 process.env.NEXT_PUBLIC_URL = "http://localhost:3000";
 process.env.SCRAPE_API_KEY = "test-api-key";
 process.env.BYPASS_RESERVATION = "1";
+process.env.EMAIL_DOMAIN = "example.com";
 
 // Mock Next.js router
 jest.mock("next/navigation", () => ({

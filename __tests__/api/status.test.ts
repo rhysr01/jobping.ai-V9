@@ -1,7 +1,7 @@
 import { GET } from "@/app/api/status/route";
-import { getDatabaseClient } from "@/Utils/databasePool";
+import { getDatabaseClient } from "@/utils/databasePool";
 
-jest.mock("@/Utils/databasePool", () => ({
+jest.mock("@/utils/databasePool", () => ({
 	getDatabaseClient: jest.fn(() => ({
 		from: jest.fn(() => ({
 			select: jest.fn(() => ({

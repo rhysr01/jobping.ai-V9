@@ -11,7 +11,7 @@ jest.mock("@supabase/supabase-js", () => ({
 	createClient: jest.fn(),
 }));
 
-jest.mock("@/Utils/url-helpers", () => ({
+jest.mock("@/utils/url-helpers", () => ({
 	getBaseUrl: jest.fn(() => "https://jobping.com"),
 	getEmailDomain: jest.fn(() => "getjobping.com"),
 	getUnsubscribeEmail: jest.fn(() => "unsubscribe@getjobping.com"),
@@ -22,7 +22,7 @@ import {
 	EMAIL_CONFIG,
 	getResendClient,
 	getSupabaseClient,
-} from "@/Utils/email/clients";
+} from "@/utils/email/clients";
 
 describe("Email Clients", () => {
 	let mockResend: any;

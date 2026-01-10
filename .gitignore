@@ -58,6 +58,7 @@ next-env.d.ts
 *.log
 logs/
 .cursor/
+.api-telemetry.json
 
 # Additional build outputs
 dist/

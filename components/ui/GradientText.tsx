@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/classname-utils";
 
 const gradientTextVariants = cva("bg-clip-text text-transparent", {
 	variants: {

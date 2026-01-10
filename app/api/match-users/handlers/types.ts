@@ -3,7 +3,7 @@
  */
 
 import type { Database } from "@/lib/database.types";
-import type { MatchMetrics, MatchProvenance } from "@/lib/types";
+import type { MatchMetrics, MatchProvenance } from "@/lib/matching-types";
 
 export type User = Database["public"]["Tables"]["users"]["Row"];
 

@@ -1,13 +1,13 @@
 /**
  * Supabase Client Configuration
  *
- * @deprecated For server-side usage, use getDatabaseClient() from '@/Utils/databasePool' instead.
+ * @deprecated For server-side usage, use getDatabaseClient() from '@/utils/databasePool' instead.
  *
  * This module is kept for client-side Supabase connections only.
  * Server-side functions now delegate to the canonical databasePool implementation.
  *
  * Migration guide:
- * - Server-side: Replace getServerSupabaseClient() with getDatabaseClient() from '@/Utils/databasePool'
+ * - Server-side: Replace getServerSupabaseClient() with getDatabaseClient() from '@/utils/databasePool'
  * - Client-side: Keep using getClientSupabaseClient() or create a dedicated client-side module
  */
 
@@ -15,11 +15,11 @@ import {
 	createClient as createSupabaseClient,
 	type SupabaseClient,
 } from "@supabase/supabase-js";
-import { getDatabaseClient } from "@/Utils/databasePool";
+import { getDatabaseClient } from "@/utils/core/database-pool";
 
 // Server-side client (uses service role key)
 /**
- * @deprecated Use getDatabaseClient() from '@/Utils/databasePool' instead.
+ * @deprecated Use getDatabaseClient() from '@/utils/databasePool' instead.
  * This function now delegates to databasePool for consistency.
  * Will be removed in v2.0.0
  */
@@ -33,7 +33,7 @@ export function getServerSupabaseClient(): SupabaseClient {
 		const caller = stack?.split("\n")[2]?.trim() || "unknown";
 		console.warn(
 			`[DEPRECATED] getServerSupabaseClient() is deprecated. ` +
-				`Use getDatabaseClient() from '@/Utils/databasePool' instead.\n` +
+				`Use getDatabaseClient() from '@/utils/databasePool' instead.\n` +
 				`Called from: ${caller}`,
 		);
 	}
@@ -46,7 +46,7 @@ export function getServerSupabaseClient(): SupabaseClient {
 /**
  * Client-side Supabase client for browser usage.
  *
- * Note: For server-side usage, use getDatabaseClient() from '@/Utils/databasePool' instead.
+ * Note: For server-side usage, use getDatabaseClient() from '@/utils/databasePool' instead.
  */
 export function getClientSupabaseClient(): SupabaseClient {
 	if (typeof window === "undefined") {

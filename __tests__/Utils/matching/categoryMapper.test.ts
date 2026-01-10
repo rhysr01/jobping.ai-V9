@@ -8,7 +8,7 @@ import {
 	mapFormLabelToDatabase,
 	mapFormToDatabase,
 	WORK_TYPE_CATEGORIES,
-} from "@/Utils/matching/categoryMapper";
+} from "@/utils/matching/categoryMapper";
 
 describe("categoryMapper", () => {
 	describe("mapFormToDatabase", () => {

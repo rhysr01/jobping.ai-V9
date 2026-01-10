@@ -11,7 +11,7 @@ try {
 		new Response(JSON.stringify({ error: "Route not found" }), { status: 404 });
 }
 
-jest.mock("@/Utils/databasePool", () => ({
+jest.mock("@/utils/databasePool", () => ({
 	getDatabaseClient: jest.fn(() => ({
 		from: jest.fn(() => ({
 			select: jest.fn(() => ({
@@ -24,7 +24,7 @@ jest.mock("@/Utils/databasePool", () => ({
 	})),
 }));
 
-jest.mock("@/Utils/auth/hmac", () => ({
+jest.mock("@/utils/authentication/hmac", () => ({
 	verifyHMAC: jest.fn().mockReturnValue({ isValid: true }),
 }));
 

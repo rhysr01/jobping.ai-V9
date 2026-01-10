@@ -5,7 +5,7 @@
 
 import { apiLogger } from "@/lib/api-logger";
 import type { Job } from "@/scrapers/types";
-import type { UserPreferences, JobMatch } from "@/Utils/matching/types";
+import type { UserPreferences, JobMatch } from "@/utils/matching/types";
 import { prefilterService, type PrefilterResult } from "./prefilter.service";
 import { aiMatchingService, type AIMatchResult } from "./ai-matching.service";
 import { fallbackService, type FallbackMatch } from "./fallback.service";

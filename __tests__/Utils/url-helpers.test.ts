@@ -10,7 +10,7 @@ import {
 	getListUnsubscribeHeader,
 	getUnsubscribeEmail,
 	getUnsubscribeUrl,
-} from "@/Utils/url-helpers";
+} from "@/utils/url-helpers";
 
 describe("URL Helpers", () => {
 	beforeEach(() => {

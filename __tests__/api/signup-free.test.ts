@@ -9,7 +9,7 @@
 import { createMocks } from "node-mocks-http";
 import { POST } from "@/app/api/signup/free/route";
 import { apiLogger } from "@/lib/api-logger";
-import { getDatabaseClient } from "@/Utils/databasePool";
+import { getDatabaseClient } from "@/utils/databasePool";
 
 // Mock external dependencies but keep database real
 jest.mock("@/lib/api-logger", () => ({
@@ -20,7 +20,7 @@ jest.mock("@/lib/api-logger", () => ({
 	},
 }));
 
-jest.mock("@/Utils/production-rate-limiter", () => ({
+jest.mock("@/utils/production-rate-limiter", () => ({
 	getProductionRateLimiter: () => ({
 		middleware: jest.fn().mockResolvedValue(null), // No rate limiting for tests
 	}),
@@ -40,7 +40,7 @@ jest.mock("@/lib/inngest/matching-helpers", () => ({
 }));
 
 // Mock business rules
-jest.mock("@/Utils/business-rules/quality-thresholds", () => ({
+jest.mock("@/utils/business-rules/quality-thresholds", () => ({
 	QUALITY_THRESHOLDS: {
 		FREE_SIGNUP: 0.7,
 	},
@@ -58,7 +58,7 @@ jest.mock("@/Utils/business-rules/quality-thresholds", () => ({
 }));
 
 // Mock matching engine
-jest.mock("@/Utils/consolidatedMatchingV2", () => ({
+jest.mock("@/utils/matching/core/matching-engine", () => ({
 	createConsolidatedMatcher: jest.fn().mockReturnValue({
 		performMatching: jest.fn().mockResolvedValue({
 			method: "ai_success",
@@ -72,7 +72,7 @@ jest.mock("@/Utils/consolidatedMatchingV2", () => ({
 }));
 
 // Mock job distribution
-jest.mock("@/Utils/matching/jobDistribution", () => ({
+jest.mock("@/utils/matching/jobDistribution", () => ({
 	distributeJobsWithDiversity: jest
 		.fn()
 		.mockImplementation((jobs) => jobs.slice(0, 5)),
@@ -477,9 +477,9 @@ describe("POST /api/signup/free - Contract Tests", () => {
 		it("should handle database errors gracefully", async () => {
 			// Mock database to fail during user creation
 			const originalGetDatabaseClient =
-				require("@/Utils/databasePool").getDatabaseClient;
+				require("@/utils/databasePool").getDatabaseClient;
 			jest
-				.mocked(require("@/Utils/databasePool").getDatabaseClient)
+				.mocked(require("@/utils/databasePool").getDatabaseClient)
 				.mockImplementation(() => {
 					throw new Error("Database connection failed");
 				});
@@ -502,7 +502,7 @@ describe("POST /api/signup/free - Contract Tests", () => {
 			expect(data.error).toBe("Internal server error");
 
 			// Restore
-			require("@/Utils/databasePool").getDatabaseClient =
+			require("@/utils/databasePool").getDatabaseClient =
 				originalGetDatabaseClient;
 		});
 
@@ -561,7 +561,7 @@ describe("POST /api/signup/free - Contract Tests", () => {
 
 			const {
 				getProductionRateLimiter,
-			} = require("@/Utils/production-rate-limiter");
+			} = require("@/utils/production-rate-limiter");
 			getProductionRateLimiter().middleware.mockResolvedValue(
 				mockRateLimitResponse,
 			);

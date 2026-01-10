@@ -1,6 +1,6 @@
 "use client";
 
-import ErrorBoundary from "@/components/ErrorBoundary";
+import ErrorBoundary from "@/components/error-boundary";
 import SignupFormFree from "@/components/signup/SignupFormFree";
 
 export default function FreeSignupPage() {

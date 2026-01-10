@@ -37,7 +37,7 @@ const mockSupabase = {
 	})),
 };
 
-jest.mock("@/Utils/databasePool", () => ({
+jest.mock("@/utils/databasePool", () => ({
 	getDatabaseClient: jest.fn(() => mockSupabase),
 }));
 

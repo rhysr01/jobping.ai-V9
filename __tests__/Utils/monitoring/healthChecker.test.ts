@@ -11,7 +11,7 @@ jest.mock("resend", () => ({
 	Resend: jest.fn(),
 }));
 
-import { HealthChecker } from "@/Utils/monitoring/healthChecker";
+import { HealthChecker } from "@/utils/monitoring/healthChecker";
 
 describe("HealthChecker", () => {
 	let healthChecker: HealthChecker;

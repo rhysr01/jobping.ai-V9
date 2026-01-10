@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
 import { POST } from "@/app/api/webhooks/resend/route";
-import { getDatabaseClient } from "@/Utils/databasePool";
+import { getDatabaseClient } from "@/utils/databasePool";
 
-jest.mock("@/Utils/databasePool", () => ({
+jest.mock("@/utils/databasePool", () => ({
 	getDatabaseClient: jest.fn(() => ({
 		from: jest.fn(() => ({
 			update: jest.fn(() => ({
@@ -19,7 +19,7 @@ jest.mock("@/Utils/databasePool", () => ({
 	})),
 }));
 
-jest.mock("@/Utils/auth/hmac", () => ({
+jest.mock("@/utils/authentication/hmac", () => ({
 	verifyHMAC: jest.fn().mockReturnValue({ isValid: true }),
 }));
 

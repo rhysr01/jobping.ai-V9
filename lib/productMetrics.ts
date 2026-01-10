@@ -6,9 +6,11 @@
 
 // Free tier limits
 export const FREE_ROLES_PER_SEND = 5;
+export const SIGNUP_INITIAL_ROLES = 10;
 
 // Premium tier limits
 export const PREMIUM_SENDS_PER_WEEK = 1;
+export const PREMIUM_SEND_DAYS_LABEL = "weekly";
 export const PREMIUM_ROLES_PER_WEEK = 50;
 export const PREMIUM_ROLES_PER_MONTH = 200;
 

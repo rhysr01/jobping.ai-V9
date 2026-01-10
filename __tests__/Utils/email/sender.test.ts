@@ -3,21 +3,21 @@
  * Tests email sending functionality with Resend integration
  */
 
-import { getResendClient } from "@/Utils/email/clients";
+import { getResendClient } from "@/utils/email/clients";
 import {
 	createJobMatchesEmail,
 	createWelcomeEmail,
-} from "@/Utils/email/productionReadyTemplates";
+} from "@/utils/email/productionReadyTemplates";
 import {
 	EMAIL_PERFORMANCE_METRICS,
 	sendBatchEmails,
 	sendMatchedJobsEmail,
 	sendWelcomeEmail,
-} from "@/Utils/email/sender";
+} from "@/utils/email/sender";
 
 // Mock dependencies
-jest.mock("@/Utils/email/clients");
-jest.mock("@/Utils/email/productionReadyTemplates");
+jest.mock("@/utils/email/clients");
+jest.mock("@/utils/email/productionReadyTemplates");
 jest.mock("@/lib/api-logger", () => ({
 	apiLogger: {
 		info: jest.fn(),

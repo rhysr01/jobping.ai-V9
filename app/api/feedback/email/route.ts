@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getDatabaseClient } from "@/Utils/core/database-pool";
+import { getDatabaseClient } from "@/utils/core/database-pool";
 import { apiLogger } from "@/lib/api-logger";
 
 // Email feedback interface removed - not currently used

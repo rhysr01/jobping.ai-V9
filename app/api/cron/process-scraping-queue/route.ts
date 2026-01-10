@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 // import { withAxiom } from "next-axiom"; // Temporarily disabled due to Axiom URL configuration issue
 import { AppError, asyncHandler } from "@/lib/errors";
-import { getDatabaseClient } from "@/Utils/core/database-pool";
+import { getDatabaseClient } from "@/utils/core/database-pool";
 import { apiLogger } from "@/lib/api-logger";
 
 // Use centralized database client

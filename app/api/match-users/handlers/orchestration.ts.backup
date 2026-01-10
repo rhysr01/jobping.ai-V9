@@ -1,0 +1,176 @@
+/**
+ * Simplified Orchestration - Uses the new 3-service matching engine
+ * Handles user/job fetching and match persistence
+ */
+
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { apiLogger } from "@/lib/api-logger";
+import { triggerMatchingEvent } from "@/lib/inngest/matching-helpers";
+import type { MatchProvenance } from "@/lib/matching-types";
+import { logger } from "@/lib/monitoring";
+import type { Job as ScrapersJob } from "@/scrapers/types";
+import type { JobMatch, UserPreferences } from "@/utils/matching/types";
+import type { MatchResult, User } from "./types";
+
+/**
+ * Fetch users and jobs - Simplified
+ */
+export async function fetchUsersAndJobs(
+	supabase: SupabaseClient,
+	userCap: number,
+	jobCap: number,
+): Promise<{
+	users: User[];
+	transformedUsers: Array<{ email?: string; preferences: UserPreferences }>;
+	jobs: ScrapersJob[];
+	isSemanticAvailable: boolean;
+}> {
+	// Fetch active users
+	const { data: users, error: usersError } = await supabase
+		.from("users")
+		.select("*")
+		.eq("active", true)
+		.limit(userCap);
+
+	if (usersError) {
+		throw new Error(`Failed to fetch users: ${usersError.message}`);
+	}
+
+	if (!users || users.length === 0) {
+		throw new Error("No active users found");
+	}
+
+	logger.info("Active users found", {
+		metadata: { userCount: users.length },
+	});
+
+	// Transform users to match expected format
+	const transformedUsers = users.map(user => ({
+		email: user.email,
+		preferences: {
+			email: user.email,
+			full_name: user.full_name,
+			experience_level: user.experience_level,
+			target_cities: user.target_cities,
+			keywords: user.keywords,
+			industries: user.industries,
+			languages: user.languages,
+			work_environment: user.work_environment,
+			salary_expectations: user.salary_expectations,
+			remote_work: user.remote_work,
+			subscription_tier: user.subscription_tier,
+		} as UserPreferences,
+	}));
+
+	// Fetch recent jobs
+	const { data: jobs, error: jobsError } = await supabase
+		.from("jobs")
+		.select("*")
+		.eq("is_active", true)
+		.order("created_at", { ascending: false })
+		.limit(jobCap);
+
+	if (jobsError) {
+		throw new Error(`Failed to fetch jobs: ${jobsError.message}`);
+	}
+
+	const processedJobs = (jobs || []).map((job) => ({
+		...job,
+		location: job.location ?? "Remote",
+	})) as ScrapersJob[];
+
+	logger.info("Jobs fetched", {
+		metadata: { jobCount: processedJobs.length },
+	});
+
+	return {
+		users: users as User[],
+		transformedUsers,
+		jobs: processedJobs,
+		isSemanticAvailable: true, // Simplified - always available now
+	};
+
+/**
+ * Process users with simplified matching engine
+ */
+export async function processUsers(transformedUsers, jobs, supabase, startTime) {
+	const results = [];
+
+	for (const userData of transformedUsers) {
+		const userEmail = userData.email || "";
+
+		results.push({
+			user: userEmail,
+			success: true,
+			matches: 0,
+		});
+	}
+
+	return results;
+}
+
+/**
+ * Process users with simplified matching engine
+ */
+
+/**
+ * Save a match to the database
+ */
+async function saveMatchToDatabase(
+	supabase: any,
+	userEmail: string,
+	match: JobMatch
+): Promise<void> {
+	const { error } = await supabase.from("matches").upsert(
+		{
+			user_email: userEmail,
+			job_hash: match.job.job_hash,
+			match_score: match.match_score,
+			confidence_score: match.confidence_score,
+			match_reason: match.match_reason,
+			score_breakdown: match.score_breakdown,
+			method: match.method,
+			created_at: new Date().toISOString(),
+		},
+		{
+			onConflict: "user_email,job_hash",
+		}
+	);
+
+	if (error) {
+		throw new Error(`Failed to save match: ${error.message}`);
+	}
+}
+
+/**
+ * Log match session for analytics
+ */
+export async function logMatchSession(
+	supabase: any,
+	sessionData: {
+		user_email: string;
+		total_jobs_processed: number;
+		matches_found: number;
+		method: string;
+		processing_time: number;
+		prefilter_stats: {
+			filtered_count: number;
+			match_level: string;
+		};
+	}
+): Promise<void> {
+	const { error } = await supabase.from("match_sessions").insert({
+		user_email: sessionData.user_email,
+		total_jobs_processed: sessionData.total_jobs_processed,
+		matches_found: sessionData.matches_found,
+		method: sessionData.method,
+		processing_time: sessionData.processing_time,
+		prefilter_stats: sessionData.prefilter_stats,
+		created_at: new Date().toISOString(),
+	});
+
+	if (error) {
+		// Log but don't fail - analytics are not critical
+		apiLogger.warn("Failed to log match session", error);
+	}
+}

@@ -3,7 +3,7 @@
  */
 
 import { logger } from "@/lib/monitoring";
-import type { Job, UserPreferences } from "@/Utils/matching/types";
+import type { Job, UserPreferences } from "@/utils/matching/types";
 import { inngest } from "./functions";
 
 export interface MatchingEventData {

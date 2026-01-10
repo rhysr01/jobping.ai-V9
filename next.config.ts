@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
 		return `build-${Date.now()}`;
 	},
 	// Disable Turbopack, use webpack instead
-	turbopack: {},
+	turbopack: false,
 	experimental: {
 		optimizePackageImports: ["framer-motion"],
 	},

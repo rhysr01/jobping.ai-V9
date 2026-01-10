@@ -2,7 +2,7 @@
 
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import ErrorBoundary from "@/components/ErrorBoundary";
+import ErrorBoundary from "@/components/error-boundary";
 import Button from "@/components/ui/Button";
 import JobClosedModal from "@/components/ui/JobClosedModal";
 import { apiCall } from "@/lib/api-client";

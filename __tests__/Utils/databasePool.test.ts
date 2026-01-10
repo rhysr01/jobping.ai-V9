@@ -3,7 +3,7 @@
  * Tests connection pooling and health checks
  */
 
-import { closeDatabasePool, getDatabaseClient } from "@/Utils/databasePool";
+import { closeDatabasePool, getDatabaseClient } from "@/utils/databasePool";
 
 jest.mock("@supabase/supabase-js", () => ({
 	createClient: jest.fn(),

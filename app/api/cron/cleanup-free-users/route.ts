@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiLogger } from "@/lib/api-logger";
-import { getDatabaseClient } from "@/Utils/core/database-pool";
+import { getDatabaseClient } from "@/utils/core/database-pool";
 
 export async function GET(request: Request) {
 	// Verify cron secret

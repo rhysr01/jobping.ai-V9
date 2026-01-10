@@ -1,32 +1,10 @@
 import crypto from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
 import { apiLogger } from "@/lib/api-logger";
-import { getDatabaseClient } from "@/Utils/core/database-pool";
+import { getDatabaseClient } from "@/utils/core/database-pool";
+import type { ResendWebhookEvent } from "@/lib/email-types";
 
-// Resend webhook event types we care about
-interface ResendWebhookEvent {
-	type:
-		| "email.bounced"
-		| "email.complained"
-		| "email.delivered"
-		| "email.opened"
-		| "email.clicked";
-	created_at: string;
-	data: {
-		email_id: string;
-		to: string;
-		from: string;
-		subject: string;
-		bounce?: {
-			bounce_type: "permanent" | "temporary";
-			diagnostic_code?: string;
-		};
-		complaint?: {
-			complaint_type: string;
-			feedback_type?: string;
-		};
-	};
-}
+// Resend webhook event types imported from centralized types
 
 // Verify Resend webhook signature
 function verifyResendWebhook(

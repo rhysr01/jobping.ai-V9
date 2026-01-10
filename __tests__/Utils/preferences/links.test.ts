@@ -3,13 +3,13 @@
  * Tests URL generation for user preference links
  */
 
-import { buildPreferencesLink } from "@/Utils/preferences/links";
+import { buildPreferencesLink } from "@/utils/preferences/links";
 
-jest.mock("@/Utils/auth/secureTokens", () => ({
+jest.mock("@/utils/authentication/secureTokens", () => ({
 	issueSecureToken: jest.fn().mockReturnValue("mock-token-123"),
 }));
 
-jest.mock("@/Utils/url-helpers", () => ({
+jest.mock("@/utils/url-helpers", () => ({
 	getBaseUrl: jest.fn().mockReturnValue("https://getjobping.com"),
 }));
 

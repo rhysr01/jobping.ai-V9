@@ -5,12 +5,25 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { apiLogger } from "@/lib/api-logger";
 import { logger } from "@/lib/monitoring";
-import { isHMACRequired } from "@/Utils/auth/hmac";
-import { getDatabaseClient } from "@/Utils/core/database-pool";
-import { withRedisLock } from "@/Utils/core/locks";
-import { JobFetchError } from "@/Utils/matching/jobSearchService";
-import { UserFetchError } from "@/Utils/matching/userBatchService";
-import { getProductionRateLimiter } from "@/Utils/production-rate-limiter";
+import { isHMACRequired } from "@/utils/authentication/hmac";
+import { getDatabaseClient } from "@/utils/core/database-pool";
+import { withRedisLock } from "@/utils/core/locks";
+import { getProductionRateLimiter } from "@/utils/production-rate-limiter";
+
+// Simple error classes to replace deleted files
+export class JobFetchError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "JobFetchError";
+	}
+}
+
+export class UserFetchError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "UserFetchError";
+	}
+}
 import { IS_DEBUG, IS_TEST, LOCK_KEY, USER_LIMIT } from "./config";
 import { trackPerformance } from "./helpers";
 import { fetchUsersAndJobs, processUsers } from "./orchestration";

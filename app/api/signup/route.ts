@@ -2,11 +2,11 @@ import { type NextRequest, NextResponse } from "next/server";
 import { apiLogger } from "@/lib/api-logger";
 import { asyncHandler, AppError } from "@/lib/errors";
 import type { JobWithMetadata } from "@/lib/types/job";
-import { getDatabaseClient } from "@/Utils/core/database-pool";
-import { sendMatchedJobsEmail, sendWelcomeEmail } from "@/Utils/email/sender";
+import { getDatabaseClient } from "@/utils/core/database-pool";
+import { sendMatchedJobsEmail, sendWelcomeEmail } from "@/utils/email/sender";
 // Pre-filtering removed - AI handles semantic matching
-import { getDistributionStats } from "@/Utils/matching/jobDistribution";
-import { getProductionRateLimiter } from "@/Utils/production-rate-limiter";
+import { getDistributionStats } from "@/utils/matching/jobDistribution";
+import { getProductionRateLimiter } from "@/utils/production-rate-limiter";
 
 // Helper function to safely send welcome email and update tracking
 async function sendWelcomeEmailAndTrack(
@@ -352,7 +352,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 					const jobHashes = existingMatchData.map((m) => m.job_hash);
 					const { data: existingJobs } = await supabase
 						.from("jobs")
-						.select("*")
+						.select("id, title, company, location, description, job_url, job_hash, career_path, primary_category, categories, career_paths, work_environment, work_arrangement, work_mode, employment_type, job_type, contract_type, source, language_requirement, salary_min, salary_max, visa_sponsorship, posted_at")
 						.in("job_hash", jobHashes);
 
 					if (existingJobs && existingJobs.length > 0) {
@@ -434,10 +434,10 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 				}
 
 				// Build optimized query using database indexes
-				// Select all fields needed for email template (including tags, work_environment, etc.)
+				// Select all fields needed for matching engine
 				let query = supabase
 					.from("jobs")
-					.select("*")
+					.select("id, job_hash, title, company, location, city, country, job_url, description, experience_required, work_environment, source, categories, company_profile_url, language_requirements, scrape_timestamp, original_posted_date, posted_at, last_seen_at, is_active, scraper_run_id, created_at, is_internship, is_graduate, visa_friendly, status, filtered_reason")
 					.eq("is_active", true)
 					.eq("status", "active")
 					.is("filtered_reason", null);
@@ -513,9 +513,9 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 							);
 						}
 
-						// Use coordinator pattern for guaranteed matching
-						const { coordinatePremiumMatching } = await import(
-							"@/Utils/matching/guaranteed/coordinator"
+						// Use simplified matching engine for guaranteed matching
+						const { simplifiedMatchingEngine } = await import(
+							"@/utils/matching/core/matching-engine"
 						);
 
 						// Extract work environment preferences from form data
@@ -531,14 +531,14 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 							language_requirements: job.language_requirements || [],
 						}));
 
-						coordinatedResult = await coordinatePremiumMatching(
-							normalizedJobs as any,
+						coordinatedResult = await simplifiedMatchingEngine.findMatchesForUser(
 							userPrefs as any,
-							supabase,
+							normalizedJobs as any,
 							{
-								targetCount: 10,
-								targetCities: userData.target_cities || [],
-								targetWorkEnvironments: targetWorkEnvironments,
+								useAI: true,
+								maxJobsForAI: 20,
+								fallbackThreshold: 3,
+								includePrefilterScore: true,
 							},
 						);
 
@@ -567,7 +567,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 							// Fetch ALL active jobs (no filters)
 							const { data: allActiveJobs } = await supabase
 								.from("jobs")
-								.select("*")
+								.select("id, job_hash, title, company, location, city, country, job_url, description, experience_required, work_environment, source, categories, company_profile_url, language_requirements, scrape_timestamp, original_posted_date, posted_at, last_seen_at, is_active, scraper_run_id, created_at, is_internship, is_graduate, visa_friendly, status, filtered_reason")
 								.eq("is_active", true)
 								.eq("status", "active")
 								.is("filtered_reason", null)
@@ -580,14 +580,14 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 									...job,
 									language_requirements: job.language_requirements || [],
 								}));
-								const guaranteedResult = await coordinatePremiumMatching(
-									normalizedAllJobs as any,
+								const guaranteedResult = await simplifiedMatchingEngine.findMatchesForUser(
 									userPrefs as any,
-									supabase,
+									normalizedAllJobs as any,
 									{
-										targetCount: 10,
-										targetCities: userData.target_cities || [],
-										targetWorkEnvironments: targetWorkEnvironments,
+										useAI: true,
+										maxJobsForAI: 20,
+										fallbackThreshold: 3,
+										includePrefilterScore: true,
 									},
 								);
 
@@ -601,20 +601,16 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 							}
 
 							// If still no jobs, trigger custom scan
+							// TODO: Implement custom scan functionality when no jobs found
 							if (distributedJobs.length === 0) {
-								const { triggerCustomScan, extractMissingCriteria } =
-									await import("@/Utils/matching/guaranteed/custom-scan");
-								const missingCriteria = extractMissingCriteria(userPrefs, []);
-								const customScan = await triggerCustomScan(
-									supabase,
-									userPrefs,
-									missingCriteria,
-								);
+								apiLogger.info("[SIGNUP] No jobs found after guaranteed matching - custom scan would trigger here", {
+									userEmail: userData.email,
+									userPrefs: userPrefs,
+								});
 
-								// Don't throw error - proceed with welcome email and custom scan info
-								apiLogger.warn("No jobs found, custom scan triggered", {
+								// Don't throw error - proceed with welcome email
+								apiLogger.warn("No jobs found - custom scan functionality not yet implemented", {
 									email: data.email,
-									scanId: customScan.scanId,
 								});
 							}
 						}
@@ -796,7 +792,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 										const { data: verifyMatches, error: verifyError } =
 											await supabase
 												.from("matches")
-												.select("*")
+												.select("id, user_email, job_hash, match_score, match_reason, created_at")
 												.eq("user_email", data.email)
 												.limit(10);
 

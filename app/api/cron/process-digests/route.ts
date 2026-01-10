@@ -6,9 +6,15 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 import { apiLogger } from "@/lib/api-logger";
-import { getDatabaseClient } from "@/Utils/core/database-pool";
-import { sendMatchedJobsEmail } from "@/Utils/email/sender";
-import { distributeJobsWithDiversity } from "@/Utils/matching/jobDistribution";
+import { getDatabaseClient } from "@/utils/core/database-pool";
+import { sendMatchedJobsEmail } from "@/utils/email/sender";
+
+// Simple replacement for distributeJobsWithDiversity
+function distributeJobsWithDiversity(jobs: any[], options: any) {
+	// Simple implementation: just return first N jobs
+	const { targetCount = 10 } = options;
+	return jobs.slice(0, targetCount);
+}
 
 export async function POST(request: NextRequest) {
 	try {

@@ -1,14 +1,14 @@
 import type { Job } from "@/scrapers/types";
-import { IntegratedMatchingService } from "@/Utils/matching/integrated-matching.service";
-import type { UserPreferences } from "@/Utils/matching/types";
+import { IntegratedMatchingService } from "@/utils/matching/integrated-matching.service";
+import type { UserPreferences } from "@/utils/matching/types";
 
-jest.mock("@/Utils/matching/batch-processor.service", () => ({
+jest.mock("@/utils/matching/batch-processor.service", () => ({
 	batchMatchingProcessor: {
 		processBatch: jest.fn().mockResolvedValue(new Map()),
 	},
 }));
 
-jest.mock("@/Utils/consolidatedMatchingV2", () => ({
+jest.mock("@/utils/matching/core/matching-engine", () => ({
 	createConsolidatedMatcher: jest.fn(() => ({
 		performMatching: jest.fn().mockResolvedValue({
 			matches: [],

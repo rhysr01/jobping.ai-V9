@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import LogoWordmark from "@/components/LogoWordmark";
+import LogoWordmark from "@/components/logo-wordmark";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 import Button from "@/components/ui/Button";
 import { trackEvent } from "@/lib/analytics";

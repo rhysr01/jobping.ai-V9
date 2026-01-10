@@ -2,7 +2,7 @@ import {
 	getMatchSessionStats,
 	logMatchSession,
 	type MatchSessionLog,
-} from "@/Utils/matching/logging.service";
+} from "@/utils/matching/logging.service";
 
 jest.mock("@supabase/supabase-js", () => ({
 	createClient: jest.fn(() => ({

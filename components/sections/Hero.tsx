@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState, memo } from "react";
 import { HeroMobileMockup } from "@/components/marketing/HeroMobileMockup";
-import TrustBadges from "@/components/sections/TrustBadges";
+import TrustBadges from "@/components/sections/trust-badges";
 import { BrandIcons } from "@/components/ui/BrandIcons";
 import GradientText from "@/components/ui/GradientText";
 import HeroBackgroundAura from "@/components/ui/HeroBackgroundAura";

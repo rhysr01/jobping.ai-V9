@@ -13,16 +13,16 @@ type JobTrack =
 	| "other";
 
 export function inferTrack(text: string): JobTrack {
-	const t = text.toLowerCase();
-	if (/(consultant|consulting|advisory)/.test(t)) return "consulting";
-	if (/(investment|bank|finance|equity|audit|account)/.test(t))
+	const normalizedText = text.toLowerCase();
+	if (/(consultant|consulting|advisory)/.test(normalizedText)) return "consulting";
+	if (/(investment|bank|finance|equity|audit|account)/.test(normalizedText))
 		return "finance";
-	if (/(strategy|corporate strategy|strategic)/.test(t)) return "strategy";
-	if (/(operations|supply chain|logistics|ops)/.test(t)) return "operations";
-	if (/(marketing|brand|growth|digital marketing)/.test(t)) return "marketing";
-	if (/(product manager|product management)/.test(t)) return "product";
-	if (/(data analyst|business intelligence|analytics)/.test(t)) return "data";
-	if (/(sustainab|esg|csr|climate)/.test(t)) return "sustainability";
+	if (/(strategy|corporate strategy|strategic)/.test(normalizedText)) return "strategy";
+	if (/(operations|supply chain|logistics|ops)/.test(normalizedText)) return "operations";
+	if (/(marketing|brand|growth|digital marketing)/.test(normalizedText)) return "marketing";
+	if (/(product manager|product management)/.test(normalizedText)) return "product";
+	if (/(data analyst|business intelligence|analytics)/.test(normalizedText)) return "data";
+	if (/(sustainab|esg|csr|climate)/.test(normalizedText)) return "sustainability";
 	return "other";
 }
 
@@ -37,15 +37,15 @@ export function scoreJob(
 	if (days <= 14) score += 40;
 	else if (days <= 28) score += 20;
 
-	const s = `${title} ${description}`.toLowerCase();
+	const combinedText = `${title} ${description}`.toLowerCase();
 	let early = 0;
 	if (
 		/(graduate programme|graduate program|graduate|entry level|intern|trainee|junior|analyst|rotation|leadership)/.test(
-			s,
+			combinedText,
 		)
 	)
 		early += 20;
-	if (/(intern|trainee|rotation|leadership)/.test(s)) early += 15;
+	if (/(intern|trainee|rotation|leadership)/.test(combinedText)) early += 15;
 	score += Math.min(35, early);
 
 	if (track !== "other") score += 15;

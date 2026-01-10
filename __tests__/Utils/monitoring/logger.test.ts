@@ -8,7 +8,7 @@ import {
 	createRequestLogger,
 	Logger,
 	logger,
-} from "@/Utils/monitoring/logger";
+} from "@/utils/monitoring/logger";
 
 describe("Logger", () => {
 	let consoleSpy: jest.SpyInstance;

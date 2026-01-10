@@ -6,7 +6,7 @@ import { CheckCircle2, Cpu, FileJson, Target, Mail } from "lucide-react";
 import { useEffect, useRef } from "react";
 import GradientText from "@/components/ui/GradientText";
 import Heading from "@/components/ui/Heading";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/classname-utils";
 
 const FeatureCard = ({
 	title,

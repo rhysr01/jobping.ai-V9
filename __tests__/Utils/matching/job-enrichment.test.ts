@@ -1,5 +1,5 @@
 import type { Job } from "@/scrapers/types";
-import { enrichJobData } from "@/Utils/matching/job-enrichment.service";
+import { enrichJobData } from "@/utils/matching/job-enrichment.service";
 
 describe("job-enrichment.service", () => {
 	const mockJob: Job = {

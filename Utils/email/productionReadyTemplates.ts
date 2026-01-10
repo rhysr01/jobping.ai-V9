@@ -11,7 +11,7 @@ import {
 	getVisaConfidenceLabel,
 	// getVisaConfidenceStyle, // Kept for future use
 } from "../../Utils/matching/visa-confidence";
-import { issueSecureToken } from "../auth/secureTokens";
+import { issueSecureToken } from "@/utils/authentication/secureTokens";
 import { buildPreferencesLink } from "../preferences/links";
 import { getBaseUrl } from "../url-helpers";
 import type { EmailJobCard } from "./types";

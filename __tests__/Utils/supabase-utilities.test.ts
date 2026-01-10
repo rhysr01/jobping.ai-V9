@@ -3,9 +3,9 @@ import {
 	type DatabaseResponse,
 	executeWithRetry,
 	wrapDatabaseResponse,
-} from "@/Utils/supabase";
+} from "@/utils/supabase";
 
-jest.mock("@/Utils/databasePool", () => {
+jest.mock("@/utils/databasePool", () => {
 	const mockSupabase = {
 		from: jest.fn(() => ({
 			select: jest.fn(() => ({

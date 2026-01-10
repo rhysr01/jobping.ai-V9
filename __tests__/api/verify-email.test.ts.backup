@@ -1,0 +1,322 @@
+/**
+ * Email Verification Flow Tests
+ *
+ * Tests the critical email verification process that enables user onboarding
+ * This is revenue-critical as users can't complete signup without verification
+ */
+
+import { createMocks } from "node-mocks-http";
+import { POST } from "@/app/api/verify-email/route";
+import { generateVerificationToken } from "@/utils/email-verification";
+
+describe("POST /api/verify-email - Email Verification Flow", () => {
+	describe("Input Validation", () => {
+		it("should reject requests without token", async () => {
+			// Create a proper request object for Next.js
+			const request = new Request("http://localhost:3000/api/verify-email", {
+				method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+				headers: {
+					"content-type": "application/json",
+				},
+				body: JSON.stringify({
+					email: "test@example.com",
+					// Missing token
+				}),
+			});
+
+			const response = await POST(request as any);
+			expect([400, 422]).toContain(response.status);
+		});
+
+		it("should reject requests without email", async () => {
+			const request = new Request("http://localhost:3000/api/verify-email", {
+				method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+				headers: {
+					"content-type": "application/json",
+				},
+				body: JSON.stringify({
+					token: "some-token",
+					// Missing email
+				}),
+			});
+
+			const response = await POST(request as any);
+			expect([400, 422]).toContain(response.status);
+		});
+
+		it("should reject invalid email formats", async () => {
+			const invalidEmails = [
+				"notanemail",
+				"@example.com",
+				"user@",
+				"user.example.com",
+			];
+
+			for (const email of invalidEmails) {
+				const request = new Request("http://localhost:3000/api/verify-email", {
+					method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+					headers: {
+						"content-type": "application/json",
+					},
+					body: JSON.stringify({
+						email,
+						token: "test-token",
+					}),
+				});
+
+				const response = await POST(request as any);
+				expect([400, 422]).toContain(response.status);
+			}
+		});
+	});
+
+	describe("Token Verification", () => {
+		it("should accept valid verification tokens", async () => {
+			const testEmail = "test@example.com";
+			const validToken = generateVerificationToken(testEmail);
+
+			const request = new Request("http://localhost:3000/api/verify-email", {
+				method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+				headers: {
+					"content-type": "application/json",
+				},
+				body: JSON.stringify({
+					email: testEmail,
+					token: validToken,
+				}),
+			});
+
+			const response = await POST(request as any);
+			expect([200, 201]).toContain(response.status);
+		});
+
+		it("should reject expired tokens", async () => {
+			// Create an expired token by mocking Date.now
+			const originalDateNow = Date.now;
+			Date.now = jest.fn(() => originalDateNow() - 25 * 60 * 60 * 1000); // 25 hours ago
+
+			const testEmail = "test@example.com";
+			const expiredToken = generateVerificationToken(testEmail);
+
+			Date.now = originalDateNow; // Restore
+
+			const request = new Request("http://localhost:3000/api/verify-email", {
+				method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+				body: {
+					email: testEmail,
+					token: expiredToken,
+				},
+			});
+
+			const response = await POST(req as any);
+			expect([400, 401]).toContain(response.status);
+		});
+
+		it("should reject tampered tokens", async () => {
+			const testEmail = "test@example.com";
+			const validToken = generateVerificationToken(testEmail);
+			const tamperedToken = validToken.replace(/.$/, "x"); // Change last character
+
+			const request = new Request("http://localhost:3000/api/verify-email", {
+				method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+				body: {
+					email: testEmail,
+					token: tamperedToken,
+				},
+			});
+
+			const response = await POST(req as any);
+			expect([400, 401]).toContain(response.status);
+		});
+
+		it("should reject tokens for different emails", async () => {
+			const originalEmail = "original@example.com";
+			const differentEmail = "different@example.com";
+			const token = generateVerificationToken(originalEmail);
+
+			const request = new Request("http://localhost:3000/api/verify-email", {
+				method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+				body: {
+					email: differentEmail, // Using different email
+					token: token,
+				},
+			});
+
+			const response = await POST(req as any);
+			expect([400, 401]).toContain(response.status);
+		});
+	});
+
+	describe("User State Updates", () => {
+		it("should mark user as verified", async () => {
+			const testEmail = "verify-test@example.com";
+			const validToken = generateVerificationToken(testEmail);
+
+			const request = new Request("http://localhost:3000/api/verify-email", {
+				method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+				body: {
+					email: testEmail,
+					token: validToken,
+				},
+			});
+
+			const response = await POST(req as any);
+			expect([200, 201]).toContain(response.status);
+
+			const data = await response.json();
+			expect(data).toBeDefined();
+			expect(data.success).toBe(true);
+		});
+
+		it("should handle already verified users gracefully", async () => {
+			const testEmail = "already-verified@example.com";
+			const validToken = generateVerificationToken(testEmail);
+
+			// First verification
+			const { req: req1 } = createMocks({
+				method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+				body: {
+					email: testEmail,
+					token: validToken,
+				},
+			});
+
+			await POST(req1 as any);
+
+			// Second verification attempt
+			const { req: req2 } = createMocks({
+				method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+				body: {
+					email: testEmail,
+					token: validToken,
+				},
+			});
+
+			const response2 = await POST(req2 as any);
+			expect([200, 201]).toContain(response2.status);
+		});
+	});
+
+	describe("Rate Limiting", () => {
+		it("should enforce rate limiting for verification attempts", async () => {
+			const testEmail = "rate-limited@example.com";
+
+			// Make multiple rapid requests
+			const requests = Array.from({ length: 10 }, () => {
+				const token = generateVerificationToken(testEmail);
+				const request = new Request("http://localhost:3000/api/verify-email", {
+					method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+					body: {
+						email: testEmail,
+						token: token,
+					},
+				});
+				return POST(req as any);
+			});
+
+			const responses = await Promise.all(requests);
+			const successCount = responses.filter(
+				(r) => r.status >= 200 && r.status < 300,
+			).length;
+			const rateLimitedCount = responses.filter((r) => r.status === 429).length;
+
+			// Should allow some requests but rate limit excessive attempts
+			expect(successCount).toBeGreaterThan(0);
+			expect(successCount + rateLimitedCount).toBe(10);
+		});
+	});
+
+	describe("Error Handling", () => {
+		it("should handle database errors gracefully", async () => {
+			const testEmail = "db-error@example.com";
+			const validToken = generateVerificationToken(testEmail);
+
+			// Mock database failure scenario
+			const request = new Request("http://localhost:3000/api/verify-email", {
+				method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+				body: {
+					email: testEmail,
+					token: validToken,
+				},
+			});
+
+			const response = await POST(req as any);
+			expect([200, 500]).toContain(response.status); // Either success or graceful failure
+		});
+
+		it("should provide helpful error messages", async () => {
+			const request = new Request("http://localhost:3000/api/verify-email", {
+				method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+				body: {
+					email: "invalid-email",
+					token: "invalid-token",
+				},
+			});
+
+			const response = await POST(req as any);
+			const data = await response.json();
+
+			if (response.status >= 400) {
+				expect(data.error || data.message).toBeDefined();
+			}
+		});
+	});
+
+	describe("Security Considerations", () => {
+		it("should prevent timing attacks on token verification", async () => {
+			const validEmail = "valid@example.com";
+			const invalidEmail = "invalid@example.com";
+			const validToken = generateVerificationToken(validEmail);
+
+			// Test that response times are similar for valid and invalid inputs
+			const start1 = Date.now();
+			const { req: req1 } = createMocks({
+				method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+				body: {
+					email: validEmail,
+					token: validToken,
+				},
+			});
+			await POST(req1 as any);
+			const time1 = Date.now() - start1;
+
+			const start2 = Date.now();
+			const { req: req2 } = createMocks({
+				method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+				body: {
+					email: invalidEmail,
+					token: validToken,
+				},
+			});
+			await POST(req2 as any);
+			const time2 = Date.now() - start2;
+
+			// Response times should be similar to prevent timing attacks
+			const timeDiff = Math.abs(time1 - time2);
+			expect(timeDiff).toBeLessThan(100); // Less than 100ms difference
+		});
+
+		it("should validate email domain reputation", async () => {
+			const suspiciousEmails = [
+				"test@temporary-mail.org",
+				"test@10minutemail.com",
+				"test@throwaway.email",
+			];
+
+			for (const email of suspiciousEmails) {
+				const token = generateVerificationToken(email);
+				const request = new Request("http://localhost:3000/api/verify-email", {
+					method: "POST", headers: { "content-type": "application/json", }, body: JSON.stringify(
+					body: {
+						email,
+						token,
+					},
+				});
+
+				const response = await POST(req as any);
+				// Should either reject or allow but log suspicious activity
+				expect([200, 201, 400, 422]).toContain(response.status);
+			}
+		});
+	});
+});
