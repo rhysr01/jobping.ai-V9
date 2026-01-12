@@ -5,6 +5,8 @@
 
 // Note: Web Vitals reporting is handled in lib/web-vitals.ts and sent to Axiom via structured logging
 
+import * as Sentry from "@sentry/nextjs";
+
 export async function register() {
 	if (process.env.NEXT_RUNTIME === "nodejs") {
 		await import("./sentry.server.config");
@@ -14,3 +16,6 @@ export async function register() {
 		await import("./sentry.edge.config");
 	}
 }
+
+// Export the required hook for Sentry error instrumentation
+export const onRequestError = Sentry.captureRequestError;

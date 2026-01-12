@@ -30,3 +30,6 @@ Sentry.init({
 	// Only initialize if DSN is available (Vercel integration will provide this)
 	enabled: !!process.env.NEXT_PUBLIC_SENTRY_DSN || !!process.env.SENTRY_DSN,
 });
+
+// Export the required hooks for Sentry navigation instrumentation
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
