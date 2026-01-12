@@ -1,5 +1,7 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const nextConfig: NextConfig = {
 	// Force unique build ID to prevent cache issues during TDZ fix
@@ -102,9 +104,10 @@ const nextConfig: NextConfig = {
 	webpack: (config, { isServer, webpack }) => {
 		// Ensure path aliases work correctly
 		config.resolve = config.resolve || {};
+		const __dirname = path.dirname(fileURLToPath(import.meta.url));
 		config.resolve.alias = {
 			...config.resolve.alias,
-			"@": require("path").resolve(process.cwd()),
+			"@": path.resolve(__dirname),
 		};
 
 		// Always exclude problematic modules
