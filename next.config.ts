@@ -97,9 +97,19 @@ const nextConfig: NextConfig = {
 	webpack: (config, { isServer, webpack }) => {
 		// Force webpack aliases for Vercel compatibility
 		config.resolve = config.resolve || {};
+		// Ensure modules are resolved correctly
+		config.resolve.modules = [
+			...(config.resolve.modules || []),
+			require('path').resolve(process.cwd()),
+		];
+		// Force alias resolution
 		config.resolve.alias = {
 			...config.resolve.alias,
 			'@': require('path').resolve(process.cwd()),
+			'@/utils': require('path').resolve(process.cwd(), 'utils'),
+			'@/lib': require('path').resolve(process.cwd(), 'lib'),
+			'@/components': require('path').resolve(process.cwd(), 'components'),
+			'@/app': require('path').resolve(process.cwd(), 'app'),
 		};
 
 		// Always exclude problematic modules
