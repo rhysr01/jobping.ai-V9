@@ -2,11 +2,11 @@ import { type NextRequest, NextResponse } from "next/server";
 import { apiLogger } from "@/lib/api-logger";
 import { asyncHandler } from "@/lib/errors";
 import type { JobWithMetadata } from "@/lib/types/job";
-import { getDatabaseClient } from "@/utils/core/database-pool";
+import { getDatabaseClient } from "../../../utils/core/database-pool";
 import { sendMatchedJobsEmail, sendWelcomeEmail } from "@/utils/email/sender";
 // Pre-filtering removed - AI handles semantic matching
 import { getDistributionStats } from "@/utils/matching/jobDistribution";
-import { getProductionRateLimiter } from "@/utils/production-rate-limiter";
+import { getProductionRateLimiter } from "../../../utils/production-rate-limiter";
 import { simplifiedMatchingEngine } from "@/utils/matching/core/matching-engine";
 
 // Helper function to safely send welcome email and update tracking

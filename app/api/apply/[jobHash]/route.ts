@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { apiLogger } from "@/lib/api-logger";
-import { verifySecureToken } from "@/utils/authentication/secureTokens";
+import { verifySecureToken } from "../../../../utils/authentication/secureTokens";
 import { getDatabaseClient } from "@/utils/core/database-pool";
 
 export const dynamic = "force-dynamic";
