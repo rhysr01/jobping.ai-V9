@@ -4,7 +4,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev",
-		"build": "TURBOPACK=0 next build",
+		"build": "TURBO_PACK=false TURBOPACK=0 next build",
 		"start": "next start",
 		"lint": "next lint",
 		"lint:biome": "biome check .",

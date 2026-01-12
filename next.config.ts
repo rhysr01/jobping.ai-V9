@@ -6,9 +6,14 @@ const nextConfig: NextConfig = {
 	generateBuildId: async () => {
 		return `build-${Date.now()}`;
 	},
-	// Turbopack configuration - disabled for Vercel compatibility
+	// Turbopack configuration with path aliases
 	experimental: {
 		optimizePackageImports: ["framer-motion"],
+		turbo: {
+			resolveAlias: {
+				"@": ".",
+			},
+		},
 	},
 	// Remove console logs in production (keep errors and warnings)
 	compiler: {
