@@ -99,7 +99,7 @@ const nextConfig: NextConfig = {
 		config.resolve = config.resolve || {};
 		config.resolve.alias = {
 			...config.resolve.alias,
-			'@': '.',
+			'@': require('path').resolve(process.cwd()),
 		};
 
 		// Always exclude problematic modules
