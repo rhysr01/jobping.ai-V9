@@ -122,49 +122,16 @@ class RealJobRunner {
 	}
 
 	async getSignupTargets() {
-		try {
-			const { data, error } = await supabase
-				.from("users")
-				.select("target_cities, career_path, industries, roles_selected")
-				.eq("subscription_active", true);
+		// REMOVED: User-based targeting to ensure even job distribution
+		// Since we don't have real users yet, test accounts were skewing the scraping
+		// Now scrapers will use their comprehensive default city lists instead
 
-			if (error) {
-				console.error("⚠️  Failed to fetch signup targets:", error.message);
-				return { cities: [], careerPaths: [], industries: [], roles: [] };
-			}
+		console.log("🎯 Comprehensive scraping mode - no user targeting applied", {
+			note: "Scrapers will use their own complete default city lists for even distribution",
+		});
 
-			// Use extracted target resolver
-			const targets = resolveTargets(data || []);
-
-			// Note: We don't provide default cities here because each scraper has its own defaults:
-			// - Reed: UK/Ireland cities (London, Manchester, Birmingham, Belfast, Dublin)
-			// - CareerJet: EU cities (Dublin, Cork, Belfast, London, Manchester, Edinburgh, Paris, Berlin, Munich, Amsterdam, Madrid, Barcelona, Milan, Rome, Lisbon, Brussels)
-			// - Arbeitnow: DACH cities (Germany, Austria, Switzerland)
-			// - Adzuna: EU_CITIES_CATEGORIES (20 cities)
-			// - JobSpy: Has its own comprehensive city list
-			// Each scraper will use its own defaults if TARGET_CITIES is empty
-
-			console.log("🎯 Signup-driven targets ready", {
-				citiesPreview: targets.cities.slice(0, 10),
-				totalCities: targets.cities.length,
-				totalCareerPaths: targets.careerPaths.length,
-				totalIndustries: targets.industries.length,
-				totalRoles: targets.roles.length,
-				note:
-					targets.cities.length === 0
-						? "Scrapers will use their own default city lists"
-						: "Scrapers will filter to their supported cities",
-			});
-
-			return targets;
-		} catch (error) {
-			console.error(
-				"⚠️  Unexpected error collecting signup targets:",
-				error.message,
-			);
-			// Return empty arrays - scrapers will use their own defaults
-			return { cities: [], careerPaths: [], industries: [], roles: [] };
-		}
+		// Return empty arrays to force scrapers to use their comprehensive defaults
+		return { cities: [], careerPaths: [], industries: [], roles: [] };
 	}
 
 	// Methods removed - now using extracted modules:
