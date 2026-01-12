@@ -1,4 +1,4 @@
-import { getBaseUrl } from "@/utils/url-helpers";
+import { getBaseUrl } from "../utils/url-helpers";
 
 export default function StructuredData() {
 	const structuredData = {

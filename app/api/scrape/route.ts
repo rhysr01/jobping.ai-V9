@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 // import { withAxiom } from "next-axiom"; // Temporarily disabled due to Axiom URL configuration issue
-import { asyncHandler } from "@/lib/errors";
-import { apiLogger } from "@/lib/api-logger";
+import { asyncHandler } from "../../../lib/errors";
+import { apiLogger } from "../../../lib/api-logger";
 
 // Simple scrape endpoint for production
 export const POST =

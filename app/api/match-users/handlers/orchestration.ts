@@ -4,9 +4,9 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { apiLogger } from "@/lib/api-logger";
+import { apiLogger } from "../../../../lib/api-logger";
 import type { Job as ScrapersJob } from "@/scrapers/types";
-import type { UserPreferences } from "@/utils/matching/types";
+import type { UserPreferences } from "../../../../utils/matching/types";
 import type { MatchResult, User } from "./types";
 
 /**

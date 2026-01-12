@@ -3,7 +3,7 @@
  * Extracted from jobMatching.ts for better organization
  */
 
-import type { Tables } from "@/lib/database.types";
+import type { Tables } from "../../lib/database.types";
 import type { Job } from "../../scrapers/types";
 
 // Re-export Job type for convenience

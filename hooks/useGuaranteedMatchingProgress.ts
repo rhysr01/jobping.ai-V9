@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { TIMING } from "@/lib/constants";
+import { TIMING } from "../lib/constants";
 
 // Use constants from lib/constants.ts
 const STAGE_DURATIONS = [

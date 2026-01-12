@@ -1,7 +1,7 @@
 import { Webhooks } from "@polar-sh/nextjs";
 import { type NextRequest, NextResponse } from "next/server";
-import { apiLogger } from "@/lib/api-logger";
-import { ENV } from "@/lib/env";
+import { apiLogger } from "../../../../lib/api-logger";
+import { ENV } from "../../../../lib/env";
 import { getDatabaseClient } from "../../../../utils/core/database-pool";
 
 // Use any for payload since Polar SDK has complex union types

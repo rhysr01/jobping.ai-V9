@@ -1,10 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Job } from "@/hooks/useMatches";
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import Button from "@/components/ui/Button";
-import { HotMatchBadge } from "@/components/ui/HotMatchBadge";
-import { trackEvent } from "@/lib/analytics";
+import { BrandIcons } from "../ui/BrandIcons";
+import Button from "../ui/Button";
+import { HotMatchBadge } from "../ui/HotMatchBadge";
+import { trackEvent } from "../../lib/analytics";
 import { X } from "lucide-react";
 
 interface JobListProps {

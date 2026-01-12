@@ -3,7 +3,7 @@ import {
 	excludeNoise,
 	localPacks,
 	targetCities,
-} from "@/lib/config";
+} from "../../lib/config";
 
 describe("config", () => {
 	describe("englishSeeds", () => {

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { apiCallJson } from "@/lib/api-client";
-import { logger } from "@/lib/monitoring";
+import { apiCallJson } from "../../lib/api-client";
+import { logger } from "../../lib/monitoring";
 
 interface SignupStatsProps {
 	setTotalUsers: (users: string) => void;

@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { asyncHandler } from "@/lib/errors";
-import { apiLogger } from "@/lib/api-logger";
-import { performanceMonitor } from "@/lib/monitoring";
+import { asyncHandler } from "../../../lib/errors";
+import { apiLogger } from "../../../lib/api-logger";
+import { performanceMonitor } from "../../../lib/monitoring";
 import { getDatabaseClient } from "../../../utils/core/database-pool";
 import { getProductionRateLimiter } from "../../../utils/production-rate-limiter";
 

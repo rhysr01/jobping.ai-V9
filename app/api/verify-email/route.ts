@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { isTest } from "@/lib/env";
-import { asyncHandler, ValidationError } from "@/lib/errors";
+import { isTest } from "../../../lib/env";
+import { asyncHandler, ValidationError } from "../../../lib/errors";
 import {
 	markUserVerified,
 	verifyVerificationToken,
-} from "@/utils/email-verification";
+} from "../../../utils/email-verification";
 import { getProductionRateLimiter } from "../../../utils/production-rate-limiter";
-import { getBaseUrl } from "@/utils/url-helpers";
+import { getBaseUrl } from "../../../utils/url-helpers";
 
 // Test mode helper - using professional pattern
 const isTestMode = () => isTest();

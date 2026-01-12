@@ -3,7 +3,7 @@
  * Tests company discovery parameter handling
  */
 
-import type { DiscoverParams } from "@/lib/discover";
+import type { DiscoverParams } from "../../lib/discover";
 
 describe("Discover - Parameter Types", () => {
 	it("should accept valid location IDs", () => {

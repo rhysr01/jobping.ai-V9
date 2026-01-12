@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle } from "lucide-react";
-import { TIMING } from "@/lib/constants";
+import { TIMING } from "../../lib/constants";
 
 const STAGES = [
 	{

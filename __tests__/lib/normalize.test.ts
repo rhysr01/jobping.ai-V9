@@ -5,7 +5,7 @@ import {
 	type JobTrack,
 	normalize,
 	scoreJob,
-} from "@/lib/normalize";
+} from "../../lib/normalize";
 
 describe("normalize", () => {
 	describe("inferTrack", () => {

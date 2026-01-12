@@ -9,7 +9,7 @@
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { logger } from "@/lib/monitoring";
+import { logger } from "../../lib/monitoring";
 
 class DatabasePool {
 	private static instance: SupabaseClient | null = null;

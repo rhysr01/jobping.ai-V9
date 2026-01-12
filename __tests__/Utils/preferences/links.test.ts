@@ -3,7 +3,7 @@
  * Tests URL generation for user preference links
  */
 
-import { buildPreferencesLink } from "@/utils/preferences/links";
+import { buildPreferencesLink } from "../../../utils/preferences/links";
 
 jest.mock("@/utils/authentication/secureTokens", () => ({
 	issueSecureToken: jest.fn().mockReturnValue("mock-token-123"),

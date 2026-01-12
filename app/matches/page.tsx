@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import ErrorBoundary from "@/components/error-boundary";
+import ErrorBoundary from "../../components/error-boundary";
 import MatchesPageContent from "./components/MatchesPageContent";
 
 export default function MatchesPage() {

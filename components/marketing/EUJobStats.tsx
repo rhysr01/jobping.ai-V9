@@ -3,10 +3,10 @@
 import { motion, useSpring, useTransform } from "framer-motion";
 import { BookOpen, MapPin, Award, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
-import GlassCard from "@/components/ui/GlassCard";
-import GradientText from "@/components/ui/GradientText";
-import Heading from "@/components/ui/Heading";
-import { cn } from "@/lib/classname-utils";
+import GlassCard from "../ui/GlassCard";
+import GradientText from "../ui/GradientText";
+import Heading from "../ui/Heading";
+import { cn } from "../../lib/classname-utils";
 
 interface JobStats {
 	internships: number;

@@ -1,17 +1,17 @@
 "use client";
 import { motion } from "framer-motion";
 import { useEffect, useState, memo } from "react";
-import { HeroMobileMockup } from "@/components/marketing/HeroMobileMockup";
-import TrustBadges from "@/components/sections/trust-badges";
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import GradientText from "@/components/ui/GradientText";
-import HeroBackgroundAura from "@/components/ui/HeroBackgroundAura";
+import { HeroMobileMockup } from "../marketing/HeroMobileMockup";
+import TrustBadges from "./trust-badges";
+import { BrandIcons } from "../ui/BrandIcons";
+import GradientText from "../ui/GradientText";
+import HeroBackgroundAura from "../ui/HeroBackgroundAura";
 import { useStats } from "@/hooks/useStats";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent } from "../../lib/analytics";
 import {
 	CTA_GET_MY_5_FREE_MATCHES,
 	CTA_GET_MY_5_FREE_MATCHES_ARIA,
-} from "@/lib/copy";
+} from "../../lib/copy";
 
 function Hero() {
 	const [preloadedJobs, setPreloadedJobs] = useState<any[]>([]);

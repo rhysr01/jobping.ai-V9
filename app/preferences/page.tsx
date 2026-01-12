@@ -1,10 +1,10 @@
 "use client";
 
 import { Suspense } from "react";
-import Button from "@/components/ui/Button";
-import { BasicInfoSection } from "@/components/preferences/BasicInfoSection";
-import { LanguageLocationSection } from "@/components/preferences/LanguageLocationSection";
-import { CareerPreferencesSection } from "@/components/preferences/CareerPreferencesSection";
+import Button from "../../components/ui/Button";
+import { BasicInfoSection } from "../../components/preferences/BasicInfoSection";
+import { LanguageLocationSection } from "../../components/preferences/LanguageLocationSection";
+import { CareerPreferencesSection } from "../../components/preferences/CareerPreferencesSection";
 import { usePreferences } from "@/hooks/usePreferences";
 
 function PreferencesContent() {

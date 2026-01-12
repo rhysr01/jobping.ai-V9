@@ -3,28 +3,28 @@
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useRef } from "react";
-import ErrorBoundary from "@/components/error-boundary";
-import { CAREER_PATHS } from "@/components/signup/constants";
-import { HeroSection } from "@/components/signup/HeroSection";
-import { ProgressBar } from "@/components/signup/ProgressBar";
-import { Step1Basics } from "@/components/signup/Step1Basics";
-import { Step2Preferences } from "@/components/signup/Step2Preferences";
-import { Step3CareerPath } from "@/components/signup/Step3CareerPath";
-import { Step4MatchingPreferences } from "@/components/signup/Step4MatchingPreferences";
-import { TrustSignals } from "@/components/signup/TrustSignals";
-import { useAriaAnnounce } from "@/components/ui/AriaLiveRegion";
-import { useReducedMotion } from "@/components/ui/useReducedMotion";
+import ErrorBoundary from "../../components/error-boundary";
+import { CAREER_PATHS } from "../../components/signup/constants";
+import { HeroSection } from "../../components/signup/HeroSection";
+import { ProgressBar } from "../../components/signup/ProgressBar";
+import { Step1Basics } from "../../components/signup/Step1Basics";
+import { Step2Preferences } from "../../components/signup/Step2Preferences";
+import { Step3CareerPath } from "../../components/signup/Step3CareerPath";
+import { Step4MatchingPreferences } from "../../components/signup/Step4MatchingPreferences";
+import { TrustSignals } from "../../components/signup/TrustSignals";
+import { useAriaAnnounce } from "../../components/ui/AriaLiveRegion";
+import { useReducedMotion } from "../../components/ui/useReducedMotion";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
 import {
 	useEmailValidation,
 	useRequiredValidation,
 } from "@/hooks/useFormValidation";
-import { ApiError, apiCallJson } from "@/lib/api-client";
-import { TIMING } from "@/lib/constants";
-import { showToast } from "@/lib/toast";
+import { ApiError, apiCallJson } from "../../lib/api-client";
+import { TIMING } from "../../lib/constants";
+import { showToast } from "../../lib/toast";
 import { useSignupState } from "@/hooks/useSignupState";
 import { useSignupNavigation } from "@/hooks/useSignupNavigation";
-import { SignupStats } from "@/components/signup/SignupStats";
+import { SignupStats } from "../../components/signup/SignupStats";
 
 function SignupForm() {
 	const router = useRouter();

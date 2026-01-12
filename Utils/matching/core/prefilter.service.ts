@@ -3,9 +3,9 @@
  * Consolidates all prefilter logic into a single, focused service
  */
 
-import { logger } from "@/lib/monitoring";
+import { logger } from "../../../lib/monitoring";
 import type { Job as ScrapersJob } from "@/scrapers/types";
-import type { UserPreferences } from "@/utils/matching/types";
+import type { UserPreferences } from "../types";
 
 export interface PrefilterResult {
 	jobs: (ScrapersJob & { freshnessTier: string; prefilterScore: number })[];

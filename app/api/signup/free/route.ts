@@ -1,9 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { apiLogger } from "@/lib/api-logger";
-import { asyncHandler } from "@/lib/errors";
-import { triggerMatchingEvent } from "@/lib/inngest/matching-helpers";
-import { simplifiedMatchingEngine } from "@/utils/matching/core/matching-engine";
+import { apiLogger } from "../../../../lib/api-logger";
+import { asyncHandler } from "../../../../lib/errors";
+import { triggerMatchingEvent } from "../../../../lib/inngest/matching-helpers";
+import { simplifiedMatchingEngine } from "../../../../utils/matching/core/matching-engine";
 
 // Simple replacements for deleted country functions
 function getCountryFromCity(city: string): string {

@@ -6,7 +6,7 @@
  */
 
 import { POST } from "@/app/api/verify-email/route";
-import { generateVerificationToken } from "@/utils/email-verification";
+import { generateVerificationToken } from "../../utils/email-verification";
 
 // Mock the email verification functions
 jest.mock("@/utils/email-verification", () => ({

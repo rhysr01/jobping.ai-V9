@@ -1,5 +1,5 @@
 import { GET } from "@/app/api/stats/route";
-import { getDatabaseClient } from "@/utils/databasePool";
+import { getDatabaseClient } from "../../utils/databasePool";
 
 // Mock Supabase client that supports chaining
 const createMockSupabaseClient = () => {

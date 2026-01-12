@@ -1,4 +1,4 @@
-import { ENV, isDevelopment, isProduction, isTest } from '@/lib/env';
+import { ENV, isDevelopment, isProduction, isTest } from '../../lib/env';
 
 // Mock the env module to avoid parsing errors in tests
 jest.mock('@/lib/env', () => {

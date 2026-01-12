@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { logger } from "@/lib/monitoring";
+import { logger } from "../lib/monitoring";
 import { matchUsersRequestSchema } from "../app/api/match-users/handlers/validation";
 
 export interface ValidatedMatchUsersRequest {

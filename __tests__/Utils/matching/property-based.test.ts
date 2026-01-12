@@ -3,7 +3,7 @@
  * Uses fast-check to test business logic with generated edge cases
  */
 
-import { calculateMatchScore } from "@/utils/matching/rule-based-matcher.service";
+import { calculateMatchScore } from "../../../utils/matching/rule-based-matcher.service";
 import fc from "fast-check";
 
 // Simple inline mock builders

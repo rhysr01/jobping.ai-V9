@@ -7,7 +7,7 @@ import {
 	RateLimitError,
 	UnauthorizedError,
 	ValidationError,
-} from "@/lib/errors";
+} from "../../lib/errors";
 
 describe("errors", () => {
 	describe("AppError", () => {

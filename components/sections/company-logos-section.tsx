@@ -3,9 +3,9 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import GradientText from "@/components/ui/GradientText";
-import { apiCallJson } from "@/lib/api-client";
+import { BrandIcons } from "../ui/BrandIcons";
+import GradientText from "../ui/GradientText";
+import { apiCallJson } from "../../lib/api-client";
 
 interface Company {
 	name: string;

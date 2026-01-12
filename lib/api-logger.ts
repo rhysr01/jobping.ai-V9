@@ -4,7 +4,7 @@
  * Replaces console.log with structured, production-ready logging
  */
 
-import { logger } from "@/lib/monitoring";
+import { logger } from "./monitoring";
 
 export const apiLogger = {
 	debug: (message: string, context?: Record<string, any>) => {

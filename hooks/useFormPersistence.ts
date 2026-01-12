@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
-import { showToast } from "@/lib/toast";
+import { showToast } from "../lib/toast";
 
 const STORAGE_VERSION = 1;
 const EXPIRATION_MS = 86400000; // 24 hours

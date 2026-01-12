@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ApiError, apiCallJson } from "@/lib/api-client";
+import { ApiError, apiCallJson } from "../lib/api-client";
 
 interface StatsData {
 	activeJobs: number;

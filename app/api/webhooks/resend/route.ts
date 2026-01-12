@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
-import { apiLogger } from "@/lib/api-logger";
+import { apiLogger } from "../../../../lib/api-logger";
 import { getDatabaseClient } from "../../../../utils/core/database-pool";
-import type { ResendWebhookEvent } from "@/lib/email-types";
+import type { ResendWebhookEvent } from "../../../../lib/email-types";
 
 // Resend webhook event types imported from centralized types
 

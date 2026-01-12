@@ -5,7 +5,7 @@ import {
 	hmacVerify,
 	isHMACRequired,
 	verifyHMAC,
-} from "@/utils/authentication/hmac";
+} from "../../../utils/authentication/hmac";
 
 describe("hmac", () => {
 	const originalEnv = process.env;

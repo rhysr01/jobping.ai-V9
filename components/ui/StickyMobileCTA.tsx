@@ -3,12 +3,12 @@
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import { trackEvent } from "@/lib/analytics";
+import { BrandIcons } from "./BrandIcons";
+import { trackEvent } from "../../lib/analytics";
 import {
 	CTA_GET_MY_5_FREE_MATCHES,
 	CTA_GET_MY_5_FREE_MATCHES_ARIA,
-} from "@/lib/copy";
+} from "../../lib/copy";
 
 export default function StickyMobileCTA() {
 	const [isVisible, setIsVisible] = useState(false);

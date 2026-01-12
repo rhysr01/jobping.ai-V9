@@ -3,8 +3,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { apiLogger } from "@/lib/api-logger";
-import { logger } from "@/lib/monitoring";
+import { apiLogger } from "../../../../lib/api-logger";
+import { logger } from "../../../../lib/monitoring";
 import { MATCH_SLO_MS } from "./config";
 import type { MatchResult, PerformanceMetrics } from "./types";
 

@@ -3,12 +3,12 @@
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import { trackEvent } from "@/lib/analytics";
+import { BrandIcons } from "./BrandIcons";
+import { trackEvent } from "../../lib/analytics";
 import {
 	CTA_GET_MY_5_FREE_MATCHES,
 	TRUST_TEXT_NO_CARD_SETUP,
-} from "@/lib/copy";
+} from "../../lib/copy";
 
 export default function ScrollCTA() {
 	const [isVisible, setIsVisible] = useState(false);

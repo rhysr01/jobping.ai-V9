@@ -5,7 +5,7 @@
  * and security incidents
  */
 
-import { performanceMonitor, logger, LogLevel } from "@/lib/monitoring";
+import { performanceMonitor, logger, LogLevel } from "../../lib/monitoring";
 
 describe("Automated Alerting System", () => {
 	beforeEach(() => {

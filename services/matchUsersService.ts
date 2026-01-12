@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
-import { logger } from "@/lib/monitoring";
-import { apiLogger } from "@/lib/api-logger";
+import { logger } from "../lib/monitoring";
+import { apiLogger } from "../lib/api-logger";
 import { getDatabaseClient } from "../utils/core/database-pool";
-import { withRedisLock } from "@/utils/core/locks";
-import { getProductionRateLimiter } from "@/utils/production-rate-limiter";
+import { withRedisLock } from "../utils/core/locks";
+import { getProductionRateLimiter } from "../utils/production-rate-limiter";
 import { trackPerformance } from "../app/api/match-users/handlers/helpers";
 import { fetchUsersAndJobs, processUsers } from "../app/api/match-users/handlers/orchestration";
 import { validateDatabaseSchema } from "../app/api/match-users/handlers/validation";
 import { checkSLO } from "../app/api/match-users/handlers/response";
-import { formatErrorResponse, formatSuccessResponse, formatProcessingInProgressResponse } from "@/utils/api-responses";
+import { formatErrorResponse, formatSuccessResponse, formatProcessingInProgressResponse } from "../utils/api-responses";
 import type { MatchResult } from "../app/api/match-users/handlers/types";
-import { isHMACRequired } from "@/utils/authentication/hmac";
+import { isHMACRequired } from "../utils/authentication/hmac";
 import { verifyHMACFromParams } from "../app/api/match-users/handlers/validation";
 
 export interface MatchUsersParams {

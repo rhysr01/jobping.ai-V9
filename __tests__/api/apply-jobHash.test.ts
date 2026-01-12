@@ -8,8 +8,8 @@
 
 import { createMocks } from "node-mocks-http";
 import { GET } from "@/app/api/apply/[jobHash]/route";
-import { getDatabaseClient } from "@/utils/databasePool";
-import { apiLogger } from "@/lib/api-logger";
+import { getDatabaseClient } from "../../utils/databasePool";
+import { apiLogger } from "../../lib/api-logger";
 
 // Mock external dependencies
 jest.mock("@/lib/api-logger", () => ({

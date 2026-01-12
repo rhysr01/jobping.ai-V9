@@ -3,17 +3,17 @@
  * Tests email sending functionality with Resend integration
  */
 
-import { getResendClient } from "@/utils/email/clients";
+import { getResendClient } from "../../../utils/email/clients";
 import {
 	createJobMatchesEmail,
 	createWelcomeEmail,
-} from "@/utils/email/productionReadyTemplates";
+} from "../../../utils/email/productionReadyTemplates";
 import {
 	EMAIL_PERFORMANCE_METRICS,
 	sendBatchEmails,
 	sendMatchedJobsEmail,
 	sendWelcomeEmail,
-} from "@/utils/email/sender";
+} from "../../../utils/email/sender";
 
 // Mock dependencies
 jest.mock("@/utils/email/clients");

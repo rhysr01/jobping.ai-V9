@@ -3,7 +3,7 @@
  * Tests distributed locking used by match-users and other APIs
  */
 
-import { withRedisLock } from "@/utils/core/locks";
+import { withRedisLock } from "../../utils/core/locks";
 
 // Mock Redis client
 jest.mock("@/utils/databasePool", () => ({

@@ -3,7 +3,7 @@ import {
 	PREMIUM_ROLES_PER_WEEK,
 	PREMIUM_SEND_DAYS_LABEL,
 	PREMIUM_SENDS_PER_WEEK,
-} from "@/lib/productMetrics";
+} from "../lib/productMetrics";
 
 export default function FAQSchema() {
 	const faqData = {

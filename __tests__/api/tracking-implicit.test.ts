@@ -8,7 +8,7 @@
 
 import { createMocks } from "node-mocks-http";
 import { GET, POST } from "@/app/api/tracking/implicit/route";
-import { apiLogger } from "@/lib/api-logger";
+import { apiLogger } from "../../lib/api-logger";
 
 // Mock external dependencies
 jest.mock("@/lib/api-logger", () => ({

@@ -2,13 +2,13 @@
 
 import { motion } from "framer-motion";
 import React from "react";
-import EntryLevelSelector from "@/components/ui/EntryLevelSelector";
+import EntryLevelSelector from "../ui/EntryLevelSelector";
 import {
 	FormFieldError,
 	FormFieldSuccess,
-} from "@/components/ui/FormFieldFeedback";
-import { Skeleton } from "@/components/ui/Skeleton";
-import WorkEnvironmentSelector from "@/components/ui/WorkEnvironmentSelector";
+} from "../ui/FormFieldFeedback";
+import { Skeleton } from "../ui/Skeleton";
+import WorkEnvironmentSelector from "../ui/WorkEnvironmentSelector";
 import { COMPANIES } from "./constants";
 import type { SignupFormData } from "./types";
 

@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
-import { BrandIcons } from "@/components/ui/BrandIcons";
+import { BrandIcons } from "../ui/BrandIcons";
 
 const faqs = [
 	{

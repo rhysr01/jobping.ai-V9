@@ -4,8 +4,8 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { apiLogger } from "@/lib/api-logger";
-import { isHMACRequired, verifyHMAC } from "@/utils/authentication/hmac";
+import { apiLogger } from "../../../../lib/api-logger";
+import { isHMACRequired, verifyHMAC } from "../../../../utils/authentication/hmac";
 import { HMAC_SECRET, SCHEMA_VALIDATION_TTL_MS } from "./config";
 import type { SchemaValidationCache } from "./types";
 

@@ -1,5 +1,5 @@
-import { SemanticRetrievalService } from "@/utils/matching/semanticRetrieval";
-import type { UserPreferences } from "@/utils/matching/types";
+import { SemanticRetrievalService } from "../../../utils/matching/semanticRetrieval";
+import type { UserPreferences } from "../../../utils/matching/types";
 
 jest.mock("@/utils/databasePool", () => ({
 	getDatabaseClient: jest.fn(() => ({

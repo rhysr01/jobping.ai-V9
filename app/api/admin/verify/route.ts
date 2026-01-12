@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { apiLogger } from "@/lib/api-logger";
+import { apiLogger } from "../../../../lib/api-logger";
 
 export async function GET(request: NextRequest) {
 	try {

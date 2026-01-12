@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { logger } from "@/lib/monitoring";
+import { logger } from "../lib/monitoring";
 import { verifyHMACAuth } from "../app/api/match-users/handlers/validation";
 
 export interface AuthenticatedRequest extends NextRequest {

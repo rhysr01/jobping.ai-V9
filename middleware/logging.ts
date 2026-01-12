@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { logger, RequestContext } from "@/lib/monitoring";
+import { logger, RequestContext } from "../lib/monitoring";
 
 /**
  * Request Logging and Monitoring Middleware

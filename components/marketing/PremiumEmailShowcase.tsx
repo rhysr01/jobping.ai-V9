@@ -1,8 +1,8 @@
 "use client";
 
 import { MapPin, ChevronLeft, ChevronRight } from "lucide-react";
-import { IPhoneShell } from "@/components/ui/IPhoneShell";
-import { TiltCard } from "@/components/ui/TiltCard";
+import { IPhoneShell } from "../ui/IPhoneShell";
+import { TiltCard } from "../ui/TiltCard";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 

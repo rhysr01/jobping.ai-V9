@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { issueSecureToken, verifySecureToken } from "@/utils/authentication/secureTokens";
+import { issueSecureToken, verifySecureToken } from "./authentication/secureTokens";
 import { getDatabaseClient } from "./core/database-pool";
 import {
 	assertValidFrom,

@@ -1,4 +1,4 @@
-import { FormFieldError } from "@/components/ui/FormFieldFeedback";
+import { FormFieldError } from "../ui/FormFieldFeedback";
 import { UseSignupFormReturn } from "@/hooks/useSignupForm";
 
 interface GDPRConsentSectionProps {

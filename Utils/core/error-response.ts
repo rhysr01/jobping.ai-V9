@@ -30,7 +30,7 @@ import {
 	type ErrorCode,
 	HTTP_STATUS,
 	type HttpStatusCode,
-} from "@/lib/constants";
+} from "../../lib/constants";
 
 export type ApiErrorBody = {
 	code: string;

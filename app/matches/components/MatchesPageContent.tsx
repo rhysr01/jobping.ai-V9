@@ -2,13 +2,13 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { GhostMatches } from "@/components/matches/GhostMatches";
-import { FreeMatchingSuite } from "@/components/signup/FreeMatchingSuite";
-import { JobList } from "@/components/matches/JobList";
-import { UpgradeBanner } from "@/components/matches/UpgradeBanner";
-import CustomScanTrigger from "@/components/ui/CustomScanTrigger";
-import JobClosedModal from "@/components/ui/JobClosedModal";
-import TargetCompaniesAlert from "@/components/ui/TargetCompaniesAlert";
+import { GhostMatches } from "../../../components/matches/GhostMatches";
+import { FreeMatchingSuite } from "../../../components/signup/FreeMatchingSuite";
+import { JobList } from "../../../components/matches/JobList";
+import { UpgradeBanner } from "../../../components/matches/UpgradeBanner";
+import CustomScanTrigger from "../../../components/ui/CustomScanTrigger";
+import JobClosedModal from "../../../components/ui/JobClosedModal";
+import TargetCompaniesAlert from "../../../components/ui/TargetCompaniesAlert";
 import { useMatches } from "@/hooks/useMatches";
 
 export default function MatchesPageContent() {

@@ -8,8 +8,8 @@
 
 import { createMocks } from "node-mocks-http";
 import { GET } from "@/app/api/dashboard/route";
-import { getDatabaseClient } from "@/utils/databasePool";
-import { apiLogger } from "@/lib/api-logger";
+import { getDatabaseClient } from "../../utils/databasePool";
+import { apiLogger } from "../../lib/api-logger";
 
 // Mock external dependencies but keep database real
 jest.mock("@/lib/api-logger", () => ({

@@ -3,7 +3,7 @@
 import { Loader2, Package, ShoppingCart } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import Button from "@/components/ui/Button";
+import Button from "../../../components/ui/Button";
 
 interface Product {
 	id: string;

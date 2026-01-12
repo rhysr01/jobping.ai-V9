@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMapProjection } from "@/hooks/useMapProjection";
-import { TIMING } from "@/lib/constants";
+import { TIMING } from "../../lib/constants";
 
 const OFFSET: Record<string, { dx: number; dy: number }> = {
 	London: { dx: 6, dy: 4 },

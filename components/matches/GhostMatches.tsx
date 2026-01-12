@@ -4,9 +4,9 @@ import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import { trackEvent } from "@/lib/analytics";
-import { apiCall } from "@/lib/api-client";
+import { BrandIcons } from "../ui/BrandIcons";
+import { trackEvent } from "../../lib/analytics";
+import { apiCall } from "../../lib/api-client";
 
 interface GhostJob {
 	job_hash: string;

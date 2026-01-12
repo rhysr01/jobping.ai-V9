@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
-import Button from "@/components/ui/Button";
+import Button from "../../components/ui/Button";
 
 interface AccountStatus {
 	accountId: string | null;

@@ -3,7 +3,7 @@
  * Tests critical database connection handling and real connectivity
  */
 
-import { getDatabaseClient } from "@/utils/core/database-pool";
+import { getDatabaseClient } from "../../utils/core/database-pool";
 
 describe("Critical Business Logic - Database Connection", () => {
 	it(" Database connection has required credentials", () => {

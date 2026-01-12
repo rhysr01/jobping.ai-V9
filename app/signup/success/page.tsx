@@ -1,11 +1,11 @@
 "use client";
 
 import { Suspense } from "react";
-import { EmailStatusSection } from "@/components/signup-success/EmailStatusSection";
-import { PremiumFeaturesSection } from "@/components/signup-success/PremiumFeaturesSection";
-import { TargetCompaniesSection } from "@/components/signup-success/TargetCompaniesSection";
-import { CustomScanSection } from "@/components/signup-success/CustomScanSection";
-import { NextStepsSection } from "@/components/signup-success/NextStepsSection";
+import { EmailStatusSection } from "../../../components/signup-success/EmailStatusSection";
+import { PremiumFeaturesSection } from "../../../components/signup-success/PremiumFeaturesSection";
+import { TargetCompaniesSection } from "../../../components/signup-success/TargetCompaniesSection";
+import { CustomScanSection } from "../../../components/signup-success/CustomScanSection";
+import { NextStepsSection } from "../../../components/signup-success/NextStepsSection";
 import { useSignupSuccess } from "@/hooks/useSignupSuccess";
 
 function SignupSuccessContent() {

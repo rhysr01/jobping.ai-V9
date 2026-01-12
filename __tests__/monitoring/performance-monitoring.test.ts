@@ -11,7 +11,7 @@ import {
 	BusinessMetrics,
 	RequestContext,
 	LogLevel,
-} from "@/lib/monitoring";
+} from "../../lib/monitoring";
 
 describe("Performance Monitoring and Alerting", () => {
 	beforeEach(() => {

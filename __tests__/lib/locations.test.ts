@@ -1,5 +1,5 @@
-import { resolveLocationId } from "@/lib/locations";
-import { mantiks } from "@/lib/mantiks";
+import { resolveLocationId } from "../../lib/locations";
+import { mantiks } from "../../lib/mantiks";
 
 // Mock mantiks
 jest.mock("@/lib/mantiks", () => ({

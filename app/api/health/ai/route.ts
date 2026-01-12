@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { aiMonitor } from "@/utils/monitoring/ai-monitor";
+import { aiMonitor } from "../../../../utils/monitoring/ai-monitor";
 
 export async function GET() {
 	try {

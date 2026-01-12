@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
-import { BrandIcons } from "@/components/ui/BrandIcons";
+import { BrandIcons } from "../ui/BrandIcons";
 import { useStats } from "@/hooks/useStats";
 
 export default function SocialProofRow() {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { logger } from "@/lib/monitoring";
+import { logger } from "../lib/monitoring";
 
 /**
  * Rate Limiting Middleware

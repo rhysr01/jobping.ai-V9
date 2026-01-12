@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ApiError, apiCall } from "@/lib/api-client";
-import { TIMING } from "@/lib/constants";
-import { trackEvent } from "@/lib/analytics";
-import { showToast } from "@/lib/toast";
-import { apiCallJson } from "@/lib/api-client";
+import { ApiError, apiCall } from "../lib/api-client";
+import { TIMING } from "../lib/constants";
+import { trackEvent } from "../lib/analytics";
+import { showToast } from "../lib/toast";
+import { apiCallJson } from "../lib/api-client";
 
 export interface Job {
 	id: number;

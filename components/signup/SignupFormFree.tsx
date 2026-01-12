@@ -2,25 +2,25 @@
 
 import { motion } from "framer-motion";
 import { Suspense, useCallback } from "react";
-import AriaLiveRegion from "@/components/ui/AriaLiveRegion";
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import Button from "@/components/ui/Button";
-import { CityChip } from "@/components/ui/CityChip";
+import AriaLiveRegion from "../ui/AriaLiveRegion";
+import { BrandIcons } from "../ui/BrandIcons";
+import Button from "../ui/Button";
+import { CityChip } from "../ui/CityChip";
 import {
 	FormFieldError,
 	FormFieldSuccess,
-} from "@/components/ui/FormFieldFeedback";
-import { useReducedMotion } from "@/components/ui/useReducedMotion";
+} from "../ui/FormFieldFeedback";
+import { useReducedMotion } from "../ui/useReducedMotion";
 import { useSignupForm } from "@/hooks/useSignupForm";
-import { showToast } from "@/lib/toast";
+import { showToast } from "../../lib/toast";
 import { LiveMatchingMessages } from "./LiveMatchingMessages";
 import { VisaSponsorshipSection } from "./VisaSponsorshipSection";
 import { LiveMatchingOverlay } from "./LiveMatchingOverlay";
 import { PersonalInfoSection } from "./PersonalInfoSection";
 import { GDPRConsentSection } from "./GDPRConsentSection";
-import EuropeMap from "@/components/ui/EuropeMap";
+import EuropeMap from "../ui/EuropeMap";
 import { AgeVerificationSection } from "./AgeVerificationSection";
-import { CITIES, CAREER_PATHS } from "@/components/signup/constants";
+import { CITIES, CAREER_PATHS } from "./constants";
 
 export default function SignupFormFree() {
 	const prefersReduced = useReducedMotion();

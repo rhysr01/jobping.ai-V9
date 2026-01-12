@@ -1,5 +1,5 @@
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import TargetCompaniesAlert from "@/components/ui/TargetCompaniesAlert";
+import { BrandIcons } from "../ui/BrandIcons";
+import TargetCompaniesAlert from "../ui/TargetCompaniesAlert";
 import { TargetCompany } from "@/hooks/useSignupSuccess";
 
 interface TargetCompaniesSectionProps {

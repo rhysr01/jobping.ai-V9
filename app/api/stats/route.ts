@@ -2,11 +2,11 @@
 // Returns active job count and other public metrics
 
 import { type NextRequest, NextResponse } from "next/server";
-import { createSuccessResponse } from "@/lib/api-response";
-import { asyncHandler, AppError } from "@/lib/errors";
-import { apiLogger } from "@/lib/api-logger";
+import { createSuccessResponse } from "../../../lib/api-response";
+import { asyncHandler, AppError } from "../../../lib/errors";
+import { apiLogger } from "../../../lib/api-logger";
 import { getDatabaseClient } from "../../../utils/core/database-pool";
-import type { StatsCache } from "@/lib/stats-types";
+import type { StatsCache } from "../../../lib/stats-types";
 
 // Helper to get requestId from request
 function getRequestId(req: NextRequest): string {

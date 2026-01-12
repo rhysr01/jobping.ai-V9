@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { AppError, asyncHandler, ValidationError } from "@/lib/errors";
+import { AppError, asyncHandler, ValidationError } from "../../../lib/errors";
 import { getDatabaseClient } from "../../../utils/core/database-pool";
-import { apiLogger } from "@/lib/api-logger";
+import { apiLogger } from "../../../lib/api-logger";
 
 export const POST = asyncHandler(async (request: NextRequest) => {
 	const formData = await request.formData();

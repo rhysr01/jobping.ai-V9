@@ -1,6 +1,6 @@
 "use client";
 
-import { FormFieldError, FormFieldSuccess } from "@/components/ui/FormFieldFeedback";
+import { FormFieldError, FormFieldSuccess } from "../ui/FormFieldFeedback";
 
 interface ContactInfoSectionProps {
 	email: string;

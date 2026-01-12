@@ -4,11 +4,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import LogoWordmark from "@/components/logo-wordmark";
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import Button from "@/components/ui/Button";
-import { trackEvent } from "@/lib/analytics";
-import { CTA_GET_MY_5_FREE_MATCHES } from "@/lib/copy";
+import LogoWordmark from "../logo-wordmark";
+import { BrandIcons } from "../ui/BrandIcons";
+import Button from "../ui/Button";
+import { trackEvent } from "../../lib/analytics";
+import { CTA_GET_MY_5_FREE_MATCHES } from "../../lib/copy";
 
 export default function Header() {
 	const [scrolled, setScrolled] = useState(false);

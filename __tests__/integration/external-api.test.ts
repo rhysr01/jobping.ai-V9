@@ -9,7 +9,7 @@
  * - Webhook endpoints
  */
 
-import { getDatabaseClient } from "@/utils/core/database-pool";
+import { getDatabaseClient } from "../../utils/core/database-pool";
 
 // Mock external services for testing
 jest.mock("openai");

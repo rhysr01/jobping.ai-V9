@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { apiLogger } from "@/lib/api-logger";
+import { apiLogger } from "../../../lib/api-logger";
 
 // Inline country flags and helper functions (from deleted countryFlags.ts)
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -44,7 +44,7 @@ const extractCountryFromLocation = (location: string): string => {
 const getCountryFromCity = (city: string): string => {
 	return extractCountryFromLocation(city);
 };
-import { asyncHandler } from "@/lib/errors";
+import { asyncHandler } from "../../../lib/errors";
 import { getDatabaseClient } from "../../../utils/core/database-pool";
 import { withApiAuth } from "../../../utils/authentication/apiAuth";
 

@@ -3,7 +3,7 @@ import {
 	type DatabaseResponse,
 	executeWithRetry,
 	wrapDatabaseResponse,
-} from "@/utils/supabase";
+} from "../../utils/supabase";
 
 jest.mock("@/utils/databasePool", () => {
 	const mockSupabase = {

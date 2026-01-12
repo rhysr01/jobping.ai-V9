@@ -7,7 +7,7 @@
 
 import { createMocks } from "node-mocks-http";
 import { GET, PUT } from "@/app/api/preferences/route";
-import { issueSecureToken } from "@/utils/authentication/secureTokens";
+import { issueSecureToken } from "../../utils/authentication/secureTokens";
 
 describe("User Preferences Management API", () => {
 	describe("GET /api/preferences - Retrieve User Preferences", () => {

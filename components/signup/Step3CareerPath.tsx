@@ -2,11 +2,11 @@
 
 import { motion } from "framer-motion";
 import React, { useState } from "react";
-import { BrandIcons } from "@/components/ui/BrandIcons";
+import { BrandIcons } from "../ui/BrandIcons";
 import {
 	FormFieldError,
 	FormFieldSuccess,
-} from "@/components/ui/FormFieldFeedback";
+} from "../ui/FormFieldFeedback";
 import { CAREER_PATHS } from "./constants";
 import type { SignupFormData } from "./types";
 

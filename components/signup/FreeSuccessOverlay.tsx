@@ -3,7 +3,7 @@
 import confetti from "canvas-confetti";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { BrandIcons } from "@/components/ui/BrandIcons";
+import { BrandIcons } from "../ui/BrandIcons";
 
 interface FreeSuccessOverlayProps {
 	matchCount: number;

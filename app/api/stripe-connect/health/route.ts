@@ -8,9 +8,9 @@
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { apiLogger } from "@/lib/api-logger";
-import { ENV } from "@/lib/env";
-import { getStripeClient, isStripeConfigured } from "@/lib/stripe";
+import { apiLogger } from "../../../../lib/api-logger";
+import { ENV } from "../../../../lib/env";
+import { getStripeClient, isStripeConfigured } from "../../../../lib/stripe";
 
 export async function GET(_req: NextRequest) {
 	try {

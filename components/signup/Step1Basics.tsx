@@ -2,16 +2,16 @@
 
 import { motion } from "framer-motion";
 import React, { useRef } from "react";
-import { CityChip } from "@/components/ui/CityChip";
-import EuropeMap from "@/components/ui/EuropeMap";
+import { CityChip } from "../ui/CityChip";
+import EuropeMap from "../ui/EuropeMap";
 import {
 	FormFieldError,
 	FormFieldSuccess,
-} from "@/components/ui/FormFieldFeedback";
-import { Skeleton } from "@/components/ui/Skeleton";
-import LanguageSelector from "@/components/ui/LanguageSelector";
-import { SIGNUP_INITIAL_ROLES } from "@/lib/productMetrics";
-import { showToast } from "@/lib/toast";
+} from "../ui/FormFieldFeedback";
+import { Skeleton } from "../ui/Skeleton";
+import LanguageSelector from "../ui/LanguageSelector";
+import { SIGNUP_INITIAL_ROLES } from "../../lib/productMetrics";
+import { showToast } from "../../lib/toast";
 import { CITIES, LANGUAGES } from "./constants";
 import type { SignupFormData } from "./types";
 

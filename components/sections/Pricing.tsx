@@ -4,12 +4,12 @@ import { motion } from "framer-motion";
 import { memo } from "react";
 import { Check, Zap, Mail, Star, TrendingUp, Shield } from "lucide-react";
 import Link from "next/link";
-import ErrorBoundary from "@/components/error-boundary";
-import SocialProofTicker from "@/components/ui/SocialProofTicker";
-import { TiltCard } from "@/components/ui/TiltCard";
+import ErrorBoundary from "../error-boundary";
+import SocialProofTicker from "../ui/SocialProofTicker";
+import { TiltCard } from "../ui/TiltCard";
 import { useStats } from "@/hooks/useStats";
-import * as Copy from "@/lib/copy";
-import { trackEvent } from "@/lib/analytics";
+import * as Copy from "../../lib/copy";
+import { trackEvent } from "../../lib/analytics";
 
 const TIERS = [
 	{

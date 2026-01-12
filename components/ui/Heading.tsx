@@ -1,7 +1,7 @@
 "use client";
 
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/classname-utils";
+import { cn } from "../../lib/classname-utils";
 
 const headingVariants = cva("font-display font-bold tracking-tight", {
 	variants: {

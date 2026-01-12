@@ -2,8 +2,8 @@
 
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
-import { CityChip } from "@/components/ui/CityChip";
-import { FormFieldError, FormFieldSuccess } from "@/components/ui/FormFieldFeedback";
+import { CityChip } from "../ui/CityChip";
+import { FormFieldError, FormFieldSuccess } from "../ui/FormFieldFeedback";
 import { CITIES } from "./constants";
 
 const EuropeMap = dynamic(() => import("@/components/ui/EuropeMap"), {

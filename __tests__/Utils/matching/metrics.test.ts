@@ -3,7 +3,7 @@ import {
 	type MatchMetrics,
 	recordMatchMetrics,
 	resetMatchMetrics,
-} from "@/utils/matching/metrics.service";
+} from "../../../utils/matching/metrics.service";
 
 describe("metrics.service", () => {
 	beforeEach(() => {

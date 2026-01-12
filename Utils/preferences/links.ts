@@ -1,4 +1,4 @@
-import { issueSecureToken } from "@/utils/authentication/secureTokens";
+import { issueSecureToken } from "../authentication/secureTokens";
 import { getBaseUrl } from "../url-helpers";
 
 interface PreferencesLinkOptions {

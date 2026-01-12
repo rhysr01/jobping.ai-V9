@@ -1,7 +1,7 @@
 import { Checkout } from "@polar-sh/nextjs";
 import { type NextRequest, NextResponse } from "next/server";
-import { ENV } from "@/lib/env";
-import { apiLogger } from "@/lib/api-logger";
+import { ENV } from "../../../lib/env";
+import { apiLogger } from "../../../lib/api-logger";
 
 // Polar's Checkout component handles GET requests with query parameters
 // Usage: /api/checkout?product_id=prod_xxx&customer_email=user@example.com

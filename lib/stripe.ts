@@ -6,8 +6,8 @@
  */
 
 import Stripe from "stripe";
-import { apiLogger } from "@/lib/api-logger";
-import { ENV } from "@/lib/env";
+import { apiLogger } from "./api-logger";
+import { ENV } from "./env";
 
 // Main Stripe client (platform account)
 let stripeClient: Stripe | null = null;

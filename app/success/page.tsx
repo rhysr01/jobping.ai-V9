@@ -4,8 +4,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import { SuccessAnimation } from "@/components/ui/SuccessAnimation";
+import { BrandIcons } from "../../components/ui/BrandIcons";
+import { SuccessAnimation } from "../../components/ui/SuccessAnimation";
 
 function SuccessContent() {
 	const [showSuccess, setShowSuccess] = useState(true);

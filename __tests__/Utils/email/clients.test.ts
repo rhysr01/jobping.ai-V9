@@ -22,7 +22,7 @@ import {
 	EMAIL_CONFIG,
 	getResendClient,
 	getSupabaseClient,
-} from "@/utils/email/clients";
+} from "../../../utils/email/clients";
 
 describe("Email Clients", () => {
 	let mockResend: any;

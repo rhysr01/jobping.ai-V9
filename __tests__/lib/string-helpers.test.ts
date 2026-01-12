@@ -3,7 +3,7 @@ import {
 	normalizeStringToArray,
 	toKebabCase,
 	truncate,
-} from "@/lib/string-helpers";
+} from "../../lib/string-helpers";
 
 describe("string-helpers", () => {
 	describe("normalizeStringToArray", () => {

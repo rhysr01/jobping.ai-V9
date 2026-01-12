@@ -1,4 +1,4 @@
-import { apiCall } from "@/lib/api-client";
+import { apiCall } from "../lib/api-client";
 import { SignupFormData } from "@/hooks/useSignupForm";
 
 export interface SignupResult {

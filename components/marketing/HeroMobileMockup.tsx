@@ -1,12 +1,12 @@
 "use client";
 
 import { MapPin } from "lucide-react";
-import { IPhoneShell } from "@/components/ui/IPhoneShell";
-import { TiltCard } from "@/components/ui/TiltCard";
+import { IPhoneShell } from "../ui/IPhoneShell";
+import { TiltCard } from "../ui/TiltCard";
 import Link from "next/link";
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import { CTA_GET_MY_5_FREE_MATCHES, CTA_GET_MY_5_FREE_MATCHES_ARIA } from "@/lib/copy";
-import { trackEvent } from "@/lib/analytics";
+import { BrandIcons } from "../ui/BrandIcons";
+import { CTA_GET_MY_5_FREE_MATCHES, CTA_GET_MY_5_FREE_MATCHES_ARIA } from "../../lib/copy";
+import { trackEvent } from "../../lib/analytics";
 import { useEffect, useState } from "react";
 
 interface HeroMockupProps {

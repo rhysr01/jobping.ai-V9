@@ -3,9 +3,9 @@
  * Replaces the massive consolidated engine with clean orchestration
  */
 
-import { apiLogger } from "@/lib/api-logger";
+import { apiLogger } from "../../../lib/api-logger";
 import type { Job } from "@/scrapers/types";
-import type { UserPreferences, JobMatch } from "@/utils/matching/types";
+import type { UserPreferences, JobMatch } from "../types";
 import { prefilterService, type PrefilterResult } from "./prefilter.service";
 import { aiMatchingService } from "./ai-matching.service";
 import { fallbackService } from "./fallback.service";

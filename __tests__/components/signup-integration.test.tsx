@@ -21,14 +21,14 @@ jest.mock("next/navigation", () => ({
 global.fetch = jest.fn();
 
 // Import components after mocks
-import Step1Basics from "@/components/signup/Step1Basics";
-import Step2Preferences from "@/components/signup/Step2Preferences";
-import Step3CareerPath from "@/components/signup/Step3CareerPath";
-import Step4MatchingPreferences from "@/components/signup/Step4MatchingPreferences";
-import GDPRConsentSection from "@/components/signup/GDPRConsentSection";
-import CareerPathSection from "@/components/signup/CareerPathSection";
-import CitySelectionSection from "@/components/signup/CitySelectionSection";
-import VisaSponsorshipSection from "@/components/signup/VisaSponsorshipSection";
+import Step1Basics from "../../components/signup/Step1Basics";
+import Step2Preferences from "../../components/signup/Step2Preferences";
+import Step3CareerPath from "../../components/signup/Step3CareerPath";
+import Step4MatchingPreferences from "../../components/signup/Step4MatchingPreferences";
+import GDPRConsentSection from "../../components/signup/GDPRConsentSection";
+import CareerPathSection from "../../components/signup/CareerPathSection";
+import CitySelectionSection from "../../components/signup/CitySelectionSection";
+import VisaSponsorshipSection from "../../components/signup/VisaSponsorshipSection";
 
 describe("Signup Component Integration Tests", () => {
 	const mockOnNext = jest.fn();

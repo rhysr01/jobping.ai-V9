@@ -5,10 +5,10 @@
  * caching effectiveness, and quality validation
  */
 
-import { AIMatchingService, type AIMatchingOptions } from "@/utils/matching/core/ai-matching.service";
-import { aiMatchingCache } from "@/lib/cache";
+import { AIMatchingService, type AIMatchingOptions } from "../utils/matching/core/ai-matching.service";
+import { aiMatchingCache } from "../lib/cache";
 import type { Job } from "@/scrapers/types";
-import type { UserPreferences } from "@/utils/matching/types";
+import type { UserPreferences } from "../utils/matching/types";
 
 // Mock OpenAI to simulate various scenarios
 jest.mock("openai", () => ({

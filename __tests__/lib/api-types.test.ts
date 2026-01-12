@@ -4,7 +4,7 @@ import {
 	createSuccessResponse,
 	type ErrorResponse,
 	type SuccessResponse,
-} from "@/lib/api-types";
+} from "../../lib/api-types";
 
 describe("api-types helpers", () => {
 	describe("createSuccessResponse", () => {

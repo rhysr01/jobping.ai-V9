@@ -3,7 +3,7 @@
 import { CheckCircle, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
-import Button from "@/components/ui/Button";
+import Button from "../../components/ui/Button";
 
 function OnboardContent() {
 	const searchParams = useSearchParams();

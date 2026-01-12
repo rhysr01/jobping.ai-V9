@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import * as Copy from "@/lib/copy";
+import { BrandIcons } from "../../components/ui/BrandIcons";
+import * as Copy from "../../lib/copy";
 
 export const metadata: Metadata = {
 	title: "Pricing | JobPing",

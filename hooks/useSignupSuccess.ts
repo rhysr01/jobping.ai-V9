@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import confetti from "canvas-confetti";
-import { ApiError, apiCall, apiCallJson } from "@/lib/api-client";
-import { showToast } from "@/lib/toast";
+import { ApiError, apiCall, apiCallJson } from "../lib/api-client";
+import { showToast } from "../lib/toast";
 
 export interface TargetCompany {
 	company: string;

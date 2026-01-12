@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/classname-utils";
+import { cn } from "../../lib/classname-utils";
 
 interface IPhoneShellProps {
 	children: React.ReactNode;

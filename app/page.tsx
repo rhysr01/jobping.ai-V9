@@ -1,19 +1,19 @@
 "use client";
 
 import { useEffect } from "react";
-import ErrorBoundary from "@/components/error-boundary";
-import { EUJobStats } from "@/components/marketing/EUJobStats";
-import { PremiumEmailShowcase } from "@/components/marketing/PremiumEmailShowcase";
-import CompanyLogos from "@/components/sections/company-logos-section";
-import FAQ from "@/components/sections/faq";
-import Footer from "@/components/sections/footer";
-import Hero from "@/components/sections/hero";
-import Pricing from "@/components/sections/pricing";
-import SocialProofRow from "@/components/sections/social-proof-row";
-import ExitIntentPopup from "@/components/ui/ExitIntentPopup";
-import ScrollCTA from "@/components/ui/ScrollCTA";
-import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
-import { initializeScrollDepthTracking } from "@/lib/scroll-tracking";
+import ErrorBoundary from "../components/error-boundary";
+import { EUJobStats } from "../components/marketing/EUJobStats";
+import { PremiumEmailShowcase } from "../components/marketing/PremiumEmailShowcase";
+import CompanyLogos from "../components/sections/company-logos-section";
+import FAQ from "../components/sections/faq";
+import Footer from "../components/sections/footer";
+import Hero from "../components/sections/hero";
+import Pricing from "../components/sections/pricing";
+import SocialProofRow from "../components/sections/social-proof-row";
+import ExitIntentPopup from "../components/ui/ExitIntentPopup";
+import ScrollCTA from "../components/ui/ScrollCTA";
+import StickyMobileCTA from "../components/ui/StickyMobileCTA";
+import { initializeScrollDepthTracking } from "../lib/scroll-tracking";
 
 export default function Page() {
 	useEffect(() => {

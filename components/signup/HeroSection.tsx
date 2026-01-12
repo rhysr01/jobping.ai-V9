@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import * as Copy from "@/lib/copy";
+import { BrandIcons } from "../ui/BrandIcons";
+import * as Copy from "../../lib/copy";
 
 interface HeroSectionProps {
 	activeJobs: string;

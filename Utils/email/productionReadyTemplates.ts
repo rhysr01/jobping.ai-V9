@@ -1,11 +1,11 @@
 // PRODUCTION-READY EMAIL TEMPLATES (Premium Design)
 // Safe for major clients: Gmail, Outlook, Apple Mail
 
-import { issueSecureToken } from "@/utils/authentication/secureTokens";
+import { issueSecureToken } from "../authentication/secureTokens";
 import {
 	calculateVisaConfidence,
 	// getVisaConfidenceStyle, // Kept for future use
-} from "@/utils/matching/visa-confidence";
+} from "../matching/visa-confidence";
 import {
 	FREE_ROLES_PER_SEND,
 	PREMIUM_ROLES_PER_MONTH,

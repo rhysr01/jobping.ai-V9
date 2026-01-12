@@ -6,8 +6,8 @@ import {
 	ERROR_CODES,
 	HTTP_STATUS,
 	TIMING,
-} from "@/lib/constants";
-import { ENV, isDevelopment, isProduction, isTest } from "@/lib/env";
+} from "../../lib/constants";
+import { ENV, isDevelopment, isProduction, isTest } from "../../lib/env";
 
 describe("Application Constants", () => {
 	describe("HTTP_STATUS", () => {

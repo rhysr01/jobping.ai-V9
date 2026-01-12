@@ -1,5 +1,5 @@
 import type { Job } from "@/scrapers/types";
-import type { JobMatch } from "@/utils/matching/types";
+import type { JobMatch } from "./types";
 import type { AIMatchResult } from "./core/ai-matching.service";
 import type { FallbackMatch } from "./core/fallback.service";
 

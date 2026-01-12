@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { apiCallJson } from "@/lib/api-client";
-import { showToast } from "@/lib/toast";
+import { apiCallJson } from "../lib/api-client";
+import { showToast } from "../lib/toast";
 
 export interface PreferencesFormData {
 	cities: string[];

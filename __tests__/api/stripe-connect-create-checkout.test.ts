@@ -8,8 +8,8 @@
 
 import { createMocks } from "node-mocks-http";
 import { POST } from "@/app/api/stripe-connect/create-checkout/route";
-import { apiLogger } from "@/lib/api-logger";
-import { ENV } from "@/lib/env";
+import { apiLogger } from "../../lib/api-logger";
+import { ENV } from "../../lib/env";
 
 // Mock external dependencies
 jest.mock("@/lib/api-logger", () => ({

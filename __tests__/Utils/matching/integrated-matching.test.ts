@@ -1,6 +1,6 @@
 import type { Job } from "@/scrapers/types";
-import { IntegratedMatchingService } from "@/utils/matching/integrated-matching.service";
-import type { UserPreferences } from "@/utils/matching/types";
+import { IntegratedMatchingService } from "../../../utils/matching/integrated-matching.service";
+import type { UserPreferences } from "../../../utils/matching/types";
 
 jest.mock("@/utils/matching/batch-processor.service", () => ({
 	batchMatchingProcessor: {

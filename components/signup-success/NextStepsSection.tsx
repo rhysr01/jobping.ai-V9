@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import Button from "@/components/ui/Button";
+import { BrandIcons } from "../ui/BrandIcons";
+import Button from "../ui/Button";
 
 interface NextStepsSectionProps {
 	email: string;

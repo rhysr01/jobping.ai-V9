@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BrandIcons } from "@/components/ui/BrandIcons";
+import { BrandIcons } from "../ui/BrandIcons";
 
 interface ProgressBarProps {
 	step: number;

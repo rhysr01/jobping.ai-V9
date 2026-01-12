@@ -1,9 +1,9 @@
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import { SuccessAnimation } from "@/components/ui/SuccessAnimation";
+import { BrandIcons } from "../ui/BrandIcons";
+import { SuccessAnimation } from "../ui/SuccessAnimation";
 import {
 	PREMIUM_ROLES_PER_MONTH,
 	PREMIUM_ROLES_PER_WEEK,
-} from "@/lib/productMetrics";
+} from "../../lib/productMetrics";
 
 interface PremiumFeaturesSectionProps {
 	matchCount: number;

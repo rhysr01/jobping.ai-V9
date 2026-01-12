@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getDatabaseClient } from "../../../utils/core/database-pool";
 import { getProductionRateLimiter } from "../../../utils/production-rate-limiter";
-import { apiLogger } from "@/lib/api-logger";
+import { apiLogger } from "../../../lib/api-logger";
 
 export async function POST(req: NextRequest) {
 	// PRODUCTION: Rate limiting for cleanup endpoint (automation use, configurable via env vars)

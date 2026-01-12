@@ -1,4 +1,4 @@
-import type { Job, UserPreferences } from "@/utils/matching/types";
+import type { Job, UserPreferences } from "../../../utils/matching/types";
 import {
 	applyHardGates,
 	validateCareerPathCompatibility,
@@ -11,7 +11,7 @@ import {
 	validateUserEligibility,
 	validateUserPreferences,
 	validateWorkEnvironmentCompatibility,
-} from "@/utils/matching/validators";
+} from "../../../utils/matching/validators";
 
 describe("validators", () => {
 	const mockJob: Job = {

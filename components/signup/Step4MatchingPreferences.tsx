@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import React from "react";
-import { FormFieldHelper } from "@/components/ui/FormFieldFeedback";
+import { FormFieldHelper } from "../ui/FormFieldFeedback";
 import { AgeVerificationSection } from "./AgeVerificationSection";
 import { COMMON_SKILLS, COMPANY_SIZES, INDUSTRIES } from "./constants";
 import type { SignupFormData } from "./types";

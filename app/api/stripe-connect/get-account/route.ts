@@ -7,8 +7,8 @@
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { apiLogger } from "@/lib/api-logger";
-import { getStripeClient, isStripeConfigured } from "@/lib/stripe";
+import { apiLogger } from "../../../../lib/api-logger";
+import { getStripeClient, isStripeConfigured } from "../../../../lib/stripe";
 
 export async function GET(req: NextRequest) {
 	try {

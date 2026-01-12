@@ -1,5 +1,5 @@
 import { Inngest } from "inngest";
-import { logger } from "@/lib/monitoring";
+import { logger } from "../monitoring";
 import { simplifiedMatchingEngine } from "../../utils/matching/core/matching-engine";
 import { getDatabaseClient } from "../../utils/core/database-pool";
 import type { Job, UserPreferences } from "../../utils/matching/types";

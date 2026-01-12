@@ -8,12 +8,12 @@
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { apiLogger } from "@/lib/api-logger";
-import { ENV } from "@/lib/env";
+import { apiLogger } from "../../../../lib/api-logger";
+import { ENV } from "../../../../lib/env";
 import {
 	getStripeClientForAccount,
 	isStripeConfigured,
-} from "@/lib/stripe";
+} from "../../../../lib/stripe";
 
 export async function POST(req: NextRequest) {
 	try {

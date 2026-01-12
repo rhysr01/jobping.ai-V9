@@ -2,8 +2,8 @@
  * Helper functions for triggering Inngest matching events
  */
 
-import { logger } from "@/lib/monitoring";
-import type { Job, UserPreferences } from "@/utils/matching/types";
+import { logger } from "../monitoring";
+import type { Job, UserPreferences } from "../../utils/matching/types";
 import { inngest } from "./functions";
 
 export interface MatchingEventData {

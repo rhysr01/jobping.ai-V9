@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { POST } from "@/app/api/feedback/enhanced/route";
-import { getDatabaseClient } from "@/utils/databasePool";
+import { getDatabaseClient } from "../../utils/databasePool";
 
 jest.mock("@/utils/databasePool", () => ({
 	getDatabaseClient: jest.fn(() => ({

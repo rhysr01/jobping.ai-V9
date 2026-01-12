@@ -1,6 +1,6 @@
 //  EMAIL SENDER - PRODUCTION READY
 
-import { apiLogger } from "@/lib/api-logger";
+import { apiLogger } from "../../lib/api-logger";
 import { getBaseUrl } from "../url-helpers";
 import { assertValidFrom, EMAIL_CONFIG, getResendClient } from "./clients";
 import {

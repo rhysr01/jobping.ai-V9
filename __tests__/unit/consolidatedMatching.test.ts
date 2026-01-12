@@ -3,8 +3,8 @@
  * Tests the core job matching logic
  */
 
-import { SimplifiedMatchingEngine } from "@/utils/matching/core/matching-engine";
-import { JobMatch, type UserPreferences } from "@/utils/matching/types";
+import { SimplifiedMatchingEngine } from "../../utils/matching/core/matching-engine";
+import { JobMatch, type UserPreferences } from "../../utils/matching/types";
 
 // Mock OpenAI
 const mockOpenAI = {

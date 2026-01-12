@@ -1,5 +1,5 @@
-import { BrandIcons } from "@/components/ui/BrandIcons";
-import CustomScanTrigger from "@/components/ui/CustomScanTrigger";
+import { BrandIcons } from "../ui/BrandIcons";
+import CustomScanTrigger from "../ui/CustomScanTrigger";
 import { CustomScan } from "@/hooks/useSignupSuccess";
 
 interface CustomScanSectionProps {

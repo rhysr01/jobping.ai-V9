@@ -6,13 +6,13 @@ import type { Metadata } from "next";
 // export { reportWebVitals } from 'next-axiom';
 import { headers } from "next/headers";
 import Script from "next/script";
-import ErrorBoundary from "@/components/error-boundary";
-import FAQSchema from "@/components/faq-schema";
-import Header from "@/components/sections/header";
-import StructuredData from "@/components/structured-data";
-import AnimatedBackground from "@/components/ui/AnimatedBackground";
-import CookieBanner from "@/components/ui/CookieBanner";
-import Toaster from "@/components/ui/Toaster";
+import ErrorBoundary from "../components/error-boundary";
+import FAQSchema from "../components/faq-schema";
+import Header from "../components/sections/header";
+import StructuredData from "../components/structured-data";
+import AnimatedBackground from "../components/ui/AnimatedBackground";
+import CookieBanner from "../components/ui/CookieBanner";
+import Toaster from "../components/ui/Toaster";
 
 export const metadata: Metadata = {
 	title:

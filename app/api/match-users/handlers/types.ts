@@ -2,8 +2,8 @@
  * Types Domain - TypeScript interfaces and types
  */
 
-import type { Database } from "@/lib/database.types";
-import type { MatchMetrics, MatchProvenance } from "@/lib/matching-types";
+import type { Database } from "../../../../lib/database.types";
+import type { MatchMetrics, MatchProvenance } from "../../../../lib/matching-types";
 
 export type User = Database["public"]["Tables"]["users"]["Row"];
 

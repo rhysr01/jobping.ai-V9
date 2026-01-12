@@ -4,7 +4,7 @@ import {
 	getEarlyCareerTerms,
 	hasEarlyCareerTerms,
 	smartEarlyCareerDetection,
-} from "@/utils/countryLanguageMap";
+} from "../../utils/countryLanguageMap";
 
 describe("countryLanguageMap", () => {
 	describe("getCountryLanguage", () => {

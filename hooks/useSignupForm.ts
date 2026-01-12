@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { trackEvent } from "@/lib/analytics";
-import { apiCallJson } from "@/lib/api-client";
+import { trackEvent } from "../lib/analytics";
+import { apiCallJson } from "../lib/api-client";
 import { useEmailValidation, useRequiredValidation } from "@/hooks/useFormValidation";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
 import { signupService } from "@/services/signupService";
