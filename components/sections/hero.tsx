@@ -150,7 +150,7 @@ function Hero() {
 							</GradientText>{" "}
 							<span className="text-content-primary inline-block">
 								instantly
-							</span>
+							</span>{" "}
 							<GradientText
 								variant="brand"
 								className={`inline-block text-[2.5rem] leading-[1.15] sm:text-5xl sm:leading-[1.15] md:text-6xl md:leading-[1.15] lg:text-7xl lg:leading-[1.15] font-black ${window.innerWidth < 768 ? "" : "will-change-transform"}`}
