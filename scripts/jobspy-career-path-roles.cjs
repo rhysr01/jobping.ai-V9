@@ -290,13 +290,13 @@ except Exception as e:
 
 				// Process and filter jobs
 				const qualityFiltered = [];
-				let processed = 0;
+				let processedCount = 0;
 				let filtered = 0;
 				let saved = 0;
 
 				for (const j of jobs) {
 					try {
-						processed++;
+						processedCount++;
 
 						// Skip if missing critical fields
 						if (!j.title || !j.company || !j.job_url) {
@@ -318,7 +318,7 @@ except Exception as e:
 						}
 
 						// Process through standardization pipe
-						const processed = processIncomingJob(
+						const processedJob = processIncomingJob(
 							{
 								title: j.title,
 								company: j.company,
@@ -332,8 +332,8 @@ except Exception as e:
 							},
 						);
 
-						if (processed) {
-							qualityFiltered.push(processed);
+						if (processedJob) {
+							qualityFiltered.push(processedJob);
 							saved++;
 						} else {
 							filtered++;
@@ -344,7 +344,7 @@ except Exception as e:
 					}
 				}
 
-				console.log(`📊 ${city}: ${processed} processed, ${filtered} filtered, ${saved} saved`);
+				console.log(`📊 ${city}: ${processedCount} processed, ${filtered} filtered, ${saved} saved`);
 
 				// Batch save to database
 				if (qualityFiltered.length > 0) {
