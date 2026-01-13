@@ -7,7 +7,7 @@ import Link from "next/link";
 import ErrorBoundary from "../error-boundary";
 import SocialProofTicker from "../ui/SocialProofTicker";
 import { TiltCard } from "../ui/TiltCard";
-import { useStats } from "@/hooks/useStats";
+import { useStats } from "../../hooks/useStats";
 import * as Copy from "../../lib/copy";
 import { trackEvent } from "../../lib/analytics";
 

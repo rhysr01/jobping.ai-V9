@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 import { BrandIcons } from "../ui/BrandIcons";
-import { useStats } from "@/hooks/useStats";
+import { useStats } from "../../hooks/useStats";
 
 export default function SocialProofRow() {
 	const { stats, isLoading: _isLoading } = useStats();

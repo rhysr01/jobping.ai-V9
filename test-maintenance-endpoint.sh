@@ -22,7 +22,18 @@ if [ ! -f ".env.local" ]; then
 fi
 
 # Load environment variables
-export $(grep -v '^#' .env.local | xargs)
+if [ -f ".env.local" ]; then
+    while IFS='=' read -r key value; do
+        # Skip comments and empty lines
+        [[ $key =~ ^[[:space:]]*# ]] && continue
+        [[ -z "$key" ]] && continue
+        # Skip lines without values (like VERCEL_URL=)
+        [[ -z "$value" ]] && continue
+        # Remove quotes from value if present
+        value=$(echo "$value" | sed 's/^"//' | sed 's/"$//')
+        export "$key=$value"
+    done < .env.local
+fi
 
 # Check required variables
 if [ -z "$CRON_SECRET" ]; then
