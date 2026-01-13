@@ -7,7 +7,7 @@ export interface SignupFormData {
 	visaStatus: string;
 	entryLevelPreferences: string[];
 	targetCompanies: string[];
-	careerPath: string;
+	careerPath: string[];
 	roles: string[];
 	industries: string[];
 	companySizePreference: string;

@@ -1,5 +1,5 @@
 import { GET } from "@/app/api/stats/route";
-import { getDatabaseClient } from "../../utils/databasePool";
+import { getDatabaseClient } from "../../utils/core/database-pool";
 
 // Mock Supabase client that supports chaining
 const createMockSupabaseClient = () => {
@@ -28,7 +28,7 @@ const createMockSupabaseClient = () => {
 
 const mockSupabase = createMockSupabaseClient();
 
-jest.mock("@/utils/databasePool", () => ({
+jest.mock("@/utils/core/database-pool", () => ({
 	getDatabaseClient: jest.fn(() => mockSupabase),
 }));
 

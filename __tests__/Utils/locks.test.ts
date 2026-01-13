@@ -6,7 +6,7 @@
 import { withRedisLock } from "../../utils/core/locks";
 
 // Mock Redis client
-jest.mock("@/utils/databasePool", () => ({
+jest.mock("@/utils/core/database-pool", () => ({
 	getDatabaseClient: jest.fn(),
 }));
 
@@ -25,7 +25,7 @@ describe("Redis Lock Utilities", () => {
 				expire: jest.fn().mockResolvedValue(1),
 			};
 
-			const { getDatabaseClient } = require("@/utils/databasePool");
+			const { getDatabaseClient } = require("@/utils/core/database-pool");
 			getDatabaseClient.mockReturnValue({
 				rpc: jest.fn().mockResolvedValue({ data: "OK", error: null }),
 			});

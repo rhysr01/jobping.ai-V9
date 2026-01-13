@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { memo, useEffect, useState } from "react";
 import { useStats } from "../../hooks/useStats";
+import { useWindowSize } from "../../hooks/useWindowSize";
 import { trackEvent } from "../../lib/analytics";
 import {
 	CTA_GET_MY_5_FREE_MATCHES,
@@ -17,6 +18,7 @@ import TrustBadges from "./trust-badges";
 function Hero() {
 	const [preloadedJobs, setPreloadedJobs] = useState<any[]>([]);
 	const { stats } = useStats();
+	const { isMobile } = useWindowSize();
 
 	// Defer job pre-fetching to improve initial page load performance
 	useEffect(() => {
@@ -119,7 +121,7 @@ function Hero() {
 						initial={{ opacity: 0, x: -20 }}
 						animate={{ opacity: 1, x: 0 }}
 						transition={{
-							duration: window.innerWidth < 768 ? 0.4 : 0.6,
+							duration: isMobile ? 0.4 : 0.6,
 							ease: "easeOut", // Better performance than easeInOut
 						}}
 						className="text-left space-y-4 sm:space-y-6 relative overflow-visible px-4 sm:pr-8 md:pr-10 sm:pl-6"
@@ -153,9 +155,9 @@ function Hero() {
 							</span>{" "}
 							<GradientText
 								variant="brand"
-								className={`inline-block text-[2.5rem] leading-[1.15] sm:text-5xl sm:leading-[1.15] md:text-6xl md:leading-[1.15] lg:text-7xl lg:leading-[1.15] font-black ${window.innerWidth < 768 ? "" : "will-change-transform"}`}
+								className={`inline-block text-[2.5rem] leading-[1.15] sm:text-5xl sm:leading-[1.15] md:text-6xl md:leading-[1.15] lg:text-7xl lg:leading-[1.15] font-black ${isMobile ? "" : "will-change-transform"}`}
 								style={
-									window.innerWidth < 768
+									isMobile
 										? {}
 										: {
 												transform: "translateZ(0)",
@@ -167,16 +169,16 @@ function Hero() {
 							</GradientText>
 						</motion.h1>
 
-						{/* Tagline - Simplified */}
+						{/* Tagline - Emerald Green */}
 						<motion.p
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ delay: 0.22, duration: 0.6 }}
-							className="text-base sm:text-lg md:text-xl text-zinc-300 leading-relaxed max-w-xl mb-4 mt-2 sm:mt-4 overflow-visible"
+							className="text-base sm:text-lg md:text-xl text-emerald-400 leading-relaxed max-w-xl mb-4 mt-2 sm:mt-4 overflow-visible"
 							style={{ wordSpacing: "0.02em" }}
 						>
-							Save 10 hours per week. Get roles from 4,000+ EU companies -
-							delivered to your inbox before they hit LinkedIn.
+							Skip 40+ hours of job searching. Get 5 roles matching your skills,
+							location, and visa in 2 minutes.
 						</motion.p>
 
 						{/* Social Proof for Free Instant Matches */}
@@ -256,15 +258,9 @@ function Hero() {
 								</p>
 								<div className="grid grid-cols-1 gap-3 sm:gap-3">
 									<motion.div
-										whileHover={
-											window.innerWidth < 768 ? undefined : { scale: 1.02 }
-										}
+										whileHover={isMobile ? undefined : { scale: 1.02 }}
 										className="flex items-start gap-3 px-3 py-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-brand-400/30 transition-all group"
-										style={
-											window.innerWidth >= 768
-												? { transform: "translateZ(0)" }
-												: {}
-										}
+										style={!isMobile ? { transform: "translateZ(0)" } : {}}
 									>
 										<div className="p-2 rounded-lg bg-brand-500/20 group-hover:bg-brand-500/30 transition-colors flex-shrink-0 mt-0.5">
 											<BrandIcons.MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-brand-400" />
@@ -285,23 +281,22 @@ function Hero() {
 									</motion.div>
 
 									<motion.div
-										whileHover={
-											window.innerWidth < 768 ? undefined : { scale: 1.02 }
-										}
+										whileHover={isMobile ? undefined : { scale: 1.02 }}
 										className="flex items-start gap-3 px-3 py-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-brand-400/30 transition-all group"
-										style={
-											window.innerWidth >= 768
-												? { transform: "translateZ(0)" }
-												: {}
-										}
+										style={!isMobile ? { transform: "translateZ(0)" } : {}}
 									>
 										<div className="p-2 rounded-lg bg-brand-500/20 group-hover:bg-brand-500/30 transition-colors flex-shrink-0 mt-0.5">
 											<BrandIcons.Compass className="h-4 w-4 sm:h-5 sm:w-5 text-brand-400" />
 										</div>
 										<div className="flex-1 min-w-0">
-											<span className="text-sm sm:text-base font-semibold text-white/90 block mb-1">
-												Career Path
-											</span>
+											<div className="flex items-center gap-2 mb-1">
+												<span className="font-display text-sm sm:text-base font-semibold text-white/90">
+													Career Paths
+												</span>
+												<span className="font-display text-xs text-emerald-400 font-medium bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
+													Pick up to 2
+												</span>
+											</div>
 											<p className="text-xs sm:text-sm text-white/70 leading-relaxed">
 												Strategy, Product, Data, Marketing, Tech...
 											</p>
@@ -309,15 +304,9 @@ function Hero() {
 									</motion.div>
 
 									<motion.div
-										whileHover={
-											window.innerWidth < 768 ? undefined : { scale: 1.02 }
-										}
+										whileHover={isMobile ? undefined : { scale: 1.02 }}
 										className="flex items-start gap-3 px-3 py-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-brand-400/30 transition-all group"
-										style={
-											window.innerWidth >= 768
-												? { transform: "translateZ(0)" }
-												: {}
-										}
+										style={!isMobile ? { transform: "translateZ(0)" } : {}}
 									>
 										<div className="p-2 rounded-lg bg-brand-500/20 group-hover:bg-brand-500/30 transition-colors flex-shrink-0 mt-0.5">
 											<BrandIcons.Passport className="h-4 w-4 sm:h-5 sm:w-5 text-brand-400" />

@@ -170,16 +170,20 @@ export class AIMatchingService {
 	 * Build the prompt for OpenAI
 	 */
 	private buildPrompt(user: UserPreferences, jobs: Job[]): string {
+		const careerPaths = Array.isArray(user.career_path)
+			? user.career_path
+			: user.career_path ? [user.career_path] : [];
+
 		const userProfile = `
 User Profile:
 - Email: ${user.email}
- - Experience Level: ${user.entry_level_preference || 'Not specified'}
+- Experience Level: ${user.entry_level_preference || 'Not specified'}
+- Career Paths: ${careerPaths.length > 0 ? careerPaths.join(', ') : 'Not specified'}
 - Target Cities: ${Array.isArray(user.target_cities) ? user.target_cities.join(', ') : user.target_cities || 'Not specified'}
- - Keywords: ${user.career_keywords || 'Not specified'}
- - Industries: ${user.industries?.join(', ') || 'Not specified'}
- - Languages: ${user.languages_spoken?.join(', ') || 'Not specified'}
+- Keywords: ${user.career_keywords || 'Not specified'}
+- Industries: ${user.industries?.join(', ') || 'Not specified'}
+- Languages: ${user.languages_spoken?.join(', ') || 'Not specified'}
 - Work Environment: ${user.work_environment || 'Not specified'}
- - Work Environment: ${user.work_environment || 'Not specified'}
 		`.trim();
 
 		const jobsList = jobs.map((job, index) => `

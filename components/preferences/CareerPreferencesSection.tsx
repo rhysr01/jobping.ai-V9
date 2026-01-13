@@ -10,20 +10,40 @@ export function CareerPreferencesSection({ formData, onUpdate }: CareerPreferenc
 		<div className="space-y-6">
 			<div>
 				<label className="block text-sm font-medium text-white mb-2">
-					Career Path Interest
+					Career Path Interests
 				</label>
-				<select
-					value={formData.careerPath}
-					onChange={(e) => onUpdate({ careerPath: e.target.value })}
-					className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-				>
-					<option value="">Select your career path</option>
-					{CAREER_PATHS.map((path) => (
-						<option key={path} value={path}>
-							{path}
-						</option>
-					))}
-				</select>
+				<div className="space-y-2">
+					{CAREER_PATHS.map((path) => {
+						const isSelected = formData.careerPath.includes(path);
+						const canSelect = !isSelected && formData.careerPath.length >= 2;
+
+						return (
+							<label key={path} className="flex items-center space-x-3">
+								<input
+									type="checkbox"
+									checked={isSelected}
+									disabled={canSelect}
+									onChange={(e) => {
+										if (e.target.checked) {
+											if (formData.careerPath.length < 2) {
+												onUpdate({ careerPath: [...formData.careerPath, path] });
+											}
+										} else {
+											onUpdate({ careerPath: formData.careerPath.filter(cp => cp !== path) });
+										}
+									}}
+									className="w-4 h-4 text-brand-600 bg-white/10 border-white/20 rounded focus:ring-brand-500 focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
+								/>
+								<span className={`text-sm ${canSelect ? 'text-zinc-500' : 'text-content-secondary'}`}>
+									{path}
+								</span>
+							</label>
+						);
+					})}
+				</div>
+				<p className="text-xs text-zinc-400 mt-2">
+					Select up to 2 career paths that interest you most
+				</p>
 			</div>
 
 			<div>

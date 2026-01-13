@@ -26,6 +26,7 @@ interface Step3CareerPathProps {
 	toggleArray: (arr: string[], value: string) => string[];
 	selectAllRoles: (careerPath: string) => void;
 	clearAllRoles: () => void;
+	tier?: "free" | "premium";
 }
 
 export const Step3CareerPath = React.memo(function Step3CareerPath({
@@ -40,7 +41,10 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 	toggleArray,
 	selectAllRoles,
 	clearAllRoles,
+	tier = "premium",
 }: Step3CareerPathProps) {
+	// Determine max selections based on premium status
+	const maxSelections = tier === "premium" ? 2 : 1;
 	const [showAllRoles, setShowAllRoles] = useState(false);
 	return (
 		<motion.div
@@ -160,28 +164,28 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 							<div className="space-y-3">
 								<motion.div
 									className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
-										formData.careerPath
+										formData.careerPath.length > 0
 											? "bg-emerald-500/10 border border-emerald-500/30"
 											: "bg-zinc-800/50 border border-zinc-700/30"
 									}`}
-									animate={formData.careerPath ? { scale: [1, 1.02, 1] } : {}}
+									animate={formData.careerPath.length > 0 ? { scale: [1, 1.02, 1] } : {}}
 									transition={{ duration: 0.5 }}
 								>
 									<motion.span
 										className={`w-3 h-3 rounded-full ${
-											formData.careerPath ? "bg-emerald-500" : "bg-zinc-500"
+											formData.careerPath.length > 0 ? "bg-emerald-500" : "bg-zinc-500"
 										}`}
-										animate={formData.careerPath ? {
+										animate={formData.careerPath.length > 0 ? {
 											boxShadow: ["0 0 0 0 rgba(16, 185, 129, 0.7)", "0 0 0 4px rgba(16, 185, 129, 0)", "0 0 0 0 rgba(16, 185, 129, 0.7)"]
 										} : {}}
 										transition={{ duration: 2, repeat: Infinity }}
 									/>
 									<span className={`font-medium ${
-										formData.careerPath ? "text-emerald-200" : "text-zinc-300"
+										formData.careerPath.length > 0 ? "text-emerald-200" : "text-zinc-300"
 									}`}>
-										Career Path Selection
+										Career Path{maxSelections > 1 ? 's' : ''} Selection ({formData.careerPath.length}/{maxSelections})
 									</span>
-									{formData.careerPath && (
+									{formData.careerPath.length > 0 && (
 										<motion.div
 											initial={{ scale: 0 }}
 											animate={{ scale: 1 }}
@@ -235,10 +239,10 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 							htmlFor="career-path-field"
 							className="block text-base font-bold text-white mb-4"
 						>
-							Select Your Career Path *
+							Select Your Career Path{maxSelections > 1 ? 's' : ''} *
 						</label>
 						<p className="text-sm text-zinc-400 mb-6">
-							Choose the career path that interests you most
+							Choose {maxSelections > 1 ? `up to ${maxSelections} career paths` : 'the career path'} that interest{maxSelections > 1 ? '' : 's'} you most
 						</p>
 						<div
 							id="career-path-field"
@@ -258,25 +262,44 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 								setTouchedFields((prev) => new Set(prev).add("careerPath"))
 							}
 						>
-							{CAREER_PATHS.map((path, index) => (
-								<motion.button
-									key={path.value}
-									type="button"
-									onClick={() => {
-										const newCareer = CAREER_PATHS.find(
-											(c) => c.value === path.value,
-										);
-										if (newCareer) {
-											const validRoles = formData.roles.filter((role) =>
-												newCareer.roles.includes(role),
+							{CAREER_PATHS.map((path, index) => {
+								const isSelected = formData.careerPath.includes(path.value);
+								return (
+									<motion.button
+										key={path.value}
+										type="button"
+										onClick={() => {
+											const newCareer = CAREER_PATHS.find(
+												(c) => c.value === path.value,
 											);
-											setFormData({
-												...formData,
-												careerPath: path.value,
-												roles: validRoles,
-											});
-										}
-									}}
+											if (newCareer) {
+												let newCareerPaths: string[];
+												if (isSelected) {
+													// Remove from selection
+													newCareerPaths = formData.careerPath.filter(cp => cp !== path.value);
+												} else {
+													// Add to selection (if under limit)
+													if (formData.careerPath.length >= maxSelections) {
+														return; // Don't allow more than max selections
+													}
+													newCareerPaths = [...formData.careerPath, path.value];
+												}
+
+												// Filter roles to only include those from selected career paths
+												const validRoles = formData.roles.filter((role) => {
+													return newCareerPaths.some(cp => {
+														const career = CAREER_PATHS.find(c => c.value === cp);
+														return career?.roles.includes(role);
+													});
+												});
+
+												setFormData({
+													...formData,
+													careerPath: newCareerPaths,
+													roles: validRoles,
+												});
+											}
+										}}
 									initial={{ opacity: 0, x: -20 }}
 									animate={{ opacity: 1, x: 0 }}
 									transition={{ delay: 0.8 + index * 0.1 }}
@@ -287,13 +310,15 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 									}}
 									whileTap={{ scale: 0.97 }}
 									className={`relative px-6 sm:px-8 py-6 sm:py-8 rounded-2xl border-2 transition-all duration-300 text-left overflow-hidden group touch-manipulation min-h-[100px] sm:min-h-[120px] ${
-										formData.careerPath === path.value
+										isSelected
 											? "border-brand-500 bg-gradient-to-br from-brand-500/20 via-brand-600/15 to-brand-700/10 shadow-[0_0_50px_rgba(99,102,241,0.4)]"
+											: formData.careerPath.length >= maxSelections
+											? "border-zinc-700/60 bg-zinc-900/30 opacity-50 cursor-not-allowed"
 											: "border-zinc-700/60 bg-zinc-900/50 hover:border-brand-500/50 hover:bg-zinc-900/70 hover:shadow-[0_0_30px_rgba(99,102,241,0.15)]"
 									}`}
 								>
 									{/* Enhanced background effects */}
-									{formData.careerPath === path.value && (
+									{isSelected && (
 										<motion.div
 											className="absolute inset-0 bg-gradient-to-br from-brand-500/15 via-brand-600/10 to-brand-700/5"
 											initial={{ opacity: 0 }}
@@ -303,12 +328,12 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 									)}
 
 									{/* Hover background effect */}
-									{formData.careerPath !== path.value && (
+									{!isSelected && formData.careerPath.length < maxSelections && (
 										<div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 to-brand-700/0 group-hover:from-brand-500/8 group-hover:to-brand-700/8 transition-all duration-300" />
 									)}
 
 									{/* Floating particles for selected state */}
-									{formData.careerPath === path.value && (
+									{isSelected && (
 										<>
 											<motion.div
 												className="absolute top-4 right-8 w-1 h-1 bg-brand-400/60 rounded-full"
@@ -327,17 +352,17 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 										{/* Enhanced icon container */}
 										<motion.div
 											className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
-												formData.careerPath === path.value
+												isSelected
 													? "bg-gradient-to-br from-brand-500 to-brand-700 scale-110"
 													: "bg-gradient-to-br from-zinc-700 to-zinc-800 group-hover:from-zinc-600 group-hover:to-zinc-700"
 											}`}
 											animate={
-												formData.careerPath === path.value
+												isSelected
 													? { scale: 1.1, rotate: [0, 5, -5, 0] }
 													: { scale: 1, rotate: 0 }
 											}
 											transition={{ duration: 0.3 }}
-											whileHover={{ scale: formData.careerPath === path.value ? 1.15 : 1.05 }}
+											whileHover={{ scale: isSelected ? 1.15 : formData.careerPath.length < maxSelections ? 1.05 : 1 }}
 										>
 											<span className="text-3xl filter drop-shadow-sm">
 												{path.emoji}
@@ -347,7 +372,7 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 										<div className="flex-1 min-w-0 pt-1">
 											<div
 												className={`font-bold text-xl mb-2 ${
-													formData.careerPath === path.value
+													isSelected
 														? "text-white"
 														: "text-zinc-200 group-hover:text-white"
 												} transition-colors`}
@@ -361,7 +386,7 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 										</div>
 
 										{/* Enhanced checkmark */}
-										{formData.careerPath === path.value && (
+										{isSelected && (
 											<motion.div
 												initial={{ scale: 0, rotate: -180 }}
 												animate={{ scale: 1, rotate: 0 }}
@@ -373,12 +398,13 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 										)}
 									</div>
 								</motion.button>
-							))}
+								);
+							})}
 						</div>
 						{shouldShowError(
 							"careerPath",
-							!formData.careerPath,
-							!!formData.careerPath,
+							formData.careerPath.length === 0,
+							formData.careerPath.length > 0,
 						) && (
 							<FormFieldError
 														error="Your career interests help us find the perfect job matches tailored to your goals and experience level."
@@ -388,10 +414,14 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 					</div>
 
 					{(() => {
-						const selectedCareer = CAREER_PATHS.find(
-							(c) => c.value === formData.careerPath,
+						const selectedCareers = CAREER_PATHS.filter(
+							(c) => formData.careerPath.includes(c.value),
 						);
-						if (!selectedCareer) return null;
+						if (selectedCareers.length === 0) return null;
+
+						// For now, show the first selected career's roles
+						// In the future, we could show combined roles from all selected careers
+						const primaryCareer = selectedCareers[0];
 
 						return (
 							<motion.div
@@ -405,8 +435,8 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 									htmlFor="roles-field"
 									className="block text-lg font-black text-white mb-4"
 								>
-									<span className="text-2xl mr-2">{selectedCareer.emoji}</span>
-									{selectedCareer.label} Roles
+									<span className="text-2xl mr-2">{primaryCareer.emoji}</span>
+									{selectedCareers.length > 1 ? 'Selected Career' : primaryCareer.label} Roles
 									<span className="text-zinc-400 font-normal text-base ml-2">
 										(Select at least one - required)
 									</span>
@@ -415,13 +445,13 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 								<div className="flex flex-col sm:flex-row gap-2 mb-4">
 									<motion.button
 										type="button"
-										onClick={() => selectAllRoles(formData.careerPath)}
+										onClick={() => selectAllRoles(primaryCareer.value)}
 										whileHover={{ scale: 1.02 }}
 										whileTap={{ scale: 0.98 }}
 										className="px-4 py-3 sm:py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-glow-subtle hover:shadow-glow-medium touch-manipulation min-h-[48px]"
-										title={`Select all ${selectedCareer.roles.length} roles in ${selectedCareer.label}`}
+										title={`Select all ${primaryCareer.roles.length} roles in ${primaryCareer.label}`}
 									>
-										Select Popular Roles ({selectedCareer.popularRoles?.length || selectedCareer.roles.length})
+										Select Popular Roles ({primaryCareer.popularRoles?.length || primaryCareer.roles.length})
 									</motion.button>
 									<motion.button
 										type="button"
@@ -456,8 +486,8 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 									}
 								>
 									<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-										{selectedCareer.roles
-											.slice(0, showAllRoles ? selectedCareer.roles.length : 5)
+										{primaryCareer.roles
+											.slice(0, showAllRoles ? primaryCareer.roles.length : 5)
 											.map((role: string, idx: number) => (
 											<motion.button
 												key={role}
@@ -509,7 +539,7 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 											</motion.button>
 										))}
 
-										{!showAllRoles && selectedCareer.roles.length > 5 && (
+										{!showAllRoles && primaryCareer.roles.length > 5 && (
 											<motion.button
 												type="button"
 												onClick={() => setShowAllRoles(true)}
@@ -517,7 +547,7 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 												whileHover={{ scale: 1.02 }}
 												whileTap={{ scale: 0.98 }}
 											>
-												Show {selectedCareer.roles.length - 5} More Roles →
+												Show {primaryCareer.roles.length - 5} More Roles →
 											</motion.button>
 										)}
 									</div>
@@ -560,7 +590,7 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 							<motion.button
 								onClick={() => setStep(4)}
 								disabled={
-									loading || !formData.careerPath || formData.roles.length === 0
+									loading || formData.careerPath.length === 0 || formData.roles.length === 0
 								}
 								whileHover={{ scale: loading ? 1 : 1.03 }}
 								whileTap={{ scale: loading ? 1 : 0.97 }}

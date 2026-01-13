@@ -12,7 +12,7 @@ export interface PreferencesFormData {
 	visaStatus: string;
 	entryLevelPreferences: string[];
 	targetCompanies: string[];
-	careerPath: string;
+	careerPath: string[];
 	roles: string[];
 }
 
@@ -146,7 +146,7 @@ export const INITIAL_FORM_DATA: PreferencesFormData = {
 	visaStatus: "",
 	entryLevelPreferences: [],
 	targetCompanies: [],
-	careerPath: "",
+	careerPath: [],
 	roles: [],
 };
 
@@ -180,7 +180,7 @@ export function usePreferences(): UsePreferencesReturn {
 					visa_status?: string;
 					entry_level_preferences?: string[];
 					target_companies?: string[];
-					career_path?: string;
+					career_path?: string | string[];
 					roles?: string[];
 				}>("/api/preferences", {
 					method: "POST",
@@ -198,7 +198,7 @@ export function usePreferences(): UsePreferencesReturn {
 					visaStatus: data.visa_status || "",
 					entryLevelPreferences: data.entry_level_preferences || [],
 					targetCompanies: data.target_companies || [],
-					careerPath: data.career_path || "",
+					careerPath: Array.isArray(data.career_path) ? data.career_path : data.career_path ? [data.career_path] : [],
 					roles: data.roles || [],
 				});
 			} catch (error) {

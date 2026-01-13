@@ -6,7 +6,7 @@ import { getDatabaseClient } from "../../../utils/core/database-pool";
 
 interface PreviewMatchesRequest {
 	cities: string[];
-	careerPath: string;
+	careerPath: string | string[];
 	visaSponsorship?: string;
 }
 
@@ -28,7 +28,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			throw new AppError("Cities array is required", 400, "VALIDATION_ERROR");
 		}
 
-		if (!careerPath || typeof careerPath !== "string") {
+		if (!careerPath || (typeof careerPath !== "string" && !Array.isArray(careerPath))) {
 			throw new AppError("Career path is required", 400, "VALIDATION_ERROR");
 		}
 
@@ -52,7 +52,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			query = query.in("city", cities);
 		}
 
-		// Filter by career path - match in categories array
+		// Filter by career path - balanced matching approach
 		if (careerPath) {
 			const careerPathMapping: Record<string, string[]> = {
 				"Strategy & Business Design": ["strategy", "business-design", "consulting"],
@@ -67,8 +67,20 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 				"Not Sure Yet / General": ["general", "graduate", "trainee", "rotational"],
 			};
 
-			const careerCategories = careerPathMapping[careerPath] || [careerPath.toLowerCase()];
-			query = query.overlaps("categories", careerCategories);
+			// Normalize to array for consistent processing
+			const careerPaths = Array.isArray(careerPath) ? careerPath : [careerPath];
+
+			// Get all categories for all selected career paths
+			const allCareerCategories = careerPaths.flatMap(path =>
+				careerPathMapping[path] || [path.toLowerCase()]
+			);
+
+			// Remove duplicates
+			const uniqueCategories = [...new Set(allCareerCategories)];
+
+			// Use overlaps to find jobs that match at least one category,
+			// but we'll filter further in the application layer for balance
+			query = query.overlaps("categories", uniqueCategories);
 		}
 
 		// Filter by visa sponsorship if specified

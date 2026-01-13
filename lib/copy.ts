@@ -136,9 +136,10 @@ export const PREMIUM_PLAN_ANNUAL = "€20 for 3 months (save €1)";
 export const PREMIUM_PLAN_DESCRIPTION = `5 fresh matches 3× per week (Mon/Wed/Fri) from companies actively hiring.`;
 export const PREMIUM_PLAN_FEATURES = [
 	`10 instant matches on signup (vs 5 for free)`,
+	`Select up to 2 career paths (vs 1 for free)`,
 	`15 fresh matches per week (Mon/Wed/Fri delivery)`,
-	"Access jobs within 7 days (vs 30 days for free)",
-	"Priority AI matching with better distribution",
+	"Access to all job postings (vs 30-day limit for free)",
+	"Balanced matching across your locations and career paths",
 	"Delivered to your inbox automatically",
 	"Account stays active (no 30-day deletion)",
 	"Cancel anytime, no questions asked",

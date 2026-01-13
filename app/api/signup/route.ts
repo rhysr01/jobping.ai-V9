@@ -486,7 +486,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 					email: userData.email,
 					target_cities: userData.target_cities,
 					languages_spoken: userData.languages_spoken,
-					career_path: userData.career_path ? [userData.career_path] : [],
+					career_path: userData.career_path || [],
 					roles_selected: userData.roles_selected,
 					entry_level_preference: userData.entry_level_preference,
 					work_environment: userData.work_environment,

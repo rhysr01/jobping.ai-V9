@@ -1,7 +1,7 @@
 import { GET } from "@/app/api/cleanup-jobs/route";
-import { getDatabaseClient } from "../../utils/databasePool";
+import { getDatabaseClient } from "../../utils/core/database-pool";
 
-jest.mock("@/utils/databasePool", () => ({
+jest.mock("@/utils/core/database-pool", () => ({
 	getDatabaseClient: jest.fn(() => ({
 		from: jest.fn(() => ({
 			delete: jest.fn(() => ({

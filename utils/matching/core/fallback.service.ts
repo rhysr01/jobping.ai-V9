@@ -23,7 +23,7 @@ export interface FallbackMatch {
 
 export class FallbackService {
 	/**
-	 * Generate fallback matches using rule-based logic
+	 * Generate fallback matches using rule-based logic with balanced distribution
 	 */
 	generateFallbackMatches(
 		jobs: Job[],
@@ -38,8 +38,8 @@ export class FallbackService {
 		// Sort by match score
 		scoredJobs.sort((a, b) => b.matchScore - a.matchScore);
 
-		// Take top matches
-		const matches = scoredJobs.slice(0, maxMatches);
+		// Apply balanced distribution to ensure all user preferences are represented
+		const matches = this.applyBalancedDistribution(scoredJobs, user, maxMatches);
 
 		logger.info("Fallback matching completed", {
 			metadata: {
@@ -63,6 +63,7 @@ export class FallbackService {
 			experience: 0,
 			location: 0,
 			recency: 0,
+			careerPath: 0,
 		};
 
 		// Skills matching (keywords)
@@ -97,9 +98,47 @@ export class FallbackService {
 		}
 		totalScore += breakdown.location * 0.2;
 
+		// Career path matching - more balanced approach
+		const userCareerPaths = Array.isArray(user.career_path)
+			? user.career_path
+			: user.career_path ? [user.career_path] : [];
+
+		if (userCareerPaths.length > 0 && job.categories && job.categories.length > 0) {
+			// Calculate how many of the job's categories are relevant to user's career paths
+			let relevantJobCategories = 0;
+			let totalJobCategories = job.categories.length;
+
+			for (const jobCategory of job.categories) {
+				const matchesAnyUserPath = userCareerPaths.some(userPath =>
+					this.categoryMatchesCareerPath(jobCategory, userPath)
+				);
+				if (matchesAnyUserPath) {
+					relevantJobCategories++;
+				}
+			}
+
+			// Use 40% relevance threshold with sliding scale (not hard cutoff)
+			const relevanceRatio = relevantJobCategories / totalJobCategories;
+			if (relevanceRatio >= 0.4) {
+				// Score based on both coverage and user career path matches
+				const userPathMatches = userCareerPaths.filter(path =>
+					job.categories!.some(category =>
+						this.categoryMatchesCareerPath(category, path)
+					)
+				).length;
+
+				// Combine relevance ratio with user path coverage
+				breakdown.careerPath = (relevanceRatio * 0.7 + (userPathMatches / userCareerPaths.length) * 0.3) * 100;
+			} else {
+				// Below 40% still gets partial score (sliding scale, not zero)
+				breakdown.careerPath = relevanceRatio * 30;
+			}
+		}
+		totalScore += breakdown.careerPath * 0.15;
+
 		// Recency bonus
 		breakdown.recency = this.calculateRecencyScore(job);
-		totalScore += breakdown.recency * 0.15;
+		totalScore += breakdown.recency * 0.1;
 
 		// Determine match quality
 		let matchQuality: "excellent" | "good" | "fair" | "low";
@@ -228,6 +267,138 @@ export class FallbackService {
 		}
 
 		return reasons.join(", ") + ` (${quality} match)`;
+	}
+
+	/**
+	 * Check if a job category matches a user's career path
+	 */
+	private categoryMatchesCareerPath(jobCategory: string, careerPath: string): boolean {
+		const careerPathMapping: Record<string, string[]> = {
+			"Strategy & Business Design": ["strategy", "business-design", "consulting"],
+			"Data & Analytics": ["data", "analytics", "data-science"],
+			"Sales & Client Success": ["sales", "business-development", "client-success"],
+			"Marketing & Growth": ["marketing", "growth", "brand"],
+			"Finance & Investment": ["finance", "accounting", "investment"],
+			"Operations & Supply Chain": ["operations", "supply-chain", "logistics"],
+			"Product & Innovation": ["product", "product-management", "innovation"],
+			"Tech & Transformation": ["tech", "technology", "transformation", "it"],
+			"Sustainability & ESG": ["sustainability", "esg", "environmental", "social"],
+			"Not Sure Yet / General": ["general", "graduate", "trainee", "rotational"],
+		};
+
+		const expectedCategories = careerPathMapping[careerPath] || [careerPath.toLowerCase()];
+		return expectedCategories.some(expected =>
+			jobCategory.toLowerCase().includes(expected.toLowerCase())
+		);
+	}
+
+	/**
+	 * Apply balanced distribution across locations and career paths
+	 * Ensures all user preferences are fairly represented in results
+	 */
+	private applyBalancedDistribution(
+		scoredJobs: FallbackMatch[],
+		user: UserPreferences,
+		maxMatches: number
+	): FallbackMatch[] {
+		const targetCities = Array.isArray(user.target_cities)
+			? user.target_cities
+			: user.target_cities ? [user.target_cities] : [];
+
+		const userCareerPaths = Array.isArray(user.career_path)
+			? user.career_path
+			: user.career_path ? [user.career_path] : [];
+
+		// If no specific preferences, just return top matches
+		if (targetCities.length === 0 && userCareerPaths.length === 0) {
+			return scoredJobs.slice(0, maxMatches);
+		}
+
+		const balancedMatches: FallbackMatch[] = [];
+		const locationCounts: Record<string, number> = {};
+		const careerPathCounts: Record<string, number> = {};
+
+		// Initialize counters
+		targetCities.forEach(city => locationCounts[city.toLowerCase()] = 0);
+		userCareerPaths.forEach(path => careerPathCounts[path] = 0);
+
+		// Calculate fair distribution targets
+		const locationsPerCity = targetCities.length > 0
+			? Math.floor(maxMatches / targetCities.length)
+			: maxMatches;
+		const jobsPerCareerPath = userCareerPaths.length > 0
+			? Math.floor(maxMatches / userCareerPaths.length)
+			: maxMatches;
+
+		// Round 1: Distribute jobs fairly across all preferences
+		for (const match of scoredJobs) {
+			if (balancedMatches.length >= maxMatches) break;
+
+			const job = match.job;
+			const jobCity = job.city?.toLowerCase() || "";
+
+			// Check if this job's location needs more representation
+			let locationNeeded = false;
+			let matchingLocation = "";
+			for (const city of targetCities) {
+				if (jobCity.includes(city.toLowerCase())) {
+					if (locationCounts[city.toLowerCase()] < locationsPerCity) {
+						locationNeeded = true;
+						matchingLocation = city.toLowerCase();
+						break;
+					}
+				}
+			}
+
+			// Check if this job's career path needs more representation
+			let careerPathNeeded = false;
+			let matchingCareerPath = "";
+			for (const path of userCareerPaths) {
+				if (job.categories?.some(cat => this.categoryMatchesCareerPath(cat, path))) {
+					if (careerPathCounts[path] < jobsPerCareerPath) {
+						careerPathNeeded = true;
+						matchingCareerPath = path;
+						break;
+					}
+				}
+			}
+
+			// Add job if it helps balance distribution
+			if ((targetCities.length === 0 || locationNeeded) &&
+				(userCareerPaths.length === 0 || careerPathNeeded)) {
+				balancedMatches.push(match);
+
+				if (matchingLocation) {
+					locationCounts[matchingLocation]++;
+				}
+				if (matchingCareerPath) {
+					careerPathCounts[matchingCareerPath]++;
+				}
+			}
+		}
+
+		// Round 2: Fill remaining slots with highest-scoring jobs
+		for (const match of scoredJobs) {
+			if (balancedMatches.length >= maxMatches) break;
+
+			// Skip if already added
+			if (balancedMatches.some(m => m.job.job_url === match.job.job_url)) {
+				continue;
+			}
+
+			balancedMatches.push(match);
+		}
+
+		logger.info("Applied balanced distribution", {
+			metadata: {
+				userEmail: user.email,
+				locationCounts,
+				careerPathCounts,
+				totalMatches: balancedMatches.length,
+			},
+		});
+
+		return balancedMatches;
 	}
 }
 
