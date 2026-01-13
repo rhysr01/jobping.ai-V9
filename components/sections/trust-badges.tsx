@@ -13,9 +13,9 @@ export default function TrustBadges() {
 			className="mt-6 flex flex-wrap items-center justify-center gap-3"
 		>
 			{[
-				{ icon: BrandIcons.CheckCircle, text: "100% Free", glowClass: "from-emerald-500/20 to-teal-500/20" },
-				{ icon: BrandIcons.Shield, text: "Privacy-First", glowClass: "from-blue-500/20 to-cyan-500/20" },
-				{ icon: BrandIcons.Zap, text: "No Credit Card", glowClass: "from-purple-500/20 to-purple-500/20" },
+				{ icon: BrandIcons.CheckCircle, text: "100% Free", glowClass: "from-emerald-500/20 to-emerald-500/10" },
+				{ icon: BrandIcons.Shield, text: "Privacy-First", glowClass: "from-emerald-500/20 to-emerald-500/10" },
+				{ icon: BrandIcons.Zap, text: "No Credit Card", glowClass: "from-emerald-500/20 to-emerald-500/10" },
 			].map((badge, index) => (
 				<motion.div
 					key={index}

@@ -332,11 +332,11 @@ class RealJobRunner {
 					"NODE_ENV=production node scrapers/wrappers/jobspy-wrapper.cjs",
 					{
 						cwd: process.cwd(),
-						timeout: 600000, // 10 minutes timeout (reduced from 20)
+						timeout: 240000, // 4 minutes timeout (increased for reliability)
 						env: { ...process.env },
 					},
 				),
-				120000, // Reduced from 600000 (10min) to 120000 (2min)
+				240000, // Increased from 120000 (2min) to 240000 (4min)
 				"JobSpy scraper",
 			);
 

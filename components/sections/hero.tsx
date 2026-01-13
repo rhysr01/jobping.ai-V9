@@ -86,13 +86,6 @@ function Hero() {
 				}}
 			/>
 			
-			{/* Animated Gradient Orbs for Premium Feel */}
-			<div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-				<div className="absolute top-0 -left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-[120px] animate-pulse" />
-				<div className="absolute top-1/4 right-0 w-80 h-80 bg-blue-500/15 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
-				<div className="absolute bottom-0 left-1/2 w-72 h-72 bg-purple-500/10 rounded-full blur-[90px] animate-pulse" style={{ animationDelay: '2s' }} />
-			</div>
-			
 			<div className="absolute inset-0 -z-10">
 				<HeroBackgroundAura />
 			</div>

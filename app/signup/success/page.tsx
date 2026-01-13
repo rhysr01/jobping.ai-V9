@@ -6,6 +6,7 @@ import { PremiumFeaturesSection } from "../../../components/signup-success/Premi
 import { TargetCompaniesSection } from "../../../components/signup-success/TargetCompaniesSection";
 import { CustomScanSection } from "../../../components/signup-success/CustomScanSection";
 import { NextStepsSection } from "../../../components/signup-success/NextStepsSection";
+import { FreeSuccessPage } from "../../../components/signup-success/FreeSuccessPage";
 import { useSignupSuccess } from "../../../hooks/useSignupSuccess";
 
 function SignupSuccessContent() {
@@ -17,10 +18,18 @@ function SignupSuccessContent() {
 		metadataLoading,
 		email,
 		matchCount,
+		isFree,
+		isPremium,
 		handleSetAlert,
 		handleResendEmail,
 	} = useSignupSuccess();
 
+	// Show dedicated free success page for free tier users
+	if (isFree) {
+		return <FreeSuccessPage matchCount={matchCount} email={email} />;
+	}
+
+	// Premium success page (existing layout)
 	return (
 		<div className="min-h-screen bg-black text-white py-8">
 			<div className="container mx-auto px-4 max-w-4xl">

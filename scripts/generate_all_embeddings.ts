@@ -36,7 +36,7 @@ if (missing.length > 0) {
 async function generateAllEmbeddings() {
   // Dynamically import services AFTER env vars are loaded
   const { embeddingService } = await import('../Utils/matching/embedding.service');
-  const { getDatabaseClient } = await import('../Utils/databasePool');
+  const { getDatabaseClient } = await import('../Utils/core/database-pool');
   console.log('🚀 Starting embedding generation...');
   const startTime = Date.now();
   

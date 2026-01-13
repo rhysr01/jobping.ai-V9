@@ -5,6 +5,110 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMapProjection } from "@/hooks/useMapProjection";
 import { TIMING } from "../../lib/constants";
 
+// Smart label collision detection - dynamically positions labels to avoid overlaps
+const calculateLabelPositions = (
+	selectedCities: string[],
+	cityEntries: [string, { lat: number; lon: number; country: string; x: number; y: number }][]
+): Map<string, { x: number; y: number }> => {
+	const positions = new Map<string, { x: number; y: number }>();
+	const LABEL_WIDTH = 80; // Approximate label width in pixels
+	const LABEL_HEIGHT = 24; // Approximate label height in pixels
+	const MIN_SPACING = 10; // Minimum pixels between labels
+
+	if (selectedCities.length === 0) return positions;
+
+	// Sort cities by Y coordinate (top to bottom) for consistent positioning
+	const sortedCities = [...selectedCities].sort((a, b) => {
+		const coordsA = cityEntries.find(([name]) => name === a)?.[1];
+		const coordsB = cityEntries.find(([name]) => name === b)?.[1];
+		return (coordsA?.y || 0) - (coordsB?.y || 0);
+	});
+
+	sortedCities.forEach((city) => {
+		const coords = cityEntries.find(([name]) => name === city)?.[1];
+		if (!coords) return;
+
+		// Start with default position (above marker)
+		let x = coords.x;
+		let y = coords.y - 32;
+
+		// Check for collisions with already-placed labels
+		let hasCollision = true;
+		let attempts = 0;
+		const maxAttempts = 8; // Try up to 8 different positions
+
+		while (hasCollision && attempts < maxAttempts) {
+			hasCollision = false;
+
+			// Check against all already-placed labels
+			for (const [, placedPos] of positions.entries()) {
+				const dx = Math.abs(x - placedPos.x);
+				const dy = Math.abs(y - placedPos.y);
+
+				// Check if rectangles overlap
+				if (
+					dx < (LABEL_WIDTH + MIN_SPACING) / 2 &&
+					dy < (LABEL_HEIGHT + MIN_SPACING) / 2
+				) {
+					hasCollision = true;
+					break;
+				}
+			}
+
+			if (hasCollision) {
+				// Try different positions in priority order:
+				// 1. Above (default) - already tried
+				// 2. Below
+				// 3. Left
+				// 4. Right
+				// 5. Top-left diagonal
+				// 6. Top-right diagonal
+				// 7. Bottom-left diagonal
+				// 8. Bottom-right diagonal
+				switch (attempts) {
+					case 0:
+						y = coords.y + 32; // Below
+						break;
+					case 1:
+						x = coords.x - 50; // Left
+						y = coords.y - 16;
+						break;
+					case 2:
+						x = coords.x + 50; // Right
+						y = coords.y - 16;
+						break;
+					case 3:
+						x = coords.x - 45; // Top-left
+						y = coords.y - 40;
+						break;
+					case 4:
+						x = coords.x + 45; // Top-right
+						y = coords.y - 40;
+						break;
+					case 5:
+						x = coords.x - 45; // Bottom-left
+						y = coords.y + 40;
+						break;
+					case 6:
+						x = coords.x + 45; // Bottom-right
+						y = coords.y + 40;
+						break;
+					case 7:
+						// Last resort - force above with extra offset
+						x = coords.x + 20;
+						y = coords.y - 45;
+						break;
+				}
+				attempts++;
+			}
+		}
+
+		positions.set(city, { x, y });
+	});
+
+	return positions;
+};
+
 const OFFSET: Record<string, { dx: number; dy: number }> = {
 	London: { dx: 6, dy: 4 },
 	Manchester: { dx: -12, dy: -10 },
@@ -296,23 +400,10 @@ const EuropeMap = memo(
 			});
 		}, [project, selectedCities]);
 
-		// Pre-calculate selected city label positions (static, only recalculates when selection changes)
+		// Smart collision detection for selected city labels - dynamically avoids overlaps
 		const selectedLabelPositions = useMemo(() => {
-			const positions: Map<string, { x: number; y: number }> = new Map();
-
-			selectedCities.forEach((city) => {
-				const coords = cityEntries.find(([name]) => name === city)?.[1];
-				if (!coords) return;
-
-				// coords already has the offset applied from cityEntries, so just position the label
-				positions.set(city, {
-					x: coords.x,
-					y: coords.y - 32, // Base Y for selected (label above marker)
-				});
-			});
-
-			return positions;
-		}, [selectedCities, cityEntries]);
+		return calculateLabelPositions(selectedCities, cityEntries);
+	}, [selectedCities, cityEntries]);
 
 		// Calculate hover label position (only when hovering, simple calculation)
 		const hoverLabelPosition = useMemo(() => {

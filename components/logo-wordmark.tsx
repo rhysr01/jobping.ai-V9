@@ -2,7 +2,7 @@ export default function LogoWordmark() {
 	return (
 		<header
 			data-testid="logo"
-			className="font-display inline-flex items-center gap-2 md:gap-3 font-semibold tracking-tight leading-[1] text-7xl md:text-8xl overflow-visible px-1 pr-4 md:pr-5"
+			className="font-display inline-flex items-center gap-2 md:gap-3 font-semibold tracking-tight leading-none text-7xl md:text-8xl overflow-visible px-1 pr-4 md:pr-5 pb-1"
 			style={{ overflow: "visible", overflowX: "visible", overflowY: "visible", minWidth: "fit-content" }}
 		>
 			<span aria-hidden className="text-white/95 flex items-center shrink-0">

@@ -42,6 +42,9 @@ export interface UseSignupSuccessReturn {
 	// URL params
 	email: string;
 	matchCount: number;
+	tier: string;
+	isFree: boolean;
+	isPremium: boolean;
 
 	// Actions
 	handleSetAlert: (company: string) => Promise<void>;
@@ -60,6 +63,9 @@ export function useSignupSuccess(): UseSignupSuccessReturn {
 	// URL parameters
 	const email = searchParams?.get("email") || "";
 	const matchCount = parseInt(searchParams?.get("matches") || "10", 10) || 10;
+	const tier = searchParams?.get("tier") || "free"; // Default to free if not specified
+	const isFree = tier === "free";
+	const isPremium = tier === "premium";
 
 	// Initialize email sent time
 	useEffect(() => {
@@ -226,6 +232,9 @@ export function useSignupSuccess(): UseSignupSuccessReturn {
 		metadataLoading,
 		email,
 		matchCount,
+		tier,
+		isFree,
+		isPremium,
 		handleSetAlert,
 		handleResendEmail,
 	};
