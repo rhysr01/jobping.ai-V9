@@ -15,7 +15,7 @@ const TIERS = [
 	{
 		name: Copy.FREE_PLAN_TITLE,
 		price: "0",
-		tagline: "Test the waters",
+		tagline: "Your first 5 matches",
 		description: "5 instant matches to try JobPing (one-time preview, no ongoing emails)",
 		features: Copy.FREE_PLAN_FEATURES,
 		cta: "Get 5 Free Matches",
@@ -26,15 +26,15 @@ const TIERS = [
 	{
 		name: Copy.PREMIUM_PLAN_TITLE,
 		price: "5",
-		tagline: "Less than 2 coffees per month",
-		description: "15 curated matches per week, delivered Mon/Wed/Fri",
+		tagline: "€5/month saves 40+ hours searching per month",
+		description: "5 fresh matches 3× per week (Mon/Wed/Fri) from companies actively hiring",
 		features: Copy.PREMIUM_PLAN_FEATURES,
 		cta: "Get Premium Access",
 		href: "/signup",
 		popular: true,
 		icon: Star,
 		badge: "Most Popular",
-		savings: "Save 15+ hours per week",
+		savings: "Save 10 hours per week job searching",
 	},
 ];
 

@@ -175,8 +175,8 @@ function Hero() {
 							className="text-base sm:text-lg md:text-xl text-zinc-300 leading-relaxed max-w-xl mb-4 mt-2 sm:mt-4 overflow-visible"
 							style={{ wordSpacing: "0.02em" }}
 						>
-							AI-powered job matching for early-career roles across Europe. Get
-							personalized matches delivered to your inbox.
+							Save 10 hours per week. Get roles from 4,000+ EU companies -
+							delivered to your inbox before they hit LinkedIn.
 						</motion.p>
 
 						{/* Social Proof for Free Instant Matches */}
@@ -279,7 +279,7 @@ function Hero() {
 												</span>
 											</div>
 											<p className="text-xs sm:text-sm text-white/70 leading-relaxed">
-												London, Paris, Berlin - where you want to work
+												London, Paris, Berlin and more - where you want to work
 											</p>
 										</div>
 									</motion.div>
@@ -327,7 +327,8 @@ function Hero() {
 												Visa Status
 											</span>
 											<p className="text-xs sm:text-sm text-white/70 leading-relaxed">
-												EU/EEA/Swiss citizen, work permit, student visa, or need sponsorship?
+												EU/EEA/Swiss citizen, work permit, student visa, or need
+												sponsorship?
 											</p>
 										</div>
 									</motion.div>

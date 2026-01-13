@@ -4,6 +4,11 @@
 
 import { FREE_ROLES_PER_SEND, PREMIUM_SENDS_PER_WEEK } from "./productMetrics";
 
+// Time savings (consistent across all copy)
+export const TIME_SAVED_PER_WEEK = 10;
+export const TIME_SAVED_PER_MONTH = TIME_SAVED_PER_WEEK * 4;
+export const TIME_SAVED_DESCRIPTION = `Save ${TIME_SAVED_PER_WEEK} hours per week job searching`;
+
 export const CTA_FREE = `Get ${FREE_ROLES_PER_SEND} matches Free`;
 export const CTA_PREMIUM = "Upgrade to Premium";
 export const VP_TAGLINE =
@@ -23,7 +28,7 @@ export const HERO_TITLE = "JobPing";
 export const HERO_HEADLINE =
 	"Get hand-picked early-career jobs across Europe without wasting hours searching";
 export const HERO_SUBLINE =
-	"We scan 4,000+ EU companies daily and send you only roles you're qualified for - filtered by location, visa status, and experience.";
+	"We scan 4,000+ EU companies daily and send you only roles you're qualified for - filtered by location and experience.";
 export const HERO_SUBLINE_MICRO =
 	"No dashboards. No job boards. Just roles you can actually apply for.";
 export const HERO_CTA = "Get my first 5 matches";
@@ -39,17 +44,17 @@ export const HOW_IT_WORKS_STEPS = [
 	{
 		title: "1. Tell us your preferences",
 		description:
-			"Choose your cities, career path, and visa status. We'll only show roles you qualify for - no time wasters. Only junior-friendly roles: internships, graduate programmes, and entry-level positions.",
+			"Tell us your target cities and career interests. We instantly filter 4,000+ European companies to find roles you're qualified for - saving you 10 hours per week of manual searching.",
 	},
 	{
 		title: "2. We search 4,000+ companies daily",
 		description:
-			"Our AI scans job boards and career pages across Europe - you get the best matches in your inbox. Every email includes salary hints, visa notes, and why the role fits you.",
+			"We scan 4,000+ company career pages daily across 22 EU cities - more than any job board. Our AI ranks every role against your exact profile, so you only see roles worth applying for.",
 	},
 	{
 		title: "3. Get matched roles instantly (Free) or weekly (Premium)",
 		description:
-			"Free: See 5 matches right away (one-time). Premium: Get 5 fresh roles every Monday, Wednesday, and Friday (15 per week). No dashboards. Open the email and apply when you like a role.",
+			"Free: Get 5 hand-picked matches instantly (one-time preview). Premium: Receive 15 fresh matches per week (5 each Mon/Wed/Fri) from companies actively hiring - never miss a deadline again.",
 	},
 ];
 
@@ -90,7 +95,7 @@ export const BUILT_FOR_STUDENTS_FEATURES = [
 	{
 		num: 2,
 		title: "Useful context in every email",
-		body: "Every email includes salary hints, visa notes, and why the role fits you.",
+		body: "Every match shows: estimated salary range, company size, and why our AI thinks it's a good fit - so you can decide in 30 seconds.",
 		meta: "Everything you need to decide in seconds.",
 	},
 	{
@@ -103,18 +108,18 @@ export const BUILT_FOR_STUDENTS_FEATURES = [
 
 // Pricing
 export const PRICING_TITLE = "Choose Your Plan";
-export const PRICING_SUBTITLE = `Unlock the full European market. Join 1,000+ students finding verified sponsorship roles.`;
+export const PRICING_SUBTITLE = `Save 10 hours per week. Join 1,000+ students finding EU roles.`;
 export const PRICING_BADGE = "Simple pricing • Cancel anytime";
 
 // Free plan
 export const FREE_PLAN_TITLE = "Free";
-export const FREE_PLAN_SUBTITLE = "Try it out";
+export const FREE_PLAN_SUBTITLE = "Your first 5 matches";
 export const FREE_PLAN_FEATURES = [
 	`Get 5 instant matches`,
 	"View matches on website",
 	"No credit card required",
 	"Takes under 2 minutes",
-	"No recurring fees",
+	"One-time preview",
 ];
 export const FREE_PLAN_DESCRIPTION = `See your first 5 matches on your personalized dashboard. This is a one-time preview to see how JobPing works. No credit card required.`;
 
@@ -128,15 +133,15 @@ export const PREMIUM_PLAN_SUBTITLE = `${PREMIUM_SENDS_PER_WEEK}× weekly`;
 export const PREMIUM_PLAN_PRICE = "€5";
 export const PREMIUM_PLAN_PRICE_UNIT = "/mo";
 export const PREMIUM_PLAN_ANNUAL = "€20 for 3 months (save €1)";
-export const PREMIUM_PLAN_DESCRIPTION = `Matches delivered to your inbox every Monday, Wednesday, and Friday - so you never miss an opportunity.`;
+export const PREMIUM_PLAN_DESCRIPTION = `5 fresh matches 3× per week (Mon/Wed/Fri) from companies actively hiring.`;
 export const PREMIUM_PLAN_FEATURES = [
 	`10 instant matches on signup (vs 5 for free)`,
-	`15 curated roles per week (3 emails: Mon / Wed / Fri)`,
-	"Automatic email delivery to your inbox",
-	"24-hour early access to fresh job postings",
-	"Priority AI matching with better job distribution",
+	`15 fresh matches per week (Mon/Wed/Fri delivery)`,
+	"Access jobs within 7 days (vs 30 days for free)",
+	"Priority AI matching with better distribution",
+	"Delivered to your inbox automatically",
 	"Account stays active (no 30-day deletion)",
-	"Cancel anytime",
+	"Cancel anytime, no questions asked",
 ];
 
 // Reassurance
