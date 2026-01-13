@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { BrandIcons } from "../ui/BrandIcons";
 import { SuccessAnimation } from "../ui/SuccessAnimation";
 import Link from "next/link";
@@ -10,7 +11,9 @@ interface FreeSuccessPageProps {
 	email: string;
 }
 
-export function FreeSuccessPage({ matchCount, email }: FreeSuccessPageProps) {
+export function FreeSuccessPage({ matchCount, email: userEmail }: FreeSuccessPageProps) {
+	const [isResending, setIsResending] = useState(false);
+	const [resendMessage, setResendMessage] = useState("");
 	return (
 		<div className="min-h-screen bg-black text-white py-8">
 			<div className="container mx-auto px-4 max-w-4xl">
@@ -153,16 +156,45 @@ export function FreeSuccessPage({ matchCount, email }: FreeSuccessPageProps) {
 				{/* Help Section - matches premium spacing */}
 				<div className="text-center">
 					<p className="text-sm text-content-secondary">
+						{resendMessage && (
+							<span className="block mb-2 text-emerald-400 font-medium">
+								{resendMessage}
+							</span>
+						)}
 						Didn't receive the email?{" "}
 						<button
 							type="button"
-							className="text-emerald-400 hover:text-emerald-300 font-medium underline transition-colors"
-							onClick={() => {
-								// TODO: Implement resend logic for free tier
-								alert("Resend email functionality coming soon!");
+							className="text-emerald-400 hover:text-emerald-300 font-medium underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+							onClick={async () => {
+								try {
+									setIsResending(true);
+									const response = await fetch("/api/signup/free/resend", {
+										method: "POST",
+										headers: {
+											"Content-Type": "application/json",
+										},
+										body: JSON.stringify({
+											email: userEmail,
+											matchCount: matchCount,
+										}),
+									});
+
+									if (response.ok) {
+										setResendMessage("Email sent! Check your inbox.");
+										setTimeout(() => setResendMessage(""), 5000);
+									} else {
+										const error = await response.json();
+										setResendMessage(error.message || "Failed to resend email.");
+									}
+								} catch (error) {
+									setResendMessage("Network error. Please try again.");
+								} finally {
+									setIsResending(false);
+								}
 							}}
+							disabled={isResending}
 						>
-							Resend it
+							{isResending ? "Sending..." : "Resend it"}
 						</button>{" "}
 						or check your spam folder
 					</p>

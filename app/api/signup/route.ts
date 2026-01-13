@@ -4,6 +4,7 @@ import { asyncHandler } from "../../../lib/errors";
 import type { JobWithMetadata } from "../../../lib/types/job";
 import { getDatabaseClient } from "../../../utils/core/database-pool";
 import { sendMatchedJobsEmail, sendWelcomeEmail } from "../../../utils/email/sender";
+import { sendVerificationEmail } from "../../../utils/email-verification";
 // Pre-filtering removed - AI handles semantic matching
 import { getDistributionStats } from "../../../utils/matching/jobDistribution";
 import { getProductionRateLimiter } from "../../../utils/production-rate-limiter";
@@ -170,7 +171,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			skills: data.skills || [],
 			career_keywords: data.careerKeywords || null,
 			subscription_tier: subscriptionTier,
-			email_verified: true, // All users are automatically verified on signup - no verification email needed
+			email_verified: false, // Premium users need email verification before accessing paid features
 			subscription_active: true,
 			email_phase: "welcome", // Start in welcome phase
 			onboarding_complete: false, // Will be set to true after first email
@@ -283,6 +284,17 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 		}
 
 		apiLogger.info(`User created`, { email: data.email });
+
+		// Send email verification for premium users (required before payment)
+		try {
+			await sendVerificationEmail(normalizedEmail, userData.full_name);
+			apiLogger.info("Verification email sent to premium user", { email: normalizedEmail });
+		} catch (emailError) {
+			apiLogger.error("Failed to send verification email", emailError as Error, {
+				email: normalizedEmail,
+			});
+			// Don't fail signup - user can resend verification later
+		}
 
 		// Clean up promo_pending if promo code was used
 		if (hasValidPromo) {
@@ -1066,14 +1078,12 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 		// Include fallback metadata in response if available
 		const responseData: any = {
 			success: true,
-			message:
-				matchesCount > 0
-					? `Signup successful! We found ${matchesCount} perfect matches. Check your email!`
-					: "Signup successful! We're finding your matches now. Check your email soon!",
+			message: "Signup successful! Please check your email and click the verification link before continuing to payment.",
 			matchesCount,
 			emailSent,
 			email: userData.email,
-			redirectUrl: `/signup/success?tier=premium&email=${encodeURIComponent(userData.email)}&matches=${matchesCount}`,
+			verificationRequired: true,
+			redirectUrl: `/signup/verify?tier=premium&email=${encodeURIComponent(userData.email)}`,
 		};
 
 		// Add fallback metadata if available (will be fetched by metadata API, but include for immediate use)

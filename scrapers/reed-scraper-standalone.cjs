@@ -557,7 +557,7 @@ async function scrapeLocation(location) {
 
 		while (page < queryMaxPages) {
 			const params = {
-				keywords: term,
+				keywords: `${term} (graduate OR intern OR "entry level" OR junior)`,
 				locationName: location,
 				resultsToTake: resultsPerPage,
 				resultsToSkip: page * resultsPerPage,

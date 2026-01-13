@@ -307,6 +307,7 @@ async function scrapeJoobleQuery(keyword, location, supabase, apiKey) {
 				body: JSON.stringify({
 					keywords: keyword,
 					location: location.name,
+					country: location.country || "gb", // Required country parameter
 					page: page,
 					radius: 25,
 				}),

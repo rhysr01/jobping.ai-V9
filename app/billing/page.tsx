@@ -67,6 +67,8 @@ export default function BillingPage({
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string>("");
 	const [processing, setProcessing] = useState(false);
+	const [emailVerified, setEmailVerified] = useState<boolean | null>(null);
+	const [verificationChecked, setVerificationChecked] = useState(false);
 
 	// Handle async params and searchParams
 	React.useEffect(() => {
@@ -104,6 +106,27 @@ export default function BillingPage({
 
 		loadParams();
 	}, [params, searchParams]);
+
+	// Check email verification status
+	useEffect(() => {
+		const checkVerification = async () => {
+			if (!userEmail) return;
+
+			try {
+				const response = await apiCallJson("/api/user/verification-status", {
+					method: "GET",
+				});
+				setEmailVerified(response.verified);
+			} catch (err) {
+				console.error("Failed to check verification status:", err);
+				setEmailVerified(false); // Assume unverified on error
+			} finally {
+				setVerificationChecked(true);
+			}
+		};
+
+		checkVerification();
+	}, [userEmail]);
 
 	// Fetch billing data (only if userId is available)
 	useEffect(() => {
@@ -442,6 +465,70 @@ export default function BillingPage({
 			description: "Add and manage your payment methods",
 		},
 	];
+
+	// Show verification prompt if email not verified
+	if (verificationChecked && emailVerified === false) {
+		return (
+			<div className="min-h-screen bg-black text-white py-16">
+				<div className="container mx-auto px-4 max-w-2xl">
+					<div className="text-center mb-8">
+						<div className="inline-flex items-center gap-2 rounded-full border-2 border-yellow-500/40 bg-yellow-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-yellow-300 mb-4">
+							<XCircle className="h-3 w-3" />
+							Verification Required
+						</div>
+
+						<h1 className="text-3xl md:text-4xl font-bold mb-4">
+							Email Verification Needed
+						</h1>
+
+						<p className="text-lg text-zinc-400 mb-8">
+							Please verify your email address before proceeding with payment.
+						</p>
+
+						<div className="bg-white/5 rounded-2xl p-8 border border-white/10 mb-8">
+							<div className="flex items-start gap-4 mb-6">
+								<div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+									<BrandIcons.Mail className="w-6 h-6 text-purple-400" />
+								</div>
+								<div className="text-left">
+									<h3 className="text-xl font-bold mb-2">Check Your Email</h3>
+									<p className="text-zinc-400 mb-4">
+										We sent a verification link to <strong className="text-white">{userEmail}</strong>
+									</p>
+									<ul className="text-sm text-zinc-400 space-y-1">
+										<li>• Click the link to verify your email</li>
+										<li>• Link expires in 24 hours</li>
+										<li>• Check your spam folder</li>
+									</ul>
+								</div>
+							</div>
+
+							<div className="flex gap-4 justify-center">
+								<Button
+									onClick={() => window.location.reload()}
+									variant="secondary"
+									size="sm"
+								>
+									I've Verified My Email
+								</Button>
+								<Button
+									onClick={() => window.open("mailto:contact@getjobping.com", "_blank")}
+									variant="outline"
+									size="sm"
+								>
+									Contact Support
+								</Button>
+							</div>
+						</div>
+
+						<div className="text-sm text-zinc-500">
+							Need a new verification email? <a href="/signup/verify" className="text-purple-400 hover:text-purple-300 underline">Resend verification</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="min-h-screen premium-bg">

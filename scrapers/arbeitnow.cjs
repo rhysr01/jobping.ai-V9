@@ -482,24 +482,23 @@ function inferCategoriesFromTags(tags, title) {
  * FIXED: Batches database saves to prevent timeouts
  */
 async function scrapeArbeitnowQuery(keyword, location, supabase) {
-	// UNLIMITED: Fetch as many pages as available (no artificial limit)
-	// Only stop when API indicates no more pages or returns empty results
-	const MAX_PAGES = parseInt(process.env.ARBEITNOW_MAX_PAGES || "1000", 10); // Very high limit, effectively unlimited
+	// ARBEITNOW FIX: Single API call - Arbeitnow returns ALL jobs in one request (no pagination needed!)
 	const BATCH_SIZE = 50; // Batch size for database saves
-	let page = 1;
-	let hasMorePages = true;
 	let totalSaved = 0; // Track total saved jobs
 	const jobBatch = []; // Accumulate jobs for batch saving
 
-	while (hasMorePages && page <= MAX_PAGES) {
-		let retries = 0; // Reset retries for each page
+	// Implement retry logic for API call
+	let retries = 0;
+	let response;
+
+	while (retries <= 3) {
 		try {
+			// Single API call as per README - Arbeitnow returns all jobs at once
 			const url = new URL(BASE_URL);
 			url.searchParams.set("search", keyword);
 			url.searchParams.set("location", location.name);
-			url.searchParams.set("page", String(page));
 
-			const response = await fetch(url.toString(), {
+			response = await fetch(url.toString(), {
 				headers: {
 					"User-Agent": "JobPing/1.0 (job aggregator)",
 					Accept: "application/json",
@@ -509,56 +508,61 @@ async function scrapeArbeitnowQuery(keyword, location, supabase) {
 			// Track API request
 			recordApiRequest("arbeitnow", url.toString(), response.ok);
 
-			if (!response.ok) {
-				// Handle rate limiting with exponential backoff
-				if (response.status === 429) {
-					console.warn(
-						`[Arbeitnow] Rate limit hit (429) for ${keyword} in ${location.name} (page ${page}) - backing off`,
-					);
-
-					// Exponential backoff: 5s, 10s, 20s, then give up
-					const backoffTime = Math.min(5000 * Math.pow(2, retries), 30000);
-					console.log(`[Arbeitnow] Waiting ${backoffTime}ms before retry...`);
-
-					await new Promise(resolve => setTimeout(resolve, backoffTime));
-					retries++;
-
-					if (retries < 3) {
-						continue; // Retry the same request
-					} else {
-						console.error(`[Arbeitnow] Rate limit persists after ${retries} retries - skipping`);
-						break;
-					}
-				}
-
-				console.error(
-					`[Arbeitnow] API error ${response.status} for ${keyword} in ${location.name} (page ${page})`,
-				);
-				break; // Stop pagination on other errors
-			}
-
-			const data = await response.json();
-			const jobs = data.data || [];
-			const meta = data.meta || {};
-			
-			// Check if there are more pages
-			// Arbeitnow API typically returns pagination info in meta or we can infer from results
-			if (jobs.length === 0) {
-				hasMorePages = false;
+			// If successful or not a rate limit error, break out of retry loop
+			if (response.ok || response.status !== 429) {
 				break;
 			}
 
-			// If meta indicates total pages, use that
-			if (meta.last_page && page >= meta.last_page) {
-				hasMorePages = false;
-			}
-
-			console.log(
-				`[Arbeitnow] Found ${jobs.length} jobs for "${keyword}" in ${location.name} (page ${page})`,
+			// Handle rate limiting with exponential backoff
+			console.warn(
+				`[Arbeitnow] Rate limit hit (429) for ${keyword} in ${location.name} - backing off`,
 			);
 
-			// Process each job and add to batch
-			for (const job of jobs) {
+			// Exponential backoff: 5s, 10s, 20s, then give up
+			const backoffTime = Math.min(5000 * Math.pow(2, retries), 30000);
+			console.log(`[Arbeitnow] Waiting ${backoffTime}ms before retry...`);
+
+			await new Promise(resolve => setTimeout(resolve, backoffTime));
+			retries++;
+
+		} catch (error) {
+			console.error(`[Arbeitnow] Network error on attempt ${retries + 1}:`, error.message);
+			retries++;
+			if (retries <= 3) {
+				await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+			}
+		}
+	}
+
+	try {
+		if (!response || !response.ok) {
+			if (response?.status === 429 && retries > 3) {
+				console.error(`[Arbeitnow] Rate limit persists after ${retries} retries - skipping`);
+			} else if (response) {
+				console.error(
+					`[Arbeitnow] API error ${response.status} for ${keyword} in ${location.name}`,
+				);
+			} else {
+				console.error(`[Arbeitnow] Failed to get response after ${retries} retries`);
+			}
+			return totalSaved; // Return what we have on errors
+		}
+
+		const data = await response.json();
+		const jobs = data.data || [];
+
+		console.log(
+			`[Arbeitnow] Found ${jobs.length} jobs for "${keyword}" in ${location.name} (single API call)`,
+		);
+
+		// If no jobs found, return early
+		if (jobs.length === 0) {
+			console.log(`[Arbeitnow] No jobs found for "${keyword}" in ${location.name}`);
+			return totalSaved;
+		}
+
+		// Process each job and add to batch
+		for (const job of jobs) {
 				try {
 					// Extract city and country
 					const city = extractCity(job.location);
@@ -658,28 +662,14 @@ async function scrapeArbeitnowQuery(keyword, location, supabase) {
 				}
 			}
 
-			// If we got fewer jobs than expected (e.g., < 20), likely no more pages
-			// This is a heuristic - adjust based on typical page size
-			if (jobs.length < 20) {
-				hasMorePages = false;
-			}
-
-			page++;
-			
-			// Rate limiting between pages
-			if (hasMorePages && page <= MAX_PAGES) {
-				await new Promise((resolve) => setTimeout(resolve, 1000)); // 1s delay between pages
-			}
-		} catch (error) {
-			console.error(
-				`[Arbeitnow] Error scraping ${keyword} in ${location.name} (page ${page}):`,
-				error.message,
-			);
-			break; // Stop pagination on error
-		}
+		// Save any remaining jobs in the batch
+	} catch (error) {
+		console.error(
+			`[Arbeitnow] Error scraping ${keyword} in ${location.name}:`,
+			error.message,
+		);
+		return totalSaved;
 	}
-
-	// Save any remaining jobs in the batch
 	if (jobBatch.length > 0) {
 		// CRITICAL FIX: Use ignoreDuplicates: true to prevent timeout on updates
 		const { error, data } = await supabase.from("jobs").upsert(jobBatch, {
