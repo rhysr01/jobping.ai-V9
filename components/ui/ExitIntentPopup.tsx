@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BrandIcons } from "./BrandIcons";
-import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 import {
 	CTA_GET_MY_5_FREE_MATCHES,
 	TRUST_TEXT_INSTANT_SETUP,
