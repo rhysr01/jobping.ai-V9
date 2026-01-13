@@ -11,6 +11,7 @@ export interface SignupFormData {
 	careerPath: string;
 	email: string;
 	fullName: string;
+	university?: string;
 	visaSponsorship: string;
 	gdprConsent: boolean;
 	birthYear?: number;
@@ -71,6 +72,7 @@ export function useSignupForm(): UseSignupFormReturn {
 		careerPath: "",
 		email: "",
 		fullName: "",
+		university: "",
 		visaSponsorship: "",
 		gdprConsent: false,
 		birthYear: undefined,

@@ -51,52 +51,182 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 			transition={{ duration: 0.4 }}
 			className="relative"
 		>
-			<div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-500/10 via-[#130433]/45 to-brand-700/15 px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
-				<div
-					className="pointer-events-none absolute -top-24 left-6 h-48 w-48 rounded-full bg-brand-700/25 blur-3xl hidden sm:block"
-					aria-hidden="true"
-				/>
-				<div
-					className="pointer-events-none absolute -bottom-28 right-0 h-56 w-56 bg-brand-500/25 blur-[120px] hidden sm:block"
-					aria-hidden="true"
-				/>
-				<div
-					className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(99,102,241,0.12),transparent_60%)]"
-					aria-hidden="true"
-				/>
-				<div className="relative z-10 space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12">
-					<div className="mb-6 sm:mb-8">
-						<h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2 sm:mb-3 bg-gradient-to-r from-white to-zinc-200 bg-clip-text text-transparent">
-							Your career path
-						</h2>
-						<p className="text-base sm:text-lg font-medium text-zinc-100 leading-relaxed">
-							What type of roles interest you?
-						</p>
+				<div className="relative overflow-hidden rounded-3xl border border-brand-500/20 bg-gradient-to-br from-zinc-900/80 via-zinc-900/60 to-zinc-800/80 backdrop-blur-sm px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
+					{/* Enhanced background effects */}
+					<div
+						className="pointer-events-none absolute -top-32 left-8 h-64 w-64 rounded-full bg-gradient-to-br from-brand-700/20 to-brand-500/15 blur-3xl hidden sm:block"
+						aria-hidden="true"
+					/>
+					<div
+						className="pointer-events-none absolute -bottom-36 right-6 h-72 w-72 bg-gradient-to-br from-purple-600/15 to-brand-500/20 blur-[140px] hidden sm:block"
+						aria-hidden="true"
+					/>
+					<div
+						className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-brand-500/8 via-transparent to-purple-600/8 rounded-full blur-3xl"
+						aria-hidden="true"
+					/>
+					<div
+						className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(99,102,241,0.08),transparent_70%)]"
+						aria-hidden="true"
+					/>
 
-						{/* Progress Helper */}
-						<div className="mt-6 rounded-2xl border-2 border-brand-500/40 bg-gradient-to-r from-brand-500/15 via-brand-700/15 to-brand-500/15 p-5 shadow-[0_0_30px_rgba(99,102,241,0.25)]">
-							<h3 className="text-sm font-bold text-white/80 mb-2">
-								Required for next step:
-							</h3>
-							<div className="space-y-1 text-sm">
-								<div
-									className={`flex items-center gap-2 ${formData.careerPath ? "text-brand-200" : "text-zinc-300"}`}
-								>
-									<span
-										className={`w-2 h-2 rounded-full ${formData.careerPath ? "bg-brand-400" : "bg-zinc-500"}`}
-									></span>
-									Career Path Selection
-								</div>
-								<div
-									className={`flex items-center gap-2 ${formData.roles.length > 0 ? "text-brand-200" : "text-zinc-300"}`}
-								>
-									<span
-										className={`w-2 h-2 rounded-full ${formData.roles.length > 0 ? "bg-brand-400" : "bg-zinc-500"}`}
-									></span>
-									Role Selection ({formData.roles.length}/1+ selected)
-								</div>
+					{/* Floating particles effect */}
+					<motion.div
+						className="absolute top-20 right-16 w-2 h-2 bg-brand-400/60 rounded-full"
+						animate={{
+							y: [0, -20, 0],
+							opacity: [0.4, 1, 0.4],
+						}}
+						transition={{
+							duration: 3,
+							repeat: Infinity,
+							ease: "easeInOut",
+						}}
+					/>
+					<motion.div
+						className="absolute bottom-24 left-20 w-1.5 h-1.5 bg-purple-400/60 rounded-full"
+						animate={{
+							y: [0, 15, 0],
+							opacity: [0.6, 1, 0.6],
+						}}
+						transition={{
+							duration: 2.5,
+							repeat: Infinity,
+							ease: "easeInOut",
+							delay: 1,
+						}}
+					/>
+
+					<div className="relative z-10 space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12">
+					<div className="mb-6 sm:mb-8">
+						<motion.div
+							initial={{ opacity: 0, y: -20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ delay: 0.2 }}
+							className="flex items-center gap-4 mb-4"
+						>
+							<motion.div
+								animate={{
+									rotate: [0, 360],
+									scale: [1, 1.1, 1]
+								}}
+								transition={{
+									duration: 4,
+									repeat: Infinity,
+									ease: "easeInOut",
+									repeatDelay: 2
+								}}
+								className="w-12 h-12 bg-gradient-to-br from-brand-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl"
+							>
+								<BrandIcons.Briefcase className="w-6 h-6 text-white" />
+							</motion.div>
+							<div>
+								<h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-1 bg-gradient-to-r from-white via-zinc-100 to-zinc-200 bg-clip-text text-transparent">
+									Your Career Path
+								</h2>
+								<div className="h-0.5 w-24 bg-gradient-to-r from-brand-500 to-purple-600 rounded-full" />
 							</div>
-						</div>
+						</motion.div>
+
+						<motion.p
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							transition={{ delay: 0.4 }}
+							className="text-base sm:text-lg font-medium text-zinc-300 leading-relaxed"
+						>
+							Discover the perfect career direction for your skills and interests
+						</motion.p>
+
+						{/* Enhanced Progress Helper */}
+						<motion.div
+							initial={{ opacity: 0, scale: 0.95 }}
+							animate={{ opacity: 1, scale: 1 }}
+							transition={{ delay: 0.6 }}
+							className="mt-8 rounded-2xl border border-brand-500/30 bg-gradient-to-r from-brand-500/10 via-brand-700/10 to-purple-600/10 p-6 shadow-[0_0_40px_rgba(99,102,241,0.2)] backdrop-blur-sm"
+						>
+							<div className="flex items-center gap-3 mb-4">
+								<motion.div
+									animate={{ rotate: [0, 360] }}
+									transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+									className="w-8 h-8 bg-gradient-to-br from-brand-500 to-purple-600 rounded-lg flex items-center justify-center"
+								>
+									<BrandIcons.Target className="w-4 h-4 text-white" />
+								</motion.div>
+								<h3 className="text-lg font-bold text-white">
+									Next Step Requirements
+								</h3>
+							</div>
+
+							<div className="space-y-3">
+								<motion.div
+									className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
+										formData.careerPath
+											? "bg-emerald-500/10 border border-emerald-500/30"
+											: "bg-zinc-800/50 border border-zinc-700/30"
+									}`}
+									animate={formData.careerPath ? { scale: [1, 1.02, 1] } : {}}
+									transition={{ duration: 0.5 }}
+								>
+									<motion.span
+										className={`w-3 h-3 rounded-full ${
+											formData.careerPath ? "bg-emerald-500" : "bg-zinc-500"
+										}`}
+										animate={formData.careerPath ? {
+											boxShadow: ["0 0 0 0 rgba(16, 185, 129, 0.7)", "0 0 0 4px rgba(16, 185, 129, 0)", "0 0 0 0 rgba(16, 185, 129, 0.7)"]
+										} : {}}
+										transition={{ duration: 2, repeat: Infinity }}
+									/>
+									<span className={`font-medium ${
+										formData.careerPath ? "text-emerald-200" : "text-zinc-300"
+									}`}>
+										Career Path Selection
+									</span>
+									{formData.careerPath && (
+										<motion.div
+											initial={{ scale: 0 }}
+											animate={{ scale: 1 }}
+											className="ml-auto"
+										>
+											<BrandIcons.CheckCircle className="w-5 h-5 text-emerald-400" />
+										</motion.div>
+									)}
+								</motion.div>
+
+								<motion.div
+									className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
+										formData.roles.length > 0
+											? "bg-emerald-500/10 border border-emerald-500/30"
+											: "bg-zinc-800/50 border border-zinc-700/30"
+									}`}
+									animate={formData.roles.length > 0 ? { scale: [1, 1.02, 1] } : {}}
+									transition={{ duration: 0.5, delay: 0.1 }}
+								>
+									<motion.span
+										className={`w-3 h-3 rounded-full ${
+											formData.roles.length > 0 ? "bg-emerald-500" : "bg-zinc-500"
+										}`}
+										animate={formData.roles.length > 0 ? {
+											boxShadow: ["0 0 0 0 rgba(16, 185, 129, 0.7)", "0 0 0 4px rgba(16, 185, 129, 0)", "0 0 0 0 rgba(16, 185, 129, 0.7)"]
+										} : {}}
+										transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+									/>
+									<span className={`font-medium ${
+										formData.roles.length > 0 ? "text-emerald-200" : "text-zinc-300"
+									}`}>
+										Role Selection ({formData.roles.length}/1+ selected)
+									</span>
+									{formData.roles.length > 0 && (
+										<motion.div
+											initial={{ scale: 0 }}
+											animate={{ scale: 1 }}
+											className="ml-auto"
+										>
+											<BrandIcons.CheckCircle className="w-5 h-5 text-emerald-400" />
+										</motion.div>
+									)}
+								</motion.div>
+							</div>
+						</motion.div>
 					</div>
 
 					<div>
@@ -128,7 +258,7 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 								setTouchedFields((prev) => new Set(prev).add("careerPath"))
 							}
 						>
-							{CAREER_PATHS.map((path) => (
+							{CAREER_PATHS.map((path, index) => (
 								<motion.button
 									key={path.value}
 									type="button"
@@ -147,68 +277,101 @@ export const Step3CareerPath = React.memo(function Step3CareerPath({
 											});
 										}
 									}}
-									whileHover={{ scale: 1.02, y: -3 }}
-									whileTap={{ scale: 0.98 }}
-									className={`relative px-4 sm:px-6 py-4 sm:py-6 rounded-xl sm:rounded-2xl border-2 transition-all text-left overflow-hidden group touch-manipulation min-h-[80px] sm:min-h-[100px] ${
+									initial={{ opacity: 0, x: -20 }}
+									animate={{ opacity: 1, x: 0 }}
+									transition={{ delay: 0.8 + index * 0.1 }}
+									whileHover={{
+										scale: 1.03,
+										y: -4,
+										boxShadow: "0 20px 40px rgba(99, 102, 241, 0.2)"
+									}}
+									whileTap={{ scale: 0.97 }}
+									className={`relative px-6 sm:px-8 py-6 sm:py-8 rounded-2xl border-2 transition-all duration-300 text-left overflow-hidden group touch-manipulation min-h-[100px] sm:min-h-[120px] ${
 										formData.careerPath === path.value
-											? "border-brand-500 bg-gradient-to-br from-brand-500/20 to-brand-700/15 shadow-glow-signup"
-											: "border-zinc-700 bg-zinc-900/40 hover:border-zinc-600 hover:bg-zinc-900/60"
+											? "border-brand-500 bg-gradient-to-br from-brand-500/20 via-brand-600/15 to-brand-700/10 shadow-[0_0_50px_rgba(99,102,241,0.4)]"
+											: "border-zinc-700/60 bg-zinc-900/50 hover:border-brand-500/50 hover:bg-zinc-900/70 hover:shadow-[0_0_30px_rgba(99,102,241,0.15)]"
 									}`}
 								>
+									{/* Enhanced background effects */}
 									{formData.careerPath === path.value && (
 										<motion.div
-											className="absolute inset-0 bg-gradient-to-br from-brand-500/10 to-brand-700/5"
+											className="absolute inset-0 bg-gradient-to-br from-brand-500/15 via-brand-600/10 to-brand-700/5"
 											initial={{ opacity: 0 }}
 											animate={{ opacity: 1 }}
-											transition={{ duration: 0.3 }}
+											transition={{ duration: 0.4 }}
 										/>
 									)}
 
-									<div className="relative flex items-start gap-4">
+									{/* Hover background effect */}
+									{formData.careerPath !== path.value && (
+										<div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 to-brand-700/0 group-hover:from-brand-500/8 group-hover:to-brand-700/8 transition-all duration-300" />
+									)}
+
+									{/* Floating particles for selected state */}
+									{formData.careerPath === path.value && (
+										<>
+											<motion.div
+												className="absolute top-4 right-8 w-1 h-1 bg-brand-400/60 rounded-full"
+												animate={{ y: [0, -8, 0], opacity: [0.6, 1, 0.6] }}
+												transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+											/>
+											<motion.div
+												className="absolute bottom-6 left-12 w-1.5 h-1.5 bg-purple-400/60 rounded-full"
+												animate={{ y: [0, 6, 0], opacity: [0.4, 1, 0.4] }}
+												transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+											/>
+										</>
+									)}
+
+									<div className="relative flex items-start gap-6">
+										{/* Enhanced icon container */}
 										<motion.div
-											className={`text-4xl sm:text-5xl ${
-												formData.careerPath === path.value ? "scale-110" : ""
+											className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
+												formData.careerPath === path.value
+													? "bg-gradient-to-br from-brand-500 to-brand-700 scale-110"
+													: "bg-gradient-to-br from-zinc-700 to-zinc-800 group-hover:from-zinc-600 group-hover:to-zinc-700"
 											}`}
 											animate={
 												formData.careerPath === path.value
-													? { scale: 1.1 }
-													: { scale: 1 }
+													? { scale: 1.1, rotate: [0, 5, -5, 0] }
+													: { scale: 1, rotate: 0 }
 											}
-											transition={{ duration: 0.2 }}
+											transition={{ duration: 0.3 }}
+											whileHover={{ scale: formData.careerPath === path.value ? 1.15 : 1.05 }}
 										>
-											{path.emoji}
+											<span className="text-3xl filter drop-shadow-sm">
+												{path.emoji}
+											</span>
 										</motion.div>
 
-										<div className="flex-1 min-w-0">
+										<div className="flex-1 min-w-0 pt-1">
 											<div
-												className={`font-bold text-lg mb-1 ${
+												className={`font-bold text-xl mb-2 ${
 													formData.careerPath === path.value
 														? "text-white"
-														: "text-zinc-200"
-												}`}
+														: "text-zinc-200 group-hover:text-white"
+												} transition-colors`}
 											>
 												{path.label}
 											</div>
-											<div className="flex items-center gap-2 text-xs text-zinc-400">
-												<BrandIcons.Briefcase className="w-3.5 h-3.5" />
-												<span>{path.roles.length} roles available</span>
+											<div className="flex items-center gap-2 text-sm text-zinc-400 group-hover:text-zinc-300 transition-colors">
+												<BrandIcons.Briefcase className="w-4 h-4" />
+												<span>{path.roles.length} specialized roles</span>
 											</div>
 										</div>
 
+										{/* Enhanced checkmark */}
 										{formData.careerPath === path.value && (
 											<motion.div
 												initial={{ scale: 0, rotate: -180 }}
 												animate={{ scale: 1, rotate: 0 }}
-												className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center flex-shrink-0 shadow-glow-subtle"
+												transition={{ type: "spring", stiffness: 200, damping: 10 }}
+												className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center flex-shrink-0 shadow-xl border-2 border-white/20"
 											>
-												<BrandIcons.Check className="w-5 h-5 text-white" />
+												<BrandIcons.Check className="w-6 h-6 text-white" />
 											</motion.div>
 										)}
 									</div>
-
-									{formData.careerPath !== path.value && (
-										<div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 to-brand-700/0 group-hover:from-brand-500/5 group-hover:to-brand-700/5 transition-all duration-300" />
-									)}
 								</motion.button>
 							))}
 						</div>

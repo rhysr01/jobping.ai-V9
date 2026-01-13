@@ -1,16 +1,16 @@
 // PRODUCTION-READY EMAIL TEMPLATES (Premium Design)
 // Safe for major clients: Gmail, Outlook, Apple Mail
 
-import { issueSecureToken } from "../authentication/secureTokens";
 import {
 	calculateVisaConfidence,
 	// getVisaConfidenceStyle, // Kept for future use
-} from "../matching/visa-confidence";
+} from "@/utils/matching/visa-confidence";
 import {
 	FREE_ROLES_PER_SEND,
 	PREMIUM_ROLES_PER_MONTH,
 	PREMIUM_ROLES_PER_WEEK,
 } from "../../lib/productMetrics";
+import { issueSecureToken } from "../authentication/secureTokens";
 import { buildPreferencesLink } from "../preferences/links";
 import { getBaseUrl } from "../url-helpers";
 import type { EmailJobCard } from "./types";
@@ -62,7 +62,7 @@ const COLORS = {
 	gray100: "#f4f4f5",
 	gray200: "#e4e4e7",
 	gray300: "#d4d4d8",
-	gray400: "#a1a1aa",
+	gray400: "#b4b4b8",
 	gray500: "#71717a",
 	gray600: "#52525b",
 	purple: "#5B21B6", // brand-600 - darker purple
@@ -71,7 +71,7 @@ const COLORS = {
 	// Better contrast colors for text on dark backgrounds
 	textPrimary: "#e4e4e7", // gray200 - WCAG AA compliant for main text
 	textSecondary: "#d4d4d8", // gray300 - acceptable for secondary text
-	textMuted: "#a1a1aa", // gray400 - only for very subtle elements
+	textMuted: "#b4b4b8", // gray400 - only for very subtle elements
 };
 
 // Premium VML button for Outlook
@@ -392,7 +392,7 @@ function wrapEmail(title: string, body: string, footerEmail?: string): string {
     .footer { border-top:1px solid rgba(91,33,182,0.15); padding:40px 20px; text-align:center; background:#050505; }
     .footer-logo { color:${COLORS.purple}; font-weight:600; font-size:16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; margin-bottom:10px; }
     .footer-text { color:${COLORS.textSecondary}; font-size:13px; margin:8px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; }
-    .footer-link { color:#667eea; text-decoration:none; font-weight:600; }
+    .footer-link { color:#7c8aee; text-decoration:none; font-weight:600; }
     .footer-link:hover { color:#5B21B6; text-decoration:underline; }
     a { color:#5B21B6; text-decoration:none; }
     a:hover { color:#6D28D9; text-decoration:underline; }

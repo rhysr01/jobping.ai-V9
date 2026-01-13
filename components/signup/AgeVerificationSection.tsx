@@ -1,47 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { motion } from "framer-motion";
 
-interface AgeVerificationSectionProps {
-	birthYear?: number;
+interface SimplifiedAgeVerificationProps {
 	ageVerified: boolean;
 	termsAccepted: boolean;
-	onBirthYearChange: (year: number) => void;
+	gdprConsent: boolean;
 	onAgeVerifiedChange: (verified: boolean) => void;
 	onTermsAcceptedChange: (accepted: boolean) => void;
+	onGdprConsentChange: (consent: boolean) => void;
 	disabled?: boolean;
 	showErrors?: boolean;
 }
 
-const currentYear = new Date().getFullYear();
-const minBirthYear = 1900;
-const maxBirthYear = currentYear - 16; // Must be at least 16 years old
-
 export function AgeVerificationSection({
-	birthYear,
 	ageVerified,
 	termsAccepted,
-	onBirthYearChange,
+	gdprConsent,
 	onAgeVerifiedChange,
 	onTermsAcceptedChange,
+	onGdprConsentChange,
 	disabled = false,
 	showErrors = false,
-}: AgeVerificationSectionProps) {
-	const [birthYearInput, setBirthYearInput] = useState(birthYear?.toString() || "");
-
-	const handleBirthYearChange = (value: string) => {
-		setBirthYearInput(value);
-		const year = parseInt(value);
-		if (!isNaN(year) && year >= minBirthYear && year <= maxBirthYear) {
-			onBirthYearChange(year);
-		}
-	};
-
-	const isValidBirthYear = birthYear && birthYear >= minBirthYear && birthYear <= maxBirthYear;
-	const birthYearError = showErrors && !isValidBirthYear && birthYearInput !== ""
-		? "Please enter a valid birth year (you must be at least 16 years old)"
-		: undefined;
-
+}: SimplifiedAgeVerificationProps) {
 	const ageVerificationError = showErrors && !ageVerified
 		? "Please confirm you are at least 16 years old"
 		: undefined;
@@ -50,69 +31,43 @@ export function AgeVerificationSection({
 		? "Please accept the terms of service to continue"
 		: undefined;
 
+	const gdprError = showErrors && !gdprConsent
+		? "Please accept the privacy policy to continue"
+		: undefined;
+
 	return (
-		<div className="space-y-6">
-			{/* Age Verification */}
-			<div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-white mb-4">
-					Age Verification (Required)
+		<motion.div
+			initial={{ opacity: 0, y: 20 }}
+			animate={{ opacity: 1, y: 0 }}
+			transition={{ duration: 0.6, delay: 0.2 }}
+			className="space-y-4"
+		>
+			{/* Legal Requirements - Streamlined */}
+			<div className="bg-gradient-to-br from-zinc-900/60 via-zinc-900/40 to-zinc-800/60 backdrop-blur-sm border border-zinc-700/50 rounded-2xl p-6">
+				<h3 className="text-lg font-bold text-white mb-6 flex items-center gap-3">
+					<span className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+						✓
+					</span>
+					Legal Requirements
 				</h3>
 
-				<div className="space-y-4">
-					{/* Birth Year Input */}
-					<div>
-						<label
-							htmlFor="birth-year"
-							className="block text-sm font-medium text-white mb-2"
-						>
-							Year of Birth
-						</label>
-						<input
-							type="number"
-							id="birth-year"
-							min={minBirthYear}
-							max={maxBirthYear}
-							value={birthYearInput}
-							onChange={(e) => handleBirthYearChange(e.target.value)}
-							placeholder={`e.g., ${maxBirthYear - 20}`}
-							disabled={disabled}
-							className={`w-full px-4 py-3 rounded-lg border-2 bg-zinc-900 text-white placeholder-zinc-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black transition-colors ${
-								birthYearError
-									? "border-red-500 focus:border-red-500"
-									: isValidBirthYear
-									? "border-green-500"
-									: "border-zinc-700 focus:border-brand-500"
-							}`}
-							aria-describedby={birthYearError ? "birth-year-error" : undefined}
-							aria-invalid={!!birthYearError}
-						/>
-						{birthYearError && (
-							<p id="birth-year-error" className="mt-2 text-sm text-red-400 flex items-center gap-2 font-medium" role="alert">
-								<span className="text-red-400">⚠️</span>
-								{birthYearError}
-							</p>
-						)}
-						<p className="mt-2 text-xs text-zinc-400">
-							You must be at least 16 years old to use JobPing (GDPR requirement).
-						</p>
-					</div>
-
-					{/* Age Confirmation Checkbox */}
-					<div className="flex items-start gap-3">
+				<div className="space-y-5">
+					{/* Age Verification - Single checkbox */}
+					<div className="flex items-start gap-4">
 						<input
 							type="checkbox"
 							id="age-verification"
 							checked={ageVerified}
 							onChange={(e) => onAgeVerifiedChange(e.target.checked)}
 							disabled={disabled}
-							className="mt-1 w-4 h-4 text-brand-600 bg-zinc-900 border-zinc-700 rounded focus:ring-brand-500 focus:ring-2"
-							aria-describedby={ageVerificationError ? "age-verification-error" : "age-verification-help"}
+							className="mt-1.5 w-5 h-5 text-brand-600 bg-zinc-900 border-zinc-700 rounded focus:ring-brand-500 focus:ring-2 transition-colors"
+							aria-describedby={ageVerificationError ? "age-verification-error" : undefined}
 							aria-invalid={!!ageVerificationError}
 						/>
 						<div className="flex-1">
 							<label
 								htmlFor="age-verification"
-								className="text-sm font-medium text-white cursor-pointer"
+								className="text-sm font-medium text-white cursor-pointer leading-relaxed"
 							>
 								I confirm I am at least 16 years old
 							</label>
@@ -122,37 +77,28 @@ export function AgeVerificationSection({
 									{ageVerificationError}
 								</p>
 							)}
-							<p id="age-verification-help" className="mt-2 text-xs text-zinc-400">
-								This confirmation is required by EU data protection laws (GDPR).
-							</p>
 						</div>
 					</div>
-				</div>
-			</div>
 
-			{/* Terms of Service Acceptance */}
-			<div className="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
-				<h3 className="text-lg font-semibold text-white mb-4">
-					Terms of Service (Required)
-				</h3>
-
-				<div className="space-y-4">
-					{/* Terms Acceptance Checkbox */}
-					<div className="flex items-start gap-3">
+					{/* Terms & Privacy - Single checkbox */}
+					<div className="flex items-start gap-4">
 						<input
 							type="checkbox"
-							id="terms-acceptance"
-							checked={termsAccepted}
-							onChange={(e) => onTermsAcceptedChange(e.target.checked)}
+							id="terms-privacy"
+							checked={termsAccepted && gdprConsent}
+							onChange={(e) => {
+								onTermsAcceptedChange(e.target.checked);
+								onGdprConsentChange(e.target.checked);
+							}}
 							disabled={disabled}
-							className="mt-1 w-4 h-4 text-brand-600 bg-zinc-900 border-zinc-700 rounded focus:ring-brand-500 focus:ring-2"
-							aria-describedby={termsError ? "terms-error" : "terms-help"}
-							aria-invalid={!!termsError}
+							className="mt-1.5 w-5 h-5 text-brand-600 bg-zinc-900 border-zinc-700 rounded focus:ring-brand-500 focus:ring-2 transition-colors"
+							aria-describedby={(termsError || gdprError) ? "legal-error" : "legal-help"}
+							aria-invalid={!!(termsError || gdprError)}
 						/>
 						<div className="flex-1">
 							<label
-								htmlFor="terms-acceptance"
-								className="text-sm font-medium text-white cursor-pointer"
+								htmlFor="terms-privacy"
+								className="text-sm font-medium text-white cursor-pointer leading-relaxed"
 							>
 								I accept the{" "}
 								<a
@@ -173,19 +119,19 @@ export function AgeVerificationSection({
 									Privacy Policy
 								</a>
 							</label>
-							{termsError && (
-								<p id="terms-error" className="mt-2 text-sm text-red-400 flex items-center gap-2 font-medium" role="alert">
+							{(termsError || gdprError) && (
+								<p id="legal-error" className="mt-2 text-sm text-red-400 flex items-center gap-2 font-medium" role="alert">
 									<span className="text-red-400">⚠️</span>
-									{termsError}
+									{termsError || gdprError}
 								</p>
 							)}
-							<p id="terms-help" className="mt-2 text-xs text-zinc-400">
-								By accepting, you agree to our terms and acknowledge our privacy practices.
+							<p id="legal-help" className="mt-3 text-xs text-zinc-400 leading-relaxed">
+								By accepting, you agree to our terms and consent to processing your data for job matching purposes under GDPR.
 							</p>
 						</div>
 					</div>
 				</div>
 			</div>
-		</div>
+		</motion.div>
 	);
 }

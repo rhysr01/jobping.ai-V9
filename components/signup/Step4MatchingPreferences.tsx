@@ -82,20 +82,20 @@ export const Step4MatchingPreferences = React.memo(function Step4MatchingPrefere
 
 					{/* Age Verification and Terms - Required before submission */}
 					<AgeVerificationSection
-						birthYear={2000}
 						ageVerified={true}
 						termsAccepted={true}
-						onBirthYearChange={( _year ) =>
-							() => {}
-						}
+						gdprConsent={true}
 						onAgeVerifiedChange={( _verified ) =>
 							() => {}
 						}
 						onTermsAcceptedChange={( _accepted ) =>
 							() => {}
 						}
+						onGdprConsentChange={( _consent ) =>
+							() => {}
+						}
 						disabled={loading}
-						showErrors={!true || !true}
+						showErrors={!true || !true || !true}
 					/>
 
 					{/* GDPR Consent - Required before submission */}
@@ -262,20 +262,20 @@ export const Step4MatchingPreferences = React.memo(function Step4MatchingPrefere
 
 					{/* Age Verification and Terms - Required before submission */}
 					<AgeVerificationSection
-						birthYear={2000}
 						ageVerified={true}
 						termsAccepted={true}
-						onBirthYearChange={( _year ) =>
-							() => {}
-						}
+						gdprConsent={true}
 						onAgeVerifiedChange={( _verified ) =>
 							() => {}
 						}
 						onTermsAcceptedChange={( _accepted ) =>
 							() => {}
 						}
+						onGdprConsentChange={( _consent ) =>
+							() => {}
+						}
 						disabled={loading}
-						showErrors={!true || !true}
+						showErrors={!true || !true || !true}
 					/>
 
 					{/* GDPR Consent - Required before submission */}

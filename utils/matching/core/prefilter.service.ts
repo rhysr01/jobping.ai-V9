@@ -3,9 +3,9 @@
  * Consolidates all prefilter logic into a single, focused service
  */
 
-import { logger } from "../../../lib/monitoring";
+import { logger } from "@/lib/monitoring";
 import type { Job as ScrapersJob } from "@/scrapers/types";
-import type { UserPreferences } from "../types";
+import type { UserPreferences } from "@/utils/matching/types";
 
 export interface PrefilterResult {
 	jobs: (ScrapersJob & { freshnessTier: string; prefilterScore: number })[];
@@ -15,7 +15,6 @@ export interface PrefilterResult {
 }
 
 export class PrefilterService {
-
 	/**
 	 * Main prefilter method - simplified from the complex prefilter system
 	 */
@@ -130,10 +129,12 @@ export class PrefilterService {
 		if (user.languages_spoken && user.languages_spoken.length > 0) {
 			return jobs.filter((job) => {
 				const jobLangs = this.extractJobLanguages(job);
-				return user.languages_spoken!.some((userLang) =>
-					jobLangs.some((jobLang) =>
-						jobLang.toLowerCase().includes(userLang.toLowerCase()),
-					),
+				return (
+					user.languages_spoken?.some((userLang) =>
+						jobLangs.some((jobLang) =>
+							jobLang.toLowerCase().includes(userLang.toLowerCase()),
+						),
+					) ?? false
 				);
 			});
 		}
@@ -156,9 +157,7 @@ export class PrefilterService {
 
 			// Filter out very old jobs (older than 30 days for free users)
 			if (user.subscription_tier === "free") {
-				const jobDate = job.posted_at
-					? new Date(job.posted_at)
-					: new Date();
+				const jobDate = job.posted_at ? new Date(job.posted_at) : new Date();
 				const daysOld =
 					(Date.now() - jobDate.getTime()) / (1000 * 60 * 60 * 24);
 				if (daysOld > 30) {
@@ -219,12 +218,15 @@ export class PrefilterService {
 
 				// Keyword matching bonus
 				if (user.career_keywords && job.description) {
-					const keywords = user.career_keywords.split(",").map(k => k.trim());
-					const keywordMatches = keywords.filter((keyword) =>
-						job.description!.toLowerCase().includes(keyword.toLowerCase()),
+					const keywords = user.career_keywords.split(",").map((k) => k.trim());
+					const keywordMatches = keywords.filter(
+						(keyword) =>
+							job.description?.toLowerCase().includes(keyword.toLowerCase()) ??
+							false,
 					);
 					score += keywordMatches.length * 5;
 				}
+
 				return { ...job, prefilterScore: Math.min(score, 100) };
 			})
 			.sort((a, b) => b.prefilterScore - a.prefilterScore);

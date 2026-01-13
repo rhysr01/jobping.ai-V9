@@ -17,7 +17,6 @@ import { LiveMatchingMessages } from "./LiveMatchingMessages";
 import { VisaSponsorshipSection } from "./VisaSponsorshipSection";
 import { LiveMatchingOverlay } from "./LiveMatchingOverlay";
 import { PersonalInfoSection } from "./PersonalInfoSection";
-import { GDPRConsentSection } from "./GDPRConsentSection";
 import EuropeMap from "../ui/EuropeMap";
 import { AgeVerificationSection } from "./AgeVerificationSection";
 import { CITIES, CAREER_PATHS } from "./constants";
@@ -538,25 +537,23 @@ export default function SignupFormFree() {
 							{/* Age Verification and Terms - Required */}
 							<div className="mt-6">
 								<AgeVerificationSection
-									birthYear={formData.birthYear}
 									ageVerified={formData.ageVerified}
 									termsAccepted={formData.termsAccepted}
-									onBirthYearChange={(year) =>
-										setFormData((prev) => ({ ...prev, birthYear: year }))
-									}
+									gdprConsent={formData.gdprConsent}
 									onAgeVerifiedChange={(verified) =>
 										setFormData((prev) => ({ ...prev, ageVerified: verified }))
 									}
 									onTermsAcceptedChange={(accepted) =>
 										setFormData((prev) => ({ ...prev, termsAccepted: accepted }))
 									}
+									onGdprConsentChange={(consent) =>
+										setFormData((prev) => ({ ...prev, gdprConsent: consent }))
+									}
 									disabled={isSubmitting}
-									showErrors={!formData.ageVerified || !formData.termsAccepted}
+									showErrors={!formData.ageVerified || !formData.termsAccepted || !formData.gdprConsent}
 								/>
 							</div>
 
-							{/* GDPR Consent */}
-							<GDPRConsentSection formState={formState} />
 
 							{/* Spacer for sticky button */}
 							<div className="h-32 sm:h-0" aria-hidden="true" />

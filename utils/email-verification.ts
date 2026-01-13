@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { apiLogger } from "../lib/api-logger";
 import {
 	issueSecureToken,
 	verifySecureToken,
@@ -58,7 +59,7 @@ export async function verifyVerificationToken(
 
 	const { data, error } = await supabase
 		.from("email_verification_requests")
-		.select("*")
+		.select("expires_at")
 		.eq("email", email.trim().toLowerCase())
 		.eq("token_hash", tokenHash)
 		.is("consumed_at", null)
@@ -120,28 +121,123 @@ export async function sendVerificationEmail(email: string): Promise<void> {
 		verification.expiresAt,
 	);
 
+	const startTime = Date.now();
 	const baseUrl = getBaseUrl();
 	const link = `${baseUrl}/api/verify-email?email=${encodeURIComponent(
 		normalizedEmail,
 	)}&token=${encodeURIComponent(token)}`;
 
-	const resend = getResendClient();
-	assertValidFrom(EMAIL_CONFIG.from);
-
-	// Use production template for consistent styling
-	const html = createVerificationEmail(link, normalizedEmail);
-	const subject = "Verify your JobPing email address";
-
-	const result = await resend.emails.send({
-		from: EMAIL_CONFIG.from,
-		to: [normalizedEmail],
-		subject,
-		html,
-		text: `Verify your JobPing email address: ${link}\n\nThis link expires in 24 hours.\n\nIf you did not create a JobPing account, you can safely ignore this email.`,
+	apiLogger.info("sendVerificationEmail called", {
+		to: normalizedEmail,
 	});
 
-	if (result?.error) {
-		throw new Error(`Resend error: ${JSON.stringify(result.error)}`);
+	console.log(`[EMAIL] sendVerificationEmail called for ${normalizedEmail}`);
+
+	// Check API key BEFORE creating client (same pattern as sender.ts)
+	const apiKey = process.env.RESEND_API_KEY;
+	if (!apiKey) {
+		const error = new Error("RESEND_API_KEY environment variable is not set");
+		console.error(`[EMAIL] ❌ Missing API key`);
+		apiLogger.error("RESEND_API_KEY missing", error);
+		throw error;
+	}
+
+	if (!apiKey.startsWith("re_")) {
+		const error = new Error(
+			`Invalid RESEND_API_KEY format: must start with "re_"`,
+		);
+		console.error(`[EMAIL] ❌ Invalid API key format`);
+		apiLogger.error("Invalid RESEND_API_KEY format", error);
+		throw error;
+	}
+
+	try {
+		const resend = getResendClient();
+		console.log(`[EMAIL] Resend client initialized. API Key present: true`);
+
+		// Use production template for consistent styling
+		const htmlContent = createVerificationEmail(link, normalizedEmail);
+		const subject = "Verify your JobPing email address";
+		const baseUrl2 = getBaseUrl();
+		const textContent = `Verify your JobPing email address: ${link}
+
+This link expires in 24 hours.
+
+If you did not create a JobPing account, you can safely ignore this email.
+
+Need help? Visit ${baseUrl2} or contact contact@getjobping.com
+
+- The JobPing Team`;
+
+		apiLogger.info("Verification email content generated", {
+			from: EMAIL_CONFIG.from,
+		});
+		assertValidFrom(EMAIL_CONFIG.from);
+
+		apiLogger.info("Attempting to send verification email", {
+			to: normalizedEmail,
+			from: EMAIL_CONFIG.from,
+		});
+		console.log(
+			`[EMAIL] Attempting to send verification email from ${EMAIL_CONFIG.from} to ${normalizedEmail}`,
+		);
+
+		// Add timeout to prevent hanging (same as sender.ts)
+		const sendPromise = resend.emails.send({
+			from: EMAIL_CONFIG.from,
+			to: [normalizedEmail],
+			subject,
+			text: textContent,
+			html: htmlContent,
+		});
+
+		const timeoutPromise = new Promise((_, reject) =>
+			setTimeout(
+				() => reject(new Error("Email send timeout after 15 seconds")),
+				15000,
+			),
+		);
+
+		const result = (await Promise.race([sendPromise, timeoutPromise])) as any;
+
+		// Handle Resend response format (same as sender.ts)
+		if (result?.error) {
+			throw new Error(`Resend API error: ${JSON.stringify(result.error)}`);
+		}
+
+		const emailId = result?.data?.id || result?.id || "unknown";
+
+		// Track successful send (same pattern as sender.ts)
+		apiLogger.info("Verification email sent successfully", {
+			to: normalizedEmail,
+			emailId,
+			duration: Date.now() - startTime,
+		});
+		console.log(
+			`[EMAIL] ✅ Verification email sent successfully to ${normalizedEmail}. Email ID: ${emailId}`,
+		);
+		return result;
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		const errorStack = error instanceof Error ? error.stack : undefined;
+		const errorType = error?.constructor?.name || "UnknownError";
+		const rawError = String(error);
+
+		// Track failed send (same pattern as sender.ts)
+		apiLogger.error("Verification email failed", error as Error, {
+			to: normalizedEmail,
+			errorMessage,
+			errorStack,
+			errorType,
+			rawError,
+			duration: Date.now() - startTime,
+		});
+		console.error(
+			`[EMAIL] ❌ Verification email failed for ${normalizedEmail}: ${errorMessage}`,
+		);
+
+		// Re-throw with context
+		throw error;
 	}
 }
 
