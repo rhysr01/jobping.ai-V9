@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import LogoWordmark from "../logo-wordmark";
 
 export default function Footer() {
 	const links = [
@@ -13,13 +14,13 @@ export default function Footer() {
 	];
 
 	return (
-		<footer className="relative mt-32 section-padding pb-[max(2rem,env(safe-area-inset-bottom))] border-t border-white/5 bg-black/40 backdrop-blur-sm">
+		<footer className="relative mt-40 section-padding pb-[max(2rem,env(safe-area-inset-bottom))] border-t border-white/5 bg-black/40 backdrop-blur-sm">
 			{/* Enhanced gradient fade at top */}
 			<div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
-			
+
 			{/* Subtle background glow */}
 			<div className="absolute inset-0 bg-gradient-to-t from-emerald-500/5 via-transparent to-transparent pointer-events-none" />
-			
+
 			<div className="container-page relative">
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
@@ -32,17 +33,9 @@ export default function Footer() {
 					<div className="flex flex-col gap-4">
 						{/* Logo with icon */}
 						<div className="flex items-center gap-3">
-							<div className="relative">
-								<div className="absolute inset-0 bg-emerald-500/20 blur-lg rounded-lg opacity-50" />
-								<div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-500/10">
-									<svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-										<path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-									</svg>
-								</div>
+							<div className="scale-75 origin-left">
+								<LogoWordmark />
 							</div>
-							<h3 className="font-display text-xl font-bold bg-gradient-to-r from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
-								JobPing
-							</h3>
 						</div>
 						<p className="text-sm text-zinc-400 max-w-md leading-relaxed">
 							AI-powered job matching for early-career roles across Europe. Get
@@ -66,8 +59,18 @@ export default function Footer() {
 							<span className="text-xs font-medium text-zinc-300 group-hover:text-emerald-400 transition-colors">
 								All Systems Operational
 							</span>
-							<svg className="w-3 h-3 text-zinc-400 group-hover:text-emerald-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+							<svg
+								className="w-3 h-3 text-zinc-400 group-hover:text-emerald-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth={2}
+									d="M9 5l7 7-7 7"
+								/>
 							</svg>
 						</Link>
 
@@ -80,8 +83,18 @@ export default function Footer() {
 									className="group relative text-xs text-zinc-400 hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/5"
 								>
 									<span>{link.label}</span>
-									<svg className="w-3 h-3 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+									<svg
+										className="w-3 h-3 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M9 5l7 7-7 7"
+										/>
 									</svg>
 								</Link>
 							))}
@@ -90,8 +103,18 @@ export default function Footer() {
 								className="group relative text-xs text-zinc-400 hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/5"
 							>
 								<span>Support</span>
-								<svg className="w-3 h-3 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+								<svg
+									className="w-3 h-3 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+									/>
 								</svg>
 							</a>
 						</nav>
@@ -111,9 +134,18 @@ export default function Footer() {
 							© {new Date().getFullYear()} JobPing. All rights reserved.
 						</p>
 						<div className="flex items-center gap-4">
-							<a href="https://www.linkedin.com/company/jobping" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-emerald-400 transition-colors">
-								<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-									<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+							<a
+								href="https://www.linkedin.com/company/jobping"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-zinc-500 hover:text-emerald-400 transition-colors"
+							>
+								<svg
+									className="w-4 h-4"
+									fill="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
 								</svg>
 							</a>
 						</div>

@@ -14,6 +14,7 @@ export default function ExitIntentPopup() {
 	const [showPopup, setShowPopup] = useState(false);
 	const [hasShown, setHasShown] = useState(false);
 	const [timeOnPage, setTimeOnPage] = useState(0);
+	const [scrollDepth, setScrollDepth] = useState(0);
 	const containerRef = useFocusTrap(showPopup);
 
 	useEffect(() => {
@@ -27,11 +28,25 @@ export default function ExitIntentPopup() {
 
 			// Track time on page
 			const startTime = Date.now();
-			const interval = setInterval(() => {
+			const timeInterval = setInterval(() => {
 				setTimeOnPage(Math.floor((Date.now() - startTime) / 1000));
 			}, 1000);
 
-			return () => clearInterval(interval);
+			// Track scroll depth
+			const handleScroll = () => {
+				const scrollTop = window.scrollY;
+				const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+				const scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+				setScrollDepth(scrollPercent);
+			};
+
+			window.addEventListener('scroll', handleScroll);
+			handleScroll(); // Initial check
+
+			return () => {
+				clearInterval(timeInterval);
+				window.removeEventListener('scroll', handleScroll);
+			};
 		}
 		return undefined;
 	}, []);
@@ -42,8 +57,8 @@ export default function ExitIntentPopup() {
 			return;
 		}
 
-		// Only show after 30+ seconds on page
-		if (timeOnPage < 30) {
+		// Only show after 20+ seconds on page AND 50%+ scroll depth
+		if (timeOnPage < 20 || scrollDepth < 50) {
 			return;
 		}
 
@@ -60,7 +75,7 @@ export default function ExitIntentPopup() {
 
 		document.addEventListener("mouseleave", handleMouseLeave);
 		return () => document.removeEventListener("mouseleave", handleMouseLeave);
-	}, [hasShown, timeOnPage]);
+	}, [hasShown, timeOnPage, scrollDepth]);
 
 	if (!showPopup) return null;
 
