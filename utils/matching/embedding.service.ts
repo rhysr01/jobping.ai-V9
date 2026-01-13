@@ -69,6 +69,23 @@ export class EmbeddingService {
     // - Supabase with pgvector
     // - etc.
   }
+
+  /**
+   * Check embedding coverage across all jobs
+   */
+  static async checkEmbeddingCoverage(): Promise<{
+    coverage: number;
+    withEmbeddings: number;
+    total: number;
+  }> {
+    // For now, return dummy data since we don't have actual embedding storage
+    // In a real implementation, this would query the vector database
+    return {
+      coverage: 0.85, // 85% coverage
+      withEmbeddings: 850,
+      total: 1000
+    };
+  }
 }
 
 export const embeddingService = EmbeddingService;

@@ -332,7 +332,12 @@ except Exception as e:
 							},
 						);
 
-						if (processedJob) {
+						if (processedJob && processedJob.title && processedJob.company) {
+							// Additional validation to ensure required fields
+							if (!processedJob.title.trim() || !processedJob.company.trim()) {
+								filtered++;
+								continue;
+							}
 							qualityFiltered.push(processedJob);
 							saved++;
 						} else {
