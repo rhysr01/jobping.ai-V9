@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import ErrorBoundary from "../components/error-boundary";
 import { EUJobStats } from "../components/marketing/EUJobStats";
 import { PremiumEmailShowcase } from "../components/marketing/PremiumEmailShowcase";
 import CompanyLogos from "../components/sections/company-logos-section";
@@ -37,27 +36,27 @@ export default function Page() {
 					7. SocialProofRow - FOMO (others are using this)
 					8. FAQ - Objection killer (addresses Visa/Cancellation fears)
 				*/}
-				<ErrorBoundary>
+
 					<Hero />
-				</ErrorBoundary>
-				<ErrorBoundary>
+
+
 					<CompanyLogos />
-				</ErrorBoundary>
-				<ErrorBoundary>
+
+
 					<EUJobStats />
-				</ErrorBoundary>
-				<ErrorBoundary>
+
+
 					<PremiumEmailShowcase />
-				</ErrorBoundary>
-				<ErrorBoundary>
+
+
 					<Pricing />
-				</ErrorBoundary>
-				<ErrorBoundary>
+
+
 					<SocialProofRow />
-				</ErrorBoundary>
-				<ErrorBoundary>
+
+
 					<FAQ />
-				</ErrorBoundary>
+
 			</main>
 			<div className="h-8 w-full bg-gradient-to-b from-transparent to-black/40" />
 			<Footer />

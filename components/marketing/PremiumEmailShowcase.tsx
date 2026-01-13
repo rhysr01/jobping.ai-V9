@@ -456,7 +456,7 @@ export function PremiumEmailShowcase() {
 	};
 
 	return (
-		<section className="py-24 sm:py-32 md:py-40 bg-black border-t border-border-subtle scroll-snap-section relative">
+		<section id="how-it-works" className="py-24 sm:py-32 md:py-40 bg-black border-t border-border-subtle scroll-snap-section relative">
 			{/* Scroll momentum fade */}
 			<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
 
