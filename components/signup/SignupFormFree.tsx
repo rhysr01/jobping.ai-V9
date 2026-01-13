@@ -227,7 +227,7 @@ export default function SignupFormFree() {
 
 							{/* VISA SPONSORSHIP - PRIMARY QUESTION (FIRST) */}
 							<VisaSponsorshipSection
-								visaSponsorship={formData.visaSponsorship as "yes" | "no" | ""}
+								visaSponsorship={formData.visaSponsorship as "eu" | "blue-card" | "student-visa" | "need-sponsorship" | ""}
 								onChange={handleVisaSponsorshipChange}
 								isSubmitting={isSubmitting}
 							/>
