@@ -50,6 +50,24 @@ const getCareerPathLabel = (value: string): string => {
 	return CAREER_PATH_LABELS[value] || value;
 };
 
+// Helper function to get career path text for emails (handles both single and multiple)
+const getCareerPathText = (careerPaths: string | string[]): string => {
+	const paths = Array.isArray(careerPaths)
+		? careerPaths
+		: careerPaths
+			? [careerPaths]
+			: [];
+
+	if (paths.length === 0) return "your selected career path";
+	if (paths.length === 1)
+		return `your ${getCareerPathLabel(paths[0])} career path`;
+	if (paths.length === 2)
+		return `your ${getCareerPathLabel(paths[0])} and ${getCareerPathLabel(paths[1])} career paths`;
+
+	// For 3 or more, use "your career paths"
+	return "your selected career paths";
+};
+
 // Helper function to map database category to form value
 const mapDatabaseToForm = (databaseCategory: string): string => {
 	return DATABASE_TO_FORM_MAPPING[databaseCategory] || databaseCategory;
@@ -694,14 +712,9 @@ export function createJobMatchesEmail(
 		// const _isInternship = job.is_internship || job.isInternship || false;
 
 		// Get user's actual career path from preferences
-		const userCareerPath = userPreferences?.career_path
-			? Array.isArray(userPreferences.career_path)
-				? userPreferences.career_path[0]
-				: userPreferences.career_path
-			: "Strategy"; // Fallback to Strategy if not provided
-
-		const careerPathLabel =
-			getCareerPathLabel(userCareerPath) || "your career path";
+		const careerPathText = getCareerPathText(
+			userPreferences?.career_path || "Strategy",
+		);
 
 		// Get user's actual entry level preference
 		const entryLevel = userPreferences?.entry_level_preference || "entry-level";
@@ -721,16 +734,16 @@ export function createJobMatchesEmail(
 
 		// Generate personalized reasons based on user's actual preferences
 		const reasons = [
-			`Perfect for your ${careerPathLabel} career path. ${company}'s practice focuses on projects that align with your interests. Located in ${location}, ${visaText}, and requires no prior experience - ideal for ${entryLevelText}.`,
-			`Hot match! ${company}'s ${isGraduate ? "Graduate Programme" : "program"} is specifically designed for ${entryLevelText} like you. The ${workEnv.toLowerCase()} work arrangement fits your preferences, and the role is in ${location} with ${visaText}. Perfect entry point into ${careerPathLabel}.`,
-			`${company}'s team specializes in work that matches your ${careerPathLabel} career path. The role is based in ${location} with ${visaText}, and the ${workEnv.toLowerCase()} setup aligns with your preferences. ${isGraduate ? "Graduate-friendly" : "Entry-level friendly"} with comprehensive training.`,
-			`Great match for ${careerPathLabel}. ${company} offers structured training for ${entryLevelText}, located in ${location} with ${visaText}. The ${workEnv.toLowerCase()} arrangement provides flexibility, and the role focuses on projects you're interested in.`,
-			`Strong alignment with your ${careerPathLabel} goals. ${company}'s team offers clear progression paths for ${entryLevelText}. Located in ${location} with ${visaText}, ${workEnv.toLowerCase()} work style, and ${isGraduate ? "graduate-friendly" : "entry-level friendly"} with excellent training support.`,
+			`Perfect for ${careerPathText}. ${company}'s practice focuses on projects that align with your interests. Located in ${location}, ${visaText}, and requires no prior experience - ideal for ${entryLevelText}.`,
+			`Hot match! ${company}'s ${isGraduate ? "Graduate Programme" : "program"} is specifically designed for ${entryLevelText} like you. The ${workEnv.toLowerCase()} work arrangement fits your preferences, and the role is in ${location} with ${visaText}. Perfect entry point into your career goals.`,
+			`${company}'s team specializes in work that matches ${careerPathText}. The role is based in ${location} with ${visaText}, and the ${workEnv.toLowerCase()} setup aligns with your preferences. ${isGraduate ? "Graduate-friendly" : "Entry-level friendly"} with comprehensive training.`,
+			`Great match for your career goals. ${company} offers structured training for ${entryLevelText}, located in ${location} with ${visaText}. The ${workEnv.toLowerCase()} arrangement provides flexibility, and the role focuses on projects you're interested in.`,
+			`Strong alignment with your career goals. ${company}'s team offers clear progression paths for ${entryLevelText}. Located in ${location} with ${visaText}, ${workEnv.toLowerCase()} work style, and ${isGraduate ? "graduate-friendly" : "entry-level friendly"} with excellent training support.`,
 		];
 
 		return (
 			reasons[index % reasons.length] ||
-			`Matches your preferences: ${location}, ${careerPathLabel} career path, ${visaText}, and ${isGraduate ? "graduate" : "entry-level"} friendly.`
+			`Matches your preferences: ${location}, ${careerPathText}, ${visaText}, and ${isGraduate ? "graduate" : "entry-level"} friendly.`
 		);
 	};
 

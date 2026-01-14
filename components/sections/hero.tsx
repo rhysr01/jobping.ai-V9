@@ -177,8 +177,36 @@ function Hero() {
 							className="text-base sm:text-lg md:text-xl text-emerald-400 leading-relaxed max-w-xl mb-4 mt-2 sm:mt-4 overflow-visible"
 							style={{ wordSpacing: "0.02em" }}
 						>
-							Skip 40+ hours of job searching. Get 5 roles matching your skills,
-							location, and visa in 2 minutes.
+							<GradientText variant="brand" className="inline">
+								Skip
+							</GradientText>{" "}
+							<GradientText variant="brand" className="inline">
+								40+
+							</GradientText>{" "}
+							hours of job searching a month.{" "}
+							<GradientText variant="brand" className="inline">
+								Get
+							</GradientText>{" "}
+							<GradientText variant="brand" className="inline">
+								5
+							</GradientText>{" "}
+							roles matching your{" "}
+							<GradientText variant="brand" className="inline">
+								skills
+							</GradientText>
+							,
+							<GradientText variant="brand" className="inline">
+								location
+							</GradientText>
+							, and{" "}
+							<GradientText variant="brand" className="inline">
+								visa
+							</GradientText>{" "}
+							in{" "}
+							<GradientText variant="brand" className="inline">
+								2 minutes
+							</GradientText>
+							.
 						</motion.p>
 
 						{/* Social Proof for Free Instant Matches */}

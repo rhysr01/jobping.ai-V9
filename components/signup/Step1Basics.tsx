@@ -484,6 +484,29 @@ export const Step1Basics = React.memo(function Step1Basics({
 				)}
 			</div>
 
+			<div>
+				<label
+					htmlFor="university"
+					className="block text-base sm:text-lg font-bold text-white mb-2 sm:mb-3"
+				>
+					University
+				</label>
+				<input
+					id="university"
+					type="text"
+					value={formData.university || ""}
+					onChange={(e) => {
+						setFormData({ ...formData, university: e.target.value });
+					}}
+					placeholder="e.g., University of Oxford"
+					autoComplete="organization"
+					className="w-full px-4 sm:px-6 py-4 sm:py-5 min-h-[56px] bg-black/50 border-2 border-zinc-700 rounded-xl sm:rounded-2xl text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 focus:ring-offset-2 focus:ring-offset-black transition-all text-base sm:text-lg font-medium backdrop-blur-sm touch-manipulation"
+				/>
+				<p className="text-sm text-zinc-400 mt-2 leading-relaxed">
+					Helps us match you with graduate programs and internships.
+				</p>
+			</div>
+
 			{/* Spacer for sticky button */}
 			<div className="h-32 sm:h-0" aria-hidden="true" />
 

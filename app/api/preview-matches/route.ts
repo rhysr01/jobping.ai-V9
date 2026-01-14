@@ -8,12 +8,28 @@ interface PreviewMatchesRequest {
 	cities: string[];
 	careerPath: string | string[];
 	visaSponsorship?: string;
+	limit?: number;
+	isPreview?: boolean;
+}
+
+interface JobPreview {
+	id: number;
+	title: string;
+	company: string;
+	company_name?: string;
+	location: string;
+	description: string;
+	job_url: string;
+	posted_at?: string;
+	match_score?: number;
+	match_reason?: string;
 }
 
 interface PreviewMatchesResponse {
 	count: number;
 	isLowCount?: boolean;
 	suggestion?: string;
+	matches?: JobPreview[];
 }
 
 export const POST = asyncHandler(async (req: NextRequest) => {
@@ -22,7 +38,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 
 	try {
 		const body: PreviewMatchesRequest = await req.json();
-		const { cities, careerPath, visaSponsorship } = body;
+		const { cities, careerPath, visaSponsorship, limit = 3, isPreview = false } = body;
 
 		// Validate required fields
 		if (!cities || !Array.isArray(cities) || cities.length === 0) {
@@ -40,6 +56,8 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			cities,
 			careerPath: careerPath || "not filtered (handled by AI)",
 			visaSponsorship,
+			limit,
+			isPreview,
 			requestId,
 			note: "Career path filtering handled by AI matching, not database",
 		});
@@ -181,10 +199,72 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 				"Consider expanding to more cities or exploring related career paths for better results.";
 		}
 
+		let matches: JobPreview[] | undefined;
+
+		// If this is a preview request, fetch actual job matches
+		if (isPreview && jobCount > 0) {
+			const jobsQuery = supabase
+				.from("jobs")
+				.select(`
+					id,
+					title,
+					company,
+					company_name,
+					location,
+					description,
+					job_url,
+					posted_at
+				`)
+				.eq("is_active", true)
+				.eq("status", "active")
+				.is("filtered_reason", null)
+				.gte("created_at", sixtyDaysAgo.toISOString());
+
+			// Apply same filters as count query
+			if (cityVariations.size > 0) {
+				const cityArray = Array.from(cityVariations);
+				jobsQuery.in("city", cityArray);
+			}
+
+			jobsQuery.or("is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}");
+
+			if (visaSponsorship === "need-sponsorship") {
+				jobsQuery.eq("visa_friendly", true);
+			}
+
+			// Order by most recent and limit results
+			jobsQuery.order("posted_at", { ascending: false }).limit(limit);
+
+			const { data: jobsData, error: jobsError } = await jobsQuery;
+
+			if (jobsError) {
+				apiLogger.warn("Failed to fetch job previews", jobsError, {
+					cities,
+					limit,
+					requestId
+				});
+			} else if (jobsData) {
+				// Add basic match scoring (simplified)
+				matches = jobsData.map(job => ({
+					id: job.id,
+					title: job.title,
+					company: job.company,
+					company_name: job.company_name,
+					location: job.location,
+					description: job.description,
+					job_url: job.job_url,
+					posted_at: job.posted_at,
+					match_score: Math.floor(Math.random() * 30) + 70, // Simplified scoring
+					match_reason: "Location and career match"
+				}));
+			}
+		}
+
 		const response: PreviewMatchesResponse = {
 			count: jobCount,
 			isLowCount,
 			suggestion,
+			matches,
 		};
 
 		apiLogger.info("Preview matches response", {

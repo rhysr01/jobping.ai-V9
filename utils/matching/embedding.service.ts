@@ -3,89 +3,99 @@
  * Handles generation and storage of job embeddings using OpenAI
  */
 
-import OpenAI from 'openai';
+import OpenAI from "openai";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+	apiKey: process.env.OPENAI_API_KEY,
 });
 
 export interface JobEmbedding {
-  job_hash: string;
-  embedding: number[];
-  created_at: string;
+	job_hash: string;
+	embedding: number[];
+	created_at: string;
 }
 
 export class EmbeddingService {
-  /**
-   * Generate embeddings for a batch of jobs
-   */
-  static async batchGenerateJobEmbeddings(jobs: any[]): Promise<Map<string, number[]>> {
-    const embeddings = new Map<string, number[]>();
+	/**
+	 * Generate embeddings for a batch of jobs
+	 */
+	static async batchGenerateJobEmbeddings(
+		jobs: any[],
+	): Promise<Map<string, number[]>> {
+		const embeddings = new Map<string, number[]>();
 
-    for (const job of jobs) {
-      try {
-        // Create a text representation of the job for embedding
-        const jobText = `${job.title || ''} ${job.company || ''} ${job.description || ''} ${job.location || ''}`.trim();
+		for (const job of jobs) {
+			try {
+				// Create a text representation of the job for embedding
+				const jobText =
+					`${job.title || ""} ${job.company || ""} ${job.description || ""} ${job.location || ""}`.trim();
 
-        if (!jobText || jobText.length < 10) {
-          console.warn(`⚠️  Skipping job ${job.job_hash} - insufficient content for embedding`);
-          continue;
-        }
+				if (!jobText || jobText.length < 10) {
+					console.warn(
+						`⚠️  Skipping job ${job.job_hash} - insufficient content for embedding`,
+					);
+					continue;
+				}
 
-        // Generate embedding using OpenAI
-        const response = await openai.embeddings.create({
-          model: 'text-embedding-3-small',
-          input: jobText,
-          encoding_format: 'float',
-        });
+				// Generate embedding using OpenAI
+				const response = await openai.embeddings.create({
+					model: "text-embedding-3-small",
+					input: jobText,
+					encoding_format: "float",
+				});
 
-        const embedding = response.data[0]?.embedding;
-        if (embedding && embedding.length > 0) {
-          embeddings.set(job.job_hash, embedding);
-        } else {
-          console.warn(`⚠️  No embedding generated for job ${job.job_hash}`);
-        }
-      } catch (error) {
-        console.error(`❌ Failed to generate embedding for job ${job.job_hash}:`, error);
-        // Continue with other jobs
-      }
-    }
+				const embedding = response.data[0]?.embedding;
+				if (embedding && embedding.length > 0) {
+					embeddings.set(job.job_hash, embedding);
+				} else {
+					console.warn(`⚠️  No embedding generated for job ${job.job_hash}`);
+				}
+			} catch (error) {
+				console.error(
+					`❌ Failed to generate embedding for job ${job.job_hash}:`,
+					error,
+				);
+				// Continue with other jobs
+			}
+		}
 
-    return embeddings;
-  }
+		return embeddings;
+	}
 
-  /**
-   * Store job embeddings in the database
-   */
-  static async storeJobEmbeddings(embeddings: Map<string, number[]>): Promise<void> {
-    // This would typically store embeddings in a vector database
-    // For now, we'll just log that embeddings were generated
-    console.log(`📊 Generated ${embeddings.size} embeddings`);
+	/**
+	 * Store job embeddings in the database
+	 */
+	static async storeJobEmbeddings(
+		embeddings: Map<string, number[]>,
+	): Promise<void> {
+		// This would typically store embeddings in a vector database
+		// For now, we'll just log that embeddings were generated
+		console.log(`📊 Generated ${embeddings.size} embeddings`);
 
-    // In a full implementation, this would store to a vector database like:
-    // - Pinecone
-    // - Weaviate
-    // - Supabase with pgvector
-    // - etc.
-  }
+		// In a full implementation, this would store to a vector database like:
+		// - Pinecone
+		// - Weaviate
+		// - Supabase with pgvector
+		// - etc.
+	}
 
-  /**
-   * Check embedding coverage across all jobs
-   */
-  static async checkEmbeddingCoverage(): Promise<{
-    coverage: number;
-    withEmbeddings: number;
-    total: number;
-  }> {
-    // For now, return dummy data since we don't have actual embedding storage
-    // In a real implementation, this would query the vector database
-    return {
-      coverage: 0.85, // 85% coverage
-      withEmbeddings: 850,
-      total: 1000
-    };
-  }
+	/**
+	 * Check embedding coverage across all jobs
+	 */
+	static async checkEmbeddingCoverage(): Promise<{
+		coverage: number;
+		withEmbeddings: number;
+		total: number;
+	}> {
+		// For now, return dummy data since we don't have actual embedding storage
+		// In a real implementation, this would query the vector database
+		return {
+			coverage: 0.85, // 85% coverage
+			withEmbeddings: 850,
+			total: 1000,
+		};
+	}
 }
 
 export const embeddingService = EmbeddingService;

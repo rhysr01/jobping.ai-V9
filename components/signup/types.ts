@@ -13,5 +13,6 @@ export interface SignupFormData {
 	companySizePreference: string;
 	skills: string[];
 	careerKeywords: string;
+	university?: string;
 	gdprConsent: boolean;
 }

@@ -247,11 +247,12 @@ function detectVisaFriendliness(job) {
 		};
 	}
 
-	// Default: unknown (does NOT reject the job)
+	// Default: assume NOT visa-friendly if no positive indicators
+	// Most jobs don't mention visa sponsorship, so they don't offer it
 	return {
-		visa_friendly: null,
-		confidence: 'unknown',
-		reason: 'no_indicators',
+		visa_friendly: false,
+		confidence: 'low',
+		reason: 'no_sponsorship_indicated',
 	};
 }
 

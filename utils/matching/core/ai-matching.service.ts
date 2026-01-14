@@ -4,23 +4,22 @@
  */
 
 import OpenAI from "openai";
-import { apiLogger } from "../../../lib/api-logger";
 import type { Job } from "@/scrapers/types";
-import type { UserPreferences } from "../types";
+import { apiLogger } from "../../../lib/api-logger";
 import { aiMatchingCache } from "../../../lib/cache";
+import {
+	generateScoreExplanation,
+	ScoreComponents,
+	UnifiedScore,
+} from "../scoring-standard";
+import type { UserPreferences } from "../types";
+import { FreeMatchBuilder } from "./prompts/free-match-builder";
+import { PremiumMatchBuilder } from "./prompts/premium-match-builder";
 
 export interface AIMatchResult {
 	job: Job;
-	matchScore: number;
-	confidenceScore: number;
+	unifiedScore: UnifiedScore;
 	matchReason: string;
-	scoreBreakdown: {
-		skills: number;
-		experience: number;
-		location: number;
-		company: number;
-		overall: number;
-	};
 }
 
 export interface AIMatchingOptions {
@@ -48,16 +47,26 @@ export class AIMatchingService {
 	async findMatches(
 		user: UserPreferences,
 		jobs: Job[],
-		options: AIMatchingOptions = {}
+		options: AIMatchingOptions = {},
 	): Promise<AIMatchResult[]> {
 		const {
 			maxRetries = 3,
 			timeoutMs = 30000,
 			useCache = true,
-			model = "gpt-4o-mini"
+			model = "gpt-4o-mini",
 		} = options;
 
+		apiLogger.info("AI matching starting", {
+			metadata: {
+				userEmail: user.email,
+				jobsCount: jobs.length,
+				model,
+				useCache,
+			},
+		});
+
 		if (!this.openai) {
+			apiLogger.error("OpenAI client not initialized");
 			throw new Error("OpenAI client not initialized");
 		}
 
@@ -72,13 +81,13 @@ export class AIMatchingService {
 				maxRetries,
 				timeoutMs,
 				useCache,
-				model
+				model,
 			});
 			results.push(...batchResults);
 
 			// Rate limiting
 			if (i + batchSize < jobs.length) {
-				await new Promise(resolve => setTimeout(resolve, 1000));
+				await new Promise((resolve) => setTimeout(resolve, 1000));
 			}
 		}
 
@@ -91,7 +100,9 @@ export class AIMatchingService {
 			},
 		});
 
-		return results.sort((a, b) => b.matchScore - a.matchScore);
+		return results.sort(
+			(a, b) => b.unifiedScore.overall - a.unifiedScore.overall,
+		);
 	}
 
 	/**
@@ -100,7 +111,7 @@ export class AIMatchingService {
 	private async processBatch(
 		user: UserPreferences,
 		jobs: Job[],
-		options: AIMatchingOptions
+		options: AIMatchingOptions,
 	): Promise<AIMatchResult[]> {
 		const cacheKey = this.generateCacheKey(user, jobs);
 
@@ -128,31 +139,45 @@ export class AIMatchingService {
 	private async callOpenAI(
 		user: UserPreferences,
 		jobs: Job[],
-		options: AIMatchingOptions
+		options: AIMatchingOptions,
 	): Promise<AIMatchResult[]> {
 		const prompt = this.buildPrompt(user, jobs);
 
 		try {
-			const response = await this.openai!.chat.completions.create({
-				model: options.model!,
+			const response = await this.openai?.chat.completions.create({
+				model: options.model || "gpt-4o-mini",
 				messages: [
 					{
 						role: "system",
-						content: "You are an expert career counselor helping match job seekers with perfect job opportunities. Analyze job matches based on skills, experience, location preferences, and career goals."
+						content:
+							"You are an expert career counselor helping match job seekers with perfect job opportunities. Analyze job matches based on skills, experience, location preferences, and career goals.",
 					},
 					{
 						role: "user",
-						content: prompt
-					}
+						content: prompt,
+					},
 				],
 				max_tokens: 2000,
 				temperature: 0.3,
 			});
 
+			if (!response) {
+				throw new Error("No response from OpenAI");
+			}
+
 			const content = response.choices[0]?.message?.content;
 			if (!content) {
 				throw new Error("No response from OpenAI");
 			}
+
+			// Debug log the raw response
+			apiLogger.info("OpenAI raw response", {
+				metadata: {
+					userEmail: user.email,
+					responseLength: content.length,
+					responsePreview: content.substring(0, 200),
+				},
+			});
 
 			return this.parseResponse(content, jobs);
 		} catch (error) {
@@ -170,65 +195,13 @@ export class AIMatchingService {
 	 * Build the prompt for OpenAI
 	 */
 	private buildPrompt(user: UserPreferences, jobs: Job[]): string {
-		const careerPaths = Array.isArray(user.career_path)
-			? user.career_path
-			: user.career_path ? [user.career_path] : [];
+		const isPremium =
+			user.subscription_tier === "premium" ||
+			user.subscription_tier === "premium_pending";
 
-		const userProfile = `
-User Profile:
-- Email: ${user.email}
-- Experience Level: ${user.entry_level_preference || 'Not specified'}
-- Career Paths: ${careerPaths.length > 0 ? careerPaths.join(', ') : 'Not specified'}
-- Target Cities: ${Array.isArray(user.target_cities) ? user.target_cities.join(', ') : user.target_cities || 'Not specified'}
-- Keywords: ${user.career_keywords || 'Not specified'}
-- Industries: ${user.industries?.join(', ') || 'Not specified'}
-- Languages: ${user.languages_spoken?.join(', ') || 'Not specified'}
-- Work Environment: ${user.work_environment || 'Not specified'}
-		`.trim();
-
-		const jobsList = jobs.map((job, index) => `
-Job ${index + 1}:
-Title: ${job.title}
-Company: ${job.company}
-Location: ${job.city}, ${job.country}
-Description: ${job.description?.substring(0, 500)}...
-Experience Required: ${job.experience_required || 'Not specified'}
-		`).join('\n');
-
-		return `
-${userProfile}
-
-Please analyze the following jobs and rate how well they match this user's profile. For each job, provide:
-
-1. Match Score (0-100): Overall compatibility
-2. Confidence Score (0-100): How confident you are in this assessment
-3. Match Reason: Brief explanation (max 50 words)
-4. Score Breakdown:
-   - Skills: 0-100
-   - Experience: 0-100
-   - Location: 0-100
-   - Company: 0-100
-
-Format your response as JSON:
-{
-  "matches": [
-    {
-      "jobIndex": 0,
-      "matchScore": 85,
-      "confidenceScore": 90,
-      "matchReason": "Strong match due to relevant experience and location",
-      "scoreBreakdown": {
-        "skills": 88,
-        "experience": 85,
-        "location": 95,
-        "company": 75
-      }
-    }
-  ]
-}
-
-${jobsList}
-		`.trim();
+		return isPremium
+			? PremiumMatchBuilder.buildPrompt(user, jobs)
+			: FreeMatchBuilder.buildPrompt(user, jobs);
 	}
 
 	/**
@@ -236,29 +209,82 @@ ${jobsList}
 	 */
 	private parseResponse(content: string, jobs: Job[]): AIMatchResult[] {
 		try {
-			const parsed = JSON.parse(content);
+			// Strip markdown code block formatting if present
+			let cleanContent = content.trim();
+			if (cleanContent.startsWith("```json")) {
+				cleanContent = cleanContent
+					.replace(/^```json\s*/, "")
+					.replace(/\s*```$/, "");
+			}
+			if (cleanContent.startsWith("```")) {
+				cleanContent = cleanContent
+					.replace(/^```\s*/, "")
+					.replace(/\s*```$/, "");
+			}
+
+			const parsed = JSON.parse(cleanContent);
 			const matches = parsed.matches || [];
 
-			return matches.map((match: any) => {
-				const jobIndex = match.jobIndex;
-				const job = jobs[jobIndex];
+			return matches
+				.map((match: any) => {
+					const jobIndex = match.jobIndex;
+					const job = jobs[jobIndex];
 
-				if (!job) return null;
+					if (!job) return null;
 
-				return {
-					job,
-					matchScore: Math.max(0, Math.min(100, match.matchScore || 0)),
-					confidenceScore: Math.max(0, Math.min(100, match.confidenceScore || 0)),
-					matchReason: match.matchReason || "AI analyzed match",
-					scoreBreakdown: {
-						skills: match.scoreBreakdown?.skills || 0,
-						experience: match.scoreBreakdown?.experience || 0,
-						location: match.scoreBreakdown?.location || 0,
-						company: match.scoreBreakdown?.company || 0,
-						overall: match.matchScore || 0,
-					},
-				};
-			}).filter(Boolean) as AIMatchResult[];
+					// Extract component scores from AI response
+					const relevance =
+						match.scoreBreakdown?.skills ||
+						match.unifiedScore.overall * 0.4 ||
+						50;
+					const quality =
+						match.scoreBreakdown?.company ||
+						match.unifiedScore.overall * 0.3 ||
+						50;
+					const opportunity =
+						match.scoreBreakdown?.experience ||
+						match.unifiedScore.overall * 0.2 ||
+						50;
+					const timing =
+						match.scoreBreakdown?.location ||
+						match.unifiedScore.overall * 0.1 ||
+						50;
+
+					// Create unified score components
+					const components: ScoreComponents = {
+						relevance: Math.max(0, Math.min(100, relevance)),
+						quality: Math.max(0, Math.min(100, quality)),
+						opportunity: Math.max(0, Math.min(100, opportunity)),
+						timing: Math.max(0, Math.min(100, timing)),
+					};
+
+					// Calculate overall score from components
+					const overallScore = Math.max(
+						0,
+						Math.min(100, match.matchScore || 0),
+					);
+
+					// Create unified score object
+					const unifiedScore: UnifiedScore = {
+						overall: overallScore,
+						components,
+						confidence: Math.max(0, Math.min(100, match.confidenceScore || 85)),
+						method: "ai",
+					};
+
+					// Add explanation for transparency
+					unifiedScore.explanation = generateScoreExplanation(
+						unifiedScore,
+						job.title || "Unknown Position",
+					);
+
+					return {
+						job,
+						unifiedScore,
+						matchReason: match.matchReason || "AI analyzed match",
+					};
+				})
+				.filter(Boolean) as AIMatchResult[];
 		} catch (error) {
 			apiLogger.error("Failed to parse OpenAI response", error as Error);
 			return [];
@@ -270,7 +296,10 @@ ${jobsList}
 	 */
 	private generateCacheKey(user: UserPreferences, jobs: Job[]): string {
 		const userKey = `${user.email}-${user.entry_level_preference}-${JSON.stringify(user.career_keywords)}`;
-		const jobsKey = jobs.map(j => `${j.title}-${j.company}`).sort().join('|');
+		const jobsKey = jobs
+			.map((j) => `${j.title}-${j.company}`)
+			.sort()
+			.join("|");
 		return `${userKey}|${jobsKey}`;
 	}
 }

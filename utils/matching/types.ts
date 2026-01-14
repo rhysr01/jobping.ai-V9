@@ -5,6 +5,7 @@
 
 import type { Tables } from "../../lib/database.types";
 import type { Job } from "../../scrapers/types";
+import type { UnifiedScore } from "./scoring-standard";
 
 // Re-export Job type for convenience
 export type { Job } from "../../scrapers/types";
@@ -56,6 +57,7 @@ export type NormalizedUserProfile = NormalizedUser;
 export interface UserPreferences {
 	email: string;
 	full_name?: string;
+	university?: string;
 	start_date?: string;
 	work_environment?: "remote" | "hybrid" | "on-site" | "unclear";
 	visa_status?: string;
@@ -75,7 +77,7 @@ export interface UserPreferences {
 	career_keywords?: string;
 
 	// Tier-aware matching
-	subscription_tier?: "free" | "premium";
+	subscription_tier?: "free" | "premium" | "premium_pending";
 }
 
 // ================================
@@ -119,6 +121,9 @@ export interface JobMatch {
 	match_reason: string;
 	confidence_score: number;
 	validation_issues?: string[]; // Issues found during post-AI validation
+
+	// Unified scoring with transparency (NEW)
+	unifiedScore?: UnifiedScore; // Transparent scoring breakdown
 
 	// Optional fields commonly accessed via "as any" in matching services
 	// These fields may be present on jobs returned from matching engine

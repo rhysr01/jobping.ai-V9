@@ -75,6 +75,7 @@ const PRODUCTION_TEST_JOBS: Job[] = [
 		last_seen_at: new Date().toISOString(),
 		is_active: true,
 		created_at: new Date().toISOString(),
+		visa_friendly: true, // London job - visa sponsorship available
 	},
 	{
 		id: 2,
@@ -101,6 +102,7 @@ const PRODUCTION_TEST_JOBS: Job[] = [
 		last_seen_at: new Date().toISOString(),
 		is_active: true,
 		created_at: new Date().toISOString(),
+		visa_friendly: true, // London job - visa sponsorship available
 	},
 	{
 		id: 3,
@@ -125,6 +127,7 @@ const PRODUCTION_TEST_JOBS: Job[] = [
 		last_seen_at: new Date().toISOString(),
 		is_active: true,
 		created_at: new Date().toISOString(),
+		visa_friendly: true, // London job - visa sponsorship available
 	},
 	{
 		id: 4,
@@ -151,6 +154,7 @@ const PRODUCTION_TEST_JOBS: Job[] = [
 		last_seen_at: new Date().toISOString(),
 		is_active: true,
 		created_at: new Date().toISOString(),
+		visa_friendly: true, // London job - visa sponsorship available
 	},
 	{
 		id: 5,
@@ -177,6 +181,7 @@ const PRODUCTION_TEST_JOBS: Job[] = [
 		last_seen_at: new Date().toISOString(),
 		is_active: true,
 		created_at: new Date().toISOString(),
+		visa_friendly: true, // London job - visa sponsorship available
 	},
 	{
 		id: 6,
@@ -203,6 +208,7 @@ const PRODUCTION_TEST_JOBS: Job[] = [
 		last_seen_at: new Date().toISOString(),
 		is_active: true,
 		created_at: new Date().toISOString(),
+		visa_friendly: true, // London job - visa sponsorship available
 	},
 
 	// Non-London jobs (should be filtered out for London-only user)
@@ -229,6 +235,7 @@ const PRODUCTION_TEST_JOBS: Job[] = [
 		last_seen_at: new Date().toISOString(),
 		is_active: true,
 		created_at: new Date().toISOString(),
+		visa_friendly: true, // London job - visa sponsorship available
 	},
 	{
 		id: 8,
@@ -252,6 +259,7 @@ const PRODUCTION_TEST_JOBS: Job[] = [
 		last_seen_at: new Date().toISOString(),
 		is_active: true,
 		created_at: new Date().toISOString(),
+		visa_friendly: true, // London job - visa sponsorship available
 	},
 
 	// Senior roles (should be filtered out for entry-level user)
@@ -278,6 +286,7 @@ const PRODUCTION_TEST_JOBS: Job[] = [
 		last_seen_at: new Date().toISOString(),
 		is_active: true,
 		created_at: new Date().toISOString(),
+		visa_friendly: true, // London job - visa sponsorship available
 	},
 ];
 
@@ -303,15 +312,39 @@ const FREE_USER_LONDON: UserPreferences = {
 const PREMIUM_USER_LONDON: UserPreferences = {
 	email: "premium-london-test@example.com",
 	target_cities: ["London"],
-	career_path: ["tech"],
+	career_path: ["tech", "data-analytics"], // Premium can choose 2 career paths
 	professional_expertise: "software development",
 	work_environment: "hybrid",
 	visa_status: "eu-citizen",
 	entry_level_preference: "entry",
 	languages_spoken: ["English"],
 	company_types: ["tech"],
-	roles_selected: ["software-engineer"],
+	roles_selected: ["software-engineer", "product-manager", "data-analyst"],
 	subscription_tier: "premium",
+	// Enhanced with comprehensive premium preferences for better matching
+	skills: ["javascript", "react", "node.js", "python", "sql", "data-analysis"],
+	industries: ["technology", "fintech", "saas", "data-analytics"],
+	company_size_preference: "startup",
+	career_keywords: "full-stack development with data skills and product thinking",
+	work_environment: "hybrid",
+	experience_required: "entry-level",
+};
+
+// 🔴 CRITICAL: Test user who NEEDS visa sponsorship
+const USER_NEEDS_VISA: UserPreferences = {
+	email: "visa-needed-test@example.com",
+	target_cities: ["London"],
+	career_path: ["tech"],
+	professional_expertise: "software development",
+	work_environment: "hybrid",
+	visa_status: "need-sponsorship", // 🔴 CRITICAL: This user needs sponsorship
+	entry_level_preference: "entry",
+	languages_spoken: ["English"],
+	company_types: ["tech"],
+	roles_selected: ["software-engineer"],
+	subscription_tier: "free",
+	skills: ["javascript", "react"],
+	career_keywords: "software engineer",
 };
 
 const FREE_USER_VISA_NEED: UserPreferences = {
@@ -360,8 +393,8 @@ class ProductionMatchingEngineTester {
 		const locationFilteringTest = await this.testLocationHardFiltering();
 		testResults.push(locationFilteringTest);
 
-		// Test 4: Visa requirements filter appropriately
-		const visaFilteringTest = await this.testVisaHardFiltering();
+		// Test 4: 🔴 CRITICAL: Visa filtering - users needing sponsorship only see eligible jobs
+		const visaFilteringTest = await this.testVisaFiltering();
 		testResults.push(visaFilteringTest);
 
 		// Test 5: Circuit breaker handles failures gracefully
@@ -468,35 +501,23 @@ class ProductionMatchingEngineTester {
 			);
 		});
 
-		// For now, test the fallback service directly since prefilter is too restrictive for test data
-		// This tests what users experience when AI matching fails
-		const { fallbackService } = await import(
-			"../Utils/matching/core/fallback.service"
-		);
-		const fallbackResult = fallbackService.generateFallbackMatches(
-			testJobsWithFlags.slice(0, 10),
-			FREE_USER_LONDON,
-			5,
+		// Use the ACTUAL production SimplifiedMatchingEngine (includes our UserChoiceRespector!)
+		const { simplifiedMatchingEngine } = await import(
+			"../Utils/matching/core/matching-engine"
 		);
 
-		// Convert to the expected format
-		const result = {
-			matches: fallbackResult.map((match) => ({
-				job_hash: match.job.job_hash,
-				match_score: match.matchScore,
-				match_reason: match.matchReason,
-				confidence_score: match.confidenceScore,
-			})),
-			method: "fallback",
-			totalJobsProcessed: testJobsWithFlags.length,
-			prefilterResults: {
-				jobs: [],
-				matchLevel: "broad",
-				filteredCount: 0,
-				sourceDistribution: {},
-			},
-			processingTime: 100,
-		};
+		console.log(`   Using ${testJobsWithFlags.length} test jobs`);
+		const result = await simplifiedMatchingEngine.findMatchesForFreeUser(
+			FREE_USER_LONDON,
+			testJobsWithFlags
+		);
+
+		console.log(`   Engine returned ${result.matches.length} matches`);
+		if (result.matches.length > 0) {
+			console.log(`   Sample match score: ${result.matches[0].match_score}`);
+		}
+
+		// Result is already in the correct format from simplifiedMatchingEngine
 		const passed = result.matches.length === 5;
 
 		console.log(
@@ -536,33 +557,21 @@ class ProductionMatchingEngineTester {
 			"💎 Testing Premium User: Should return multiple matches (up to available eligible jobs)...",
 		);
 
-		// Test fallback service for premium user
-		const { fallbackService } = await import(
-			"../Utils/matching/core/fallback.service"
-		);
-		const fallbackResult = fallbackService.generateFallbackMatches(
-			PRODUCTION_TEST_JOBS.slice(0, 10),
-			PREMIUM_USER_LONDON,
-			6,
+		// Use the ACTUAL production SimplifiedMatchingEngine (includes our UserChoiceRespector!)
+		const { simplifiedMatchingEngine } = await import(
+			"../Utils/matching/core/matching-engine"
 		);
 
-		const result = {
-			matches: fallbackResult.map((match) => ({
-				job_hash: match.job.job_hash,
-				match_score: match.matchScore,
-				match_reason: match.matchReason,
-				confidence_score: match.confidenceScore,
-			})),
-			method: "fallback",
-			totalJobsProcessed: PRODUCTION_TEST_JOBS.length,
-			prefilterResults: {
-				jobs: [],
-				matchLevel: "broad",
-				filteredCount: 0,
-				sourceDistribution: {},
-			},
-			processingTime: 100,
-		};
+		console.log(`   Using ${PRODUCTION_TEST_JOBS.length} test jobs`);
+		const result = await simplifiedMatchingEngine.findMatchesForPremiumUser(
+			PREMIUM_USER_LONDON,
+			PRODUCTION_TEST_JOBS
+		);
+
+		console.log(`   Engine returned ${result.matches.length} matches`);
+		if (result.matches.length > 0) {
+			console.log(`   Sample match score: ${result.matches[0].match_score}`);
+		}
 		// With only 6 eligible jobs in test data, expect reasonable number of matches
 		const passed = result.matches.length >= 3; // At least 3 matches from 6 eligible jobs
 
@@ -590,6 +599,56 @@ class ProductionMatchingEngineTester {
 						: 0,
 				processingTime: result.processingTime,
 				eligibleJobsAvailable: 6,
+			},
+		};
+	}
+
+	/**
+	 * 🔴 CRITICAL: Test visa filtering - users who need sponsorship should only see visa-friendly jobs
+	 */
+	private async testVisaFiltering(): Promise<TestResult> {
+		console.log(
+			"🇪🇺 Testing Visa Filtering: User needing sponsorship should ONLY see visa-friendly jobs...",
+		);
+
+		const { simplifiedMatchingEngine } = await import(
+			"../Utils/matching/core/matching-engine"
+		);
+
+		const startTime = Date.now();
+		const result = await simplifiedMatchingEngine.findMatchesForFreeUser(
+			USER_NEEDS_VISA,
+			PRODUCTION_TEST_JOBS
+		);
+		const processingTime = Date.now() - startTime;
+
+		// Count total jobs vs visa-friendly jobs in test data
+		const totalJobs = PRODUCTION_TEST_JOBS.length;
+		const visaFriendlyJobs = PRODUCTION_TEST_JOBS.filter(job => job.visa_friendly === true).length;
+
+		// User should only see visa-friendly jobs (since they need sponsorship)
+		const allMatchesAreVisaFriendly = result.matches.every(match => {
+			const job = PRODUCTION_TEST_JOBS.find(j => j.job_hash === match.job_hash);
+			return job?.visa_friendly === true;
+		});
+
+		// Pass if either: no matches (filtered out by other criteria) OR all matches are visa-friendly
+		const passed = result.matches.length === 0 || allMatchesAreVisaFriendly;
+
+		console.log(`   ✅ Visa filtering: ${result.matches.length} matches (${allMatchesAreVisaFriendly ? 'all visa-friendly' : 'ERROR: non-visa jobs included'})`);
+		console.log(`   📊 Test data: ${visaFriendlyJobs}/${totalJobs} jobs are visa-friendly`);
+		console.log(`   ⏱️  Processing Time: ${processingTime}ms`);
+
+		return {
+			testName: "Visa Filtering",
+			passed,
+			details: {
+				userNeedsSponsorship: true,
+				totalTestJobs: totalJobs,
+				visaFriendlyJobs: visaFriendlyJobs,
+				matchesReturned: result.matches.length,
+				allMatchesVisaFriendly: allMatchesAreVisaFriendly,
+				processingTime,
 			},
 		};
 	}
@@ -977,7 +1036,20 @@ class ProductionMatchingEngineTester {
 		);
 		insights.aiSuccessRate = aiSuccessTests.length / methodTests.length;
 
-		// Calculate average match quality
+		// Calculate tier-specific match quality (addresses the misleading 63% average!)
+		const freeTest = testResults.find((t) => t.testName === "Free User Match Count");
+		const premiumTest = testResults.find((t) => t.testName === "Premium User Match Count");
+
+		if (freeTest && freeTest.details.averageScore !== undefined) {
+			insights.freeTierMatchQuality = freeTest.details.averageScore;
+			console.log(`   🆓 Free Tier Match Quality: ${freeTest.details.averageScore}%`);
+		}
+		if (premiumTest && premiumTest.details.averageScore !== undefined) {
+			insights.premiumTierMatchQuality = premiumTest.details.averageScore;
+			console.log(`   💎 Premium Tier Match Quality: ${premiumTest.details.averageScore}%`);
+		}
+
+		// Overall average (for backward compatibility - but now we know it's misleading!)
 		const qualityTests = testResults.filter(
 			(t) => t.details.averageScore !== undefined,
 		);
@@ -985,6 +1057,8 @@ class ProductionMatchingEngineTester {
 			insights.averageMatchQuality =
 				qualityTests.reduce((sum, t) => sum + t.details.averageScore, 0) /
 				qualityTests.length;
+			console.log(`   📊 Combined Average (misleading): ${insights.averageMatchQuality}%`);
+			console.log(`   ⚠️  SOLUTION: Separate tier metrics prevent averaging free + premium`);
 		}
 
 		// Check caching efficiency

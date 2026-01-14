@@ -2,8 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { apiLogger } from "../../../../lib/api-logger";
 import { asyncHandler } from "../../../../lib/errors";
-import { triggerMatchingEvent } from "../../../../lib/inngest/matching-helpers";
-import { simplifiedMatchingEngine } from "../../../../utils/matching/core/matching-engine";
+import { SignupMatchingService } from "../../../../utils/services/SignupMatchingService";
 
 // Simple replacements for deleted country functions
 function getCountryFromCity(city: string): string {
@@ -29,37 +28,9 @@ function getCountryVariations(country: string): string[] {
 	return variations[country.toLowerCase()] || [country];
 }
 
-// Inline quality thresholds (from deleted business-rules/quality-thresholds.ts)
-const QUALITY_THRESHOLDS = {
-	FREE_SIGNUP: 0.7,
-};
-
-const calculateQualityMetrics = (jobs: any[]) => ({
-	averageScore:
-		jobs.reduce((sum, job) => sum + (job.score || 0), 0) / jobs.length,
-	minScore: Math.min(...jobs.map((job) => job.score || 0)),
-	maxScore: Math.max(...jobs.map((job) => job.score || 0)),
-});
-
-const filterHighQualityJobs = (jobs: any[]) =>
-	jobs.filter((job) => (job.score || 0) >= QUALITY_THRESHOLDS.FREE_SIGNUP);
-
-const selectJobsForDistribution = (
-	_allJobs: any[],
-	highQualityJobs: any[],
-	targetCount: number,
-) => highQualityJobs.slice(0, targetCount);
 
 // Note: createConsolidatedMatcher import removed - using simplified matching engine
 import { getDatabaseClient } from "../../../../utils/core/database-pool";
-
-// Simple replacement for distributeJobsWithDiversity
-function distributeJobsWithDiversity(jobs: any[], options: any) {
-	// Simple implementation: just return first N jobs
-	const { targetCount = 10 } = options;
-	return jobs.slice(0, targetCount);
-}
-
 import { getProductionRateLimiter } from "../../../../utils/production-rate-limiter";
 
 // Input validation schema
@@ -301,110 +272,26 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 		strategy: targetCountries.size > 0 ? "country-level" : "no-location-filter",
 	});
 
+	// SIMPLIFIED: Let PrefilterService handle all smart filtering
+	// Only do basic fetching - active, status, and freshness
+	const sixtyDaysAgo = new Date();
+	sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
 	let query = supabase
 		.from("jobs")
 		.select("*")
 		.eq("is_active", true)
 		.eq("status", "active")
-		.is("filtered_reason", null);
+		.is("filtered_reason", null)
+		.gte("created_at", sixtyDaysAgo.toISOString()) // Only recent jobs
+		.order("id", { ascending: false }); // Pseudo-random for variety
+		// REMOVED LIMIT - let PrefilterService filter by location/career first
 
-	// CRITICAL FIX: City is MORE IMPORTANT than country - filter by city first
-	// Build city variations array (handles native names like Wien, Zürich, Milano, Roma)
-	const cityVariations = new Set<string>();
-	if (targetCities.length > 0) {
-		targetCities.forEach((city) => {
-			cityVariations.add(city); // Original: "Dublin"
-			cityVariations.add(city.toUpperCase()); // "DUBLIN"
-			cityVariations.add(city.toLowerCase()); // "dublin"
-
-			// Add native language variations (based on actual database values)
-			const cityVariants: Record<string, string[]> = {
-				Vienna: ["Wien", "WIEN", "wien"],
-				Zurich: ["Zürich", "ZURICH", "zürich"],
-				Milan: ["Milano", "MILANO", "milano"],
-				Rome: ["Roma", "ROMA", "roma"],
-				Prague: ["Praha", "PRAHA", "praha"],
-				Warsaw: ["Warszawa", "WARSZAWA", "warszawa"],
-				Brussels: ["Bruxelles", "BRUXELLES", "bruxelles", "Brussel", "BRUSSEL"],
-				Munich: ["München", "MÜNCHEN", "münchen"],
-				Copenhagen: ["København", "KØBENHAVN"],
-				Stockholm: ["Stockholms län"],
-				Helsinki: ["Helsingfors"],
-				Dublin: ["Baile Átha Cliath"],
-			};
-
-			if (cityVariants[city]) {
-				cityVariants[city].forEach((v) => {
-					cityVariations.add(v);
-				});
-			}
-
-			// Add London area variations (based on actual database values)
-			if (city.toLowerCase() === "london") {
-				[
-					"Central London",
-					"City Of London",
-					"East London",
-					"North London",
-					"South London",
-					"West London",
-				].forEach((v) => {
-					cityVariations.add(v);
-					cityVariations.add(v.toUpperCase());
-					cityVariations.add(v.toLowerCase());
-				});
-			}
-		});
-	}
-
-	// PRIORITY 1: Filter by city variations (city is more important)
-	// Use .in() with all variations - this is case-sensitive but we include all case variations
-	// This catches jobs where city field matches any variation
-	if (cityVariations.size > 0) {
-		const cityArray = Array.from(cityVariations);
-		// Use .in() with all variations - includes uppercase, lowercase, and mixed case
-		query = query.in("city", cityArray);
-		apiLogger.info("Free signup - filtering jobs by cities (with variations)", {
-			email: normalizedEmail,
-			targetCities: targetCities,
-			cityVariations: cityArray.slice(0, 15), // Log first 15
-			cityVariationCount: cityVariations.size,
-			note: "City filtering includes all case variations - catches Wien/Vienna, Zürich/Zurich, etc.",
-		});
-	} else if (targetCountryVariations.size > 0) {
-		// Fallback: if no city variations, use country only
-		const countryArray = Array.from(targetCountryVariations);
-		query = query.in("country", countryArray);
-		apiLogger.info(
-			"Free signup - filtering by country only (no city variations)",
-			{
-				email: normalizedEmail,
-				countries: Array.from(targetCountries),
-				countryVariations: countryArray.slice(0, 10),
-				variationCount: targetCountryVariations.size,
-			},
-		);
-	}
-
-	// DON'T filter by career path at DB level - too restrictive
-	// Let pre-filtering handle career path matching for better results
-	// This ensures we get more jobs to choose from
-
-	// Filter for early-career roles (same as preview API)
-	// This ensures we get internships, graduate roles, or early-career jobs
-	query = query.or(
-		"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}",
-	);
-
-	// Fetch jobs from last 60 days for recency, but use id-based ordering for variety
-	// This balances recency (quality) with variety (better matching pool)
-	const sixtyDaysAgo = new Date();
-	sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-
-	query = query
-		.gte("created_at", sixtyDaysAgo.toISOString()) // Only recent jobs (last 60 days)
-		.order("id", { ascending: false }) // Pseudo-random ordering via id for variety
-		.limit(2000); // Fetch more jobs for better diversity
+	apiLogger.info("Free signup - simplified job fetching", {
+		email: normalizedEmail,
+		strategy: "basic-fetch-only",
+		note: "PrefilterService now handles all smart filtering (cities, career, etc.)",
+	});
 
 	let { data: allJobs, error: jobsError } = await query;
 
@@ -514,497 +401,46 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 		);
 	}
 
-	// Run matching using consolidated matching engine
-	// Engine handles: Hard Gates → Pre-Ranking → AI Matching
-	let matchedJobsRaw: any[] = [];
+	// REFACTORED: Use consolidated matching service
+	const matchingConfig = SignupMatchingService.getConfig("free");
+	const matchingResult = await SignupMatchingService.runMatching(userPrefs, matchingConfig);
 
-	// Check if OpenAI API key is available (same way as embedding service)
-	const rawOpenaiKey = process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY;
+	const matchesCount = matchingResult.matchCount;
 
-	// Clean the API key (remove quotes, newlines, whitespace) - same as embedding service
-	const openaiKey = rawOpenaiKey
-		?.trim()
-		.replace(/^["']|["']$/g, "") // Remove surrounding quotes
-		.replace(/\n/g, "") // Remove newlines
-		.replace(/\r/g, "") // Remove carriage returns
-		.trim();
-
-	const hasOpenAIKey = openaiKey && openaiKey.startsWith("sk-");
-
-	if (!hasOpenAIKey) {
-		apiLogger.warn(
-			"OPENAI_API_KEY not set or invalid - using fallback matching without AI",
-			{
-				email: normalizedEmail,
-				jobCount: jobsForMatching.length,
-				openaiKeyStatus: rawOpenaiKey ? "set but invalid format" : "not set",
-				cleanedKeyPreview: openaiKey
-					? `${openaiKey.substring(0, 10)}...`
-					: "none",
-			},
-		);
-
-		// FALLBACK: Use simplified matching engine
-		const matchResult = await simplifiedMatchingEngine.findMatchesForUser(
-			userPrefs as any,
-			jobsForMatching as any[],
-			{ useAI: false }, // Force rule-based fallback
-		);
-
-		matchedJobsRaw = matchResult.matches
-			.map((m: any) => {
-				const job = jobsForMatching.find((j: any) => j.job_hash === m.job_hash);
-				return job
-					? {
-							...job,
-							match_score: m.match_score,
-							match_reason: m.match_reason,
-						}
-					: null;
-			})
-			.filter((j: any) => j !== null);
-
-		apiLogger.info("Fallback matching completed (no AI)", {
-			email: normalizedEmail,
-			matchesCount: matchedJobsRaw.length,
-		});
-	} else {
-		// Use Inngest for durable matching if enabled (prevents Vercel timeout)
-		const useInngest = process.env.USE_INNGEST_FOR_MATCHING === "true";
-
-		if (useInngest) {
-			// Trigger Inngest matching event (async, durable, with retries)
-			apiLogger.info("Triggering Inngest matching event", {
-				email: normalizedEmail,
-				jobsCount: jobsForMatching.length,
-				cities: targetCities,
-				careerPath: userData.career_path,
-			});
-
-			try {
-				await triggerMatchingEvent({
-					userPrefs: userPrefs as any,
-					jobs: jobsForMatching as any[],
-					context: {
-						source: "signup/free",
-						requestId: crypto.randomUUID(),
-					},
-				});
-
-				// For signup/free, we still need immediate results for the response
-				// So we'll do synchronous matching as fallback, but Inngest will also process it
-				// In production, you might want to return immediately and send email when Inngest completes
-				apiLogger.info(
-					"Inngest matching triggered, falling back to sync matching for immediate response",
-					{ email: normalizedEmail },
-				);
-			} catch (inngestError) {
-				apiLogger.error(
-					"Failed to trigger Inngest matching, using synchronous matching",
-					inngestError as Error,
-					{ email: normalizedEmail },
-				);
-			}
-		}
-
-		// Normal AI matching flow (synchronous for immediate response)
-		// Matching engine handles: Hard Gates → Pre-Ranking → AI Matching
-
-		apiLogger.info("Starting AI matching", {
-			email: normalizedEmail,
-			jobsCount: jobsForMatching.length,
-			cities: targetCities,
-			careerPath: userData.career_path,
-			useInngest,
-			note: "Matching engine will apply hard gates, pre-rank, and select top 50 for AI",
-		});
-
-		let matchResult: any = null;
-		try {
-			// Pass all jobs - engine handles hard gates and pre-ranking internally
-			matchResult = await simplifiedMatchingEngine.findMatchesForUser(
-				userPrefs as any,
-				jobsForMatching as any[],
-				{ useAI: true }, // Use AI matching
-			);
-		} catch (matchingError) {
-			apiLogger.error("AI matching failed", matchingError as Error, {
-				email: normalizedEmail,
-				jobsCount: jobsForMatching.length,
-				errorMessage:
-					matchingError instanceof Error
-						? matchingError.message
-						: String(matchingError),
-			});
-
-			// FALLBACK: Use rule-based matching
-			apiLogger.warn(
-				"AI matching failed, using rule-based fallback",
-				{ email: normalizedEmail },
-			);
-			const fallbackResult = await simplifiedMatchingEngine.findMatchesForUser(
-				userPrefs as any,
-				jobsForMatching as any[],
-				{ useAI: false }, // Force rule-based matching
-			);
-			matchResult = fallbackResult;
-		}
-
-		if (
-			!matchResult ||
-			!matchResult.matches ||
-			matchResult.matches.length === 0
-		) {
-			apiLogger.warn("No matches returned from matching engine", {
-				email: normalizedEmail,
-				jobsCount: jobsForMatching.length,
-				cities: targetCities,
-				careerPath: userData.career_path,
-			});
-
-			return NextResponse.json(
-				{ error: "No matches found. Try different cities or career paths." },
-				{ status: 404 },
-			);
-		} else {
-			apiLogger.info("Matching completed", {
-				email: normalizedEmail,
-				matchesCount: matchResult.matches.length,
-				method: matchResult.method,
-			});
-
-			// Get matched jobs with full data
-			for (const m of matchResult.matches) {
-				const job = jobsForMatching.find((j: any) => j.job_hash === m.job_hash);
-				if (job) {
-					matchedJobsRaw.push({
-						...job,
-						match_score: m.match_score,
-						match_reason: m.match_reason,
-					});
-				}
-			}
-		}
-	}
-
-	if (matchedJobsRaw.length === 0) {
+	// Check for matches
+	if (matchesCount === 0) {
 		return NextResponse.json(
 			{ error: "No matches found. Try different cities or career paths." },
 			{ status: 404 },
 		);
 	}
 
-	// ENTERPRISE-LEVEL FIX: Prioritize quality while maintaining balance
-	// Step 1: Sort by match_score DESC to prioritize highest-quality matches
-	matchedJobsRaw.sort((a: any, b: any) => {
-		const scoreA = a.match_score || 0;
-		const scoreB = b.match_score || 0;
-		return scoreB - scoreA; // Higher score = better quality
-	});
-
-	// Step 2: Filter low-quality matches using business rules
-	const highQualityJobs = filterHighQualityJobs(matchedJobsRaw);
-
-	// Step 3: Calculate quality metrics for logging using business rules
-	const qualityMetrics = calculateQualityMetrics(matchedJobsRaw);
-
-	apiLogger.info("Free signup - quality filtering", {
-		email: normalizedEmail,
-		totalMatches: matchedJobsRaw.length,
-		highQualityMatches: highQualityJobs.length,
-		qualityThreshold: QUALITY_THRESHOLDS.FREE_SIGNUP,
-		averageScore: qualityMetrics.averageScore,
-		minScore: qualityMetrics.minScore,
-		maxScore: qualityMetrics.maxScore,
-		qualityFilterApplied: highQualityJobs.length < matchedJobsRaw.length,
-	});
-
-	// Step 4: Use high-quality jobs if we have enough, otherwise use all (with quality priority)
-	// This ensures we always return 5 jobs if possible, but prioritize quality
-	const jobsForDistribution = selectJobsForDistribution(
-		matchedJobsRaw,
-		highQualityJobs,
-		5, // Free tier: 5 jobs
-	);
-
-	// Distribute jobs (max 5 for free)
-	// Extract work environment preferences (may be comma-separated string or array)
-	let targetWorkEnvironments: string[] = [];
-	if (userData.work_environment) {
-		if (Array.isArray(userData.work_environment)) {
-			targetWorkEnvironments = userData.work_environment;
-		} else if (typeof userData.work_environment === "string") {
-			// Parse comma-separated string: "Office, Hybrid" -> ["Office", "Hybrid"]
-			targetWorkEnvironments = userData.work_environment
-				.split(",")
-				.map((env: string) => env.trim())
-				.filter(Boolean);
-		}
-	}
-
-	// Log city and work environment distribution before distribution
-	const cityDistributionBefore = matchedJobsRaw.reduce(
-		(acc: Record<string, number>, job: any) => {
-			const city = job.city || "unknown";
-			acc[city] = (acc[city] || 0) + 1;
-			return acc;
-		},
-		{},
-	);
-	const workEnvDistributionBefore = matchedJobsRaw.reduce(
-		(acc: Record<string, number>, job: any) => {
-			const workEnv = job.work_environment || "unknown";
-			acc[workEnv] = (acc[workEnv] || 0) + 1;
-			return acc;
-		},
-		{},
-	);
-	apiLogger.info("Free signup - jobs before distribution", {
-		email: normalizedEmail,
-		totalJobs: matchedJobsRaw.length,
-		cityDistribution: cityDistributionBefore,
-		workEnvDistribution: workEnvDistributionBefore,
-		targetCities: targetCities,
-		targetWorkEnvironments: targetWorkEnvironments,
-	});
-
-	// ENTERPRISE-LEVEL FIX: Use quality-filtered jobs for distribution
-	// Dynamic target count based on available jobs (min 3, max 5)
-	const availableJobsCount = jobsForDistribution.length;
-	const dynamicTargetCount = Math.min(5, Math.max(3, availableJobsCount));
-
-	const distributedJobs = distributeJobsWithDiversity(
-		jobsForDistribution as any[],
-		{
-			targetCount: dynamicTargetCount,
-			targetCities: targetCities, // Use normalized array
-			maxPerSource: 2,
-			ensureCityBalance: true,
-			targetWorkEnvironments: targetWorkEnvironments,
-			ensureWorkEnvironmentBalance: targetWorkEnvironments.length > 0,
-		},
-	);
-
-	// Log city and work environment distribution after distribution
-	const cityDistributionAfter = distributedJobs.reduce(
-		(acc: Record<string, number>, job: any) => {
-			const city = job.city || "unknown";
-			acc[city] = (acc[city] || 0) + 1;
-			return acc;
-		},
-		{},
-	);
-	const workEnvDistributionAfter = distributedJobs.reduce(
-		(acc: Record<string, number>, job: any) => {
-			const workEnv = job.work_environment || "unknown";
-			acc[workEnv] = (acc[workEnv] || 0) + 1;
-			return acc;
-		},
-		{},
-	);
-	apiLogger.info("Free signup - jobs after distribution", {
-		email: normalizedEmail,
-		totalJobs: distributedJobs.length,
-		cityDistribution: cityDistributionAfter,
-		workEnvDistribution: workEnvDistributionAfter,
-		targetCities: targetCities,
-		targetWorkEnvironments: targetWorkEnvironments,
-	});
-
-	// ENTERPRISE-LEVEL FIX: Ensure final jobs maintain quality
-	// If distribution returned jobs, use them (they're already balanced and quality-filtered)
-	// Otherwise fallback to top-quality jobs (sorted by match_score)
-	let finalJobs: any[];
-	if (distributedJobs.length > 0) {
-		finalJobs = distributedJobs.slice(0, 5);
-	} else {
-		// Fallback: Use top-quality jobs sorted by match_score
-		const sortedByQuality = [...jobsForDistribution].sort((a: any, b: any) => {
-			const scoreA = a.match_score || 0;
-			const scoreB = b.match_score || 0;
-			return scoreB - scoreA;
-		});
-		finalJobs = sortedByQuality.slice(0, 5);
-
-		apiLogger.warn(
-			"Free signup - distribution returned empty, using top-quality fallback",
-			{
-				email: normalizedEmail,
-				fallbackJobsCount: finalJobs.length,
-				topScores: finalJobs.map((j: any) => j.match_score || 0),
-			},
-		);
-	}
-
-	// ENTERPRISE-LEVEL FIX: Log final quality metrics
-	const finalAverageScore =
-		finalJobs.length > 0
-			? finalJobs.reduce(
-					(sum: number, j: any) => sum + (j.match_score || 0),
-					0,
-				) / finalJobs.length
-			: 0;
-	const finalMinScore =
-		finalJobs.length > 0
-			? Math.min(...finalJobs.map((j: any) => j.match_score || 0))
-			: 0;
-
-	apiLogger.info("Free signup - final job quality", {
-		email: normalizedEmail,
-		finalJobsCount: finalJobs.length,
-		averageScore: Math.round(finalAverageScore * 10) / 10,
-		minScore: finalMinScore,
-		maxScore:
-			finalJobs.length > 0
-				? Math.max(...finalJobs.map((j: any) => j.match_score || 0))
-				: 0,
-		qualityThresholdMet: finalMinScore >= QUALITY_THRESHOLDS.FREE_SIGNUP,
-	});
-
-	// CRITICAL: Filter out jobs without job_hash before saving
-	const validJobs = finalJobs.filter((job: any) => {
-		if (!job || !job.job_hash) {
-			apiLogger.warn("Skipping job without job_hash", {
-				email: normalizedEmail,
-				hasJob: !!job,
-				jobTitle: job?.title,
-				jobCompany: job?.company,
-			});
-			return false;
-		}
-		return true;
-	});
-
-	if (validJobs.length === 0) {
-		const error = new Error("No valid jobs to save (all missing job_hash)");
-		apiLogger.error(
-			"No valid jobs to save (all missing job_hash)",
-			error as Error,
-			{
-				email: normalizedEmail,
-				finalJobsCount: finalJobs.length,
-				distributedJobsCount: distributedJobs.length,
-				matchedJobsRawCount: matchedJobsRaw.length,
-			},
-		);
-		return NextResponse.json(
-			{ error: "No valid matches found. Please try again." },
-			{ status: 500 },
-		);
-	}
-
-	// Store matches in YOUR matches table (uses user_email, not user_id!)
-	// match_score from AI is 0-100, normalize to 0-1 for database
-	const matchRecords = validJobs.map((job: any) => {
-		// match_score is 0-100 from matching engine, normalize to 0-1
-		let normalizedScore = 0.75; // Default fallback
-		if (job.match_score !== undefined && job.match_score !== null) {
-			if (job.match_score > 1) {
-				// Score is 0-100, normalize to 0-1
-				normalizedScore = job.match_score / 100;
-			} else {
-				// Score is already 0-1
-				normalizedScore = job.match_score;
-			}
-		}
-
-		return {
-			user_email: normalizedEmail, // CRITICAL: Use user_email, not user_id!
-			job_hash: String(job.job_hash), // Ensure it's a string
-			match_score: normalizedScore, // Normalized to 0-1
-			match_reason: job.match_reason || "AI matched",
-			match_quality: "good", // Use simple value that should pass constraint
-			match_tags: userData.career_path ? [userData.career_path] : [], // Convert to array (database expects array)
-			matched_at: new Date().toISOString(),
-			created_at: new Date().toISOString(),
-		};
-	});
-
-	// CRITICAL: Save matches - fail if this doesn't work
-	const { data: savedMatches, error: matchesError } = await supabase
-		.from("matches")
-		.upsert(matchRecords, { onConflict: "user_email,job_hash" })
-		.select();
-
-	if (matchesError) {
-		apiLogger.error("Failed to store matches", matchesError as Error, {
-			email: normalizedEmail,
-		});
-		return NextResponse.json(
-			{ error: "Failed to save matches. Please try again." },
-			{ status: 500 },
-		);
-	}
-
-	// Verify matches were saved
-	if (!savedMatches || savedMatches.length === 0) {
-		apiLogger.error("No matches saved", new Error("Matches array empty"), {
-			email: normalizedEmail,
-			matchRecordsCount: matchRecords.length,
-		});
-		return NextResponse.json(
-			{ error: "Failed to save matches. Please try again." },
-			{ status: 500 },
-		);
-	}
-
-	// Log successful match creation for debugging
-	apiLogger.info("Free signup - matches saved successfully", {
-		email: normalizedEmail,
-		savedMatchesCount: savedMatches.length,
-		savedMatchHashes: savedMatches.map((m: any) => m.job_hash),
-		matchRecordsCount: matchRecords.length,
-		validJobsCount: validJobs.length,
-	});
-
-	// Track analytics (optional - don't fail if this fails)
-	try {
-		await supabase.from("free_signups_analytics").insert({
-			email: normalizedEmail,
-			cities: preferred_cities,
-			career_path: career_paths[0],
-		});
-	} catch (analyticsError) {
-		// Non-critical - log but don't fail
-		apiLogger.warn("Failed to track analytics", analyticsError as Error, {
-			email: normalizedEmail,
-		});
-	}
-
-	// Set session cookie for client-side auth
+	// REFACTORED: Service already saved matches, create response
 	const response = NextResponse.json({
 		success: true,
-		matchCount: savedMatches.length,
+		matchCount: matchesCount,
 		userId: userData.id,
 	});
 
+	// Set session cookie for client-side auth
 	// Set a session cookie (simple approach - you may want JWT instead)
 	// Cookie expiration matches user expiration (30 days)
 	// CRITICAL: Don't use secure flag if site might be accessed over HTTP
 	const isProduction = process.env.NODE_ENV === "production";
 	const isHttps =
 		request.headers.get("x-forwarded-proto") === "https" ||
+		request.headers.get("x-forwarded-proto")?.includes("https") ||
 		request.url.startsWith("https://");
 
-	response.cookies.set("free_user_email", normalizedEmail, {
-		httpOnly: true,
-		secure: isProduction && isHttps, // Only secure in production HTTPS
-		sameSite: "lax",
-		maxAge: 60 * 60 * 24 * 30,
-		path: "/",
-	});
-
-	// Optional: Still create session for future use, but don't rely on it
 	try {
-		const sessionId = crypto.randomUUID();
-		await supabase.from("free_sessions").insert({
-			session_id: sessionId,
-			user_email: normalizedEmail,
-			expires_at: freeExpiresAt.toISOString(),
-			created_at: new Date().toISOString(),
+		response.cookies.set("session", userData.email, {
+			httpOnly: true,
+			secure: isProduction && isHttps,
+			sameSite: "lax",
+			maxAge: 30 * 24 * 60 * 60, // 30 days
+			path: "/",
 		});
 	} catch (sessionError) {
-		// Non-critical - log but don't fail
 		apiLogger.warn(
 			"Failed to create session (non-critical)",
 			sessionError as Error,
@@ -1020,8 +456,7 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 
 	apiLogger.info("Free signup successful", {
 		email: normalizedEmail,
-		matchCount: savedMatches.length,
-		savedMatchesCount: savedMatches.length,
+		matchCount: matchesCount,
 	});
 
 	return response;

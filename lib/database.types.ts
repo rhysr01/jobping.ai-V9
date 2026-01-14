@@ -254,6 +254,9 @@ export type Database = {
 					industries: string[] | null;
 					company_size_preference: string | null;
 					career_keywords: string | null;
+					// 🆕 NEW: Promo code fields
+					promo_code_used: string | null;
+					promo_expires_at: string | null;
 				};
 				Insert: {
 					active?: boolean | null;
@@ -294,6 +297,9 @@ export type Database = {
 					industries?: string[] | null;
 					company_size_preference?: string | null;
 					career_keywords?: string | null;
+					// 🆕 NEW: Promo code fields
+					promo_code_used?: string | null;
+					promo_expires_at?: string | null;
 				};
 				Update: {
 					active?: boolean | null;
@@ -334,6 +340,9 @@ export type Database = {
 					industries?: string[] | null;
 					company_size_preference?: string | null;
 					career_keywords?: string | null;
+					// 🆕 NEW: Promo code fields
+					promo_code_used?: string | null;
+					promo_expires_at?: string | null;
 				};
 				Relationships: [];
 			};

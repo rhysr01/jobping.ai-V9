@@ -6,9 +6,14 @@
 import { logger } from "@/lib/monitoring";
 import type { Job as ScrapersJob } from "@/scrapers/types";
 import type { UserPreferences } from "@/utils/matching/types";
+import {
+	calculateOverallScore,
+	ScoreComponents,
+	UnifiedScore,
+} from "../scoring-standard";
 
 export interface PrefilterResult {
-	jobs: (ScrapersJob & { freshnessTier: string; prefilterScore: number })[];
+	jobs: (ScrapersJob & { freshnessTier: string; unifiedScore: UnifiedScore })[];
 	matchLevel: "exact" | "nearby" | "broad";
 	filteredCount: number;
 	sourceDistribution: Record<string, number>;
@@ -28,11 +33,49 @@ export class PrefilterService {
 		const locationFiltered = this.filterByLocation(jobs, user);
 		const matchLevel = locationFiltered.matchLevel;
 
-		// Language filtering
-		const languageFiltered = this.filterByLanguage(locationFiltered.jobs, user);
+		logger.info("After location filtering", {
+			metadata: {
+				userEmail: user.email,
+				originalCount: jobs.length,
+				afterLocation: locationFiltered.jobs.length,
+			},
+		});
+
+		// Career path filtering - map form values to database categories
+		const careerFiltered = this.filterByCareerPath(locationFiltered.jobs, user);
+
+		logger.info("After career path filtering", {
+			metadata: {
+				userEmail: user.email,
+				afterLocation: locationFiltered.jobs.length,
+				afterCareer: careerFiltered.length,
+				userCareerPaths: user.career_path,
+			},
+		});
+
+		// 🔴 CRITICAL: Visa filtering - must happen before quality filtering
+		const visaFiltered = this.filterByVisa(careerFiltered, user);
+
+		logger.info("After visa filtering", {
+			metadata: {
+				userEmail: user.email,
+				afterCareer: careerFiltered.length,
+				afterVisa: visaFiltered.length,
+				userNeedsSponsorship: user.visa_status === "need-sponsorship",
+			},
+		});
 
 		// Basic quality filtering
-		const qualityFiltered = this.filterByQuality(languageFiltered, user);
+		const qualityFiltered = this.filterByQuality(visaFiltered, user);
+
+		logger.info("After quality filtering", {
+			metadata: {
+				userEmail: user.email,
+				afterVisa: visaFiltered.length,
+				afterQuality: qualityFiltered.length,
+				subscriptionTier: user.subscription_tier,
+			},
+		});
 
 		// Score jobs
 		const scoredJobs = this.scoreJobs(qualityFiltered, user, matchLevel);
@@ -63,7 +106,7 @@ export class PrefilterService {
 	}
 
 	/**
-	 * Simple location filtering
+	 * Enhanced location filtering with city variations (moved from signup route)
 	 */
 	private filterByLocation(
 		jobs: (ScrapersJob & { freshnessTier: string })[],
@@ -82,36 +125,38 @@ export class PrefilterService {
 			return { jobs, matchLevel: "broad" };
 		}
 
-		// Exact city matches
-		const exactMatches = jobs.filter((job) =>
-			targetCities.some(
-				(city) =>
-					job.city?.toLowerCase() === city.toLowerCase() ||
-					job.location?.toLowerCase().includes(city.toLowerCase()),
-			),
-		);
+		// Build comprehensive city variations (moved from signup route)
+		const cityVariations = this.buildCityVariations(targetCities);
 
-		if (exactMatches.length >= 10) {
-			return { jobs: exactMatches, matchLevel: "exact" };
+		// City filtering with variations (includes native language names, case variations, etc.)
+		const cityMatches = jobs.filter((job) => {
+			const jobCity = job.city?.toLowerCase();
+			const jobLocation = job.location?.toLowerCase();
+
+			return (
+				(jobCity && cityVariations.has(jobCity)) ||
+				(jobLocation && cityVariations.has(jobLocation)) ||
+				Array.from(cityVariations).some((variation) =>
+					jobLocation?.includes(variation),
+				)
+			);
+		});
+
+		if (cityMatches.length >= 10) {
+			return { jobs: cityMatches, matchLevel: "exact" };
 		}
 
-		// Nearby matches (same country/region)
-		const nearbyMatches = jobs.filter((job) => {
+		// Country-level fallback (if no city matches)
+		const countryMatches = jobs.filter((job) => {
 			const jobCountry = job.country?.toLowerCase();
-			const jobCity = job.city?.toLowerCase();
-
 			return targetCities.some((city) => {
-				// Same country logic (simplified)
-				if (jobCountry && this.isSameRegion(jobCountry, city)) {
-					return true;
-				}
-				// Broad location match
-				return jobCity && this.isNearbyLocation(jobCity, city);
+				const cityCountry = this.getCountryForCity(city);
+				return jobCountry === cityCountry?.toLowerCase();
 			});
 		});
 
-		if (nearbyMatches.length >= 5) {
-			return { jobs: nearbyMatches, matchLevel: "nearby" };
+		if (countryMatches.length >= 5) {
+			return { jobs: countryMatches, matchLevel: "nearby" };
 		}
 
 		// Fallback to all jobs if not enough matches
@@ -119,27 +164,114 @@ export class PrefilterService {
 	}
 
 	/**
-	 * Language requirement filtering
+	 * Build comprehensive city variations (moved from signup route)
 	 */
-	private filterByLanguage(
+	private buildCityVariations(targetCities: string[]): Set<string> {
+		const cityVariations = new Set<string>();
+
+		targetCities.forEach((city) => {
+			// Original city
+			cityVariations.add(city);
+			cityVariations.add(city.toUpperCase());
+			cityVariations.add(city.toLowerCase());
+
+			// Native language variations (from signup route)
+			const cityVariants: Record<string, string[]> = {
+				Vienna: ["Wien", "WIEN", "wien"],
+				Zurich: ["Zürich", "ZURICH", "zürich"],
+				Milan: ["Milano", "MILANO", "milano"],
+				Rome: ["Roma", "ROMA", "roma"],
+				Prague: ["Praha", "PRAHA", "praha"],
+				Warsaw: ["Warszawa", "WARSZAWA", "warszawa"],
+				Brussels: ["Bruxelles", "BRUXELLES", "bruxelles", "Brussel", "BRUSSEL"],
+				Munich: ["München", "MÜNCHEN", "münchen"],
+				Copenhagen: ["København", "KØBENHAVN"],
+				Stockholm: ["Stockholms län"],
+				Helsinki: ["Helsingfors"],
+				Dublin: ["Baile Átha Cliath"],
+			};
+
+			if (cityVariants[city]) {
+				cityVariants[city].forEach((variation) => {
+					cityVariations.add(variation);
+				});
+			}
+
+			// London area variations
+			if (city.toLowerCase() === "london") {
+				const londonAreas = [
+					"Central London",
+					"City Of London",
+					"East London",
+					"North London",
+					"South London",
+					"West London",
+				];
+				londonAreas.forEach((area) => {
+					cityVariations.add(area);
+					cityVariations.add(area.toUpperCase());
+					cityVariations.add(area.toLowerCase());
+				});
+			}
+		});
+
+		return cityVariations;
+	}
+
+	/**
+	 * Get country for a city (simplified mapping)
+	 */
+	private getCountryForCity(city: string): string | null {
+		const cityToCountry: Record<string, string> = {
+			// European cities mapping
+			london: "United Kingdom",
+			berlin: "Germany",
+			munich: "Germany",
+			vienna: "Austria",
+			zurich: "Switzerland",
+			milan: "Italy",
+			rome: "Italy",
+			prague: "Czech Republic",
+			warsaw: "Poland",
+			brussels: "Belgium",
+			copenhagen: "Denmark",
+			stockholm: "Sweden",
+			helsinki: "Finland",
+			dublin: "Ireland",
+			amsterdam: "Netherlands",
+			paris: "France",
+		};
+
+		return cityToCountry[city.toLowerCase()] || null;
+	}
+
+	/**
+	 * 🔴 CRITICAL: Visa filtering - ensures users who need sponsorship only see eligible jobs
+	 * This is make-or-break for international students
+	 */
+	private filterByVisa(
 		jobs: (ScrapersJob & { freshnessTier: string })[],
 		user: UserPreferences,
 	): (ScrapersJob & { freshnessTier: string })[] {
-		// If user specified languages, filter jobs that match
-		if (user.languages_spoken && user.languages_spoken.length > 0) {
-			return jobs.filter((job) => {
-				const jobLangs = this.extractJobLanguages(job);
-				return (
-					user.languages_spoken?.some((userLang) =>
-						jobLangs.some((jobLang) =>
-							jobLang.toLowerCase().includes(userLang.toLowerCase()),
-						),
-					) ?? false
-				);
-			});
+		// If user doesn't need sponsorship, show all jobs
+		if (user.visa_status !== "need-sponsorship") {
+			return jobs;
 		}
 
-		return jobs;
+		// 🔴 CRITICAL: User needs sponsorship - ONLY show visa-friendly jobs
+		const visaFriendlyJobs = jobs.filter((job) => job.visa_friendly === true);
+
+		logger.info("Visa filtering applied", {
+			metadata: {
+				userEmail: user.email,
+				userNeedsSponsorship: true,
+				jobsBeforeFiltering: jobs.length,
+				visaFriendlyJobs: visaFriendlyJobs.length,
+				visaFriendlyJobsFound: visaFriendlyJobs.length > 0,
+			},
+		});
+
+		return visaFriendlyJobs;
 	}
 
 	/**
@@ -182,66 +314,227 @@ export class PrefilterService {
 	}
 
 	/**
-	 * Simple scoring system
+	 * Unified scoring system using standardized components
 	 */
 	private scoreJobs(
 		jobs: (ScrapersJob & { freshnessTier: string })[],
 		user: UserPreferences,
 		matchLevel: string,
-	): (ScrapersJob & { freshnessTier: string; prefilterScore: number })[] {
+	): (ScrapersJob & { freshnessTier: string; unifiedScore: UnifiedScore })[] {
+		const userTier = this.isPremiumUser(user) ? "premium" : "free";
+
 		return jobs
 			.map((job) => {
-				let score = 50; // Base score
+				// Calculate component scores
+				const components: ScoreComponents = {
+					relevance: this.calculateRelevanceScore(job, user, matchLevel),
+					quality: this.calculateQualityScore(job, user),
+					opportunity: this.calculateOpportunityScore(job, user),
+					timing: this.calculateTimingScore(job),
+				};
 
-				// Location match bonus
-				if (matchLevel === "exact") score += 20;
-				else if (matchLevel === "nearby") score += 10;
+				// Calculate overall score using unified formula
+				const overallScore = calculateOverallScore(components, userTier);
 
-				// Freshness bonus
-				if (job.freshnessTier === "hot") score += 15;
-				else if (job.freshnessTier === "warm") score += 10;
+				// Create unified score object
+				const unifiedScore: UnifiedScore = {
+					overall: overallScore,
+					components,
+					confidence: 85, // Prefilter has good confidence in basic matching
+					method: "rule-based",
+				};
 
-				// Company reputation bonus (simplified)
-				if (this.isTopCompany(job.company)) score += 10;
-
-				// Experience match bonus
-				if (user.entry_level_preference && job.experience_required) {
-					if (
-						this.isExperienceMatch(
-							user.entry_level_preference,
-							job.experience_required,
-						)
-					) {
-						score += 15;
-					}
-				}
-
-				// Keyword matching bonus
-				if (user.career_keywords && job.description) {
-					const keywords = user.career_keywords.split(",").map((k) => k.trim());
-					const keywordMatches = keywords.filter(
-						(keyword) =>
-							job.description?.toLowerCase().includes(keyword.toLowerCase()) ??
-							false,
-					);
-					score += keywordMatches.length * 5;
-				}
-
-				return { ...job, prefilterScore: Math.min(score, 100) };
+				return { ...job, unifiedScore };
 			})
-			.sort((a, b) => b.prefilterScore - a.prefilterScore);
+			.sort((a, b) => b.unifiedScore.overall - a.unifiedScore.overall);
+	}
+
+	/**
+	 * Calculate relevance component (skills, experience, preferences alignment)
+	 */
+	private calculateRelevanceScore(
+		job: ScrapersJob & { freshnessTier: string },
+		user: UserPreferences,
+		matchLevel: string,
+	): number {
+		let relevance = 50; // Base relevance
+
+		// Location relevance
+		if (matchLevel === "exact") relevance += 20;
+		else if (matchLevel === "nearby") relevance += 10;
+
+		// Experience relevance
+		if (user.entry_level_preference && job.experience_required) {
+			if (
+				this.isExperienceMatch(
+					user.entry_level_preference,
+					job.experience_required,
+				)
+			) {
+				relevance += 15;
+			}
+		}
+
+		// Keyword relevance (semantic matching)
+		if (user.career_keywords && job.description) {
+			const keywords = user.career_keywords.split(",").map((k) => k.trim());
+			const keywordMatches = keywords.filter(
+				(keyword) =>
+					job.description?.toLowerCase().includes(keyword.toLowerCase()) ??
+					false,
+			);
+			relevance += Math.min(keywordMatches.length * 8, 20); // Cap at 20 points
+		}
+
+		// Language relevance for premium users
+		if (this.isPremiumUser(user) && user.languages_spoken && user.languages_spoken.length > 0) {
+			const jobLanguages = this.extractJobLanguages(job);
+			const hasLanguageMatch = user.languages_spoken.some((userLang) =>
+				jobLanguages.some((jobLang) =>
+					jobLang.toLowerCase().includes(userLang.toLowerCase()),
+				),
+			);
+
+			if (hasLanguageMatch) {
+				relevance += 15;
+			}
+		}
+
+		return Math.min(100, Math.max(0, relevance));
+	}
+
+	/**
+	 * Calculate quality component (company reputation, role stability)
+	 */
+	private calculateQualityScore(
+		job: ScrapersJob,
+		user: UserPreferences,
+	): number {
+		let quality = 40; // Base quality
+
+		// Company reputation
+		if (this.isTopCompany(job.company)) {
+			quality += 25;
+		}
+
+		// Job title quality indicators
+		if (job.title) {
+			const title = job.title.toLowerCase();
+			if (
+				title.includes("senior") ||
+				title.includes("lead") ||
+				title.includes("principal")
+			) {
+				quality += 10; // Higher seniority often means better opportunities
+			}
+			if (title.includes("intern") || title.includes("junior")) {
+				quality += 5; // Entry-level roles can still be quality opportunities
+			}
+		}
+
+		// Premium users get enhanced quality assessment
+		if (this.isPremiumUser(user)) {
+			// Additional quality signals for premium users
+			if (job.company && job.company.length > 0) {
+				quality += 5; // Established companies get bonus
+			}
+		}
+
+		return Math.min(100, Math.max(0, quality));
+	}
+
+	/**
+	 * Calculate opportunity component (career advancement potential)
+	 */
+	private calculateOpportunityScore(
+		job: ScrapersJob,
+		user: UserPreferences,
+	): number {
+		let opportunity = 30; // Base opportunity
+
+		// Premium users get more detailed opportunity assessment
+		if (this.isPremiumUser(user)) {
+			// Career progression keywords
+			if (job.description) {
+				const desc = job.description.toLowerCase();
+				const progressionKeywords = [
+					"growth",
+					"development",
+					"progression",
+					"advancement",
+					"learning",
+					"training",
+					"mentorship",
+					"career",
+				];
+
+				const progressionMatches = progressionKeywords.filter((keyword) =>
+					desc.includes(keyword),
+				);
+
+				opportunity += Math.min(progressionMatches.length * 8, 25);
+			}
+
+			// Company growth indicators
+			if (job.company) {
+				const company = job.company.toLowerCase();
+				if (
+					company.includes("tech") ||
+					company.includes("startup") ||
+					company.includes("scale") ||
+					company.includes("growth")
+				) {
+					opportunity += 15; // Growth companies offer more advancement
+				}
+			}
+		} else {
+			// Basic opportunity for free users
+			opportunity += 10; // Conservative estimate
+		}
+
+		return Math.min(100, Math.max(0, opportunity));
+	}
+
+	/**
+	 * Calculate timing component (freshness, market fit)
+	 */
+	private calculateTimingScore(
+		job: ScrapersJob & { freshnessTier: string },
+	): number {
+		let timing = 60; // Base timing score
+
+		// Freshness bonus
+		if (job.freshnessTier === "hot") timing += 25;
+		else if (job.freshnessTier === "fresh") timing += 20;
+		else if (job.freshnessTier === "recent") timing += 15;
+		else if (job.freshnessTier === "week-old") timing += 10;
+		else if (job.freshnessTier === "older") timing += 5;
+
+		// Job market timing (simplified)
+		const currentDate = new Date();
+		const month = currentDate.getMonth();
+
+		// Graduate season bonus (Sep-Dec)
+		if (month >= 8 && month <= 11) {
+			timing += 5;
+		}
+
+		return Math.min(100, Math.max(0, timing));
 	}
 
 	/**
 	 * Ensure source diversity in results
 	 */
 	private ensureDiversity(
-		jobs: (ScrapersJob & { freshnessTier: string; prefilterScore: number })[],
-	): (ScrapersJob & { freshnessTier: string; prefilterScore: number })[] {
+		jobs: (ScrapersJob & {
+			freshnessTier: string;
+			unifiedScore: UnifiedScore;
+		})[],
+	): (ScrapersJob & { freshnessTier: string; unifiedScore: UnifiedScore })[] {
 		const sourceMap = new Map<string, number>();
 		const diverseJobs: (ScrapersJob & {
 			freshnessTier: string;
-			prefilterScore: number;
+			unifiedScore: UnifiedScore;
 		})[] = [];
 
 		for (const job of jobs) {
@@ -259,40 +552,6 @@ export class PrefilterService {
 		}
 
 		return diverseJobs;
-	}
-
-	/**
-	 * Helper methods
-	 */
-	private isSameRegion(country: string, city: string): boolean {
-		// Simplified region matching
-		const regions: Record<string, string[]> = {
-			uk: [
-				"london",
-				"manchester",
-				"birmingham",
-				"leeds",
-				"glasgow",
-				"edinburgh",
-			],
-			us: ["new york", "san francisco", "los angeles", "chicago", "seattle"],
-			germany: ["berlin", "munich", "hamburg", "cologne", "frankfurt"],
-		};
-
-		for (const [region, cities] of Object.entries(regions)) {
-			if (cities.includes(city.toLowerCase()) && country.includes(region)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	private isNearbyLocation(jobCity: string, targetCity: string): boolean {
-		// Very basic proximity check - in real app would use geolocation
-		return jobCity
-			.toLowerCase()
-			.includes(targetCity.toLowerCase().split(" ")[0]);
 	}
 
 	private extractJobLanguages(job: ScrapersJob): string[] {
@@ -354,6 +613,94 @@ export class PrefilterService {
 			distribution[source] = (distribution[source] || 0) + 1;
 		});
 		return distribution;
+	}
+
+	/**
+	 * Check if user is premium tier
+	 */
+	private isPremiumUser(user: UserPreferences): boolean {
+		return (
+			user.subscription_tier === "premium" ||
+			user.subscription_tier === "premium_pending"
+		);
+	}
+
+	/**
+	 * Filter jobs by career path - map form values to database categories
+	 */
+	private filterByCareerPath(
+		jobs: (ScrapersJob & { freshnessTier: string })[],
+		user: UserPreferences,
+	): (ScrapersJob & { freshnessTier: string })[] {
+		// If no career path specified, return all jobs
+		if (
+			!user.career_path ||
+			(Array.isArray(user.career_path) && user.career_path.length === 0)
+		) {
+			return jobs;
+		}
+
+		// Map form career path values to database categories
+		const careerPathMapping: Record<string, string[]> = {
+			strategy: ["strategy-business-design"],
+			data: ["data-analytics"],
+			sales: ["sales-client-success"],
+			marketing: ["marketing-growth"],
+			finance: ["finance-investment"],
+			operations: ["operations-supply-chain"],
+			product: ["product-innovation"],
+			tech: ["tech-transformation"],
+			sustainability: ["sustainability-esg"],
+			unsure: ["general", "early-career", "entry-level", "graduate-programme"],
+		};
+
+		// Get database categories that match user's career path selection
+		const userCareerPaths = Array.isArray(user.career_path)
+			? user.career_path
+			: [user.career_path];
+		const targetCategories = new Set<string>();
+
+		userCareerPaths.forEach((path) => {
+			const mappedCategories = careerPathMapping[path];
+			if (mappedCategories) {
+				mappedCategories.forEach((cat) => {
+					targetCategories.add(cat);
+				});
+			}
+		});
+
+		// If no valid mappings found, return all jobs
+		if (targetCategories.size === 0) {
+			logger.warn("No career path mappings found for user selection", {
+				metadata: {
+					userCareerPaths,
+					availableMappings: Object.keys(careerPathMapping),
+				},
+			});
+			return jobs;
+		}
+
+		// Filter jobs that have matching categories
+		const filtered = jobs.filter((job) => {
+			if (!job.categories || !Array.isArray(job.categories)) {
+				return false;
+			}
+
+			// Check if job has any of the target categories
+			return job.categories.some((category) => targetCategories.has(category));
+		});
+
+		logger.info("Career path filtering completed", {
+			metadata: {
+				userEmail: user.email,
+				userCareerPaths,
+				targetCategories: Array.from(targetCategories),
+				jobsBefore: jobs.length,
+				jobsAfter: filtered.length,
+			},
+		});
+
+		return filtered;
 	}
 }
 

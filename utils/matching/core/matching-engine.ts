@@ -3,17 +3,20 @@
  * Replaces the massive consolidated engine with clean orchestration
  */
 
-import { apiLogger } from "../../../lib/api-logger";
 import type { Job } from "@/scrapers/types";
-import type { UserPreferences, JobMatch } from "../types";
-import { prefilterService, type PrefilterResult } from "./prefilter.service";
-import { aiMatchingService } from "./ai-matching.service";
-import { fallbackService } from "./fallback.service";
+import { apiLogger } from "../../../lib/api-logger";
+import { UserChoiceRespector } from "../business-logic/user-choice-respector";
 import {
 	calculateFreshnessTier,
 	convertAIMatchesToJobMatches,
 	convertFallbackMatchesToJobMatches,
 } from "../matchUtils";
+import type { JobMatch, UserPreferences } from "../types";
+import { aiMatchingService } from "./ai-matching.service";
+import { fallbackService } from "./fallback.service";
+import { type PrefilterResult, prefilterService } from "./prefilter.service";
+import { FreeMatchBuilder } from "./prompts/free-match-builder";
+import { PremiumMatchBuilder } from "./prompts/premium-match-builder";
 
 export interface MatchingOptions {
 	useAI: boolean;
@@ -37,7 +40,7 @@ export class SimplifiedMatchingEngine {
 	async findMatchesForUser(
 		user: UserPreferences,
 		allJobs: Job[],
-		options: Partial<MatchingOptions> = {}
+		options: Partial<MatchingOptions> = {},
 	): Promise<MatchingResult> {
 		const startTime = Date.now();
 		const opts: MatchingOptions = {
@@ -50,11 +53,25 @@ export class SimplifiedMatchingEngine {
 
 		try {
 			// Step 1: Add freshness tier to jobs and prefilter
-			const jobsWithFreshness = allJobs.map(job => ({
+			const jobsWithFreshness = allJobs.map((job) => ({
 				...job,
 				freshnessTier: calculateFreshnessTier(job),
 			}));
-			const prefilterResult = await prefilterService.prefilterJobs(jobsWithFreshness, user);
+			const prefilterResult = await prefilterService.prefilterJobs(
+				jobsWithFreshness,
+				user,
+			);
+
+			apiLogger.info("Prefilter result", {
+				metadata: {
+					userEmail: user.email,
+					jobsBeforePrefilter: jobsWithFreshness.length,
+					jobsAfterPrefilter: prefilterResult.jobs.length,
+					fallbackThreshold: opts.fallbackThreshold,
+					willUseAI:
+						opts.useAI && prefilterResult.jobs.length >= opts.fallbackThreshold,
+				},
+			});
 
 			if (prefilterResult.jobs.length === 0) {
 				apiLogger.warn("No jobs passed prefilter", {
@@ -79,7 +96,9 @@ export class SimplifiedMatchingEngine {
 				try {
 					const aiResults = await aiMatchingService.findMatches(
 						user,
-						prefilterResult.jobs.slice(0, opts.maxJobsForAI).map(j => j as Job)
+						prefilterResult.jobs
+							.slice(0, opts.maxJobsForAI)
+							.map((j) => j as Job),
 					);
 
 					if (aiResults.length > 0) {
@@ -93,33 +112,51 @@ export class SimplifiedMatchingEngine {
 						});
 					}
 				} catch (aiError) {
-					apiLogger.warn("AI matching failed, falling back to rules", aiError as Error, {
-						userEmail: user.email,
-					});
+					apiLogger.warn(
+						"AI matching failed, falling back to rules",
+						aiError as Error,
+						{
+							userEmail: user.email,
+						},
+					);
 				}
 			}
 
 			// Step 3: Use fallback if AI didn't work or wasn't enough
 			if (matches.length < opts.fallbackThreshold) {
 				const fallbackResults = fallbackService.generateFallbackMatches(
-					prefilterResult.jobs.map(j => j as Job),
+					prefilterResult.jobs.map((j) => j as Job),
 					user,
-					opts.fallbackThreshold * 2
+					opts.fallbackThreshold * 2,
 				);
 
-				const fallbackMatches = convertFallbackMatchesToJobMatches(fallbackResults);
+				const fallbackMatches =
+					convertFallbackMatchesToJobMatches(fallbackResults);
 
 				// Combine with AI results if any
 				matches = [...matches, ...fallbackMatches]
-					.filter((match, index, arr) =>
-						// Remove duplicates by job URL
-						arr.findIndex(m => m.job?.job_url === match.job?.job_url) === index
+					.filter(
+						(match, index, arr) =>
+							// Remove duplicates by job URL
+							arr.findIndex((m) => m.job?.job_url === match.job?.job_url) ===
+							index,
 					)
 					.sort((a, b) => b.match_score - a.match_score)
 					.slice(0, opts.fallbackThreshold * 2);
 
 				method = opts.useAI ? "ai" : "fallback";
 			}
+
+			// Step 4: Apply business logic to respect user choices
+			const isPremium =
+				user.subscription_tier === "premium" ||
+				user.subscription_tier === "premium_pending";
+			matches = UserChoiceRespector.applyAllBusinessLogic(
+				matches,
+				user.target_cities || [],
+				user.career_path || [],
+				isPremium,
+			);
 
 			const result: MatchingResult = {
 				matches,
@@ -141,7 +178,6 @@ export class SimplifiedMatchingEngine {
 			});
 
 			return result;
-
 		} catch (error) {
 			apiLogger.error("Matching engine failed", error as Error, {
 				userEmail: user.email,
@@ -149,10 +185,27 @@ export class SimplifiedMatchingEngine {
 			});
 
 			// Emergency fallback - return basic matches
-			const emergencyMatches = fallbackService.generateFallbackMatches(allJobs, user, 5);
+			const emergencyMatches = fallbackService.generateFallbackMatches(
+				allJobs,
+				user,
+				5,
+			);
+			let emergencyJobMatches =
+				convertFallbackMatchesToJobMatches(emergencyMatches);
+
+			// Apply business logic even in emergency fallback
+			const isPremium =
+				user.subscription_tier === "premium" ||
+				user.subscription_tier === "premium_pending";
+			emergencyJobMatches = UserChoiceRespector.applyAllBusinessLogic(
+				emergencyJobMatches,
+				user.target_cities || [],
+				user.career_path || [],
+				isPremium,
+			);
 
 			return {
-				matches: convertFallbackMatchesToJobMatches(emergencyMatches),
+				matches: emergencyJobMatches,
 				method: "fallback",
 				totalJobsProcessed: allJobs.length,
 				prefilterResults: {
@@ -166,6 +219,24 @@ export class SimplifiedMatchingEngine {
 		}
 	}
 
+	/**
+	 * Tier-specific convenience methods (eliminates parameter passing)
+	 */
+	async findMatchesForFreeUser(
+		userPrefs: UserPreferences,
+		jobs: Job[],
+	): Promise<MatchingResult> {
+		const config = FreeMatchBuilder.getConfig();
+		return this.findMatchesForUser(userPrefs, jobs, config);
+	}
+
+	async findMatchesForPremiumUser(
+		userPrefs: UserPreferences,
+		jobs: Job[],
+	): Promise<MatchingResult> {
+		const config = PremiumMatchBuilder.getConfig();
+		return this.findMatchesForUser(userPrefs, jobs, config);
+	}
 }
 
 export const simplifiedMatchingEngine = new SimplifiedMatchingEngine();

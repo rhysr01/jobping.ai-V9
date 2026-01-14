@@ -45,6 +45,7 @@ echo "7. Filter Medical & Healthcare Roles"
 echo "8. Filter Legal Roles"
 echo "9. Filter Teaching & Education Roles"
 echo "10. Enable RLS Security"
+echo "11. Add Data Integrity Constraints"
 echo ""
 
 # Run migrations one by one
@@ -58,6 +59,7 @@ run_migration "20260108205107_filter_medical_healthcare_roles.sql" "Medical/Heal
 run_migration "20260108205108_filter_legal_roles.sql" "Legal Filtering"
 run_migration "20260108205109_filter_teaching_education_roles.sql" "Teaching/Education Filtering"
 run_migration "20260108205104_enable_rls_security.sql" "RLS Security Setup"
+run_migration "20260115000000_add_data_integrity_constraints.sql" "Data Integrity Constraints"
 
 echo "🎉 All maintenance migrations completed successfully!"
 echo ""

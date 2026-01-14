@@ -373,13 +373,153 @@ export async function GET(request: NextRequest) {
       console.error(`❌ Teaching filtering failed: ${error.message}`);
     }
 
+    // 8. Data Integrity Constraint Enforcement
+    console.log("▶️  Running: Data Integrity Constraint Enforcement");
+    try {
+      let integrityFixed = 0;
+
+      // Valid categories based on form options
+      const VALID_CATEGORIES = [
+        'strategy-business-design',
+        'data-analytics',
+        'sales-client-success',
+        'marketing-growth',
+        'finance-investment',
+        'operations-supply-chain',
+        'product-innovation',
+        'tech-transformation',
+        'sustainability-esg',
+        'general'
+      ];
+
+      // Intelligent mapping function for invalid categories
+      function mapInvalidCategory(invalidCategory: string, jobTitle: string, jobDescription: string) {
+        const text = `${jobTitle || ''} ${jobDescription || ''}`.toLowerCase();
+
+        switch (invalidCategory) {
+          case 'creative-design':
+            if (text.includes('product') || text.includes('ux') || text.includes('ui') || text.includes('design')) {
+              return 'product-innovation';
+            }
+            return 'marketing-growth';
+
+          case 'general-management':
+            if (text.includes('strategy') || text.includes('business') || text.includes('consulting')) {
+              return 'strategy-business-design';
+            }
+            return 'operations-supply-chain';
+
+          case 'legal-compliance':
+            return 'operations-supply-chain';
+
+          case 'people-hr':
+            return 'operations-supply-chain';
+
+          case 'early-career':
+          case 'graduate':
+          case 'internship':
+          case 'entry-level':
+          default:
+            return 'general';
+        }
+      }
+
+      // Fix visa status (ensure no null values)
+      const { data: nullVisaJobs, error: visaSelectError } = await supabase
+        .from('jobs')
+        .select('id')
+        .is('visa_friendly', null)
+        .limit(1000); // Process in batches
+
+      if (!visaSelectError && nullVisaJobs && nullVisaJobs.length > 0) {
+        console.log(`Found ${nullVisaJobs.length} jobs with null visa status`);
+
+        const updatePromises = nullVisaJobs.map(job =>
+          supabase
+            .from('jobs')
+            .update({ visa_friendly: false })
+            .eq('id', job.id)
+        );
+
+        await Promise.all(updatePromises);
+        integrityFixed += nullVisaJobs.length;
+      }
+
+      // Fix invalid categories
+      const { data: invalidCategoryJobs, error: categorySelectError } = await supabase
+        .from('jobs')
+        .select('id, title, description, categories')
+        .not('categories', 'is', null)
+        .limit(1000); // Process in batches
+
+      if (!categorySelectError && invalidCategoryJobs) {
+        const jobsToUpdate = [];
+
+        for (const job of invalidCategoryJobs) {
+          if (job.categories) {
+            const invalidCats = job.categories.filter((cat: string) => !VALID_CATEGORIES.includes(cat));
+            if (invalidCats.length > 0) {
+              const newCategories = [];
+              const mappedCategories = new Set();
+
+              // Keep valid categories
+              job.categories.forEach((cat: string) => {
+                if (VALID_CATEGORIES.includes(cat)) {
+                  newCategories.push(cat);
+                  mappedCategories.add(cat);
+                }
+              });
+
+              // Map invalid categories intelligently
+              invalidCats.forEach((invalidCat: string) => {
+                const mappedCat = mapInvalidCategory(invalidCat, job.title, job.description);
+                if (!mappedCategories.has(mappedCat)) {
+                  newCategories.push(mappedCat);
+                  mappedCategories.add(mappedCat);
+                }
+              });
+
+              // Ensure at least one category
+              if (newCategories.length === 0) {
+                newCategories.push('general');
+              }
+
+              jobsToUpdate.push({ id: job.id, categories: newCategories });
+            }
+          }
+        }
+
+        if (jobsToUpdate.length > 0) {
+          console.log(`Found ${jobsToUpdate.length} jobs with invalid categories`);
+
+          const updatePromises = jobsToUpdate.map(({ id, categories }) =>
+            supabase
+              .from('jobs')
+              .update({ categories })
+              .eq('id', id)
+          );
+
+          await Promise.all(updatePromises);
+          integrityFixed += jobsToUpdate.length;
+        }
+      }
+
+      results.push({ step: "Data Integrity Enforcement", count: integrityFixed, status: "success" });
+      console.log(`✅ Enforced data integrity on ${integrityFixed} jobs`);
+    } catch (error: any) {
+      results.push({ step: "Data Integrity Enforcement", status: "failed", error: error.message });
+      console.error(`❌ Data integrity enforcement failed: ${error.message}`);
+    }
+
     console.log("🎉 Maintenance completed!");
     console.log(`📊 Total jobs filtered: ${totalFiltered}`);
+    console.log(`🔒 Data integrity enforced on: ${results.find(r => r.step === "Data Integrity Enforcement")?.count || 0} jobs`);
 
     return NextResponse.json({
       success: true,
       message: "Automated maintenance completed successfully",
       totalFiltered,
+      dataIntegrityFixed: results.find(r => r.step === "Data Integrity Enforcement")?.count || 0,
       results,
       timestamp: new Date().toISOString()
     });

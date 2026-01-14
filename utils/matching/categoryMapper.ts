@@ -121,7 +121,7 @@ export const WORK_TYPE_CATEGORIES = [
 ];
 
 // Student satisfaction optimization
-// Prioritizes what students told us they want - simple relevance matching
+// Prioritizes what students told us they want - balanced relevance matching
 
 export const STUDENT_SATISFACTION_FACTORS = {
 	// How well jobs match what students explicitly selected
@@ -131,18 +131,25 @@ export const STUDENT_SATISFACTION_FACTORS = {
 		general: 40, // General business jobs (fallback)
 		none: 0, // No match with preferences
 	},
+	// Multi-path bonuses for premium users
+	multiPath: {
+		bothPathsMatch: 120, // Job matches both of user's career paths
+		onePathMatch: 100, // Job matches one of user's career paths
+		partialMatch: 60, // Job partially matches user's preferences
+	},
 };
 
-// Simple satisfaction scoring - matches what students told us they want
+// Balanced satisfaction scoring for single and multiple career paths
 export function getStudentSatisfactionScore(
 	jobCategories: string[],
 	userFormValues: string[],
 ): number {
 	if (!userFormValues || userFormValues.length === 0) return 1; // Neutral for flexible users
+	if (!jobCategories || jobCategories.length === 0) return 0; // No categories = low quality
 
 	let score = 0;
 
-	// Primary: Exact career path match (most important for satisfaction)
+	// Build user's preferred database categories
 	const userDatabaseCategories = new Set<string>();
 	userFormValues.forEach((formValue) => {
 		getDatabaseCategoriesForForm(formValue).forEach((category) => {
@@ -150,14 +157,40 @@ export function getStudentSatisfactionScore(
 		});
 	});
 
+	// Count exact category matches
 	const exactMatches = jobCategories.filter((category) =>
 		userDatabaseCategories.has(category),
 	);
-	if (exactMatches.length > 0) {
-		score += 60; // Strong career alignment
+
+	// Calculate relevance ratio (what % of job categories are relevant to user)
+	const relevanceRatio = exactMatches.length / jobCategories.length;
+
+	// Only consider jobs that are at least 40% relevant to avoid random matches
+	if (relevanceRatio < 0.4) {
+		return 0; // Job is not relevant enough to user's career interests
 	}
 
-	// Secondary: Work type categorization (shows job quality)
+	// Base scoring based on relevance
+	score += relevanceRatio * 60; // Up to 60 points for category relevance
+
+	// Bonus for multi-path users (premium feature)
+	if (userFormValues.length > 1) {
+		// Check how many of user's career paths this job covers
+		const userPathsCovered = userFormValues.filter((formValue) => {
+			const pathCategories = getDatabaseCategoriesForForm(formValue);
+			return pathCategories.some((cat) => jobCategories.includes(cat));
+		});
+
+		if (userPathsCovered.length === userFormValues.length) {
+			score += STUDENT_SATISFACTION_FACTORS.multiPath.bothPathsMatch - 100; // Bonus points
+		} else if (userPathsCovered.length >= 1) {
+			score += STUDENT_SATISFACTION_FACTORS.multiPath.onePathMatch - 100; // Standard points
+		} else {
+			score += STUDENT_SATISFACTION_FACTORS.multiPath.partialMatch - 100; // Partial points
+		}
+	}
+
+	// Secondary: Work type categorization bonus (shows job quality)
 	const workTypeMatches = jobCategories.filter((cat) =>
 		WORK_TYPE_CATEGORIES.includes(cat),
 	);
@@ -165,9 +198,7 @@ export function getStudentSatisfactionScore(
 		score += 20; // Properly categorized = higher quality
 	}
 
-	// Additional factors (work environment, entry level) intentionally omitted for simplicity and consistency
-
-	return Math.min(score, 100); // Cap at 100
+	return Math.min(Math.max(score, 0), 100); // Cap between 0-100
 }
 
 // Seniority levels (not work types)
@@ -215,7 +246,7 @@ export function getDatabaseCategoriesForForm(formValue: string): string[] {
 }
 
 /**
- * Checks if a job category matches any of the user's selected form categories
+ * Checks if a job category matches user's selected form categories with balanced filtering
  */
 export function jobMatchesUserCategories(
 	jobCategories: string[],
@@ -232,8 +263,20 @@ export function jobMatchesUserCategories(
 		});
 	});
 
-	// Check if any job category matches user preferences
-	return jobCategories.some((category) => userDatabaseCategories.has(category));
+	// Count exact matches
+	const exactMatches = jobCategories.filter((category) =>
+		userDatabaseCategories.has(category),
+	);
+
+	// For single career path users: require at least one match
+	if (userFormValues.length === 1) {
+		return exactMatches.length > 0;
+	}
+
+	// For multiple career path users (premium): require minimum relevance
+	// Job must have at least 40% of its categories matching user preferences
+	const relevanceRatio = exactMatches.length / jobCategories.length;
+	return relevanceRatio >= 0.4;
 }
 
 /**

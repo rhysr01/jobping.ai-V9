@@ -134,14 +134,11 @@ describe("FallbackService", () => {
 			// Each match should have required properties
 			result.forEach((match: FallbackMatch) => {
 				expect(match).toHaveProperty("job");
-				expect(match).toHaveProperty("matchScore");
+				expect(match).toHaveProperty("unifiedScore");
 				expect(match).toHaveProperty("matchReason");
-				expect(match).toHaveProperty("matchQuality");
-				expect(match).toHaveProperty("confidenceScore");
-				expect(match).toHaveProperty("scoreBreakdown");
-				expect(typeof match.matchScore).toBe("number");
-				expect(match.matchScore).toBeGreaterThanOrEqual(0);
-				expect(match.matchScore).toBeLessThanOrEqual(100);
+				expect(typeof match.unifiedScore.overall).toBe("number");
+				expect(match.unifiedScore.overall).toBeGreaterThanOrEqual(0);
+				expect(match.unifiedScore.overall).toBeLessThanOrEqual(100);
 			});
 		});
 
@@ -195,7 +192,7 @@ describe("FallbackService", () => {
 
 			expect(result.length).toBe(1);
 			// Job should still be included with partial score since 50% relevance > 40% threshold
-			expect(result[0].matchScore).toBeGreaterThan(0);
+			expect(result[0].unifiedScore.overall).toBeGreaterThan(0);
 		});
 
 		it("should give partial scores to jobs below 40% relevance threshold", () => {
@@ -402,7 +399,7 @@ describe("FallbackService", () => {
 
 			// Note: Actual classification may vary based on scoring, but should be reasonable quality
 			expect(["excellent", "good", "fair", "low"]).toContain(result[0].matchQuality);
-			expect(result[0].matchScore).toBeGreaterThanOrEqual(40);
+			expect(result[0].unifiedScore.overall).toBeGreaterThanOrEqual(40);
 		});
 
 		it("should classify good matches correctly", () => {
@@ -417,7 +414,7 @@ describe("FallbackService", () => {
 
 			// Note: Actual classification may vary based on scoring
 			expect(["excellent", "good", "fair", "low"]).toContain(result[0].matchQuality);
-			expect(result[0].matchScore).toBeGreaterThanOrEqual(50);
+			expect(result[0].unifiedScore.overall).toBeGreaterThanOrEqual(50);
 		});
 
 		it("should classify fair matches correctly", () => {
@@ -431,7 +428,7 @@ describe("FallbackService", () => {
 
 			// Note: Actual classification may vary based on scoring
 			expect(["fair", "low"]).toContain(result[0].matchQuality);
-			expect(result[0].matchScore).toBeGreaterThanOrEqual(20);
+			expect(result[0].unifiedScore.overall).toBeGreaterThanOrEqual(20);
 		});
 
 		it("should classify low matches correctly", () => {
@@ -445,7 +442,7 @@ describe("FallbackService", () => {
 			const result = service.generateFallbackMatches([lowJob], mockUser, 1);
 
 			expect(["fair", "low"]).toContain(result[0].matchQuality); // More nuanced with advanced algorithm
-			expect(result[0].matchScore).toBeGreaterThan(20); // Better minimum scores
+			expect(result[0].unifiedScore.overall).toBeGreaterThan(20); // Better minimum scores
 		});
 	});
 
@@ -455,7 +452,7 @@ describe("FallbackService", () => {
 
 			result.forEach(match => {
 				const breakdown = match.scoreBreakdown;
-				const totalScore = match.matchScore;
+				const totalScore = match.unifiedScore.overall;
 
 				// Verify total score calculation (approximate due to rounding)
 				const expectedTotal =
@@ -476,8 +473,8 @@ describe("FallbackService", () => {
 			expect(result1.length).toBe(result2.length);
 			// Results should be consistent (though order might vary due to sorting)
 			// Allow for small variations due to potential timing/recency factors
-			const scores1 = result1.map(m => m.matchScore).sort();
-			const scores2 = result2.map(m => m.matchScore).sort();
+			const scores1 = result1.map(m => m.unifiedScore.overall).sort();
+			const scores2 = result2.map(m => m.unifiedScore.overall).sort();
 
 			expect(scores1.length).toBe(scores2.length);
 			scores1.forEach((score, index) => {
@@ -636,7 +633,7 @@ describe("FallbackService", () => {
 				];
 				const scoredJobs = jobs.map((job, i) => ({
 					job,
-					matchScore: 80 - i * 5,
+					unifiedScore: { overall: 80 - i * 5, components: { relevance: 0, quality: 0, opportunity: 0, timing: 0 }, confidence: 85, method: "rule-based" as const },
 					job_hash: job.job_hash,
 				}));
 
@@ -650,8 +647,8 @@ describe("FallbackService", () => {
 			it("should remove duplicate jobs", () => {
 				const job = mockJobs[0];
 				const scoredJobs = [
-					{ job, matchScore: 80, job_hash: "same-hash" },
-					{ job, matchScore: 75, job_hash: "same-hash" }, // Duplicate hash
+					{ job, unifiedScore: { overall: 80, components: { relevance: 0, quality: 0, opportunity: 0, timing: 0 }, confidence: 85, method: "rule-based" as const }, job_hash: "same-hash" },
+					{ job, unifiedScore: { overall: 75, components: { relevance: 0, quality: 0, opportunity: 0, timing: 0 }, confidence: 85, method: "rule-based" as const }, job_hash: "same-hash" }, // Duplicate hash
 				];
 
 				const result = (service as any).applyBalancedDistribution(scoredJobs, mockUser, 5);
@@ -671,7 +668,7 @@ describe("FallbackService", () => {
 				const matches = service.generateFallbackMatches([incompleteJob], mockUser, 5);
 
 				expect(matches).toHaveLength(1);
-				expect(matches[0].matchScore).toBeDefined();
+				expect(matches[0].unifiedScore.overall).toBeDefined();
 			});
 
 			it("should handle users with empty preferences", () => {
@@ -685,7 +682,7 @@ describe("FallbackService", () => {
 				const matches = service.generateFallbackMatches(mockJobs, emptyUser, 5);
 
 				expect(matches.length).toBeGreaterThan(0); // Should return matches even with empty preferences
-				expect(matches[0].matchScore).toBeGreaterThan(0);
+				expect(matches[0].unifiedScore.overall).toBeGreaterThan(0);
 			});
 
 			it("should handle zero-length job arrays", () => {

@@ -16,6 +16,7 @@ import { showToast } from "../../lib/toast";
 import { LiveMatchingMessages } from "./LiveMatchingMessages";
 import { VisaSponsorshipSection } from "./VisaSponsorshipSection";
 import { LiveMatchingOverlay } from "./LiveMatchingOverlay";
+import { LiveJobsReview } from "./LiveJobsReview";
 import { PersonalInfoSection } from "./PersonalInfoSection";
 import EuropeMap from "../ui/EuropeMap";
 import { AgeVerificationSection } from "./AgeVerificationSection";
@@ -547,6 +548,15 @@ export default function SignupFormFree() {
 								</motion.div>
 							)}
 
+							{/* LIVE JOB PREVIEW - Show actual job previews when cities + career selected */}
+							{formData.cities.length > 0 && formData.careerPath && (
+								<LiveJobsReview
+									cities={formData.cities}
+									careerPath={formData.careerPath}
+									isVisible={true}
+									className="mt-8"
+								/>
+							)}
 
 							{/* Age Verification and Terms - Required */}
 							<div className="mt-6">
