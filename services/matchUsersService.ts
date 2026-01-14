@@ -132,7 +132,6 @@ export class MatchUsersService {
 					transformedUsers,
 					jobs,
 					supabase,
-					startTime,
 				);
 
 				const totalProcessingTime = Date.now() - performanceTracker.startTime;

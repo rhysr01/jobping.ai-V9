@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createSuccessResponse } from "../../../lib/api-response";
-import { asyncHandler, AppError } from "../../../lib/errors";
 import { apiLogger } from "../../../lib/api-logger";
+import { createSuccessResponse } from "../../../lib/api-response";
+import { AppError, asyncHandler } from "../../../lib/errors";
 import { getDatabaseClient } from "../../../utils/core/database-pool";
 
 interface PreviewMatchesRequest {
@@ -17,7 +17,8 @@ interface PreviewMatchesResponse {
 }
 
 export const POST = asyncHandler(async (req: NextRequest) => {
-	const requestId = req.headers.get("x-request-id") || "preview-matches-" + Date.now();
+	const requestId =
+		req.headers.get("x-request-id") || "preview-matches-" + Date.now();
 
 	try {
 		const body: PreviewMatchesRequest = await req.json();
@@ -28,7 +29,10 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			throw new AppError("Cities array is required", 400, "VALIDATION_ERROR");
 		}
 
-		if (!careerPath || (typeof careerPath !== "string" && !Array.isArray(careerPath))) {
+		if (
+			!careerPath ||
+			(typeof careerPath !== "string" && !Array.isArray(careerPath))
+		) {
 			throw new AppError("Career path is required", 400, "VALIDATION_ERROR");
 		}
 
@@ -54,9 +58,64 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			.is("filtered_reason", null)
 			.gte("created_at", sixtyDaysAgo.toISOString());
 
-		// Filter by cities - match any of the selected cities
+		// Build city variations array (handles native names like Wien, Zürich, Milano, Roma)
+		const cityVariations = new Set<string>();
 		if (cities.length > 0) {
-			query = query.in("city", cities);
+			cities.forEach((city) => {
+				cityVariations.add(city); // Original: "Dublin"
+				cityVariations.add(city.toUpperCase()); // "DUBLIN"
+				cityVariations.add(city.toLowerCase()); // "dublin"
+
+				// Add native language variations (based on actual database values)
+				const cityVariants: Record<string, string[]> = {
+					Vienna: ["Wien", "WIEN", "wien"],
+					Zurich: ["Zürich", "ZURICH", "zürich"],
+					Milan: ["Milano", "MILANO", "milano"],
+					Rome: ["Roma", "ROMA", "roma"],
+					Prague: ["Praha", "PRAHA", "praha"],
+					Warsaw: ["Warszawa", "WARSZAWA", "warszawa"],
+					Brussels: [
+						"Bruxelles",
+						"BRUXELLES",
+						"bruxelles",
+						"Brussel",
+						"BRUSSEL",
+					],
+					Munich: ["München", "MÜNCHEN", "münchen"],
+					Copenhagen: ["København", "KØBENHAVN"],
+					Stockholm: ["Stockholms län"],
+					Helsinki: ["Helsingfors"],
+					Dublin: ["Baile Átha Cliath"],
+				};
+
+				if (cityVariants[city]) {
+					cityVariants[city].forEach((v) => {
+						cityVariations.add(v);
+					});
+				}
+
+				// Add London area variations (based on actual database values)
+				if (city.toLowerCase() === "london") {
+					[
+						"Central London",
+						"City Of London",
+						"East London",
+						"North London",
+						"South London",
+						"West London",
+					].forEach((v) => {
+						cityVariations.add(v);
+						cityVariations.add(v.toUpperCase());
+						cityVariations.add(v.toLowerCase());
+					});
+				}
+			});
+		}
+
+		// Filter by city variations (city is more important)
+		if (cityVariations.size > 0) {
+			const cityArray = Array.from(cityVariations);
+			query = query.in("city", cityArray);
 		}
 
 		// DON'T filter by career path at DB level - too restrictive for preview
@@ -95,23 +154,31 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 				careerPath,
 				visaSponsorship,
 				requestId,
-				filters: "active + status + recent + early-career + cities + visa (no career path filtering)",
+				filters:
+					"active + status + recent + early-career + cities + visa (no career path filtering)",
 			});
-			throw new AppError("Failed to fetch job count", 500, "DATABASE_ERROR", error);
+			throw new AppError(
+				"Failed to fetch job count",
+				500,
+				"DATABASE_ERROR",
+				error,
+			);
 		}
 
 		const jobCount = count || 0;
 
 		// Determine if this is a low count and provide suggestions
 		let isLowCount = false;
-		let suggestion = undefined;
+		let suggestion;
 
 		if (jobCount === 0) {
 			isLowCount = true;
-			suggestion = "Try selecting additional cities or a broader career path to find more opportunities.";
+			suggestion =
+				"Try selecting additional cities or a broader career path to find more opportunities.";
 		} else if (jobCount < 10) {
 			isLowCount = true;
-			suggestion = "Consider expanding to more cities or exploring related career paths for better results.";
+			suggestion =
+				"Consider expanding to more cities or exploring related career paths for better results.";
 		}
 
 		const response: PreviewMatchesResponse = {
@@ -127,12 +194,16 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			requestId,
 		});
 
-		const successResponse = createSuccessResponse(response, undefined, undefined, 200);
+		const successResponse = createSuccessResponse(
+			response,
+			undefined,
+			undefined,
+			200,
+		);
 		const nextResponse = NextResponse.json(successResponse, { status: 200 });
 		nextResponse.headers.set("x-request-id", requestId);
 
 		return nextResponse;
-
 	} catch (error) {
 		if (error instanceof AppError) {
 			throw error;
@@ -146,7 +217,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			"An unexpected error occurred",
 			500,
 			"INTERNAL_ERROR",
-			error as Error
+			error as Error,
 		);
 	}
 });

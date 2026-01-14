@@ -81,7 +81,7 @@ export async function fetchUsersAndJobs(
 			company_types: user.company_types || [],
 			visa_status: user.visa_status,
 			professional_expertise: user.career_path || "",
-			subscription_tier: user.subscription_tier as const,
+			subscription_tier: user.subscription_tier,
 			career_keywords: user.career_keywords,
 			industries: user.industries,
 		} as UserPreferences,
@@ -102,7 +102,6 @@ export async function processUsers(
 	transformedUsers: Array<{ email?: string; preferences: UserPreferences }>,
 	jobs: ScrapersJob[],
 	supabase: SupabaseClient,
-	startTime: number,
 ): Promise<MatchResult[]> {
 	const { simplifiedMatchingEngine } = await import(
 		"@/utils/matching/core/matching-engine"
