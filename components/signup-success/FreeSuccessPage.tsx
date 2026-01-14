@@ -148,7 +148,7 @@ export function FreeSuccessPage({ matchCount, email: userEmail }: FreeSuccessPag
 						</Link>
 
 						<p className="text-xs text-content-secondary mt-4">
-							Less than 2 coffees per month • Save 15+ hours per week
+							Less than 2 coffees per month • Save 10 hours per week
 						</p>
 					</div>
 				</div>

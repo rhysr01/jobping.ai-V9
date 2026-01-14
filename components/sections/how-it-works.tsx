@@ -6,25 +6,25 @@ import { BrandIcons } from "../ui/BrandIcons";
 const STEPS = [
 	{
 		number: "01",
-		title: "Tell Us About Yourself",
+		title: "Tell us your preferences",
 		description:
-			"Share your career interests, preferred cities, and visa requirements. Our AI learns your preferences to find the perfect matches.",
+			"Tell us your visa status, target cities, and career interests. We instantly filter 4,000+ European companies to find roles you're actually eligible for - saving you 10 hours of manual searching per week.",
 		icon: BrandIcons.Users,
 		color: "from-blue-500 to-blue-600",
 	},
 	{
 		number: "02",
-		title: "AI Matching Engine",
+		title: "We search 4,000+ companies daily",
 		description:
-			"Our advanced AI analyzes thousands of graduate jobs across Europe, scoring each role based on your profile, skills, and career goals.",
+			"We scan 4,000+ company career pages daily across 22 EU cities - more than any job board. Our AI ranks every role against your exact profile, so you only see roles worth applying for.",
 		icon: BrandIcons.Zap,
 		color: "from-purple-500 to-purple-600",
 	},
 	{
 		number: "03",
-		title: "Get Personalized Matches",
+		title: "Get matched roles instantly (Free) or weekly (Premium)",
 		description:
-			"Receive 5 curated job matches every week via email. Each match includes detailed reasoning, visa sponsorship info, and direct application links.",
+			"Free: Get 5 hand-picked matches instantly (one-time preview). Premium: Receive 15 fresh matches per week (5 each Mon/Wed/Fri) from companies actively hiring - never miss a deadline again.",
 		icon: BrandIcons.Mail,
 		color: "from-emerald-500 to-emerald-600",
 	},

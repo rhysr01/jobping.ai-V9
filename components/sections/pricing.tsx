@@ -27,7 +27,7 @@ const TIERS = [
 		name: Copy.PREMIUM_PLAN_TITLE,
 		price: "5",
 		tagline: "€5/month saves 40+ hours searching per month",
-		description: "5 fresh matches 3× per week (Mon/Wed/Fri) from companies actively hiring",
+		description: "5 fresh matches 3× per week (Mon/Wed/Fri) from companies actively hiring visa-sponsored roles",
 		features: Copy.PREMIUM_PLAN_FEATURES,
 		cta: "Get Premium Access",
 		href: "/signup",

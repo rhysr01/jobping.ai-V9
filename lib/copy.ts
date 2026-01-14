@@ -95,7 +95,7 @@ export const BUILT_FOR_STUDENTS_FEATURES = [
 	{
 		num: 2,
 		title: "Useful context in every email",
-		body: "Every match shows: estimated salary range, company size, and why our AI thinks it's a good fit - so you can decide in 30 seconds.",
+		body: "Every match shows: estimated salary range, visa sponsorship status, company size, and why our AI thinks it's a good fit - so you can decide in 30 seconds.",
 		meta: "Everything you need to decide in seconds.",
 	},
 	{
@@ -138,7 +138,7 @@ export const PREMIUM_PLAN_FEATURES = [
 	`10 instant matches on signup (vs 5 for free)`,
 	`Select up to 2 career paths (vs 1 for free)`,
 	`15 fresh matches per week (Mon/Wed/Fri delivery)`,
-	"Access to all job postings (vs 30-day limit for free)",
+	"Access jobs within 7 days (vs 30 days for free)",
 	"Balanced matching across your locations and career paths",
 	"Delivered to your inbox automatically",
 	"Account stays active (no 30-day deletion)",
