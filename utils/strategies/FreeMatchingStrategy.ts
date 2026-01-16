@@ -7,6 +7,7 @@ import { apiLogger } from "../../lib/api-logger";
 import { getDatabaseClient } from "../core/database-pool";
 import { simplifiedMatchingEngine } from "../matching/core/matching-engine";
 import type { JobWithMetadata } from "../../lib/types/job";
+import { FORM_TO_DATABASE_MAPPING } from "../matching/categoryMapper";
 
 export interface FreeUserPreferences {
 	email: string;
@@ -68,17 +69,23 @@ export async function runFreeMatching(
 				(city) => job.city?.toLowerCase() === city.toLowerCase(),
 			);
 
-			const careerMatch = !userPrefs.career_path || // If no career specified, include
+			// IMPROVED: Strict career path matching for free tier
+			// Only match jobs that have the exact career path category
+			const careerMatch = !userPrefs.career_path || // If no career specified, include all
 				!job.categories || job.categories.length === 0 || // or if job has no categories, include
 				job.categories.some((cat) => {
 					const catLower = cat.toLowerCase();
 					// Handle both array and string career_path formats
 					if (Array.isArray(userPrefs.career_path)) {
-						return userPrefs.career_path.some(userCareer =>
-							catLower.includes(userCareer.toLowerCase())
-						);
+						return userPrefs.career_path.some(userCareer => {
+							// Map user career path to database category and check exact match
+							const dbCategory = FORM_TO_DATABASE_MAPPING[userCareer] || userCareer;
+							return catLower === dbCategory.toLowerCase();
+						});
 					} else {
-						return userPrefs.career_path && catLower.includes(userPrefs.career_path.toLowerCase());
+						// Map user career path to database category and check exact match
+						const dbCategory = FORM_TO_DATABASE_MAPPING[userPrefs.career_path] || userPrefs.career_path;
+						return catLower === dbCategory.toLowerCase();
 					}
 				});
 
