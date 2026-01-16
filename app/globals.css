@@ -97,6 +97,7 @@
 	--text-xl: var(--text-body-xl);
 	--text-2xl: var(--text-display-sm);
 	--text-4xl: var(--text-display-xl);
+	--text-6xl: 3.75rem;
 
 	/* Enhanced letter spacing for premium feel */
 	--letter-tight: -0.025em;     /* Headlines */

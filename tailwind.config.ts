@@ -216,6 +216,13 @@ export default {
     					lineHeight: '1.1',
     					letterSpacing: '-0.02em'
     				}
+    			],
+    			'6xl': [
+    				'3.75rem',
+    				{
+    					lineHeight: '1.05',
+    					letterSpacing: '-0.025em'
+    				}
     			]
     		},
     		boxShadow: {
