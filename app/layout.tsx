@@ -12,7 +12,7 @@ import Header from "../components/sections/header";
 import StructuredData from "../components/structured-data";
 import AnimatedBackground from "../components/ui/AnimatedBackground";
 import CookieBanner from "../components/ui/CookieBanner";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { KeyboardShortcuts } from "@/components/ui/keyboard-shortcuts";
 

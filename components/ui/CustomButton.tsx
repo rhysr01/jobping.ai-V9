@@ -1,11 +1,12 @@
+import { forwardRef } from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { motion } from "framer-motion";
 import { BrandIcons } from "./BrandIcons";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-	children: ReactNode;
+	children?: ReactNode;
 	variant?: "primary" | "secondary" | "ghost" | "danger" | "gradient" | "outline";
-	size?: "sm" | "md" | "lg";
+	size?: "sm" | "md" | "lg" | "icon";
 	isLoading?: boolean;
 	className?: string;
 	href?: string;
@@ -15,7 +16,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 	animated?: boolean; // Enable framer-motion animations
 }
 
-export default function Button({
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({
 	children,
 	variant = "primary",
 	size = "md",
@@ -28,7 +29,7 @@ export default function Button({
 	fullWidth = false,
 	animated = false,
 	...props
-}: ButtonProps) {
+}, ref) {
 	const IconComponent = icon ? BrandIcons[icon] : null;
 	const widthClass = fullWidth ? "w-full" : "";
 	const baseClasses =
@@ -55,6 +56,7 @@ export default function Button({
 		sm: "px-4 py-3 text-sm min-h-[52px] sm:min-h-[48px]", // Bigger on mobile for better touch targets
 		md: "px-6 py-4 text-sm sm:text-base min-h-[56px] sm:min-h-[48px]", // More generous mobile spacing
 		lg: "px-8 py-5 text-base sm:text-lg min-h-[64px] sm:min-h-[48px] w-full sm:w-auto", // Largest on mobile for primary CTAs
+		icon: "h-10 w-10 p-0", // Square icon button
 	};
 
 	const buttonContent = (
@@ -82,6 +84,7 @@ export default function Button({
 
 	const buttonElement = animated ? (
 		<motion.button
+			ref={ref}
 			{...(buttonProps as any)}
 			whileHover={{
 				scale: disabled || isLoading ? 1 : 1.01, // Reduced scale for better performance
@@ -96,6 +99,7 @@ export default function Button({
 		</motion.button>
 	) : (
 		<button
+			ref={ref}
 			{...buttonProps}
 			className={`${buttonProps.className} ${hoverClasses}`}
 		>
@@ -118,4 +122,8 @@ export default function Button({
 	}
 
 	return buttonElement;
-}
+});
+
+Button.displayName = "Button";
+
+export default Button;
