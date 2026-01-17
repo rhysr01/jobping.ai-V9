@@ -82,11 +82,12 @@ export async function runFreeMatching(
 							const dbCategory = FORM_TO_DATABASE_MAPPING[userCareer] || userCareer;
 							return catLower === dbCategory.toLowerCase();
 						});
-					} else {
+					} else if (userPrefs.career_path) {
 						// Map user career path to database category and check exact match
 						const dbCategory = FORM_TO_DATABASE_MAPPING[userPrefs.career_path] || userPrefs.career_path;
 						return catLower === dbCategory.toLowerCase();
 					}
+					return false; // No career path specified
 				});
 
 			return cityMatch && careerMatch;
