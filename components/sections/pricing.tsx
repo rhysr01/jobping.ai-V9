@@ -111,20 +111,20 @@ function Pricing() {
 									>
 										{tier.popular && (
 											<>
-												{/* Popular badge with emerald gradient */}
-												<div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-													<div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 shadow-lg shadow-brand-500/30">
-														<span className="font-display text-xs font-bold text-white uppercase tracking-wider">
-															🔥 Most Popular
+												{/* Popular badge with emerald gradient - MUCH MORE PROMINENT */}
+												<div className="absolute -top-3 left-6 z-10">
+													<div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 rounded-full shadow-xl shadow-amber-500/30 border-2 border-white/20">
+														<span className="font-display text-sm font-black text-white uppercase tracking-wider">
+															🔥 PREMIUM
 														</span>
 													</div>
 												</div>
 											</>
 										)}
 
-										<div className="relative z-10 p-6 sm:p-8">
-											{/* Icon */}
-											<div className={`inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-lg mb-4 sm:mb-6 ${
+										<div className="relative z-10 p-8 sm:p-10">
+											{/* Icon with more breathing room */}
+											<div className={`inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-lg mb-8 ${
 												tier.popular
 													? "bg-gradient-to-br from-brand-500/20 to-brand-600/20 border border-brand-500/30 shadow-lg shadow-brand-500/20"
 													: "bg-white/5 border border-white/10"
@@ -132,7 +132,7 @@ function Pricing() {
 												<Icon size={20} className={`sm:w-6 sm:h-6 ${tier.popular ? "text-brand-400" : "text-zinc-400"}`} />
 											</div>
 
-											<div className="mb-4 sm:mb-6">
+											<div className="mb-8">
 												<h3 className="font-display text-display-sm font-black text-white mb-1">
 													{tier.name}
 												</h3>
@@ -146,8 +146,8 @@ function Pricing() {
 												</p>
 											</div>
 
-											{/* Price */}
-											<div className="mb-8 pb-8 border-b border-white/10">
+											{/* Price with more breathing room */}
+											<div className="mb-10 pb-10 border-b border-white/10">
 												<div className="flex items-baseline gap-2">
 													<span className={`text-5xl font-black ${
 														tier.popular
@@ -165,8 +165,8 @@ function Pricing() {
 												)}
 											</div>
 
-											{/* Features */}
-											<ul className="space-y-3.5 mb-8 flex-1">
+											{/* Features with better spacing */}
+											<ul className="space-y-4 mb-10 flex-1">
 												{tier.features.map((feature) => (
 													<li
 														key={feature}
@@ -181,12 +181,12 @@ function Pricing() {
 																className={`w-3.5 h-3.5 ${tier.popular ? "text-brand-400" : "text-zinc-400"}`}
 															/>
 														</div>
-														<span className="text-zinc-300 leading-relaxed">{feature}</span>
+														<span className="text-zinc-200 leading-relaxed font-medium">{feature}</span>
 													</li>
 												))}
 											</ul>
 
-											{/* CTA Button */}
+											{/* CTA Button with top spacing */}
 											<CustomButton
 												href={tier.href}
 												onClick={() =>
@@ -198,7 +198,7 @@ function Pricing() {
 												variant={tier.popular ? "primary" : "secondary"}
 												size="lg"
 												fullWidth
-												className="relative group overflow-hidden"
+												className="relative group overflow-hidden mt-2"
 											>
 												{tier.popular && (
 													<div className="absolute inset-0 bg-gradient-to-r from-white/20 via-white/30 to-white/20 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none" />
