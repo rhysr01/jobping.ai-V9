@@ -7,7 +7,6 @@ import { useCallback, useEffect, useState } from "react";
 import LogoWordmark from "../logo-wordmark";
 import { BrandIcons } from "../ui/BrandIcons";
 import CustomButton from "../ui/CustomButton";
-import { ThemeToggle } from "../ui/theme-toggle";
 import { trackEvent } from "../../lib/analytics";
 import { CTA_GET_MY_5_FREE_MATCHES } from "../../lib/copy";
 
@@ -245,10 +244,6 @@ export default function Header() {
 								</span>
 							</div>
 
-							{/* Theme toggle */}
-							<div className="hidden lg:flex">
-								<ThemeToggle />
-							</div>
 
 							{/* Enhanced CTA Button with shine effect */}
 							<Link

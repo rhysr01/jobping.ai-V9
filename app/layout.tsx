@@ -8,7 +8,6 @@ import { headers } from "next/headers";
 import Script from "next/script";
 import { KeyboardShortcuts } from "@/components/ui/keyboard-shortcuts";
 import { Toaster as Sonner, Toaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "@/components/ui/theme-provider";
 import ErrorBoundary from "../components/error-boundary";
 import FAQSchema from "../components/faq-schema";
 import Header from "../components/sections/header";
@@ -161,12 +160,6 @@ export default async function RootLayout({
 				role="application"
 				aria-label="JobPing - AI Job Matching Platform"
 			>
-				<ThemeProvider
-					attribute="class"
-					defaultTheme="dark"
-					enableSystem
-					disableTransitionOnChange
-				>
 					{/* Enhanced animated background */}
 					<AnimatedBackground />
 
@@ -252,7 +245,6 @@ export default async function RootLayout({
             `,
 						}}
 					/>
-				</ThemeProvider>
 			</body>
 		</html>
 	);
