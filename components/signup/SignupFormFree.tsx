@@ -1,21 +1,19 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Suspense, useCallback, useRef, useState } from "react";
-import ErrorBoundary from "../../components/error-boundary";
-import { PageLoading } from "../ui/skeletons";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
-import {
-	useEmailValidation,
-} from "@/hooks/useFormValidation";
+import { useEmailValidation } from "@/hooks/useFormValidation";
+import { useSignupNavigation } from "@/hooks/useSignupNavigation";
+import { useSignupState } from "@/hooks/useSignupState";
 import { ApiError, apiCallJson } from "@/lib/api-client";
 import { TIMING } from "@/lib/constants";
 import { showToast } from "@/lib/toast";
-import { useSignupState } from "@/hooks/useSignupState";
-import { useSignupNavigation } from "@/hooks/useSignupNavigation";
+import ErrorBoundary from "../../components/error-boundary";
 import { useAriaAnnounce } from "../ui/AriaLiveRegion";
 import { Progress } from "../ui/progress";
+import { PageLoading } from "../ui/skeletons";
 import { HeroSectionFree } from "./HeroSectionFree";
 import { Step1FreeBasics } from "./Step1FreeBasics";
 import { Step2FreeCities } from "./Step2FreeCities";
@@ -63,10 +61,22 @@ function SignupFormFree() {
 	const { clearProgress } = useFormPersistence(
 		formData as any,
 		setFormData as any,
-		{ tier: 'free', hasStep: true, minStepForSave: 1 },
+		{ tier: "free", hasStep: true, minStepForSave: 1 },
 		setStep,
 		step,
 	);
+
+	// Ref to track redirect timeout for cleanup
+	const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+	// Cleanup timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (redirectTimeoutRef.current) {
+				clearTimeout(redirectTimeoutRef.current);
+			}
+		};
+	}, []);
 
 	// Use navigation hook
 	useSignupNavigation({
@@ -103,7 +113,7 @@ function SignupFormFree() {
 		try {
 			// Stage 1: Validation (10% - 30%)
 			setSubmissionProgress(10);
-			await new Promise(resolve => setTimeout(resolve, 300));
+			await new Promise((resolve) => setTimeout(resolve, 300));
 			setSubmissionProgress(30);
 			setSubmissionStage("Finding your perfect matches...");
 
@@ -138,8 +148,11 @@ function SignupFormFree() {
 
 			clearProgress();
 
-			setTimeout(() => {
-				router.push(`/matches?tier=free&email=${encodeURIComponent(response.email)}`);
+			// Store timeout ref for cleanup
+			redirectTimeoutRef.current = setTimeout(() => {
+				router.push(
+					`/matches?tier=free&email=${encodeURIComponent(response.email)}`,
+				);
 			}, TIMING.REDIRECT_DELAY_MS);
 		} catch (error) {
 			setSubmissionProgress(0);
@@ -171,20 +184,23 @@ function SignupFormFree() {
 		[],
 	);
 
-	const getDisabledMessage = useCallback((stepNumber: number) => {
-		switch (stepNumber) {
-			case 1:
-				return !formData.fullName.trim() || !formData.email.trim() || !emailValidation.isValid
-					? "Enter your details"
-					: "Continue";
-			case 2:
-				return formData.cities.length === 0
-					? "Select cities"
-					: "Continue";
-			default:
-				return "Continue";
-		}
-	}, [formData, emailValidation]);
+	const getDisabledMessage = useCallback(
+		(stepNumber: number) => {
+			switch (stepNumber) {
+				case 1:
+					return !formData.fullName.trim() ||
+						!formData.email.trim() ||
+						!emailValidation.isValid
+						? "Enter your details"
+						: "Continue";
+				case 2:
+					return formData.cities.length === 0 ? "Select cities" : "Continue";
+				default:
+					return "Continue";
+			}
+		},
+		[formData, emailValidation],
+	);
 
 	return (
 		<div className="min-h-screen bg-black relative overflow-hidden pb-[max(1.5rem,env(safe-area-inset-bottom))]">
@@ -231,19 +247,65 @@ function SignupFormFree() {
 							<div className="mb-4">
 								<Progress value={submissionProgress} className="h-2" />
 							</div>
-							<p className="text-white font-medium text-lg">{submissionStage}</p>
-							<p className="text-zinc-400 text-sm mt-1">Finding your perfect job matches...</p>
+							<p className="text-white font-medium text-lg">
+								{submissionStage}
+							</p>
+							<p className="text-zinc-400 text-sm mt-1">
+								Finding your perfect job matches...
+							</p>
 							<div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-								<span className="text-sm font-medium text-emerald-200">🚀 Searching 847+ jobs in your selected cities</span>
+								<span className="text-sm font-medium text-emerald-200">
+									🚀 Searching 847+ jobs in your selected cities
+								</span>
 							</div>
 						</motion.div>
 					)}
 
 					{/* Step content */}
 					<div className="text-white text-center">
-						{step === 1 && <Step1FreeBasics key="step1" formData={formData} setFormData={setFormData as any} touchedFields={new Set()} setTouchedFields={() => {}} fieldErrors={{}} setFieldErrors={() => {}} announce={announce} loading={loading} setStep={navigation.navigateToStep} emailValidation={emailValidation} shouldShowError={shouldShowError} getDisabledMessage={getDisabledMessage} />}
-						{step === 2 && <Step2FreeCities key="step2" formData={formData} setFormData={setFormData as any} touchedFields={new Set()} setTouchedFields={() => {}} loading={loading} setStep={navigation.navigateToStep} shouldShowError={shouldShowError} getDisabledMessage={getDisabledMessage} toggleArray={toggleArrayValue as any} />}
-						{step === 3 && <Step3FreeCareer key="step3" formData={formData} setFormData={setFormData as any} touchedFields={new Set()} setTouchedFields={() => {}} loading={loading} setStep={navigation.navigateToStep} handleSubmit={handleSubmit} />}
+						{step === 1 && (
+							<Step1FreeBasics
+								key="step1"
+								formData={formData}
+								setFormData={setFormData as any}
+								touchedFields={new Set()}
+								setTouchedFields={() => {}}
+								fieldErrors={{}}
+								setFieldErrors={() => {}}
+								announce={announce}
+								loading={loading}
+								setStep={navigation.navigateToStep}
+								emailValidation={emailValidation}
+								shouldShowError={shouldShowError}
+								getDisabledMessage={getDisabledMessage}
+							/>
+						)}
+						{step === 2 && (
+							<Step2FreeCities
+								key="step2"
+								formData={formData}
+								setFormData={setFormData as any}
+								touchedFields={new Set()}
+								setTouchedFields={() => {}}
+								loading={loading}
+								setStep={navigation.navigateToStep}
+								shouldShowError={shouldShowError}
+								getDisabledMessage={getDisabledMessage}
+								toggleArray={toggleArrayValue as any}
+							/>
+						)}
+						{step === 3 && (
+							<Step3FreeCareer
+								key="step3"
+								formData={formData}
+								setFormData={setFormData as any}
+								touchedFields={new Set()}
+								setTouchedFields={() => {}}
+								loading={loading}
+								setStep={navigation.navigateToStep}
+								handleSubmit={handleSubmit}
+							/>
+						)}
 					</div>
 				</div>
 			</div>

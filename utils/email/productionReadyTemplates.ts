@@ -74,18 +74,23 @@ const mapDatabaseToForm = (databaseCategory: string): string => {
 };
 
 const COLORS = {
+	// Consistent with CSS custom properties
+	brand: "#14B8A6", // brand-500 - teal
+	brandSecondary: "#0D9488", // brand-600 - darker teal
+	purple: "#14B8A6", // Use brand color instead of purple
+	indigo: "#14B8A6", // Use brand color for consistency
+	emerald: "#10b981",
+	// Background colors
 	bg: "#0a0a0a",
 	panel: "#000000",
 	white: "#ffffff",
+	// Gray scale
 	gray100: "#f4f4f5",
 	gray200: "#e4e4e7",
 	gray300: "#d4d4d8",
 	gray400: "#b4b4b8",
 	gray500: "#71717a",
 	gray600: "#52525b",
-	purple: "#5B21B6", // brand-600 - darker purple
-	indigo: "#5B21B6", // brand-600 - darker purple (consistent with brand)
-	emerald: "#10b981",
 	// Better contrast colors for text on dark backgrounds
 	textPrimary: "#e4e4e7", // gray200 - WCAG AA compliant for main text
 	textSecondary: "#d4d4d8", // gray300 - acceptable for secondary text
@@ -358,7 +363,10 @@ function wrapEmail(title: string, body: string, footerEmail?: string): string {
     /* Layout */
     .container { width:100%; background:${COLORS.bg}; padding:20px 0; }
     .shell { width:100%; max-width:600px; margin:0 auto; background:${COLORS.panel}; border-radius:12px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.4); }
-    .header { background:linear-gradient(135deg,${COLORS.purple} 0%,#6D28D9 50%,${COLORS.purple} 100%); padding:48px 40px; text-align:center; position:relative; }
+    .header { background:linear-gradient(135deg,${COLORS.purple} 0%,#6D28D9 50%,${COLORS.purple} 100%); background-color:${COLORS.purple}; padding:48px 40px; text-align:center; position:relative; }
+
+    /* Outlook VML gradient fallback */
+    .outlook-header { background-color:${COLORS.purple}; }
     .header::before { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background:radial-gradient(circle at 30% 20%,rgba(255,255,255,0.1),transparent 60%); pointer-events:none; }
     .logo { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; font-weight:700; font-size:38px; color:${COLORS.white}; letter-spacing:-0.8px; text-shadow:0 2px 12px rgba(0,0,0,0.3); margin:0 0 10px 0; position:relative; z-index:1; }
     .tag { color:${COLORS.white}; opacity:0.95; font-size:12px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; position:relative; z-index:1; }
@@ -372,7 +380,7 @@ function wrapEmail(title: string, body: string, footerEmail?: string): string {
     .gmail-table { border-collapse: collapse !important; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
     
     /* Gmail dark mode support */
-    [data-ogsc] .header { background: linear-gradient(135deg,${COLORS.purple} 0%,#6D28D9 50%,${COLORS.purple} 100%) !important; }
+    [data-ogsc] .header { background: linear-gradient(135deg,${COLORS.purple} 0%,#6D28D9 50%,${COLORS.purple} 100%) !important; background-color:${COLORS.purple} !important; }
     [data-ogsc] .card { background: #1a1a1a !important; border-color: rgba(91,33,182,0.25) !important; }
     [data-ogsc] .text { color: ${COLORS.textPrimary} !important; }
     
@@ -468,8 +476,17 @@ function wrapEmail(title: string, body: string, footerEmail?: string): string {
         <!--<![endif]-->
           <tr>
             <td class="header">
+              <!--[if mso]>
+              <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;">
+                <v:fill type="gradient" color="${COLORS.purple}" color2="#6D28D9" angle="135" />
+                <v:textbox style="mso-fit-shape-to-text:true">
+              <![endif]-->
               <div class="logo">JobPing</div>
               <div class="tag">AI Powered Job Matching for Europe</div>
+              <!--[if mso]>
+                </v:textbox>
+              </v:rect>
+              <![endif]-->
             </td>
           </tr>
           ${body}

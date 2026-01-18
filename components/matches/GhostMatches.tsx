@@ -56,7 +56,9 @@ export function GhostMatches({ onUpgradeClick }: GhostMatchesProps) {
 					});
 				}
 			} catch (err) {
-				console.warn("Failed to fetch ghost matches:", err);
+				if (process.env.NODE_ENV === "development") {
+					console.warn("Failed to fetch ghost matches:", err);
+				}
 				setError("Failed to load");
 				setGhostMatchCount(0);
 			} finally {

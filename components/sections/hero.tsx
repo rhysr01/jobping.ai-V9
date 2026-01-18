@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { memo, useEffect, useState } from "react";
+import { memo } from "react";
 import { useStats } from "@/hooks/useStats";
 import { useWindowSize } from "@/hooks/useWindowSize";
 import { trackEvent } from "../../lib/analytics";
@@ -13,72 +13,14 @@ import { HeroMobileMockup } from "../marketing/HeroMobileMockup";
 import { BrandIcons } from "../ui/BrandIcons";
 import HeroBackgroundAura from "../ui/HeroBackgroundAura";
 import TrustBadges from "./trust-badges";
+import CustomButton from "../ui/CustomButton";
 
 function Hero() {
-	const [preloadedJobs, setPreloadedJobs] = useState<any[]>([]);
+	const preloadedJobs: any[] = []; // Removed API call for performance
 	const { stats } = useStats();
 	const { isMobile } = useWindowSize();
 
-	// Mobile-optimized job pre-fetching to improve initial page load performance
-	useEffect(() => {
-		async function fetchJobs() {
-			try {
-				// Calculate week number for rotation
-				const now = new Date();
-				const start = new Date(now.getFullYear(), 0, 1);
-				const days = Math.floor(
-					(now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000),
-				);
-				const weekNumber = Math.ceil((days + start.getDay() + 1) / 7);
-
-				const response = await fetch(
-					`/api/sample-jobs?day=monday&tier=free&week=${weekNumber}`,
-					{
-						signal: AbortSignal.timeout(8000), // 8 second timeout for hero
-					},
-				);
-
-				if (!response.ok) {
-					throw new Error(
-						`HTTP ${response.status}: Failed to fetch sample jobs`,
-					);
-				}
-
-				const data = await response.json();
-
-				if (data.jobs && data.jobs.length > 0) {
-					setPreloadedJobs(data.jobs);
-				}
-			} catch (error) {
-				if (process.env.NODE_ENV === "development") {
-					console.error("Failed to pre-fetch jobs:", error);
-				}
-				// Silently fail - hero will use fallback data
-				// This is intentional as hero should always render
-			}
-		}
-
-		// Mobile-specific optimization: longer delay or skip on slow connections
-		if (isMobile) {
-			// Check for slow connection (2G, slow-2g) and skip pre-fetching
-			const connection = (navigator as any).connection ||
-				(navigator as any).mozConnection ||
-				(navigator as any).webkitConnection;
-
-			if (connection && (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g')) {
-				// Skip pre-fetching entirely on very slow connections
-				return;
-			}
-
-			// Longer delay on mobile (5 seconds instead of 2)
-			const timeoutId = setTimeout(fetchJobs, 5000);
-			return () => clearTimeout(timeoutId);
-		} else {
-			// Normal desktop behavior
-			const timeoutId = setTimeout(fetchJobs, 2000);
-			return () => clearTimeout(timeoutId);
-		}
-	}, [isMobile]);
+	// Removed API call for performance - hero should render immediately
 
 	return (
 		<section
@@ -164,19 +106,19 @@ function Hero() {
 
 						{/* CTAs */}
 						<div className="flex flex-col gap-3 pt-2">
-							<a
+							<CustomButton
 								href="/signup/free"
 								onClick={() => {
 									trackEvent("cta_clicked", { type: "free", location: "hero" });
 								}}
-								className="btn-cta-enhanced w-full sm:w-auto sm:max-w-xs"
+								variant="primary"
+								size="lg"
+								className="w-full sm:w-auto sm:max-w-xs"
 								aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
+								icon="ArrowRight"
 							>
-								<span className="flex items-center justify-center gap-2">
-									{CTA_GET_MY_5_FREE_MATCHES}
-									<BrandIcons.ArrowRight className="h-5 w-5" />
-								</span>
-							</a>
+								{CTA_GET_MY_5_FREE_MATCHES}
+							</CustomButton>
 
 							<TrustBadges />
 

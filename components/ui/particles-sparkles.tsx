@@ -36,16 +36,22 @@ export const SparklesCore = (props: ParticlesProps) => {
 	useEffect(() => {
 		if (typeof window === "undefined") return;
 
-		console.log("🎆 SparklesCore: Initializing particles engine...");
+		if (process.env.NODE_ENV === "development") {
+			console.log("🎆 SparklesCore: Initializing particles engine...");
+		}
 		initParticlesEngine(async (engine) => {
 			await loadSlim(engine);
 		})
 			.then(() => {
-				console.log("✅ SparklesCore: Particles engine initialized");
+				if (process.env.NODE_ENV === "development") {
+					console.log("✅ SparklesCore: Particles engine initialized");
+				}
 				setInit(true);
 			})
 			.catch((err) => {
-				console.error("❌ SparklesCore: Failed to initialize", err);
+				if (process.env.NODE_ENV === "development") {
+					console.error("❌ SparklesCore: Failed to initialize", err);
+				}
 				setError(err instanceof Error ? err.message : "Unknown error");
 			});
 	}, []);
@@ -67,7 +73,7 @@ export const SparklesCore = (props: ParticlesProps) => {
 
 	// Debug logging
 	useEffect(() => {
-		if (typeof window !== "undefined") {
+		if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
 			console.log("🎆 SparklesCore render:", {
 				init,
 				error,
@@ -77,7 +83,9 @@ export const SparklesCore = (props: ParticlesProps) => {
 	}, [init, error, id, generatedId]);
 
 	if (error) {
-		console.warn("SparklesCore error:", error);
+		if (process.env.NODE_ENV === "development") {
+			console.warn("SparklesCore error:", error);
+		}
 	}
 
 	return (

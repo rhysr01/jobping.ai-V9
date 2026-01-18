@@ -41,7 +41,9 @@ export default function CompanyLogos() {
 				}
 				setCompanies(data.companies || []);
 			} catch (error) {
-				console.error("Failed to fetch companies:", error);
+				if (process.env.NODE_ENV === "development") {
+					console.error("Failed to fetch companies:", error);
+				}
 				setError(true);
 				// Silently fail - this is not critical for page functionality
 			} finally {
@@ -226,9 +228,11 @@ export default function CompanyLogos() {
 													height={140}
 													className="object-contain h-[140px] w-auto max-w-[160px] opacity-90 transition-all duration-500 ease-out group-hover:opacity-100 group-hover:scale-125 filter drop-shadow-[0_4px_12px_rgba(16,185,129,0.3)]"
 													onError={() => {
-														console.error(
-															`Failed to load logo: ${company.logoPath} for ${company.name}`,
-														);
+														if (process.env.NODE_ENV === "development") {
+															console.error(
+																`Failed to load logo: ${company.logoPath} for ${company.name}`,
+															);
+														}
 														setFailedLogos((prev) =>
 															new Set(prev).add(company.logoPath),
 														);

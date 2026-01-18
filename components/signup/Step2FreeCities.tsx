@@ -14,7 +14,7 @@ import {
 	HoverCardContent,
 	HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { CITIES } from "./constants";
+import { POPULAR_CITIES, ALL_CITIES } from "./constants";
 import type { SignupFormData } from "./types";
 
 interface Step2FreeCitiesProps {
@@ -47,6 +47,12 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 	const formRefs = {
 		cities: useRef<HTMLDivElement>(null),
 	};
+
+	const [showAllCities, setShowAllCities] = React.useState(false);
+	const displayedCities = React.useMemo(
+		() => showAllCities ? ALL_CITIES : POPULAR_CITIES,
+		[showAllCities]
+	);
 
 	const handleCityToggle = (city: string) => {
 		if ("vibrate" in navigator) {
@@ -82,7 +88,7 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 		setTouchedFields((prev) => new Set(prev).add("cities"));
 	};
 
-	const isStepValid = formData.fullName.trim() && formData.cities.length > 0;
+	const isStepValid = formData.cities.length > 0;
 
 	return (
 		<motion.div
@@ -105,20 +111,6 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 				</div>
 			</div>
 
-			{/* Name field first */}
-			<div className="mb-8 max-w-md mx-auto">
-				<label className="block text-base font-bold text-white mb-3">
-					What's your name?
-				</label>
-				<input
-					type="text"
-					value={formData.fullName}
-					onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-					placeholder="John Smith"
-					className="w-full px-4 py-4 bg-black/50 border-2 border-zinc-700 rounded-lg text-white placeholder-zinc-400 focus:border-emerald-500 focus:outline-none transition-all"
-					autoComplete="name"
-				/>
-			</div>
 
 			<div>
 				<div className="flex items-center gap-2 mb-3">
@@ -133,7 +125,7 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 					</label>
 					<HoverCard>
 						<HoverCardTrigger asChild>
-							<button className="text-zinc-400 hover:text-zinc-300 transition-colors">
+							<button className="text-zinc-400 hover:text-zinc-300 transition-colors" aria-label="Help with city selection">
 								<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 								</svg>
@@ -163,9 +155,15 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 					aria-describedby="cities-help"
 					onBlur={handleCitiesBlur}
 				>
-					{CITIES.map((city) => {
-						const isSelected = formData.cities.includes(city);
-						const isDisabled = !isSelected && formData.cities.length >= 3;
+					{displayedCities.map((city) => {
+						const isSelected = React.useMemo(
+							() => formData.cities.includes(city),
+							[formData.cities, city]
+						);
+						const isDisabled = React.useMemo(
+							() => !isSelected && formData.cities.length >= 3,
+							[isSelected, formData.cities.length]
+						);
 						return (
 							<CityChip
 								key={city}
@@ -184,6 +182,19 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 						);
 					})}
 				</div>
+
+				{/* Show More Button */}
+				{!showAllCities && (
+					<div className="mt-4 text-center">
+						<button
+							onClick={() => setShowAllCities(true)}
+							className="text-sm text-brand-400 hover:text-brand-300 transition-colors underline underline-offset-2"
+							type="button"
+						>
+							Show {ALL_CITIES.length - POPULAR_CITIES.length} more cities →
+						</button>
+					</div>
+				)}
 
 				{/* Selection Summary */}
 				<div className="mt-4 flex items-center justify-between">

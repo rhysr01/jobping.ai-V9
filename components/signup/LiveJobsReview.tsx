@@ -72,7 +72,9 @@ export function LiveJobsReview({
 				setJobPreviews([]);
 			}
 		} catch (err) {
-			console.error('Error fetching job previews:', err);
+			if (process.env.NODE_ENV === "development") {
+				console.error('Error fetching job previews:', err);
+			}
 			setError('Unable to load job previews right now');
 		} finally {
 			setIsLoading(false);

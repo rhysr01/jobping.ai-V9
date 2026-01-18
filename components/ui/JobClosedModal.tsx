@@ -43,7 +43,10 @@ export default function JobClosedModal({
 }: JobClosedModalProps) {
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-zinc-900 border-zinc-800">
+			<DialogContent
+				className="max-w-2xl max-h-[90vh] overflow-y-auto bg-zinc-900 border-zinc-800"
+				aria-describedby="job-closed-description"
+			>
 				<DialogHeader>
 					<div className="flex items-center gap-3">
 						<div className="w-12 h-12 rounded-full bg-warning/20 flex items-center justify-center">

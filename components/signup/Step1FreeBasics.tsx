@@ -73,7 +73,7 @@ export const Step1FreeBasics = React.memo(function Step1FreeBasics({
 	};
 
 
-	const isStepValid = formData.email.trim() && emailValidation.isValid;
+	const isStepValid = formData.fullName.trim() && formData.email.trim() && emailValidation.isValid && formData.fullName.trim().length >= 2;
 
 	return (
 		<motion.div
@@ -102,6 +102,38 @@ export const Step1FreeBasics = React.memo(function Step1FreeBasics({
 			<div className="space-y-6">
 				<div className="max-w-md mx-auto">
 					<SharedFormField
+						id="fullName"
+						label="What's your name?"
+						required
+						type="text"
+						value={formData.fullName}
+						onChange={(value) => {
+							setFormData({ ...formData, fullName: typeof value === 'string' ? value : '' });
+							setFieldErrors((prev) => {
+								const next = { ...prev };
+								delete next.fullName;
+								return next;
+							});
+						}}
+						onBlur={() => {
+							setTouchedFields((prev) => new Set(prev).add("fullName"));
+						}}
+						onKeyDown={(e) => {
+							if (e.key === 'Enter') {
+								e.preventDefault();
+								const emailInput = document.getElementById('email');
+								emailInput?.focus();
+							}
+						}}
+						placeholder="John Smith"
+						error={fieldErrors.fullName || (shouldShowError("fullName", formData.fullName.length > 0, formData.fullName.trim().length >= 2) ? "Name is required" : undefined)}
+						success={formData.fullName.length > 0 && formData.fullName.trim().length >= 2 ? "Looks good!" : undefined}
+						autoComplete="name"
+						inputMode="text"
+						autoFocus
+					/>
+
+					<SharedFormField
 						id="email"
 						label="Enter your email"
 						required
@@ -109,6 +141,12 @@ export const Step1FreeBasics = React.memo(function Step1FreeBasics({
 						value={formData.email}
 						onChange={handleEmailChange}
 						onBlur={handleEmailBlur}
+						onKeyDown={(e) => {
+							if (e.key === 'Enter' && isStepValid && !loading) {
+								e.preventDefault();
+								setStep(2);
+							}
+						}}
 						placeholder="you@example.com"
 						helpText="Get 5 instant job matches - no spam, no commitment"
 						error={fieldErrors.email || (shouldShowError("email", formData.email.length > 0, emailValidation.isValid) ? emailValidation.error : undefined)}

@@ -12,9 +12,7 @@ CREATE TABLE IF NOT EXISTS custom_scans (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   estimated_completion TIMESTAMPTZ,
   completed_at TIMESTAMPTZ,
-  matches_found INTEGER DEFAULT 0,
-  
-  CONSTRAINT fk_user_email FOREIGN KEY (user_email) REFERENCES users(email)
+  matches_found INTEGER DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_custom_scans_user_email ON custom_scans(user_email, created_at DESC);

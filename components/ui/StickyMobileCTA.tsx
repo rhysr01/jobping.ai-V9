@@ -24,7 +24,7 @@ export default function StickyMobileCTA() {
 	useEffect(() => {
 		// Check if mobile on mount and resize
 		const updateBreakpoint = () => {
-			setIsUnderLarge(window.innerWidth <= 1024);
+			setIsUnderLarge(window.innerWidth <= 768);
 		};
 
 		updateBreakpoint();

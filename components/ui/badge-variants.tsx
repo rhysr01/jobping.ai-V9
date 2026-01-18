@@ -10,7 +10,7 @@ const badgeVariants = cva(
 			variant: {
 				"social-proof": "px-4 py-2 bg-emerald-500/10 border-emerald-500/20 text-emerald-200",
 				"trust-signal": "px-3 py-1 bg-white/[0.03] border-white/10 text-zinc-300",
-				"premium-feature": "px-3 py-1 bg-gradient-to-r from-brand-500/20 to-purple-500/20 border-brand-500/30 text-brand-200",
+				"premium-feature": "px-3 py-1 bg-gradient-to-r from-brand-500/20 to-brand-600/20 border-brand-500/30 text-brand-200",
 				"job-match": "px-2 py-1 bg-brand-500/20 border-brand-500/30 text-brand-200 text-xs",
 				"status-success": "px-3 py-1 bg-success/10 border-success/20 text-success",
 				"status-error": "px-3 py-1 bg-error/10 border-error/20 text-error",

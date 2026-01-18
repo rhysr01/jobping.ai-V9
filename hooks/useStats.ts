@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, apiCallJson } from "../lib/api-client";
+import { useRequestDeduplication } from "./useRequestDeduplication";
 
 interface StatsData {
 	activeJobs: number;
@@ -76,95 +77,37 @@ export function useStats(): UseStatsReturn {
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<Error | null>(null);
 
+	const { executeRequest } = useRequestDeduplication({ ttl: 300000 }); // 5 minute cache
+
 	const fetchStats = useCallback(async () => {
-		// Check cache first
-		const cached = getCachedStats();
-		if (cached) {
-			setStats(cached.data);
-			setIsLoading(false);
-			setError(null);
-
-			// Fetch fresh data in background
-			apiCallJson<{
-				data?: {
-					activeJobs?: number;
-					activeJobsFormatted?: string;
-					totalUsers?: number;
-					totalUsersFormatted?: string;
-					internships?: number;
-					graduates?: number;
-					earlyCareer?: number;
-					weeklyNewJobs?: number;
-					weeklyNewJobsFormatted?: string;
-					avgTimeToApply?: { premium: number; free: number };
-				};
-				activeJobs?: number;
-				activeJobsFormatted?: string;
-				totalUsers?: number;
-				totalUsersFormatted?: string;
-				internships?: number;
-				graduates?: number;
-				earlyCareer?: number;
-				weeklyNewJobs?: number;
-				weeklyNewJobsFormatted?: string;
-				avgTimeToApply?: { premium: number; free: number };
-			}>("/api/stats")
-				.then((data) => {
-					if (data) {
-						const freshStats: StatsData = {
-							activeJobs: parseStat(
-								data.data?.activeJobs ??
-									data.data?.activeJobsFormatted ??
-									data.activeJobs ??
-									data.activeJobsFormatted,
-								12748,
-							),
-							totalUsers: parseStat(
-								data.data?.totalUsers ??
-									data.data?.totalUsersFormatted ??
-									data.totalUsers ??
-									data.totalUsersFormatted,
-								3400,
-							),
-							internships: parseStat(
-								data.data?.internships ?? data.internships,
-								4997,
-							),
-							graduates: parseStat(
-								data.data?.graduates ?? data.graduates,
-								3953,
-							),
-							earlyCareer: parseStat(
-								data.data?.earlyCareer ?? data.earlyCareer,
-								0,
-							),
-							weeklyNewJobs: parseStat(
-								data.data?.weeklyNewJobs ??
-									data.data?.weeklyNewJobsFormatted ??
-									data.weeklyNewJobs ??
-									data.weeklyNewJobsFormatted,
-								287,
-							),
-							avgTimeToApply: data.data?.avgTimeToApply ??
-								data.avgTimeToApply ?? { premium: 12, free: 72 },
-						};
-						setStats(freshStats);
-						setCachedStats(freshStats);
-					}
-				})
-				.catch(() => {
-					// Ignore background fetch errors
-				});
-			return;
-		}
-
-		// No cache, fetch fresh
 		setIsLoading(true);
 		setError(null);
 
 		try {
-			const data = await apiCallJson<{
-				data?: {
+			// Check cache first
+			const cached = getCachedStats();
+			if (cached) {
+				setStats(cached.data);
+				setIsLoading(false);
+				setError(null);
+				return;
+			}
+
+			// Fetch fresh data with deduplication
+			const data = await executeRequest("stats", () =>
+				apiCallJson<{
+					data?: {
+						activeJobs?: number;
+						activeJobsFormatted?: string;
+						totalUsers?: number;
+						totalUsersFormatted?: string;
+						internships?: number;
+						graduates?: number;
+						earlyCareer?: number;
+						weeklyNewJobs?: number;
+						weeklyNewJobsFormatted?: string;
+						avgTimeToApply?: { premium: number; free: number };
+					};
 					activeJobs?: number;
 					activeJobsFormatted?: string;
 					totalUsers?: number;
@@ -175,18 +118,9 @@ export function useStats(): UseStatsReturn {
 					weeklyNewJobs?: number;
 					weeklyNewJobsFormatted?: string;
 					avgTimeToApply?: { premium: number; free: number };
-				};
-				activeJobs?: number;
-				activeJobsFormatted?: string;
-				totalUsers?: number;
-				totalUsersFormatted?: string;
-				internships?: number;
-				graduates?: number;
-				earlyCareer?: number;
-				weeklyNewJobs?: number;
-				weeklyNewJobsFormatted?: string;
-				avgTimeToApply?: { premium: number; free: number };
-			}>("/api/stats");
+				}>("/api/stats"),
+			);
+
 			const freshStats: StatsData = {
 				activeJobs: parseStat(
 					data.data?.activeJobs ??
@@ -243,7 +177,7 @@ export function useStats(): UseStatsReturn {
 		} finally {
 			setIsLoading(false);
 		}
-	}, []); // Empty deps: fetchStats doesn't depend on any props or state
+	}, [executeRequest]);
 
 	useEffect(() => {
 		fetchStats();

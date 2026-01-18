@@ -33,7 +33,7 @@ export default function CookieBanner() {
 		if (typeof window === "undefined") return;
 
 		const checkMobileCTA = () => {
-			if (window.innerWidth <= 1024) {
+			if (window.innerWidth <= 768) {
 				// Show mobile CTA after scrolling past hero section
 				const scrollY = window.scrollY;
 				const windowHeight = window.innerHeight;

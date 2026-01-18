@@ -21,7 +21,7 @@ export default function Header() {
 
 	// Initialize mobile state immediately with SSR safety
 	useEffect(() => {
-		const checkMobile = () => setIsMobile(window.innerWidth <= 1024);
+		const checkMobile = () => setIsMobile(window.innerWidth <= 768);
 		checkMobile();
 
 		// Also listen for resize events
@@ -33,7 +33,7 @@ export default function Header() {
 	useEffect(() => {
 		// Mobile detection
 		const updateMobileState = () => {
-			setIsMobile(window.innerWidth <= 1024);
+			setIsMobile(window.innerWidth <= 768);
 		};
 
 		updateMobileState();
@@ -169,7 +169,7 @@ export default function Header() {
 					<div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
 				</div>
 				
-				<div className="container-page relative" style={{ overflow: "visible" }}>
+				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative" style={{ overflow: "visible" }}>
 					<div className="h-24 md:h-28 flex items-center justify-between py-2 overflow-visible" style={{ overflow: "visible" }}>
 						{/* Logo with graduation cap */}
 						<Link
@@ -216,7 +216,7 @@ export default function Header() {
 									{activeSection === link.href ? (
 										<motion.div
 											layoutId="activeNav"
-											className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full"
+											className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-brand-400 to-brand-500 rounded-full"
 											initial={false}
 											transition={{
 												type: "spring",
@@ -225,7 +225,7 @@ export default function Header() {
 											}}
 										/>
 									) : (
-										<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-emerald-400 to-emerald-500 group-hover:w-full transition-all duration-300 ease-out" />
+										<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-400 to-brand-500 group-hover:w-full transition-all duration-300 ease-out" />
 									)}
 									
 									{/* Subtle glow on hover */}
@@ -262,19 +262,15 @@ export default function Header() {
 								className="font-display group relative px-6 py-3 rounded-full font-semibold text-white overflow-hidden"
 							>
 								{/* Black shiny background */}
-								<div className="absolute inset-0 bg-black group-hover:bg-gradient-to-r group-hover:from-black group-hover:via-gray-900 group-hover:to-black transition-all duration-300" />
-
-								{/* Shine effect on hover */}
-								<div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-									<div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000" />
-								</div>
+								<div className="absolute inset-0 bg-black group-hover:bg-brand-500/10 transition-all duration-300" />
 
 								{/* Shadow that grows on hover */}
 								<div className="absolute inset-0 shadow-lg shadow-black/50 group-hover:shadow-xl group-hover:shadow-black/80 rounded-full transition-all" />
 
 								{/* Text */}
 								<span className="relative z-10 group-hover:-translate-y-0.5 inline-flex items-center gap-2 transition-transform">
-									{CTA_GET_MY_5_FREE_MATCHES}
+									<span className="hidden sm:inline">{CTA_GET_MY_5_FREE_MATCHES}</span>
+									<span className="sm:hidden">Get 5 Free Matches</span>
 									<BrandIcons.ArrowRight className="h-4 w-4" />
 								</span>
 
@@ -287,9 +283,7 @@ export default function Header() {
 						<button
 							type="button"
 							onClick={toggleMobileMenu}
-							className={`p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 text-content-secondary hover:text-white min-h-[44px] min-w-[44px] flex items-center justify-center ${
-								isMobile ? 'block' : 'hidden'
-							}`}
+							className="md:hidden p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 text-content-secondary hover:text-white min-h-[44px] min-w-[44px] flex items-center justify-center"
 							aria-label="Toggle menu"
 							aria-expanded={mobileMenuOpen}
 						>
@@ -341,7 +335,7 @@ export default function Header() {
 										<BrandIcons.X className="h-6 w-6" />
 									</button>
 								</div>
-								<nav className="flex flex-col gap-3" role="navigation" aria-label="Mobile navigation">
+								<nav className="flex flex-col gap-3" aria-label="Mobile navigation">
 									{navLinks.map((link) => (
 										<Link
 											key={link.href}
@@ -371,7 +365,7 @@ export default function Header() {
 										className="mt-4 w-full"
 									>
 										<span className="flex items-center justify-center gap-2">
-											{CTA_GET_MY_5_FREE_MATCHES}
+											Get 5 Free Matches
 											<BrandIcons.ArrowRight className="h-5 w-5" />
 										</span>
 									</CustomButton>

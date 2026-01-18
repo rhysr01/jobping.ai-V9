@@ -1,4 +1,16 @@
-export const CITIES = [
+// Popular cities shown initially (choice overload fix)
+export const POPULAR_CITIES = [
+	"London",
+	"Berlin",
+	"Amsterdam",
+	"Paris",
+	"Dublin",
+	"Barcelona",
+	"Madrid",
+];
+
+// All available cities (shown when user clicks "Show more")
+export const ALL_CITIES = [
 	"Dublin",
 	"London",
 	"Paris",
@@ -21,6 +33,9 @@ export const CITIES = [
 	"Prague",
 	"Warsaw",
 ];
+
+// Backwards compatibility - default to popular cities
+export const CITIES = POPULAR_CITIES;
 
 export const LANGUAGES = [
 	// Most common EU languages

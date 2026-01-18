@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
 	FormFieldError,
@@ -11,6 +11,18 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
+// Simple debounce utility (like Stripe's UX)
+function debounce<T extends (...args: any[]) => void>(
+	func: T,
+	wait: number
+): (...args: Parameters<T>) => void {
+	let timeout: NodeJS.Timeout;
+	return (...args: Parameters<T>) => {
+		clearTimeout(timeout);
+		timeout = setTimeout(() => func(...args), wait);
+	};
+}
+
 interface SharedFormFieldProps {
 	id: string;
 	label: string;
@@ -20,6 +32,7 @@ interface SharedFormFieldProps {
 	value: string | boolean;
 	onChange: (value: string | boolean) => void;
 	onBlur?: () => void;
+	onKeyDown?: (e: React.KeyboardEvent) => void;
 	placeholder?: string;
 	error?: string;
 	success?: string;
@@ -27,6 +40,7 @@ interface SharedFormFieldProps {
 	autoComplete?: string;
 	inputMode?: "text" | "email" | "tel" | "url" | "numeric" | "decimal";
 	disabled?: boolean;
+	autoFocus?: boolean;
 	className?: string;
 	options?: { value: string; label: string }[]; // For radio-group
 }
@@ -40,6 +54,7 @@ export const SharedFormField = React.memo(function SharedFormField({
 	value,
 	onChange,
 	onBlur,
+	onKeyDown,
 	placeholder,
 	error,
 	success,
@@ -47,9 +62,30 @@ export const SharedFormField = React.memo(function SharedFormField({
 	autoComplete,
 	inputMode,
 	disabled = false,
+	autoFocus = false,
 	className = "",
 	options = [],
 }: SharedFormFieldProps) {
+	// Debounced validation for smoother UX (like Stripe/Linear)
+	const debouncedValidation = useMemo(
+		() =>
+			debounce(() => {
+				if (onBlur) {
+					onBlur();
+				}
+			}, 300),
+		[onBlur]
+	);
+
+	const handleInputChange = useCallback((newValue: string | boolean) => {
+		onChange(newValue);
+
+		// Trigger debounced validation for email fields
+		if (type === "email" && typeof newValue === "string" && newValue.length > 3) {
+			debouncedValidation();
+		}
+	}, [onChange, type, debouncedValidation]);
+
 	return (
 		<div className={className}>
 			<label
@@ -72,9 +108,11 @@ export const SharedFormField = React.memo(function SharedFormField({
 				<Textarea
 					id={id}
 					value={value as string}
-					onChange={(e) => onChange(e.target.value)}
+					onChange={(e) => handleInputChange(e.target.value)}
 					onBlur={onBlur}
+					onKeyDown={onKeyDown}
 					placeholder={placeholder}
+					autoFocus={autoFocus}
 					autoComplete={autoComplete}
 					disabled={disabled}
 					className={`w-full px-4 sm:px-6 py-4 sm:py-5 min-h-[120px] bg-black/50 border-2 rounded-lg text-white placeholder-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/30 focus:ring-offset-2 focus:ring-offset-black transition-all text-base sm:text-lg font-medium backdrop-blur-sm touch-manipulation resize-none ${
@@ -103,7 +141,7 @@ export const SharedFormField = React.memo(function SharedFormField({
 					<Switch
 						id={id}
 						checked={value as boolean}
-						onCheckedChange={(checked) => onChange(checked)}
+						onCheckedChange={(checked) => handleInputChange(checked)}
 						disabled={disabled}
 						className={className}
 					/>
@@ -114,7 +152,7 @@ export const SharedFormField = React.memo(function SharedFormField({
 					<Checkbox
 						id={id}
 						checked={value as boolean}
-						onCheckedChange={(checked) => onChange(checked)}
+						onCheckedChange={(checked) => handleInputChange(checked)}
 						disabled={disabled}
 						className={className}
 					/>
@@ -123,7 +161,7 @@ export const SharedFormField = React.memo(function SharedFormField({
 			) : variant === "radio-group" && options.length > 0 ? (
 				<RadioGroup
 					value={value as string}
-					onValueChange={(newValue) => onChange(newValue)}
+					onValueChange={(newValue) => handleInputChange(newValue)}
 					disabled={disabled}
 					className={`space-y-3 ${className}`}
 				>
@@ -144,9 +182,11 @@ export const SharedFormField = React.memo(function SharedFormField({
 					id={id}
 					type={type}
 					value={value as string}
-					onChange={(e) => onChange(e.target.value)}
+					onChange={(e) => handleInputChange(e.target.value)}
 					onBlur={onBlur}
+					onKeyDown={onKeyDown}
 					placeholder={placeholder}
+					autoFocus={autoFocus}
 					autoComplete={autoComplete}
 					inputMode={inputMode}
 					disabled={disabled}

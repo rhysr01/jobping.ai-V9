@@ -17,7 +17,7 @@ export default function ScrollCTA() {
 
 	useEffect(() => {
 		// Don't show on mobile - let sticky mobile CTA handle it
-		if (typeof window !== "undefined" && window.innerWidth <= 1024) {
+		if (typeof window !== "undefined" && window.innerWidth <= 768) {
 			return;
 		}
 

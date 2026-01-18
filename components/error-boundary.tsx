@@ -1,7 +1,7 @@
 "use client";
 
-import { Component, type ReactNode } from "react";
 import * as Sentry from "@sentry/nextjs";
+import { Component, type ReactNode } from "react";
 import CustomButton from "./ui/CustomButton";
 
 interface Props {
@@ -26,8 +26,10 @@ export default class ErrorBoundary extends Component<Props, State> {
 	}
 
 	componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-		// Log to console for development
-		console.error("Error caught by boundary:", error, errorInfo);
+		// Log to console for development only
+		if (process.env.NODE_ENV === "development") {
+			console.error("Error caught by boundary:", error, errorInfo);
+		}
 
 		// Send to Sentry with full context
 		Sentry.captureException(error, {

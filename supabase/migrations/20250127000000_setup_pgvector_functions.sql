@@ -10,19 +10,12 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                    WHERE table_name = 'jobs' AND column_name = 'embedding') THEN
         ALTER TABLE public.jobs ADD COLUMN embedding vector(1536);
-        CREATE INDEX CONCURRENTLY IF NOT EXISTS jobs_embedding_idx ON public.jobs USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+        CREATE INDEX IF NOT EXISTS jobs_embedding_idx ON public.jobs USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
     END IF;
 END $$;
 
--- Add preference_embedding column to users table if it doesn't exist
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
-                   WHERE table_name = 'users' AND column_name = 'preference_embedding') THEN
-        ALTER TABLE public.users ADD COLUMN preference_embedding vector(1536);
-        CREATE INDEX CONCURRENTLY IF NOT EXISTS users_preference_embedding_idx ON public.users USING ivfflat (preference_embedding vector_cosine_ops) WITH (lists = 100);
-    END IF;
-END $$;
+-- Note: User preference embeddings are stored in user_job_preferences table
+-- No need to add preference_embedding to users view
 
 -- Fix function search_path security vulnerability
 -- Adds SET search_path = '' to prevent SQL injection via search_path manipulation

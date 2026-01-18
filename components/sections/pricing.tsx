@@ -70,7 +70,7 @@ function Pricing() {
 				<h2 className="font-display text-display-lg font-black text-white mt-4 mb-4 sm:mb-6 leading-tight">
 					Stop Scrolling LinkedIn.
 					<br />
-					<span className="bg-gradient-to-r from-brand-300 via-white to-brand-300 bg-clip-text text-transparent">
+					<span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">
 						Let AI Find Your Jobs.
 					</span>
 				</h2>
@@ -101,39 +101,39 @@ function Pricing() {
 								{tier.popular && (
 									<div className="absolute -inset-1 bg-gradient-to-r from-brand-500/20 via-brand-500/30 to-accent-500/20 rounded-2xl blur-2xl opacity-75" />
 								)}
-						<TiltCard>
-							<div
-								className={`relative flex flex-col h-full rounded-2xl border card-mobile-spacing transition-all ${
-									tier.popular
-										? "border-brand-500/30 bg-gradient-to-b from-zinc-900 to-black shadow-[0_20px_50px_rgba(20,184,166,0.15)]"
-										: "border-border-subtle bg-white/[0.02] backdrop-blur-xl hover:border-white/20"
-								}`}
-							>
-						{tier.popular && (
-							<>
-								{/* Popular badge with emerald gradient */}
-								<div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-									<div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-lg shadow-emerald-500/30">
-										<span className="font-display text-xs font-bold text-white uppercase tracking-wider">
-											🔥 Most Popular
-										</span>
-									</div>
-								</div>
-							</>
-						)}
+								<TiltCard>
+									<div
+										className={`relative flex flex-col h-full rounded-2xl border card-mobile-spacing transition-all ${
+											tier.popular
+												? "border-brand-500/30 bg-gradient-to-b from-zinc-900 to-black shadow-[0_20px_50px_rgba(20,184,166,0.15)]"
+												: "border-border-subtle bg-white/[0.02] backdrop-blur-xl hover:border-white/20"
+										}`}
+									>
+										{tier.popular && (
+											<>
+												{/* Popular badge with emerald gradient */}
+												<div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+													<div className="px-4 py-1.5 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 shadow-lg shadow-brand-500/30">
+														<span className="font-display text-xs font-bold text-white uppercase tracking-wider">
+															🔥 Most Popular
+														</span>
+													</div>
+												</div>
+											</>
+										)}
 
-						<div className="relative z-10">
-							{/* Icon */}
-							<div className={`inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-lg mb-4 sm:mb-6 ${
-								tier.popular
-									? "bg-gradient-to-br from-brand-500/20 to-brand-600/20 border border-brand-500/30 shadow-lg shadow-brand-500/20"
-									: "bg-white/5 border border-white/10"
-							}`}>
-								<Icon size={20} className={`sm:w-6 sm:h-6 ${tier.popular ? "text-brand-400" : "text-zinc-400"}`} />
-							</div>
+										<div className="relative z-10 p-6 sm:p-8">
+											{/* Icon */}
+											<div className={`inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-lg mb-4 sm:mb-6 ${
+												tier.popular
+													? "bg-gradient-to-br from-brand-500/20 to-brand-600/20 border border-brand-500/30 shadow-lg shadow-brand-500/20"
+													: "bg-white/5 border border-white/10"
+											}`}>
+												<Icon size={20} className={`sm:w-6 sm:h-6 ${tier.popular ? "text-brand-400" : "text-zinc-400"}`} />
+											</div>
 
-							<div className="mb-4 sm:mb-6">
-								<h3 className="font-display text-display-sm font-black text-white mb-1">
+											<div className="mb-4 sm:mb-6">
+												<h3 className="font-display text-display-sm font-black text-white mb-1">
 													{tier.name}
 												</h3>
 												<p className={`text-sm font-medium mb-3 ${
@@ -186,28 +186,28 @@ function Pricing() {
 												))}
 											</ul>
 
-							{/* CTA Button */}
-							<CustomButton
-								href={tier.href}
-								onClick={() =>
-									trackEvent("cta_clicked", {
-										type: tier.popular ? "premium" : "free",
-										location: "pricing",
-									})
-								}
-								variant={tier.popular ? "primary" : "secondary"}
-								size="lg"
-								fullWidth
-								className="relative group overflow-hidden"
-							>
-								{tier.popular && (
-									<div className="absolute inset-0 bg-gradient-to-r from-white/20 via-white/30 to-white/20 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none" />
-								)}
-								<span className="relative z-10 flex items-center justify-center gap-2">
-									{tier.cta}
-									<span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
-								</span>
-							</CustomButton>
+											{/* CTA Button */}
+											<CustomButton
+												href={tier.href}
+												onClick={() =>
+													trackEvent("cta_clicked", {
+														type: tier.popular ? "premium" : "free",
+														location: "pricing",
+													})
+												}
+												variant={tier.popular ? "primary" : "secondary"}
+												size="lg"
+												fullWidth
+												className="relative group overflow-hidden"
+											>
+												{tier.popular && (
+													<div className="absolute inset-0 bg-gradient-to-r from-white/20 via-white/30 to-white/20 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none" />
+												)}
+												<span className="relative z-10 flex items-center justify-center gap-2">
+													{tier.cta}
+													<span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
+												</span>
+											</CustomButton>
 
 											{/* Guarantee badge for premium */}
 											{tier.popular && (

@@ -55,10 +55,7 @@ export function EUJobStats() {
 					throw new Error("Invalid response format");
 				}
 			} catch (error) {
-				// Silently handle API failures during development - use fallback data
-				if (process.env.NODE_ENV === "development") {
-					console.debug("EU job stats API unavailable, using fallback data");
-				}
+				// Silently handle API failures - use fallback data
 				setHasError(false); // Don't show error state, use fallback data
 				setStats({
 					internships: 2525,
