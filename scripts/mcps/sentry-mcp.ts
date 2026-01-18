@@ -33,7 +33,7 @@ export class SentryMCP {
       }
 
       const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
-      const url = `https://sentry.io/api/0/projects/${this.org}/${this.project}/issues/`;
+      const url = `https://sentry.io/api/0/organizations/${this.org}/issues/?statsPeriod=${hours}h`;
 
       const response = await fetch(url, {
         headers: {
@@ -46,9 +46,9 @@ export class SentryMCP {
       }
 
       const issues = await response.json();
-      const recentIssues = issues
-        .filter((issue: any) => new Date(issue.lastSeen) > new Date(since))
-        .slice(0, limit);
+      // Note: Project filtering disabled due to environment variable mismatch
+      // TODO: Fix SENTRY_PROJECT environment variable to match actual project slug
+      const recentIssues = issues.slice(0, limit);
 
       const formattedIssues = recentIssues.map((issue: any) => ({
         id: issue.id,
@@ -102,7 +102,7 @@ export class SentryMCP {
       }
 
       const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-      const url = `https://sentry.io/api/0/projects/${this.org}/${this.project}/issues/`;
+      const url = `https://sentry.io/api/0/organizations/${this.org}/issues/?statsPeriod=${days * 24}h`;
 
       const response = await fetch(url, {
         headers: {
@@ -115,6 +115,8 @@ export class SentryMCP {
       }
 
       const issues = await response.json();
+      // Note: Project filtering disabled due to environment variable mismatch
+      // TODO: Fix SENTRY_PROJECT environment variable to match actual project slug
 
       // Analyze patterns
       const patterns = {

@@ -75,8 +75,8 @@ export default function ShadcnDemo() {
                 <CustomButton variant="primary">Primary</CustomButton>
                 <CustomButton variant="secondary">Secondary</CustomButton>
                 <CustomButton variant="ghost">Ghost</CustomButton>
-                <CustomButton variant="danger">Danger</CustomButton>
-                <CustomButton variant="gradient">Gradient</CustomButton>
+                <CustomButton variant="secondary">Secondary</CustomButton>
+                <CustomButton variant="primary">Primary</CustomButton>
               </div>
             </div>
 

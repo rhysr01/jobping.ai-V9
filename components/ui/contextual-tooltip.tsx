@@ -1,5 +1,11 @@
 import { BrandIcons } from "./BrandIcons";
 import { cn } from "@/lib/utils";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ContextualTooltipProps {
 	content: string;
@@ -23,7 +29,7 @@ export function ContextualTooltip({
 }: ContextualTooltipProps) {
 	const variants = {
 		default: "bg-zinc-900/95 border-zinc-700 text-zinc-100",
-		info: "bg-blue-900/95 border-blue-700 text-blue-100",
+		info: "bg-blue-900/95 border-blue-700 text-info",
 		warning: "bg-amber-900/95 border-amber-700 text-amber-100",
 		success: "bg-emerald-900/95 border-emerald-700 text-emerald-100"
 	};
@@ -38,30 +44,31 @@ export function ContextualTooltip({
 	const IconComponent = showIcon ? iconVariants[variant] : null;
 
 	return (
-		<div className="relative inline-block group">
-			{children}
-			<div
-				className={cn(
-					"absolute z-50 px-3 py-2 text-sm shadow-lg backdrop-blur-sm rounded-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none",
-					variants[variant],
-					side === "top" && "bottom-full left-1/2 transform -translate-x-1/2 mb-2",
-					side === "bottom" && "top-full left-1/2 transform -translate-x-1/2 mt-2",
-					side === "left" && "right-full top-1/2 transform -translate-y-1/2 mr-2",
-					side === "right" && "left-full top-1/2 transform -translate-y-1/2 ml-2",
-					className
-				)}
-				style={{ maxWidth }}
-			>
-				<div className="flex items-start gap-2">
-					{IconComponent && (
-						<IconComponent className="w-4 h-4 mt-0.5 flex-shrink-0" />
+		<TooltipProvider>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					{children}
+				</TooltipTrigger>
+				<TooltipContent
+					side={side}
+					className={cn(
+						"max-w-sm px-3 py-2 text-sm shadow-lg backdrop-blur-sm rounded-lg border",
+						variants[variant],
+						className
 					)}
-					<div className="flex-1">
-						{content}
+					style={{ maxWidth }}
+				>
+					<div className="flex items-start gap-2">
+						{IconComponent && (
+							<IconComponent className="w-4 h-4 mt-0.5 flex-shrink-0" />
+						)}
+						<div className="flex-1">
+							{content}
+						</div>
 					</div>
-				</div>
-			</div>
-		</div>
+				</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
 	);
 }
 

@@ -1,10 +1,15 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BrandIcons } from "./BrandIcons";
-import { useFocusTrap } from "../../hooks/useFocusTrap";
+import {
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetHeader,
+	SheetTitle,
+} from "@/components/ui/sheet";
 import {
 	CTA_GET_MY_5_FREE_MATCHES,
 	TRUST_TEXT_INSTANT_SETUP,
@@ -15,7 +20,6 @@ export default function ExitIntentPopup() {
 	const [hasShown, setHasShown] = useState(false);
 	const [timeOnPage, setTimeOnPage] = useState(0);
 	const [scrollDepth, setScrollDepth] = useState(0);
-	const containerRef = useFocusTrap(showPopup);
 
 	useEffect(() => {
 		// Check if already shown in this session
@@ -77,99 +81,51 @@ export default function ExitIntentPopup() {
 		return () => document.removeEventListener("mouseleave", handleMouseLeave);
 	}, [hasShown, timeOnPage, scrollDepth]);
 
-	if (!showPopup) return null;
-
 	return (
-		<AnimatePresence mode="wait">
-			{showPopup && (
-				<motion.div
-					key="exit-popup"
-					initial={{ opacity: 0 }}
-					animate={{ opacity: 1 }}
-					exit={{ opacity: 0 }}
-					className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm"
-					onClick={() => setShowPopup(false)}
-					role="dialog"
-					aria-modal="true"
-					aria-labelledby="exit-popup-title"
-					aria-describedby="exit-popup-description"
-					onKeyDown={(e) => {
-						if (e.key === "Escape") {
-							setShowPopup(false);
-						}
-					}}
-				>
-					<motion.div
-						ref={containerRef as React.RefObject<HTMLDivElement>}
-						initial={{ scale: 0.9, opacity: 0 }}
-						animate={{ scale: 1, opacity: 1 }}
-						exit={{ scale: 0.9, opacity: 0 }}
-						onClick={(e) => e.stopPropagation()}
-						className="relative bg-white/[0.06] border border-white/10 backdrop-blur-xl rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 sm:mx-0 shadow-feature elevation-3"
-					>
-						<button
-							type="button"
-							onClick={() => setShowPopup(false)}
-							className="absolute top-3 right-3 sm:top-4 sm:right-4 text-content-secondary hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center p-2"
-							aria-label="Close popup"
-						>
-							<svg
-								className="w-5 h-5 sm:w-6 sm:h-6"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-								aria-hidden="true"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M6 18L18 6M6 6l12 12"
-								/>
-							</svg>
-						</button>
+		<Sheet open={showPopup} onOpenChange={setShowPopup}>
+			<SheetContent
+				side="bottom"
+				className="bg-zinc-900/95 border-zinc-800 backdrop-blur-xl"
+			>
+				<SheetHeader className="text-center">
+					<div className="flex justify-center mb-4">
+						<BrandIcons.Zap className="w-6 h-6 text-emerald-400" />
+					</div>
+					<SheetTitle className="text-xl sm:text-2xl font-black text-white mb-3">
+						{CTA_GET_MY_5_FREE_MATCHES}
+					</SheetTitle>
+					<SheetDescription className="text-sm sm:text-base text-zinc-300 mb-5 max-w-md mx-auto">
+						See <strong className="text-white">5 hand-picked jobs</strong>{" "}
+						matched to your city, visa status, and career path. Instant
+						results - no credit card needed.
+					</SheetDescription>
+				</SheetHeader>
 
-						<div className="text-center">
-							<BrandIcons.Zap
-								className="w-5 h-5 sm:w-[20.8px] sm:h-[20.8px] mx-auto mb-3 sm:mb-4 text-emerald-400"
-								aria-hidden="true"
-							/>
-							<h3
-								id="exit-popup-title"
-								className="text-xl sm:text-2xl font-black text-white mb-2 sm:mb-3 leading-tight px-2 sm:px-0"
-							>
-								{CTA_GET_MY_5_FREE_MATCHES}
-							</h3>
-							<p
-								id="exit-popup-description"
-								className="text-sm sm:text-base text-content-heading mb-4 sm:mb-5 leading-relaxed px-1 sm:px-0"
-							>
-								See <strong className="text-white">5 hand-picked jobs</strong>{" "}
-								matched to your city, visa status, and career path. Instant
-								results - no credit card needed.
-							</p>
-							<div className="mb-5 sm:mb-6 inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 sm:px-3 py-1 text-xs font-semibold text-emerald-200">
-								<BrandIcons.Zap className="h-3 w-3 shrink-0" />
-								<span className="whitespace-nowrap">{TRUST_TEXT_INSTANT_SETUP.replace("⚡ ", "")}</span>
-							</div>
-							<Link
-								href="/signup/free"
-								onClick={() => setShowPopup(false)}
-								className="btn-primary w-full text-sm sm:text-base py-3 sm:py-3.5 min-h-[48px]"
-							>
-								{CTA_GET_MY_5_FREE_MATCHES} →
-							</Link>
-							<button
-								type="button"
-								onClick={() => setShowPopup(false)}
-								className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-500 opacity-50 hover:opacity-75 min-h-[48px] min-w-[48px] px-4 py-2"
-							>
-								No thanks
-							</button>
-						</div>
-					</motion.div>
-				</motion.div>
-			)}
-		</AnimatePresence>
+				<div className="flex flex-col items-center space-y-6">
+					<div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
+						<BrandIcons.Zap className="h-3 w-3 shrink-0" />
+						<span className="whitespace-nowrap">
+							{TRUST_TEXT_INSTANT_SETUP.replace("⚡ ", "")}
+						</span>
+					</div>
+
+					<Link
+						href="/signup/free"
+						onClick={() => setShowPopup(false)}
+						className="btn-primary w-full max-w-sm text-sm sm:text-base py-3 sm:py-3.5 min-h-[48px] text-center"
+					>
+						{CTA_GET_MY_5_FREE_MATCHES} →
+					</Link>
+
+					<button
+						type="button"
+						onClick={() => setShowPopup(false)}
+						className="text-xs sm:text-sm text-zinc-500 opacity-50 hover:opacity-75 min-h-[48px] px-4 py-2"
+					>
+						No thanks
+					</button>
+				</div>
+			</SheetContent>
+		</Sheet>
 	);
 }

@@ -96,7 +96,7 @@ export const Step1Basics = React.memo(function Step1Basics({
 					className="block text-base sm:text-lg font-bold text-white mb-2 sm:mb-3 flex items-center gap-2"
 				>
 					<span>Full Name</span>
-					<span className="text-red-400 text-sm" aria-label="required">*</span>
+					<span className="text-error text-sm" aria-label="required">*</span>
 				</label>
 				<input
 					ref={formRefs.fullName}
@@ -162,7 +162,7 @@ export const Step1Basics = React.memo(function Step1Basics({
 					className="block text-base sm:text-lg font-bold text-white mb-2 sm:mb-3 flex items-center gap-2"
 				>
 					<span>Email</span>
-					<span className="text-red-400 text-sm" aria-label="required">*</span>
+					<span className="text-error text-sm" aria-label="required">*</span>
 				</label>
 				<p id="email-help" className="text-sm font-medium text-zinc-300 mb-3 sm:mb-4 leading-relaxed">
 					Get {SIGNUP_INITIAL_ROLES} jobs in your welcome email, then curated
@@ -235,7 +235,7 @@ export const Step1Basics = React.memo(function Step1Basics({
 					className="block text-base font-bold text-white mb-3 flex items-center gap-2"
 				>
 					<span>Preferred Cities</span>
-					<span className="text-red-400 text-sm" aria-label="required">*</span>
+					<span className="text-error text-sm" aria-label="required">*</span>
 					<span className="text-zinc-400 font-normal text-sm">(Select up to 3)</span>
 				</label>
 				<p id="cities-help" className="text-sm text-zinc-400 mb-2 leading-relaxed">
@@ -433,7 +433,7 @@ export const Step1Basics = React.memo(function Step1Basics({
 					className="block text-base font-bold text-white mb-3 flex items-center gap-2"
 				>
 					<span>Languages (Professional Level)</span>
-					<span className="text-red-400 text-sm" aria-label="required">*</span>
+					<span className="text-error text-sm" aria-label="required">*</span>
 				</label>
 				<p id="languages-help" className="text-sm text-zinc-400 mb-2 leading-relaxed">
 					Select languages you can use professionally

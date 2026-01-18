@@ -19,7 +19,7 @@ export default function NotFound() {
 					</p>
 
 					<div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-						<CustomButton href="/" variant="gradient" size="lg">
+						<CustomButton href="/" variant="primary" size="lg">
 							Go Home
 						</CustomButton>
 						<CustomButton

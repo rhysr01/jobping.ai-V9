@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { memo } from "react";
-import { Zap, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { BrandIcons } from "../ui/BrandIcons";
 import ErrorBoundary from "../error-boundary";
 import SocialProofTicker from "../ui/SocialProofTicker";
@@ -23,7 +23,7 @@ const TIERS = [
 		cta: "Get 5 Free Matches",
 		href: "/signup/free",
 		popular: false,
-		icon: Zap,
+		icon: BrandIcons.Zap,
 	},
 	{
 		name: Copy.PREMIUM_PLAN_TITLE,
@@ -63,7 +63,7 @@ function Pricing() {
 				viewport={{ once: true }}
 				className="mx-auto max-w-3xl text-center mb-10 sm:mb-12 px-4 sm:px-6"
 			>
-				<span className="font-display inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 sm:px-4 py-1.5 text-xs font-bold tracking-wide text-emerald-300 mb-4">
+				<span className="font-display inline-flex items-center gap-3 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 sm:px-4 py-1.5 text-xs font-bold tracking-wide text-emerald-300 mb-4">
 					<BrandIcons.TrendingUp className="w-3.5 h-3.5" />
 					Join 1,000+ Students Landing EU Roles
 				</span>
@@ -83,8 +83,8 @@ function Pricing() {
 
 			<div className={`${
 				isMobile
-					? "flex flex-col gap-4" // Simpler stacking on mobile
-					: "grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8"
+					? "flex flex-col gap-6" // Simpler stacking on mobile
+					: "grid grid-cols-1 md:grid-cols-2 gap-8"
 			} max-w-5xl mx-auto px-4 sm:px-6 mb-12 sm:mb-16`}>
 					{TIERS.map((tier, index) => {
 						const Icon = tier.icon;
@@ -99,11 +99,11 @@ function Pricing() {
 							>
 								{/* Premium Card Glow Effect */}
 								{tier.popular && (
-									<div className="absolute -inset-1 bg-gradient-to-r from-brand-500/20 via-brand-500/30 to-accent-500/20 rounded-3xl blur-2xl opacity-75" />
+									<div className="absolute -inset-1 bg-gradient-to-r from-brand-500/20 via-brand-500/30 to-accent-500/20 rounded-2xl blur-2xl opacity-75" />
 								)}
 						<TiltCard>
 							<div
-								className={`relative flex flex-col h-full rounded-3xl border card-mobile-spacing transition-all ${
+								className={`relative flex flex-col h-full rounded-2xl border card-mobile-spacing transition-all ${
 									tier.popular
 										? "border-brand-500/30 bg-gradient-to-b from-zinc-900 to-black shadow-[0_20px_50px_rgba(20,184,166,0.15)]"
 										: "border-border-subtle bg-white/[0.02] backdrop-blur-xl hover:border-white/20"
@@ -124,7 +124,7 @@ function Pricing() {
 
 						<div className="relative z-10">
 							{/* Icon */}
-							<div className={`inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl mb-4 sm:mb-6 ${
+							<div className={`inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-lg mb-4 sm:mb-6 ${
 								tier.popular
 									? "bg-gradient-to-br from-brand-500/20 to-brand-600/20 border border-brand-500/30 shadow-lg shadow-brand-500/20"
 									: "bg-white/5 border border-white/10"
@@ -195,7 +195,7 @@ function Pricing() {
 										location: "pricing",
 									})
 								}
-								variant={tier.popular ? "gradient" : "secondary"}
+								variant={tier.popular ? "primary" : "secondary"}
 								size="lg"
 								fullWidth
 								className="relative group overflow-hidden"

@@ -1,8 +1,11 @@
+/* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind CSS directives */
 @tailwind base;
+/* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind CSS directives */
 @tailwind components;
+/* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind CSS directives */
 @tailwind utilities;
 
-@theme inline {
+/* @theme inline { */
 	/* Updated color values with Charcoal + Teal + Gold theme */
 	--color-background: oklch(0.07 0 0); /* Charcoal #0F172A */
 	--color-foreground: oklch(0.99 0 0); /* White */
@@ -34,26 +37,141 @@
 	--secondary: 43 96% 56%; /* Maps to gold accent-500 (#F59E0B) */
 	--secondary-foreground: 0 0% 98%;
 
-	/* Updated JobPing brand colors - Charcoal + Teal + Gold */
-	--jobping-primary: 215 28% 17%; /* Charcoal #0F172A */
-	--jobping-brand-500: 173 80% 40%; /* Teal #14B8A6 */
-	--jobping-brand-600: 178 71% 39%; /* Darker teal */
-	--jobping-accent-500: 43 96% 56%; /* Gold #F59E0B */
-	--jobping-accent-600: 38 92% 50%; /* Darker gold */
-	--jobping-success: 160 84% 39%; /* Emerald #10B981 */
-}
+	/* JobPing Brand Colors - Consistent naming */
+	--brand-primary: 215 28% 17%; /* Charcoal #0F172A */
+	--brand-500: 173 80% 40%; /* Teal #14B8A6 */
+	--brand-600: 178 71% 39%; /* Darker teal */
+	--accent-500: 43 96% 56%; /* Gold #F59E0B */
+	--accent-600: 38 92% 50%; /* Darker gold */
+
+	/* Semantic Colors - Clear purpose */
+	--success: 160 84% 39%; /* Emerald - for success states */
+	--success-foreground: 0 0% 98%;
+	--warning: 38 92% 50%; /* Gold - for warning states */
+	--warning-foreground: 0 0% 98%;
+	--error: 0 84% 60%; /* Red - for error states */
+	--error-foreground: 0 0% 98%;
+	--info: 199 89% 48%; /* Blue - for info states */
+	--color-info-foreground: 0 0% 98%;
+
+	/* Standardized Spacing Scale */
+	--space-1: 0.25rem; /* 4px */
+	--space-2: 0.5rem;  /* 8px */
+	--space-3: 0.75rem; /* 12px */
+	--space-4: 1rem;    /* 16px */
+	--space-5: 1.25rem; /* 20px */
+	--space-6: 1.5rem;  /* 24px */
+	--space-8: 2rem;    /* 32px */
+	--space-10: 2.5rem; /* 40px */
+	--space-12: 3rem;   /* 48px */
+	--space-16: 4rem;   /* 64px */
+	--space-20: 5rem;   /* 80px */
+	--space-24: 6rem;   /* 96px */
+
+	/* Standardized Border Radius */
+	--radius-sm: 0.25rem; /* 4px - small elements */
+	--radius-md: 0.375rem; /* 6px - default cards/buttons */
+	--radius-lg: 0.5rem;  /* 8px - large elements */
+	--radius-xl: 0.75rem; /* 12px - special elements */
+	--radius-full: 9999px; /* Full rounded */
+
+	/* Standardized Shadow Scale */
+	--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+	--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+	--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+	--shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+	/* Semantic Font Weights */
+	--font-weight-thin: 100;
+	--font-weight-light: 300;
+	--font-weight-normal: 400;
+	--font-weight-medium: 500;
+	--font-weight-semibold: 600;
+	--font-weight-bold: 700;
+	--font-weight-extrabold: 800;
+	--font-weight-black: 900;
 
 /* Typography utility classes */
 .text-display-xl { font-size: var(--text-display-xl); letter-spacing: var(--letter-tight); line-height: 1.1; }
 .text-display-lg { font-size: var(--text-display-lg); letter-spacing: var(--letter-tight); line-height: 1.15; }
 .text-display-md { font-size: var(--text-display-md); letter-spacing: var(--letter-tight); line-height: 1.2; }
 .text-display-sm { font-size: var(--text-display-sm); letter-spacing: var(--letter-tight); line-height: 1.25; }
+.text-display-xs { font-size: var(--text-display-xs); letter-spacing: var(--letter-tight); line-height: 1.3; }
 
 .text-body-xl { font-size: var(--text-body-xl); letter-spacing: var(--letter-normal); line-height: 1.6; }
 .text-body-lg { font-size: var(--text-body-lg); letter-spacing: var(--letter-normal); line-height: 1.6; }
 .text-body-md { font-size: var(--text-body-md); letter-spacing: var(--letter-normal); line-height: 1.6; }
 .text-body-sm { font-size: var(--text-body-sm); letter-spacing: var(--letter-normal); line-height: 1.5; }
 .text-body-xs { font-size: var(--text-body-xs); letter-spacing: var(--letter-normal); line-height: 1.4; }
+
+/* Semantic Color Utility Classes - Replace hardcoded Tailwind colors */
+.text-success { color: hsl(var(--color-success)); }
+.text-success-foreground { color: hsl(var(--color-success-foreground)); }
+.text-warning { color: hsl(var(--color-warning)); }
+.text-warning-foreground { color: hsl(var(--color-warning-foreground)); }
+.text-error { color: hsl(var(--color-error)); }
+.text-error-foreground { color: hsl(var(--color-error-foreground)); }
+.text-info { color: hsl(var(--color-info)); }
+.text-info-foreground { color: hsl(var(--color-info-foreground)); }
+
+.bg-success { background-color: hsl(var(--color-success)); }
+.bg-warning { background-color: hsl(var(--color-warning)); }
+.bg-error { background-color: hsl(var(--color-error)); }
+.bg-info { background-color: hsl(var(--color-info)); }
+
+.border-success { border-color: hsl(var(--color-success)); }
+.border-warning { border-color: hsl(var(--color-warning)); }
+.border-error { border-color: hsl(var(--color-error)); }
+.border-info { border-color: hsl(var(--color-info)); }
+
+/* Standardized Spacing Utility Classes */
+.space-y-1 > * + * { margin-top: var(--space-1); }
+.space-y-2 > * + * { margin-top: var(--space-2); }
+.space-y-3 > * + * { margin-top: var(--space-3); }
+.space-y-4 > * + * { margin-top: var(--space-4); }
+.space-y-6 > * + * { margin-top: var(--space-6); }
+.space-y-8 > * + * { margin-top: var(--space-8); }
+
+.space-x-1 > * + * { margin-left: var(--space-1); }
+.space-x-2 > * + * { margin-left: var(--space-2); }
+.space-x-3 > * + * { margin-left: var(--space-3); }
+.space-x-4 > * + * { margin-left: var(--space-4); }
+.space-x-6 > * + * { margin-left: var(--space-6); }
+.space-x-8 > * + * { margin-left: var(--space-8); }
+
+.p-1 { padding: var(--space-1); }
+.p-2 { padding: var(--space-2); }
+.p-3 { padding: var(--space-3); }
+.p-4 { padding: var(--space-4); }
+.p-6 { padding: var(--space-6); }
+.p-8 { padding: var(--space-8); }
+
+.px-1 { padding-left: var(--space-1); padding-right: var(--space-1); }
+.px-2 { padding-left: var(--space-2); padding-right: var(--space-2); }
+.px-3 { padding-left: var(--space-3); padding-right: var(--space-3); }
+.px-4 { padding-left: var(--space-4); padding-right: var(--space-4); }
+.px-6 { padding-left: var(--space-6); padding-right: var(--space-6); }
+.px-8 { padding-left: var(--space-8); padding-right: var(--space-8); }
+
+.py-1 { padding-top: var(--space-1); padding-bottom: var(--space-1); }
+.py-2 { padding-top: var(--space-2); padding-bottom: var(--space-2); }
+.py-3 { padding-top: var(--space-3); padding-bottom: var(--space-3); }
+.py-4 { padding-top: var(--space-4); padding-bottom: var(--space-4); }
+.py-6 { padding-top: var(--space-6); padding-bottom: var(--space-6); }
+.py-8 { padding-top: var(--space-8); padding-bottom: var(--space-8); }
+
+/* Standardized Border Radius Utility Classes */
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* Standardized Shadow Utility Classes */
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }
 
 /* Premium text shadows */
 .text-depth {
@@ -81,6 +199,7 @@
 	--text-display-lg: 3rem;      /* 48px - Section titles */
 	--text-display-md: 2.25rem;   /* 36px - Card titles */
 	--text-display-sm: 1.875rem;  /* 30px - Subtitles */
+	--text-display-xs: 1.5rem;    /* 24px - Small section titles */
 
 	/* Body Scale - Content */
 	--text-body-xl: 1.25rem;      /* 20px - Lead paragraphs */
@@ -126,7 +245,6 @@ html {
 
 html,
 body {
-	min-height: 100vh;
 	min-height: 100svh; /* Support for small viewport height on mobile */
 	background-color: #09090b; /* Zinc 950 - Prevent FOUC */
 	overflow-x: hidden;
@@ -548,15 +666,20 @@ form select {
 @media (max-width: 768px) {
 	/* Reduce motion and animations on mobile - maintain smooth interactions */
 	* {
+		/* biome-ignore lint/complexity/noImportantStyles: Required for mobile performance */
 		animation-duration: 0.3s !important; /* Minimum 300ms for smooth animations */
+		/* biome-ignore lint/complexity/noImportantStyles: Required for mobile performance */
 		animation-iteration-count: 1 !important;
+		/* biome-ignore lint/complexity/noImportantStyles: Required for mobile performance */
 		transition-duration: 0.15s !important; /* Minimum 150ms for smooth transitions */
 	}
 
 	/* Disable expensive animations */
 	.animated-grid,
 	.enhanced-grid {
+		/* biome-ignore lint/complexity/noImportantStyles: Required for mobile performance */
 		animation: none !important;
+		/* biome-ignore lint/complexity/noImportantStyles: Required for mobile performance */
 		background-image: none !important;
 	}
 
@@ -791,6 +914,7 @@ form select {
 /* Respect user's motion preferences */
 @media (prefers-reduced-motion: reduce) {
 	.animated-grid {
+		/* biome-ignore lint/complexity/noImportantStyles: Required for accessibility (prefers-reduced-motion) */
 		animation: none !important;
 	}
 }
@@ -898,6 +1022,34 @@ form select {
 		--chart-5: 27 87% 67%;
 		--radius: 0.5rem;
 	}
+
+	.light {
+		--background: 0 0% 100%;
+		--foreground: 0 0% 3.9%;
+		--card: 0 0% 100%;
+		--card-foreground: 0 0% 3.9%;
+		--popover: 0 0% 100%;
+		--popover-foreground: 0 0% 3.9%;
+		--primary: 173 80% 40%;
+		--primary-foreground: 0 0% 98%;
+		--secondary: 43 96% 56%;
+		--secondary-foreground: 0 0% 98%;
+		--muted: 0 0% 96.1%;
+		--muted-foreground: 0 0% 45.1%;
+		--accent: 173 80% 40%;
+		--accent-foreground: 0 0% 98%;
+		--destructive: 0 84% 60%;
+		--destructive-foreground: 0 0% 98%;
+		--border: 0 0% 89.8%;
+		--input: 0 0% 89.8%;
+		--ring: 173 80% 40%;
+		--chart-1: 12 76% 61%;
+		--chart-2: 173 58% 39%;
+		--chart-3: 197 37% 24%;
+		--chart-4: 43 74% 66%;
+		--chart-5: 27 87% 67%;
+	}
+
   .dark {
 		--background: 0 0% 3.9%;
 		--foreground: 0 0% 98%;
@@ -905,26 +1057,25 @@ form select {
 		--card-foreground: 0 0% 98%;
 		--popover: 0 0% 3.9%;
 		--popover-foreground: 0 0% 98%;
-		--primary: 0 0% 98%;
-		--primary-foreground: 0 0% 9%;
-		--secondary: 0 0% 14.9%;
+		--primary: 173 80% 40%;
+		--primary-foreground: 0 0% 98%;
+		--secondary: 43 96% 56%;
 		--secondary-foreground: 0 0% 98%;
 		--muted: 0 0% 14.9%;
 		--muted-foreground: 0 0% 63.9%;
-		--accent: 0 0% 14.9%;
+		--accent: 173 80% 40%;
 		--accent-foreground: 0 0% 98%;
-		--destructive: 0 62.8% 30.6%;
+		--destructive: 0 84% 60%;
 		--destructive-foreground: 0 0% 98%;
 		--border: 0 0% 14.9%;
 		--input: 0 0% 14.9%;
-		--ring: 0 0% 83.1%;
+		--ring: 173 80% 40%;
 		--chart-1: 220 70% 50%;
 		--chart-2: 160 60% 45%;
 		--chart-3: 30 80% 55%;
 		--chart-4: 280 65% 60%;
 		--chart-5: 340 75% 55%;
-	}
-}
+	/* } */
 
 
 

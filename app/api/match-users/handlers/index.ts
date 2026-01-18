@@ -2,7 +2,7 @@
  * Main Route Handler - Orchestrates all matching logic
  */
 
-import { type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/middleware/api-auth";
 import { validateMatchUsersRequest } from "@/middleware/api-validation";
 import { matchUsersService } from "@/services/matchUsersService";
@@ -36,12 +36,24 @@ export async function matchUsersHandler(req: NextRequest) {
 
 	// Parse request body (avoid double consumption)
 	let body;
-	if (authResult.authenticatedReq?._rawBody) {
-		// Use raw body from authenticated request to avoid double consumption
-		body = JSON.parse(authResult.authenticatedReq._rawBody);
-	} else {
-		// Fallback for requests without authentication
-		body = await req.json();
+	try {
+		if (authResult.authenticatedReq?._rawBody) {
+			// Use raw body from authenticated request to avoid double consumption
+			body = JSON.parse(authResult.authenticatedReq._rawBody);
+		} else {
+			// Fallback for requests without authentication
+			body = await req.json();
+		}
+	} catch (error) {
+		console.error("Failed to parse request body:", error);
+		return NextResponse.json(
+			{
+				error: "Invalid JSON in request body",
+				code: "INVALID_JSON",
+				requestId,
+			},
+			{ status: 400 },
+		);
 	}
 
 	// Validate request

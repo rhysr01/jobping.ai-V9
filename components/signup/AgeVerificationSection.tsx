@@ -72,8 +72,8 @@ export function AgeVerificationSection({
 								I confirm I am at least 16 years old
 							</label>
 							{ageVerificationError && (
-								<p id="age-verification-error" className="mt-2 text-sm text-red-400 flex items-center gap-2 font-medium" role="alert">
-									<span className="text-red-400">⚠️</span>
+								<p id="age-verification-error" className="mt-2 text-sm text-error flex items-center gap-2 font-medium" role="alert">
+									<span className="text-error">⚠️</span>
 									{ageVerificationError}
 								</p>
 							)}
@@ -120,8 +120,8 @@ export function AgeVerificationSection({
 								</a>
 							</label>
 							{(termsError || gdprError) && (
-								<p id="legal-error" className="mt-2 text-sm text-red-400 flex items-center gap-2 font-medium" role="alert">
-									<span className="text-red-400">⚠️</span>
+								<p id="legal-error" className="mt-2 text-sm text-error flex items-center gap-2 font-medium" role="alert">
+									<span className="text-error">⚠️</span>
 									{termsError || gdprError}
 								</p>
 							)}

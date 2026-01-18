@@ -83,7 +83,7 @@ export function EUJobStats() {
 						{[1, 2, 3, 4].map((i) => (
 							<div
 								key={i}
-								className="h-40 glass-card elevation-1 rounded-2xl animate-pulse bg-white/5"
+								className="h-40 glass-card elevation-1 rounded-lg animate-pulse bg-white/5"
 							/>
 						))}
 					</div>
@@ -135,7 +135,7 @@ export function EUJobStats() {
 		purple: {
 			iconBg: "bg-gradient-to-br from-purple-500/30 to-purple-600/20",
 			iconBorder: "border-purple-500/40",
-			iconText: "text-purple-200",
+			iconText: "text-brand-500/80",
 			iconShadow: "shadow-[0_4px_16px_rgba(20,184,166,0.3)]",
 			cardHover: "hover:border-purple-500/30",
 			gradient: "from-purple-400 to-purple-600",
@@ -151,7 +151,7 @@ export function EUJobStats() {
 		blue: {
 			iconBg: "bg-gradient-to-br from-blue-500/30 to-blue-600/20",
 			iconBorder: "border-blue-500/40",
-			iconText: "text-blue-200",
+			iconText: "text-info/80",
 			iconShadow: "shadow-[0_4px_16px_rgba(59,130,246,0.3)]",
 			cardHover: "hover:border-blue-500/30",
 			gradient: "from-blue-400 to-blue-600",
@@ -186,7 +186,7 @@ export function EUJobStats() {
 						whileInView={{ opacity: 1, scale: 1 }}
 						viewport={{ once: true }}
 						transition={{ duration: 0.4, delay: 0.1 }}
-						className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-[11px] font-medium tracking-[0.16em] uppercase text-emerald-200 shadow-lg shadow-emerald-500/20 backdrop-blur-sm mb-4"
+						className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium tracking-[0.16em] uppercase text-emerald-200 shadow-lg shadow-emerald-500/20 backdrop-blur-sm mb-4"
 					>
 						<TrendingUp className="h-4 w-4 text-emerald-300" />
 						Live Data
@@ -246,7 +246,7 @@ export function EUJobStats() {
 										{/* Icon with enhanced animation */}
 										<motion.span
 											className={cn(
-												"inline-flex h-14 w-14 items-center justify-center rounded-xl border mb-4",
+												"inline-flex h-14 w-14 items-center justify-center rounded-md border mb-4",
 												colors.iconBg,
 												colors.iconBorder,
 												colors.iconText,

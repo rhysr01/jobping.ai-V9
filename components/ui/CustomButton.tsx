@@ -1,12 +1,36 @@
 import { forwardRef } from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { motion } from "framer-motion";
+import { cva, type VariantProps } from "class-variance-authority";
 import { BrandIcons } from "./BrandIcons";
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+const buttonVariants = cva(
+	"font-display inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation",
+	{
+		variants: {
+			variant: {
+				primary: "bg-brand-500 hover:bg-brand-600 text-white font-semibold shadow-lg shadow-brand-500/30 hover:shadow-xl hover:shadow-brand-500/40 transition-all duration-200",
+				secondary: "border-2 border-brand-500/30 bg-brand-500/10 hover:bg-brand-500/20 text-brand-100 font-medium transition-all duration-200",
+				ghost: "text-zinc-300 hover:text-white hover:bg-white/5 font-medium transition-all duration-200",
+			},
+			size: {
+				sm: "px-4 py-3 text-sm min-h-[52px] sm:min-h-[48px]", // Bigger on mobile for better touch targets
+				md: "px-6 py-4 text-sm sm:text-base min-h-[56px] sm:min-h-[48px]", // More generous mobile spacing
+				lg: "px-8 py-5 text-base sm:text-lg min-h-[64px] sm:min-h-[48px] w-full sm:w-auto", // Largest on mobile for primary CTAs
+				icon: "h-10 w-10 p-0", // Square icon button
+			},
+		},
+		defaultVariants: {
+			variant: "primary",
+			size: "md",
+		},
+	}
+);
+
+interface ButtonProps
+	extends ButtonHTMLAttributes<HTMLButtonElement>,
+		VariantProps<typeof buttonVariants> {
 	children?: ReactNode;
-	variant?: "primary" | "secondary" | "ghost" | "danger" | "gradient" | "outline";
-	size?: "sm" | "md" | "lg" | "icon";
 	isLoading?: boolean;
 	className?: string;
 	href?: string;
@@ -18,8 +42,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({
 	children,
-	variant = "primary",
-	size = "md",
+	variant,
+	size,
 	isLoading = false,
 	className = "",
 	disabled,
@@ -32,32 +56,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({
 }, ref) {
 	const IconComponent = icon ? BrandIcons[icon] : null;
 	const widthClass = fullWidth ? "w-full" : "";
-	const baseClasses =
-		"font-display inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation";
-
-	const hoverClasses = animated ? "" : "hover:scale-[1.02] active:scale-[0.98]";
-
-	const variants = {
-		primary:
-			"h-11 bg-black text-white font-medium shadow-lg shadow-black/50 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.8)] hover:-translate-y-[2px] active:translate-y-0 active:shadow-lg transition-all duration-200 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/10 before:via-white/5 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-200",
-		secondary:
-			"border-2 border-white/25 bg-white/[0.08] text-white font-medium hover:border-white/40 hover:bg-white/10 hover:-translate-y-[2px] hover:shadow-[0_8px_16px_-4px_rgba(255,255,255,0.1)] active:translate-y-0 transition-all duration-200",
-		ghost:
-			"text-content-secondary hover:text-white hover:bg-white/5 font-medium hover:-translate-y-[1px] transition-all duration-200",
-		danger:
-			"border-2 border-error-500/30 bg-error-500/15 text-error-200 hover:bg-error-500/25 font-medium hover:-translate-y-[2px] hover:shadow-[0_8px_16px_-4px_rgba(239,68,68,0.3)] active:translate-y-0 transition-all duration-200",
-		gradient:
-			"h-11 bg-gradient-to-r from-black via-gray-900 to-black text-white font-medium shadow-lg shadow-black/50 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.8)] hover:-translate-y-[2px] active:translate-y-0 active:shadow-lg transition-all duration-200 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/20 before:via-white/10 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-200",
-		outline:
-			"border-2 border-brand-500/50 bg-transparent hover:bg-brand-500/10 text-white font-bold rounded-xl",
-	};
-
-	const sizes = {
-		sm: "px-4 py-3 text-sm min-h-[52px] sm:min-h-[48px]", // Bigger on mobile for better touch targets
-		md: "px-6 py-4 text-sm sm:text-base min-h-[56px] sm:min-h-[48px]", // More generous mobile spacing
-		lg: "px-8 py-5 text-base sm:text-lg min-h-[64px] sm:min-h-[48px] w-full sm:w-auto", // Largest on mobile for primary CTAs
-		icon: "h-10 w-10 p-0", // Square icon button
-	};
 
 	const buttonContent = (
 		<>
@@ -77,7 +75,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({
 
 	const buttonProps = {
 		type: props.type || "button",
-		className: `${baseClasses} ${variants[variant]} ${sizes[size]} ${widthClass} ${className}`,
+		className: buttonVariants({ variant, size, className: `${widthClass} ${className}`.trim() }),
 		disabled: disabled || isLoading,
 		...props
 	};
@@ -101,7 +99,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({
 		<button
 			ref={ref}
 			{...buttonProps}
-			className={`${buttonProps.className} ${hoverClasses}`}
 		>
 			{buttonContent}
 		</button>
@@ -113,7 +110,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({
 				href={href}
 				target={target}
 				rel={target === "_blank" ? "noreferrer noopener" : undefined}
-				className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${widthClass} ${className}`}
+				className={buttonVariants({ variant, size, className: `${widthClass} ${className}`.trim() })}
 				{...(props as any)}
 			>
 				{buttonContent}

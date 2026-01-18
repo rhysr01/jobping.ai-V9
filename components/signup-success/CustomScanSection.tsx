@@ -13,10 +13,10 @@ export function CustomScanSection({ customScan, email }: CustomScanSectionProps)
 	}
 
 	return (
-		<div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+		<div className="bg-white/5 rounded-lg p-6 border border-white/10">
 			<div className="flex items-center gap-3 mb-6">
 				<div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
-					<BrandIcons.Sparkles className="w-5 h-5 text-purple-400" />
+					<BrandIcons.Sparkles className="w-5 h-5 text-brand-500" />
 				</div>
 				<div>
 					<h3 className="text-lg font-semibold text-white">
@@ -35,8 +35,8 @@ export function CustomScanSection({ customScan, email }: CustomScanSectionProps)
 				userEmail={email}
 			/>
 
-			<div className="mt-4 p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
-				<p className="text-sm text-purple-200">
+			<div className="mt-4 p-4 bg-purple-500/10 rounded-md border border-purple-500/20">
+				<p className="text-sm text-brand-500/80">
 					🚀 <strong>Bonus scan:</strong> Get additional job matches beyond your
 					weekly {customScan.estimatedTime.toLowerCase()} scan. Perfect for urgent job searches!
 				</p>

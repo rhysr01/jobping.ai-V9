@@ -74,7 +74,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 						<div className="text-center max-w-md">
 							<div className="mb-6">
 								<svg
-									className="w-16 h-16 mx-auto text-red-400"
+									className="w-16 h-16 mx-auto text-error"
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"

@@ -20,7 +20,23 @@ export async function authenticateRequest(req: NextRequest): Promise<{
 			};
 		}
 
-		const raw = await req.text();
+		let raw: string;
+		try {
+			raw = await req.text();
+		} catch (error) {
+			logger.error("Failed to read request body", { error: error as Error });
+			return {
+				isAuthenticated: false,
+				error: NextResponse.json(
+					{
+						error: "Failed to read request body",
+						code: "BODY_READ_ERROR",
+					},
+					{ status: 400 },
+				),
+			};
+		}
+
 		const sig = req.headers.get("x-jobping-signature");
 		const timestampHeader = req.headers.get("x-jobping-timestamp");
 		const timestamp = timestampHeader

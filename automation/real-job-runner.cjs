@@ -171,6 +171,15 @@ class RealJobRunner {
 			return true;
 		}
 
+		// Use extracted quota manager for global cycle check
+		if (shouldStopCycle(stats)) {
+			const globalTarget = getCycleJobTarget();
+			console.log(
+				`🎯 Global cycle job target (${globalTarget}) reached after ${stage}; skipping remaining scrapers.`,
+			);
+			return true;
+		}
+
 		// Check per-scraper target if scraper name provided
 		if (scraperName) {
 			if (hasScraperReachedTarget(stats, scraperName)) {
@@ -332,11 +341,10 @@ class RealJobRunner {
 					"NODE_ENV=production node scrapers/wrappers/jobspy-wrapper.cjs",
 					{
 						cwd: process.cwd(),
-						timeout: 240000, // 4 minutes timeout (increased for reliability)
 						env: { ...process.env },
 					},
 				),
-				240000, // Increased from 120000 (2min) to 240000 (4min)
+				240000, // 4 minutes timeout for JobSpy
 				"JobSpy scraper",
 			);
 
@@ -346,6 +354,7 @@ class RealJobRunner {
 			}
 
 			// Get job count from database - JobSpy saves with "jobspy-indeed" source
+			console.log("🔧 DEBUG: About to query database for job count");
 			const startTime = new Date(Date.now() - 15 * 60 * 1000).toISOString(); // 15 minutes ago
 			const { count, error } = await supabase
 				.from("jobs")
@@ -354,6 +363,12 @@ class RealJobRunner {
 				.gte("created_at", startTime);
 
 			const jobsSaved = error ? 0 : count || 0;
+			console.log(
+				"🔧 DEBUG: Database query completed, jobsSaved:",
+				jobsSaved,
+				"error:",
+				error,
+			);
 
 			if (jobsSaved > 0) {
 				console.log(`✅ JobSpy: Found ${jobsSaved} jobs in database`);
@@ -415,11 +430,11 @@ class RealJobRunner {
 					"NODE_ENV=production node scripts/jobspy-internships-only.cjs",
 					{
 						cwd: process.cwd(),
-						timeout: 1200000, // 20 minutes timeout for JobSpy
+						// Remove timeout from execAsync, let withTimeout handle it
 						env: { ...process.env },
 					},
 				),
-				600000, // Increased from 120000 (2min) to 600000 (10min)
+				600000, // 10 minutes timeout
 				"JobSpy Internships scraper",
 			);
 
@@ -517,11 +532,11 @@ class RealJobRunner {
 					"NODE_ENV=production node scripts/jobspy-career-path-roles.cjs",
 					{
 						cwd: process.cwd(),
-						timeout: 1200000, // 20 minutes timeout for JobSpy
+						// Remove timeout from execAsync, let withTimeout handle it
 						env,
 					},
 				),
-				600000, // Increased from 120000 (2min) to 600000 (10min)
+				600000, // 10 minutes timeout
 				"Career Path Roles scraper",
 			);
 

@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import LogoWordmark from "../logo-wordmark";
 import { BrandIcons } from "../ui/BrandIcons";
 import CustomButton from "../ui/CustomButton";
+import { ThemeToggle } from "../ui/theme-toggle";
 import { trackEvent } from "../../lib/analytics";
 import { CTA_GET_MY_5_FREE_MATCHES } from "../../lib/copy";
 
@@ -179,7 +180,7 @@ export default function Header() {
 								}
 								trackEvent("logo_clicked", { location: "header" });
 							}}
-							className="flex items-center gap-2 group py-1 overflow-visible"
+							className="flex items-center gap-3 group py-1 overflow-visible"
 							aria-label="JobPing Home"
 							style={{ overflow: "visible", paddingRight: "0.75rem" }}
 						>
@@ -189,7 +190,7 @@ export default function Header() {
 						</Link>
 
 						{/* Desktop Navigation */}
-						<nav className="hidden md:flex items-center gap-6 lg:gap-8">
+						<nav className="hidden md:flex items-center gap-8">
 							{/* Navigation Links with animated underlines */}
 							{navLinks.map((link) => (
 								<Link
@@ -233,7 +234,7 @@ export default function Header() {
 							))}
 
 							{/* Trust badge - desktop only */}
-							<div className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.03] backdrop-blur-sm border border-white/10 hover:bg-white/[0.05] hover:border-emerald-500/30 transition-all">
+							<div className="hidden lg:flex items-center gap-3 px-4 py-2 rounded-full bg-white/[0.03] backdrop-blur-sm border border-white/10 hover:bg-white/[0.05] hover:border-emerald-500/30 transition-all">
 								{/* Pulsing dot */}
 								<div className="relative flex h-2 w-2">
 									<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -242,6 +243,11 @@ export default function Header() {
 								<span className="font-display text-xs font-medium text-zinc-300">
 									1,000+ students
 								</span>
+							</div>
+
+							{/* Theme toggle */}
+							<div className="hidden lg:flex">
+								<ThemeToggle />
 							</div>
 
 							{/* Enhanced CTA Button with shine effect */}
@@ -253,7 +259,7 @@ export default function Header() {
 										location: "header",
 									});
 								}}
-								className="font-display group relative px-6 py-3 rounded-xl font-semibold text-white overflow-hidden"
+								className="font-display group relative px-6 py-3 rounded-full font-semibold text-white overflow-hidden"
 							>
 								{/* Black shiny background */}
 								<div className="absolute inset-0 bg-black group-hover:bg-gradient-to-r group-hover:from-black group-hover:via-gray-900 group-hover:to-black transition-all duration-300" />
@@ -264,7 +270,7 @@ export default function Header() {
 								</div>
 
 								{/* Shadow that grows on hover */}
-								<div className="absolute inset-0 shadow-lg shadow-black/50 group-hover:shadow-xl group-hover:shadow-black/80 rounded-xl transition-all" />
+								<div className="absolute inset-0 shadow-lg shadow-black/50 group-hover:shadow-xl group-hover:shadow-black/80 rounded-full transition-all" />
 
 								{/* Text */}
 								<span className="relative z-10 group-hover:-translate-y-0.5 inline-flex items-center gap-2 transition-transform">
@@ -273,7 +279,7 @@ export default function Header() {
 								</span>
 
 								{/* Border glow */}
-								<div className="absolute inset-0 rounded-xl border border-white/30 group-hover:border-white/60 transition-colors" />
+								<div className="absolute inset-0 rounded-full border border-white/30 group-hover:border-white/60 transition-colors" />
 							</Link>
 						</nav>
 
@@ -281,7 +287,7 @@ export default function Header() {
 						<button
 							type="button"
 							onClick={toggleMobileMenu}
-							className={`p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 text-content-secondary hover:text-white min-h-[44px] min-w-[44px] flex items-center justify-center ${
+							className={`p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 text-content-secondary hover:text-white min-h-[44px] min-w-[44px] flex items-center justify-center ${
 								isMobile ? 'block' : 'hidden'
 							}`}
 							aria-label="Toggle menu"
@@ -360,7 +366,7 @@ export default function Header() {
 											});
 											setMobileMenuOpen(false);
 										}}
-										variant="gradient"
+										variant="primary"
 										size="lg"
 										className="mt-4 w-full"
 									>

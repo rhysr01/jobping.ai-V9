@@ -257,7 +257,7 @@ const getVisaStyle = (confidence: string) => {
 		case "likely":
 			return {
 				bg: "bg-yellow-500/20",
-				text: "text-yellow-400",
+				text: "text-warning",
 				border: "border-yellow-500/30",
 				label: "Probable Sponsorship",
 				icon: "○",
@@ -265,7 +265,7 @@ const getVisaStyle = (confidence: string) => {
 		case "local-only":
 			return {
 				bg: "bg-blue-500/20",
-				text: "text-blue-400",
+				text: "text-info",
 				border: "border-blue-500/30",
 				label: "Possible Sponsorship",
 				icon: "○",
@@ -273,7 +273,7 @@ const getVisaStyle = (confidence: string) => {
 		default:
 			return {
 				bg: "bg-red-500/20",
-				text: "text-red-400",
+				text: "text-error",
 				border: "border-red-500/30",
 				label: "No Sponsorship",
 				icon: "✕",
@@ -288,7 +288,7 @@ const renderContent = (email: typeof PREMIUM_DAYS[0]) => {
 		<div className="h-full bg-zinc-950 flex flex-col">
 		{/* Email Header - Sticky */}
 		<div className="px-3 py-2 border-b border-white/5 bg-surface-elevated/20 shrink-0">
-			<div className="text-[10px] text-zinc-400 mb-0.5">
+			<div className="text-xs text-zinc-400 mb-0.5">
 				From: <span className="text-emerald-400 font-medium">{email.from}</span>
 			</div>
 			<div className="text-[10px] text-zinc-400">
@@ -299,20 +299,20 @@ const renderContent = (email: typeof PREMIUM_DAYS[0]) => {
 		{/* Email Body - All content flows naturally for scrolling */}
 		<div className="p-3 space-y-2.5">
 			{/* Premium Badge */}
-			<div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-brand-500/20 to-brand-600/20 px-2 py-0.5 text-[10px] font-bold text-brand-300 border border-brand-500/30 shadow-lg shadow-brand-500/20">
+			<div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-brand-500/20 to-brand-600/20 px-2 py-0.5 text-xs font-bold text-brand-300 border border-brand-500/30 shadow-lg shadow-brand-500/20">
 				<div className="w-1.5 h-1.5 bg-brand-400 rounded-full animate-pulse" />
 				<span>Premium Member</span>
 			</div>
 
 			{/* Title */}
-			<h1 className="text-[13px] font-bold text-white">
+			<h1 className="text-sm font-bold text-white">
 				{email.subject}
 			</h1>
 
 			{/* Profile Section - Matches production detailed box */}
 			<div className="rounded-lg bg-purple-500/15 border border-purple-500/35 px-2.5 py-2 mb-2">
-				<div className="text-[9px] font-bold text-purple-400 uppercase tracking-wider mb-1.5">📋 Your Profile</div>
-				<div className="space-y-0.5 text-[10px] text-content-heading leading-relaxed">
+				<div className="text-xs font-bold text-brand-500 uppercase tracking-wider mb-1.5">📋 Your Profile</div>
+				<div className="space-y-0.5 text-xs text-content-heading leading-relaxed">
 					<div><strong>Career Path:</strong> {USER_PROFILE.careerPath}</div>
 					<div><strong>Cities:</strong> {USER_PROFILE.cities.join(", ")}</div>
 					<div><strong>Visa:</strong> {USER_PROFILE.visa}</div>
@@ -346,17 +346,17 @@ const renderContent = (email: typeof PREMIUM_DAYS[0]) => {
 							: "bg-gradient-to-r from-purple-500 to-purple-600 shadow-lg shadow-purple-500/25"
 					}`}>
 						<div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-						<span className="text-[10px] font-bold text-white">
+						<span className="text-xs font-bold text-white">
 							{job.score}% Match
 						</span>
 					</div>
-					<div className="text-[10px] font-semibold text-content-heading truncate ml-2">
+					<div className="text-xs font-semibold text-content-heading truncate ml-2">
 						{job.company}
 					</div>
 				</div>
 
 				{/* Job Title */}
-				<h3 className="text-[12px] font-bold text-white mb-1.5 leading-tight line-clamp-2">
+				<h3 className="text-sm font-bold text-white mb-1.5 leading-tight line-clamp-2">
 					{job.title}
 				</h3>
 
@@ -368,7 +368,7 @@ const renderContent = (email: typeof PREMIUM_DAYS[0]) => {
 
 				{/* Match Reason */}
 				<div className="mb-1.5 p-1.5 bg-purple-500/15 border-l-2 border-purple-500/40 rounded backdrop-blur-sm">
-					<div className="text-[9px] font-bold text-purple-400 uppercase tracking-wider mb-0.5 flex items-center gap-1">
+					<div className="text-[9px] font-bold text-brand-500 uppercase tracking-wider mb-0.5 flex items-center gap-1">
 						<svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
 							<path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
 						</svg>
@@ -422,7 +422,7 @@ const renderContent = (email: typeof PREMIUM_DAYS[0]) => {
 						</button>
 						<button
 							type="button"
-							className="flex-1 bg-red-500/10 border border-red-500/30 text-red-400 px-2 py-2 rounded-lg text-[9px] font-semibold pointer-events-auto hover:bg-red-500/20 transition-colors min-h-[48px]"
+							className="flex-1 bg-red-500/10 border border-red-500/30 text-error px-2 py-2 rounded-lg text-[9px] font-semibold pointer-events-auto hover:bg-red-500/20 transition-colors min-h-[48px]"
 						>
 							👎 Not for me
 						</button>

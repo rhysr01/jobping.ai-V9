@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { BrandIcons } from "../ui/BrandIcons";
-import GradientText from "../ui/GradientText";
 import { apiCallJson } from "../../lib/api-client";
 import {
 	Carousel,
@@ -13,6 +12,8 @@ import {
 	CarouselNext,
 	CarouselPrevious,
 } from "@/components/ui/carousel";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 import Autoplay from "embla-carousel-autoplay";
 
 interface Company {
@@ -262,15 +263,14 @@ export default function CompanyLogos() {
 					transition={{ delay: 0.3 }}
 					className="text-center mt-8"
 				>
-					<div className="inline-flex items-center gap-2 px-6 py-3 rounded-full glass-card elevation-1 border border-white/10">
-						<p className="text-lg md:text-xl text-content-secondary">
-							JobPing aggregates jobs from public sources including{" "}
-							<GradientText variant="accent" className="font-semibold">
-								Indeed, Glassdoor, Adzuna, Jooble, Reed, Arbeitnow
-							</GradientText>
-							, and company pages. We are not affiliated with these companies and match you with available listings.
-						</p>
-					</div>
+					<Alert className="max-w-2xl mx-auto border-zinc-800 bg-zinc-900/50">
+						<Info className="h-4 w-4 text-emerald-500" />
+						<AlertDescription className="text-sm text-zinc-400">
+							JobPing aggregates jobs from public sources including Indeed, Glassdoor,
+							Adzuna, Jooble, Reed, Arbeitnow, and company pages. We are not affiliated
+							with these companies and match you with available listings.
+						</AlertDescription>
+					</Alert>
 				</motion.div>
 			</div>
 		</section>

@@ -11,7 +11,6 @@ import {
 } from "../../lib/copy";
 import { HeroMobileMockup } from "../marketing/HeroMobileMockup";
 import { BrandIcons } from "../ui/BrandIcons";
-import GradientText from "../ui/GradientText";
 import HeroBackgroundAura from "../ui/HeroBackgroundAura";
 import TrustBadges from "./trust-badges";
 
@@ -84,7 +83,7 @@ function Hero() {
 	return (
 		<section
 			data-testid="hero-section"
-			className="section-padding-hero pt-28 pb-20 md:pt-32 md:pb-24 relative isolate overflow-visible min-h-[60vh] md:min-h-[65vh] flex items-center bg-transparent"
+			className="section-padding-hero pt-28 pb-20 md:pt-32 md:pb-24 relative isolate overflow-visible min-h-[25vh] md:min-h-[65vh] flex items-center bg-transparent"
 		>
 			{/* Layer 1: The Dot Grid (The Foundation) */}
 			<div
@@ -106,20 +105,12 @@ function Hero() {
 				}}
 			/>
 
-			{/* Animated Gradient Orbs for Premium Feel */}
+			{/* Subtle single gradient orb for premium feel */}
 			<div
 				className="absolute inset-0 -z-10 overflow-hidden"
 				aria-hidden="true"
 			>
-				<div className="absolute top-0 -left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-[120px] animate-pulse" />
-				<div
-					className="absolute top-1/4 right-0 w-80 h-80 bg-blue-500/15 rounded-full blur-[100px] animate-pulse"
-					style={{ animationDelay: "1s" }}
-				/>
-				<div
-					className="absolute bottom-0 left-1/2 w-72 h-72 bg-purple-500/10 rounded-full blur-[90px] animate-pulse"
-					style={{ animationDelay: "2s" }}
-				/>
+				<div className="absolute top-0 -left-1/4 w-96 h-96 bg-emerald-500/8 rounded-full blur-[120px]" />
 			</div>
 
 			<div className="absolute inset-0 -z-10">
@@ -135,60 +126,26 @@ function Hero() {
 				<div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center mt-4 md:mt-8 overflow-visible">
 					{/* LEFT SIDE - Content */}
 					<div className="text-left space-y-4 sm:space-y-6 relative overflow-visible px-4 sm:pr-8 md:pr-10 sm:pl-6">
-						{/* Headline - "Silver Silk" gradient */}
-						<h1 className="font-display text-display-xl font-black text-white text-depth-strong mb-3 max-w-full sm:max-w-[560px] lg:max-w-[640px] xl:max-w-[760px] relative overflow-visible" style={{ wordSpacing: "0.05em" }}>
-							{/* Silver Silk gradient: purple-500/80 (20%) → zinc-100 (50%) → purple-500/80 (80%) */}
-							<GradientText variant="brand" className="inline-block">
-								Get 5 early-career
-							</GradientText>{" "}
-							<GradientText variant="brand" className="inline-block">
-								job matches
-							</GradientText>{" "}
-							<span className="text-content-primary inline-block">
-								instantly
-							</span>{" "}
-							<GradientText variant="brand" className="inline-block text-display-xl font-black">
-								free
-							</GradientText>
+						{/* Headline - Clear hierarchy */}
+						<h1 className="font-display text-display-xl font-black text-white mb-3 max-w-full sm:max-w-[560px] lg:max-w-[640px] xl:max-w-[760px] relative overflow-visible" style={{ wordSpacing: "0.05em" }}>
+							Stop wasting 40+ hours{" "}
+							<span className="text-emerald-400">
+								job searching
+							</span>
 						</h1>
 
-						{/* Tagline - Emerald Green */}
-						<p className="text-body-lg text-emerald-400 leading-relaxed max-w-xl mb-4 mt-2 sm:mt-4 overflow-visible" style={{ wordSpacing: "0.02em" }}>
-							<GradientText variant="brand" className="inline">
-								Skip
-							</GradientText>{" "}
-							<GradientText variant="brand" className="inline">
-								40+
-							</GradientText>{" "}
-							hours of job searching a month.{" "}
-							<GradientText variant="brand" className="inline">
-								Get
-							</GradientText>{" "}
-							<GradientText variant="brand" className="inline">
-								5
-							</GradientText>{" "}
-							roles matching your{" "}
-							<GradientText variant="brand" className="inline">
-								skills
-							</GradientText>
-							,
-							<GradientText variant="brand" className="inline">
-								location
-							</GradientText>
-							, and{" "}
-							<GradientText variant="brand" className="inline">
-								visa
-							</GradientText>{" "}
-							in{" "}
-							<GradientText variant="brand" className="inline">
+						{/* Single, clear value proposition */}
+						<p className="text-body-lg text-zinc-300 leading-relaxed max-w-xl mb-4 mt-2 sm:mt-4 overflow-visible">
+							Get your perfect EU role in{" "}
+							<span className="text-emerald-400 font-semibold">
 								2 minutes
-							</GradientText>
-							.
+							</span>
+							{" "}instead of wasting 40+ hours searching.
 						</p>
 
 						{/* Social Proof for Free Instant Matches */}
 						<div className="mb-6">
-							<div className="inline-flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-emerald-500/10 via-blue-500/8 to-purple-500/10 border border-emerald-500/20 rounded-full backdrop-blur-sm">
+							<div className="inline-flex items-center gap-3 px-4 py-2.5 bg-zinc-900/50 border border-zinc-700 rounded-full">
 								{/* Static elements for better mobile performance */}
 								<div className="relative flex h-3 w-3">
 									<span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
@@ -212,7 +169,7 @@ function Hero() {
 								onClick={() => {
 									trackEvent("cta_clicked", { type: "free", location: "hero" });
 								}}
-								className="btn-cta-enhanced w-full sm:w-auto sm:max-w-xs hover:shadow-[0_8px_30px_rgba(20,184,166,0.4)]"
+								className="btn-cta-enhanced w-full sm:w-auto sm:max-w-xs"
 								aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
 							>
 								<span className="flex items-center justify-center gap-2">
@@ -228,7 +185,7 @@ function Hero() {
 								initial={{ opacity: 0, y: 10 }}
 								animate={{ opacity: 1, y: 0 }}
 								transition={{ delay: 0.42, duration: 0.6 }}
-								className="mt-3 sm:mt-4 p-3 sm:p-4 rounded-xl bg-gradient-to-br from-brand-500/10 via-brand-500/5 to-transparent border border-brand-500/20 backdrop-blur-sm shadow-lg shadow-brand-500/5"
+								className="mt-3 sm:mt-4 p-3 sm:p-4 rounded-xl bg-zinc-900/30 border border-zinc-700"
 							>
 								<p className="font-display text-xs sm:text-sm font-bold text-white/90 mb-3 sm:mb-4 flex items-center gap-2">
 									<BrandIcons.Info className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-brand-300 flex-shrink-0" />

@@ -35,7 +35,7 @@ export function PremiumFeaturesSection({ matchCount, email }: PremiumFeaturesSec
 
 			{/* Premium Benefits Grid */}
 			<div className="grid md:grid-cols-3 gap-4 max-w-4xl mx-auto mb-8">
-				<div className="bg-white/5 rounded-xl p-6 border border-white/10">
+				<div className="bg-white/5 rounded-lg p-6 border border-white/10">
 					<div className="w-12 h-12 rounded-full bg-brand-500/20 flex items-center justify-center mb-4 mx-auto">
 						<BrandIcons.Zap className="w-6 h-6 text-brand-400" />
 					</div>
@@ -47,9 +47,9 @@ export function PremiumFeaturesSection({ matchCount, email }: PremiumFeaturesSec
 					</p>
 				</div>
 
-				<div className="bg-white/5 rounded-xl p-6 border border-white/10">
+				<div className="bg-white/5 rounded-lg p-6 border border-white/10">
 					<div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mb-4 mx-auto">
-						<BrandIcons.Check className="w-6 h-6 text-green-400" />
+						<BrandIcons.Check className="w-6 h-6 text-success" />
 					</div>
 					<h3 className="text-lg font-semibold text-white mb-2">
 						Advanced Matching
@@ -59,9 +59,9 @@ export function PremiumFeaturesSection({ matchCount, email }: PremiumFeaturesSec
 					</p>
 				</div>
 
-				<div className="bg-white/5 rounded-xl p-6 border border-white/10">
+				<div className="bg-white/5 rounded-lg p-6 border border-white/10">
 					<div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mb-4 mx-auto">
-						<BrandIcons.Clock className="w-6 h-6 text-blue-400" />
+						<BrandIcons.Clock className="w-6 h-6 text-info" />
 					</div>
 					<h3 className="text-lg font-semibold text-white mb-2">
 						Priority Support
@@ -73,7 +73,7 @@ export function PremiumFeaturesSection({ matchCount, email }: PremiumFeaturesSec
 			</div>
 
 			{/* Email Confirmation */}
-			<div className="bg-gradient-to-r from-brand-500/10 via-purple-500/10 to-pink-500/10 rounded-2xl p-6 border border-brand-500/20 max-w-md mx-auto">
+			<div className="bg-gradient-to-r from-brand-500/10 via-purple-500/10 to-pink-500/10 rounded-lg p-6 border border-brand-500/20 max-w-md mx-auto">
 				<div className="flex items-center justify-center gap-3 mb-4">
 					<BrandIcons.Mail className="w-6 h-6 text-brand-400" />
 					<span className="text-lg font-semibold text-white">Check Your Email</span>

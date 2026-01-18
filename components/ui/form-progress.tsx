@@ -95,7 +95,7 @@ export function FormProgress({
 							<motion.p
 								initial={{ opacity: 0, y: -10 }}
 								animate={{ opacity: 1, y: 0 }}
-								className="text-xs text-red-400 mt-1"
+								className="text-xs text-error mt-1"
 							>
 								{step.error}
 							</motion.p>
@@ -139,10 +139,10 @@ export function ValidationFeedback({
 	};
 
 	const colors = {
-		success: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-		error: "text-red-400 bg-red-500/10 border-red-500/20",
-		warning: "text-amber-400 bg-amber-500/10 border-amber-500/20",
-		info: "text-blue-400 bg-blue-500/10 border-blue-500/20"
+		success: "text-success bg-emerald-500/10 border-emerald-500/20",
+		error: "text-error bg-red-500/10 border-red-500/20",
+		warning: "text-warning bg-amber-500/10 border-amber-500/20",
+		info: "text-info bg-blue-500/10 border-blue-500/20"
 	};
 
 	const IconComponent = icons[type];
@@ -213,7 +213,7 @@ export function SmartFormField({
 			<div className="flex items-center justify-between">
 				<label htmlFor={id} className="text-base font-bold text-white flex items-center gap-2">
 					{label}
-					{required && <span className="text-red-400">*</span>}
+					{required && <span className="text-error">*</span>}
 				</label>
 				{help && (
 					<div className="text-xs text-zinc-400 cursor-help" title={help}>

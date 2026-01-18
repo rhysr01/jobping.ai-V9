@@ -27,10 +27,10 @@ export default function Footer() {
 					whileInView={{ opacity: 1, y: 0 }}
 					viewport={{ once: true }}
 					transition={{ duration: 0.6 }}
-					className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12"
+					className="grid grid-cols-1 md:grid-cols-2 gap-8"
 				>
 					{/* Left: Logo + Tagline */}
-					<div className="flex flex-col gap-4">
+					<div className="flex flex-col gap-6">
 						{/* Logo with icon */}
 						<div className="flex items-center gap-3">
 							<div className="scale-75 origin-left">
@@ -44,13 +44,13 @@ export default function Footer() {
 					</div>
 
 					{/* Right: System Status + Links */}
-					<div className="flex flex-col items-start md:items-end gap-5">
+					<div className="flex flex-col items-start md:items-end gap-6">
 						{/* Enhanced Status Link */}
 						<Link
 							href="https://status.getjobping.com"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="group inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.03] backdrop-blur-sm border border-white/10 hover:bg-white/[0.05] hover:border-emerald-500/30 transition-all"
+							className="group inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/[0.03] backdrop-blur-sm border border-white/10 hover:bg-white/[0.05] hover:border-emerald-500/30 transition-all"
 						>
 							<span className="relative flex h-2 w-2">
 								<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -78,12 +78,12 @@ export default function Footer() {
 						</Link>
 
 						{/* Enhanced Navigation Links */}
-						<nav className="flex flex-wrap items-center gap-3 md:justify-end">
+						<nav className="flex flex-wrap items-center gap-4 md:justify-end">
 							{links.map((link) => (
 								<Link
 									key={link.href}
 									href={link.href}
-									className="group relative text-xs text-zinc-400 hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/5"
+									className="group relative text-xs text-zinc-400 hover:text-emerald-400 transition-colors inline-flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-white/5"
 								>
 									<span>{link.label}</span>
 									<svg
@@ -138,7 +138,7 @@ export default function Footer() {
 					transition={{ duration: 0.6, delay: 0.2 }}
 					className="mt-10 pt-8 border-t border-white/5"
 				>
-					<div className="flex flex-col md:flex-row items-center justify-between gap-4">
+					<div className="flex flex-col md:flex-row items-center justify-between gap-6">
 						<p className="text-xs text-zinc-500">
 							© {new Date().getFullYear()} JobPing. All rights reserved.
 						</p>

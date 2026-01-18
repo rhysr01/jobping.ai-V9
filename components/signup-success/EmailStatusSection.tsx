@@ -20,13 +20,13 @@ export function EmailStatusSection({
 			<div className="flex items-start justify-between mb-4">
 				<div className="flex items-center gap-3">
 					<div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-						<BrandIcons.Check className="w-5 h-5 text-green-400" />
+						<BrandIcons.Check className="w-5 h-5 text-success" />
 					</div>
 					<div>
 						<h3 className="text-lg font-semibold text-white">
 							Welcome to JobPing Premium!
 						</h3>
-						<p className="text-sm text-green-400">
+						<p className="text-sm text-success">
 							Account created • Email sent at {emailSentAt}
 						</p>
 					</div>
@@ -41,12 +41,12 @@ export function EmailStatusSection({
 							{emailStatus.sent ? "Email sent successfully" : "Sending welcome email..."}
 						</p>
 						{emailStatus.sentAt && (
-							<p className="text-xs text-green-400">
+							<p className="text-xs text-success">
 								Delivered at {emailStatus.sentAt}
 							</p>
 						)}
 						{emailStatus.error && (
-							<p className="text-xs text-red-400">{emailStatus.error}</p>
+							<p className="text-xs text-error">{emailStatus.error}</p>
 						)}
 					</div>
 					{!emailStatus.sent && !emailStatus.retrying && (

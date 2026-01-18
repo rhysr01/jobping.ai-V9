@@ -81,7 +81,7 @@ export function ErrorRecovery({
 		>
 			{/* Error Icon */}
 			<div className="w-16 h-16 mx-auto mb-4 bg-red-500/10 rounded-full flex items-center justify-center">
-				<IconComponent className="w-8 h-8 text-red-400" />
+				<IconComponent className="w-8 h-8 text-error" />
 			</div>
 
 			{/* Error Message */}
@@ -128,7 +128,7 @@ export function ErrorRecovery({
 					</CustomButton>
 				)}
 				<CustomButton
-					variant="outline"
+					variant="secondary"
 					size="sm"
 					onClick={() => {
 						showToast.success("Support email copied to clipboard");

@@ -36,10 +36,10 @@ export function IPhoneShell({
 
 			{/* 2. Status Bar */}
 			<div className="absolute top-0 left-0 right-0 h-10 flex items-end justify-between px-7 pb-1 z-40 pointer-events-none">
-				<span className="text-[11px] font-bold text-white tracking-tight">
+				<span className="text-xs font-bold text-white tracking-tight">
 					9:41
 				</span>
-				<div className="flex items-center gap-1.5">
+				<div className="flex items-center gap-2">
 					{/* Signal bars */}
 					<svg
 						className="w-3.5 h-3.5 text-white"
@@ -60,9 +60,9 @@ export function IPhoneShell({
 			<div className="h-full pt-10 pb-6 overflow-hidden relative flex flex-col">
 				{showMailHeader && (
 					<div className="h-12 border-b border-white/10 flex items-center px-6 bg-zinc-900/50 backdrop-blur-md shrink-0">
-						<span className="text-blue-400 text-sm font-medium">‹ Inbox</span>
+						<span className="text-info text-sm font-medium">‹ Inbox</span>
 						<div className="flex-1 text-center">
-							<p className="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold">
+							<p className="text-xs text-zinc-400 uppercase tracking-widest font-semibold">
 								JOBPING MATCH
 							</p>
 						</div>

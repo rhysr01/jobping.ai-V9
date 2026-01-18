@@ -11,7 +11,7 @@ export function NextStepsSection({ email }: NextStepsSectionProps) {
 		<div className="bg-white/5 rounded-2xl p-6 border border-white/10">
 			<div className="flex items-center gap-3 mb-6">
 				<div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-					<BrandIcons.CheckCircle className="w-5 h-5 text-green-400" />
+					<BrandIcons.CheckCircle className="w-5 h-5 text-success" />
 				</div>
 				<div>
 					<h3 className="text-lg font-semibold text-white">
@@ -26,7 +26,7 @@ export function NextStepsSection({ email }: NextStepsSectionProps) {
 			<div className="space-y-4">
 				<div className="flex items-start gap-3 p-4 bg-green-500/10 rounded-xl border border-green-500/20">
 					<div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center mt-0.5">
-						<span className="text-xs text-green-400 font-bold">1</span>
+						<span className="text-xs text-success font-bold">1</span>
 					</div>
 					<div>
 						<h4 className="text-sm font-semibold text-white mb-1">
@@ -34,14 +34,14 @@ export function NextStepsSection({ email }: NextStepsSectionProps) {
 						</h4>
 						<p className="text-sm text-content-secondary">
 							Your first batch of personalized job matches is on its way to{" "}
-							<span className="text-green-400 font-medium">{email}</span>
+							<span className="text-success font-medium">{email}</span>
 						</p>
 					</div>
 				</div>
 
 				<div className="flex items-start gap-3 p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
 					<div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center mt-0.5">
-						<span className="text-xs text-blue-400 font-bold">2</span>
+						<span className="text-xs text-info font-bold">2</span>
 					</div>
 					<div>
 						<h4 className="text-sm font-semibold text-white mb-1">
@@ -55,7 +55,7 @@ export function NextStepsSection({ email }: NextStepsSectionProps) {
 
 				<div className="flex items-start gap-3 p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
 					<div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center mt-0.5">
-						<span className="text-xs text-purple-400 font-bold">3</span>
+						<span className="text-xs text-brand-500 font-bold">3</span>
 					</div>
 					<div>
 						<h4 className="text-sm font-semibold text-white mb-1">

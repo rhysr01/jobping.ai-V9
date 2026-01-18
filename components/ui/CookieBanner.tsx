@@ -5,6 +5,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import CustomButton from "./CustomButton";
 
+// Mobile CTA visibility constants
+const MOBILE_CTA_TRIGGERS = {
+	SHOW_THRESHOLD: 0.8,  // Show mobile CTA after scrolling 80% of viewport height
+} as const;
+
 export default function CookieBanner() {
 	const [isVisible, setIsVisible] = useState(false);
 	const [mobileCTAVisible, setMobileCTAVisible] = useState(false);
@@ -32,7 +37,7 @@ export default function CookieBanner() {
 				// Show mobile CTA after scrolling past hero section
 				const scrollY = window.scrollY;
 				const windowHeight = window.innerHeight;
-				setMobileCTAVisible(scrollY > windowHeight * 0.8);
+				setMobileCTAVisible(scrollY > windowHeight * MOBILE_CTA_TRIGGERS.SHOW_THRESHOLD);
 			} else {
 				setMobileCTAVisible(false);
 			}
@@ -111,15 +116,15 @@ export default function CookieBanner() {
 									<p className="text-sm sm:text-base text-white font-medium leading-relaxed">
 										We use cookies to improve your experience and analyze site
 										usage.{" "}
-										<span className="text-content-secondary">
+										<span className="text-zinc-400">
 											Essential cookies are always active.
 										</span>
 									</p>
-									<p className="text-xs sm:text-sm text-content-muted">
+									<p className="text-xs sm:text-sm text-zinc-500">
 										Learn more in our{" "}
 										<Link
 											href="/legal/privacy"
-											className="text-brand-400 hover:text-brand-300 underline decoration-brand-400/30 underline-offset-4 hover:decoration-brand-300/50 transition-colors"
+											className="text-brand-500 hover:text-brand-600 underline decoration-brand-500/30 underline-offset-4 hover:decoration-brand-600/50 transition-colors"
 										>
 											Privacy Policy
 										</Link>

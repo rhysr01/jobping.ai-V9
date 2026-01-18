@@ -1,3 +1,5 @@
+import { config as dotenvConfig } from "dotenv";
+import { resolve } from "path";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
@@ -8,6 +10,9 @@ import { VercelMCP } from "./vercel-mcp.ts";
 import { SupabaseMCP } from "./supabase-mcp.ts";
 import { BraveSearchMCP } from "./bravesearch-mcp.ts";
 import { PuppeteerMCP } from "./puppeteer-mcp.ts";
+
+// Load environment variables from .env.local
+dotenvConfig({ path: resolve(process.cwd(), ".env.local") });
 
 class JobPingMCPServer {
   private server: Server;

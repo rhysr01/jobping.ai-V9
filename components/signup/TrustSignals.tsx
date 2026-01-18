@@ -33,7 +33,7 @@ export function TrustSignals({
 			<div className="flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-400 px-4">
 				<div className="flex items-center gap-1.5">
 					<svg
-						className="w-4 h-4 text-green-500"
+						className="w-4 h-4 text-success"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -50,7 +50,7 @@ export function TrustSignals({
 				<span className="text-zinc-700">·</span>
 				<div className="flex items-center gap-1.5">
 					<svg
-						className="w-4 h-4 text-green-500"
+						className="w-4 h-4 text-success"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"

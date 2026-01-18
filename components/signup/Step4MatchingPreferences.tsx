@@ -208,9 +208,9 @@ export const Step4MatchingPreferences = React.memo(function Step4MatchingPrefere
 							<span
 								className={`text-xs font-medium ${
 									formData.careerKeywords.length > 180
-										? "text-red-400"
+										? "text-error"
 										: formData.careerKeywords.length > 150
-											? "text-yellow-400"
+											? "text-warning"
 											: "text-zinc-400"
 								}`}
 							>
@@ -322,7 +322,7 @@ export const Step4MatchingPreferences = React.memo(function Step4MatchingPrefere
 									. You can unsubscribe at any time.
 								</p>
 								{!formData.gdprConsent && (
-									<p id="gdpr-error-step4" className="mt-2 text-sm text-red-400 flex items-center gap-2 font-medium" role="alert" aria-live="polite">
+									<p id="gdpr-error-step4" className="mt-2 text-sm text-error flex items-center gap-2 font-medium" role="alert" aria-live="polite">
 										<span>⚠️</span>
 										<span>You must agree to receive job matches to continue</span>
 									</p>

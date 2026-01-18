@@ -711,7 +711,7 @@ async function processIncomingJob(job, options = {}) {
 	}
 
 	// Determine if job has rich context (long description, URL, etc.)
-	const hasRichContext = description.length > 100 && jobUrl && jobUrl !== "#";
+	const hasRichContext = (description && description.length > 100) && jobUrl && jobUrl !== "#";
 
 	console.log(
 		`[Processor] ✅ Accepting job with ${description.length} chars (rich context: ${hasRichContext})`,

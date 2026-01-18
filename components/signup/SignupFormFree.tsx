@@ -4,11 +4,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Suspense, useCallback, useRef, useState } from "react";
 import ErrorBoundary from "../../components/error-boundary";
-import { useReducedMotion } from "../ui/useReducedMotion";
+import { PageLoading } from "../ui/skeletons";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
 import {
 	useEmailValidation,
-	useRequiredValidation,
 } from "@/hooks/useFormValidation";
 import { ApiError, apiCallJson } from "@/lib/api-client";
 import { TIMING } from "@/lib/constants";
@@ -50,7 +49,6 @@ function SignupFormFree() {
 		toggleArrayValue,
 	} = signupState;
 
-	const prefersReduced = useReducedMotion();
 	const { announce, Announcement } = useAriaAnnounce();
 	const formRefs = {
 		fullName: useRef<HTMLInputElement>(null),
@@ -82,7 +80,6 @@ function SignupFormFree() {
 
 	// Form validation hooks
 	const emailValidation = useEmailValidation(formData.email);
-	const nameValidation = useRequiredValidation(formData.fullName, "Full name");
 
 	// Update navigation hook with proper email validation
 	const navigation = useSignupNavigation({
@@ -196,14 +193,9 @@ function SignupFormFree() {
 				className="absolute inset-0 enhanced-grid opacity-30"
 				aria-hidden="true"
 			/>
-			<motion.div
-				className="absolute top-20 right-10 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl hidden sm:block"
-				animate={
-					prefersReduced
-						? { scale: 1, opacity: 0.3 }
-						: { scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }
-				}
-				transition={{ duration: 8, repeat: prefersReduced ? 0 : Infinity }}
+			{/* Remove performance-killing infinite animation */}
+			<div
+				className="absolute top-20 right-10 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl hidden sm:block opacity-30"
 				aria-hidden="true"
 			/>
 
@@ -241,12 +233,15 @@ function SignupFormFree() {
 							</div>
 							<p className="text-white font-medium text-lg">{submissionStage}</p>
 							<p className="text-zinc-400 text-sm mt-1">Finding your perfect job matches...</p>
+							<div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+								<span className="text-sm font-medium text-emerald-200">🚀 Searching 847+ jobs in your selected cities</span>
+							</div>
 						</motion.div>
 					)}
 
 					{/* Step content */}
 					<div className="text-white text-center">
-						{step === 1 && <Step1FreeBasics key="step1" formData={formData} setFormData={setFormData as any} touchedFields={new Set()} setTouchedFields={() => {}} fieldErrors={{}} setFieldErrors={() => {}} announce={announce} loading={loading} setStep={navigation.navigateToStep} emailValidation={emailValidation} nameValidation={nameValidation} shouldShowError={shouldShowError} getDisabledMessage={getDisabledMessage} />}
+						{step === 1 && <Step1FreeBasics key="step1" formData={formData} setFormData={setFormData as any} touchedFields={new Set()} setTouchedFields={() => {}} fieldErrors={{}} setFieldErrors={() => {}} announce={announce} loading={loading} setStep={navigation.navigateToStep} emailValidation={emailValidation} shouldShowError={shouldShowError} getDisabledMessage={getDisabledMessage} />}
 						{step === 2 && <Step2FreeCities key="step2" formData={formData} setFormData={setFormData as any} touchedFields={new Set()} setTouchedFields={() => {}} loading={loading} setStep={navigation.navigateToStep} shouldShowError={shouldShowError} getDisabledMessage={getDisabledMessage} toggleArray={toggleArrayValue as any} />}
 						{step === 3 && <Step3FreeCareer key="step3" formData={formData} setFormData={setFormData as any} touchedFields={new Set()} setTouchedFields={() => {}} loading={loading} setStep={navigation.navigateToStep} handleSubmit={handleSubmit} />}
 					</div>
@@ -267,9 +262,10 @@ export default function SignupFormFreeWrapper() {
 		<ErrorBoundary>
 			<Suspense
 				fallback={
-					<div className="min-h-screen bg-black flex items-center justify-center">
-						<div className="text-white text-xl">Loading...</div>
-					</div>
+					<PageLoading
+						title="Finding your perfect matches"
+						subtitle="This takes just a moment..."
+					/>
 				}
 			>
 				<SignupFormFree />

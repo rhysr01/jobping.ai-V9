@@ -5,11 +5,6 @@ import React from "react";
 import { SharedFormField } from "../ui/SharedFormField";
 import { MobileNavigation } from "./MobileNavigation";
 import { showToast } from "../../lib/toast";
-import {
-	HoverCard,
-	HoverCardContent,
-	HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import type { SignupFormData } from "./types";
 
 interface Step1FreeBasicsProps {
@@ -23,7 +18,6 @@ interface Step1FreeBasicsProps {
 	loading: boolean;
 	setStep: (step: number) => void;
 	emailValidation: { isValid: boolean; error?: string };
-	nameValidation: { isValid: boolean; error?: string };
 	shouldShowError: (
 		fieldName: string,
 		hasValue: boolean,
@@ -43,22 +37,12 @@ export const Step1FreeBasics = React.memo(function Step1FreeBasics({
 	loading,
 	setStep,
 	emailValidation,
-	nameValidation,
 	shouldShowError,
 	getDisabledMessage,
 }: Step1FreeBasicsProps) {
 
-	const handleNameChange = (value: string) => {
-		setFormData({ ...formData, fullName: value });
-		setFieldErrors((prev) => {
-			const next = { ...prev };
-			delete next.fullName;
-			return next;
-		});
-	};
-
-	const handleEmailChange = (value: string) => {
-		setFormData({ ...formData, email: value });
+	const handleEmailChange = (value: string | boolean) => {
+		setFormData({ ...formData, email: typeof value === 'string' ? value : '' });
 		setFieldErrors((prev) => {
 			const next = { ...prev };
 			delete next.email;
@@ -66,14 +50,6 @@ export const Step1FreeBasics = React.memo(function Step1FreeBasics({
 		});
 	};
 
-	const handleNameBlur = () => {
-		setTouchedFields((prev) => new Set(prev).add("fullName"));
-		if (!formData.fullName.trim() && formData.fullName.length > 0) {
-			announce("Full name is required", "assertive");
-		} else if (formData.fullName.trim().length > 0) {
-			announce("Full name is valid", "polite");
-		}
-	};
 
 	// Keyboard navigation enhancement
 	const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -97,7 +73,7 @@ export const Step1FreeBasics = React.memo(function Step1FreeBasics({
 	};
 
 
-	const isStepValid = formData.fullName.trim() && formData.email.trim() && emailValidation.isValid;
+	const isStepValid = formData.email.trim() && emailValidation.isValid;
 
 	return (
 		<motion.div
@@ -113,59 +89,34 @@ export const Step1FreeBasics = React.memo(function Step1FreeBasics({
 		>
 			<div className="mb-6 sm:mb-8">
 				<h2 id="step1-heading" className="text-display-md font-black text-white mb-2 sm:mb-3 bg-gradient-to-r from-white to-zinc-200 bg-clip-text text-transparent">
-					Let's get started
+					Get your matches
 				</h2>
 				<p className="text-base sm:text-lg font-medium text-zinc-100 leading-relaxed">
-					Tell us about yourself to find your perfect matches
+					Enter your email to receive 5 personalized job matches instantly
 				</p>
+				<div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+					<span className="text-sm font-medium text-emerald-200">⚡ Free • Instant • No commitment</span>
+				</div>
 			</div>
 
 			<div className="space-y-6">
-				<SharedFormField
-					id="fullName"
-					label="Full Name"
-					required
-					type="text"
-					value={formData.fullName}
-					onChange={handleNameChange}
-					onBlur={handleNameBlur}
-					placeholder="John Smith"
-					error={fieldErrors.fullName || (shouldShowError("fullName", formData.fullName.length > 0, nameValidation.isValid) ? nameValidation.error : undefined)}
-					success={formData.fullName.length > 0 && nameValidation.isValid ? "Looks good!" : undefined}
-					autoComplete="name"
-					inputMode="text"
-				/>
-
-				<HoverCard>
-					<HoverCardTrigger asChild>
-						<div>
-							<SharedFormField
-								id="email"
-								label="Email"
-								required
-								type="email"
-								value={formData.email}
-								onChange={handleEmailChange}
-								onBlur={handleEmailBlur}
-								placeholder="you@example.com"
-								helpText="Get 5 instant matches - no spam, no commitment"
-								error={fieldErrors.email || (shouldShowError("email", formData.email.length > 0, emailValidation.isValid) ? emailValidation.error : undefined)}
-								success={formData.email.length > 0 && emailValidation.isValid ? "Email looks good!" : undefined}
-								autoComplete="email"
-								inputMode="email"
-							/>
-						</div>
-					</HoverCardTrigger>
-					<HoverCardContent className="w-80 p-4" side="right">
-						<div className="space-y-2">
-							<p className="text-sm font-semibold text-white">📧 Your privacy matters</p>
-							<p className="text-xs text-zinc-300 leading-relaxed">
-								We'll only send you personalized job matches - never spam or share your email.
-								You can unsubscribe anytime with one click.
-							</p>
-						</div>
-					</HoverCardContent>
-				</HoverCard>
+				<div className="max-w-md mx-auto">
+					<SharedFormField
+						id="email"
+						label="Enter your email"
+						required
+						type="email"
+						value={formData.email}
+						onChange={handleEmailChange}
+						onBlur={handleEmailBlur}
+						placeholder="you@example.com"
+						helpText="Get 5 instant job matches - no spam, no commitment"
+						error={fieldErrors.email || (shouldShowError("email", formData.email.length > 0, emailValidation.isValid) ? emailValidation.error : undefined)}
+						success={formData.email.length > 0 && emailValidation.isValid ? "Perfect! ✓" : undefined}
+						autoComplete="email"
+						inputMode="email"
+					/>
+				</div>
 			</div>
 
 			{/* Spacer for sticky navigation */}

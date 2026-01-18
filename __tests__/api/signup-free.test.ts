@@ -376,17 +376,6 @@ describe("Free Signup Route - E2E Flow Tests", () => {
 	});
 
 	test("validates duplicate email handling logic", () => {
-		const signupData = {
-			email: "duplicate-test@example.com",
-			full_name: "Duplicate Test User",
-			preferred_cities: ["Berlin"],
-			career_paths: ["tech"],
-			visa_sponsorship: "no",
-			birth_year: 1995,
-			age_verified: true,
-			terms_accepted: true,
-		};
-
 		// Test the expected response structure for duplicate emails
 		const expectedResponse = {
 			error: "account_already_exists",
@@ -445,17 +434,6 @@ describe("Free Signup Route - E2E Flow Tests", () => {
 	});
 
 	test("validates cookie settings for existing users", () => {
-		const signupData = {
-			email: "cookie-test@example.com",
-			full_name: "Cookie Test User",
-			preferred_cities: ["Berlin"],
-			career_paths: ["tech"],
-			visa_sponsorship: "no",
-			birth_year: 1995,
-			age_verified: true,
-			terms_accepted: true,
-		};
-
 		// Test expected cookie configuration
 		const expectedCookieOptions = {
 			httpOnly: true,

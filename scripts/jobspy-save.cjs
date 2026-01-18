@@ -12,6 +12,9 @@
 // In production/GitHub Actions, env vars are already set
 if (process.env.NODE_ENV !== "production" && !process.env.GITHUB_ACTIONS) {
     require("dotenv").config({ path: ".env.local" });
+} else if (!process.env.SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    // Fallback: try loading .env.local even in production if Supabase vars aren't set
+    require("dotenv").config({ path: ".env.local" });
 }
 const { spawnSync } = require("node:child_process");
 const { createClient } = require("@supabase/supabase-js");

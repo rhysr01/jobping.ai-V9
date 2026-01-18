@@ -97,3 +97,41 @@ export function Skeleton({ className }: SkeletonProps) {
 		/>
 	)
 }
+
+// Enhanced loading states with context
+export function PageLoading({ title = "Loading...", subtitle }: { title?: string; subtitle?: string }) {
+	return (
+		<div className="min-h-screen bg-black flex items-center justify-center">
+			<div className="text-center space-y-6">
+				<div className="w-16 h-16 border-4 border-brand-500/30 border-t-brand-500 rounded-full animate-spin mx-auto"></div>
+				<div className="space-y-2">
+					<h2 className="text-white text-xl font-semibold">{title}</h2>
+					{subtitle && <p className="text-zinc-400">{subtitle}</p>}
+				</div>
+			</div>
+		</div>
+	)
+}
+
+export function ContentLoading({ title = "Loading content...", className }: { title?: string; className?: string }) {
+	return (
+		<div className={cn("flex flex-col items-center justify-center py-12 space-y-4", className)}>
+			<div className="w-8 h-8 border-3 border-brand-500/30 border-t-brand-500 rounded-full animate-spin"></div>
+			<p className="text-zinc-400 text-sm">{title}</p>
+		</div>
+	)
+}
+
+export function FormLoading({ fields = 3, showButton = true }: { fields?: number; showButton?: boolean }) {
+	return (
+		<div className="space-y-6 animate-pulse">
+			{Array.from({ length: fields }).map((_, i) => (
+				<div key={i} className="space-y-2">
+					<div className="h-5 bg-zinc-700/50 rounded w-24" />
+					<div className="h-12 bg-zinc-700/50 rounded-xl" />
+				</div>
+			))}
+			{showButton && <div className="h-12 bg-zinc-700/50 rounded-xl w-full" />}
+		</div>
+	)
+}

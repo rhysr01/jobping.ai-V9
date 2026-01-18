@@ -60,7 +60,7 @@ export function JobList({
 							<HoverCard>
 								<HoverCardTrigger asChild>
 									<motion.div
-										className={`group relative rounded-2xl border-2 p-6 transition-all duration-300 cursor-pointer ${
+										className={`group relative rounded-lg border-2 p-6 transition-all duration-300 cursor-pointer ${
 											isClicked
 												? "border-brand-500 bg-brand-500/5 shadow-[0_0_30px_rgba(20,184,166,0.3)]"
 												: "border-border-default bg-surface-elevated/40 hover:border-border-default hover:shadow-lg"
@@ -70,6 +70,7 @@ export function JobList({
 									>
 								{/* Dismiss Button */}
 								<button
+									type="button"
 									onClick={() => onJobDismiss(job)}
 									disabled={isDismissing}
 									className="absolute top-4 right-4 z-10 rounded-full bg-zinc-800/80 p-2 text-zinc-400 opacity-0 shadow-sm transition-all hover:bg-zinc-700 hover:text-zinc-300 group-hover:opacity-100 disabled:opacity-50"
@@ -119,12 +120,12 @@ export function JobList({
 								{job.visa_confidence && job.visa_confidence !== "unknown" && (
 									<div className="mb-4">
 										<span
-											className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
+											className={`inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs font-medium ${
 												job.visa_confidence === "verified"
-													? "bg-green-100 text-green-800 border-green-200"
+													? "bg-success/10 text-success border-success/20"
 													: job.visa_confidence === "likely"
-													? "bg-yellow-100 text-yellow-800 border-yellow-200"
-													: "bg-gray-100 text-gray-800 border-gray-200"
+													? "bg-warning/10 text-warning border-warning/20"
+													: "bg-zinc-800/50 text-zinc-400 border-zinc-700"
 											}`}
 										>
 											{job.visa_confidence_percentage && (
@@ -224,7 +225,7 @@ export function JobList({
 													: "bg-gray-400"
 											}`} />
 											<div>
-												<p className="font-semibold text-blue-400">
+												<p className="font-semibold text-info">
 													{job.visa_confidence === "verified"
 														? "Verified Visa Sponsor"
 														: job.visa_confidence === "likely"
@@ -232,7 +233,7 @@ export function JobList({
 														: "Local Only"}
 												</p>
 												{job.visa_confidence_percentage && (
-													<p className="text-xs text-blue-300">
+													<p className="text-xs text-info/80">
 														{job.visa_confidence_percentage}% confidence
 													</p>
 												)}
@@ -277,7 +278,7 @@ export function JobList({
 							<motion.div
 								initial={{ opacity: 0, y: 10 }}
 								animate={{ opacity: 1, y: 0 }}
-								className="mt-6 rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-orange-500/10 p-4"
+								className="mt-6 rounded-lg border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-orange-500/10 p-4"
 							>
 								<p className="text-sm text-amber-200">
 									🎯 <strong>Want more matches?</strong> Upgrade to Premium for

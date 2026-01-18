@@ -73,6 +73,9 @@ export const Step3FreeCareer = React.memo(function Step3FreeCareer({
 				<p className="text-base sm:text-lg font-medium text-zinc-100 leading-relaxed">
 					Select your career path to get personalized matches
 				</p>
+				<div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20">
+					<span className="text-sm font-medium text-purple-200">🎉 Almost done - your matches are ready!</span>
+				</div>
 			</div>
 
 			<div>
@@ -82,7 +85,7 @@ export const Step3FreeCareer = React.memo(function Step3FreeCareer({
 					className="block text-base font-bold text-white mb-3 flex items-center gap-2"
 				>
 					<span>Career Path</span>
-					<span className="text-red-400 text-sm" aria-label="required">*</span>
+					<span className="text-error text-sm" aria-label="required">*</span>
 				</label>
 				<p id="career-help" className="text-sm text-zinc-400 mb-4 leading-relaxed">
 					Choose the type of role that interests you most. This helps us find the perfect matches.

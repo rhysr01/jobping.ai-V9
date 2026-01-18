@@ -10,7 +10,7 @@ interface EmptyStateProps {
 	action?: {
 		label: string;
 		href: string;
-		variant?: "primary" | "secondary" | "outline";
+		variant?: "primary" | "secondary" | "ghost";
 	};
 	className?: string;
 }
@@ -48,7 +48,7 @@ export function EmptyState({
 			{action && (
 				<Link href={action.href}>
 					<CustomButton
-						variant={action.variant || "outline"}
+						variant={action.variant || "secondary"}
 						size="md"
 					>
 						{action.label}
@@ -69,7 +69,7 @@ export function NoMatchesEmpty() {
 			action={{
 				label: "Update Preferences",
 				href: "/preferences",
-				variant: "outline"
+				variant: "secondary"
 			}}
 		/>
 	);
@@ -109,7 +109,7 @@ export function VisaJobsOnlyEmpty() {
 			action={{
 				label: "Update Search",
 				href: "/preferences",
-				variant: "outline"
+				variant: "secondary"
 			}}
 		/>
 	);

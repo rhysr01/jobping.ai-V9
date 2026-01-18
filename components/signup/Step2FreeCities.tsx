@@ -82,7 +82,7 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 		setTouchedFields((prev) => new Set(prev).add("cities"));
 	};
 
-	const isStepValid = formData.cities.length > 0;
+	const isStepValid = formData.fullName.trim() && formData.cities.length > 0;
 
 	return (
 		<motion.div
@@ -100,6 +100,24 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 				<p className="text-base sm:text-lg font-medium text-zinc-100 leading-relaxed">
 					Choose up to 3 cities for instant job matches
 				</p>
+				<div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20">
+					<span className="text-sm font-medium text-blue-200">🎯 Location matters for visa sponsorship</span>
+				</div>
+			</div>
+
+			{/* Name field first */}
+			<div className="mb-8 max-w-md mx-auto">
+				<label className="block text-base font-bold text-white mb-3">
+					What's your name?
+				</label>
+				<input
+					type="text"
+					value={formData.fullName}
+					onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+					placeholder="John Smith"
+					className="w-full px-4 py-4 bg-black/50 border-2 border-zinc-700 rounded-lg text-white placeholder-zinc-400 focus:border-emerald-500 focus:outline-none transition-all"
+					autoComplete="name"
+				/>
 			</div>
 
 			<div>
@@ -110,7 +128,7 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 						className="block text-base font-bold text-white flex items-center gap-2"
 					>
 						<span>Preferred Cities</span>
-						<span className="text-red-400 text-sm" aria-label="required">*</span>
+						<span className="text-error text-sm" aria-label="required">*</span>
 						<span className="text-zinc-400 font-normal text-sm">(Select up to 3)</span>
 					</label>
 					<HoverCard>

@@ -156,11 +156,11 @@ export function HeroMobileMockup({ stats: _stats, topMatch: _topMatch, preloaded
 										className="group relative"
 									>
 										{/* Glow effect on hover */}
-										<div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl opacity-0 group-hover:opacity-20 blur-lg transition-opacity duration-500" />
+										<div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg opacity-0 group-hover:opacity-20 blur-lg transition-opacity duration-500" />
 										
 										{/* Card */}
 										<div
-											className="relative rounded-2xl bg-white/[0.03] backdrop-blur-[12px] border border-white/8 p-2.5 transition-all duration-500 ease-out hover:bg-white/[0.06] hover:border-emerald-500/30 hover:-translate-y-1"
+											className="relative rounded-lg bg-white/[0.03] backdrop-blur-[12px] border border-white/8 p-2.5 transition-all duration-500 ease-out hover:bg-white/[0.06] hover:border-emerald-500/30 hover:-translate-y-1"
 											style={{
 												boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
 											}}
@@ -168,48 +168,48 @@ export function HeroMobileMockup({ stats: _stats, topMatch: _topMatch, preloaded
 											{/* Match Score & Company */}
 											<div className="flex items-center justify-between mb-1.5">
 												{/* Custom Match Badge - No Emoji */}
-												<div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg ${
+												<div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg ${
 													job.matchScore >= 92
 														? "bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-lg shadow-emerald-500/25"
 														: "bg-gradient-to-r from-purple-500 to-purple-600 shadow-lg shadow-purple-500/25"
 												}`}>
 													<div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-													<span className="text-[10px] font-bold text-white">
+													<span className="text-xs font-bold text-white">
 														{job.matchScore}% Match
 													</span>
 												</div>
-											<div className="text-[10px] font-semibold text-white truncate ml-2">
+											<div className="text-xs font-semibold text-white truncate ml-2">
 												{job.company}
 											</div>
 										</div>
 
 										{/* Job Title */}
-										<h3 className="text-[12px] font-bold text-white mb-1 leading-tight line-clamp-2">
+										<h3 className="text-sm font-bold text-white mb-1 leading-tight line-clamp-2">
 											{job.title}
 										</h3>
 
 										{/* Location */}
-										<div className="flex items-center gap-1 text-[10px] text-zinc-300 mb-1.5">
+										<div className="flex items-center gap-2 text-xs text-zinc-300 mb-1.5">
 											<MapPin size={10} className="shrink-0" />
 											{job.location}
 										</div>
 
 										{/* Match Reason */}
 										<div className="mb-1.5 p-1.5 bg-purple-500/15 border-l-2 border-purple-500 rounded">
-											<div className="text-[9px] font-semibold text-purple-400 uppercase tracking-wider mb-0.5">
+											<div className="text-xs font-semibold text-brand-500 uppercase tracking-wider mb-0.5">
 												Why This Matches
 											</div>
-											<p className="text-[10px] text-white leading-relaxed line-clamp-2">
+											<p className="text-xs text-white leading-relaxed line-clamp-2">
 												{job.matchReason}
 											</p>
 										</div>
 
 										{/* Tags */}
-										<div className="flex flex-wrap gap-1 mb-1.5">
-											<span className="px-1.5 py-0.5 rounded bg-purple-500/15 text-zinc-300 text-[9px] font-semibold">
+										<div className="flex flex-wrap gap-2 mb-1.5">
+											<span className="px-1.5 py-0.5 rounded bg-purple-500/15 text-zinc-300 text-xs font-semibold">
 												{job.workEnvironment}
 											</span>
-											<span className="px-1.5 py-0.5 rounded bg-purple-500/15 text-zinc-300 text-[9px] font-semibold">
+											<span className="px-1.5 py-0.5 rounded bg-purple-500/15 text-zinc-300 text-xs font-semibold">
 												{job.type}
 											</span>
 										</div>

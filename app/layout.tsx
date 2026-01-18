@@ -6,15 +6,15 @@ import type { Metadata } from "next";
 // export { reportWebVitals } from 'next-axiom';
 import { headers } from "next/headers";
 import Script from "next/script";
+import { KeyboardShortcuts } from "@/components/ui/keyboard-shortcuts";
+import { Toaster as Sonner, Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/ui/theme-provider";
 import ErrorBoundary from "../components/error-boundary";
 import FAQSchema from "../components/faq-schema";
 import Header from "../components/sections/header";
 import StructuredData from "../components/structured-data";
 import AnimatedBackground from "../components/ui/AnimatedBackground";
 import CookieBanner from "../components/ui/CookieBanner";
-import { Toaster } from "@/components/ui/sonner";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { KeyboardShortcuts } from "@/components/ui/keyboard-shortcuts";
 
 export const metadata: Metadata = {
 	title:
@@ -109,7 +109,7 @@ export default async function RootLayout({
 	const nonce = headersList.get("x-nonce") || "";
 
 	return (
-		<html lang="en" className="scroll-smooth">
+		<html lang="en" className="scroll-smooth" suppressHydrationWarning>
 			<head>
 				{/* Font preconnect for faster font loading */}
 				<link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -135,13 +135,15 @@ export default async function RootLayout({
 				<link rel="manifest" href="/manifest.json" />
 				<meta name="theme-color" content="#6d28d9" />
 				<meta name="mobile-web-app-capable" content="yes" />
-				<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+				<meta
+					name="apple-mobile-web-app-status-bar-style"
+					content="black-translucent"
+				/>
 				<meta name="apple-mobile-web-app-title" content="JobPing" />
 				<link rel="apple-touch-icon" href="/og-image.png" />
-				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: Schema.org structured data */}
 				<script
 					type="application/ld+json"
-					// Organization schema to complement SoftwareApplication
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: Safe JSON-LD structured data
 					dangerouslySetInnerHTML={{
 						__html: JSON.stringify({
 							"@context": "https://schema.org",
@@ -154,30 +156,40 @@ export default async function RootLayout({
 					}}
 				/>
 			</head>
-			<body className="text-white premium-bg custom-scrollbar relative" role="application" aria-label="JobPing - AI Job Matching Platform">
-				{/* Enhanced animated background */}
-				<AnimatedBackground />
-
-				<a
-					href="#main-content"
-					className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 z-50 bg-black/90 border border-white/20 rounded-md px-3 py-2 text-white text-sm font-medium backdrop-blur-sm shadow-lg hover:bg-black/95 transition-colors"
-					aria-label="Skip navigation to main content"
+			<body
+				className="text-foreground premium-bg custom-scrollbar relative"
+				role="application"
+				aria-label="JobPing - AI Job Matching Platform"
+			>
+				<ThemeProvider
+					attribute="class"
+					defaultTheme="dark"
+					enableSystem
+					disableTransitionOnChange
 				>
-					Skip to content
-				</a>
-				<Header />
-				<ErrorBoundary>{children}</ErrorBoundary>
-				<Toaster />
-				<Sonner />
-				<KeyboardShortcuts />
-				<CookieBanner />
-				{/* Google Analytics - deferred for better performance */}
-				<Script
-					src="https://www.googletagmanager.com/gtag/js?id=G-G40ZHDYNL6"
-					strategy="lazyOnload"
-				/>
-				<Script id="google-analytics" strategy="afterInteractive">
-					{`
+					{/* Enhanced animated background */}
+					<AnimatedBackground />
+
+					<a
+						href="#main-content"
+						className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 z-50 bg-black/90 border border-white/20 rounded-md px-3 py-2 text-white text-sm font-medium backdrop-blur-sm shadow-lg hover:bg-black/95 transition-colors"
+						aria-label="Skip navigation to main content"
+					>
+						Skip to content
+					</a>
+					<Header />
+					<ErrorBoundary>{children}</ErrorBoundary>
+					<Toaster />
+					<Sonner />
+					<KeyboardShortcuts />
+					<CookieBanner />
+					{/* Google Analytics - deferred for better performance */}
+					<Script
+						src="https://www.googletagmanager.com/gtag/js?id=G-G40ZHDYNL6"
+						strategy="lazyOnload"
+					/>
+					<Script id="google-analytics" strategy="afterInteractive">
+						{`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
@@ -193,16 +205,15 @@ export default async function RootLayout({
               anonymize_ip: true, // Anonymize IP addresses for GDPR
             });
           `}
-				</Script>
-				{/* PostHog Analytics - Session Replay & Feature Flags */}
-				{process.env.NEXT_PUBLIC_POSTHOG_KEY && (
-					/* biome-ignore lint/security/noDangerouslySetInnerHtml: Internal tracking script */
-					<Script
-						id="posthog"
-						strategy="lazyOnload"
-						nonce={nonce}
-						dangerouslySetInnerHTML={{
-							__html: `
+					</Script>
+					{/* PostHog Analytics - Session Replay & Feature Flags */}
+					{process.env.NEXT_PUBLIC_POSTHOG_KEY && (
+						<Script
+							id="posthog"
+							strategy="lazyOnload"
+							nonce={nonce}
+							dangerouslySetInnerHTML={{
+								__html: `
                 !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
                 var consent = typeof localStorage !== 'undefined' ? localStorage.getItem('cookie-consent') : null;
                 var isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -216,16 +227,17 @@ export default async function RootLayout({
                   }
                 });
               `,
-						}}
-					/>
-				)}
+							}}
+						/>
+					)}
 
-				{/* PWA Service Worker Registration - Only on mobile for better performance */}
-				<Script
-					id="pwa-registration"
-					strategy="afterInteractive"
-					dangerouslySetInnerHTML={{
-						__html: `
+					{/* PWA Service Worker Registration - Only on mobile for better performance */}
+					<Script
+						id="pwa-registration"
+						strategy="afterInteractive"
+						/* biome-ignore lint/security/noDangerouslySetInnerHtml: Safe PWA service worker script */
+						dangerouslySetInnerHTML={{
+							__html: `
               if ('serviceWorker' in navigator && window.innerWidth < 1024) {
                 window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js')
@@ -238,8 +250,9 @@ export default async function RootLayout({
                 });
               }
             `,
-					}}
-				/>
+						}}
+					/>
+				</ThemeProvider>
 			</body>
 		</html>
 	);

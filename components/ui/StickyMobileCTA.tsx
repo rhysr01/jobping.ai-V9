@@ -10,6 +10,13 @@ import {
 	CTA_GET_MY_5_FREE_MATCHES_ARIA,
 } from "../../lib/copy";
 
+// Scroll trigger constants for better maintainability
+const SCROLL_TRIGGERS = {
+	SHOW_CTA_THRESHOLD: 0.8,    // Show CTA after scrolling 80% of viewport height
+	HIDE_CTA_THRESHOLD: 3.0,    // Hide CTA when scrolling beyond 3x viewport height
+	RESET_CTA_THRESHOLD: 0.5,   // Reset CTA visibility when scrolling above 50% of viewport
+} as const;
+
 export default function StickyMobileCTA() {
 	const [isVisible, setIsVisible] = useState(false);
 	const [isUnderLarge, setIsUnderLarge] = useState(false);
@@ -29,10 +36,11 @@ export default function StickyMobileCTA() {
 			const scrollY = window.scrollY;
 			const windowHeight = window.innerHeight;
 
-			// Show CTA after scrolling past hero section (80vh) and hide when near top
-			if (scrollY > windowHeight * 0.8 && scrollY < windowHeight * 3) {
+			// Show CTA after scrolling past hero section and hide when near top
+			if (scrollY > windowHeight * SCROLL_TRIGGERS.SHOW_CTA_THRESHOLD &&
+				scrollY < windowHeight * SCROLL_TRIGGERS.HIDE_CTA_THRESHOLD) {
 				setIsVisible(true);
-			} else if (scrollY < windowHeight * 0.5) {
+			} else if (scrollY < windowHeight * SCROLL_TRIGGERS.RESET_CTA_THRESHOLD) {
 				setIsVisible(false);
 			}
 		};
