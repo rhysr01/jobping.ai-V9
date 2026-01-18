@@ -17,6 +17,7 @@ const buttonVariants = cva(
 				sm: "px-4 py-3 text-sm min-h-[52px] sm:min-h-[48px]", // Bigger on mobile for better touch targets
 				md: "px-6 py-4 text-sm sm:text-base min-h-[56px] sm:min-h-[48px]", // More generous mobile spacing
 				lg: "px-8 py-5 text-base sm:text-lg min-h-[64px] sm:min-h-[48px] w-full sm:w-auto", // Largest on mobile for primary CTAs
+				xl: "px-12 py-6 text-xl min-h-[72px] w-full sm:w-auto", // Extra large for hero CTAs
 				icon: "h-10 w-10 p-0", // Square icon button
 			},
 		},
