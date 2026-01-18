@@ -4,7 +4,6 @@ import { motion, useSpring, useTransform } from "framer-motion";
 import { BookOpen, MapPin, Award, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import GlassCard from "../ui/GlassCard";
-import GradientText from "../ui/GradientText";
 import Heading from "../ui/Heading";
 import { JobStatsDisclaimer } from "../ui/JobStatsDisclaimer";
 import { cn } from "../../lib/classname-utils";
