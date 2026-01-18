@@ -23,7 +23,7 @@ export interface UseSignupFormReturn {
 	emailValidation: ReturnType<typeof useEmailValidation>;
 	nameValidation: ReturnType<typeof useRequiredValidation>;
 	citiesValidation: ReturnType<typeof useRequiredValidation>;
-	visaSponsorshipValidation: ReturnType<typeof useRequiredValidation>;
+	visaStatusValidation: ReturnType<typeof useRequiredValidation>;
 	isFormValid: boolean;
 	formProgress: number;
 	shouldShowError: (fieldName: string, hasValue: boolean, isValid: boolean) => boolean;
@@ -58,11 +58,20 @@ export function useSignupForm(): UseSignupFormReturn {
 
 	const [formData, setFormData] = useState<SignupFormData>({
 		cities: [],
-		careerPath: "",
+		careerPath: [],
 		email: "",
 		fullName: "",
 		university: "",
-		visaSponsorship: "",
+		visaStatus: "",
+		languages: [],
+		workEnvironment: [],
+		entryLevelPreferences: [],
+		targetCompanies: [],
+		roles: [],
+		industries: [],
+		companySizePreference: "",
+		skills: [],
+		careerKeywords: "",
 		gdprConsent: false,
 		birthYear: undefined,
 		ageVerified: false,
@@ -92,7 +101,7 @@ export function useSignupForm(): UseSignupFormReturn {
 
 	// Form persistence
 	const { clearProgress } = useFormPersistence(
-		formData,
+		formData as any,
 		setFormData as any,
 		{ tier: 'free', hasStep: false },
 	);
@@ -101,7 +110,7 @@ export function useSignupForm(): UseSignupFormReturn {
 	const emailValidation = useEmailValidation(formData.email);
 	const nameValidation = useRequiredValidation(formData.fullName, "Full name");
 	const citiesValidation = useRequiredValidation(formData.cities, "Preferred cities");
-	const visaSponsorshipValidation = useRequiredValidation(formData.visaSponsorship, "Visa sponsorship");
+	const visaStatusValidation = useRequiredValidation(formData.visaStatus, "Visa status");
 
 	// Memoized helper functions
 	const toggleArray = useCallback((arr: string[], value: string) => {
@@ -128,8 +137,8 @@ export function useSignupForm(): UseSignupFormReturn {
 				return formData.fullName.length > 3;
 			}
 
-			if (fieldName === "visaSponsorship" && hasValue && !isValid) {
-				return formData.visaSponsorship.length > 0;
+			if (fieldName === "visaStatus" && hasValue && !isValid) {
+				return formData.visaStatus.length > 0;
 			}
 
 			return touchedFields.has(fieldName) && hasValue && !isValid;
@@ -138,7 +147,7 @@ export function useSignupForm(): UseSignupFormReturn {
 			touchedFields,
 			formData.email,
 			formData.fullName,
-			formData.visaSponsorship,
+			formData.visaStatus,
 		],
 	);
 
@@ -175,7 +184,7 @@ export function useSignupForm(): UseSignupFormReturn {
 						body: JSON.stringify({
 							cities: formData.cities,
 							careerPath: formData.careerPath,
-							visaSponsorship: formData.visaSponsorship || undefined,
+							visaStatus: formData.visaStatus || undefined,
 						}),
 					});
 					setJobCount(data.count || 0);
@@ -207,7 +216,7 @@ export function useSignupForm(): UseSignupFormReturn {
 				clearTimeout(newTimeoutId);
 			}
 		};
-	}, [formData.cities, formData.careerPath, formData.visaSponsorship]);
+	}, [formData.cities, formData.careerPath, formData.visaStatus]);
 
 	// Calculate form completion percentage
 	const formProgress = useMemo(() => {
@@ -216,13 +225,13 @@ export function useSignupForm(): UseSignupFormReturn {
 		if (formData.careerPath) completed++;
 		if (formData.email && emailValidation.isValid) completed++;
 		if (formData.fullName && nameValidation.isValid) completed++;
-		if (formData.visaSponsorship && visaSponsorshipValidation.isValid) completed++;
+		if (formData.visaStatus && visaStatusValidation.isValid) completed++;
 		return (completed / 5) * 100;
 	}, [
 		formData,
 		emailValidation.isValid,
 		nameValidation.isValid,
-		visaSponsorshipValidation.isValid,
+		visaStatusValidation.isValid,
 	]);
 
 	// Memoized computed values
@@ -232,7 +241,7 @@ export function useSignupForm(): UseSignupFormReturn {
 			Boolean(formData.careerPath) &&
 			Boolean(emailValidation.isValid) &&
 			Boolean(nameValidation.isValid) &&
-			Boolean(visaSponsorshipValidation.isValid) &&
+			Boolean(visaStatusValidation.isValid) &&
 			Boolean(formData.ageVerified) &&
 			Boolean(formData.termsAccepted) &&
 			Boolean(formData.gdprConsent),
@@ -241,7 +250,7 @@ export function useSignupForm(): UseSignupFormReturn {
 			formData.careerPath,
 			emailValidation.isValid,
 			nameValidation.isValid,
-			visaSponsorshipValidation.isValid,
+			visaStatusValidation.isValid,
 			formData.ageVerified,
 			formData.termsAccepted,
 			formData.gdprConsent,
@@ -326,7 +335,7 @@ export function useSignupForm(): UseSignupFormReturn {
 		emailValidation,
 		nameValidation,
 		citiesValidation,
-		visaSponsorshipValidation,
+		visaStatusValidation,
 		isFormValid,
 		formProgress,
 		shouldShowError,

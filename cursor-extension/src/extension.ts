@@ -39,7 +39,6 @@ class SentryMCP {
         return '❌ Sentry MCP not configured. Please set SENTRY_AUTH_TOKEN, SENTRY_ORG, and SENTRY_PROJECT environment variables.';
       }
 
-      const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
       const url = `https://sentry.io/api/0/organizations/${this.org}/issues/?statsPeriod=${hours}h`;
 
       const response = await fetch(url, {
@@ -86,7 +85,6 @@ class SentryMCP {
         return '❌ Sentry MCP not configured. Please set environment variables first.';
       }
 
-      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
       const url = `https://sentry.io/api/0/organizations/${this.org}/issues/?statsPeriod=${days * 24}h`;
 
       const response = await fetch(url, {

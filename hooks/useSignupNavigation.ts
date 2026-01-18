@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
-import type { SignupFormData } from "./useSignupState";
+import type { SignupFormData } from "../components/signup/types";
 
 interface UseSignupNavigationProps {
 	step: number;

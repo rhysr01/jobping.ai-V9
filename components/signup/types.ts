@@ -5,6 +5,7 @@ export interface SignupFormData {
 	languages: string[];
 	workEnvironment: string[];
 	visaStatus: string;
+	visaSponsorship?: string; // For backward compatibility with free signup
 	entryLevelPreferences: string[];
 	targetCompanies: string[];
 	careerPath: string[];

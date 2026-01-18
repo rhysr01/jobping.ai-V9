@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import React from "react";
 import { SharedFormField } from "../ui/SharedFormField";
-import { MobileNavigation } from "./MobileNavigation";
 import { showToast } from "../../lib/toast";
 import type { SignupFormData } from "./types";
 

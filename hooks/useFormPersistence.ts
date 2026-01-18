@@ -32,7 +32,6 @@ interface PremiumFormData extends BaseFormData {
 
 interface FreeFormData extends BaseFormData {
 	cities: string[];
-	careerPath: string[];
 	email: string;
 	fullName: string;
 	visaSponsorship: string;
@@ -100,9 +99,27 @@ export function useFormPersistence(
 		if (!shouldSave) return;
 
 		try {
+			let formDataToSave = formData;
+
+			// Convert SignupFormData to FreeFormData for free tier
+			if (tier === 'free') {
+				const signupData = formData as any; // SignupFormData
+				formDataToSave = {
+					email: signupData.email,
+					fullName: signupData.fullName,
+					cities: signupData.cities,
+					careerPath: signupData.careerPath?.[0] || '', // Convert array to string
+					visaSponsorship: signupData.visaSponsorship,
+					gdprConsent: signupData.gdprConsent,
+					birthYear: signupData.birthYear,
+					ageVerified: signupData.ageVerified,
+					termsAccepted: signupData.termsAccepted,
+				} as FreeFormData;
+			}
+
 			const state: SavedFormState = {
 				version: STORAGE_VERSION,
-				formData,
+				formData: formDataToSave,
 				timestamp: Date.now(),
 			};
 
@@ -148,12 +165,33 @@ export function useFormPersistence(
 				}
 				showToast.success("Welcome back! Your progress has been restored.");
 			} else {
-				// Free: only restore if user confirms
+				// Free: convert FreeFormData back to SignupFormData and restore if user confirms
 				const shouldRestore = confirm(
 					"We found your previous progress. Would you like to restore it?"
 				);
 				if (shouldRestore) {
-					setFormData(parsed.formData);
+					const freeData = parsed.formData as FreeFormData;
+					const signupData = {
+						fullName: freeData.fullName || '',
+						email: freeData.email || '',
+						cities: freeData.cities || [],
+						languages: [],
+						workEnvironment: [],
+						visaStatus: freeData.visaSponsorship === 'yes' ? 'Non-EU (require sponsorship)' : 'EU citizen',
+						entryLevelPreferences: [],
+						targetCompanies: [],
+						careerPath: freeData.careerPath ? [freeData.careerPath] : [], // Convert string to array
+						roles: [],
+						industries: [],
+						companySizePreference: '',
+						skills: [],
+						careerKeywords: '',
+						gdprConsent: freeData.gdprConsent || false,
+						birthYear: freeData.birthYear,
+						ageVerified: freeData.ageVerified || false,
+						termsAccepted: freeData.termsAccepted || false,
+					};
+					setFormData(signupData as any);
 				}
 			}
 		} catch (error) {
