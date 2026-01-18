@@ -16,6 +16,13 @@ updates:
       prefix: "deps"
       prefix-development: "deps-dev"
       include: "scope"
+    ignore:
+      # Prevent ESLint major version updates (v8 -> v9 has breaking changes)
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      # Prevent Next.js major version updates for stability
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
