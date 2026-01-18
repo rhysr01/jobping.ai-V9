@@ -55,7 +55,7 @@ function Hero() {
 					{/* LEFT SIDE - Content */}
 					<div className="text-center space-y-8 relative overflow-visible px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
 						{/* MASSIVE Headline - Clear hierarchy */}
-						<h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-none mb-8 max-w-full overflow-visible" style={{ wordSpacing: "0.05em" }}>
+						<h1 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white leading-none mb-8 max-w-full overflow-visible" style={{ wordSpacing: "0.05em" }}>
 							Graduate Jobs Made Simple
 						</h1>
 
