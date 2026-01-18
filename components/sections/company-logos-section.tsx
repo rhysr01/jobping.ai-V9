@@ -2,10 +2,8 @@
 
 import Autoplay from "embla-carousel-autoplay";
 import { motion } from "framer-motion";
-import { Info } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
 	Carousel,
 	CarouselContent,
@@ -266,23 +264,6 @@ export default function CompanyLogos() {
 				</div>
 
 				{/* Disclaimer */}
-				<motion.div
-					initial={{ opacity: 0 }}
-					whileInView={{ opacity: 1 }}
-					viewport={{ once: true }}
-					transition={{ delay: 0.3 }}
-					className="text-center mt-8"
-				>
-					<Alert className="max-w-2xl mx-auto border-zinc-800 bg-zinc-900/50">
-						<Info className="h-4 w-4 text-emerald-500" />
-						<AlertDescription className="text-sm text-zinc-300">
-							JobPing aggregates jobs from public sources including Indeed,
-							Glassdoor, Adzuna, Jooble, Reed, Arbeitnow, and company pages. We
-							are not affiliated with these companies and match you with
-							available listings.
-						</AlertDescription>
-					</Alert>
-				</motion.div>
 			</div>
 		</section>
 	);

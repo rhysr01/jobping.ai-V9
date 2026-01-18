@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import GlassCard from "../ui/GlassCard";
 import GradientText from "../ui/GradientText";
 import Heading from "../ui/Heading";
+import { JobStatsDisclaimer } from "../ui/JobStatsDisclaimer";
 import { cn } from "../../lib/classname-utils";
 
 interface JobStats {
@@ -294,33 +295,13 @@ export function EUJobStats() {
 					})}
 				</div>
 
-				{/* Enhanced Footer */}
-				<motion.div
-					initial={{ opacity: 0, y: 10 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					viewport={{ once: true }}
-					transition={{ delay: 0.5, duration: 0.6 }}
-					className="mt-12 md:mt-16 text-center"
-				>
-					<div className="inline-flex items-center gap-2 px-6 py-3 rounded-full glass-card elevation-1 border border-white/10">
-						<p className="text-lg md:text-xl text-content-secondary">
-							Updated daily •{" "}
-							<GradientText variant="accent" className="font-semibold">
-								{displayStats.total.toLocaleString()}+ roles
-							</GradientText>{" "}
-							from{" "}
-							<GradientText variant="accent" className="font-semibold">
-								21 cities
-							</GradientText>{" "}
-							across Europe
-						</p>
-					</div>
-					{hasError && (
-						<p className="text-xs text-content-muted mt-3 italic">
-							Showing cached data
-						</p>
-					)}
-				</motion.div>
+				{/* Job Stats & Disclaimer */}
+				<JobStatsDisclaimer
+					totalJobs={displayStats.total}
+					totalCities={21}
+					isLoadingStats={isLoadingStats}
+					className="mt-12 md:mt-16"
+				/>
 			</div>
 		</section>
 	);
