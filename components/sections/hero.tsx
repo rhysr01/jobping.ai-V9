@@ -55,7 +55,7 @@ function Hero() {
 					{/* LEFT SIDE - Content */}
 					<div className="text-center space-y-8 relative overflow-visible px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
 						{/* MASSIVE Headline - Clear hierarchy */}
-						<h1 className="font-display text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black text-white leading-none mb-8 max-w-full overflow-visible" style={{ wordSpacing: "0.05em" }}>
+						<h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-none mb-8 max-w-full overflow-visible" style={{ wordSpacing: "0.05em" }}>
 							Stop Scrolling.<br/>
 							<span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
 								Start Applying.
@@ -63,7 +63,7 @@ function Hero() {
 						</h1>
 
 						{/* Clear, impactful value proposition */}
-						<p className="text-xl sm:text-2xl md:text-3xl text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12">
+						<p className="text-lg sm:text-xl md:text-2xl text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12">
 							Get your perfect European job in{" "}
 							<strong className="text-white font-bold">2 minutes</strong>
 							{", "}not 40+ hours of searching.
