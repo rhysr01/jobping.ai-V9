@@ -139,7 +139,7 @@
 		"@types/react": "^18.2.37",
 		"@types/react-dom": "^18.2.15",
 		"autoprefixer": "10.4.21",
-		"eslint": "^8.54.0",
+		"eslint": "^9.39.2",
 		"eslint-config-next": "16.0.7",
 		"fast-check": "4.5.3",
 		"glob": "13.0.0",
