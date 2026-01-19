@@ -194,7 +194,7 @@ export default function Header() {
 							style={{ overflow: "visible", paddingRight: "0.75rem" }}
 						>
 							<div
-								className="scale-72 md:scale-80 origin-left overflow-visible pr-3 md:pr-4"
+								className="scale-50 md:scale-60 origin-left overflow-visible pr-3 md:pr-4"
 								style={{ overflow: "visible", minWidth: "fit-content" }}
 							>
 								<LogoWordmark />

@@ -27,7 +27,7 @@ export default function AnimatedBackground() {
 
 
 			{/* Perspective Grid - clean, professional background */}
-			<RetroGrid className="-z-20" opacity={0.3} gridSize={25} angle={35} />
+			<RetroGrid className="-z-20" opacity={0.15} gridSize={25} angle={35} />
 
 
 			{/* Enhanced film grain noise texture */}
