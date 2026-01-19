@@ -4,12 +4,12 @@
  * Tests the strategy pattern orchestration and delegation logic
  */
 
-import { SignupMatchingService } from "../../../utils/services/SignupMatchingService";
-import type { UserPreferences } from "../../../utils/matching/types";
-import type { MatchingConfig } from "../../../utils/services/SignupMatchingService";
+import { SignupMatchingService } from "@/utils/services/SignupMatchingService";
+import type { UserPreferences } from "@/utils/matching/types";
+import type { MatchingConfig } from "@/utils/services/SignupMatchingService";
 
 // Mock all dependencies
-jest.mock("../../../lib/api-logger", () => ({
+jest.mock("@/lib/api-logger", () => ({
 	apiLogger: {
 		info: jest.fn(),
 		error: jest.fn(),
@@ -17,25 +17,24 @@ jest.mock("../../../lib/api-logger", () => ({
 	},
 }));
 
-jest.mock("../../../utils/core/database-pool", () => ({
+jest.mock("@/utils/core/database-pool", () => ({
 	getDatabaseClient: jest.fn(),
 }));
 
-jest.mock("../../../utils/strategies/FreeMatchingStrategy", () => ({
+jest.mock("@/utils/strategies/FreeMatchingStrategy", () => ({
 	runFreeMatching: jest.fn(),
 }));
 
-jest.mock("../../../utils/strategies/PremiumMatchingStrategy", () => ({
+jest.mock("@/utils/strategies/PremiumMatchingStrategy", () => ({
 	runPremiumMatching: jest.fn(),
 }));
 
-const mockRunFreeMatching =
-	require("../../../utils/strategies/FreeMatchingStrategy")
-		.runFreeMatching as jest.MockedFunction<any>;
+const mockRunFreeMatching = require("@/utils/strategies/FreeMatchingStrategy")
+	.runFreeMatching as jest.MockedFunction<any>;
 const mockRunPremiumMatching =
-	require("../../../utils/strategies/PremiumMatchingStrategy")
+	require("@/utils/strategies/PremiumMatchingStrategy")
 		.runPremiumMatching as jest.MockedFunction<any>;
-const mockGetDatabaseClient = require("../../../utils/core/database-pool")
+const mockGetDatabaseClient = require("@/utils/core/database-pool")
 	.getDatabaseClient as jest.MockedFunction<any>;
 
 describe("SignupMatchingService - Strategy Pattern", () => {
@@ -386,7 +385,7 @@ describe("SignupMatchingService - Strategy Pattern", () => {
 		});
 
 		it("should log matching start with correct tier", async () => {
-			const mockLogger = require("../../../lib/api-logger").apiLogger;
+			const mockLogger = require("@/lib/api-logger").apiLogger;
 
 			await SignupMatchingService.runMatching(mockUser, mockConfig);
 
@@ -401,7 +400,7 @@ describe("SignupMatchingService - Strategy Pattern", () => {
 		});
 
 		it("should log successful completion", async () => {
-			const mockLogger = require("../../../lib/api-logger").apiLogger;
+			const mockLogger = require("@/lib/api-logger").apiLogger;
 
 			await SignupMatchingService.runMatching(mockUser, mockConfig);
 
@@ -417,7 +416,7 @@ describe("SignupMatchingService - Strategy Pattern", () => {
 		});
 
 		it("should log errors with context", async () => {
-			const mockLogger = require("../../../lib/api-logger").apiLogger;
+			const mockLogger = require("@/lib/api-logger").apiLogger;
 			mockRunFreeMatching.mockRejectedValue(new Error("Test error"));
 
 			await SignupMatchingService.runMatching(mockUser, mockConfig);

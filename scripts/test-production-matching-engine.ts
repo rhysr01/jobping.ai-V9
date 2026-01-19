@@ -1,5 +1,3 @@
-#!/usr/bin/env tsx
-
 // Export for testing
 export { main, ProductionMatchingEngineTester };
 
@@ -44,11 +42,11 @@ import type { Job } from "../scrapers/types";
 // Now import after environment is set up
 import type { UserPreferences } from "../Utils/matching/types";
 
-interface TestResult {
-	testName: string;
-	passed: boolean;
-	details: Record<string, any>;
-}
+// interface TestResult {
+// 	testName: string;
+// 	passed: boolean;
+// 	details: Record<string, any>;
+// }
 
 /**
  * Fetch real production jobs for testing instead of synthetic data
@@ -317,6 +315,8 @@ function getFallbackTestJobs(): Job[] {
 	},
 ];
 
+}
+
 // Test data using real production jobs for maximum realism
 let PRODUCTION_TEST_JOBS: Job[] = [];
 
@@ -397,11 +397,7 @@ class ProductionMatchingEngineTester {
 		}
 	}
 
-	async runProductionTests(): Promise<{
-		allTestsPassed: boolean;
-		testResults: TestResult[];
-		productionInsights: any;
-	}> {
+	async runProductionTests(): Promise<any> {
 		console.log("🚀 PRODUCTION MATCHING ENGINE TESTS\n");
 		console.log(
 			"Testing the REAL production code path used by actual users!\n",

@@ -7,11 +7,11 @@
 import {
 	runFreeMatching,
 	type FreeUserPreferences,
-} from "../../../utils/strategies/FreeMatchingStrategy";
-import type { JobWithMetadata } from "../../../lib/types/job";
+} from "@/utils/strategies/FreeMatchingStrategy";
+import type { JobWithMetadata } from "@/lib/types/job";
 
 // Mock all dependencies
-jest.mock("../../../lib/api-logger", () => ({
+jest.mock("@/lib/api-logger", () => ({
 	apiLogger: {
 		info: jest.fn(),
 		error: jest.fn(),
@@ -19,19 +19,21 @@ jest.mock("../../../lib/api-logger", () => ({
 	},
 }));
 
-jest.mock("../../../utils/core/database-pool", () => ({
+jest.mock("@/utils/core/database-pool", () => ({
 	getDatabaseClient: jest.fn(),
 }));
 
-jest.mock("../../../utils/matching/core/matching-engine", () => ({
+jest.mock("@/utils/matching/core/matching-engine", () => ({
 	simplifiedMatchingEngine: {
 		findMatchesForUser: jest.fn(),
+		findMatchesForFreeUser: jest.fn(),
+		findMatchesForPremiumUser: jest.fn(),
 	},
 }));
 
 const mockSimplifiedMatchingEngine =
-	require("../../../utils/matching/core/matching-engine").simplifiedMatchingEngine;
-const mockGetDatabaseClient = require("../../../utils/core/database-pool")
+	require("@/utils/matching/core/matching-engine").simplifiedMatchingEngine;
+const mockGetDatabaseClient = require("@/utils/core/database-pool")
 	.getDatabaseClient as jest.MockedFunction<any>;
 
 describe("FreeMatchingStrategy - Free Tier Logic", () => {
@@ -95,7 +97,7 @@ describe("FreeMatchingStrategy - Free Tier Logic", () => {
 
 	describe("Input Processing", () => {
 		it("should handle user preferences correctly", async () => {
-			mockSimplifiedMatchingEngine.findMatchesForUser.mockResolvedValue({
+			mockSimplifiedMatchingEngine.findMatchesForFreeUser.mockResolvedValue({
 				matches: [],
 				method: "ai",
 				metadata: { matchingMethod: "free_ai_ranked" },
@@ -104,7 +106,7 @@ describe("FreeMatchingStrategy - Free Tier Logic", () => {
 			await runFreeMatching(mockUser, mockJobs);
 
 			expect(
-				mockSimplifiedMatchingEngine.findMatchesForUser,
+				mockSimplifiedMatchingEngine.findMatchesForFreeUser,
 			).toHaveBeenCalledWith(
 				expect.objectContaining({
 					email: mockUser.email,
@@ -135,7 +137,7 @@ describe("FreeMatchingStrategy - Free Tier Logic", () => {
 
 	describe("Pre-filtering Logic", () => {
 		beforeEach(() => {
-			mockSimplifiedMatchingEngine.findMatchesForUser.mockResolvedValue({
+			mockSimplifiedMatchingEngine.findMatchesForFreeUser.mockResolvedValue({
 				matches: [
 					{
 						job: mockJobs[0],
@@ -153,7 +155,7 @@ describe("FreeMatchingStrategy - Free Tier Logic", () => {
 
 			// Should match job1 and job2 (London + tech), but not job3 (Manchester + marketing)
 			expect(
-				mockSimplifiedMatchingEngine.findMatchesForUser,
+				mockSimplifiedMatchingEngine.findMatchesForFreeUser,
 			).toHaveBeenCalledWith(
 				expect.any(Object),
 				expect.arrayContaining([
@@ -171,7 +173,7 @@ describe("FreeMatchingStrategy - Free Tier Logic", () => {
 
 			// Should still filter by city but allow all careers
 			expect(
-				mockSimplifiedMatchingEngine.findMatchesForUser,
+				mockSimplifiedMatchingEngine.findMatchesForFreeUser,
 			).toHaveBeenCalledWith(
 				expect.any(Object),
 				expect.arrayContaining([
@@ -201,7 +203,7 @@ describe("FreeMatchingStrategy - Free Tier Logic", () => {
 
 	describe("AI Processing", () => {
 		it("should use light AI configuration for free tier", async () => {
-			mockSimplifiedMatchingEngine.findMatchesForUser.mockResolvedValue({
+			mockSimplifiedMatchingEngine.findMatchesForFreeUser.mockResolvedValue({
 				matches: [
 					{
 						job: mockJobs[0],
@@ -216,7 +218,7 @@ describe("FreeMatchingStrategy - Free Tier Logic", () => {
 			await runFreeMatching(mockUser, mockJobs);
 
 			expect(
-				mockSimplifiedMatchingEngine.findMatchesForUser,
+				mockSimplifiedMatchingEngine.findMatchesForFreeUser,
 			).toHaveBeenCalledWith(
 				expect.any(Object),
 				expect.any(Array),
@@ -230,7 +232,7 @@ describe("FreeMatchingStrategy - Free Tier Logic", () => {
 		});
 
 		it("should limit results to 5 matches maximum", async () => {
-			mockSimplifiedMatchingEngine.findMatchesForUser.mockResolvedValue({
+			mockSimplifiedMatchingEngine.findMatchesForFreeUser.mockResolvedValue({
 				matches: Array(10)
 					.fill(null)
 					.map((_, i) => ({
@@ -251,7 +253,7 @@ describe("FreeMatchingStrategy - Free Tier Logic", () => {
 
 	describe("Database Operations", () => {
 		beforeEach(() => {
-			mockSimplifiedMatchingEngine.findMatchesForUser.mockResolvedValue({
+			mockSimplifiedMatchingEngine.findMatchesForFreeUser.mockResolvedValue({
 				matches: [
 					{
 						job: mockJobs[0],
@@ -317,7 +319,7 @@ describe("FreeMatchingStrategy - Free Tier Logic", () => {
 
 	describe("Logging", () => {
 		beforeEach(() => {
-			mockSimplifiedMatchingEngine.findMatchesForUser.mockResolvedValue({
+			mockSimplifiedMatchingEngine.findMatchesForFreeUser.mockResolvedValue({
 				matches: [
 					{
 						job: mockJobs[0],
@@ -331,7 +333,7 @@ describe("FreeMatchingStrategy - Free Tier Logic", () => {
 		});
 
 		it("should log matching start", async () => {
-			const mockLogger = require("../../../lib/api-logger").apiLogger;
+			const mockLogger = require("@/lib/api-logger").apiLogger;
 
 			await runFreeMatching(mockUser, mockJobs);
 
@@ -347,7 +349,7 @@ describe("FreeMatchingStrategy - Free Tier Logic", () => {
 		});
 
 		it("should log pre-filtering results", async () => {
-			const mockLogger = require("../../../lib/api-logger").apiLogger;
+			const mockLogger = require("@/lib/api-logger").apiLogger;
 
 			await runFreeMatching(mockUser, mockJobs);
 
@@ -362,7 +364,7 @@ describe("FreeMatchingStrategy - Free Tier Logic", () => {
 		});
 
 		it("should log ranking completion", async () => {
-			const mockLogger = require("../../../lib/api-logger").apiLogger;
+			const mockLogger = require("@/lib/api-logger").apiLogger;
 
 			await runFreeMatching(mockUser, mockJobs);
 
@@ -378,7 +380,7 @@ describe("FreeMatchingStrategy - Free Tier Logic", () => {
 		});
 
 		it("should log database save success", async () => {
-			const mockLogger = require("../../../lib/api-logger").apiLogger;
+			const mockLogger = require("@/lib/api-logger").apiLogger;
 
 			await runFreeMatching(mockUser, mockJobs);
 
@@ -392,7 +394,7 @@ describe("FreeMatchingStrategy - Free Tier Logic", () => {
 		});
 
 		it("should log errors with context", async () => {
-			const mockLogger = require("../../../lib/api-logger").apiLogger;
+			const mockLogger = require("@/lib/api-logger").apiLogger;
 			mockSimplifiedMatchingEngine.findMatchesForUser.mockRejectedValue(
 				new Error("AI failed"),
 			);

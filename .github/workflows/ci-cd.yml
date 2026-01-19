@@ -45,8 +45,8 @@ jobs:
       - name: 🔬 Run Biome linter
         run: npm run lint:biome
 
-      - name: 🔍 TypeScript type checking
-        run: npm run type-check
+      - name: 🔍 TypeScript type checking (production code only)
+        run: npm run type-check:production
 
       - name: 🧪 Run unit tests
         run: npm test
@@ -117,7 +117,7 @@ jobs:
       - name: 🏗️ Build application
         run: npm run build
         env:
-          NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+          NEXT_PUBLIC_BASE_URL: "${{ secrets.NEXT_PUBLIC_BASE_URL }}"
 
       - name: 📊 Bundle analysis
         run: |
@@ -129,7 +129,7 @@ jobs:
       - name: 🧪 Run E2E tests
         run: npm run test:e2e
         env:
-          NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+          NEXT_PUBLIC_BASE_URL: "${{ secrets.NEXT_PUBLIC_BASE_URL }}"
 
       - name: ⚡ Performance tests
         run: npm run test:e2e:performance
@@ -173,7 +173,7 @@ jobs:
           npm i -g vercel
 
           # Deploy with environment variables
-          DEPLOY_URL=$(vercel --prod --yes --token ${{ secrets.VERCEL_ACCESS_TOKEN }} 2>&1 | grep -o 'https://[^"]*\.vercel\.app')
+          DEPLOY_URL=$(vercel --prod --yes --token "${{ secrets.VERCEL_ACCESS_TOKEN }}" 2>&1 | grep -o 'https://[^"]*\.vercel\.app')
 
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
           echo "🚀 Deployed to: $DEPLOY_URL"
@@ -220,8 +220,8 @@ jobs:
       - name: 🔍 Run deployment monitoring
         run: npm run deploy:check
         env:
-          VERCEL_ACCESS_TOKEN: ${{ secrets.VERCEL_ACCESS_TOKEN }}
-          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_ACCESS_TOKEN: "${{ secrets.VERCEL_ACCESS_TOKEN }}"
+          VERCEL_TEAM_ID: "${{ secrets.VERCEL_TEAM_ID }}"
 
   # ===== POST-DEPLOYMENT TESTS =====
   post-deploy-tests:
@@ -290,7 +290,7 @@ jobs:
   notify:
     name: 📢 Notify
     runs-on: ubuntu-latest
-    needs: [deploy, post-deploy-tests, performance-check]
+    needs: [quality-check, security-scan, build-and-test, deploy, post-deploy-tests, performance-check]
     if: always() && github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:

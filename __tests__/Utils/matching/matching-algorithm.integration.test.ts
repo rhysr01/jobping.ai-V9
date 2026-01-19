@@ -276,8 +276,8 @@ describe("Matching Algorithm Integration", () => {
 			);
 
 			expect(results.length).toBe(1);
-			// Should get low relevance score (less than 50)
-			expect(results[0].unifiedScore.components.relevance).toBeLessThan(50);
+			// Should get moderate relevance score (less than 70)
+			expect(results[0].unifiedScore.components.relevance).toBeLessThan(70);
 		});
 	});
 

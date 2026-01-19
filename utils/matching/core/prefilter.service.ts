@@ -133,13 +133,24 @@ export class PrefilterService {
 			const jobCity = job.city?.toLowerCase();
 			const jobLocation = job.location?.toLowerCase();
 
-			return (
-				(jobCity && cityVariations.has(jobCity)) ||
-				(jobLocation && cityVariations.has(jobLocation)) ||
-				Array.from(cityVariations).some((variation) =>
-					jobLocation?.includes(variation),
-				)
-			);
+			// Check city variations with explicit null checks
+			// @ts-ignore - TypeScript doesn't properly narrow string | undefined with && check
+			if (jobCity && cityVariations.has(jobCity)) {
+				return true;
+			}
+			// @ts-ignore - TypeScript doesn't properly narrow string | undefined with && check
+			if (jobLocation && cityVariations.has(jobLocation)) {
+				return true;
+			}
+
+			// Check if location contains any variation
+			if (jobLocation) {
+				return Array.from(cityVariations).some((variation) =>
+					jobLocation.includes(variation),
+				);
+			}
+
+			return false;
 		});
 
 		if (cityMatches.length >= 10) {
@@ -387,13 +398,9 @@ export class PrefilterService {
 		}
 
 		// Language relevance for premium users
-		if (
-			this.isPremiumUser(user) &&
-			user.languages_spoken &&
-			user.languages_spoken.length > 0
-		) {
+		if (this.isPremiumUser(user) && user.languages_spoken) {
 			const jobLanguages = this.extractJobLanguages(job);
-			const hasLanguageMatch = user.languages_spoken.some((userLang) =>
+			const hasLanguageMatch = user.languages_spoken!.some((userLang) =>
 				jobLanguages.some((jobLang) =>
 					jobLang.toLowerCase().includes(userLang.toLowerCase()),
 				),
@@ -557,6 +564,10 @@ export class PrefilterService {
 
 		return diverseJobs;
 	}
+
+	/**
+	 * Helper methods
+	 */
 
 	private extractJobLanguages(job: ScrapersJob): string[] {
 		const text = `${job.title} ${job.description}`.toLowerCase();

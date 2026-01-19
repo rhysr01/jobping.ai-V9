@@ -1,20 +1,71 @@
 {
-	"editor.formatOnSave": true,
-	"editor.defaultFormatter": "biomejs.biome",
-	"editor.codeActionsOnSave": {
-		"source.organizeImports.biome": "explicit",
-		"source.fixAll.biome": "explicit"
+	"typescript.preferences.includePackageJsonAutoImports": "auto",
+	"typescript.preferences.importModuleSpecifier": "relative",
+	"typescript.suggest.autoImports": true,
+	"typescript.preferences.preferTypeOnlyAutoImports": true,
+	"typescript.preferences.includeCompletionsForImportStatements": true,
+	"typescript.preferences.includeCompletionsForModuleExports": true,
+	"typescript.preferences.includeCompletionsWithInsertText": true,
+	"typescript.preferences.includeCompletionsWithSnippetText": true,
+	"typescript.preferences.useAliasesForRenames": true,
+	"typescript.suggest.includeAutomaticOptionalChainCompletions": true,
+	"typescript.suggest.includeCompletionsForImportStatements": true,
+	"typescript.suggest.includeCompletionsWithInsertText": true,
+	"typescript.suggest.includeCompletionsWithSnippetText": true,
+	"typescript.preferences.quoteStyle": "double",
+	"typescript.format.enable": true,
+	"typescript.format.insertSpaceAfterCommaDelimiter": true,
+	"typescript.format.insertSpaceAfterConstructor": false,
+	"typescript.format.insertSpaceAfterFunctionKeywordForAnonymousFunctions": true,
+	"typescript.format.insertSpaceAfterKeywordsInControlFlowStatements": true,
+	"typescript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces": false,
+	"typescript.format.insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBraces": false,
+	"typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": false,
+	"typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis": false,
+	"typescript.format.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces": false,
+	"typescript.format.insertSpaceAfterSemicolonInForStatements": true,
+	"typescript.format.insertSpaceBeforeAndAfterBinaryOperators": true,
+	"typescript.format.insertSpaceBeforeFunctionParenthesis": false,
+	"typescript.format.placeOpenBraceOnNewLineForControlBlocks": false,
+	"typescript.format.placeOpenBraceOnNewLineForFunctions": false,
+	"typescript.format.semicolons": "insert",
+	"typescript.validate.enable": true,
+	"typescript.preferences.useAliasesForRenames": true,
+	"typescript.preferences.renameShorthandProperties": false,
+	"typescript.implementationsCodeLens.enabled": true,
+	"typescript.referencesCodeLens.enabled": true,
+	"typescript.preferences.includeInlayParameterNameHints": "all",
+	"typescript.preferences.includeInlayParameterNameHintsWhenArgumentMatchesName": false,
+	"typescript.preferences.includeInlayFunctionParameterTypeHints": false,
+	"typescript.preferences.includeInlayVariableTypeHints": false,
+	"typescript.preferences.includeInlayPropertyDeclarationTypeHints": false,
+	"typescript.preferences.includeInlayFunctionLikeReturnTypeHints": false,
+	"typescript.preferences.includeInlayEnumMemberValueHints": false,
+	"typescript.inlayHints.parameterNames.enabled": "all",
+	"typescript.inlayHints.parameterNames.suppressWhenArgumentMatchesName": true,
+	"typescript.inlayHints.variableTypes.enabled": false,
+	"typescript.inlayHints.propertyDeclarationTypes.enabled": false,
+	"typescript.inlayHints.functionLikeReturnTypes.enabled": false,
+	"typescript.inlayHints.enumMemberValues.enabled": false,
+	"typescript.suggest.names": true,
+	"typescript.suggest.paths": true,
+	"typescript.suggest.autoImports": true,
+	"typescript.suggest.completeJSDocs": true,
+	"typescript.preferences.autoImportFileExcludePatterns": [
+		"**/node_modules/**"
+	],
+	"typescript.tsserver.useSeparateSyntaxServer": true,
+	"typescript.tsserver.maxTsServerMemory": 4096,
+	"typescript.tsserver.pluginPaths": [],
+	"typescript.tsserver.trace": "off",
+	"typescript.tsserver.log": "off",
+	"typescript.tsserver.pluginProbeLocations": [],
+	"typescript.preferences.tsconfig": {
+		"**/__tests__/**/*.ts": "tsconfig.test.json",
+		"**/__tests__/**/*.tsx": "tsconfig.test.json",
+		"**/*.test.ts": "tsconfig.test.json",
+		"**/*.spec.ts": "tsconfig.test.json"
 	},
-	"[javascript]": {
-		"editor.defaultFormatter": "biomejs.biome"
-	},
-	"[typescript]": {
-		"editor.defaultFormatter": "biomejs.biome"
-	},
-	"[javascriptreact]": {
-		"editor.defaultFormatter": "biomejs.biome"
-	},
-	"[typescriptreact]": {
-		"editor.defaultFormatter": "biomejs.biome"
-	}
+	"typescript.preferences.tsconfig.fallback": "tsconfig.json",
+	"typescript.preferences.tsconfig.autoDetect": "on"
 }

@@ -45,10 +45,12 @@
 		"automation/**",
 		"scrapers/**",
 		"scripts/**",
-		"**/__tests__/**",
-		"**/*.test.ts",
-		"**/*.spec.ts",
 		"tests/**",
-		"**/__mocks__/**"
+		"**/__tests__/**",
+		"**/__mocks__/**",
+		"**/*.test.ts",
+		"**/*.test.tsx",
+		"**/*.spec.ts",
+		"**/*.spec.tsx"
 	]
 }

@@ -7,11 +7,11 @@
 import {
 	runPremiumMatching,
 	type PremiumUserPreferences,
-} from "../../../utils/strategies/PremiumMatchingStrategy";
-import type { JobWithMetadata } from "../../../lib/types/job";
+} from "@/utils/strategies/PremiumMatchingStrategy";
+import type { JobWithMetadata } from "@/lib/types/job";
 
 // Mock all dependencies
-jest.mock("../../../lib/api-logger", () => ({
+jest.mock("@/lib/api-logger", () => ({
 	apiLogger: {
 		info: jest.fn(),
 		error: jest.fn(),
@@ -19,19 +19,21 @@ jest.mock("../../../lib/api-logger", () => ({
 	},
 }));
 
-jest.mock("../../../utils/core/database-pool", () => ({
+jest.mock("@/utils/core/database-pool", () => ({
 	getDatabaseClient: jest.fn(),
 }));
 
-jest.mock("../../../utils/matching/core/matching-engine", () => ({
+jest.mock("@/utils/matching/core/matching-engine", () => ({
 	simplifiedMatchingEngine: {
 		findMatchesForUser: jest.fn(),
+		findMatchesForFreeUser: jest.fn(),
+		findMatchesForPremiumUser: jest.fn(),
 	},
 }));
 
 const mockSimplifiedMatchingEngine =
-	require("../../../utils/matching/core/matching-engine").simplifiedMatchingEngine;
-const mockGetDatabaseClient = require("../../../utils/core/database-pool")
+	require("@/utils/matching/core/matching-engine").simplifiedMatchingEngine;
+const mockGetDatabaseClient = require("@/utils/core/database-pool")
 	.getDatabaseClient as jest.MockedFunction<any>;
 
 describe("PremiumMatchingStrategy - Premium Tier Logic", () => {

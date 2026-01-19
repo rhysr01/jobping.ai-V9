@@ -14,9 +14,7 @@ test.describe("Simple Signup Tests", () => {
 
 		// Check if homepage loads - just verify heading and body are present
 		await expect(
-			page.locator(
-				'h1:has-text("Get 5 early-career job matches instantly free")',
-			),
+			page.locator('h1:has-text("Graduate JobsMade Simple")'),
 		).toBeVisible();
 		await expect(page.locator("body")).toBeVisible();
 

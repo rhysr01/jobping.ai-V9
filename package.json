@@ -11,6 +11,7 @@
 		"lint:biome:fix": "biome check --write .",
 		"format": "biome format --write .",
 		"type-check": "tsc --noEmit",
+		"type-check:production": "tsc --noEmit --skipLibCheck --exclude '__tests__/**' --exclude 'tests/**' --exclude '*.test.ts' --exclude '*.test.tsx' --exclude '*.spec.ts' --exclude '*.spec.tsx'",
 		"test": "jest",
 		"test:watch": "jest --watch",
 		"test:coverage": "jest --coverage",

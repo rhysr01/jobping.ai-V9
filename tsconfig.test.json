@@ -1,0 +1,32 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"types": ["jest", "@types/jest", "node", "@testing-library/jest-dom"],
+		"strict": false,
+		"noUnusedLocals": false,
+		"noUnusedParameters": false,
+		"noImplicitReturns": false,
+		"noFallthroughCasesInSwitch": false,
+		"forceConsistentCasingInFileNames": false
+	},
+	"include": [
+		"next-env.d.ts",
+		"**/__tests__/**/*.ts",
+		"**/__tests__/**/*.tsx",
+		"**/*.test.ts",
+		"**/*.spec.ts",
+		"jest.setup.ts",
+		"jest.config.js",
+		".next/types/**/*.ts"
+	],
+	"exclude": [
+		"node_modules",
+		"**/*.cjs",
+		"**/*.js",
+		"automation/**",
+		"scrapers/**",
+		"scripts/**",
+		"tests/**",
+		"**/__mocks__/**"
+	]
+}
