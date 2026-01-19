@@ -76,8 +76,8 @@ function Hero() {
 						<strong className="text-white font-bold flex items-center gap-2">
 							<BrandIcons.Zap className="w-5 h-5 text-emerald-400 animate-pulse" />
 							2 minutes
-						</strong>, skip
-						the endless scrolling.
+						</strong>
+						, skip the endless scrolling.
 					</p>
 
 					{/* Enhanced Social Proof with Visual Elements */}

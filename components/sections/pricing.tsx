@@ -113,7 +113,6 @@ function Pricing() {
 												: "border-border-subtle bg-white/[0.02] backdrop-blur-xl hover:border-white/20"
 										}`}
 									>
-
 										<div className="relative z-10 p-8 sm:p-10">
 											{/* Icon with more breathing room */}
 											<div

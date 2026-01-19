@@ -223,14 +223,14 @@ export default function CompanyLogos() {
 											{/* Inner glow with light source */}
 											<div className="absolute inset-[1px] bg-gradient-to-br from-brand-500/[0.08] via-transparent to-white/[0.04] rounded-2xl pointer-events-none" />
 
-											{/* Logo with improved error handling */}
+											{/* Logo with improved error handling and grayscale effect */}
 											<div className="relative z-10 flex items-center justify-center w-full h-full">
 												<Image
 													src={company.logoPath}
 													alt={`${company.name} company logo`}
 													width={140}
 													height={140}
-													className="object-contain h-[140px] w-auto max-w-[160px] opacity-90 transition-all duration-500 ease-out group-hover:opacity-100 group-hover:scale-125 filter drop-shadow-[0_4px_12px_rgba(16,185,129,0.3)]"
+													className="grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500 ease-out object-contain h-[140px] w-auto max-w-[160px] filter drop-shadow-[0_4px_12px_rgba(16,185,129,0.3)]"
 													onError={() => {
 														if (process.env.NODE_ENV === "development") {
 															console.error(

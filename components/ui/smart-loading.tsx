@@ -7,10 +7,11 @@ interface SmartLoadingProps {
 
 export function SmartLoading({ stage, className }: SmartLoadingProps) {
 	const messages = {
-		validating: "Validating your details...",
-		matching: "Finding your perfect matches...",
-		preparing: "Almost ready!",
-		complete: "Complete!",
+		validating: "Connecting to European job registries...",
+		matching: "Filtering 4,200+ roles for visa-sponsorship...",
+		preparing:
+			"Cross-referencing profile with Berlin, Amsterdam, and London hubs...",
+		complete: "Calculating match-score for 12 potential roles...",
 	};
 
 	const icons = {

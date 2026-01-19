@@ -17,6 +17,7 @@ export default function Header() {
 	const [isMobile, setIsMobile] = useState(false);
 	const [previouslyFocusedElement, setPreviouslyFocusedElement] =
 		useState<Element | null>(null);
+	const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 	const pathname = usePathname();
 
 	// Initialize mobile state immediately with SSR safety
@@ -200,15 +201,17 @@ export default function Header() {
 							</div>
 						</Link>
 
-						{/* Desktop Navigation - now grouped with CTA on the right */}
-						<div className="hidden md:flex items-center gap-8">
-							{/* Navigation Links with animated underlines */}
+						{/* Desktop Navigation with Sliding Highlight */}
+						<div className="hidden md:flex items-center gap-2 relative">
+							{/* Navigation Links with magnetic pill effect */}
 							{navLinks.map((link) => (
 								<Link
 									key={link.href}
 									href={link.href}
 									onClick={(e) => handleNavClick(e, link.href, link.scroll)}
-									className={`font-display relative text-sm font-medium transition-colors group py-2 whitespace-nowrap ${
+									onMouseEnter={() => setHoveredItem(link.href)}
+									onMouseLeave={() => setHoveredItem(null)}
+									className={`font-display relative text-sm font-medium transition-colors px-3 py-2 rounded-lg whitespace-nowrap ${
 										activeSection === link.href
 											? "text-white"
 											: "text-zinc-300 hover:text-white"
@@ -223,7 +226,7 @@ export default function Header() {
 								>
 									<span className="relative z-10">{link.label}</span>
 
-									{/* Animated underline */}
+									{/* Animated underline for active state */}
 									{activeSection === link.href ? (
 										<motion.div
 											layoutId="activeNav"
@@ -238,11 +241,22 @@ export default function Header() {
 									) : (
 										<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-brand-400 to-brand-500 group-hover:w-full transition-all duration-300 ease-out" />
 									)}
-
-									{/* Subtle glow on hover */}
-									<span className="absolute inset-0 bg-emerald-500/0 group-hover:bg-emerald-500/5 rounded-lg blur-sm transition-all" />
 								</Link>
 							))}
+
+							{/* Magnetic pill highlight */}
+							{hoveredItem && (
+								<motion.div
+									layoutId="nav-highlight"
+									className="absolute bg-emerald-500/10 rounded-lg -z-10"
+									transition={{
+										type: "spring",
+										bounce: 0.2,
+										duration: 0.6,
+									}}
+									initial={false}
+								/>
+							)}
 
 							{/* Trust badge - desktop only */}
 							<div className="hidden lg:flex items-center gap-3 px-4 py-2 rounded-full bg-white/[0.03] backdrop-blur-sm border border-white/10 hover:bg-white/[0.05] hover:border-emerald-500/30 transition-all">
