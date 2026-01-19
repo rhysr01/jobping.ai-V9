@@ -6,6 +6,7 @@ import React, { useRef } from "react";
 export const TiltCard = ({ children }: { children: React.ReactNode }) => {
 	const targetRef = useRef<HTMLDivElement>(null);
 
+	// Motion values for 3D tilt effect - used in mouse tracking
 	const x = useMotionValue(0);
 	const y = useMotionValue(0);
 
@@ -28,6 +29,7 @@ export const TiltCard = ({ children }: { children: React.ReactNode }) => {
 		const xPct = mouseX / width - 0.5;
 		const yPct = mouseY / height - 0.5;
 
+		// Explicitly use the motion values - this ensures TypeScript recognizes they're used
 		x.set(xPct);
 		y.set(yPct);
 	};

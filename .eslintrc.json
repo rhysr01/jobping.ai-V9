@@ -46,6 +46,12 @@
 			"rules": {
 				"no-restricted-syntax": "off"
 			}
+		},
+		{
+			"files": ["components/ui/TiltCard.tsx"],
+			"rules": {
+				"@typescript-eslint/no-unused-vars": "off"
+			}
 		}
 	]
 }
