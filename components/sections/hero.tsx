@@ -80,23 +80,8 @@ function Hero() {
 						, skip the endless scrolling.
 					</p>
 
-					{/* Enhanced Social Proof with Visual Elements */}
+					{/* Enhanced Social Proof */}
 					<div className="relative mt-12 mb-8">
-						{/* Floating geometric shapes */}
-						<div className="absolute inset-0 flex items-center justify-center">
-							<div className="relative w-full max-w-4xl h-64">
-								<div className="absolute top-8 left-8 w-16 h-16 bg-emerald-500/20 rounded-lg rotate-12 animate-float"></div>
-								<div className="absolute top-16 right-16 w-12 h-12 bg-cyan-500/20 rounded-full animate-float-delayed"></div>
-								<div className="absolute bottom-8 left-1/4 w-20 h-20 bg-blue-500/20 rounded-xl rotate-45 animate-float"></div>
-
-								{/* Central illustration area */}
-								<div className="absolute inset-0 flex items-center justify-center">
-									<div className="w-48 h-48 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-full blur-xl"></div>
-									<div className="absolute w-32 h-32 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full"></div>
-								</div>
-							</div>
-						</div>
-
 						{/* Social proof metrics */}
 						<div className="relative flex items-center justify-center gap-6 mb-12">
 							<div className="flex items-center gap-2 text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-full backdrop-blur-sm border border-emerald-500/20">
@@ -116,7 +101,7 @@ function Hero() {
 					<div className="flex justify-center">
 						<div className="relative group">
 							{/* Glow effect */}
-							<div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 rounded-2xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-500"></div>
+							<div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 rounded-xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-500"></div>
 
 							<CustomButton
 								href="/signup/free"

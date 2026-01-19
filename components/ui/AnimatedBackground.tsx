@@ -23,42 +23,12 @@ export default function AnimatedBackground() {
 		);
 	}, []);
 
-	// Optimized parallax transforms based on device
-	const parallaxSlow = useTransform(
+	// Optimized parallax transform for RetroGrid
+	const parallaxY = useTransform(
 		scrollY,
 		[0, 1000],
-		[0, isMobile ? 100 : 200],
+		[0, isMobile ? 50 : 100]
 	);
-	const parallaxMedium = useTransform(
-		scrollY,
-		[0, 1000],
-		[0, isMobile ? 200 : 400],
-	);
-	const parallaxFast = useTransform(
-		scrollY,
-		[0, 1000],
-		[0, isMobile ? 300 : 600],
-	);
-	const opacityTransform = useTransform(scrollY, [0, 500], [1, 0.3]);
-
-	// Mouse parallax values - only on desktop
-	const mouseX = useMotionValue(0);
-	const mouseY = useMotionValue(0);
-
-	// Mouse parallax effect - disabled on mobile
-	useEffect(() => {
-		if (isMobile || prefersReducedMotion) return;
-
-		const handleMouseMove = (e: MouseEvent) => {
-			const x = (e.clientX / window.innerWidth - 0.5) * 30; // Reduced multiplier
-			const y = (e.clientY / window.innerHeight - 0.5) * 30;
-			mouseX.set(x);
-			mouseY.set(y);
-		};
-
-		window.addEventListener("mousemove", handleMouseMove, { passive: true });
-		return () => window.removeEventListener("mousemove", handleMouseMove);
-	}, [mouseX, mouseY, isMobile, prefersReducedMotion]);
 
 	// Prevent SSR hydration issues
 	if (!isClient) {
@@ -75,61 +45,10 @@ export default function AnimatedBackground() {
 				style={{ y: parallaxSlow }}
 			/>
 
-			{/* Animated mesh gradients with parallax */}
-			<motion.div
-				className="absolute inset-0 opacity-40"
-				style={{ y: parallaxMedium, opacity: opacityTransform }}
-			>
-				<div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_100%_50%_at_0%_0%,rgba(16,185,129,0.15),transparent_60%)]" />
-				<div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(ellipse_100%_50%_at_100%_0%,rgba(59,130,246,0.12),transparent_60%)]" />
-				<div className="absolute bottom-0 left-1/2 w-full h-full bg-[radial-gradient(ellipse_50%_100%_at_50%_100%,rgba(20,184,166,0.10),transparent_60%)]" />
-			</motion.div>
 
-			{/* Perspective Grid - replaces floating orbs for cleaner, more professional look */}
+			{/* Perspective Grid - clean, professional background */}
 			<RetroGrid className="-z-20" opacity={0.3} gridSize={25} angle={35} />
 
-			{/* Optimized particle count - significantly reduced on mobile */}
-			<div className="absolute inset-0">
-				{Array.from({ length: isMobile ? 1 : 8 }).map((_, i) => {
-					const baseDelay = i * (isMobile ? 1 : 0.5); // Slower, less frequent on mobile
-					const baseDuration = isMobile ? 20 + (i % 2) * 10 : 12 + (i % 3) * 6; // Much slower on mobile
-
-					return (
-						<motion.div
-							key={i}
-							className="absolute w-1 h-1 bg-emerald-400/10 rounded-full blur-sm"
-							initial={{
-								x: `${(i * 13) % 100}%`, // More spread out
-								y: `${(i * 17) % 100}%`,
-								opacity: 0,
-							}}
-							animate={
-								prefersReducedMotion
-									? undefined
-									: {
-											y: [
-												`${(i * 17) % 100}%`,
-												`${((i * 17) % 100) - (isMobile ? 10 : 15)}%`,
-												`${(i * 17) % 100}%`,
-											],
-											opacity: [0, isMobile ? 0.2 : 0.4, 0], // Much more subtle on mobile
-											scale: [0.3, isMobile ? 0.8 : 1.2, 0.3], // Smaller scale changes
-										}
-							}
-							transition={
-								prefersReducedMotion
-									? undefined
-									: {
-											duration: baseDuration,
-											repeat: Infinity,
-											delay: baseDelay,
-											ease: "easeInOut",
-										}
-							}
-						/>
-					);
-				})}
-			</div>
 
 			{/* Enhanced film grain noise texture */}
 			<motion.div
