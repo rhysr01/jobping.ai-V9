@@ -66,11 +66,13 @@ export const Step1FreeBasics = React.memo(function Step1FreeBasics({
 		}
 	};
 
-	// Use proper navigation validation instead of local validation
+	// Use proper navigation validation with fallback for debounced email validation
+	const basicEmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+	const emailLooksValid = basicEmailRegex.test(formData.email.trim());
 	const isStepValid =
-		formData.fullName.trim() &&
-		formData.email.trim() &&
-		emailValidation.isValid;
+		formData.fullName.trim() !== "" &&
+		formData.email.trim() !== "" &&
+		(emailValidation.isValid || emailLooksValid);
 
 	return (
 		<motion.div
