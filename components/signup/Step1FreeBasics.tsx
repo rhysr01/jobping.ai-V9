@@ -8,7 +8,7 @@ import type { SignupFormData } from "./types";
 
 interface Step1FreeBasicsProps {
 	formData: SignupFormData;
-	setFormData: (updates: Partial<SignupFormData>) => void;
+	setFormData: React.Dispatch<React.SetStateAction<SignupFormData>>;
 	touchedFields: Set<string>;
 	setTouchedFields: React.Dispatch<React.SetStateAction<Set<string>>>;
 	fieldErrors: Record<string, string>;
@@ -40,7 +40,7 @@ export const Step1FreeBasics = React.memo(function Step1FreeBasics({
 	getDisabledMessage,
 }: Step1FreeBasicsProps) {
 	const handleEmailChange = (value: string | boolean) => {
-		setFormData({ ...formData, email: typeof value === "string" ? value : "" });
+		setFormData((prev) => ({ ...prev, email: typeof value === "string" ? value : "" }));
 		setFieldErrors((prev) => {
 			const next = { ...prev };
 			delete next.email;
@@ -110,10 +110,10 @@ export const Step1FreeBasics = React.memo(function Step1FreeBasics({
 						type="text"
 						value={formData.fullName}
 						onChange={(value) => {
-							setFormData({
-								...formData,
+							setFormData((prev) => ({
+								...prev,
 								fullName: typeof value === "string" ? value : "",
-							});
+							}));
 							setFieldErrors((prev) => {
 								const next = { ...prev };
 								delete next.fullName;
@@ -196,8 +196,7 @@ export const Step1FreeBasics = React.memo(function Step1FreeBasics({
 			<div className="flex justify-center mt-8">
 				<button
 					onClick={() => {
-						console.log("Button clicked");
-						// setStep(2);
+						setStep(2);
 					}}
 					disabled={!isStepValid || loading}
 					className="px-6 py-3 bg-blue-500 text-white rounded disabled:opacity-50"

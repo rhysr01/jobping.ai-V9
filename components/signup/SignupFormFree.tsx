@@ -338,7 +338,7 @@ function SignupFormFree() {
 							<Step1FreeBasics
 								key="step1"
 								formData={formData}
-								setFormData={setFormData as any}
+								setFormData={setFormData}
 								touchedFields={new Set()}
 								setTouchedFields={() => {}}
 								fieldErrors={{}}
@@ -355,7 +355,7 @@ function SignupFormFree() {
 							<Step2FreeCities
 								key="step2"
 								formData={formData}
-								setFormData={setFormData as any}
+								setFormData={setFormData}
 								touchedFields={new Set()}
 								setTouchedFields={() => {}}
 								loading={loading}
@@ -369,7 +369,7 @@ function SignupFormFree() {
 							<Step3FreeCareer
 								key="step3"
 								formData={formData}
-								setFormData={setFormData as any}
+								setFormData={setFormData}
 								touchedFields={new Set()}
 								setTouchedFields={() => {}}
 								loading={loading}

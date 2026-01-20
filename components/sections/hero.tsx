@@ -51,7 +51,7 @@ function Hero() {
 			</div>
 
 			{/* Radial Spotlight for grounding and depth */}
-			<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none -z-10" />
+			<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none -z-10" />
 
 			{/* Scroll momentum fade */}
 			<div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-0" />
@@ -74,19 +74,19 @@ function Hero() {
 					</h1>
 
 					{/* Clear, impactful value proposition */}
-					<p className="text-lg sm:text-xl md:text-2xl text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-8">
+					<p className="text-lg sm:text-xl md:text-2xl text-zinc-300 leading-tight max-w-4xl mx-auto mb-8">
 						Get your perfect entry-level European position in just{" "}
 						<strong className="inline-flex items-center gap-1 text-white font-bold">
 							<BrandIcons.Zap className="w-4 h-4 text-emerald-400 animate-pulse" />
 							2 minutes
 						</strong>
-						, skip the endless scrolling.
+						—skip the endless scrolling.
 					</p>
 
 					{/* Enhanced Social Proof */}
 					<div className="relative mt-12 mb-8">
 						{/* Social proof metrics */}
-						<div className="relative flex items-center justify-center gap-6 mb-12">
+						<div className="relative flex items-center justify-center gap-4 mb-12">
 							<div className="flex items-center gap-2 text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-full backdrop-blur-sm border border-emerald-500/20">
 								<div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
 								<span className="text-sm font-medium">
@@ -113,7 +113,7 @@ function Hero() {
 								}}
 								variant="primary"
 								size="xl"
-								className="relative text-xl px-12 py-6 w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 shadow-2xl shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300"
+								className="relative text-xl px-12 py-6 w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 shadow-2xl shadow-emerald-500/30 hover:shadow-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all duration-300"
 								aria-label={CTA_GET_MY_5_FREE_MATCHES_ARIA}
 								icon="ArrowRight"
 							>
