@@ -29,7 +29,7 @@ SET
   status = 'inactive',
   filtered_reason = COALESCE(filtered_reason || '; ', '') || 'senior_manager_director_role',
   updated_at = NOW()
-WHERE is_active = true AND created_at > '2026-01-20 00:00:00'
+WHERE is_active = true
   AND (
     -- Senior roles (unless it's a graduate program)
     (LOWER(title) LIKE '%senior%' AND NOT (
@@ -99,7 +99,7 @@ SET
   status = 'inactive',
   filtered_reason = COALESCE(filtered_reason || '; ', '') || 'teaching_education_role',
   updated_at = NOW()
-WHERE is_active = true AND created_at > '2026-01-20 00:00:00'
+WHERE is_active = true
   AND (
     LOWER(title) LIKE '%teacher%' OR
     LOWER(title) LIKE '%teaching%' OR
@@ -132,7 +132,7 @@ SET
   status = 'inactive',
   filtered_reason = COALESCE(filtered_reason || '; ', '') || 'legal_role',
   updated_at = NOW()
-WHERE is_active = true AND created_at > '2026-01-20 00:00:00'
+WHERE is_active = true
   AND (
     LOWER(title) LIKE '%lawyer%' OR
     LOWER(title) LIKE '%attorney%' OR
@@ -168,7 +168,7 @@ SET
   status = 'inactive',
   filtered_reason = COALESCE(filtered_reason || '; ', '') || 'medical_healthcare_role',
   updated_at = NOW()
-WHERE is_active = true AND created_at > '2026-01-20 00:00:00'
+WHERE is_active = true
   AND (
     LOWER(title) LIKE '%nurse%' OR
     LOWER(title) LIKE '%doctor%' OR
@@ -202,7 +202,7 @@ SET
   status = 'inactive',
   filtered_reason = COALESCE(filtered_reason || '; ', '') || 'non_business_role',
   updated_at = NOW()
-WHERE is_active = true AND created_at > '2026-01-20 00:00:00'
+WHERE is_active = true
   AND (
     -- Engineering (unless software/IT/business-related)
     (LOWER(title) LIKE '%engineer%' AND (
@@ -276,5 +276,5 @@ COMMIT;
 -- ORDER BY job_count DESC;
 --
 -- Check remaining active jobs:
--- SELECT COUNT(*) as active_jobs FROM jobs WHERE is_active = true AND created_at > '2026-01-20 00:00:00';
+-- SELECT COUNT(*) as active_jobs FROM jobs WHERE is_active = true;
 

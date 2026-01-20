@@ -80,8 +80,8 @@
     "errors": 0
   },
   "adzuna__2026-01-20": {
-    "total": 166,
-    "success": 166,
+    "total": 665,
+    "success": 665,
     "errors": 0
   },
   "jooble__2026-01-20": {
@@ -90,13 +90,13 @@
     "errors": 0
   },
   "reed__2026-01-20": {
-    "total": 65,
-    "success": 65,
+    "total": 171,
+    "success": 171,
     "errors": 0
   },
   "arbeitnow__2026-01-20": {
-    "total": 26,
-    "success": 26,
-    "errors": 0
+    "total": 38,
+    "success": 37,
+    "errors": 1
   }
 }
