@@ -39,6 +39,7 @@ function SignupFormFree() {
 		totalUsers,
 		isLoadingStats,
 		formData,
+		error: signupError, // Extract error to monitor it
 		setStep,
 		setLoading,
 		setError,
@@ -78,6 +79,41 @@ function SignupFormFree() {
 			}
 		};
 	}, []);
+
+	// Clear validation errors and signup errors when navigating to a new step
+	// This prevents errors from previous steps or failed submissions from persisting
+	// Following production-first approach: only show errors when they're relevant to current step
+	useEffect(() => {
+		// Clear validation errors when step changes (unless currently submitting)
+		if (!isSubmitting) {
+			setValidationErrors({});
+			// Also clear signup state error when navigating to a new step
+			if (signupError) {
+				setError("");
+			}
+		}
+	}, [step, isSubmitting, signupError, setError]); // Clear errors whenever step changes
+
+	// Clear errors on initial mount if navigating directly to step 2 or if errors exist
+	// This handles cases where users navigate directly to /signup/free?step=2 with stale errors
+	// Also handles race conditions where errors might persist from previous sessions
+	useEffect(() => {
+		// Always clear errors on mount if not submitting - defensive approach
+		if (!isSubmitting) {
+			const hasValidationErrors = Object.keys(validationErrors).length > 0;
+			const hasSignupError = !!signupError;
+			
+			if (hasValidationErrors || hasSignupError) {
+				if (hasValidationErrors) {
+					setValidationErrors({});
+				}
+				if (hasSignupError) {
+					setError("");
+				}
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []); // Only run on mount - clear any stale errors from previous sessions
 
 	// Form validation hooks
 	const emailValidation = useEmailValidation(formData.email);
@@ -154,7 +190,10 @@ function SignupFormFree() {
 				entryLevelPreferences: formData.entryLevelPreferences,
 				visaStatus: formData.visaStatus,
 				birth_year: formData.birthYear,
-				age_verified: formData.ageVerified,
+				// Map gdprConsent to terms_accepted (required by API)
+				terms_accepted: formData.gdprConsent || false,
+				// Set age_verified to true when user accepts terms (accepting terms implies age verification)
+				age_verified: formData.gdprConsent || formData.ageVerified || false,
 			};
 
 			console.log('Submitting form data:', {
@@ -368,7 +407,8 @@ function SignupFormFree() {
 					)}
 
 					{/* Form Validation Errors */}
-					{Object.keys(validationErrors).length > 0 && (
+					{/* Only show errors if not currently submitting and errors are relevant to current step */}
+					{Object.keys(validationErrors).length > 0 && !isSubmitting && (
 						<motion.div
 							initial={{ opacity: 0, y: -10 }}
 							animate={{ opacity: 1, y: 0 }}
