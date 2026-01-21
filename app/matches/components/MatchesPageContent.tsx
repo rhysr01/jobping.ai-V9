@@ -10,7 +10,9 @@ import CustomScanTrigger from "../../../components/ui/CustomScanTrigger";
 import JobClosedModal from "../../../components/ui/JobClosedModal";
 import TargetCompaniesAlert from "../../../components/ui/TargetCompaniesAlert";
 import { SmartLoading } from "../../../components/ui/smart-loading";
+import { PremiumJobsPreview } from "../../../components/matches/PremiumJobsPreview";
 import { useMatches } from "../../../hooks/useMatches";
+import { getStoredUserPreferencesForMatches } from "../../../hooks/useFormPersistence";
 
 export default function MatchesPageContent() {
 	const {
@@ -177,6 +179,18 @@ export default function MatchesPageContent() {
 						onJobDismiss={handleJobDismiss}
 						showUpgradeBanner={showUpgradeBanner}
 					/>
+
+					{/* Premium Jobs Preview - Show after user has jobs */}
+					{jobs.length > 0 && (() => {
+						// Get real user preferences from localStorage
+						const userPrefs = getStoredUserPreferencesForMatches();
+						return userPrefs ? (
+							<PremiumJobsPreview
+								userPreferences={userPrefs}
+								className="mt-8"
+							/>
+						) : null;
+					})()}
 				</div>
 
 				{/* Ghost Matches for Empty State */}

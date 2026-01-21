@@ -207,8 +207,93 @@ export function useFormPersistence(
 		}
 	}, [STORAGE_KEY, setFormData, setStep, hasStep, tier]);
 
+	/**
+	 * Get stored user preferences for matches page
+	 */
+	const getStoredUserPreferences = useCallback(() => {
+		try {
+			const stored = localStorage.getItem(STORAGE_KEY);
+			if (!stored) return null;
+
+			const parsed: SavedFormState = JSON.parse(stored);
+
+			// Check if data is not too old (24 hours)
+			const age = Date.now() - parsed.timestamp;
+			if (age > EXPIRATION_MS) {
+				localStorage.removeItem(STORAGE_KEY);
+				return null;
+			}
+
+			// Return user preferences for matches page
+			const data = parsed.formData;
+			return {
+				cities: tier === 'free' ? (data as FreeFormData).cities : (data as PremiumFormData).cities || [],
+				careerPath: tier === 'free' ? [(data as FreeFormData).careerPath] : (data as PremiumFormData).careerPath || [],
+				tier: tier,
+			};
+		} catch (error) {
+			console.warn('Failed to retrieve stored user preferences:', error);
+			return null;
+		}
+	}, [STORAGE_KEY, tier]);
+
 	return {
-		// Could add utility functions here if needed
 		clearProgress: () => localStorage.removeItem(STORAGE_KEY),
+		getStoredUserPreferences,
 	};
+}
+
+/**
+ * Utility function to retrieve stored user preferences for matches page
+ * Used when user navigates to /matches after signup
+ */
+export function getStoredUserPreferencesForMatches(): {
+	cities: string[];
+	careerPath: string[];
+	tier: 'free' | 'premium';
+} | null {
+	const STORAGE_VERSION = 1;
+	const EXPIRATION_MS = 86400000; // 24 hours
+
+	// Try free tier first (most common)
+	const freeKey = `jobping_free_signup_v${STORAGE_VERSION}`;
+	try {
+		const stored = localStorage.getItem(freeKey);
+		if (stored) {
+			const parsed: SavedFormState = JSON.parse(stored);
+			const age = Date.now() - parsed.timestamp;
+			if (age <= EXPIRATION_MS) {
+				const data = parsed.formData as FreeFormData;
+				return {
+					cities: data.cities || [],
+					careerPath: data.careerPath ? [data.careerPath] : [],
+					tier: 'free' as const,
+				};
+			}
+		}
+	} catch (error) {
+		console.warn('Failed to retrieve free tier preferences:', error);
+	}
+
+	// Try premium tier
+	const premiumKey = `jobping_premium_signup_v${STORAGE_VERSION}`;
+	try {
+		const stored = localStorage.getItem(premiumKey);
+		if (stored) {
+			const parsed: SavedFormState = JSON.parse(stored);
+			const age = Date.now() - parsed.timestamp;
+			if (age <= EXPIRATION_MS) {
+				const data = parsed.formData as PremiumFormData;
+				return {
+					cities: data.cities || [],
+					careerPath: Array.isArray(data.careerPath) ? data.careerPath : [],
+					tier: 'premium' as const,
+				};
+			}
+		}
+	} catch (error) {
+		console.warn('Failed to retrieve premium tier preferences:', error);
+	}
+
+	return null;
 }

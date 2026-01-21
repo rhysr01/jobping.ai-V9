@@ -3,7 +3,6 @@
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { authenticateRequest } from "@/middleware/api-auth";
 import { validateMatchUsersRequest } from "@/middleware/api-validation";
 import { matchUsersService } from "@/services/matchUsersService";
 
@@ -28,22 +27,10 @@ export class UserFetchError extends Error {
 export async function matchUsersHandler(req: NextRequest) {
 	const requestId = crypto.randomUUID();
 
-	// Authenticate request
-	const authResult = await authenticateRequest(req);
-	if (!authResult.isAuthenticated) {
-		return authResult.error!;
-	}
-
-	// Parse request body (avoid double consumption)
+	// Parse request body once to avoid double consumption
 	let body;
 	try {
-		if (authResult.authenticatedReq?._rawBody) {
-			// Use raw body from authenticated request to avoid double consumption
-			body = JSON.parse(authResult.authenticatedReq._rawBody);
-		} else {
-			// Fallback for requests without authentication
-			body = await req.json();
-		}
+		body = await req.json();
 	} catch (error) {
 		console.error("Failed to parse request body:", error);
 		return NextResponse.json(

@@ -194,7 +194,7 @@ export default function Header() {
 							style={{ overflow: "visible", paddingRight: "0.75rem" }}
 						>
 							<div
-								className="scale-40 md:scale-45 origin-left overflow-visible pr-3 md:pr-4"
+								className="scale-30 sm:scale-40 md:scale-45 origin-left overflow-visible pr-2 sm:pr-3 md:pr-4"
 								style={{ overflow: "visible", minWidth: "fit-content" }}
 							>
 								<LogoWordmark />
@@ -343,7 +343,7 @@ export default function Header() {
 									? { duration: 0.3, ease: "easeOut" }
 									: { type: "spring", damping: 25, stiffness: 200 }
 							}
-							className="fixed top-0 right-0 bottom-0 w-80 max-w-[85vw] bg-black/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto"
+							className="fixed top-0 right-0 bottom-0 w-72 sm:w-80 max-w-[90vw] bg-black/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto"
 							role="dialog"
 							aria-modal="true"
 							aria-label="Mobile navigation menu"

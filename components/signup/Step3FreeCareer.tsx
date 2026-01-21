@@ -13,6 +13,7 @@ import {
 	HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import type { SignupFormData } from "./types";
+import { JobCountTeaser } from "./JobCountTeaser";
 
 interface Step3FreeCareerProps {
 	formData: SignupFormData;
@@ -187,6 +188,14 @@ export const Step3FreeCareer = React.memo(function Step3FreeCareer({
 								?.label || formData.careerPath[0]}
 						</p>
 					</div>
+				)}
+
+				{/* Job Count Teaser - Shows available job count */}
+				{formData.cities && formData.cities.length > 0 && formData.careerPath && formData.careerPath.length > 0 && (
+					<JobCountTeaser
+						cities={formData.cities}
+						careerPath={formData.careerPath}
+					/>
 				)}
 
 				{/* Success Message */}

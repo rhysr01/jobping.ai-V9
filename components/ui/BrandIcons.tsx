@@ -3,6 +3,123 @@
  * Modern, sleek SVG icons that match our design system
  */
 
+// Individual exports to prevent tree-shaking issues
+export const Briefcase = ({ className = "w-5 h-5" }: { className?: string }) => (
+	<svg
+		className={className}
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+		strokeLinecap="round"
+		strokeLinejoin="round"
+		aria-hidden="true"
+	>
+		<rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+		<path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+	</svg>
+);
+
+export const Target = ({ className = "w-5 h-5" }: { className?: string }) => (
+	<svg
+		className={className}
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+		strokeLinecap="round"
+		strokeLinejoin="round"
+		aria-hidden="true"
+	>
+		<circle cx="12" cy="12" r="10" />
+		<circle cx="12" cy="12" r="6" />
+		<circle cx="12" cy="12" r="2" />
+	</svg>
+);
+
+export const Sparkles = ({ className = "w-5 h-5" }: { className?: string }) => (
+	<svg
+		className={className}
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+		strokeLinecap="round"
+		strokeLinejoin="round"
+		aria-hidden="true"
+	>
+		<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+		<path d="M5 3v4" />
+		<path d="M19 17v4" />
+		<path d="M3 5h4" />
+		<path d="M17 19h4" />
+	</svg>
+);
+
+export const CheckCircle = ({ className = "w-5 h-5" }: { className?: string }) => (
+	<svg
+		className={className}
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+		strokeLinecap="round"
+		strokeLinejoin="round"
+		aria-hidden="true"
+	>
+		<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+		<polyline points="22,4 12,14.01 9,11.01" />
+	</svg>
+);
+
+export const Mail = ({ className = "w-5 h-5" }: { className?: string }) => (
+	<svg
+		className={className}
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+		strokeLinecap="round"
+		strokeLinejoin="round"
+		aria-hidden="true"
+	>
+		<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+		<polyline points="22,6 12,13 2,6" />
+	</svg>
+);
+
+export const Clock = ({ className = "w-5 h-5" }: { className?: string }) => (
+	<svg
+		className={className}
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+		strokeLinecap="round"
+		strokeLinejoin="round"
+		aria-hidden="true"
+	>
+		<circle cx="12" cy="12" r="10" />
+		<polyline points="12,6 12,12 16,14" />
+	</svg>
+);
+
+export const Zap = ({ className = "w-5 h-5" }: { className?: string }) => (
+	<svg
+		className={className}
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+		strokeLinecap="round"
+		strokeLinejoin="round"
+		aria-hidden="true"
+	>
+		<polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2" />
+	</svg>
+);
+
+// Keep the object export for backward compatibility
 export const BrandIcons = {
 	// Career/Job related
 	Briefcase: ({ className = "w-5 h-5" }: { className?: string }) => (

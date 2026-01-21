@@ -1,33 +1,21 @@
 "use client";
 
 import { motion } from "framer-motion";
-import React, { useRef } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { CityChip } from "../ui/CityChip";
 import { FormFieldError, FormFieldSuccess } from "../ui/FormFieldFeedback";
 import { MobileNavigation } from "./MobileNavigation";
 import { showToast } from "../../lib/toast";
-import {
-	HoverCard,
-	HoverCardContent,
-	HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import { POPULAR_CITIES, ALL_CITIES } from "./constants";
 import type { SignupFormData } from "./types";
 
 interface Step2FreeCitiesProps {
 	formData: SignupFormData;
-	setFormData: (updates: Partial<SignupFormData>) => void;
+	setFormData: React.Dispatch<React.SetStateAction<SignupFormData>>;
 	touchedFields: Set<string>;
 	setTouchedFields: React.Dispatch<React.SetStateAction<Set<string>>>;
 	loading: boolean;
 	setStep: (step: number) => void;
-	shouldShowError: (
-		fieldName: string,
-		hasValue: boolean,
-		isValid: boolean,
-	) => boolean;
-	getDisabledMessage: (stepNumber: number) => string;
-	toggleArray: (arr: string[], value: string) => string[];
 }
 
 export const Step2FreeCities = React.memo(function Step2FreeCities({
@@ -37,16 +25,14 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 	setTouchedFields,
 	loading,
 	setStep,
-	shouldShowError,
-	getDisabledMessage,
-	toggleArray,
 }: Step2FreeCitiesProps) {
 	const formRefs = {
 		cities: useRef<HTMLDivElement>(null),
 	};
 
-	const [showAllCities, setShowAllCities] = React.useState(false);
-	const displayedCities = React.useMemo(
+	const [showAllCities, setShowAllCities] = useState(false);
+
+	const displayedCities = useMemo(
 		() => (showAllCities ? ALL_CITIES : POPULAR_CITIES),
 		[showAllCities],
 	);
@@ -66,12 +52,11 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 		}
 
 		const wasSelected = formData.cities.includes(city);
-		const newCities = toggleArray(formData.cities, city);
+		const newCities = wasSelected
+			? formData.cities.filter((c: string) => c !== city)
+			: [...formData.cities, city];
 
-		setFormData({
-			...formData,
-			cities: newCities,
-		});
+		setFormData((prev) => ({ ...prev, cities: newCities }));
 		setTouchedFields((prev) => new Set(prev).add("cities"));
 
 		// Show success feedback
@@ -96,9 +81,14 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 			exit={{ opacity: 0, x: -20 }}
 			transition={{ duration: 0.4 }}
 			className="space-y-6 sm:space-y-8 md:space-y-10"
+			role="region"
+			aria-labelledby="step2-heading"
 		>
 			<div className="mb-6 sm:mb-8">
-				<h2 className="text-display-md font-black text-white mb-2 sm:mb-3 bg-gradient-to-r from-white to-zinc-200 bg-clip-text text-transparent">
+				<h2
+					id="step2-heading"
+					className="text-display-md font-black text-white mb-2 sm:mb-3 bg-gradient-to-r from-white to-zinc-200 bg-clip-text text-transparent"
+				>
 					Where do you want to work?
 				</h2>
 				<p className="text-base sm:text-lg font-medium text-zinc-100 leading-relaxed">
@@ -112,58 +102,19 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 			</div>
 
 			<div>
-				<div className="flex items-center gap-2 mb-3">
-					<label
-						id="cities-label"
-						htmlFor="cities-field"
-						className="block text-base font-bold text-white flex items-center gap-2"
-					>
-						<span>Preferred Cities</span>
-						<span className="text-error text-sm" aria-label="required">
-							*
-						</span>
-						<span className="text-zinc-400 font-normal text-sm">
-							(Select up to 3)
-						</span>
-					</label>
-					<HoverCard>
-						<HoverCardTrigger asChild>
-							<button
-								className="text-zinc-400 hover:text-zinc-300 transition-colors"
-								aria-label="Help with city selection"
-							>
-								<svg
-									className="w-4 h-4"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-									/>
-								</svg>
-							</button>
-						</HoverCardTrigger>
-						<HoverCardContent className="w-80 p-4">
-							<div className="space-y-2">
-								<p className="text-sm font-semibold text-white">
-									🌍 Choose your location preferences
-								</p>
-								<p className="text-xs text-zinc-300 leading-relaxed">
-									We'll find job matches in all selected cities. Most roles are
-									remote-friendly, so you can work from anywhere. Start with
-									your preferred locations!
-								</p>
-							</div>
-						</HoverCardContent>
-					</HoverCard>
-				</div>
+				<label
+					id="cities-label"
+					htmlFor="cities-field"
+					className="block text-base font-bold text-white mb-3 flex items-center gap-2"
+				>
+					<span>Preferred Cities</span>
+					<span className="text-error text-sm" aria-label="required">
+						*
+					</span>
+				</label>
 				<p
 					id="cities-help"
-					className="text-sm text-zinc-400 mb-2 leading-relaxed"
+					className="text-sm text-zinc-400 mb-4 leading-relaxed"
 				>
 					Choose cities where you'd like to work. We'll find the best matches
 					instantly.
@@ -179,11 +130,11 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 					onBlur={handleCitiesBlur}
 				>
 					{displayedCities.map((city) => {
-						const isSelected = React.useMemo(
+						const isSelected = useMemo(
 							() => formData.cities.includes(city),
 							[formData.cities, city],
 						);
-						const isDisabled = React.useMemo(
+						const isDisabled = useMemo(
 							() => !isSelected && formData.cities.length >= 3,
 							[isSelected, formData.cities.length],
 						);
@@ -206,11 +157,14 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 					})}
 				</div>
 
-				{/* Show More Button */}
-				{!showAllCities && (
+				{/* Show More Button - Only show if not showing all cities */}
+				{!showAllCities && POPULAR_CITIES.length > 0 && (
 					<div className="mt-4 text-center">
 						<button
-							onClick={() => setShowAllCities(true)}
+							onClick={() => {
+								console.log('Step2FreeCities: Show more cities clicked');
+								setShowAllCities(true);
+							}}
 							className="text-sm text-brand-400 hover:text-brand-300 transition-colors underline underline-offset-2"
 							type="button"
 						>
@@ -243,11 +197,7 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 				)}
 
 				{/* Error Display */}
-				{shouldShowError(
-					"cities",
-					formData.cities.length === 0,
-					formData.cities.length > 0,
-				) && (
+				{!isStepValid && (
 					<FormFieldError
 						error="Please select at least one city to find relevant job opportunities."
 						id="cities-error"
@@ -265,7 +215,7 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 				onNext={() => setStep(3)}
 				onBack={() => setStep(1)}
 				nextDisabled={!isStepValid || loading}
-				nextLabel={getDisabledMessage(2)}
+				nextLabel="Continue"
 				loading={loading}
 			/>
 		</motion.div>

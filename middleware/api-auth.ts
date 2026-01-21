@@ -6,7 +6,7 @@ export interface AuthenticatedRequest extends NextRequest {
 	_rawBody?: string;
 }
 
-export async function authenticateRequest(req: NextRequest): Promise<{
+export async function authenticateRequest(req: NextRequest, body?: any): Promise<{
 	isAuthenticated: boolean;
 	error?: NextResponse;
 	authenticatedReq?: AuthenticatedRequest;
@@ -22,7 +22,7 @@ export async function authenticateRequest(req: NextRequest): Promise<{
 
 		let raw: string;
 		try {
-			raw = await req.text();
+			raw = body ? JSON.stringify(body) : await req.text();
 		} catch (error) {
 			logger.error("Failed to read request body", { error: error as Error });
 			return {

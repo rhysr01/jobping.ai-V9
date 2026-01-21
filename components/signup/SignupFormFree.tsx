@@ -44,7 +44,6 @@ function SignupFormFree() {
 		setSuccessState,
 		setFormData,
 		updateFormData,
-		toggleArrayValue,
 	} = signupState;
 
 	const { announce, Announcement } = useAriaAnnounce();
@@ -356,14 +355,11 @@ function SignupFormFree() {
 							<Step2FreeCities
 								key="step2"
 								formData={formData}
-								setFormData={updateFormData}
+								setFormData={setFormData}
 								touchedFields={new Set()}
 								setTouchedFields={() => {}}
 								loading={loading}
 								setStep={navigation.navigateToStep}
-								shouldShowError={shouldShowError}
-								getDisabledMessage={getDisabledMessage}
-								toggleArray={toggleArrayValue as any}
 							/>
 						)}
 						{step === 3 && (

@@ -2,7 +2,7 @@ export default function LogoWordmark() {
 	return (
 		<header
 			data-testid="logo"
-			className="font-display inline-flex items-center gap-2 md:gap-3 font-semibold tracking-tight text-6xl md:text-7xl px-1 pb-3 md:pb-4"
+			className="font-display inline-flex items-center gap-1 sm:gap-2 md:gap-3 font-semibold tracking-tight text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl px-1 pb-2 sm:pb-3 md:pb-4"
 			style={{
 				overflow: "visible",
 				lineHeight: "1.2",
@@ -11,7 +11,7 @@ export default function LogoWordmark() {
 			<span aria-hidden className="text-white/95 flex items-center shrink-0">
 				{/* White graduation cap before the J */}
 				<svg
-					className="h-[57px] w-[57px] md:h-[73px] md:w-[73px] flex-shrink-0"
+					className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 lg:h-[57px] lg:w-[57px] xl:h-[73px] xl:w-[73px] flex-shrink-0"
 					viewBox="0 0 24 24"
 					fill="none"
 					stroke="currentColor"

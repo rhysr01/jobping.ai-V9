@@ -123,6 +123,7 @@ export default async function RootLayout({
 					rel="stylesheet"
 					media="(max-width: 1024px)"
 				/>
+				{/* Desktop: Lazy load Clash Display + Inter combined for efficiency */}
 				<link
 					href="https://fonts.googleapis.com/css2?family=Clash+Display:opsz,wght@40..72,400..700&family=Inter:wght@400;500;600;700&display=swap"
 					rel="stylesheet"
