@@ -150,15 +150,17 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 		// Career path filtering is handled by AI matching in the actual signup process
 		// Preview should show all early-career jobs in selected cities, regardless of category
 
-		// Filter for early-career roles using categories array (fallback since is_internship/is_graduate columns may not exist yet)
+		// Filter for early-career OR business-related roles (more generous for preview)
 		if (isPremiumPreview) {
 			// Premium preview: show more variety including mid-level roles
 			query = query.or(
-				"categories.cs.{early-career},categories.cs.{business},categories.cs.{management}"
+				"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management}"
 			);
 		} else {
 			// Regular preview: stick to early-career
-			query = query.or("categories.cs.{early-career}");
+			query = query.or(
+				"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}"
+			);
 		}
 
 		// Filter by visa sponsorship if specified
@@ -219,10 +221,12 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			// Apply same role filtering
 			if (isPremiumPreview) {
 				fallbackQuery = fallbackQuery.or(
-					"categories.cs.{early-career},categories.cs.{business},categories.cs.{management}"
+					"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management}"
 				);
 			} else {
-				fallbackQuery = fallbackQuery.or("categories.cs.{early-career}");
+				fallbackQuery = fallbackQuery.or(
+					"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}"
+				);
 			}
 
 			const { count: fallbackCount } = await fallbackQuery;
