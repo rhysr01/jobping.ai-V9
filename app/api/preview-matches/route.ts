@@ -66,6 +66,8 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			visaSponsorship,
 			limit,
 			isPreview,
+			isPremiumPreview,
+			cityVariations: Array.from(cityVariations).slice(0, 5), // Log first 5 city variants
 			requestId,
 			note: "Career path filtering handled by AI matching, not database",
 		});
@@ -148,10 +150,16 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 		// Career path filtering is handled by AI matching in the actual signup process
 		// Preview should show all early-career jobs in selected cities, regardless of category
 
-		// Filter for early-career roles (same as free signup API)
-		query = query.or(
-			"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}",
-		);
+		// Filter for early-career roles using categories array (fallback since is_internship/is_graduate columns may not exist yet)
+		if (isPremiumPreview) {
+			// Premium preview: show more variety including mid-level roles
+			query = query.or(
+				"categories.cs.{early-career},categories.cs.{business},categories.cs.{management}"
+			);
+		} else {
+			// Regular preview: stick to early-career
+			query = query.or("categories.cs.{early-career}");
+		}
 
 		// Filter by visa sponsorship if specified
 		if (visaSponsorship) {
@@ -191,7 +199,42 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			);
 		}
 
-		const jobCount = count || 0;
+		let jobCount = count || 0;
+
+		// If no jobs found with city filter, try a fallback query without city restrictions
+		if (jobCount === 0 && cities.length > 0) {
+			apiLogger.info("No jobs found with city filter, trying fallback", {
+				cities,
+				requestId
+			});
+
+			let fallbackQuery = supabase
+				.from("jobs")
+				.select("id", { count: "exact", head: true })
+				.eq("is_active", true)
+				.eq("status", "active")
+				.is("filtered_reason", null)
+				.gte("created_at", sixtyDaysAgo.toISOString());
+
+			// Apply same role filtering
+			if (isPremiumPreview) {
+				fallbackQuery = fallbackQuery.or(
+					"categories.cs.{early-career},categories.cs.{business},categories.cs.{management}"
+				);
+			} else {
+				fallbackQuery = fallbackQuery.or("categories.cs.{early-career}");
+			}
+
+			const { count: fallbackCount } = await fallbackQuery;
+			jobCount = Math.min(fallbackCount || 0, 500); // Cap at 500 to avoid overwhelming numbers
+
+			if (jobCount > 0) {
+				apiLogger.info("Fallback query found jobs", {
+					fallbackCount: jobCount,
+					requestId
+				});
+			}
+		}
 
 		// Determine if this is a low count and provide suggestions
 		let isLowCount = false;
