@@ -20,17 +20,6 @@ export default function Header() {
 	const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 	const pathname = usePathname();
 
-	// Initialize mobile state immediately with SSR safety
-	useEffect(() => {
-		const checkMobile = () => setIsMobile(window.innerWidth <= 768);
-		checkMobile();
-
-		// Also listen for resize events
-		const handleResize = () => checkMobile();
-		window.addEventListener("resize", handleResize);
-		return () => window.removeEventListener("resize", handleResize);
-	}, []);
-
 	useEffect(() => {
 		// Mobile detection
 		const updateMobileState = () => {
