@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { CityChip } from "../ui/CityChip";
 import { FormFieldError, FormFieldSuccess } from "../ui/FormFieldFeedback";
 import { MobileNavigation } from "./MobileNavigation";
@@ -130,14 +130,8 @@ export const Step2FreeCities = React.memo(function Step2FreeCities({
 					onBlur={handleCitiesBlur}
 				>
 					{displayedCities.map((city) => {
-						const isSelected = useMemo(
-							() => formData.cities.includes(city),
-							[formData.cities, city],
-						);
-						const isDisabled = useMemo(
-							() => !isSelected && formData.cities.length >= 3,
-							[isSelected, formData.cities.length],
-						);
+						const isSelected = formData.cities.includes(city);
+						const isDisabled = !isSelected && formData.cities.length >= 3;
 						return (
 							<CityChip
 								key={city}
