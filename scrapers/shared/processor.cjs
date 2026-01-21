@@ -510,9 +510,10 @@ async function processIncomingJob(job, options = {}) {
 	} = options;
 
 	// CRITICAL: Validate source to prevent null sources
-	if (!source || source === "unknown") {
-		console.error(`[Processor] ❌ Rejecting job with invalid source: "${source}"`);
+	if (!source || source === "unknown" || source === null || source === undefined) {
+		console.error(`[Processor] ❌ Rejecting job with invalid source: "${source}" (type: ${typeof source})`);
 		console.error(`[Processor] Job details: ${job.title || 'No title'} at ${job.company || 'No company'}`);
+		console.error(`[Processor] Full job object:`, JSON.stringify(job, null, 2));
 		return null; // Reject jobs with invalid sources
 	}
 
