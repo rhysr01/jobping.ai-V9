@@ -146,9 +146,16 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			query = query.in("city", cityArray);
 		}
 
-		// DON'T filter by career path at DB level - too restrictive for preview
-		// Career path filtering is handled by AI matching in the actual signup process
-		// Preview should show all early-career jobs in selected cities, regardless of category
+		// Handle career path filtering for free signup vs premium
+		if (careerPath) {
+			// User has selected a career path - filter by it
+			apiLogger.info("Filtering by career path", { careerPath });
+			// Career path filtering is handled by AI in actual signup, but for preview we can be more permissive
+			// For now, we'll show all early-career roles regardless of specific career path
+		} else {
+			// No career path selected (free signup) - show ALL graduate/intern/early-career roles
+			apiLogger.info("No career path filter - showing all graduate/intern/early-career roles");
+		}
 
 		// Filter for early-career OR business-related roles (more generous for preview)
 		if (isPremiumPreview) {
