@@ -58,6 +58,7 @@ function SignupFormFree() {
 	const [validationErrors, setValidationErrors] = useState<
 		Record<string, string>
 	>({});
+	const [isMounted, setIsMounted] = useState(false);
 
 	// Form persistence hook
 	// SignupFormData is compatible with FormDataType since it contains all required fields
@@ -95,24 +96,18 @@ function SignupFormFree() {
 		}
 	}, [step, isSubmitting, signupError, setError]); // Clear errors whenever step changes
 
-	// Clear errors on initial mount if navigating directly to step 2 or if errors exist
+	// Mark component as mounted to prevent hydration mismatches
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
+
+	// Clear errors on initial mount - always clear to prevent stale errors from persisting
 	// This handles cases where users navigate directly to /signup/free?step=2 with stale errors
 	// Also handles race conditions where errors might persist from previous sessions
 	useEffect(() => {
-		// Always clear errors on mount if not submitting - defensive approach
-		if (!isSubmitting) {
-			const hasValidationErrors = Object.keys(validationErrors).length > 0;
-			const hasSignupError = !!signupError;
-			
-			if (hasValidationErrors || hasSignupError) {
-				if (hasValidationErrors) {
-					setValidationErrors({});
-				}
-				if (hasSignupError) {
-					setError("");
-				}
-			}
-		}
+		// Always clear errors on mount - defensive approach to prevent phantom errors
+		setValidationErrors({});
+		setError("");
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []); // Only run on mount - clear any stale errors from previous sessions
 
@@ -342,7 +337,45 @@ function SignupFormFree() {
 			});
 
 			setError(errorMessage);
-			setValidationErrors({ general: errorMessage, ...errorDetails });
+			
+			// Convert zod validation errors array to a proper string map
+			// Ensure all values are strings to prevent React rendering errors
+			const validationErrorsMap: Record<string, string> = { general: errorMessage };
+			if (errorDetails && Array.isArray(errorDetails)) {
+				errorDetails.forEach((detail: any) => {
+					if (detail && typeof detail === 'object') {
+						if (detail.path && Array.isArray(detail.path)) {
+							const field = detail.path.join('.');
+							const message = typeof detail.message === 'string' 
+								? detail.message 
+								: 'Invalid value';
+							validationErrorsMap[field] = message;
+						} else if (typeof detail.message === 'string') {
+							// Handle case where detail is a simple object with message
+							validationErrorsMap[detail.path || 'unknown'] = detail.message;
+						}
+					}
+				});
+			} else if (errorDetails && typeof errorDetails === 'object' && !Array.isArray(errorDetails)) {
+				// If errorDetails is already an object, merge it properly but ensure all values are strings
+				Object.entries(errorDetails).forEach(([key, value]) => {
+					if (typeof value === 'string') {
+						validationErrorsMap[key] = value;
+					} else if (value && typeof value === 'object' && 'message' in value) {
+						validationErrorsMap[key] = String((value as any).message || 'Invalid value');
+					} else {
+						validationErrorsMap[key] = String(value || 'Invalid value');
+					}
+				});
+			}
+			
+			// Final safety check: ensure all values are strings
+			const safeValidationErrors: Record<string, string> = {};
+			Object.entries(validationErrorsMap).forEach(([key, value]) => {
+				safeValidationErrors[key] = typeof value === 'string' ? value : String(value || '');
+			});
+			
+			setValidationErrors(safeValidationErrors);
 			showToast.error(errorMessage);
 
 			// Log error details for debugging (development only)
@@ -473,8 +506,8 @@ function SignupFormFree() {
 					)}
 
 					{/* Form Validation Errors */}
-					{/* Only show errors if not currently submitting and errors are relevant to current step */}
-					{Object.keys(validationErrors).length > 0 && !isSubmitting && (
+					{/* Only show errors if mounted, not currently submitting, and errors are relevant to current step */}
+					{isMounted && Object.keys(validationErrors).length > 0 && !isSubmitting && (
 						<motion.div
 							initial={{ opacity: 0, y: -10 }}
 							animate={{ opacity: 1, y: 0 }}
@@ -489,15 +522,17 @@ function SignupFormFree() {
 										Please check your information:
 									</h4>
 									<ul className="space-y-1">
-										{Object.entries(validationErrors).map(([field, error]) => (
-											<li
-												key={field}
-												className="text-red-300 text-sm flex items-center gap-2"
-											>
-												<span className="w-1 h-1 bg-red-400 rounded-full"></span>
-												{error}
-											</li>
-										))}
+										{Object.entries(validationErrors)
+											.filter(([_, error]) => error && typeof error === 'string')
+											.map(([field, error]) => (
+												<li
+													key={field}
+													className="text-red-300 text-sm flex items-center gap-2"
+												>
+													<span className="w-1 h-1 bg-red-400 rounded-full"></span>
+													{error as string}
+												</li>
+											))}
 									</ul>
 								</div>
 							</div>
