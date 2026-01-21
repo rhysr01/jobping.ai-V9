@@ -48,11 +48,13 @@ export function JobCountTeaser({ cities, careerPath }: JobCountTeaserProps) {
 				throw new Error("Failed to fetch");
 			}
 
-			const data = await response.json();
-			console.log('API Data:', data); // Debug logging
+			const responseData = await response.json();
+			console.log('API Data:', responseData); // Debug logging
+			// API wraps response in { data: { count, ... } }
+			const data = responseData.data || responseData;
 			setJobCount({
 				count: data.count || 0,
-				isLowCount: data.count < 20,
+				isLowCount: (data.count || 0) < 20,
 			});
 		} catch (err) {
 			console.error("JobCountTeaser fetch error:", err);

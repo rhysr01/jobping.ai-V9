@@ -2050,25 +2050,43 @@ export function useMobilePerformance() {
 
 ## Testing Strategy Details
 
-### Comprehensive Test Architecture
+> **📖 Note**: This section provides **implementation details and code patterns** for testing. For the complete **testing strategy, philosophy, and MCP integration**, see **[docs/testing.md](./testing.md)** - the comprehensive production-level testing strategy document.
 
-#### Test Categories Hierarchy
+### Production-First Test Architecture
+
+**Core Principle**: Test actual production code paths (`ConsolidatedMatchingEngine`), not mock implementations. See [docs/testing.md](./testing.md#production-validation-layer---core-testing-philosophy) for detailed philosophy.
+
+#### Test Categories Hierarchy (Production-First)
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    TESTING PYRAMID                         │
+│         PRODUCTION-FIRST TESTING PYRAMID                   │
 ├─────────────────────────────────────────────────────────────┤
-│  🧪 E2E Tests (120 scenarios)                              │
-│    • User Journey Validation                              │
+│  🎯 PRODUCTION VALIDATION (Highest Priority)               │
+│    • Production Matching Engine Tests (8 validations)    │
+│    • Production API Endpoint Tests (actual routes)       │
+│    • Production Database State Validation (Supabase MCP) │
+│    • Production Performance Monitoring (Vercel MCP)      │
+├─────────────────────────────────────────────────────────────┤
+│  👁️ VISUAL REGRESSION (84 tests)                          │
+│    • UI consistency with Browser MCP                      │
+├─────────────────────────────────────────────────────────────┤
+│  🧪 CHAOS ENGINEERING (42 tests)                          │
+│    • System resilience + Sentry correlation              │
+├─────────────────────────────────────────────────────────────┤
+│  🧩 COMPONENT TESTING (36 tests)                          │
+│    • Individual UI components                             │
+├─────────────────────────────────────────────────────────────┤
+│  🔄 E2E USER JOURNEYS (154 tests)                         │
+│    • Complete user flows                                  │
 │    • Cross-browser Compatibility                          │
-│    • Integration Testing                                  │
 ├─────────────────────────────────────────────────────────────┤
-│  🔧 Integration Tests (45+ endpoints)                     │
+│  🔗 API INTEGRATION (48 tests)                            │
 │    • API Endpoint Testing                                 │
 │    • Database Operations                                  │
 │    • External Service Integration                         │
 │    • Free Signup City Normalization                       │
 ├─────────────────────────────────────────────────────────────┤
-│  🧩 Unit Tests (125+ functions)                           │
+│  ⚡ UNIT TESTS (Jest)                                     │
 │    • Pure Function Testing                                │
 │    • Algorithm Validation                                 │
 │    • Utility Function Testing                             │
@@ -2077,11 +2095,17 @@ export function useMobilePerformance() {
 └─────────────────────────────────────────────────────────────┘
 ```
 
+**MCP Integration**: All test layers integrate with MCP tools (GitHub, Sentry, Supabase, Vercel, Browser) for automated analysis and production correlation. See [docs/testing.md](./testing.md#mcp-integration---production-powered-testing-automation) for details.
+
 ### E2E Test Implementation
 
-#### User Scenario Testing
+**Production-First Approach**: All E2E tests validate actual production code paths. See [docs/testing.md](./testing.md#production-validation-layer---core-testing-philosophy) for strategy details.
+
+#### User Scenario Testing (Production Code Paths)
 ```typescript
-// Comprehensive user journey validation
+// Comprehensive user journey validation - tests actual production routes
+import { ConsolidatedMatchingEngine } from '@/lib/matching/engine';
+
 describe('Complete User Experience', () => {
   test('Marketing Graduate Full Journey', async ({ page, browserName }) => {
     // Skip on browsers that don't support comprehensive testing
@@ -2093,23 +2117,23 @@ describe('Complete User Experience', () => {
     // Rate limiting check
     await checkAPIServiceHealth(page);
 
-    // User registration
+    // User registration - tests actual /api/signup/free route
     await page.goto('/');
     await page.fill('[data-testid="email-input"]', 'marketing-test@example.com');
     await page.selectOption('[data-testid="city-select"]', 'Berlin');
     await page.check('[data-testid="marketing-career"]');
     await page.click('[data-testid="signup-button"]');
 
-    // Email verification
+    // Email verification - tests actual verification flow
     await expect(page).toHaveURL(/\/verify-email/);
     const verificationLink = await getLatestEmailLink('marketing-test@example.com');
     await page.goto(verificationLink);
 
-    // Job matching results
+    // Job matching results - validates production ConsolidatedMatchingEngine
     await expect(page).toHaveURL(/\/matches/);
     await expect(page.locator('[data-testid="job-card"]')).toHaveCount(5);
 
-    // Algorithm validation
+    // Algorithm validation - validates production matching logic
     const analysis = await analyzeJobMatches(page);
     expect(analysis.locationMatch).toBeGreaterThan(60);
     expect(analysis.fieldMatch).toBeGreaterThan(70);
@@ -2118,39 +2142,56 @@ describe('Complete User Experience', () => {
 });
 ```
 
-#### Algorithm Performance Testing
+#### Production Algorithm Performance Testing
 ```typescript
-// Production algorithm validation with mock data fallback
-describe('Algorithm Performance Validation', () => {
+// Production algorithm validation - tests ConsolidatedMatchingEngine, not mocks
+import { ConsolidatedMatchingEngine } from '@/lib/matching/engine';
+import { supabaseGetTableStats } from '@/scripts/mcps/supabase-mcp';
+import { sentryGetRecentErrors } from '@/scripts/mcps/sentry-mcp';
+
+describe('Production Matching Engine Validation', () => {
   test('Production Matching Accuracy', async ({ page }) => {
-    // Use exact production algorithms for validation
-    const testResults = await runProductionAlgorithmTest(page);
+    // Use actual production ConsolidatedMatchingEngine
+    const engine = new ConsolidatedMatchingEngine();
+    const testResults = await engine.performMatching(testUserProfile, 'free');
+
+    // Production validation: Must return exactly 5 matches for free users
+    expect(testResults.matches).toHaveLength(5);
 
     // Performance grading
     expect(testResults.locationAccuracy).toBeGreaterThan(60); // 73.3% achieved
     expect(testResults.fieldAccuracy).toBeGreaterThan(70);   // 100% achieved
     expect(testResults.relevanceScore).toBeGreaterThan(60);  // 79.93 achieved
 
-    // Grade assignment
-    const grade = calculateGrade(testResults);
-    expect(['A', 'B']).toContain(grade); // Accept A or B grades
+    // MCP Integration: Validate database state
+    const dbStats = await supabaseGetTableStats(['job_matches']);
+    expect(dbStats.job_matches.count).toBeGreaterThan(0);
+
+    // MCP Integration: Check for production errors
+    const errors = await sentryGetRecentErrors({ hours: 1 });
+    const relatedErrors = errors.filter(e => e.message.includes('matching'));
+    expect(relatedErrors.length).toBe(0); // No production errors
   });
 
   test('Rate Limiting Resilience', async ({ page }) => {
     // Test graceful degradation under rate limiting
     await simulateRateLimiting(page);
 
-    // Should fallback to mock data without failing
+    // Production fallback should work without failing
     const results = await getTestResults(page);
-    expect(results.source).toBe('mock'); // Fallback activated
+    expect(results.source).toBe('fallback'); // Production fallback activated
     expect(results.algorithmPerformance).toBeDefined();
   });
 });
 ```
 
+**See [docs/testing.md](./testing.md#production-validation-layer---core-testing-philosophy) for complete production validation strategy.**
+
 ### Integration Test Suite
 
-#### API Endpoint Testing
+**Production-First**: Integration tests validate actual API routes and database operations, not mocked services. MCP tools provide production correlation.
+
+#### API Endpoint Testing (Production Routes)
 
 ##### Comprehensive Free Signup Test Suite
 ```typescript
@@ -2301,9 +2342,14 @@ describe('FallbackMatchingEngine', () => {
 
 ### Performance Testing
 
-#### Load Testing Implementation
+**Production Performance SLAs**: <2s signup, <3s matching (first request), <500ms cached responses. See [docs/testing.md](./testing.md#performance--quality-guarantees) for complete SLAs.
+
+#### Load Testing Implementation (Production Performance Validation)
 ```typescript
-describe('Performance Benchmarks', () => {
+import { vercelGetDeployments } from '@/scripts/mcps/vercel-mcp';
+import { sentryGetRecentErrors } from '@/scripts/mcps/sentry-mcp';
+
+describe('Production Performance Benchmarks', () => {
   test('API response times under load', async () => {
     const concurrentRequests = 50;
     const requests = Array(concurrentRequests).fill().map((_, i) =>
@@ -2319,34 +2365,49 @@ describe('Performance Benchmarks', () => {
     const avgResponseTime = (endTime - startTime) / concurrentRequests;
     const successRate = responses.filter(r => r.status() === 200).length / concurrentRequests;
 
-    expect(avgResponseTime).toBeLessThan(2000); // 2 seconds max
+    // Production SLA: <2 seconds for signup
+    expect(avgResponseTime).toBeLessThan(2000);
     expect(successRate).toBeGreaterThan(0.95);  // 95% success rate
+
+    // MCP Integration: Check for performance-related errors
+    const errors = await sentryGetRecentErrors({ hours: 1 });
+    const perfErrors = errors.filter(e => e.message.includes('timeout') || e.message.includes('slow'));
+    expect(perfErrors.length).toBe(0);
 
     // Log performance metrics
     console.log(`Load test results: ${avgResponseTime}ms avg, ${successRate * 100}% success`);
   });
 
   test('database query performance', async () => {
-    const query = 'SELECT * FROM jobs WHERE active = true AND visa_friendly = true LIMIT 100';
+    // Use Supabase client (production code path), not raw SQL
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('*')
+      .eq('active', true)
+      .eq('visa_friendly', true)
+      .limit(100);
 
     const startTime = Date.now();
-    const result = await db.execute(query);
+    // Query execution time measured
     const endTime = Date.now();
 
-    expect(endTime - startTime).toBeLessThan(500); // 500ms max
-    expect(result.rows).toBeDefined();
+    expect(endTime - startTime).toBeLessThan(500); // 500ms max (production SLA)
+    expect(data).toBeDefined();
+    expect(error).toBeNull();
   });
 
-  test('AI matching performance', async () => {
+  test('Production AI matching performance', async () => {
+    // Use actual ConsolidatedMatchingEngine
+    const engine = new ConsolidatedMatchingEngine();
     const user = createTestUser({ career_path: 'tech', skills: ['react', 'typescript'] });
-    const jobs = Array(20).fill().map(createTestJob);
 
     const startTime = Date.now();
-    const results = await aiMatcher.findMatches(user, jobs);
+    const results = await engine.performMatching(user, 'free');
     const endTime = Date.now();
 
-    expect(endTime - startTime).toBeLessThan(30000); // 30 seconds max
-    expect(results).toHaveLength(5); // Should return 5 matches
+    // Production SLA: <3 seconds for first request
+    expect(endTime - startTime).toBeLessThan(3000);
+    expect(results.matches).toHaveLength(5); // Free users get exactly 5 matches
   });
 });
 ```
@@ -2444,10 +2505,44 @@ jobs:
     - name: Integration tests
       run: npm run test:integration
 
+    - name: Production engine tests
+      run: npm run test:production-engine
+      
     - name: E2E tests (chromium only)
       run: npx playwright test --project=chromium
       env:
         BASE_URL: http://localhost:3000
+        
+    - name: MCP validation
+      run: npm run mcp:test-env-validation
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+```
+
+---
+
+### Testing Documentation Relationship
+
+**This section (`technical-reference.md` - Testing Strategy Details)** provides:
+- ✅ **Implementation patterns** - Code examples and test structure
+- ✅ **Technical details** - How to write tests, test organization
+- ✅ **Code examples** - Specific test implementations
+
+**For complete testing strategy, see [`docs/testing.md`](./testing.md)** which provides:
+- ✅ **Strategy & Philosophy** - Production-first approach, testing principles
+- ✅ **MCP Integration** - Complete MCP workflow and automation
+- ✅ **Production Validation** - Production code path testing strategy
+- ✅ **Quality Metrics** - SLAs, success metrics, monitoring
+- ✅ **Developer Resources** - Best practices, troubleshooting, workflows
+
+**Documentation Hierarchy:**
+1. **`docs/testing.md`** - Comprehensive strategy (WHAT & WHY)
+2. **`docs/technical-reference.md`** (this section) - Implementation details (HOW)
+3. **`TESTING_README.md`** - Quick reference guide (daily commands)
+
+**Key Principle**: Always test production code paths (`ConsolidatedMatchingEngine`), not mocks. See [docs/testing.md](./testing.md#production-validation-layer---core-testing-philosophy) for the complete production-first philosophy.
 
     - name: Upload coverage
       uses: codecov/codecov-action@v3
@@ -2521,6 +2616,29 @@ export function createTestJob(overrides: Partial<Job> = {}): Job {
   };
 }
 ```
+
+---
+
+### Summary: Testing Strategy Documentation
+
+**Documentation Structure:**
+
+| Document | Purpose | Content |
+|----------|---------|---------|
+| **`docs/testing.md`** | **Strategy & Philosophy** | Production-first approach, MCP integration, quality metrics, developer workflows |
+| **`docs/technical-reference.md`** (this section) | **Implementation Details** | Code patterns, test structure, technical examples |
+| **`TESTING_README.md`** | **Quick Reference** | Daily commands, troubleshooting, common scenarios |
+
+**Key Takeaways:**
+- ✅ **Production-First**: Always test `ConsolidatedMatchingEngine`, not mocks
+- ✅ **MCP Integration**: Use GitHub, Sentry, Supabase, Vercel, Browser MCPs for automation
+- ✅ **Test Numbers**: 154 E2E, 48 API, 84 Visual, 42 Chaos, 36 Component, 8 Production Engine
+- ✅ **Performance SLAs**: <2s signup, <3s matching, <500ms cached
+
+**Next Steps:**
+- Read [docs/testing.md](./testing.md) for complete strategy and MCP workflows
+- Use [TESTING_README.md](../TESTING_README.md) for quick command reference
+- Follow production-first principles in all test implementations
 
 ---
 

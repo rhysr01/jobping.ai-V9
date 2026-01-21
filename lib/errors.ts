@@ -7,7 +7,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { logger } from "./monitoring";
 
 // Request ID helper (for consistent request tracking)
-function getRequestId(req: NextRequest): string {
+export function getRequestId(req: NextRequest): string {
 	const headerVal = req.headers.get("x-request-id");
 	if (headerVal && headerVal.length > 0) {
 		return headerVal;

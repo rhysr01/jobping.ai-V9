@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
+import type { FormDataType } from "@/hooks/useFormPersistence";
 import { useEmailValidation } from "@/hooks/useFormValidation";
 import { useFreeSignupNavigation } from "@/hooks/useFreeSignupNavigation";
 import { useSignupState } from "@/hooks/useSignupState";
@@ -57,9 +58,10 @@ function SignupFormFree() {
 	>({});
 
 	// Form persistence hook
-	const { clearProgress } = useFormPersistence(
-		formData as any,
-		updateFormData as any,
+	// SignupFormData is compatible with FormDataType since it contains all required fields
+	const { clearProgress, savePreferencesForMatches } = useFormPersistence(
+		formData as unknown as FormDataType,
+		updateFormData as unknown as React.Dispatch<React.SetStateAction<FormDataType>>,
 		{ tier: "free", hasStep: true, minStepForSave: 1 },
 		setStep,
 		step,
@@ -192,6 +194,9 @@ function SignupFormFree() {
 			setSubmissionProgress(100);
 			setSubmissionStage("Complete! Redirecting...");
 
+			// Save preferences for matches page before clearing form progress
+			// This allows PremiumJobsPreview to access user preferences
+			savePreferencesForMatches(formData as unknown as FormDataType);
 			clearProgress();
 
 			// Store timeout ref for cleanup
@@ -219,8 +224,8 @@ function SignupFormFree() {
 			}
 
 			console.error('Signup submission error:', {
-				error: error.message,
-				status: error.status,
+				error: error instanceof ApiError ? error.message : String(error),
+				status: error instanceof ApiError ? error.status : undefined,
 				details: errorDetails,
 				formData: {
 					email: formData.email,
@@ -235,8 +240,10 @@ function SignupFormFree() {
 			setValidationErrors({ general: errorMessage, ...errorDetails });
 			showToast.error(errorMessage);
 
-			// Also show alert for debugging
-			alert(`Signup Error: ${errorMessage}\n\nCheck browser console (F12) for detailed debugging info.`);
+			// Log error details for debugging (development only)
+			if (process.env.NODE_ENV === "development") {
+				console.error("Signup Error:", errorMessage, errorDetails);
+			}
 		} finally {
 			setLoading(false);
 			setIsSubmitting(false);

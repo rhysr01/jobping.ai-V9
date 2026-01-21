@@ -48,6 +48,7 @@ export const TIMING = {
 	// Session & Expiration
 	SESSION_EXPIRED_REDIRECT_MS: 3000, // 3 seconds - delay before redirect on expired session
 	FORM_PERSISTENCE_SHOW_MS: 10000, // 10 seconds - show "Resume Signup" prompt
+	FORM_PREFERENCES_EXPIRATION_MS: 24 * 60 * 60 * 1000, // 24 hours - form preferences expiration
 
 	// Rate Limiting & Delays
 	RATE_LIMIT_DELAY_MS: 1000, // 1 second - delay between rate-limited requests

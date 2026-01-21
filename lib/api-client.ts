@@ -13,6 +13,7 @@ export class ApiError extends Error {
 		message: string,
 		public status?: number,
 		public retryable: boolean = false,
+		public response?: any,
 	) {
 		super(message);
 		this.name = "ApiError";
@@ -105,8 +106,9 @@ export async function apiCall(
 
 				// For 4xx errors (except 429), don't retry
 				if (response.status >= 400 && response.status < 500) {
-					// Try to get error message from response
+					// Try to get error message and details from response
 					let errorMessage = "Request failed. Please try again.";
+					let responseData = null;
 					try {
 						const data = await response
 							.clone()
@@ -115,10 +117,11 @@ export async function apiCall(
 						if (data?.error) {
 							errorMessage = data.error;
 						}
+						responseData = data;
 					} catch {
 						// Ignore JSON parse errors
 					}
-					throw new ApiError(errorMessage, response.status, false);
+					throw new ApiError(errorMessage, response.status, false, responseData);
 				}
 
 				return response;

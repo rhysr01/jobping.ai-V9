@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BrandIcons } from "../ui/BrandIcons";
 import CustomButton from "../ui/CustomButton";
 import { trackEvent } from "../../lib/analytics";
@@ -30,6 +30,7 @@ export function PremiumJobsPreview({ userPreferences, className = "" }: PremiumJ
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(false);
 	const [hasLoaded, setHasLoaded] = useState(false);
+	const previewRef = useRef<HTMLDivElement>(null);
 
 	const fetchPremiumPreviews = async () => {
 		if (hasLoaded) return; // Already loaded
@@ -52,7 +53,9 @@ export function PremiumJobsPreview({ userPreferences, className = "" }: PremiumJ
 
 			if (!response.ok) throw new Error("Failed to fetch");
 
-			const data = await response.json();
+			const responseData = await response.json();
+			// API wraps response in { data: { matches, ... } }
+			const data = responseData.data || responseData;
 			setPremiumJobs(data.matches || []);
 			setHasLoaded(true);
 		} catch (err) {
@@ -65,7 +68,7 @@ export function PremiumJobsPreview({ userPreferences, className = "" }: PremiumJ
 
 	// Lazy load: Only fetch when component becomes visible
 	useEffect(() => {
-		if (userPreferences.tier !== 'premium' && !hasLoaded) {
+		if (userPreferences.tier !== 'premium' && !hasLoaded && previewRef.current) {
 			// Use Intersection Observer for lazy loading
 			const observer = new IntersectionObserver(
 				(entries) => {
@@ -77,7 +80,7 @@ export function PremiumJobsPreview({ userPreferences, className = "" }: PremiumJ
 				{ threshold: 0.1 } // Trigger when 10% visible
 			);
 
-			const element = document.getElementById('premium-preview-trigger');
+			const element = previewRef.current;
 			if (element) {
 				observer.observe(element);
 			}
@@ -145,6 +148,7 @@ export function PremiumJobsPreview({ userPreferences, className = "" }: PremiumJ
 
 	return (
 		<motion.div
+			ref={previewRef}
 			id="premium-preview-trigger"
 			initial={{ opacity: 0, y: 20 }}
 			animate={{ opacity: 1, y: 0 }}

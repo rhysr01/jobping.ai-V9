@@ -67,13 +67,14 @@ const getCompaniesHandler = asyncHandler(async (_req: NextRequest) => {
 		const supabase = getDatabaseClient();
 
 		// Get distinct companies from sent jobs with their locations
+		// Fix: Use neq() instead of not("eq", "") to avoid incomplete query generation
 		const { data, error } = await supabase
 			.from("jobs")
 			.select("company, company_name, location, city, country")
 			.eq("is_active", true)
 			.eq("is_sent", true)
 			.not("company", "is", null)
-			.not("company", "eq", "");
+			.neq("company", ""); // Use neq() instead of not("eq", "") to avoid query generation issues
 
 		if (error) {
 			apiLogger.error("Database error fetching companies", error as Error, {

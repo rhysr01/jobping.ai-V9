@@ -83,12 +83,12 @@ export async function POST(request: NextRequest) {
 				const { data: user, error: userError } = await supabase
 					.from("users")
 					.select(
-						"email, full_name, subscription_tier, active, delivery_paused, last_email_sent, email_count",
+						"email, full_name, subscription_tier, subscription_active, delivery_paused, last_email_sent, email_count",
 					)
 					.eq("email", digest.user_email)
 					.single();
 
-				if (userError || !user || !user.active || user.delivery_paused) {
+				if (userError || !user || !user.subscription_active || user.delivery_paused) {
 					// Cancel digest if user doesn't exist or is inactive
 					await supabase
 						.from("pending_digests")

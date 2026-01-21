@@ -1,8 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "crypto";
+import * as Sentry from "@sentry/nextjs";
 import { apiLogger } from "../../../../lib/api-logger";
-import { asyncHandler } from "../../../../lib/errors";
+import { asyncHandler, getRequestId } from "../../../../lib/errors";
 import { SignupMatchingService } from "../../../../utils/services/SignupMatchingService";
 
 // Simple replacements for deleted country functions
@@ -320,6 +321,15 @@ const freeSignupSchema = z.object({
 });
 
 export const POST = asyncHandler(async (request: NextRequest) => {
+	const requestId = getRequestId(request);
+	
+	// Set Sentry context for this request
+	Sentry.setContext("request", {
+		requestId,
+		endpoint: "signup-free",
+		method: "POST",
+	});
+
 	// Rate limiting - prevent abuse (more lenient for legitimate users)
 	const rateLimitResult = await getProductionRateLimiter().middleware(
 		request,
@@ -331,6 +341,19 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 	);
 
 	if (rateLimitResult) {
+		apiLogger.warn("Rate limit exceeded for free signup", {
+			requestId,
+			ip: request.headers.get("x-forwarded-for") || "unknown",
+			endpoint: "signup-free",
+		});
+		Sentry.captureMessage("Rate limit exceeded for free signup", {
+			level: "warning",
+			tags: { endpoint: "signup-free", error_type: "rate_limit" },
+			extra: {
+				requestId,
+				ip: request.headers.get("x-forwarded-for") || "unknown",
+			},
+		});
 		return rateLimitResult;
 	}
 
@@ -343,7 +366,10 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 		const errors = validationResult.error.issues
 			.map((e: any) => `${e.path.join(".")}: ${e.message}`)
 			.join(", ");
-		apiLogger.warn("Free signup validation failed", new Error(errors), {
+		const validationError = new Error(errors);
+		
+		apiLogger.warn("Free signup validation failed", validationError, {
+			requestId,
 			email: body.email,
 			full_name: body.full_name,
 			cities: body.cities,
@@ -353,12 +379,26 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 			visaStatus: body.visaStatus,
 			requestBody: body,
 		});
+		
+		Sentry.captureMessage("Free signup validation failed", {
+			level: "warning",
+			tags: { endpoint: "signup-free", error_type: "validation" },
+			extra: {
+				requestId,
+				email: body.email,
+				errors: validationResult.error.issues,
+				cities: body.cities,
+				careerPath: body.careerPath,
+			},
+		});
+		
 		return NextResponse.json(
 			{
 				error: "invalid_input",
 				message:
 					"Please check your information and try again. All fields are required and must be valid.",
 				details: validationResult.error.issues,
+				requestId,
 			},
 			{ status: 400 },
 		);
@@ -438,6 +478,7 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 			.limit(1);
 
 		apiLogger.info("Existing free user tried to sign up again", {
+			requestId,
 			email: normalizedEmail,
 			hasMatches: (existingMatches?.length || 0) > 0,
 			matchCount: existingMatches?.length || 0,
@@ -477,7 +518,16 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 
 	if (minimalError) {
 		apiLogger.error("Failed to create minimal user", minimalError as Error, {
+			requestId,
 			email: normalizedEmail,
+		});
+		Sentry.captureException(minimalError, {
+			tags: { endpoint: "signup-free", error_type: "user_creation" },
+			extra: {
+				requestId,
+				email: normalizedEmail,
+				stage: "minimal_user_insert",
+			},
 		});
 		throw minimalError;
 	}
@@ -509,9 +559,20 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 		}
 		// If update fails, continue with minimal user data
 	} catch (updateError) {
+		const errorMessage = updateError instanceof Error ? updateError.message : String(updateError);
 		apiLogger.warn("Failed to update user with additional fields, continuing with minimal data", {
+			requestId,
 			email: normalizedEmail,
-			error: updateError instanceof Error ? updateError.message : String(updateError),
+			error: errorMessage,
+		});
+		Sentry.captureException(updateError instanceof Error ? updateError : new Error(errorMessage), {
+			tags: { endpoint: "signup-free", error_type: "user_update" },
+			level: "warning",
+			extra: {
+				requestId,
+				email: normalizedEmail,
+				stage: "user_field_update",
+			},
 		});
 	}
 
@@ -542,6 +603,7 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 	}
 
 	apiLogger.info("Free signup - cities normalized", {
+		requestId,
 		email: normalizedEmail,
 		original: userData.target_cities,
 		normalized: targetCities,
@@ -572,6 +634,7 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 	}
 
 	apiLogger.info("Free signup - job fetching strategy", {
+		requestId,
 		email: normalizedEmail,
 		targetCities: targetCities,
 		targetCountries: Array.from(targetCountries),
@@ -595,6 +658,7 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 	// REMOVED LIMIT - let PrefilterService filter by location/career first
 
 	apiLogger.info("Free signup - simplified job fetching", {
+		requestId,
 		email: normalizedEmail,
 		strategy: "basic-fetch-only",
 		note: "PrefilterService now handles all smart filtering (cities, career, etc.)",
@@ -611,6 +675,7 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 		apiLogger.warn(
 			"Free signup - no jobs found for target countries, trying broader fallback",
 			{
+				requestId,
 				email: normalizedEmail,
 				countries: Array.from(targetCountries),
 				cities: targetCities,
@@ -652,6 +717,7 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 			apiLogger.info(
 				"Free signup - found jobs using broader fallback (no country filter)",
 				{
+					requestId,
 					email: normalizedEmail,
 					jobCount: allJobs.length,
 					note: "Pre-filtering will handle city matching",
@@ -662,15 +728,42 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 
 	// Final check: if still no jobs, return error
 	if (jobsError || !allJobs || allJobs.length === 0) {
+		const reason = targetCities.length === 0
+			? "No cities selected"
+			: jobsError
+				? `Database error: ${jobsError.message}`
+				: "No jobs match your criteria after all fallback attempts";
+		
 		apiLogger.warn("Free signup - no jobs found after all fallbacks", {
+			requestId,
 			email: normalizedEmail,
 			cities: targetCities,
 			careerPath: userData.career_path,
 			jobsError: jobsError?.message,
 			jobsCount: allJobs?.length || 0,
+			reason,
 		});
+		
+		Sentry.captureMessage("Free signup - no jobs found after all fallbacks", {
+			level: "warning",
+			tags: { endpoint: "signup-free", error_type: "no_jobs_found" },
+			extra: {
+				requestId,
+				email: normalizedEmail,
+				cities: targetCities,
+				careerPath: userData.career_path,
+				reason,
+				jobsError: jobsError?.message,
+			},
+		});
+		
 		return NextResponse.json(
-			{ error: "No jobs found. Try different cities or career paths." },
+			{
+				error: "no_jobs_found",
+				message: `No jobs found. ${reason}. Try different cities or career paths.`,
+				details: { cities: targetCities, careerPath: userData.career_path },
+				requestId,
+			},
 			{ status: 404 },
 		);
 	}
@@ -680,6 +773,7 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 	// Stage 2-4: Hard Gates + Pre-Ranking + AI (handled in consolidatedMatchingV2)
 	// Stage 5: Diversity Pass (in distributeJobsWithDiversity)
 	apiLogger.info("Free signup - using new matching architecture", {
+		requestId,
 		email: normalizedEmail,
 		totalJobsFetched: allJobs?.length || 0,
 		targetCities: targetCities,
@@ -704,8 +798,29 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 	const jobsForMatching = allJobs || [];
 
 	if (!jobsForMatching || jobsForMatching.length === 0) {
+		apiLogger.warn("Free signup - no jobs available for matching", {
+			requestId,
+			email: normalizedEmail,
+			targetCities,
+			careerPath: userData.career_path,
+		});
+		Sentry.captureMessage("Free signup - no jobs available for matching", {
+			level: "warning",
+			tags: { endpoint: "signup-free", error_type: "no_jobs_for_matching" },
+			extra: {
+				requestId,
+				email: normalizedEmail,
+				targetCities,
+				careerPath: userData.career_path,
+			},
+		});
 		return NextResponse.json(
-			{ error: "No matches found. Try different cities or career paths." },
+			{
+				error: "no_jobs_for_matching",
+				message: "No jobs available for matching. Try different cities or career paths.",
+				details: { cities: targetCities, careerPath: userData.career_path },
+				requestId,
+			},
 			{ status: 404 },
 		);
 	}
@@ -721,17 +836,44 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 
 	// Check for matches
 	if (matchesCount === 0) {
+		const matchingReason = matchingResult.error || "No jobs matched user criteria after filtering";
 		apiLogger.info("Free signup - no matches found for user criteria", {
+			requestId,
 			email: normalizedEmail,
 			jobsAvailable: jobsForMatching.length,
+			method: matchingResult.method,
+			reason: matchingReason,
 			userCriteria: {
 				cities: targetCities,
 				careerPath: userData.career_path,
 				visaStatus: userData.visa_status,
 			},
 		});
+		Sentry.captureMessage("Free signup - no matches found for user criteria", {
+			level: "info",
+			tags: { endpoint: "signup-free", error_type: "no_matches_found" },
+			extra: {
+				requestId,
+				email: normalizedEmail,
+				jobsAvailable: jobsForMatching.length,
+				method: matchingResult.method,
+				reason: matchingReason,
+				cities: targetCities,
+				careerPath: userData.career_path,
+			},
+		});
 		return NextResponse.json(
-			{ error: "No matches found. Try different cities or career paths." },
+			{
+				error: "no_matches_found",
+				message: `No matches found. ${matchingReason}. Try different cities or career paths.`,
+				details: {
+					cities: targetCities,
+					careerPath: userData.career_path,
+					method: matchingResult.method,
+					reason: matchingReason,
+				},
+				requestId,
+			},
 			{ status: 404 },
 		);
 	}
@@ -765,10 +907,15 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 		apiLogger.warn(
 			"Failed to create session (non-critical)",
 			sessionError as Error,
+			{
+				requestId,
+				email: normalizedEmail,
+			},
 		);
 	}
 
 	apiLogger.info("Cookie set for free user", {
+		requestId,
 		email: normalizedEmail,
 		secure: isProduction && isHttps,
 		isProduction,
@@ -776,6 +923,7 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 	});
 
 	apiLogger.info("Free signup successful", {
+		requestId,
 		email: normalizedEmail,
 		matchCount: matchesCount,
 	});

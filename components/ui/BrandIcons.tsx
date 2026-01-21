@@ -331,6 +331,23 @@ export const BrandIcons = {
 		</svg>
 	),
 
+	AlertTriangle: ({ className = "w-5 h-5" }: { className?: string }) => (
+		<svg
+			className={className}
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+		>
+			<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+			<line x1="12" y1="9" x2="12" y2="13" />
+			<line x1="12" y1="17" x2="12.01" y2="17" />
+		</svg>
+	),
+
 	Check: ({ className = "w-5 h-5" }: { className?: string }) => (
 		<svg
 			className={className}
@@ -535,6 +552,57 @@ export const BrandIcons = {
 			aria-hidden="true"
 		>
 			<path d="M21 12a9 9 0 1 1-6.219-8.56" />
+		</svg>
+	),
+
+	Lock: ({ className = "w-5 h-5" }: { className?: string }) => (
+		<svg
+			className={className}
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+		>
+			<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+			<circle cx="12" cy="16" r="1" />
+			<path d="M7 11V7a5 5 0 0 1 10 0v4" />
+		</svg>
+	),
+
+	Crown: ({ className = "w-5 h-5" }: { className?: string }) => (
+		<svg
+			className={className}
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+		>
+			<path d="M2 18h20l-2-4-3 2-3-4-3 4-3-2-2 4z" />
+			<path d="M12 2l3 4-3 2-3-2 3-4z" />
+		</svg>
+	),
+
+	Calendar: ({ className = "w-5 h-5" }: { className?: string }) => (
+		<svg
+			className={className}
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+		>
+			<rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+			<line x1="16" y1="2" x2="16" y2="6" />
+			<line x1="8" y1="2" x2="8" y2="6" />
+			<line x1="3" y1="10" x2="21" y2="10" />
 		</svg>
 	),
 };

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useCallback } from "react";
 import { showToast } from "../lib/toast";
+import { TIMING } from "../lib/constants";
 
 const STORAGE_VERSION = 1;
-const EXPIRATION_MS = 86400000; // 24 hours
+const EXPIRATION_MS = TIMING.FORM_PREFERENCES_EXPIRATION_MS;
 
 interface BaseFormData {
 	email?: string;
@@ -38,7 +39,7 @@ interface FreeFormData extends BaseFormData {
 	gdprConsent: boolean;
 }
 
-type FormDataType = PremiumFormData | FreeFormData;
+export type FormDataType = PremiumFormData | FreeFormData;
 
 interface SavedFormState {
 	version: number;
@@ -237,9 +238,46 @@ export function useFormPersistence(
 		}
 	}, [STORAGE_KEY, tier]);
 
+	/**
+	 * Save user preferences for matches page (separate from form progress)
+	 * This persists even after clearProgress() is called
+	 */
+	const savePreferencesForMatches = useCallback((formData: FormDataType) => {
+		try {
+			const PREFERENCES_KEY = `jobping_${tier}_preferences_v${STORAGE_VERSION}`;
+			let preferencesToSave: { cities: string[]; careerPath: string[]; tier: 'free' | 'premium' };
+			
+			if (tier === "free") {
+				const freeData = formData as FreeFormData;
+				preferencesToSave = {
+					cities: freeData.cities || [],
+					careerPath: freeData.careerPath ? [freeData.careerPath] : [],
+					tier: 'free' as const,
+				};
+			} else {
+				const premiumData = formData as PremiumFormData;
+				preferencesToSave = {
+					cities: premiumData.cities || [],
+					careerPath: Array.isArray(premiumData.careerPath) ? premiumData.careerPath : [],
+					tier: 'premium' as const,
+				};
+			}
+
+			const state = {
+				...preferencesToSave,
+				timestamp: Date.now(),
+			};
+
+			localStorage.setItem(PREFERENCES_KEY, JSON.stringify(state));
+		} catch (error) {
+			console.warn("Failed to save preferences for matches:", error);
+		}
+	}, [tier]);
+
 	return {
 		clearProgress: () => localStorage.removeItem(STORAGE_KEY),
 		getStoredUserPreferences,
+		savePreferencesForMatches,
 	};
 }
 
@@ -253,9 +291,47 @@ export function getStoredUserPreferencesForMatches(): {
 	tier: 'free' | 'premium';
 } | null {
 	const STORAGE_VERSION = 1;
-	const EXPIRATION_MS = 86400000; // 24 hours
+	const EXPIRATION_MS = TIMING.FORM_PREFERENCES_EXPIRATION_MS;
 
-	// Try free tier first (most common)
+	// Try preferences key first (persists after signup)
+	const freePrefsKey = `jobping_free_preferences_v${STORAGE_VERSION}`;
+	try {
+		const stored = localStorage.getItem(freePrefsKey);
+		if (stored) {
+			const parsed = JSON.parse(stored);
+			const age = Date.now() - parsed.timestamp;
+			if (age <= EXPIRATION_MS) {
+				return {
+					cities: parsed.cities || [],
+					careerPath: parsed.careerPath || [],
+					tier: 'free' as const,
+				};
+			}
+		}
+	} catch (error) {
+		console.warn('Failed to retrieve free preferences:', error);
+	}
+
+	// Try premium preferences
+	const premiumPrefsKey = `jobping_premium_preferences_v${STORAGE_VERSION}`;
+	try {
+		const stored = localStorage.getItem(premiumPrefsKey);
+		if (stored) {
+			const parsed = JSON.parse(stored);
+			const age = Date.now() - parsed.timestamp;
+			if (age <= EXPIRATION_MS) {
+				return {
+					cities: parsed.cities || [],
+					careerPath: parsed.careerPath || [],
+					tier: 'premium' as const,
+				};
+			}
+		}
+	} catch (error) {
+		console.warn('Failed to retrieve premium preferences:', error);
+	}
+
+	// Fallback: Try form progress keys (for backward compatibility)
 	const freeKey = `jobping_free_signup_v${STORAGE_VERSION}`;
 	try {
 		const stored = localStorage.getItem(freeKey);
@@ -275,7 +351,7 @@ export function getStoredUserPreferencesForMatches(): {
 		console.warn('Failed to retrieve free tier preferences:', error);
 	}
 
-	// Try premium tier
+	// Try premium tier form progress
 	const premiumKey = `jobping_premium_signup_v${STORAGE_VERSION}`;
 	try {
 		const stored = localStorage.getItem(premiumKey);
