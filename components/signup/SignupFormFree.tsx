@@ -133,13 +133,26 @@ function SignupFormFree() {
 
 			// Stage 2: API Call (30% - 70%)
 			setSubmissionProgress(40);
+
+			// Transform form data to match API expectations
+			const apiData = {
+				email: formData.email,
+				full_name: formData.fullName,
+				cities: formData.cities,
+				careerPath: formData.careerPath,
+				entryLevelPreferences: formData.entryLevelPreferences,
+				visaStatus: formData.visaStatus,
+				birth_year: formData.birthYear,
+				age_verified: formData.ageVerified,
+			};
+
 			const response = await apiCallJson<{
 				userId: string;
 				email: string;
 				matchesCount: number;
 			}>("/api/signup/free", {
 				method: "POST",
-				body: JSON.stringify(formData),
+				body: JSON.stringify(apiData),
 			});
 
 			if (!response) {
