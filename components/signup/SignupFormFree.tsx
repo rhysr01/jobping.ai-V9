@@ -107,6 +107,12 @@ function SignupFormFree() {
 		if (!formData.cities?.length) {
 			errors.cities = "Please select at least one city";
 		}
+		if (!formData.careerPath?.length) {
+			errors.careerPath = "Please select at least one career path";
+		}
+		if (!formData.gdprConsent) {
+			errors.gdprConsent = "Please accept the Terms of Service and Privacy Policy";
+		}
 
 		setValidationErrors(errors);
 

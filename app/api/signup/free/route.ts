@@ -345,6 +345,11 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 			.join(", ");
 		apiLogger.warn("Free signup validation failed", new Error(errors), {
 			email: body.email,
+			full_name: body.full_name,
+			cities: body.cities,
+			careerPath: body.careerPath,
+			visaStatus: body.visaStatus,
+			requestBody: body,
 		});
 		return NextResponse.json(
 			{
