@@ -67,7 +67,6 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			limit,
 			isPreview,
 			isPremiumPreview,
-			cityVariations: Array.from(cityVariations).slice(0, 5), // Log first 5 city variants
 			requestId,
 			note: "Career path filtering handled by AI matching, not database",
 		});
@@ -140,34 +139,28 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			});
 		}
 
-		// Filter by city variations (city is more important)
+		// Apply city filter first
 		if (cityVariations.size > 0) {
 			const cityArray = Array.from(cityVariations);
 			query = query.in("city", cityArray);
 		}
 
-		// Handle career path filtering for free signup vs premium
-		if (careerPath) {
-			// User has selected a career path - filter by it
-			apiLogger.info("Filtering by career path", { careerPath });
-			// Career path filtering is handled by AI in actual signup, but for preview we can be more permissive
-			// For now, we'll show all early-career roles regardless of specific career path
+		// Apply role filter - this will naturally intersect with city filter
+		if (isPremiumPreview) {
+			query = query.or("is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management}");
 		} else {
-			// No career path selected (free signup) - show ALL graduate/intern/early-career roles
-			apiLogger.info("No career path filter - showing all graduate/intern/early-career roles");
+			query = query.or("is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}");
 		}
 
-		// Filter for early-career OR business-related roles (more generous for preview)
-		if (isPremiumPreview) {
-			// Premium preview: show more variety including mid-level roles
-			query = query.or(
-				"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management}"
-			);
+		// Log filtering approach
+		if (careerPath) {
+			apiLogger.info("Filtering by career path", { careerPath });
 		} else {
-			// Regular preview: stick to early-career
-			query = query.or(
-				"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}"
-			);
+			apiLogger.info("No career path filter - showing all graduate/intern/early-career roles", {
+				cities: cities?.length || 0,
+				cityVariations: cityVariations.size,
+				isPremiumPreview
+			});
 		}
 
 		// Filter by visa sponsorship if specified
