@@ -81,8 +81,11 @@ export async function apiCall(
 
 				// Log signup requests for debugging
 				if (url.includes("/api/signup/free")) {
-					console.group(`🌐 [API CLIENT] Request attempt ${attempt + 1}/${retries + 1}`);
-					console.log("Request details:", {
+					const useGroup = typeof window !== "undefined" && process.env.NODE_ENV === "development";
+					if (useGroup) {
+						console.group(`🌐 [API CLIENT] Request attempt ${attempt + 1}/${retries + 1}`);
+					}
+					console.log(`🌐 [API CLIENT] Request attempt ${attempt + 1}/${retries + 1} - Details:`, {
 						url,
 						method: fetchOptions.method || "GET",
 						hasBody: !!fetchOptions.body,
@@ -96,7 +99,9 @@ export async function apiCall(
 							console.log("Request body (raw):", fetchOptions.body.substring(0, 200));
 						}
 					}
-					console.groupEnd();
+					if (useGroup) {
+						console.groupEnd();
+					}
 				}
 
 				const response = await fetch(url, {
@@ -110,14 +115,19 @@ export async function apiCall(
 				// Log signup responses for debugging
 				if (url.includes("/api/signup/free")) {
 					const statusEmoji = response.ok ? "✅" : response.status >= 500 ? "🔥" : "⚠️";
-					console.group(`${statusEmoji} [API CLIENT] Response received`);
-					console.log("Response status:", {
+					const useGroup = typeof window !== "undefined" && process.env.NODE_ENV === "development";
+					if (useGroup) {
+						console.group(`${statusEmoji} [API CLIENT] Response received`);
+					}
+					console.log(`${statusEmoji} [API CLIENT] Response received - Status:`, {
 						status: response.status,
 						statusText: response.statusText,
 						ok: response.ok,
 						headers: Object.fromEntries(response.headers.entries()),
 					});
-					console.groupEnd();
+					if (useGroup) {
+						console.groupEnd();
+					}
 				}
 
 				// Handle common HTTP errors
@@ -154,14 +164,19 @@ export async function apiCall(
 						
 						// Log signup error details
 						if (url.includes("/api/signup/free")) {
-							console.group("❌ [API CLIENT] Error response");
-							console.error("Error details:", {
+							const useGroup = typeof window !== "undefined" && process.env.NODE_ENV === "development";
+							if (useGroup) {
+								console.group("❌ [API CLIENT] Error response");
+							}
+							console.error("❌ [API CLIENT] Error response - Details:", {
 								url,
 								status: response.status,
 								errorMessage,
 							});
-							console.error("Full error response:", responseData);
-							console.groupEnd();
+							if (useGroup) {
+								console.error("Full error response:", responseData);
+								console.groupEnd();
+							}
 						}
 					} catch {
 						// Ignore JSON parse errors
@@ -247,8 +262,11 @@ export async function apiCallJson<T = unknown>(
 	
 	// Log signup JSON responses for debugging
 	if (url.includes("/api/signup/free")) {
-		console.group("📦 [API CLIENT] JSON response parsed");
-		console.log("Response summary:", {
+		const useGroup = typeof window !== "undefined" && process.env.NODE_ENV === "development";
+		if (useGroup) {
+			console.group("📦 [API CLIENT] JSON response parsed");
+		}
+		console.log("📦 [API CLIENT] JSON response parsed - Summary:", {
 			url,
 			hasData: !!jsonData,
 			success: jsonData?.success,
@@ -256,8 +274,10 @@ export async function apiCallJson<T = unknown>(
 			userId: jsonData?.userId,
 			error: jsonData?.error,
 		});
-		console.log("Full JSON response:", jsonData);
-		console.groupEnd();
+		if (useGroup) {
+			console.log("Full JSON response:", jsonData);
+			console.groupEnd();
+		}
 	}
 
 	return jsonData;

@@ -168,8 +168,11 @@ function SignupFormFree() {
 		setTimeout(() => setSubmissionProgress(10), 100);
 
 		try {
-			console.group("🔵 [FREE SIGNUP CLIENT] Starting submission");
-			console.log("Form data:", {
+			// Safe console logging - only use group in development, regular log in production
+			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+				console.group("🔵 [FREE SIGNUP CLIENT] Starting submission");
+			}
+			console.log("🔵 [FREE SIGNUP CLIENT] Starting submission - Form data:", {
 				email: formData.email,
 				fullName: formData.fullName,
 				cities: formData.cities,
@@ -180,7 +183,9 @@ function SignupFormFree() {
 				gdprConsent: formData.gdprConsent,
 				ageVerified: formData.ageVerified,
 			});
-			console.groupEnd();
+			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+				console.groupEnd();
+			}
 
 			// Stage 1: Validation (10% - 30%)
 			setSubmissionProgress(10);
@@ -206,8 +211,10 @@ function SignupFormFree() {
 				age_verified: formData.gdprConsent || formData.ageVerified || false,
 			};
 
-			console.group("🟢 [FREE SIGNUP CLIENT] Submitting to API");
-			console.log("API payload:", {
+			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+				console.group("🟢 [FREE SIGNUP CLIENT] Submitting to API");
+			}
+			console.log("🟢 [FREE SIGNUP CLIENT] Submitting to API - Payload:", {
 				email: apiData.email,
 				full_name: apiData.full_name,
 				cities: apiData.cities,
@@ -219,8 +226,10 @@ function SignupFormFree() {
 				age_verified: apiData.age_verified,
 				hasBirthYear: !!apiData.birth_year,
 			});
-			console.log("Full API data:", JSON.stringify(apiData, null, 2));
-			console.groupEnd();
+			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+				console.log("Full API data:", JSON.stringify(apiData, null, 2));
+				console.groupEnd();
+			}
 
 			const response = await apiCallJson<{
 				userId: string;
@@ -234,8 +243,10 @@ function SignupFormFree() {
 				body: JSON.stringify(apiData),
 			});
 
-			console.group("✅ [FREE SIGNUP CLIENT] API response received");
-			console.log("Response summary:", {
+			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+				console.group("✅ [FREE SIGNUP CLIENT] API response received");
+			}
+			console.log("✅ [FREE SIGNUP CLIENT] API response received - Summary:", {
 				success: !!response,
 				userId: response?.userId,
 				email: response?.email,
@@ -243,8 +254,10 @@ function SignupFormFree() {
 				hasError: !!response?.error,
 				error: response?.error,
 			});
-			console.log("Full response:", response);
-			console.groupEnd();
+			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+				console.log("Full response:", response);
+				console.groupEnd();
+			}
 
 			if (!response) {
 				throw new Error("No response from server");
@@ -264,14 +277,18 @@ function SignupFormFree() {
 			setSubmissionProgress(100);
 			setSubmissionStage("Complete! Redirecting...");
 
-			console.group("🎉 [FREE SIGNUP CLIENT] Signup successful!");
-			console.log("Success details:", {
+			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+				console.group("🎉 [FREE SIGNUP CLIENT] Signup successful!");
+			}
+			console.log("🎉 [FREE SIGNUP CLIENT] Signup successful! - Details:", {
 				email: response.email,
 				userId: response.userId,
-				matchesCount: response.matchesCount,
+				matchCount: response.matchesCount,
 				redirectDelay: TIMING.REDIRECT_DELAY_MS,
 			});
-			console.groupEnd();
+			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+				console.groupEnd();
+			}
 
 			// Save preferences for matches page before clearing form progress
 			// This allows PremiumJobsPreview to access user preferences
@@ -289,8 +306,10 @@ function SignupFormFree() {
 				);
 			}, TIMING.REDIRECT_DELAY_MS);
 		} catch (error) {
-			console.group("❌ [FREE SIGNUP CLIENT] Error during submission");
-			console.error("Error summary:", {
+			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+				console.group("❌ [FREE SIGNUP CLIENT] Error during submission");
+			}
+			console.error("❌ [FREE SIGNUP CLIENT] Error during submission - Summary:", {
 				error: error instanceof Error ? error.message : String(error),
 				errorType: error instanceof ApiError ? "ApiError" : typeof error,
 				status: error instanceof ApiError ? error.status : undefined,
@@ -302,11 +321,13 @@ function SignupFormFree() {
 				cities: formData.cities,
 				careerPath: formData.careerPath,
 			});
-			console.error("Full error object:", error);
-			if (error instanceof ApiError && error.response) {
-				console.error("API error response:", error.response);
+			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+				console.error("Full error object:", error);
+				if (error instanceof ApiError && error.response) {
+					console.error("API error response:", error.response);
+				}
+				console.groupEnd();
 			}
-			console.groupEnd();
 
 			setSubmissionProgress(0);
 			setSubmissionStage("");
