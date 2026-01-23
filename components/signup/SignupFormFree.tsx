@@ -70,6 +70,7 @@ function SignupFormFree() {
 		Record<string, string>
 	>({});
 	const [isMounted, setIsMounted] = useState(false);
+	const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
 
 	// Form persistence hook
 	// SignupFormData is compatible with FormDataType since it contains all required fields
@@ -104,6 +105,8 @@ function SignupFormFree() {
 			if (signupError) {
 				setError("");
 			}
+			// Clear touched fields when changing steps to prevent stale error states
+			setTouchedFields(new Set());
 		}
 	}, [step, isSubmitting, signupError, setError]); // Clear errors whenever step changes
 
@@ -667,8 +670,8 @@ function SignupFormFree() {
 								key="step2"
 								formData={formData}
 								setFormData={setFormData}
-								touchedFields={new Set()}
-								setTouchedFields={() => {}}
+								touchedFields={touchedFields}
+								setTouchedFields={setTouchedFields}
 								loading={loading}
 								setStep={navigation.navigateToStep}
 							/>
