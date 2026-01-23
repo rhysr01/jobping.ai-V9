@@ -49,6 +49,17 @@ function SignupFormFree() {
 		updateFormData,
 	} = signupState;
 
+	// Guard against undefined functions during SSR or initialization
+	// This prevents "setFormData is not defined" and "updateFormData is not defined" errors
+	if (typeof window !== "undefined" && (!setFormData || !updateFormData)) {
+		console.error("[FREE SIGNUP CLIENT] Critical: setFormData or updateFormData is undefined", {
+			hasSetFormData: !!setFormData,
+			hasUpdateFormData: !!updateFormData,
+			signupStateKeys: Object.keys(signupState),
+		});
+		// Don't throw - let component render and hook will initialize
+	}
+
 	const { announce, Announcement } = useAriaAnnounce();
 
 	// Enhanced submission progress state

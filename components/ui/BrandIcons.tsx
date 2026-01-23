@@ -3,6 +3,8 @@
  * Modern, sleek SVG icons that match our design system
  */
 
+"use client";
+
 // Individual exports to prevent tree-shaking issues
 export const Briefcase = ({ className = "w-5 h-5" }: { className?: string }) => (
 	<svg
