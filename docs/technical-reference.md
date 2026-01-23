@@ -11,6 +11,8 @@
 - [🚀 Advanced Job Filtering System (Jan 2026)](#-advanced-job-filtering-system-jan-2026)
 - [Enterprise Enhancements (Jan 2026)](#enterprise-enhancements-jan-2026)
 - [🚨 Critical Production Fixes (Jan 15, 2026)](#-critical-production-fixes-jan-15-2026)
+- [🐛 Sentry Error Fixes & Debugging Infrastructure (Jan 23, 2026)](#-sentry-error-fixes--debugging-infrastructure-jan-23-2026)
+- [📋 Free Signup & Matching Infrastructure (Jan 23, 2026)](#-free-signup--matching-infrastructure-jan-23-2026)
 - [Detailed API Reference](#detailed-api-reference)
 - [Complete Database Schema](#complete-database-schema)
 - [Job Scraping System Details](#job-scraping-system-details)
@@ -566,6 +568,346 @@ Data Input    Validation             Matching              Processing       Dist
 - **Impact**: Broken email formatting for international users
 - **Root Cause**: HTML escaping issues in dynamic content
 - **Fix**: Comprehensive HTML sanitization and encoding
+
+---
+
+## 🐛 Sentry Error Fixes & Debugging Infrastructure (Jan 23, 2026)
+
+### Overview
+**Status**: ✅ **CRITICAL ERRORS FIXED & DEBUGGING ENHANCED**
+
+Comprehensive fixes for production Sentry errors and enhanced debugging infrastructure for free signup flow.
+
+### Critical Error Fixes
+
+#### 1. BrandIcons/Zap Undefined Errors (26 occurrences)
+- **Issue**: `ReferenceError: BrandIcons is not defined` and `ReferenceError: Zap is not defined`
+- **Location**: `components/sections/hero.tsx`, various components using `BrandIcons.Zap`
+- **Root Cause**: SSR (Server-Side Rendering) issues - BrandIcons not available during server rendering
+- **Fix Applied**: Added `"use client"` directive to `components/ui/BrandIcons.tsx`
+- **Impact**: Prevents hydration mismatches and undefined reference errors
+- **Status**: ✅ Fixed
+
+#### 2. setFormData/updateFormData Undefined Errors (6 occurrences)
+- **Issue**: `ReferenceError: setFormData is not defined` and `ReferenceError: updateFormData is not defined`
+- **Location**: `components/signup/SignupFormFree.tsx`
+- **Root Cause**: Functions might be undefined during SSR before hook initializes
+- **Fix Applied**: Added guard checks (client-side only) to detect and log if undefined
+- **Implementation**:
+  ```typescript
+  // Guard against undefined functions during SSR or initialization
+  if (typeof window !== "undefined" && (!setFormData || !updateFormData)) {
+    console.error("[FREE SIGNUP CLIENT] Critical: setFormData or updateFormData is undefined", {
+      hasSetFormData: !!setFormData,
+      hasUpdateFormData: !!updateFormData,
+      signupStateKeys: Object.keys(signupState),
+    });
+  }
+  ```
+- **Status**: ✅ Guard added, monitoring
+
+#### 3. Body Already Read Error (103 occurrences)
+- **Issue**: `TypeError: Body is unusable: Body has already been read`
+- **Location**: `/api/match-users` route handler
+- **Root Cause**: Request body being read multiple times by Next.js error handlers or middleware
+- **Fix Applied**: Clone request before reading body to preserve original for error handling
+- **Implementation**:
+  ```typescript
+  // Clone request to prevent "Body already read" errors
+  const clonedReq = req.clone();
+  
+  // Read from cloned request
+  body = await clonedReq.json();
+  bodyString = JSON.stringify(body); // Store for error logging
+  ```
+- **Status**: ✅ Fixed
+
+#### 4. React Hydration Error #185
+- **Issue**: Minified React error #185 (hydration mismatch)
+- **Root Cause**: `console.group`/`console.groupEnd` calls causing hydration mismatches in production
+- **Fix Applied**: Guard all `console.group` calls with `typeof window !== "undefined" && process.env.NODE_ENV === "development"`
+- **Impact**: Prevents hydration errors while maintaining debugging capabilities in development
+- **Status**: ✅ Fixed
+
+### Enhanced Debugging Infrastructure
+
+#### Comprehensive Console Logging
+**Purpose**: Enable F12 debugging for free signup flow
+
+**Client-Side Logging** (`components/signup/SignupFormFree.tsx`):
+- 🔵 Form submission start (with form data)
+- 🟢 API request details (payload, attempt number)
+- ✅ API response received (success, matchCount, userId)
+- ❌ Error details (full error objects, API responses)
+- 🎉 Success flow (redirect preparation)
+
+**Server-Side Logging** (`app/api/signup/free/route.ts`):
+- Request received (requestId, timestamp)
+- Request body received (all form fields)
+- Validation result (success/failure with errors)
+- User creation steps (minimal insert, update)
+- Job fetching (initial fetch, fallbacks)
+- Matching process (start, completion, match count)
+
+**API Client Logging** (`lib/api-client.ts`):
+- Request attempts (URL, method, attempt number)
+- Response status (status code, headers)
+- Error responses (full error details)
+- JSON parsing (success, matchCount, errors)
+
+**Log Format**:
+- All logs prefixed with `[FREE SIGNUP]`, `[FREE SIGNUP CLIENT]`, or `[API CLIENT]`
+- Console groups in development (collapsible)
+- Regular console.log in production (Next.js strips console.log)
+- Full request/response objects logged for debugging
+
+#### Error Tracking Summary
+**13 error types** tracked across signup flow:
+
+**Server-Side (8 types)**:
+1. Rate limit exceeded
+2. Validation failed
+3. User check error
+4. User creation failed
+5. User update failed
+6. No jobs found
+7. No jobs for matching
+8. No matches found
+
+**Client-Side (3 types)**:
+9. Client-side validation error
+10. API error
+11. Unexpected error
+
+**Global (2 types)**:
+12. Error boundary catches
+13. Global error handler
+
+**Sentry Integration**:
+- All errors include requestId for tracing
+- Tagged with `endpoint: "signup-free"` and `error_type`
+- Context data (email, cities, careerPath) included
+- Full error details and stack traces
+
+### Testing & Monitoring
+
+#### Post-Deployment Monitoring
+- Monitor Sentry for error rate decreases
+- Track BrandIcons/Zap error frequency
+- Monitor setFormData/updateFormData errors
+- Verify body read errors eliminated
+
+#### Debugging Workflow
+1. Open F12 → Console tab
+2. Submit free signup form
+3. Watch grouped logs flow through entire process
+4. Check Network tab for raw HTTP requests/responses
+5. Review Sentry for server-side errors
+
+---
+
+## 📋 Free Signup & Matching Infrastructure (Jan 23, 2026)
+
+### Overview
+**Status**: ✅ **COMPLETE INFRASTRUCTURE DOCUMENTATION**
+
+Complete technical documentation of free signup flow and matching infrastructure based on codebase analysis.
+
+### Free Signup Flow Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    FREE SIGNUP PIPELINE                          │
+└─────────────────────────────────────────────────────────────────┘
+
+1. Frontend Form (SignupFormFree.tsx)
+   ├─ Multi-step form (3 steps)
+   ├─ Client-side validation
+   └─ Form persistence (localStorage)
+
+2. API Route (/api/signup/free)
+   ├─ Rate Limiting (10 requests/hour/IP)
+   ├─ Input Validation (Zod schema)
+   ├─ User Existence Check
+   ├─ User Creation (Minimal → Update pattern)
+   ├─ Job Fetching (Country-level → Fallbacks)
+   ├─ Matching Engine (SignupMatchingService)
+   └─ Response (Success/Error with requestId)
+
+3. Matching Engine (SignupMatchingService)
+   ├─ PrefilterService (Location/Career/Visa filtering)
+   ├─ ConsolidatedMatchingEngine (AI + Rule-based)
+   └─ Match Storage (Database persistence)
+
+4. Frontend Success Handling
+   ├─ Cookie Setting (Session management)
+   ├─ Redirect to /matches
+   └─ Match Display
+```
+
+### Matching Pipeline Architecture
+
+```
+User Input → Validation → Hard Filtering → AI Matching → Fallback → Results
+     ↓           ↓            ↓            ↓           ↓          ↓
+  Raw Data   Sanitize    Location/Career  GPT-4      Rule-based  5 Jobs
+             GDPR        Visa Filtering   Embeddings Algorithm
+```
+
+#### Stage 1: Hard Filtering (PrefilterService)
+- **Location Matching**: City name exact match or country containment
+- **Career Path**: Category matching with synonym expansion
+- **Visa Requirements**: Explicit visa sponsorship filtering
+- **Freshness**: Jobs posted within last 30 days (free tier)
+- **Quality Gates**: Minimum description length, valid URLs
+
+#### Stage 2: AI Matching (ConsolidatedMatchingEngine)
+- **Semantic Similarity**: OpenAI embeddings comparison
+- **Context Awareness**: User preferences + job requirements
+- **Confidence Scoring**: 0-100 confidence levels
+- **Fallback Triggers**: API failures or low confidence scores
+
+#### Stage 3: Rule-Based Fallback
+- **Experience Matching**: Entry-level vs senior filtering
+- **Skills Matching**: Keyword-based relevance scoring
+- **Company Reputation**: Established company bonus points
+- **Geographic Proximity**: Regional preference matching
+
+### Infrastructure Components
+
+#### 1. API Layer (`/app/api/signup/free/route.ts`)
+- **Runtime**: Vercel serverless functions
+- **Rate Limiting**: Redis-backed (10 requests/hour/IP)
+- **Error Handling**: Structured error responses with requestId
+- **Logging**: Comprehensive request/response logging
+- **Sentry Integration**: All error points tracked
+
+#### 2. Matching Service (`SignupMatchingService`)
+- **Location**: `utils/services/SignupMatchingService.ts`
+- **Purpose**: Consolidated matching logic for both free & premium
+- **Config**: Tier-aware configurations (`free` vs `premium_pending`)
+- **Methods**:
+  - `getConfig(tier)` - Get tier-specific matching config
+  - `runMatching(userPrefs, config)` - Execute matching pipeline
+  - `checkExistingMatches(email, tier)` - Prevent duplicates
+
+#### 3. Prefilter Service (`PrefilterService`)
+- **Location**: `utils/matching/core/prefilter.service.ts`
+- **Purpose**: Hard filtering before AI matching
+- **Filters**:
+  - Location (city variations, country matching)
+  - Career path (synonym expansion)
+  - Visa status (sponsorship requirements)
+  - Job freshness (30 days for free)
+  - Quality gates (description length, valid URLs)
+
+#### 4. Matching Engine (`ConsolidatedMatchingEngine`)
+- **Location**: `lib/matching/engine.ts`
+- **Purpose**: AI + Rule-based matching coordination
+- **Features**:
+  - GPT-4 semantic similarity
+  - Embedding-based matching
+  - Fallback rule-based algorithm
+  - Confidence scoring
+  - Diversity distribution
+
+### Data Flow
+
+#### Free Signup Request Flow
+```
+1. User submits form → SignupFormFree.tsx
+2. Client validation → useEmailValidation, form checks
+3. API call → POST /api/signup/free
+4. Rate limit check → Redis-based limiting
+5. Input validation → Zod schema validation
+6. User check → Supabase query (existing user?)
+7. User creation → Minimal insert → Update pattern
+8. Job fetching → Country-level → Fallback strategies
+9. Matching → SignupMatchingService.runMatching()
+10. Match storage → Database persistence
+11. Cookie setting → Session management
+12. Response → Success with matchCount
+13. Redirect → /matches page
+```
+
+#### Matching Execution Flow
+```
+1. User preferences extracted
+2. PrefilterService filters jobs:
+   - Location matching (city/country)
+   - Career path matching
+   - Visa status filtering
+   - Freshness filtering (30 days)
+3. ConsolidatedMatchingEngine processes:
+   - AI matching (if available)
+   - Embedding similarity
+   - Fallback rule-based matching
+4. Results ranked and filtered:
+   - Confidence scoring
+   - Diversity distribution
+   - Top 5 matches selected
+5. Matches stored in database
+6. Results returned to API
+```
+
+### Error Handling Points
+
+#### Server-Side (API Route)
+1. **Rate Limit Exceeded** - 10 requests/hour/IP
+2. **Validation Failed** - Zod schema validation
+3. **User Check Error** - Database connection issues
+4. **User Creation Failed** - Database constraints
+5. **User Update Failed** - Schema cache issues
+6. **No Jobs Found** - Empty database or strict filtering
+7. **No Jobs for Matching** - All jobs filtered out
+8. **No Matches Found** - Matching engine too strict
+
+#### Client-Side (React Component)
+1. **Client-Side Validation** - Form field validation
+2. **API Error** - Network/server errors
+3. **Unexpected Error** - Non-ApiError exceptions
+
+### Performance Considerations
+
+#### Caching Strategy
+- **Job Embeddings**: Pre-computed semantic embeddings (24h cache)
+- **User Matches**: Recent matches cached (5min cache)
+- **Session Data**: Redis-backed session storage
+
+#### Batch Processing
+- **User Processing**: Processed individually (not batched for signup)
+- **Job Fetching**: Country-level queries for efficiency
+- **Matching**: Single user matching (not batch)
+
+#### Optimization
+- **Database Queries**: Optimized with proper indexes
+- **AI Calls**: Rate-limited and cached
+- **Response Time**: Target <5s for free signup
+
+### Configuration
+
+#### Free Tier Limits
+- **Matches**: 5 instant matches
+- **Job Freshness**: 30 days
+- **Rate Limit**: 10 signups/hour/IP
+- **Session**: 30 days cookie expiration
+
+#### Matching Config
+```typescript
+{
+  tier: "free",
+  matchCount: 5,
+  jobFreshnessDays: 30,
+  useAI: true,
+  fallbackEnabled: true,
+  diversityEnabled: false
+}
+```
+
+### Related Documentation
+- See `docs/free-signup-matching-infrastructure.md` for complete details
+- See `docs/sentry-error-tracking-summary.md` for error tracking details
+- See `docs/sentry-errors-fix-plan.md` for fix implementation details
 
 ---
 
