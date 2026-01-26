@@ -52,7 +52,7 @@ jobs:
 
       - name: Upload smoke report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: pilot-smoke-report
           path: PILOT_SMOKE.md
