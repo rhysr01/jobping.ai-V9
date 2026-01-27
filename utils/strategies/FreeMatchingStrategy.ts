@@ -6,6 +6,7 @@
 import { apiLogger } from "../../lib/api-logger";
 import type { JobWithMetadata } from "../../lib/types/job";
 import { simplifiedMatchingEngine } from "../matching/core/matching-engine";
+import { getDatabaseClient } from "../core/database-pool";
 
 export interface FreeUserPreferences {
 	email: string;
@@ -251,24 +252,43 @@ async function rankAndReturnMatches(
 			duration: Date.now() - startTime,
 		});
 
-		// Save matches to database
-		const matchesToSave = matches.map((m: any) => ({
-			user_email: userPrefs.email,
-			job_hash: String(m.job_hash),
-			match_score: Number((m.match_score || 0) / 100),
-			match_reason: String(m.match_reason || "Matched"),
-			matched_at: new Date().toISOString(),
-			created_at: new Date().toISOString(),
-			match_algorithm: method,
-		}));
+	// Save matches to database
+	const matchesToSave = matches.map((m: any) => ({
+		user_email: userPrefs.email,
+		job_hash: String(m.job_hash),
+		match_score: Number((m.match_score || 0) / 100),
+		match_reason: String(m.match_reason || "Matched"),
+		matched_at: new Date().toISOString(),
+		created_at: new Date().toISOString(),
+		match_algorithm: method,
+	}));
 
 	if (matchesToSave.length > 0) {
-		// Note: This uses user_matches table via views/aliases in the actual implementation
-		// For now, we log the matches to be saved (actual storage is handled by matching engine)
-		apiLogger.info("[FREE] Matches ready for storage", {
-			email: userPrefs.email,
-			count: matchesToSave.length,
-		});
+		try {
+			const supabase = getDatabaseClient();
+			const { data, error } = await supabase
+				.from("matches")
+				.insert(matchesToSave);
+
+			if (error) {
+				apiLogger.error("[FREE] Failed to save matches to database", error as Error, {
+					email: userPrefs.email,
+					matchCount: matchesToSave.length,
+					errorCode: error.code,
+				});
+			} else {
+				apiLogger.info("[FREE] Successfully saved matches to database", {
+					email: userPrefs.email,
+					count: matchesToSave.length,
+					insertedRows: data?.length || 0,
+				});
+			}
+		} catch (err) {
+			apiLogger.error("[FREE] Error saving matches", err as Error, {
+				email: userPrefs.email,
+				matchCount: matchesToSave.length,
+			});
+		}
 	}
 
 		return {
