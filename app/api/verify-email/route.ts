@@ -66,23 +66,25 @@ export const GET = asyncHandler(async (req: NextRequest) => {
 		);
 	}
 
-	await markUserVerified(email);
-
-	// Check user tier to determine redirect destination
+	// Check user tier and subscription status to determine redirect destination
 	const supabase = (
 		await import("../../../utils/core/database-pool")
 	).getDatabaseClient();
 	const { data: user } = await supabase
 		.from("users")
-		.select("subscription_tier")
+		.select("subscription_tier, subscription_active")
 		.eq("email", email)
 		.single();
 
-	// Premium users go to payment, others go to success page
-	const redirectUrl =
-		user?.subscription_tier === "premium"
-			? `${baseUrl}/billing?verified=true&email=${encodeURIComponent(email)}`
-			: `${baseUrl}/signup/success?verified=true&email=${encodeURIComponent(email)}`;
+	// 🟢 FIXED BUG #14: Only redirect to billing if premium AND subscription not already active
+	// This prevents showing billing page to users with active subscriptions or promo codes
+	const shouldShowBilling =
+		user?.subscription_tier === "premium" &&
+		!user?.subscription_active;
+
+	const redirectUrl = shouldShowBilling
+		? `${baseUrl}/billing?verified=true&email=${encodeURIComponent(email)}`
+		: `${baseUrl}/signup/success?verified=true&email=${encodeURIComponent(email)}`;
 
 	return NextResponse.redirect(redirectUrl);
 });

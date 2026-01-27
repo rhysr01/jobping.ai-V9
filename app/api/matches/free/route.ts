@@ -19,9 +19,9 @@ export const GET = asyncHandler(async (request: NextRequest) => {
 		return rateLimitResult;
 	}
 
-	// Get user email from cookie (set by signup API when redirecting existing users)
+	// Get user email from unified cookie (set by signup API for all tiers)
 	const cookies = request.cookies;
-	const userEmail = cookies.get("free_user_email")?.value?.toLowerCase().trim();
+	const userEmail = cookies.get("user_email")?.value?.toLowerCase().trim();
 
 	if (!userEmail) {
 		apiLogger.warn("Free matches accessed without cookie", {

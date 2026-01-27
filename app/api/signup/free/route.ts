@@ -1029,24 +1029,22 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 	// Set session cookie for client-side auth
 	// Set a session cookie (simple approach - you may want JWT instead)
 	// Cookie expiration matches user expiration (30 days)
-	// CRITICAL: Don't use secure flag if site might be accessed over HTTP
+	// FIXED: In production, always set secure flag. Vercel automatically handles HTTPS
+	// In development (localhost), secure is false which is correct
 	const isProduction = process.env.NODE_ENV === "production";
-	const isHttps =
-		request.headers.get("x-forwarded-proto") === "https" ||
-		request.headers.get("x-forwarded-proto")?.includes("https") ||
-		request.url.startsWith("https://");
+	const secure = isProduction; // Simplified: production always uses HTTPS on Vercel
 
 	try {
-		response.cookies.set("session", userData.email, {
+		response.cookies.set("user_email", userData.email, {
 			httpOnly: true,
-			secure: isProduction && isHttps,
+			secure: secure,
 			sameSite: "lax",
 			maxAge: 30 * 24 * 60 * 60, // 30 days
 			path: "/",
 		});
 	} catch (sessionError) {
 		apiLogger.warn(
-			"Failed to create session (non-critical)",
+			"Failed to create user_email cookie (non-critical)",
 			sessionError as Error,
 			{
 				requestId,
@@ -1055,12 +1053,11 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 		);
 	}
 
-	apiLogger.info("Cookie set for free user", {
+	apiLogger.info("Cookie set for user", {
 		requestId,
 		email: normalizedEmail,
-		secure: isProduction && isHttps,
+		secure: secure,
 		isProduction,
-		isHttps,
 	});
 
 	apiLogger.info("Free signup successful", {

@@ -11,6 +11,16 @@ import { sendVerificationEmail } from "../../../utils/email-verification";
 import { getProductionRateLimiter } from "../../../utils/production-rate-limiter";
 import { SignupMatchingService } from "../../../utils/services/SignupMatchingService";
 
+// 🔴 BUG FIX #5: Promo code validation moved to reusable function
+const VALID_PROMO_CODES = ["rhys"]; // Add more codes here as needed
+
+function isPromoCodeValid(code: string, expiresAt: string): boolean {
+	return (
+		VALID_PROMO_CODES.includes(code.toLowerCase()) &&
+		new Date(expiresAt) > new Date()
+	);
+}
+
 // Helper function to safely send welcome email and update tracking
 async function sendWelcomeEmailAndTrack(
 	email: string,
@@ -111,6 +121,14 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 		.eq("email", normalizedEmail)
 		.single();
 
+	// 🔴 BUG FIX #6: Idempotency check - moved BEFORE user creation
+	// Check if user already has matches before doing expensive operations
+	const { data: existingMatches } = await supabase
+		.from("matches")
+		.select("job_hash")
+		.eq("user_email", normalizedEmail)
+		.limit(1);
+
 	if (existingUser) {
 		// Check if it's a free user upgrading to premium
 		const { data: userDetails } = await supabase
@@ -166,26 +184,21 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 				{ status: 409 },
 			);
 
-			// Set cookie so they can access premium matches
-			const isProduction = process.env.NODE_ENV === "production";
-			const isHttps =
-				req.headers.get("x-forwarded-proto") === "https" ||
-				req.url.startsWith("https://");
+		// Set unified cookie so they can access premium matches
+		// 🟢 FIXED: Using single "user_email" cookie for all tiers
+		// The matches endpoints check subscription_tier in database, not cookie name
+		const isProduction = process.env.NODE_ENV === "production";
+		const isHttps =
+			req.headers.get("x-forwarded-proto") === "https" ||
+			req.url.startsWith("https://");
 
-			response.cookies.set("premium_user_email", normalizedEmail, {
-				httpOnly: true,
-				secure: isProduction && isHttps,
-				sameSite: "lax",
-				maxAge: 60 * 60 * 24 * 30, // 30 days
-				path: "/",
-			});
-
-			// Check if they have matches
-			const { data: existingMatches } = await supabase
-				.from("matches")
-				.select("job_hash")
-				.eq("user_email", normalizedEmail)
-				.limit(1);
+		response.cookies.set("user_email", normalizedEmail, {
+			httpOnly: true,
+			secure: isProduction && isHttps,
+			sameSite: "lax",
+			maxAge: 60 * 60 * 24 * 30, // 30 days
+			path: "/",
+		});
 
 			apiLogger.info("Existing premium user tried to sign up again", {
 				email: normalizedEmail,
@@ -205,9 +218,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 		.single();
 
 	const hasValidPromo =
-		pendingPromo &&
-		pendingPromo.promo_code?.toLowerCase() === "rhys" &&
-		new Date(pendingPromo.expires_at) > new Date();
+		pendingPromo && isPromoCodeValid(pendingPromo.promo_code, pendingPromo.expires_at);
 
 	// This is the premium signup API - free users use /api/signup/free
 	const subscriptionTier: "premium_pending" | "premium" = "premium_pending";
@@ -382,18 +393,43 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 
 	apiLogger.info(`User created`, { email: data.email });
 
-	// Send email verification for premium users (required before payment)
-	try {
-		await sendVerificationEmail(normalizedEmail);
-		apiLogger.info("Verification email sent to premium user", {
-			email: normalizedEmail,
+	// 🔴 BUG FIX #4: Email verification race condition
+	// Premium users must verify email BEFORE getting matches
+	// If not email verified (and not using promo code that skips verification),
+	// don't run matching yet - user must verify first
+	if (!emailVerified) {
+		// Send email verification for premium users (required before payment)
+		try {
+			await sendVerificationEmail(normalizedEmail);
+			apiLogger.info("Verification email sent to premium user", {
+				email: normalizedEmail,
+			});
+		} catch (emailError) {
+			apiLogger.error("Failed to send verification email", emailError as Error, {
+				email: normalizedEmail,
+			});
+			// Don't fail signup - user can resend verification later
+		}
+
+		// Return early - don't run matching for unverified users
+		return NextResponse.json({
+			success: true,
+			message:
+				"Account created! Verify your email to access your personalized matches.",
+			email: userData.email,
+			verificationRequired: true,
+			redirectUrl: `/signup/verify?tier=premium&email=${encodeURIComponent(userData.email)}`,
+			matchesCount: 0,
+			emailSent: false,
 		});
-	} catch (emailError) {
-		apiLogger.error("Failed to send verification email", emailError as Error, {
-			email: normalizedEmail,
-		});
-		// Don't fail signup - user can resend verification later
 	}
+
+	// Email is verified (either user verified it or promo code skipped verification)
+	// Safe to proceed with matching and email delivery
+	apiLogger.info("Email verified, proceeding with premium matching", {
+		email: normalizedEmail,
+		skipVerification: !!hasValidPromo,
+	});
 
 	// Clean up promo_pending if promo code was used
 	if (hasValidPromo) {
@@ -417,13 +453,9 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 	let matchesCount = 0;
 	let emailSent = false;
 
-	// IDEMPOTENCY CHECK: Check if matches already exist before expensive operations
-	const { data: existingMatches } = await supabase
-		.from("matches")
-		.select("job_hash")
-		.eq("user_email", normalizedEmail)
-		.limit(1);
-
+	// Note: Idempotency check was already done earlier (line ~106)
+	// If matches existed, user is already handled and we returned early
+	// Only new users reach this point
 	if (existingMatches && existingMatches.length > 0) {
 		apiLogger.info(
 			"Matches already exist for user, skipping expensive matching",

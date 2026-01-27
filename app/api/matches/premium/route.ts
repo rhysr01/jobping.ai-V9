@@ -19,10 +19,10 @@ export const GET = asyncHandler(async (request: NextRequest) => {
 		return rateLimitResult;
 	}
 
-	// Get user email from cookie (set by premium signup flows)
+	// Get user email from unified cookie (set by signup API for all tiers)
 	const cookies = request.cookies;
 	const userEmail = cookies
-		.get("premium_user_email")
+		.get("user_email")
 		?.value?.toLowerCase()
 		.trim();
 
