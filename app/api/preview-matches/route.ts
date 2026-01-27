@@ -271,19 +271,25 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 				.is("filtered_reason", null)
 				.gte("created_at", sixtyDaysAgo.toISOString());
 
-			// Apply same filters as count query
-			if (cityVariations.size > 0) {
-				const cityArray = Array.from(cityVariations);
-				jobsQuery.in("city", cityArray);
-			}
+		// Apply same filters as count query
+		if (cityVariations.size > 0) {
+			const cityArray = Array.from(cityVariations);
+			jobsQuery.in("city", cityArray);
+		}
 
+		if (isPremiumPreview) {
+			jobsQuery.or(
+				"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management}",
+			);
+		} else {
 			jobsQuery.or(
 				"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}",
 			);
+		}
 
-			if (visaSponsorship === "need-sponsorship") {
-				jobsQuery.eq("visa_friendly", true);
-			}
+		if (visaSponsorship === "need-sponsorship") {
+			jobsQuery.eq("visa_friendly", true);
+		}
 
 			// Order by most recent and limit results
 			jobsQuery.order("posted_at", { ascending: false }).limit(limit);

@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
+import { debugLogger } from "@/lib/debug-logger";
 import { BrandIcons } from "../ui/BrandIcons";
 import { HotMatchBadge } from "../ui/HotMatchBadge";
 import CustomButton from "../ui/CustomButton";
@@ -40,12 +41,27 @@ export function LiveJobsReview({
 
 	// Fetch job previews when cities and career are selected
 	const fetchJobPreviews = useCallback(async () => {
-		if (!cities.length || !careerPath || hasFetched) return;
+		if (!cities.length || !careerPath || hasFetched) {
+			debugLogger.debug("LIVE_JOBS", "Skipping fetch", {
+				hasCities: cities.length > 0,
+				hasCareerPath: !!careerPath,
+				alreadyFetched: hasFetched,
+			});
+			return;
+		}
 
 		setIsLoading(true);
 		setError(null);
 
+		const tracker = debugLogger.createTracker("LIVE_JOBS_FETCH");
+
 		try {
+			debugLogger.step("LIVE_JOBS", "Starting preview fetch", {
+				cities,
+				careerPath,
+			});
+			tracker.checkpoint("Calling preview-matches API");
+
 			// Call preview-matches API with limited results for preview
 			const response = await fetch("/api/preview-matches", {
 				method: "POST",
@@ -61,10 +77,27 @@ export function LiveJobsReview({
 			});
 
 			if (!response.ok) {
-				throw new Error("Failed to fetch job previews");
+				const errorText = await response.text();
+				debugLogger.error("LIVE_JOBS", "API returned error", {
+					status: response.status,
+					statusText: response.statusText,
+					errorBody: errorText,
+				});
+				throw new Error(`Failed to fetch job previews (${response.status})`);
 			}
 
 			const data = await response.json();
+			tracker.checkpoint("API response received", {
+				hasMatches: !!data.matches,
+				matchCount: data.matches?.length || 0,
+				totalCount: data.count,
+			});
+
+			debugLogger.success("LIVE_JOBS", "Preview fetch successful", {
+				jobCount: data.count,
+				matchesShown: data.matches?.length || 0,
+				isLowCount: data.isLowCount,
+			});
 
 			if (data.matches && data.matches.length > 0) {
 				setJobPreviews(data.matches.slice(0, 3)); // Limit to 3 previews
@@ -72,6 +105,14 @@ export function LiveJobsReview({
 				setJobPreviews([]);
 			}
 		} catch (err) {
+			const errorMsg = err instanceof Error ? err.message : String(err);
+			debugLogger.error("LIVE_JOBS", "Failed to fetch previews", {
+				error: errorMsg,
+				cities,
+				careerPath,
+			});
+			tracker.error("Fetch failed", err instanceof Error ? err : new Error(String(err)));
+			
 			if (process.env.NODE_ENV === "development") {
 				console.error("Error fetching job previews:", err);
 			}

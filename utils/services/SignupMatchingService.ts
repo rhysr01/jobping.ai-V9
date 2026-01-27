@@ -11,6 +11,7 @@
  * - Comprehensive logging and error handling
  */
 
+import { randomUUID } from "crypto";
 import { apiLogger } from "../../lib/api-logger";
 import { getDatabaseClient } from "../core/database-pool";
 import type { JobMatch, UserPreferences } from "../matching/types";
@@ -93,7 +94,7 @@ export class SignupMatchingService {
 	): Promise<MatchingResult> {
 		const startTime = Date.now();
 		const email = userPrefs.email;
-		const requestIdStr = requestId || crypto.randomUUID();
+		const requestIdStr = requestId || randomUUID();
 
 		try {
 			apiLogger.info(
