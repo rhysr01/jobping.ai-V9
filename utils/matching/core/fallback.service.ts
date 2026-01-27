@@ -539,96 +539,33 @@ export class FallbackService {
 
 	/**
 	 * Calculate match score between job category and user career path
+	 * SIMPLIFIED: Using short form categories everywhere now
 	 */
 	private calculateCategoryMatchScore(
 		jobCategory: string,
 		userPath: string,
 	): number {
-		// First try exact mapping
+		// First try exact match (most direct - preferred now with short form)
 		if (this.categoryMatchesCareerPath(jobCategory, userPath)) {
 			return 100;
 		}
 
 		// Try advanced matching with synonyms and related terms
-		const careerPathMapping: Record<string, string[]> = {
-			"Strategy & Business Design": [
-				"strategy",
-				"business-design",
-				"consulting",
-				"management",
-				"planning",
-			],
-			"Data & Analytics": [
-				"data",
-				"analytics",
-				"data-science",
-				"bi",
-				"business intelligence",
-				"insights",
-			],
-			"Sales & Client Success": [
-				"sales",
-				"business-development",
-				"client-success",
-				"account management",
-				"revenue",
-			],
-			"Marketing & Growth": [
-				"marketing",
-				"growth",
-				"brand",
-				"content",
-				"social",
-				"campaign",
-			],
-			"Finance & Investment": [
-				"finance",
-				"accounting",
-				"investment",
-				"fp&a",
-				"financial",
-				"budget",
-			],
-			"Operations & Supply Chain": [
-				"operations",
-				"supply-chain",
-				"logistics",
-				"procurement",
-				"efficiency",
-			],
-			"Product & Innovation": [
-				"product",
-				"product-management",
-				"innovation",
-				"roadmap",
-				"features",
-			],
-			"Tech & Transformation": [
-				"tech",
-				"technology",
-				"transformation",
-				"it",
-				"digital",
-				"software",
-			],
-			"Sustainability & ESG": [
-				"sustainability",
-				"esg",
-				"environmental",
-				"social",
-				"governance",
-				"csr",
-			],
-			"Not Sure Yet / General": [
-				"general",
-				"graduate",
-				"trainee",
-				"rotational",
-				"development",
-			],
+		// SIMPLIFIED: Using short form category names
+		const careerPathSynonyms: Record<string, string[]> = {
+			strategy: ["strategy", "business-design", "consulting", "management", "planning"],
+			data: ["data", "analytics", "data-science", "bi", "business-intelligence", "insights"],
+			sales: ["sales", "business-development", "client-success", "account-management", "revenue"],
+			marketing: ["marketing", "growth", "brand", "content", "social", "campaign"],
+			finance: ["finance", "accounting", "investment", "fp&a", "financial", "budget"],
+			operations: ["operations", "supply-chain", "logistics", "procurement", "efficiency"],
+			product: ["product", "product-management", "innovation", "roadmap", "features"],
+			tech: ["tech", "technology", "transformation", "it", "digital", "software"],
+			sustainability: ["sustainability", "esg", "environmental", "social", "governance", "csr"],
+			unsure: ["general", "graduate", "trainee", "rotational", "development"],
 		};
 
-		const synonyms = careerPathMapping[userPath] || [userPath.toLowerCase()];
+		const synonyms = careerPathSynonyms[userPath] || [userPath.toLowerCase()];
 		const jobCategoryLower = jobCategory.toLowerCase();
 
 		// Check for strong synonym matches
@@ -682,38 +619,22 @@ export class FallbackService {
 		jobCategory: string,
 		careerPath: string,
 	): boolean {
-		const careerPathMapping: Record<string, string[]> = {
-			"Strategy & Business Design": [
-				"strategy",
-				"business-design",
-				"consulting",
-			],
-			"Data & Analytics": ["data", "analytics", "data-science"],
-			"Sales & Client Success": [
-				"sales",
-				"business-development",
-				"client-success",
-			],
-			"Marketing & Growth": ["marketing", "growth", "brand"],
-			"Finance & Investment": ["finance", "accounting", "investment"],
-			"Operations & Supply Chain": ["operations", "supply-chain", "logistics"],
-			"Product & Innovation": ["product", "product-management", "innovation"],
-			"Tech & Transformation": ["tech", "technology", "transformation", "it"],
-			"Sustainability & ESG": [
-				"sustainability",
-				"esg",
-				"environmental",
-				"social",
-			],
-			"Not Sure Yet / General": [
-				"general",
-				"graduate",
-				"trainee",
-				"rotational",
-			],
+		// SIMPLIFIED: Using short form categories now
+		// careerPath IS the database category (e.g., "finance", "data", "tech")
+		const careerPathSynonyms: Record<string, string[]> = {
+			strategy: ["strategy", "business-design", "consulting"],
+			data: ["data", "analytics", "data-science"],
+			sales: ["sales", "business-development", "client-success"],
+			marketing: ["marketing", "growth", "brand"],
+			finance: ["finance", "accounting", "investment"],
+			operations: ["operations", "supply-chain", "logistics"],
+			product: ["product", "product-management", "innovation"],
+			tech: ["tech", "technology", "transformation", "it"],
+			sustainability: ["sustainability", "esg", "environmental", "social"],
+			unsure: ["general", "graduate", "trainee", "rotational"],
 		};
 
-		const expectedCategories = careerPathMapping[careerPath] || [
+		const expectedCategories = careerPathSynonyms[careerPath] || [
 			careerPath.toLowerCase(),
 		];
 		return expectedCategories.some((expected) =>
