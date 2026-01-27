@@ -140,7 +140,7 @@ export function useFormPersistence(
 			// localStorage might be disabled or full - fail silently
 			console.warn("Failed to save form progress:", error);
 		}
-	}, [formData, currentStep, hasStep, minStepForSave, STORAGE_KEY, tier]);
+	}, [formData, currentStep, hasStep, minStepForSave, tier]);
 
 	// Restore progress on mount (only once)
 	useEffect(() => {
@@ -217,7 +217,7 @@ export function useFormPersistence(
 				console.warn("Failed to remove corrupted form data:", removeError);
 			}
 		}
-	}, [STORAGE_KEY, setFormData, setStep, hasStep, tier]);
+	}, [setFormData, setStep, hasStep, tier]);
 
 	/**
 	 * Get stored user preferences for matches page
@@ -250,7 +250,7 @@ export function useFormPersistence(
 			console.warn('Failed to retrieve stored user preferences:', error);
 			return null;
 		}
-	}, [STORAGE_KEY, tier]);
+	}, [tier]);
 
 	/**
 	 * Save user preferences for matches page (separate from form progress)

@@ -330,63 +330,60 @@ function detectWorkEnvironment(job) {
 /**
  * Classify job type as internship, graduate, or entry-level
  * Returns: { isInternship: boolean, isGraduate: boolean }
+ * 
+ * IMPROVED: Check graduate FIRST (more specific), then internship
+ * Prevents "graduate internship" from being marked as just internship
  */
 function classifyJobType(job) {
 	const title = (job.title || "").toLowerCase();
 	const description = (job.description || "").toLowerCase();
-	const _text = `${title} ${description}`;
+	const fullText = `${title} ${description}`;
 
-	// Internship indicators (multilingual)
-	const internshipTerms = [
-		"intern",
-		"internship",
-		"stage",
-		"praktikum",
-		"prácticas",
-		"tirocinio",
-		"stagiaire",
-		"stagiar",
-		"becario",
-		"werkstudent",
-		"placement",
-		"summer intern",
-		"winter intern",
-		"co-op",
-		"coop",
+	// GRADUATE program indicators - CHECK FIRST (more specific)
+	const graduatePatterns = [
+		/\bgraduate\s+(?:programme|program|scheme|trainee|role)\b/,
+		/\bgrad\s+(?:scheme|program)\b/,
+		/\b(?:management|graduate)\s+trainee\b/,
+		/\b(?:rotational|leadership|accelerated|fast-track)\s+(?:programme|program)\b/,
+		/\bcampus\s+hire\b/,
+		/\bnew\s+grad(?:uate)?\b/,
+		/\brecent\s+graduate\b/,
+		/\btrainee\s+(?:programme|program|scheme)\b/,
 	];
 
-	// Graduate program indicators
-	const graduateTerms = [
-		"graduate",
-		"grad scheme",
-		"grad program",
-		"graduate programme",
-		"graduate program",
-		"graduate scheme",
-		"graduate trainee",
-		"management trainee",
-		"trainee program",
-		"trainee programme",
-		"rotational program",
-		"rotational programme",
-		"campus hire",
-		"new grad",
-		"recent graduate",
-	];
-
-	// Check for internship first (more specific)
-	const isInternship = internshipTerms.some(
-		(term) => title.includes(term) || description.includes(term),
+	const isGraduate = graduatePatterns.some((pattern) =>
+		pattern.test(fullText)
 	);
 
-	// Check for graduate program
-	const isGraduate =
-		!isInternship &&
-		graduateTerms.some(
-			(term) => title.includes(term) || description.includes(term),
-		);
+	// If already marked as graduate, don't also mark as internship
+	if (isGraduate) {
+		return { isInternship: false, isGraduate: true };
+	}
 
-	return { isInternship, isGraduate };
+	// INTERNSHIP indicators (multilingual) - only if NOT graduate
+	const internshipPatterns = [
+		/\bintern(?:ship)?\b/,
+		/\bsummer\s+(?:intern|placement)\b/,
+		/\bwinter\s+(?:intern|placement)\b/,
+		/\bspring\s+(?:intern|placement)\b/,
+		/\b(?:co-op|coop)\b/,
+		/\bstage\b/,
+		/\bpraktikum\b/,
+		/\bpr[aá]cticas\b/,
+		/\btirocinio\b/,
+		/\bstagiaire\b/,
+		/\bstagiar\b/,
+		/\bbecario\b/,
+		/\bwerkstudent\b/,
+		/\b(?:placement|work\s+experience)\b/,
+		/\b(?:sandwich\s+course|year\s+out)\b/,
+	];
+
+	const isInternship = internshipPatterns.some((pattern) =>
+		pattern.test(fullText)
+	);
+
+	return { isInternship, isGraduate: false };
 }
 
 /**

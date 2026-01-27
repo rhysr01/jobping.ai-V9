@@ -104,6 +104,7 @@
 		"@tsparticles/react": "3.0.0",
 		"@tsparticles/slim": "3.9.1",
 		"@types/canvas-confetti": "1.9.0",
+		"@vercel/analytics": "1.6.1",
 		"@vercel/og": "0.8.6",
 		"axios": "1.12.2",
 		"canvas-confetti": "1.9.4",

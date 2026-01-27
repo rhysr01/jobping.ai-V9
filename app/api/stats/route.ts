@@ -304,44 +304,179 @@ async function handleSignupStats(requestId: string) {
 	return response;
 }
 
-// Consolidated EU jobs stats handler
+// Cache for EU job stats (24-hour cache)
+let cachedEUStats: {
+	internships: number;
+	graduateRoles: number;
+	earlyCareer: number;
+	total: number;
+	cities: number;
+	timestamp: string;
+} | null = null;
+let lastEUStatsFetch: number = 0;
+const EU_STATS_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+// Consolidated EU jobs stats handler with 24-hour caching
 async function handleEUJobStats(requestId: string) {
+	const now = Date.now();
+
+	// Return cached stats if still valid (24 hours)
+	if (
+		cachedEUStats &&
+		now - lastEUStatsFetch < EU_STATS_CACHE_DURATION
+	) {
+		apiLogger.info("Returning cached EU stats", {
+			cacheAge: Math.floor((now - lastEUStatsFetch) / 1000 / 60),
+		});
+		const response = createSuccessResponse(
+			{
+				...cachedEUStats,
+				cached: true,
+				cacheAge: Math.floor((now - lastEUStatsFetch) / 1000 / 60 / 60), // hours
+			},
+			undefined,
+			undefined,
+			200,
+		);
+		response.headers.set("x-request-id", requestId);
+		response.headers.set(
+			"Cache-Control",
+			"public, s-maxage=86400, stale-while-revalidate=172800",
+		);
+		return response;
+	}
+
+	apiLogger.info("Fetching fresh EU stats");
 	const supabase = getDatabaseClient();
 
-	const { data, error } = await supabase
+	// Get internship count
+	const { count: internships, error: internshipsError } = await supabase
 		.from("jobs")
-		.select("country, city")
+		.select("id", { count: "exact", head: true })
+		.eq("is_active", true)
+		.eq("is_internship", true);
+
+	if (internshipsError) {
+		apiLogger.warn("Error fetching EU internships count", internshipsError, {
+			endpoint: "/api/stats",
+			query: "euInternships",
+		});
+	}
+
+	// Get graduate roles count
+	const { count: graduateRoles, error: graduatesError } = await supabase
+		.from("jobs")
+		.select("id", { count: "exact", head: true })
+		.eq("is_active", true)
+		.eq("is_graduate", true);
+
+	if (graduatesError) {
+		apiLogger.warn("Error fetching EU graduate roles count", graduatesError, {
+			endpoint: "/api/stats",
+			query: "euGraduates",
+		});
+	}
+
+	// Get early career count
+	let earlyCareer = 0;
+	try {
+		const { count, error: earlyCareerError } = await supabase
+			.from("jobs")
+			.select("id", { count: "exact", head: true })
+			.eq("is_active", true)
+			.contains("categories", ["early-career"])
+			.eq("is_internship", false)
+			.eq("is_graduate", false);
+
+		if (earlyCareerError) {
+			apiLogger.warn("Error fetching EU early career count", earlyCareerError, {
+				endpoint: "/api/stats",
+				query: "euEarlyCareer",
+			});
+		} else {
+			earlyCareer = count || 0;
+		}
+	} catch (error) {
+		apiLogger.error("Error fetching EU early career count", error as Error, {
+			endpoint: "/api/stats",
+			query: "euEarlyCareer",
+		});
+		earlyCareer = 0;
+	}
+
+	// Get total active jobs count
+	const { count: total, error: totalError } = await supabase
+		.from("jobs")
+		.select("id", { count: "exact", head: true })
 		.eq("is_active", true);
 
-	if (error) {
+	if (totalError) {
+		apiLogger.error("Error fetching total jobs count", totalError, {
+			endpoint: "/api/stats",
+			query: "euTotalJobs",
+		});
 		throw new AppError(
 			"Failed to fetch EU job stats",
 			500,
 			"DATABASE_ERROR",
-			error,
+			totalError,
 		);
 	}
 
-	// Aggregate by country
-	const countryStats: Record<string, number> = {};
-	data?.forEach((job) => {
-		const country = job.country || "Unknown";
-		countryStats[country] = (countryStats[country] || 0) + 1;
+	// Get distinct cities count - use a small select to get unique values
+	const { data: cityData, error: citiesError } = await supabase
+		.from("jobs")
+		.select("city", { count: "exact", head: false })
+		.eq("is_active", true)
+		.not("city", "is", null);
+
+	if (citiesError) {
+		apiLogger.warn("Error fetching cities data", citiesError, {
+			endpoint: "/api/stats",
+			query: "euCities",
+		});
+	}
+
+	// Get unique cities count
+	const uniqueCities = new Set(
+		cityData?.map((j) => j.city) || [],
+	);
+	const citiesCount = uniqueCities.size;
+
+	cachedEUStats = {
+		internships: internships || 0,
+		graduateRoles: graduateRoles || 0,
+		earlyCareer: earlyCareer,
+		total: total || 0,
+		cities: citiesCount,
+		timestamp: new Date().toISOString(),
+	};
+
+	lastEUStatsFetch = now;
+
+	apiLogger.info("Returning fresh EU stats", {
+		internships: cachedEUStats.internships,
+		graduateRoles: cachedEUStats.graduateRoles,
+		earlyCareer: cachedEUStats.earlyCareer,
+		total: cachedEUStats.total,
+		cities: cachedEUStats.cities,
 	});
 
-	const successResponse = createSuccessResponse(
+	const response = createSuccessResponse(
 		{
-			totalJobs: data?.length || 0,
-			byCountry: countryStats,
-			timestamp: new Date().toISOString(),
+			...cachedEUStats,
+			cached: false,
 		},
 		undefined,
 		undefined,
 		200,
 	);
 
-	const response = NextResponse.json(successResponse, { status: 200 });
 	response.headers.set("x-request-id", requestId);
+	response.headers.set(
+		"Cache-Control",
+		"public, s-maxage=86400, stale-while-revalidate=172800",
+	);
 	return response;
 }
 

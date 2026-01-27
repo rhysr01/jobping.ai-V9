@@ -108,7 +108,7 @@ function SignupFormFree() {
 			// Clear touched fields when changing steps to prevent stale error states
 			setTouchedFields(new Set());
 		}
-	}, [step, isSubmitting, signupError, setError]); // Clear errors whenever step changes
+	}, [step, isSubmitting, signupError]); // Clear errors whenever step changes
 
 	// Mark component as mounted to prevent hydration mismatches
 	useEffect(() => {

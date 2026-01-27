@@ -73,7 +73,7 @@ export default function Header() {
 	// Close mobile menu when route changes
 	useEffect(() => {
 		setMobileMenuOpen(false);
-	}, []);
+	}, [pathname]);
 
 	// Prevent body scroll when mobile menu is open
 	useEffect(() => {

@@ -87,7 +87,7 @@ export function LiveJobsReview({
 		if (cities.length > 0 && careerPath && !hasFetched) {
 			fetchJobPreviews();
 		}
-	}, [cities, careerPath, hasFetched, fetchJobPreviews]);
+	}, [cities, careerPath, hasFetched]);
 
 	// Reset when cities or career change
 	useEffect(() => {
