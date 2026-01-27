@@ -5,6 +5,9 @@ import { trackEvent } from "../../lib/analytics";
 import {
 	CTA_GET_MY_5_FREE_MATCHES,
 	CTA_GET_MY_5_FREE_MATCHES_ARIA,
+	HERO_HEADLINE,
+	HERO_SUBLINE,
+	HERO_PILL,
 } from "../../lib/copy";
 import HeroBackgroundAura from "../ui/HeroBackgroundAura";
 import CustomButton from "../ui/CustomButton";
@@ -56,40 +59,31 @@ function Hero() {
 			<div className="container-page relative z-10 mx-auto max-w-7xl overflow-visible">
 				{/* LEFT SIDE - Content */}
 				<div className="text-center space-y-8 relative overflow-visible px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-					{/* IMPACTFUL Headline with Enhanced Typography */}
-					<h1
-						className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-white leading-none mb-6 max-w-full overflow-visible tracking-tighter"
-						style={{ wordSpacing: "0.05em" }}
-					>
-						<span className="block text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl">
-							Graduate Jobs
-						</span>
-						<span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">
-							Made Simple
-						</span>
-					</h1>
+				{/* IMPACTFUL Headline with Enhanced Typography */}
+				<h1
+					className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-white leading-none mb-6 max-w-full overflow-visible tracking-tighter"
+					style={{ wordSpacing: "0.05em" }}
+				>
+					{HERO_HEADLINE}
+				</h1>
 
-					{/* Clear, impactful value proposition */}
-					<p className="text-lg sm:text-xl md:text-2xl text-zinc-300 leading-tight max-w-4xl mx-auto mb-8">
-						Get European internships, graduate & early-career roles in 2 minutes. <strong className="text-white font-bold">Personalized matches.</strong>
-					</p>
+				{/* Clear, impactful value proposition */}
+				<p className="text-lg sm:text-xl md:text-2xl text-zinc-300 leading-tight max-w-4xl mx-auto mb-8">
+					{HERO_SUBLINE}
+				</p>
 
-					{/* Enhanced Social Proof */}
-					<div className="relative mt-12 mb-8">
-						{/* Social proof metrics */}
-						<div className="relative flex items-center justify-center gap-4 mb-12">
-							<div className="flex items-center gap-2 text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-full backdrop-blur-sm border border-emerald-500/20">
-								<div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse sm:animate-none"></div>
-								<span className="text-sm font-medium">
-									1,000+ students matched
-								</span>
-							</div>
-							<div className="w-px h-4 bg-zinc-600"></div>
-							<div className="flex items-center gap-2 text-cyan-400 bg-cyan-500/10 px-4 py-2 rounded-full backdrop-blur-sm border border-cyan-500/20">
-								<span className="text-sm font-medium">22 European cities</span>
-							</div>
+				{/* Enhanced Social Proof */}
+				<div className="relative mt-12 mb-8">
+					{/* Social proof metrics */}
+					<div className="relative flex items-center justify-center gap-4 mb-12">
+						<div className="flex items-center gap-2 text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-full backdrop-blur-sm border border-emerald-500/20">
+							<div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse sm:animate-none"></div>
+							<span className="text-sm font-medium">
+								{HERO_PILL}
+							</span>
 						</div>
 					</div>
+				</div>
 
 					{/* ENHANCED prominent CTA with glow */}
 					<div className="flex justify-center">

@@ -799,14 +799,14 @@ export function createJobMatchesEmail(
 					: "";
 			}
 
-			const apply = evidenceHref
-				? vmlButton(
-						evidenceHref,
-						"View Match Evidence →",
-						COLORS.indigo,
-						COLORS.purple,
-					)
-				: "";
+		const apply = evidenceHref
+			? vmlButton(
+					evidenceHref,
+					"Apply Now →",
+					COLORS.indigo,
+					COLORS.purple,
+				)
+			: "";
 			const plainLink = evidenceHref
 				? `<p class="text" style="color:${COLORS.textSecondary}; font-size:13px; margin-top:20px; line-height:1.6;">Button not working? Paste this link:<br /><a href="${evidenceHref}" style="color:#5B21B6; text-decoration:underline; word-break:break-all; font-size:12px;">${evidenceHref.substring(0, 80)}...</a></p>`
 				: "";

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BrandIcons } from "../ui/BrandIcons";
 import { SuccessAnimation } from "../ui/SuccessAnimation";
+import { SuccessCelebration } from "../ui/SuccessCelebration";
 import Link from "next/link";
 import { TrendingUp, Sparkles } from "lucide-react";
 
@@ -17,11 +18,32 @@ export function FreeSuccessPage({
 }: FreeSuccessPageProps) {
 	const [isResending, setIsResending] = useState(false);
 	const [resendMessage, setResendMessage] = useState("");
+	const [showCelebration, setShowCelebration] = useState(true);
+
+	// Auto-hide celebration after 3 seconds
+	useEffect(() => {
+		if (showCelebration) {
+			const timer = setTimeout(() => setShowCelebration(false), 3000);
+			return () => clearTimeout(timer);
+		}
+		// Explicit return for all code paths
+		return undefined;
+	}, [showCelebration]);
 	return (
-		<div className="min-h-screen bg-black text-white py-8">
-			<div className="container mx-auto px-4 max-w-4xl">
-				{/* Success Hero - matches premium layout */}
-				<div className="text-center mb-8">
+		<>
+			{/* Success Celebration Overlay */}
+			<SuccessCelebration
+				matchCount={matchCount}
+				isVisible={showCelebration}
+				onComplete={() => setShowCelebration(false)}
+				autoHide={true}
+				autoHideDelay={3000}
+			/>
+
+			<div className="min-h-screen bg-black text-white py-8">
+				<div className="container mx-auto px-4 max-w-4xl">
+					{/* Success Hero - matches premium layout */}
+					<div className="text-center mb-8">
 					<SuccessAnimation message="Your Matches Are Ready!" />
 
 					{/* Badge - consistent with premium */}
@@ -213,7 +235,8 @@ export function FreeSuccessPage({
 						or check your spam folder
 					</p>
 				</div>
+				</div>
 			</div>
-		</div>
+		</>
 	);
 }

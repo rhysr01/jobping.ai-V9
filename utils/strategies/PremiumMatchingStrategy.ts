@@ -6,10 +6,7 @@
 import { apiLogger } from "../../lib/api-logger";
 import type { JobWithMetadata } from "../../lib/types/job";
 import { simplifiedMatchingEngine } from "../matching/core/matching-engine";
-import {
-	jobMatchesUserCategories,
-	getCategoryPriorityScore,
-} from "../matching/categoryMapper";
+import { jobMatchesUserCategories } from "../matching/categoryMapper";
 
 export interface PremiumUserPreferences {
 	email: string;

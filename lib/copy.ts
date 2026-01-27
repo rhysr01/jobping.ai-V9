@@ -2,7 +2,7 @@
  * Centralized copy strings for consistent messaging across the application
  */
 
-import { FREE_ROLES_PER_SEND, PREMIUM_SENDS_PER_WEEK } from "./productMetrics";
+import { FREE_ROLES_PER_SEND } from "./productMetrics";
 
 // Time savings (consistent across all copy)
 export const TIME_SAVED_PER_WEEK = 10;
@@ -108,12 +108,20 @@ export const BUILT_FOR_STUDENTS_FEATURES = [
 
 // Pricing
 export const PRICING_TITLE = "Choose Your Plan";
-export const PRICING_SUBTITLE = `Save 10 hours per week. Join 1,000+ students finding EU roles.`;
+export const PRICING_SUBTITLE = "Save 40+ hours per month. Stop scrolling LinkedIn.";
 export const PRICING_BADGE = "Simple pricing • Cancel anytime";
+export const PRICING_BETA_WARNING = "🔥 Beta pricing—after Feb 28, premium will be €9/month";
+export const PRICING_BETA_END_DATE = "2026-02-28";
+
+// Value comparison
+export const PRICING_VALUE_CALLOUT = "40+ hours/month wasted job hunting?";
+export const PRICING_TIME_VALUE = "That's €400+ of your time at minimum wage.";
+export const PRICING_COMPETITOR_LINKEDIN = "€30/month";
+export const PRICING_COMPETITOR_GENERIC = "€0-20";
 
 // Free plan
 export const FREE_PLAN_TITLE = "Free";
-export const FREE_PLAN_SUBTITLE = "Your first 5 matches";
+export const FREE_PLAN_SUBTITLE = "5 instant matches";
 export const FREE_PLAN_FEATURES = [
 	`Get 5 instant matches`,
 	"View matches on website",
@@ -129,20 +137,22 @@ export const PREMIUM_TIME_TO_APPLY_HOURS = 12;
 export const FREE_TIME_TO_APPLY_HOURS = 72;
 
 export const PREMIUM_PLAN_TITLE = "Premium";
-export const PREMIUM_PLAN_SUBTITLE = `${PREMIUM_SENDS_PER_WEEK}× weekly`;
+export const PREMIUM_PLAN_SUBTITLE = `15 jobs/week • 3× delivery`;
+export const PREMIUM_PLAN_VALUE = "€0.08 per job match";
 export const PREMIUM_PLAN_PRICE = "€5";
 export const PREMIUM_PLAN_PRICE_UNIT = "/mo";
 export const PREMIUM_PLAN_ANNUAL = "€20 for 3 months (save €1)";
 export const PREMIUM_PLAN_DESCRIPTION = `5 fresh matches 3× per week (Mon/Wed/Fri) from companies actively hiring.`;
+export const PREMIUM_PLAN_GUARANTEE = "💸 If you don't apply to 3+ jobs in 30 days, we'll refund you.";
+export const PREMIUM_SOCIAL_PROOF_PERCENT = "89";
 export const PREMIUM_PLAN_FEATURES = [
-	`10 instant matches on signup (vs 5 for free)`,
-	`Select up to 2 career paths (vs 1 for free)`,
-	`15 fresh matches per week (Mon/Wed/Fri delivery)`,
-	"Access jobs within 7 days (vs 30 days for free)",
-	"Balanced matching across your locations and career paths",
-	"Delivered to your inbox automatically",
-	"Account stays active (no 30-day deletion)",
-	"Cancel anytime, no questions asked",
+	`✨ 15 fresh matches every week (Mon/Wed/Fri)`,
+	`🎯 AI-powered visa sponsorship scoring`,
+	`⚡ Jobs posted within 7 days (fresher roles)`,
+	`🔄 AI learns from your feedback instantly`,
+	`📧 Delivered to your inbox automatically`,
+	`🚫 No scrolling, no dashboards, no BS`,
+	`⏸️ Cancel anytime, no questions asked`,
 ];
 
 // Reassurance

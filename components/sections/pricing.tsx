@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { memo } from "react";
+import { memo, useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import { BrandIcons } from "../ui/BrandIcons";
 import ErrorBoundary from "../error-boundary";
@@ -16,7 +16,7 @@ const TIERS = [
 	{
 		name: Copy.FREE_PLAN_TITLE,
 		price: "0",
-		tagline: "Your first 5 matches",
+		tagline: Copy.FREE_PLAN_SUBTITLE,
 		description:
 			"5 instant matches to try JobPing (one-time preview, no ongoing emails)",
 		features: Copy.FREE_PLAN_FEATURES,
@@ -28,7 +28,7 @@ const TIERS = [
 	{
 		name: Copy.PREMIUM_PLAN_TITLE,
 		price: "5",
-		tagline: "€5/month saves 40+ hours searching per month",
+		tagline: Copy.PREMIUM_PLAN_SUBTITLE,
 		description:
 			"5 fresh matches 3× per week (Mon/Wed/Fri) from companies actively hiring visa-sponsored roles",
 		features: Copy.PREMIUM_PLAN_FEATURES,
@@ -36,13 +36,31 @@ const TIERS = [
 		href: "/signup",
 		popular: true,
 		icon: Star,
-		badge: "Most Popular",
-		savings: "Save 10 hours per week job searching",
+		badge: `${Copy.PREMIUM_SOCIAL_PROOF_PERCENT}% choose Premium`,
+		value: Copy.PREMIUM_PLAN_VALUE,
+		guarantee: Copy.PREMIUM_PLAN_GUARANTEE,
 	},
 ];
 
 function Pricing() {
 	const { isMobile } = useWindowSize();
+	const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
+
+	useEffect(() => {
+		// Calculate days until beta pricing ends
+		const calculateDaysRemaining = () => {
+			const betaEndDate = new Date(Copy.PRICING_BETA_END_DATE);
+			const now = new Date();
+			const diffTime = betaEndDate.getTime() - now.getTime();
+			const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+			setDaysRemaining(Math.max(0, diffDays));
+		};
+
+		calculateDaysRemaining();
+		// Update once per hour (not every minute to reduce re-renders)
+		const interval = setInterval(calculateDaysRemaining, 1000 * 60 * 60);
+		return () => clearInterval(interval);
+	}, []);
 
 	return (
 		<section
@@ -81,6 +99,60 @@ function Pricing() {
 							We do it in seconds.
 						</span>
 					</p>
+				</motion.div>
+
+				{/* Beta Pricing Urgency Countdown */}
+				{daysRemaining !== null && daysRemaining > 0 && (
+					<motion.div
+						initial={{ opacity: 0, y: 16 }}
+						whileInView={{ opacity: 1, y: 0 }}
+						viewport={{ once: true }}
+						className="max-w-2xl mx-auto mb-12 px-4"
+					>
+						<div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-center backdrop-blur-sm">
+							<p className="text-red-400 font-bold text-sm sm:text-base">
+								⏰ Beta pricing ends in {daysRemaining} day{daysRemaining !== 1 ? "s" : ""}
+							</p>
+							<p className="text-xs text-zinc-400 mt-2">
+								After Feb 28, premium will be €9/month
+							</p>
+						</div>
+					</motion.div>
+				)}
+
+				{/* Value Comparison Banner */}
+				<motion.div
+					initial={{ opacity: 0, y: 16 }}
+					whileInView={{ opacity: 1, y: 0 }}
+					viewport={{ once: true }}
+					className="max-w-3xl mx-auto mb-16 px-4"
+				>
+					<div className="bg-gradient-to-r from-emerald-500/10 to-emerald-400/5 border border-emerald-500/30 rounded-xl p-6 sm:p-8 text-center backdrop-blur-sm">
+						<p className="text-sm sm:text-base text-zinc-300 mb-4">
+							<span className="text-white font-bold">{Copy.PRICING_VALUE_CALLOUT}</span>
+						</p>
+						<p className="text-base sm:text-lg font-semibold text-white mb-6">
+							{Copy.PRICING_TIME_VALUE}
+						</p>
+						<div className="grid grid-cols-3 gap-3 sm:gap-4 text-center text-xs sm:text-sm">
+							<div className="border-l border-emerald-500/30 pl-3 sm:pl-4">
+								<p className="text-zinc-400 text-xs">LinkedIn Premium</p>
+								<p className="text-white font-bold text-sm sm:text-base">
+									{Copy.PRICING_COMPETITOR_LINKEDIN}
+								</p>
+							</div>
+							<div className="border-l border-emerald-500/30 pl-3 sm:pl-4">
+								<p className="text-zinc-400 text-xs">Generic Job Boards</p>
+								<p className="text-white font-bold text-sm sm:text-base">
+									{Copy.PRICING_COMPETITOR_GENERIC}
+								</p>
+							</div>
+							<div className="border-l border-emerald-500/30 pl-3 sm:pl-4">
+								<p className="text-emerald-400 font-bold text-xs">JobPing Premium</p>
+								<p className="text-white font-bold text-sm sm:text-base">€5/mo</p>
+							</div>
+						</div>
+					</div>
 				</motion.div>
 
 				<div
@@ -144,7 +216,7 @@ function Pricing() {
 												</p>
 											</div>
 
-											{/* Price with more breathing room */}
+											{/* Price with value callout */}
 											<div className="mb-10 pb-10 border-b border-white/10">
 												<div className="flex items-baseline gap-2">
 													<span
@@ -160,9 +232,9 @@ function Pricing() {
 														/month
 													</span>
 												</div>
-												{tier.savings && (
-													<p className="font-display text-sm text-emerald-400 mt-2 font-medium">
-														{tier.savings}
+												{tier.value && (
+													<p className="font-display text-xs sm:text-sm text-emerald-400 mt-2 font-medium">
+														{tier.value}
 													</p>
 												)}
 											</div>
@@ -219,10 +291,20 @@ function Pricing() {
 
 											{/* Guarantee badge for premium */}
 											{tier.popular && (
-												<div className="mt-4 flex items-center justify-center gap-2 text-xs text-zinc-400">
-													<BrandIcons.Shield className="w-3.5 h-3.5 text-brand-500" />
-													<span>Cancel anytime • No questions asked</span>
-												</div>
+												<>
+													<div className="mt-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+														<p className="text-xs sm:text-sm text-emerald-300 font-medium">
+															{tier.guarantee}
+														</p>
+														<p className="text-xs text-zinc-400 mt-1">
+															We're this confident in our matching.
+														</p>
+													</div>
+													<div className="mt-4 flex items-center justify-center gap-2 text-xs text-zinc-400">
+														<BrandIcons.Shield className="w-3.5 h-3.5 text-brand-500" />
+														<span>Cancel anytime • No questions asked</span>
+													</div>
+												</>
 											)}
 										</div>
 									</div>

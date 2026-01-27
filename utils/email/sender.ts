@@ -9,6 +9,183 @@ import {
 } from "./productionReadyTemplates";
 import type { EmailJobCard } from "./types";
 
+// Subscription confirmation email sender
+export async function sendSubscriptionConfirmationEmail(args: {
+	to: string;
+	userName?: string;
+	subscriptionId: string;
+}) {
+	const startTime = Date.now();
+
+	apiLogger.info("sendSubscriptionConfirmationEmail called", {
+		to: args.to,
+		subscriptionId: args.subscriptionId,
+	});
+	console.log(`[EMAIL] sendSubscriptionConfirmationEmail called for ${args.to}`);
+
+	// Check API key BEFORE creating client
+	const apiKey = process.env.RESEND_API_KEY;
+	if (!apiKey) {
+		const error = new Error("RESEND_API_KEY environment variable is not set");
+		console.error(`[EMAIL] ❌ Missing API key`);
+		apiLogger.error("RESEND_API_KEY missing", error);
+		throw error;
+	}
+
+	if (!apiKey.startsWith("re_")) {
+		const error = new Error(
+			`Invalid RESEND_API_KEY format: must start with "re_"`,
+		);
+		console.error(`[EMAIL] ❌ Invalid API key format`);
+		apiLogger.error("Invalid RESEND_API_KEY format", error);
+		throw error;
+	}
+
+	try {
+		const resend = getResendClient();
+		console.log(
+			`[EMAIL] Resend client initialized for subscription confirmation. API Key present: true`,
+		);
+
+		const baseUrl = getBaseUrl();
+		const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+    .success-badge { display: inline-block; background: #10b981; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; margin: 15px 0; }
+    .cta-button { display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px; }
+    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 14px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>✓ Subscription Confirmed</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${args.userName || "there"},</p>
+      <p>Great news! Your premium subscription to JobPing has been successfully activated.</p>
+      
+      <div class="success-badge">Premium Plan Active</div>
+      
+      <h3>What's Included:</h3>
+      <ul>
+        <li>15 personalized job matches every week</li>
+        <li>Delivery on Monday, Wednesday, and Friday mornings</li>
+        <li>Advanced filtering and preferences</li>
+        <li>Priority support</li>
+      </ul>
+      
+      <p>Your first batch of matches will arrive on your next scheduled delivery day.</p>
+      
+      <p><a href="${baseUrl}/preferences" class="cta-button">Manage Preferences</a></p>
+      
+      <div class="footer">
+        <p>Thank you for supporting JobPing! If you have any questions, reply to this email or visit our <a href="${baseUrl}">homepage</a>.</p>
+        <p>- The JobPing Team</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+		`;
+
+		const textContent = `Hi ${args.userName || "there"},
+
+Your premium subscription to JobPing has been successfully activated!
+
+What's Included:
+- 15 personalized job matches every week
+- Delivery on Monday, Wednesday, and Friday mornings
+- Advanced filtering and preferences
+- Priority support
+
+Your first batch of matches will arrive on your next scheduled delivery day.
+
+Manage your preferences: ${baseUrl}/preferences
+
+Thank you for supporting JobPing!
+- The JobPing Team`;
+
+		apiLogger.info("Email content generated for subscription confirmation", {
+			from: EMAIL_CONFIG.from,
+		});
+		assertValidFrom(EMAIL_CONFIG.from);
+
+		apiLogger.info("Attempting to send subscription confirmation email", {
+			to: args.to,
+			from: EMAIL_CONFIG.from,
+		});
+		console.log(
+			`[EMAIL] Attempting to send subscription confirmation email from ${EMAIL_CONFIG.from} to ${args.to}`,
+		);
+
+		// Add timeout to prevent hanging
+		const sendPromise = resend.emails.send({
+			from: EMAIL_CONFIG.from,
+			to: [args.to],
+			subject: "Welcome to JobPing Premium – Your subscription is active",
+			text: textContent,
+			html: htmlContent,
+		});
+
+		const timeoutPromise = new Promise((_, reject) =>
+			setTimeout(
+				() => reject(new Error("Email send timeout after 15 seconds")),
+				15000,
+			),
+		);
+
+		const result = (await Promise.race([sendPromise, timeoutPromise])) as any;
+
+		// Handle Resend response format
+		if (result?.error) {
+			throw new Error(`Resend API error: ${JSON.stringify(result.error)}`);
+		}
+
+		const emailId = result?.data?.id || result?.id || "unknown";
+
+		// Track successful send
+		trackEmailSend(true, Date.now() - startTime);
+		apiLogger.info("Subscription confirmation email sent successfully", {
+			to: args.to,
+			emailId,
+			duration: Date.now() - startTime,
+		});
+		console.log(
+			`[EMAIL] ✅ Subscription confirmation email sent successfully to ${args.to}. Email ID: ${emailId}`,
+		);
+		return result;
+	} catch (error) {
+		// Track failed send
+		trackEmailSend(false, Date.now() - startTime);
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		const errorStack = error instanceof Error ? error.stack : undefined;
+		const apiKeyPrefix = process.env.RESEND_API_KEY?.substring(0, 10) || "none";
+		console.error(
+			`[EMAIL] ❌ sendSubscriptionConfirmationEmail failed for ${args.to}:`,
+			errorMessage,
+		);
+		console.error(`[EMAIL] API Key prefix: ${apiKeyPrefix}...`);
+		console.error(`[EMAIL] Error stack:`, errorStack);
+		apiLogger.error("sendSubscriptionConfirmationEmail failed", error as Error, {
+			to: args.to,
+			errorMessage,
+			errorStack,
+			errorType: error?.constructor?.name,
+			apiKeyPrefix,
+			duration: Date.now() - startTime,
+		});
+		throw error;
+	}
+}
+
 // Welcome email sender using production templates
 export async function sendWelcomeEmail(args: {
 	to: string;
