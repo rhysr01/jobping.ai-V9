@@ -312,9 +312,7 @@ export class SignupMatchingService {
 				experience_required, work_environment, source, categories, company_profile_url,
 				language_requirements, scrape_timestamp, original_posted_date, posted_at,
 				last_seen_at, is_active, scraper_run_id, created_at, is_internship, is_graduate,
-				visa_friendly, status, filtered_reason, career_path, primary_category,
-				categories, career_paths, work_arrangement, work_mode, employment_type,
-				job_type, contract_type, salary_min, salary_max, visa_sponsorship, posted_at
+				visa_friendly, status, filtered_reason, salary_min, salary_max, visa_sponsorship
 			`)
 			.eq("is_active", true)
 			.eq("status", "active")

@@ -491,14 +491,14 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 				.limit(10);
 
 			if (existingMatchData && existingMatchData.length > 0) {
-				// Fetch full job data for email
-				const jobHashes = existingMatchData.map((m) => m.job_hash);
-				const { data: existingJobs } = await supabase
-					.from("jobs")
-					.select(
-						"id, title, company, location, description, job_url, job_hash, career_path, primary_category, categories, career_paths, work_environment, work_arrangement, work_mode, employment_type, job_type, contract_type, source, language_requirement, salary_min, salary_max, visa_sponsorship, posted_at",
-					)
-					.in("job_hash", jobHashes);
+			// Fetch full job data for email
+			const jobHashes = existingMatchData.map((m) => m.job_hash);
+			const { data: existingJobs } = await supabase
+				.from("jobs")
+				.select(
+					"id, title, company, location, description, job_url, job_hash, categories, work_environment, source, language_requirements, salary_min, salary_max, visa_sponsorship, posted_at",
+				)
+				.in("job_hash", jobHashes);
 
 				if (existingJobs && existingJobs.length > 0) {
 					const jobsForEmail = existingJobs.map((job) => {
