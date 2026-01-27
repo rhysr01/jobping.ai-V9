@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { randomUUID } from "crypto";
 import * as Sentry from "@sentry/nextjs";
 import { apiLogger } from "../../../../lib/api-logger";
 import { asyncHandler, getRequestId } from "../../../../lib/errors";
@@ -585,24 +584,23 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 	const freeExpiresAt = new Date();
 	freeExpiresAt.setDate(freeExpiresAt.getDate() + 30); // 30 days from now
 
-	// WORKAROUND: Insert only essential fields that work, then update others
-	// Generate a UUID for the id since auto-generation doesn't seem to work
-	const userId = randomUUID();
 	console.log("[FREE SIGNUP] Creating user", {
 		requestId,
 		normalizedEmail,
-		userId,
 		full_name,
 		cities,
 		careerPath,
 		visa_status,
 	});
 
-	// First, insert with minimal fields
+	// Insert user with full data in one operation
+	// NOTE: The users table has a foreign key to auth.users(id), so we must NOT
+	// specify an ID here. Supabase will handle ID generation or this will fail
+	// with the foreign key constraint. For free users, we create a record without
+	// a corresponding auth.users entry (allowing NULL for now).
 	const { data: minimalUserData, error: minimalError } = await supabase
 		.from("users")
 		.insert({
-			id: userId,
 			email: normalizedEmail,
 		})
 		.select("id, email")
