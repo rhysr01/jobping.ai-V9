@@ -14,12 +14,12 @@ interface CareerPathSectionProps {
 }
 
 const CAREER_PATHS: CareerPath[] = [
-	{ value: "strategy", label: "Strategy & Business Design" },
-	{ value: "data", label: "Data & Analytics" },
-	{ value: "sales", label: "Sales & Client Success" },
-	{ value: "product", label: "Product & Engineering" },
-	{ value: "marketing", label: "Marketing & Growth" },
-	{ value: "finance", label: "Finance & Operations" },
+	{ value: "strategy-business-design", label: "Strategy & Business Design" },
+	{ value: "data-analytics", label: "Data & Analytics" },
+	{ value: "sales-client-success", label: "Sales & Client Success" },
+	{ value: "product-innovation", label: "Product & Engineering" },
+	{ value: "marketing-growth", label: "Marketing & Growth" },
+	{ value: "finance-investment", label: "Finance & Operations" },
 	{ value: "consulting", label: "Consulting & Advisory" },
 	{ value: "other", label: "Other / Open to Anything" },
 ];

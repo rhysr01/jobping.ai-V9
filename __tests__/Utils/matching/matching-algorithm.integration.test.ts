@@ -183,7 +183,7 @@ describe("Matching Algorithm Integration", () => {
 		multiPreferenceUser = {
 			email: "multi-preference@example.com",
 			target_cities: ["London", "Berlin", "Paris"],
-			career_path: ["Tech & Transformation", "Data & Analytics"],
+			career_path: ["tech-transformation", "data-analytics"],
 			professional_expertise: "Software Development",
 			work_environment: "hybrid",
 			visa_status: "eu-citizen",
@@ -200,7 +200,7 @@ describe("Matching Algorithm Integration", () => {
 		singlePreferenceUser = {
 			email: "single-preference@example.com",
 			target_cities: ["London"],
-			career_path: ["Tech & Transformation"],
+			career_path: ["tech-transformation"],
 			professional_expertise: "Software Development",
 			work_environment: "hybrid",
 			visa_status: "eu-citizen",
@@ -221,7 +221,7 @@ describe("Matching Algorithm Integration", () => {
 			)!;
 			const userWithTechOnly = {
 				...singlePreferenceUser,
-				career_path: ["Tech & Transformation"], // Only wants tech
+				career_path: ["tech-transformation"], // Only wants tech
 			};
 
 			const results = fallbackService.generateFallbackMatches(
@@ -241,7 +241,7 @@ describe("Matching Algorithm Integration", () => {
 			)!;
 			const userWithTechOnly = {
 				...singlePreferenceUser,
-				career_path: ["Tech & Transformation"],
+				career_path: ["tech-transformation"],
 			};
 
 			const results = fallbackService.generateFallbackMatches(
@@ -266,7 +266,7 @@ describe("Matching Algorithm Integration", () => {
 
 			const userWithTechOnly = {
 				...singlePreferenceUser,
-				career_path: ["Tech & Transformation"],
+				career_path: ["tech-transformation"],
 			};
 
 			const results = fallbackService.generateFallbackMatches(
@@ -458,7 +458,7 @@ describe("Matching Algorithm Integration", () => {
 
 			const userWithTechFocus = {
 				...singlePreferenceUser,
-				career_path: ["Tech & Transformation"],
+				career_path: ["tech-transformation"],
 			};
 
 			const results = fallbackService.generateFallbackMatches(
