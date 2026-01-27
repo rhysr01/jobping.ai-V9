@@ -307,13 +307,13 @@ export class SignupMatchingService {
 
 		const { data: jobs } = await supabase
 			.from("jobs")
-			.select(`
-				id, job_hash, title, company, location, city, country, job_url, description,
-				experience_required, work_environment, source, categories, company_profile_url,
-				language_requirements, scrape_timestamp, original_posted_date, posted_at,
-				last_seen_at, is_active, scraper_run_id, created_at, is_internship, is_graduate,
-				visa_friendly, status, filtered_reason, salary_min, salary_max, visa_sponsorship
-			`)
+		.select(`
+			id, job_hash, title, company, location, city, country, job_url, description,
+			experience_required, work_environment, source, categories, company_profile_url,
+			language_requirements, scrape_timestamp, original_posted_date, posted_at,
+			last_seen_at, is_active, scraper_run_id, created_at, is_internship, is_graduate,
+			visa_friendly, visa_sponsored, status, filtered_reason
+		`)
 			.eq("is_active", true)
 			.eq("status", "active")
 			.is("filtered_reason", null)

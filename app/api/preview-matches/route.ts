@@ -3,6 +3,7 @@ import { apiLogger } from "../../../lib/api-logger";
 import { createSuccessResponse } from "../../../lib/api-response";
 import { AppError, asyncHandler } from "../../../lib/errors";
 import { getDatabaseClient } from "../../../utils/core/database-pool";
+import { normalizeCareerPath } from "../../../scrapers/types";
 
 interface PreviewMatchesRequest {
 	cities: string[];
@@ -54,10 +55,10 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 		}
 
 	// Career path is optional for all queries - only used for filtering when provided
-	// Using long form categories everywhere (finance-investment, data-analytics, etc)
-	const normalizedCareerPath = Array.isArray(careerPath)
-		? careerPath[0]
-		: careerPath;
+	// Normalize to canonical format (strategy, data-analytics, etc)
+	const rawCareerPath = Array.isArray(careerPath) ? careerPath[0] : careerPath;
+	const normalized = normalizeCareerPath(rawCareerPath);
+	const normalizedCareerPath = normalized && normalized[0] !== "unsure" ? normalized[0] : null;
 
 	apiLogger.info("Preview matches request", {
 		cities,

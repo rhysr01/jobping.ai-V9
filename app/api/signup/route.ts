@@ -495,9 +495,9 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			const jobHashes = existingMatchData.map((m) => m.job_hash);
 			const { data: existingJobs } = await supabase
 				.from("jobs")
-				.select(
-					"id, title, company, location, description, job_url, job_hash, categories, work_environment, source, language_requirements, salary_min, salary_max, visa_sponsorship, posted_at",
-				)
+			.select(
+				"id, title, company, location, description, job_url, job_hash, categories, work_environment, source, language_requirements, posted_at",
+			)
 				.in("job_hash", jobHashes);
 
 				if (existingJobs && existingJobs.length > 0) {
