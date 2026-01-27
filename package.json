@@ -116,7 +116,7 @@
 		"dotenv": "17.2.3",
 		"embla-carousel-autoplay": "8.6.0",
 		"embla-carousel-react": "8.6.0",
-		"framer-motion": "12.23.22",
+		"framer-motion": "12.27.0",
 		"inngest": "3.48.1",
 		"lru-cache": "11.2.4",
 		"lucide-react": "0.525.0",
