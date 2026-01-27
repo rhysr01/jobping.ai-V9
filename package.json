@@ -131,7 +131,7 @@
 		"react-hot-toast": "2.6.0",
 		"react-resizable-panels": "4.4.1",
 		"redis": "4.7.1",
-		"resend": "^6.0.1",
+		"resend": "^6.7.0",
 		"sonner": "2.0.7",
 		"stripe": "17.7.0",
 		"tailwind-merge": "3.4.0",
