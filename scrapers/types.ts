@@ -47,47 +47,46 @@ export const CAREER_TAXONOMY_VERSION = 1;
 
 // Canonical career paths - Single source of truth
 export const CANONICAL_CAREER_PATHS = [
-	"strategy", // Strategy & Business Design
-	"data-analytics", // Data Analytics
-	"retail-luxury", // Retail & Luxury
-	"sales", // Sales & Client Success
-	"marketing", // Marketing
-	"finance", // Finance
-	"operations", // Operations & Supply Chain
-	"product", // Product & Innovation
-	"tech", // Tech & Transformation
-	"sustainability", // Sustainability & ESG
-	"entrepreneurship", // Entrepreneurship
+	"strategy-business-design", // Strategy & Business Design
+	"data-analytics", // Data & Analytics
+	"sales-client-success", // Sales & Client Success
+	"product-innovation", // Product & Engineering
+	"marketing-growth", // Marketing & Growth
+	"finance-investment", // Finance & Operations
+	"consulting", // Consulting & Advisory
+	"other", // Other / Open to Anything
 	"unsure", // I'm not sure yet
 	"unknown", // Could not infer the job's path
 ] as const;
 
 // Tie-break priority order (higher index = higher priority)
 export const CAREER_PATH_PRIORITY = {
-	product: 9,
+	"product-innovation": 9,
 	"data-analytics": 8,
-	marketing: 7,
-	operations: 6,
-	finance: 5,
-	strategy: 4,
-	sales: 3,
-	tech: 2,
-	sustainability: 1,
-	"retail-luxury": 0,
-	entrepreneurship: 0,
+	"marketing-growth": 7,
+	"finance-investment": 6,
+	"strategy-business-design": 4,
+	"sales-client-success": 3,
+	consulting: 2,
+	other: 0,
 	unsure: -1,
 	unknown: -2,
 } as const;
 
-// Synonym slug mapping dictionary
+// Synonym slug mapping dictionary - maps user input to form career path values
 export const CAREER_PATH_SYNONYMS: Record<string, string> = {
-	// Strategy synonyms
-	"business development": "strategy",
-	"biz dev": "sales",
-	"management consulting": "strategy",
-	advisory: "strategy",
-	"business strategy": "strategy",
-	strategic: "strategy",
+	// Strategy & Business Design synonyms
+	strategy: "strategy-business-design",
+	"business development": "strategy-business-design",
+	"biz dev": "strategy-business-design",
+	"management consulting": "strategy-business-design",
+	advisory: "strategy-business-design",
+	"business strategy": "strategy-business-design",
+	strategic: "strategy-business-design",
+	"strategy & business design": "strategy-business-design",
+	"strategy-business-design": "strategy-business-design",
+	consulting: "strategy-business-design",
+	"consulting & advisory": "strategy-business-design",
 
 	// Data Analytics synonyms
 	"data analyst": "data-analytics",
@@ -101,89 +100,61 @@ export const CAREER_PATH_SYNONYMS: Record<string, string> = {
 	ml: "data-analytics",
 	ai: "data-analytics",
 	"artificial intelligence": "data-analytics",
+	"data & analytics": "data-analytics",
 
-	// Retail & Luxury synonyms
-	retail: "retail-luxury",
-	luxury: "retail-luxury",
-	fashion: "retail-luxury",
-	merchandising: "retail-luxury",
-	buying: "retail-luxury",
+	// Sales & Client Success synonyms
+	"sales representative": "sales-client-success",
+	"account executive": "sales-client-success",
+	"client success": "sales-client-success",
+	"customer success": "sales-client-success",
+	"account manager": "sales-client-success",
+	"sales development": "sales-client-success",
+	revenue: "sales-client-success",
+	"sales & client success": "sales-client-success",
+	"sales-client-success": "sales-client-success",
+	sales: "sales-client-success",
 
-	// Sales synonyms
-	"sales representative": "sales",
-	"account executive": "sales",
-	"client success": "sales",
-	"customer success": "sales",
-	"account manager": "sales",
-	"sales development": "sales",
-	revenue: "sales",
+	// Product & Innovation synonyms
+	"product manager": "product-innovation",
+	"product owner": "product-innovation",
+	"product development": "product-innovation",
+	"user experience": "product-innovation",
+	ux: "product-innovation",
+	"user interface": "product-innovation",
+	ui: "product-innovation",
+	"product design": "product-innovation",
+	"product & engineering": "product-innovation",
+	"product-innovation": "product-innovation",
+	product: "product-innovation",
 
-	// Marketing synonyms
-	brand: "marketing",
-	"digital marketing": "marketing",
-	"social media": "marketing",
-	content: "marketing",
-	advertising: "marketing",
-	"brand manager": "marketing",
-	growth: "marketing",
+	// Marketing & Growth synonyms
+	brand: "marketing-growth",
+	"digital marketing": "marketing-growth",
+	"social media": "marketing-growth",
+	content: "marketing-growth",
+	advertising: "marketing-growth",
+	"brand manager": "marketing-growth",
+	growth: "marketing-growth",
+	"marketing & growth": "marketing-growth",
+	"marketing-growth": "marketing-growth",
+	marketing: "marketing-growth",
 
-	// Finance synonyms
-	financial: "finance",
-	investment: "finance",
-	banking: "finance",
-	accounting: "finance",
-	audit: "finance",
-	treasury: "finance",
-	"corporate finance": "finance",
+	// Finance & Operations synonyms
+	financial: "finance-investment",
+	investment: "finance-investment",
+	banking: "finance-investment",
+	accounting: "finance-investment",
+	audit: "finance-investment",
+	treasury: "finance-investment",
+	"corporate finance": "finance-investment",
+	"finance & operations": "finance-investment",
+	"finance-investment": "finance-investment",
+	finance: "finance-investment",
 
-	// Operations synonyms
-	"supply chain": "operations",
-	logistics: "operations",
-	procurement: "operations",
-	manufacturing: "operations",
-	production: "operations",
-	"quality assurance": "operations",
-	inventory: "operations",
-
-	// Product synonyms
-	"product manager": "product",
-	"product owner": "product",
-	"product development": "product",
-	"user experience": "product",
-	ux: "product",
-	"user interface": "product",
-	ui: "product",
-	"product design": "product",
-
-	// Tech synonyms
-	software: "tech",
-	developer: "tech",
-	engineer: "tech",
-	programming: "tech",
-	coding: "tech",
-	technology: "tech",
-	technical: "tech",
-	engineering: "tech",
-	devops: "tech",
-	cybersecurity: "tech",
-	infrastructure: "tech",
-
-	// Sustainability synonyms
-	esg: "sustainability",
-	environmental: "sustainability",
-	"social responsibility": "sustainability",
-	"corporate responsibility": "sustainability",
-	green: "sustainability",
-	climate: "sustainability",
-	renewable: "sustainability",
-
-	// Entrepreneurship synonyms
-	startup: "entrepreneurship",
-	entrepreneur: "entrepreneurship",
-	founder: "entrepreneurship",
-	"co-founder": "entrepreneurship",
-	innovation: "entrepreneurship",
-	venture: "entrepreneurship",
+	// Other catch-all
+	other: "other",
+	unsure: "other",
+	unknown: "other",
 };
 
 // Legacy constants (deprecated - use CANONICAL_CAREER_PATHS instead)
