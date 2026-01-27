@@ -71,7 +71,7 @@
 		"@hookform/resolvers": "5.2.2",
 		"@modelcontextprotocol/sdk": "1.25.2",
 		"@octokit/rest": "22.0.1",
-		"@polar-sh/nextjs": "0.7.0",
+		"@polar-sh/nextjs": "0.9.3",
 		"@radix-ui/react-accordion": "1.2.12",
 		"@radix-ui/react-aspect-ratio": "1.1.8",
 		"@radix-ui/react-avatar": "1.1.11",
