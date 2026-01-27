@@ -4,7 +4,6 @@ import * as Sentry from "@sentry/nextjs";
 import { apiLogger } from "../../../../lib/api-logger";
 import { asyncHandler, getRequestId } from "../../../../lib/errors";
 import { SignupMatchingService } from "../../../../utils/services/SignupMatchingService";
-import { mapFormToDatabase } from "../../../../utils/matching/categoryMapper";
 
 // Simple replacements for deleted country functions
 function getCountryFromCity(city: string): string {
@@ -640,11 +639,8 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 	});
 	
 	try {
-		// Convert form career path (short form) to database format (long form)
-		// Form sends: "data", "finance", "tech", etc.
-		// Database needs: "data-analytics", "finance-investment", "tech-transformation", etc.
-		const dbCareerPath = careerPath[0] ? mapFormToDatabase(careerPath[0]) : null;
-
+		// Form now sends long form directly (data-analytics, finance-investment, etc)
+		// No conversion needed - store as-is
 		const { data: updatedUserData, error: updateError } = await supabase
 			.from("users")
 			.update({
@@ -653,7 +649,7 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 				free_signup_at: new Date().toISOString(),
 				free_expires_at: freeExpiresAt.toISOString(),
 				target_cities: cities,
-				career_path: dbCareerPath,
+				career_path: careerPath[0] || null,
 				entry_level_preference:
 					entryLevelPreferences?.join(", ") || "graduate, intern, junior",
 				visa_status: visa_status,

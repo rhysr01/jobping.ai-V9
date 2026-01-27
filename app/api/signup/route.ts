@@ -10,7 +10,6 @@ import { sendVerificationEmail } from "../../../utils/email-verification";
 // Pre-filtering removed - AI handles semantic matching
 import { getProductionRateLimiter } from "../../../utils/production-rate-limiter";
 import { SignupMatchingService } from "../../../utils/services/SignupMatchingService";
-import { mapFormToDatabase } from "../../../utils/matching/categoryMapper";
 
 // 🔴 BUG FIX #5: Promo code validation moved to reusable function
 const VALID_PROMO_CODES = ["rhys"]; // Add more codes here as needed
@@ -261,14 +260,9 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 				? data.entryLevelPreferences.join(", ")
 				: null,
 		company_types: data.targetCompanies || [],
-		// Convert form career path (short form) to database format (long form)
-		// Form sends: "data", "finance", "tech", etc. (may be array)
-		// Database needs: "data-analytics", "finance-investment", "tech-transformation", etc.
-		career_path: data.careerPath
-			? Array.isArray(data.careerPath)
-				? data.careerPath.map((cp: string) => mapFormToDatabase(cp))
-				: [mapFormToDatabase(data.careerPath)]
-			: null,
+		// Form now sends long form directly (data-analytics, finance-investment, etc)
+		// No conversion needed - store as-is
+		career_path: data.careerPath || null,
 		roles_selected: data.roles || [],
 		// NEW MATCHING PREFERENCES
 		remote_preference:

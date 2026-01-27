@@ -164,7 +164,7 @@ export const COMPANIES = [
 
 export const CAREER_PATHS = [
 	{
-		value: "strategy",
+		value: "strategy-business-design",
 		label: "Strategy & Business Design",
 		emoji: "",
 		popularRoles: [
@@ -193,7 +193,7 @@ export const CAREER_PATHS = [
 		],
 	},
 	{
-		value: "data",
+		value: "data-analytics",
 		label: "Data & Analytics",
 		emoji: "",
 		popularRoles: [
@@ -222,7 +222,7 @@ export const CAREER_PATHS = [
 		],
 	},
 	{
-		value: "sales",
+		value: "sales-client-success",
 		label: "Sales & Client Success",
 		emoji: "",
 		popularRoles: [
@@ -251,7 +251,7 @@ export const CAREER_PATHS = [
 		],
 	},
 	{
-		value: "marketing",
+		value: "marketing-growth",
 		label: "Marketing & Growth",
 		emoji: "",
 		popularRoles: [
@@ -280,7 +280,7 @@ export const CAREER_PATHS = [
 		],
 	},
 	{
-		value: "finance",
+		value: "finance-investment",
 		label: "Finance & Investment",
 		emoji: "",
 		popularRoles: [
@@ -309,7 +309,7 @@ export const CAREER_PATHS = [
 		],
 	},
 	{
-		value: "operations",
+		value: "operations-supply-chain",
 		label: "Operations & Supply Chain",
 		emoji: "",
 		popularRoles: [
@@ -338,7 +338,7 @@ export const CAREER_PATHS = [
 		],
 	},
 	{
-		value: "product",
+		value: "product-innovation",
 		label: "Product & Innovation",
 		emoji: "",
 		popularRoles: [
@@ -367,7 +367,7 @@ export const CAREER_PATHS = [
 		],
 	},
 	{
-		value: "tech",
+		value: "tech-transformation",
 		label: "Tech & Transformation",
 		emoji: "",
 		popularRoles: [
@@ -396,7 +396,7 @@ export const CAREER_PATHS = [
 		],
 	},
 	{
-		value: "sustainability",
+		value: "sustainability-esg",
 		label: "Sustainability & ESG",
 		emoji: "",
 		popularRoles: [
