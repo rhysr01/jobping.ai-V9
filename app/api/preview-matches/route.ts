@@ -54,7 +54,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 		}
 
 	// Career path is optional for all queries - only used for filtering when provided
-	// NOW SIMPLIFIED: No mapping needed - form value IS the database category
+	// Using long form categories everywhere (finance-investment, data-analytics, etc)
 	const normalizedCareerPath = Array.isArray(careerPath)
 		? careerPath[0]
 		: careerPath;
@@ -145,9 +145,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 		}
 
 	// Build early-career filter that includes career path
-	// SIMPLIFIED: No mapping needed - form value IS database category
-	// If career path is specified: (early-career OR career-path)
-	// If no career path: just early-career filter
+	// Using long form categories throughout (finance-investment, data-analytics, etc)
 	let earlyCareerFilter = "";
 	if (normalizedCareerPath) {
 		// Include both early-career and the specific career path
@@ -157,9 +155,8 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			earlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{${normalizedCareerPath}}`;
 		}
 		apiLogger.info("Applied career path filter in OR clause", {
-			formValue: normalizedCareerPath,
+			careerPath: normalizedCareerPath,
 			requestId,
-			note: "No mapping needed - form value IS database category",
 		});
 	} else {
 		// No career path specified - use standard early-career filter
@@ -228,7 +225,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 				.gte("created_at", sixtyDaysAgo.toISOString());
 
 			// Apply same role filtering with career path if specified
-			// SIMPLIFIED: No mapping needed - form value IS database category
+			// Using long form categories (finance-investment, data-analytics, etc)
 			let fallbackEarlyCareerFilter = "";
 			if (normalizedCareerPath) {
 				if (isPremiumPreview) {
@@ -299,7 +296,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 		}
 
 		// Build same early-career filter with career path included
-		// SIMPLIFIED: No mapping needed - form value IS database category
+		// Using long form categories (finance-investment, data-analytics, etc)
 		let jobsEarlyCareerFilter = "";
 		if (normalizedCareerPath) {
 			if (isPremiumPreview) {

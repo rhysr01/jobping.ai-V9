@@ -539,30 +539,30 @@ export class FallbackService {
 
 	/**
 	 * Calculate match score between job category and user career path
-	 * SIMPLIFIED: Using short form categories everywhere now
+	 * Using long form categories everywhere (finance-investment, data-analytics, etc)
 	 */
 	private calculateCategoryMatchScore(
 		jobCategory: string,
 		userPath: string,
 	): number {
-		// First try exact match (most direct - preferred now with short form)
+		// First try exact match
 		if (this.categoryMatchesCareerPath(jobCategory, userPath)) {
 			return 100;
 		}
 
 		// Try advanced matching with synonyms and related terms
-		// SIMPLIFIED: Using short form category names
+		// userPath is already in long form (finance-investment, data-analytics, etc)
 		const careerPathSynonyms: Record<string, string[]> = {
-			strategy: ["strategy", "business-design", "consulting", "management", "planning"],
-			data: ["data", "analytics", "data-science", "bi", "business-intelligence", "insights"],
-			sales: ["sales", "business-development", "client-success", "account-management", "revenue"],
-			marketing: ["marketing", "growth", "brand", "content", "social", "campaign"],
-			finance: ["finance", "accounting", "investment", "fp&a", "financial", "budget"],
-			operations: ["operations", "supply-chain", "logistics", "procurement", "efficiency"],
-			product: ["product", "product-management", "innovation", "roadmap", "features"],
-			tech: ["tech", "technology", "transformation", "it", "digital", "software"],
-			sustainability: ["sustainability", "esg", "environmental", "social", "governance", "csr"],
-			unsure: ["general", "graduate", "trainee", "rotational", "development"],
+			"strategy-business-design": ["strategy", "business-design", "consulting", "management", "planning"],
+			"data-analytics": ["data", "analytics", "data-science", "bi", "business-intelligence", "insights"],
+			"sales-client-success": ["sales", "business-development", "client-success", "account-management", "revenue"],
+			"marketing-growth": ["marketing", "growth", "brand", "content", "social", "campaign"],
+			"finance-investment": ["finance", "accounting", "investment", "fp&a", "financial", "budget"],
+			"operations-supply-chain": ["operations", "supply-chain", "logistics", "procurement", "efficiency"],
+			"product-innovation": ["product", "product-management", "innovation", "roadmap", "features"],
+			"tech-transformation": ["tech", "technology", "transformation", "it", "digital", "software"],
+			"sustainability-esg": ["sustainability", "esg", "environmental", "social", "governance", "csr"],
+			"all-categories": ["general", "graduate", "trainee", "rotational", "development"],
 		};
 
 		const synonyms = careerPathSynonyms[userPath] || [userPath.toLowerCase()];
@@ -619,19 +619,18 @@ export class FallbackService {
 		jobCategory: string,
 		careerPath: string,
 	): boolean {
-		// SIMPLIFIED: Using short form categories now
-		// careerPath IS the database category (e.g., "finance", "data", "tech")
+		// Using long form categories everywhere (finance-investment, data-analytics, etc)
 		const careerPathSynonyms: Record<string, string[]> = {
-			strategy: ["strategy", "business-design", "consulting"],
-			data: ["data", "analytics", "data-science"],
-			sales: ["sales", "business-development", "client-success"],
-			marketing: ["marketing", "growth", "brand"],
-			finance: ["finance", "accounting", "investment"],
-			operations: ["operations", "supply-chain", "logistics"],
-			product: ["product", "product-management", "innovation"],
-			tech: ["tech", "technology", "transformation", "it"],
-			sustainability: ["sustainability", "esg", "environmental", "social"],
-			unsure: ["general", "graduate", "trainee", "rotational"],
+			"strategy-business-design": ["strategy", "business-design", "consulting"],
+			"data-analytics": ["data", "analytics", "data-science"],
+			"sales-client-success": ["sales", "business-development", "client-success"],
+			"marketing-growth": ["marketing", "growth", "brand"],
+			"finance-investment": ["finance", "accounting", "investment"],
+			"operations-supply-chain": ["operations", "supply-chain", "logistics"],
+			"product-innovation": ["product", "product-management", "innovation"],
+			"tech-transformation": ["tech", "technology", "transformation", "it"],
+			"sustainability-esg": ["sustainability", "esg", "environmental", "social"],
+			"all-categories": ["general", "graduate", "trainee", "rotational"],
 		};
 
 		const expectedCategories = careerPathSynonyms[careerPath] || [

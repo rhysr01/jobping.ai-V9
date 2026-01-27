@@ -644,7 +644,7 @@ export class PrefilterService {
 
 	/**
 	 * Filter jobs by career path
-	 * SIMPLIFIED: No mapping needed - form values ARE database categories now
+	 * Using long form categories everywhere (finance-investment, data-analytics, etc)
 	 */
 	private filterByCareerPath(
 		jobs: (ScrapersJob & { freshnessTier: string })[],
@@ -659,11 +659,12 @@ export class PrefilterService {
 		}
 
 		// Get user career paths (handle both string and array formats)
+		// These are already in long form (finance-investment, data-analytics, etc)
 		const userCareerPaths = Array.isArray(user.career_path)
 			? user.career_path
 			: [user.career_path];
 
-		// SIMPLIFIED: Form values ARE database categories now - no mapping needed!
+		// Create Set of target categories (no mapping needed - already long form)
 		const targetCategories = new Set(userCareerPaths);
 
 		// If no valid paths found, return all jobs

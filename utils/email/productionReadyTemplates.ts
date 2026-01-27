@@ -31,30 +31,27 @@ const CAREER_PATH_LABELS: Record<string, string> = {
 };
 
 const DATABASE_TO_FORM_MAPPING: Record<string, string> = {
-	// SIMPLIFIED: Short form categories used everywhere now
-	// Direct mapping (most are identity mappings)
-	strategy: "strategy",
-	finance: "finance",
-	sales: "sales",
-	marketing: "marketing",
-	data: "data",
-	operations: "operations",
-	product: "product",
-	tech: "tech",
-	sustainability: "sustainability",
-	// Legacy support for old long-form names (backwards compatibility)
-	"strategy-business-design": "strategy",
-	"finance-investment": "finance",
-	"sales-client-success": "sales",
-	"marketing-growth": "marketing",
-	"data-analytics": "data",
-	"operations-supply-chain": "operations",
-	"product-innovation": "product",
-	"tech-transformation": "tech",
-	"sustainability-esg": "sustainability",
-	"retail-luxury": "retail-luxury",
-	entrepreneurship: "entrepreneurship",
-	technology: "tech",
+	// Long form categories used everywhere
+	"strategy-business-design": "strategy-business-design",
+	"finance-investment": "finance-investment",
+	"sales-client-success": "sales-client-success",
+	"marketing-growth": "marketing-growth",
+	"data-analytics": "data-analytics",
+	"operations-supply-chain": "operations-supply-chain",
+	"product-innovation": "product-innovation",
+	"tech-transformation": "tech-transformation",
+	"sustainability-esg": "sustainability-esg",
+	"all-categories": "all-categories",
+	// Legacy short form support (for backwards compatibility)
+	strategy: "strategy-business-design",
+	finance: "finance-investment",
+	sales: "sales-client-success",
+	marketing: "marketing-growth",
+	data: "data-analytics",
+	operations: "operations-supply-chain",
+	product: "product-innovation",
+	tech: "tech-transformation",
+	sustainability: "sustainability-esg",
 };
 
 // Helper function to get career path label

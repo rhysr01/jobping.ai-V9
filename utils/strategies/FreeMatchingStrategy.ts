@@ -82,10 +82,10 @@ export async function runFreeMatching(
 		job.categories.some((cat) => {
 			const catLower = cat.toLowerCase();
 			// Handle both array and string career_path formats
-			// SIMPLIFIED: No mapping needed - form value IS database category now
+			// Long form categories are used everywhere now (e.g., "finance-investment")
 			if (Array.isArray(userPrefs.career_path)) {
 				return userPrefs.career_path.some((userCareer) => {
-					// Direct comparison - no mapping needed!
+					// Direct comparison - userCareer IS database category
 					return catLower === userCareer.toLowerCase();
 				});
 			} else if (userPrefs.career_path) {

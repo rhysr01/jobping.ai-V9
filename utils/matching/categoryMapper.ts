@@ -1,13 +1,13 @@
 // Utils/matching/categoryMapper.ts
-// Category mapping - NOW SIMPLIFIED!
+// Category mapping - uses LONG FORM everywhere
 // 
-// All categories use SHORT FORM (no hyphens):
-// - finance (not finance-investment)
-// - data (not data-analytics)
-// - strategy (not strategy-business-design)
+// All categories use LONG FORM (with hyphens):
+// - finance-investment (consistent everywhere)
+// - data-analytics (consistent everywhere)
+// - strategy-business-design (consistent everywhere)
 // - etc.
 //
-// This makes the codebase consistent - the form value IS the database category.
+// SINGLE mapping: long-form → display label (for UI only)
 
 export interface FormCategory {
 	value: string;
@@ -15,71 +15,72 @@ export interface FormCategory {
 	jobCount?: number;
 }
 
-// Career path values - SAME everywhere (form, database, stored in users table)
+// Career path values - stored and used in long form everywhere
 export const ORIGINAL_CAREER_PATH_VALUES = [
-	"strategy",
-	"data",
-	"sales",
-	"marketing",
-	"finance",
-	"operations",
-	"product",
-	"tech",
-	"sustainability",
-	"unsure",
+	"strategy-business-design",
+	"data-analytics",
+	"sales-client-success",
+	"marketing-growth",
+	"finance-investment",
+	"operations-supply-chain",
+	"product-innovation",
+	"tech-transformation",
+	"sustainability-esg",
+	"all-categories",
 ] as const;
 
-// Display labels for UI - SINGLE mapping source of truth
+// Display labels for UI - ONLY mapping needed
+// Maps long-form category → human-readable label
 export const CAREER_PATH_LABELS: Record<string, string> = {
-	strategy: "Strategy & Business Design",
-	data: "Data & Analytics",
-	sales: "Sales & Client Success",
-	marketing: "Marketing & Growth",
-	finance: "Finance & Investment",
-	operations: "Operations & Supply Chain",
-	product: "Product & Innovation",
-	tech: "Tech & Transformation",
-	sustainability: "Sustainability & ESG",
-	unsure: "Not Sure Yet / General",
+	"strategy-business-design": "Strategy & Business Design",
+	"data-analytics": "Data & Analytics",
+	"sales-client-success": "Sales & Client Success",
+	"marketing-growth": "Marketing & Growth",
+	"finance-investment": "Finance & Investment",
+	"operations-supply-chain": "Operations & Supply Chain",
+	"product-innovation": "Product & Innovation",
+	"tech-transformation": "Tech & Transformation",
+	"sustainability-esg": "Sustainability & ESG",
+	"all-categories": "Not Sure Yet / General",
 };
 
 /**
  * Gets the display label for a career path value
- * No mapping needed - form values ARE database categories now
+ * Input: long-form category (finance-investment)
+ * Output: display label (Finance & Investment)
  */
 export function getCareerPathLabel(value: string): string {
 	return CAREER_PATH_LABELS[value] || value;
 }
 
 // Student satisfaction optimization
-// Prioritizes what students told us they want - balanced relevance matching
 export const STUDENT_SATISFACTION_FACTORS = {
-	// How well jobs match what students explicitly selected
 	preferenceMatch: {
-		exact: 100, // Perfect match with user's career path choice
-		related: 70, // Related work type categories
-		general: 40, // General business jobs (fallback)
-		none: 0, // No match with preferences
+		exact: 100,
+		related: 70,
+		general: 40,
+		none: 0,
 	},
-	// Multi-path bonuses for premium users
 	multiPath: {
-		bothPathsMatch: 120, // Job matches both of user's career paths
-		onePathMatch: 100, // Job matches one of user's career paths
-		partialMatch: 60, // Job partially matches user's preferences
+		bothPathsMatch: 120,
+		onePathMatch: 100,
+		partialMatch: 60,
 	},
 };
 
-// Balanced satisfaction scoring for single and multiple career paths
+/**
+ * Balanced satisfaction scoring for single and multiple career paths
+ */
 export function getStudentSatisfactionScore(
 	jobCategories: string[],
 	userFormValues: string[],
 ): number {
-	if (!userFormValues || userFormValues.length === 0) return 1; // Neutral for flexible users
-	if (!jobCategories || jobCategories.length === 0) return 0; // No categories = low quality
+	if (!userFormValues || userFormValues.length === 0) return 1;
+	if (!jobCategories || jobCategories.length === 0) return 0;
 
 	let score = 0;
 
-	// NO MAPPING NEEDED - form values ARE categories now
+	// No mapping needed - userFormValues ARE the database categories
 	const userPreferredCategories = new Set(userFormValues);
 
 	// Count exact category matches
@@ -87,42 +88,36 @@ export function getStudentSatisfactionScore(
 		userPreferredCategories.has(category),
 	);
 
-	// Calculate relevance ratio (what % of job categories are relevant to user)
 	const relevanceRatio = exactMatches.length / jobCategories.length;
 
-	// Only consider jobs that are at least 40% relevant to avoid random matches
 	if (relevanceRatio < 0.4) {
-		return 0; // Job is not relevant enough to user's career interests
+		return 0;
 	}
 
-	// Base scoring based on relevance
-	score += relevanceRatio * 60; // Up to 60 points for category relevance
+	score += relevanceRatio * 60;
 
-	// Bonus for multi-path users (premium feature)
 	if (userFormValues.length > 1) {
-		// Check how many of user's career paths this job covers
 		const userPathsCovered = userFormValues.filter((formValue) => {
 			return jobCategories.includes(formValue);
 		});
 
 		if (userPathsCovered.length === userFormValues.length) {
-			score += STUDENT_SATISFACTION_FACTORS.multiPath.bothPathsMatch - 100; // Bonus points
+			score += STUDENT_SATISFACTION_FACTORS.multiPath.bothPathsMatch - 100;
 		} else if (userPathsCovered.length >= 1) {
-			score += STUDENT_SATISFACTION_FACTORS.multiPath.onePathMatch - 100; // Standard points
+			score += STUDENT_SATISFACTION_FACTORS.multiPath.onePathMatch - 100;
 		} else {
-			score += STUDENT_SATISFACTION_FACTORS.multiPath.partialMatch - 100; // Partial points
+			score += STUDENT_SATISFACTION_FACTORS.multiPath.partialMatch - 100;
 		}
 	}
 
-	// Secondary: Work type categorization bonus (shows job quality)
 	const workTypeMatches = jobCategories.filter((cat) =>
 		WORK_TYPE_CATEGORIES.includes(cat),
 	);
 	if (workTypeMatches.length > 0) {
-		score += 20; // Properly categorized = higher quality
+		score += 20;
 	}
 
-	return Math.min(Math.max(score, 0), 100); // Cap between 0-100
+	return Math.min(Math.max(score, 0), 100);
 }
 
 // Seniority levels (not work types)
@@ -134,42 +129,42 @@ export const SENIORITY_LEVELS = [
 ];
 
 /**
- * NO MAPPING FUNCTION NEEDED - form values ARE now database categories!
- * Simply return the value as-is
+ * Identity function - form values ARE database categories (no mapping needed)
  */
 export function mapFormToDatabase(formValue: string): string {
-	return formValue; // No transformation needed!
+	return formValue; // Already in correct format!
 }
 
 /**
- * NO MAPPING NEEDED - form values ARE database categories now
+ * Maps form label to database category
+ * Input: "Finance & Investment" (UI label)
+ * Output: "finance-investment" (database category)
  */
 export function mapFormLabelToDatabase(formLabel: string): string {
-	// Just find the form value from the label and return it
 	for (const [value, label] of Object.entries(CAREER_PATH_LABELS)) {
 		if (label === formLabel) {
 			return value;
 		}
 	}
-	return formLabel; // Fallback
+	return formLabel;
 }
 
 /**
- * NO MAPPING NEEDED - form values ARE database categories now
+ * Identity function - database categories ARE form values
  */
 export function mapDatabaseToForm(databaseCategory: string): string {
-	return databaseCategory; // No transformation needed!
+	return databaseCategory; // Already in correct format!
 }
 
 /**
  * Gets all database categories for a form value
- * Now much simpler - just return the value (or all categories if 'unsure')
+ * Since form value IS database category now, just return it
  */
 export function getDatabaseCategoriesForForm(formValue: string): string[] {
-	if (formValue === "unsure") {
+	if (formValue === "all-categories") {
 		return WORK_TYPE_CATEGORIES;
 	}
-	return [formValue]; // Just return the value directly - it's already the database category
+	return [formValue];
 }
 
 /**
@@ -180,23 +175,18 @@ export function jobMatchesUserCategories(
 	userFormValues: string[],
 ): boolean {
 	if (!jobCategories || jobCategories.length === 0) return false;
-	if (!userFormValues || userFormValues.length === 0) return true; // If no preferences, show all
+	if (!userFormValues || userFormValues.length === 0) return true;
 
-	// NO MAPPING NEEDED - form values ARE categories directly
 	const userPreferredCategories = new Set(userFormValues);
 
-	// Count exact matches
 	const exactMatches = jobCategories.filter((category) =>
 		userPreferredCategories.has(category),
 	);
 
-	// For single career path users: require at least one match
 	if (userFormValues.length === 1) {
 		return exactMatches.length > 0;
 	}
 
-	// For multiple career path users (premium): require minimum relevance
-	// Job must have at least 40% of its categories matching user preferences
 	const relevanceRatio = exactMatches.length / jobCategories.length;
 	return relevanceRatio >= 0.4;
 }
@@ -209,31 +199,28 @@ export function getCategoryPriorityScore(
 	userFormValues: string[],
 ): number {
 	if (!jobCategories || jobCategories.length === 0) return 0;
-	if (!userFormValues || userFormValues.length === 0) return 1; // Neutral score if no preferences
+	if (!userFormValues || userFormValues.length === 0) return 1;
 
-	// NO MAPPING NEEDED - form values ARE categories directly
 	const userPreferredCategories = new Set(userFormValues);
 
-	// Count how many job categories match user preferences
 	const matchingCategories = jobCategories.filter((category) =>
 		userPreferredCategories.has(category),
 	);
 	return matchingCategories.length;
 }
 
-// All work type categories - NOW SIMPLIFIED
+// All work type categories in long form
 export const WORK_TYPE_CATEGORIES = [
-	"strategy",
-	"data",
-	"marketing",
-	"tech",
-	"operations",
-	"finance",
-	"sales",
-	"product",
-	"sustainability",
-	"all-categories", // Fallback for "unsure"
-	// Seniority/special categories (keep these as-is)
+	"strategy-business-design",
+	"data-analytics",
+	"marketing-growth",
+	"tech-transformation",
+	"operations-supply-chain",
+	"finance-investment",
+	"sales-client-success",
+	"product-innovation",
+	"sustainability-esg",
+	"all-categories",
 	"early-career",
 	"internship",
 ];
