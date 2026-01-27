@@ -19,8 +19,8 @@ export function addSecurityHeaders(response: NextResponse): void {
 	// Use nonces for all inline scripts - much more maintainable
 	// The nonce prevents XSS attacks while allowing necessary Next.js and application scripts
 	const scriptSrc = isDevelopment
-		? `'self' 'nonce-${nonce}' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://*.supabase.co https://cdn.jsdelivr.net https://*.sentry.io https://challenges.cloudflare.com`
-		: `'self' 'nonce-${nonce}' https://www.googletagmanager.com https://www.google-analytics.com https://*.supabase.co https://cdn.jsdelivr.net https://*.sentry.io https://challenges.cloudflare.com`;
+		? `'self' 'nonce-${nonce}' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://*.supabase.co https://cdn.jsdelivr.net https://*.sentry.io https://challenges.cloudflare.com https://vercel.live`
+		: `'self' 'nonce-${nonce}' https://www.googletagmanager.com https://www.google-analytics.com https://*.supabase.co https://cdn.jsdelivr.net https://*.sentry.io https://challenges.cloudflare.com https://vercel.live`;
 
 	response.headers.set(
 		"Content-Security-Policy",
@@ -29,7 +29,7 @@ export function addSecurityHeaders(response: NextResponse): void {
 			"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com; " +
 			"font-src 'self' https://fonts.gstatic.com https://api.fontshare.com https://cdn.fontshare.com; " +
 			"img-src 'self' data: https: blob:; " +
-			"connect-src 'self' https://*.supabase.co https://api.resend.com https://api.openai.com https://*.google-analytics.com https://www.googletagmanager.com https://*.sentry.io https://challenges.cloudflare.com; " +
+			"connect-src 'self' https://*.supabase.co https://api.resend.com https://api.openai.com https://*.google-analytics.com https://www.googletagmanager.com https://*.sentry.io https://challenges.cloudflare.com https://vercel.live; " +
 			"object-src 'none'; " +
 			"base-uri 'self'; " +
 			"form-action 'self'",
