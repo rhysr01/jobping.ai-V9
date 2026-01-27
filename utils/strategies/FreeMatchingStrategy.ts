@@ -266,7 +266,7 @@ async function rankAndReturnMatches(
 	if (matchesToSave.length > 0) {
 		try {
 			const supabase = getDatabaseClient();
-			const { data, error } = await supabase
+			const { error } = await supabase
 				.from("matches")
 				.insert(matchesToSave);
 
@@ -280,7 +280,6 @@ async function rankAndReturnMatches(
 				apiLogger.info("[FREE] Successfully saved matches to database", {
 					email: userPrefs.email,
 					count: matchesToSave.length,
-					insertedRows: Array.isArray(data) ? data.length : 0,
 				});
 			}
 		} catch (err) {
