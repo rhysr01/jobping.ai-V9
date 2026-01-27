@@ -3,6 +3,7 @@ import { apiLogger } from "../../../lib/api-logger";
 import { createSuccessResponse } from "../../../lib/api-response";
 import { AppError, asyncHandler } from "../../../lib/errors";
 import { getDatabaseClient } from "../../../utils/core/database-pool";
+import { FORM_TO_DATABASE_MAPPING } from "../../../utils/matching/categoryMapper";
 
 interface PreviewMatchesRequest {
 	cities: string[];
@@ -53,19 +54,22 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			throw new AppError("Cities array is required", 400, "VALIDATION_ERROR");
 		}
 
-		// Career path is optional for all queries - only used for filtering when provided
-		// No validation needed for careerPath since it's truly optional
+	// Career path is optional for all queries - only used for filtering when provided
+	// 🐛 BUG FIX #4: Career path NOW IS filtered in database query below
+	const normalizedCareerPath = Array.isArray(careerPath)
+		? careerPath[0]
+		: careerPath;
 
-		apiLogger.info("Preview matches request", {
-			cities,
-			careerPath: careerPath || "not filtered (handled by AI)",
-			visaSponsorship,
-			limit,
-			isPreview,
-			isPremiumPreview,
-			requestId,
-			note: "Career path filtering handled by AI matching, not database",
-		});
+	apiLogger.info("Preview matches request", {
+		cities,
+		careerPath: normalizedCareerPath || "not filtered",
+		visaSponsorship,
+		limit,
+		isPreview,
+		isPremiumPreview,
+		requestId,
+		note: "Career path filtered by database query using category mapping",
+	});
 
 		const supabase = getDatabaseClient();
 
@@ -141,23 +145,27 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			query = query.in("city", cityArray);
 		}
 
-		// Apply role filter - this will naturally intersect with city filter
-		if (isPremiumPreview) {
-			query = query.or("is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management}");
-		} else {
-			query = query.or("is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}");
-		}
+	// Apply role filter - this will naturally intersect with city filter
+	if (isPremiumPreview) {
+		query = query.or("is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management}");
+	} else {
+		query = query.or("is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}");
+	}
 
-		// Log filtering approach
-		if (careerPath) {
-			apiLogger.info("Filtering by career path", { careerPath });
-		} else {
-			apiLogger.info("No career path filter - showing all graduate/intern/early-career roles", {
-				cities: cities?.length || 0,
-				cityVariations: cityVariations.size,
-				isPremiumPreview
+	// 🐛 BUG FIX #4: Apply career path filter if provided
+	// Maps form value (e.g., "data") to database category (e.g., "data-analytics")
+	if (normalizedCareerPath) {
+		const databaseCategory = FORM_TO_DATABASE_MAPPING[normalizedCareerPath];
+		if (databaseCategory) {
+			// Use PostgreSQL contains operator to filter jobs with this category
+			query = query.contains("categories", [databaseCategory]);
+			apiLogger.info("Applied career path filter", {
+				formValue: normalizedCareerPath,
+				databaseCategory,
+				requestId,
 			});
 		}
+	}
 
 		// Filter by visa sponsorship if specified
 		if (visaSponsorship) {
@@ -285,6 +293,14 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			jobsQuery.or(
 				"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}",
 			);
+		}
+
+		// Apply career path filter if provided (same logic as count query)
+		if (normalizedCareerPath) {
+			const databaseCategory = FORM_TO_DATABASE_MAPPING[normalizedCareerPath];
+			if (databaseCategory) {
+				jobsQuery.contains("categories", [databaseCategory]);
+			}
 		}
 
 		if (visaSponsorship === "need-sponsorship") {

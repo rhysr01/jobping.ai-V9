@@ -48,6 +48,7 @@ export function getCareerPathLabel(value: string): string {
 
 // Complete mapping between form values and database categories
 // Form values match the original Supabase users.career_path values (simple, no hyphens)
+// CRITICAL: Only includes options users can select on the form
 export const FORM_TO_DATABASE_MAPPING: Record<string, string> = {
 	strategy: "strategy-business-design",
 	data: "data-analytics", // Original form value 'data' maps to database category 'data-analytics'
@@ -98,9 +99,14 @@ export const DATABASE_TO_FORM_MAPPING: Record<string, string> = {
 	"retail-luxury": "retail-luxury", // Not in original form, keep as-is
 	entrepreneurship: "entrepreneurship", // Not in original form, keep as-is
 	technology: "tech", // Legacy mapping
+	// Note: people-hr, legal-compliance, creative-design, general-management are
+	// database categories but not form options - left unmapped intentionally
 };
 
-// All work type categories in the database (excluding seniority levels)
+// All work type categories in the database that match form options ONLY
+// CRITICAL: These must match FORM_TO_DATABASE_MAPPING values
+// Invalid categories (people-hr, legal-compliance, creative-design, general-management, 
+// retail-luxury, entrepreneurship, technology) should NOT appear in new jobs
 export const WORK_TYPE_CATEGORIES = [
 	"strategy-business-design",
 	"data-analytics",
@@ -111,13 +117,7 @@ export const WORK_TYPE_CATEGORIES = [
 	"sales-client-success",
 	"product-innovation",
 	"sustainability-esg",
-	"retail-luxury",
-	"entrepreneurship",
-	"technology",
-	"people-hr",
-	"legal-compliance",
-	"creative-design",
-	"general-management",
+	"all-categories", // Fallback for "unsure"
 ];
 
 // Student satisfaction optimization

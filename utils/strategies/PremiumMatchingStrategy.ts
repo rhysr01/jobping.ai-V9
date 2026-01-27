@@ -6,6 +6,10 @@
 import { apiLogger } from "../../lib/api-logger";
 import type { JobWithMetadata } from "../../lib/types/job";
 import { simplifiedMatchingEngine } from "../matching/core/matching-engine";
+import {
+	jobMatchesUserCategories,
+	getCategoryPriorityScore,
+} from "../matching/categoryMapper";
 
 export interface PremiumUserPreferences {
 	email: string;
@@ -71,59 +75,55 @@ export async function runPremiumMatching(
 			};
 		}
 
-		// STAGE 1: Comprehensive pre-filtering (premium users provide rich data)
-		// This is the KEY difference from free - we filter THOROUGHLY because
-		// premium users have provided skills, industries, company size, work environment, etc.
-		const preFiltered = jobs.filter((job) => {
-			// City matching (required)
-			const cityMatch = userPrefs.target_cities.some(
-				(city) => job.city?.toLowerCase() === city.toLowerCase(),
+	// STAGE 1: Comprehensive pre-filtering (premium users provide rich data)
+	// This is the KEY difference from free - we filter THOROUGHLY because
+	// premium users have provided skills, industries, company size, work environment, etc.
+	const preFiltered = jobs.filter((job) => {
+		// City matching (required) - use flexible matching for variations like "London" vs "Central London"
+		const cityMatch = userPrefs.target_cities.some((userCity) => {
+			const normalizedUserCity = userCity.toLowerCase().trim();
+			const normalizedJobCity = job.city?.toLowerCase().trim() || "";
+			// Allow partial matches for city names (e.g., "London" matches "Central London")
+			return (
+				normalizedJobCity === normalizedUserCity ||
+				normalizedJobCity.includes(normalizedUserCity) ||
+				normalizedUserCity.includes(normalizedJobCity)
 			);
-			if (!cityMatch) return false;
-
-			// Career path matching
-			const careerMatch =
-				!userPrefs.career_path?.length ||
-				userPrefs.career_path.some((career) =>
-					job.categories?.some((cat) =>
-						cat.toLowerCase().includes(career.toLowerCase()),
-					),
-				);
-			if (!careerMatch) return false;
-
-			// Skills matching (premium feature)
-			const skillsMatch =
-				!userPrefs.skills?.length ||
-				userPrefs.skills.some(
-					(skill) =>
-						job.title?.toLowerCase().includes(skill.toLowerCase()) ||
-						job.description?.toLowerCase().includes(skill.toLowerCase()) ||
-						job.categories?.some((cat) =>
-							cat.toLowerCase().includes(skill.toLowerCase()),
-						),
-				);
-
-			// Industries matching (premium feature)
-			const industryMatch =
-				!userPrefs.industries?.length ||
-				userPrefs.industries.some(
-					(industry) =>
-						job.company?.toLowerCase().includes(industry.toLowerCase()) ||
-						job.description?.toLowerCase().includes(industry.toLowerCase()),
-				);
-
-			// Work environment matching
-			const workEnvMatch =
-				!userPrefs.work_environment ||
-				userPrefs.work_environment === "unclear" ||
-				job.work_environment === userPrefs.work_environment;
-
-			// Visa status matching (if specified)
-			const visaMatch =
-				!userPrefs.visa_status || job.visa_sponsorship || job.visa_friendly;
-
-			return skillsMatch && industryMatch && workEnvMatch && visaMatch;
 		});
+		if (!cityMatch) return false;
+
+		// Career path matching - uses proper database category mapping, not string matching
+		const careerMatch = jobMatchesUserCategories(
+			job.categories || [],
+			userPrefs.career_path || [],
+		);
+		if (!careerMatch) return false;
+
+		// Industries matching (premium feature)
+		// Note: Skills filtering removed from pre-filter - moved to ranking for better UX
+		const industryMatch =
+			!userPrefs.industries?.length ||
+			userPrefs.industries.some(
+				(industry) =>
+					job.company?.toLowerCase().includes(industry.toLowerCase()) ||
+					job.description?.toLowerCase().includes(industry.toLowerCase()),
+			);
+		if (!industryMatch) return false;
+
+		// Work environment matching
+		const workEnvMatch =
+			!userPrefs.work_environment ||
+			userPrefs.work_environment === "unclear" ||
+			job.work_environment === userPrefs.work_environment;
+		if (!workEnvMatch) return false;
+
+		// Visa status matching (if specified)
+		const visaMatch =
+			!userPrefs.visa_status || job.visa_sponsorship || job.visa_friendly;
+		if (!visaMatch) return false;
+
+		return true;
+	});
 
 		apiLogger.info("[PREMIUM] Pre-filtered jobs", {
 			email: userPrefs.email,
@@ -146,28 +146,31 @@ export async function runPremiumMatching(
 					"Filters too restrictive - premium users have specific requirements",
 			});
 
-			// Fallback: Relax some constraints but keep core requirements
-			const fallbackFiltered = jobs.filter((job) => {
-				// Keep city and career as mandatory
-				const cityMatch = userPrefs.target_cities.some(
-					(city) => job.city?.toLowerCase() === city.toLowerCase(),
+		// Fallback: Relax some constraints but keep core requirements
+		const fallbackFiltered = jobs.filter((job) => {
+			// Keep city and career as mandatory
+			const cityMatch = userPrefs.target_cities.some((userCity) => {
+				const normalizedUserCity = userCity.toLowerCase().trim();
+				const normalizedJobCity = job.city?.toLowerCase().trim() || "";
+				return (
+					normalizedJobCity === normalizedUserCity ||
+					normalizedJobCity.includes(normalizedUserCity) ||
+					normalizedUserCity.includes(normalizedJobCity)
 				);
-				const careerMatch =
-					!userPrefs.career_path?.length ||
-					userPrefs.career_path.some((career) =>
-						job.categories?.some((cat) =>
-							cat.toLowerCase().includes(career.toLowerCase()),
-						),
-					);
-
-				// Relax skills/industries but keep work env and visa
-				const workEnvMatch =
-					!userPrefs.work_environment ||
-					userPrefs.work_environment === "unclear" ||
-					job.work_environment === userPrefs.work_environment;
-
-				return cityMatch && careerMatch && workEnvMatch;
 			});
+			const careerMatch = jobMatchesUserCategories(
+				job.categories || [],
+				userPrefs.career_path || [],
+			);
+
+			// Relax skills/industries but keep work env and visa
+			const workEnvMatch =
+				!userPrefs.work_environment ||
+				userPrefs.work_environment === "unclear" ||
+				job.work_environment === userPrefs.work_environment;
+
+			return cityMatch && careerMatch && workEnvMatch;
+		});
 
 			if (fallbackFiltered.length > 0) {
 				apiLogger.info("[PREMIUM] Using fallback (relaxed skills/industries)", {

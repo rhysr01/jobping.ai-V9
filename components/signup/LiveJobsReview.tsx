@@ -40,6 +40,8 @@ export function LiveJobsReview({
 	const [hasFetched, setHasFetched] = useState(false);
 
 	// Fetch job previews when cities and career are selected
+	// 🐛 BUG FIX #1: Removed hasFetched from dependency array to prevent infinite loops
+	// hasFetched is used only for control flow inside the function, not as a dependency
 	const fetchJobPreviews = useCallback(async () => {
 		if (!cities.length || !careerPath || hasFetched) {
 			debugLogger.debug("LIVE_JOBS", "Skipping fetch", {
@@ -56,9 +58,14 @@ export function LiveJobsReview({
 		const tracker = debugLogger.createTracker("LIVE_JOBS_FETCH");
 
 		try {
+			// 🐛 BUG FIX #3: Normalize career path - convert array to string if needed
+			const normalizedCareerPath = Array.isArray(careerPath)
+				? careerPath[0]
+				: careerPath;
+
 			debugLogger.step("LIVE_JOBS", "Starting preview fetch", {
 				cities,
-				careerPath,
+				careerPath: normalizedCareerPath,
 			});
 			tracker.checkpoint("Calling preview-matches API");
 
@@ -70,7 +77,7 @@ export function LiveJobsReview({
 				},
 				body: JSON.stringify({
 					cities,
-					careerPath,
+					careerPath: normalizedCareerPath, // Send as string
 					limit: 3, // Only show 3 preview jobs
 					isPreview: true,
 				}),
@@ -112,7 +119,7 @@ export function LiveJobsReview({
 				careerPath,
 			});
 			tracker.error("Fetch failed", err instanceof Error ? err : new Error(String(err)));
-			
+
 			if (process.env.NODE_ENV === "development") {
 				console.error("Error fetching job previews:", err);
 			}
@@ -121,16 +128,17 @@ export function LiveJobsReview({
 			setIsLoading(false);
 			setHasFetched(true);
 		}
-	}, [cities, careerPath, hasFetched]);
+	}, [cities, careerPath]);
 
 	// Trigger fetch when dependencies change
 	useEffect(() => {
 		if (cities.length > 0 && careerPath && !hasFetched) {
 			fetchJobPreviews();
 		}
-	}, [cities, careerPath, hasFetched]);
+	}, [cities, careerPath, hasFetched, fetchJobPreviews]);
 
-	// Reset when cities or career change
+	// 🐛 BUG FIX #2: Reset when cities or career change
+	// This clears old results and allows new fetch
 	useEffect(() => {
 		setHasFetched(false);
 		setJobPreviews([]);

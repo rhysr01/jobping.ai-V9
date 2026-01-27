@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { trackEvent } from "../lib/analytics";
+import {
+	trackEvent,
+	trackSignupNoMatches,
+	trackSignupCompleted,
+	trackSignupStarted,
+	trackSignupFailed,
+} from "../lib/analytics";
 import { apiCallJson } from "../lib/api-client";
 import { useEmailValidation, useRequiredValidation } from "./useFormValidation";
 import { useFormPersistence } from "./useFormPersistence";
@@ -287,61 +293,78 @@ export function useSignupForm(): UseSignupFormReturn {
 				return;
 			}
 
-			setIsSubmitting(true);
-			setError("");
-			setShowLiveMatching(true);
-			setOverlayStartTime(Date.now());
+		setIsSubmitting(true);
+		setError("");
+		setShowLiveMatching(true);
+		setOverlayStartTime(Date.now());
 
-			trackEvent("signup_started", { tier: "free" });
+		const signupStartTime = Date.now();
+		trackSignupStarted("free");
 
-			try {
-				const result = await signupService.submitFreeSignup(formData);
+		try {
+			const result = await signupService.submitFreeSignup(formData);
 
-				if (result.redirectToMatches) {
-					dismissOverlayWithMinimumTime(() => {
-						setTimeout(() => {
-							router.push(
-								`/matches?justSignedUp=true&matchCount=${result.matchCount || 5}`,
-							);
-						}, 500); // Small delay after overlay disappears
-					});
-					return;
-				}
-
-				setMatchCount(result.matchCount || 0);
-
-				if ((result.matchCount || 0) === 0) {
-					setError(
-						"We couldn't find any matches for your preferences. Try selecting different cities or career paths.",
-					);
-					trackEvent("signup_failed", { tier: "free", error: "no_matches" });
-					return;
-				}
-
-				trackEvent("signup_completed", {
-					tier: "free",
-					cities: formData.cities.length,
-					career_path: formData.careerPath,
-					matchCount: result.matchCount,
-				});
-
-				clearProgress();
+			if (result.redirectToMatches) {
 				dismissOverlayWithMinimumTime(() => {
-					router.push(
-						`/matches?justSignedUp=true&matchCount=${result.matchCount}`,
-					);
+					setTimeout(() => {
+						router.push(
+							`/matches?justSignedUp=true&matchCount=${result.matchCount || 5}`,
+						);
+					}, 500); // Small delay after overlay disappears
 				});
-			} catch (err) {
-				dismissOverlayWithMinimumTime();
-				const errorMessage =
-					err instanceof Error
-						? err.message
-						: "Something went wrong. Please try again.";
-				trackEvent("signup_failed", { tier: "free", error: errorMessage });
-				setError(errorMessage);
-			} finally {
-				setIsSubmitting(false);
+				return;
 			}
+
+			setMatchCount(result.matchCount || 0);
+
+			if ((result.matchCount || 0) === 0) {
+				setError(
+					"We couldn't find any matches for your preferences. Try selecting different cities or career paths.",
+				);
+				// ENHANCED: Track with more context for debugging
+				trackSignupNoMatches({
+					tier: "free",
+					cities: formData.cities,
+					career_path: formData.careerPath,
+					available_jobs_count: 0,
+					filter_stage: "city_career",
+					duration_ms: Date.now() - signupStartTime,
+					reason: "no_matches_found",
+				});
+				return;
+			}
+
+			// ENHANCED: Track completion with full context
+			trackSignupCompleted({
+				tier: "free",
+				matchCount: result.matchCount || 0,
+				cities: formData.cities.length,
+				career_path: formData.careerPath,
+				duration_ms: Date.now() - signupStartTime,
+			});
+
+			clearProgress();
+			dismissOverlayWithMinimumTime(() => {
+				router.push(
+					`/matches?justSignedUp=true&matchCount=${result.matchCount}`,
+				);
+			});
+		} catch (err) {
+			dismissOverlayWithMinimumTime();
+			const errorMessage =
+				err instanceof Error
+					? err.message
+					: "Something went wrong. Please try again.";
+			trackSignupFailed(errorMessage, {
+				tier: "free",
+				cities: formData.cities,
+				career_path: formData.careerPath,
+				duration_ms: Date.now() - signupStartTime,
+			});
+			setError(errorMessage);
+		} finally {
+			setIsSubmitting(false);
+		}
 		},
 		[
 			isFormValid,

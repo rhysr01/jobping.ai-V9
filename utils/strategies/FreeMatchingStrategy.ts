@@ -11,7 +11,7 @@ import { simplifiedMatchingEngine } from "../matching/core/matching-engine";
 export interface FreeUserPreferences {
 	email: string;
 	target_cities: string[];
-	career_path: string | null;
+	career_path: string | string[] | null;
 	visa_status?: string;
 	entry_level_preference?: string;
 	subscription_tier: "free";
@@ -61,16 +61,17 @@ export async function runFreeMatching(
 			};
 		}
 
-		// STAGE 1: Pre-filter by cities and career (simple)
-		// This is the KEY difference from premium - we filter AGGRESSIVELY because
-		// free users haven't provided skills, industries, company size, etc.
-		const preFiltered = jobs.filter((job) => {
-		const cityMatch = userPrefs.target_cities.some((city) => {
-			// Include jobs with NULL city (they may match user's preferences)
-			if (!job.city) return true;
-			// Match city exactly (case-insensitive)
-			return job.city.toLowerCase() === city.toLowerCase();
-		});
+	// STAGE 1: Pre-filter by cities and career (simple)
+	// This is the KEY difference from premium - we filter AGGRESSIVELY because
+	// free users haven't provided skills, industries, company size, etc.
+	const preFiltered = jobs.filter((job) => {
+	const cityMatch = userPrefs.target_cities.some((city) => {
+		// Include jobs with NULL city (they may match user's preferences)
+		if (!job.city) return true;
+		// FIXED: Use includes() to match city variations (e.g., "London" matches "Central London")
+		// This aligns with prefilter.service.ts behavior and improves match rate
+		return job.city.toLowerCase().includes(city.toLowerCase());
+	});
 
 		// IMPROVED: Strict career path matching for free tier
 		// Only match jobs that have the exact career path category
@@ -110,41 +111,46 @@ export async function runFreeMatching(
 			afterPreFilter: preFiltered.length,
 		});
 
-		if (preFiltered.length === 0) {
-			apiLogger.warn("[FREE] No jobs after pre-filtering", {
+	if (preFiltered.length === 0) {
+		apiLogger.warn("[FREE] No jobs after pre-filtering", {
+			email: userPrefs.email,
+			reason: "No jobs match cities and career",
+		});
+
+		// Fallback: Try broader search if pre-filter too strict
+		// IMPROVED: Use same city matching logic as main filter (includes()) but skip career filter
+		// This ensures consistent behavior and better UX - give users city-matched jobs
+		// over zero results, even if career doesn't match perfectly
+		const fallbackFiltered = jobs.filter((job) =>
+			userPrefs.target_cities.some((city) => {
+				if (!job.city) return true; // Include jobs with NULL city
+				return job.city.toLowerCase().includes(city.toLowerCase());
+			}),
+		);
+
+		if (fallbackFiltered.length > 0) {
+			apiLogger.info("[FREE] Using fallback (city-only filter)", {
 				email: userPrefs.email,
-				reason: "No jobs match cities and career",
+				jobsInFallback: fallbackFiltered.length,
+				reason: "Career filter too strict, falling back to location-based matching",
 			});
 
-			// Fallback: Try broader search if pre-filter too strict
-			const fallbackFiltered = jobs.filter((job) =>
-				userPrefs.target_cities.some((city) =>
-					job.city?.toLowerCase().includes(city.toLowerCase()),
-				),
+			return await rankAndReturnMatches(
+				userPrefs,
+				fallbackFiltered,
+				"free_fallback",
+				startTime,
+				maxMatches,
 			);
-
-			if (fallbackFiltered.length > 0) {
-				apiLogger.info("[FREE] Using fallback (city-only filter)", {
-					email: userPrefs.email,
-					jobsInFallback: fallbackFiltered.length,
-				});
-
-				return await rankAndReturnMatches(
-					userPrefs,
-					fallbackFiltered,
-					"free_fallback",
-					startTime,
-					maxMatches,
-				);
-			}
-
-			return {
-				matches: [],
-				matchCount: 0,
-				method: "no_jobs_after_filter",
-				duration: Date.now() - startTime,
-			};
 		}
+
+		return {
+			matches: [],
+			matchCount: 0,
+			method: "no_jobs_after_filter",
+			duration: Date.now() - startTime,
+		};
+	}
 
 		// STAGE 2: Light AI ranking (use simplified matching engine)
 		// For free tier, we use lighter AI because:
