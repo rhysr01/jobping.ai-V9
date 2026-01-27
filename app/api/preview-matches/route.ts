@@ -3,7 +3,6 @@ import { apiLogger } from "../../../lib/api-logger";
 import { createSuccessResponse } from "../../../lib/api-response";
 import { AppError, asyncHandler } from "../../../lib/errors";
 import { getDatabaseClient } from "../../../utils/core/database-pool";
-import { FORM_TO_DATABASE_MAPPING } from "../../../utils/matching/categoryMapper";
 
 interface PreviewMatchesRequest {
 	cities: string[];
@@ -55,7 +54,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 		}
 
 	// Career path is optional for all queries - only used for filtering when provided
-	// 🐛 BUG FIX #4: Career path NOW IS filtered in database query below
+	// NOW SIMPLIFIED: No mapping needed - form value IS the database category
 	const normalizedCareerPath = Array.isArray(careerPath)
 		? careerPath[0]
 		: careerPath;
@@ -146,24 +145,22 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 		}
 
 	// Build early-career filter that includes career path
-	// If career path is specified, we need: (early-career OR career-path) AND apply career path
+	// SIMPLIFIED: No mapping needed - form value IS database category
+	// If career path is specified: (early-career OR career-path)
 	// If no career path: just early-career filter
 	let earlyCareerFilter = "";
 	if (normalizedCareerPath) {
-		const databaseCategory = FORM_TO_DATABASE_MAPPING[normalizedCareerPath];
-		if (databaseCategory) {
-			// Include both early-career and the specific career path
-			if (isPremiumPreview) {
-				earlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management},categories.cs.{${databaseCategory}}`;
-			} else {
-				earlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{${databaseCategory}}`;
-			}
-			apiLogger.info("Applied career path filter in OR clause", {
-				formValue: normalizedCareerPath,
-				databaseCategory,
-				requestId,
-			});
+		// Include both early-career and the specific career path
+		if (isPremiumPreview) {
+			earlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management},categories.cs.{${normalizedCareerPath}}`;
+		} else {
+			earlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{${normalizedCareerPath}}`;
 		}
+		apiLogger.info("Applied career path filter in OR clause", {
+			formValue: normalizedCareerPath,
+			requestId,
+			note: "No mapping needed - form value IS database category",
+		});
 	} else {
 		// No career path specified - use standard early-career filter
 		if (isPremiumPreview) {
@@ -231,15 +228,13 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 				.gte("created_at", sixtyDaysAgo.toISOString());
 
 			// Apply same role filtering with career path if specified
+			// SIMPLIFIED: No mapping needed - form value IS database category
 			let fallbackEarlyCareerFilter = "";
 			if (normalizedCareerPath) {
-				const databaseCategory = FORM_TO_DATABASE_MAPPING[normalizedCareerPath];
-				if (databaseCategory) {
-					if (isPremiumPreview) {
-						fallbackEarlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management},categories.cs.{${databaseCategory}}`;
-					} else {
-						fallbackEarlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{${databaseCategory}}`;
-					}
+				if (isPremiumPreview) {
+					fallbackEarlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management},categories.cs.{${normalizedCareerPath}}`;
+				} else {
+					fallbackEarlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{${normalizedCareerPath}}`;
 				}
 			} else {
 				if (isPremiumPreview) {
@@ -304,15 +299,13 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 		}
 
 		// Build same early-career filter with career path included
+		// SIMPLIFIED: No mapping needed - form value IS database category
 		let jobsEarlyCareerFilter = "";
 		if (normalizedCareerPath) {
-			const databaseCategory = FORM_TO_DATABASE_MAPPING[normalizedCareerPath];
-			if (databaseCategory) {
-				if (isPremiumPreview) {
-					jobsEarlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management},categories.cs.{${databaseCategory}}`;
-				} else {
-					jobsEarlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{${databaseCategory}}`;
-				}
+			if (isPremiumPreview) {
+				jobsEarlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management},categories.cs.{${normalizedCareerPath}}`;
+			} else {
+				jobsEarlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{${normalizedCareerPath}}`;
 			}
 		} else {
 			if (isPremiumPreview) {
