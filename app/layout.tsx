@@ -1,6 +1,7 @@
 import "./globals.css";
 import "../lib/web-vitals";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 
 // TODO: Add Axiom Web Vitals export once URL is properly configured
 // export { reportWebVitals } from 'next-axiom';
@@ -103,6 +104,10 @@ export default async function RootLayout({
 }: {
 	children: React.ReactNode;
 }) {
+	// Get the nonce from the security-headers middleware
+	const headersList = await headers();
+	const nonce = headersList.get("x-nonce") || "";
+
 	return (
 		<html lang="en" className="scroll-smooth" suppressHydrationWarning>
 			<head>
@@ -138,6 +143,7 @@ export default async function RootLayout({
 				<meta name="apple-mobile-web-app-title" content="JobPing" />
 				<link rel="apple-touch-icon" href="/og-image.png" />
 				<script
+					nonce={nonce}
 					type="application/ld+json"
 					// biome-ignore lint/security/noDangerouslySetInnerHtml: Safe JSON-LD structured data
 					dangerouslySetInnerHTML={{
@@ -178,6 +184,7 @@ export default async function RootLayout({
 				{/* PWA Service Worker Registration - Only on mobile for better performance */}
 				<Script
 					id="pwa-registration"
+					nonce={nonce}
 					strategy="afterInteractive"
 					/* biome-ignore lint/security/noDangerouslySetInnerHtml: Safe PWA service worker script */
 					dangerouslySetInnerHTML={{

@@ -723,8 +723,8 @@ async function processIncomingJob(job, options = {}) {
 		`[Processor] ✅ Accepting job with ${description.length} chars (rich context: ${hasRichContext})`,
 	);
 
-	// Return standardized job object
-	return {
+	// Build job object
+	const jobObject = {
 		title,
 		company,
 		company_name, // CRITICAL: Always set company_name
@@ -752,6 +752,33 @@ async function processIncomingJob(job, options = {}) {
 		is_active: true,
 		created_at: nowIso,
 	};
+
+	// CRITICAL: Validate classification at ingestion time
+	const { validateJobClassification } = require("./classificationValidator.cjs");
+	const classificationValidation = validateJobClassification(jobObject);
+
+	if (!classificationValidation.isValid) {
+		console.warn(
+			`[Processor] ⚠️  Classification validation failed for "${title}":`,
+			classificationValidation.errors
+		);
+	}
+
+	if (classificationValidation.warnings.length > 0) {
+		console.warn(
+			`[Processor] ⚠️  Classification warnings for "${title}":`,
+			classificationValidation.warnings
+		);
+	}
+
+	if (classificationValidation.fixed) {
+		console.log(
+			`[Processor] 🔧 Auto-fixed classification for "${title}" - was ${classificationValidation.job.is_internship ? "internship" : "graduate"}, now ${classificationValidation.job.is_graduate ? "graduate" : "internship"}`
+		);
+		return classificationValidation.job;
+	}
+
+	return jobObject;
 }
 
 module.exports = {

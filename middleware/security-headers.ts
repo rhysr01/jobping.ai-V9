@@ -12,13 +12,15 @@ export function addSecurityHeaders(response: NextResponse): void {
 	response.headers.set("x-nonce", nonce);
 
 	// Enhanced security headers with strict CSP (no unsafe-inline or unsafe-eval in production)
-	// Using nonces for dynamic scripts and hashes for static inline scripts
+	// Using nonces for all inline scripts - this is more maintainable than hardcoded hashes
 	// In development, allow unsafe-inline for Next.js dev scripts
 	const isDevelopment = process.env.NODE_ENV !== "production";
 
+	// Use nonces for all inline scripts - much more maintainable
+	// The nonce prevents XSS attacks while allowing necessary Next.js and application scripts
 	const scriptSrc = isDevelopment
 		? `'self' 'nonce-${nonce}' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://*.supabase.co https://cdn.jsdelivr.net https://*.sentry.io https://challenges.cloudflare.com`
-		: `'self' 'nonce-${nonce}' 'sha256-kqFzuQJivdoTtSFw6wC6ycybBAlKswA7hJ7PojqXc7Q=' 'sha256-S/UEtrQCu6TgVoi5WG9EmfntThy9qa0ZZqFKfu1n76w=' 'sha256-K2qBnrJSupBJBzTvPD141bNBx/+m8R4iJQNj2EHmozM=' 'sha256-6BVL0DgOeCbtUrFGJAsqrMsuY26fcarXXnMdHEfKW3Y=' 'sha256-gjKA4KaUqCuh6Z8uiLLjc/ejIMPbHQttPwGl2h8rL9g=' 'sha256-NAH07B08mzYM3EU9WiA+8U25CIu0RUXeauLJC+NvFZ4=' https://www.googletagmanager.com https://www.google-analytics.com https://*.supabase.co https://cdn.jsdelivr.net https://*.sentry.io https://challenges.cloudflare.com`;
+		: `'self' 'nonce-${nonce}' https://www.googletagmanager.com https://www.google-analytics.com https://*.supabase.co https://cdn.jsdelivr.net https://*.sentry.io https://challenges.cloudflare.com`;
 
 	response.headers.set(
 		"Content-Security-Policy",

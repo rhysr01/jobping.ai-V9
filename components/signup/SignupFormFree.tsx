@@ -11,6 +11,7 @@ import { useFreeSignupNavigation } from "@/hooks/useFreeSignupNavigation";
 import { useSignupState } from "@/hooks/useSignupState";
 import { ApiError, apiCallJson } from "@/lib/api-client";
 import { TIMING } from "@/lib/constants";
+import { debugLogger } from "@/lib/debug-logger";
 import { showToast } from "@/lib/toast";
 import ErrorBoundary from "../../components/error-boundary";
 import { useAriaAnnounce } from "../ui/AriaLiveRegion";
@@ -30,6 +31,12 @@ function SignupFormFree() {
 	const initialStep = urlStep
 		? Math.max(1, Math.min(3, parseInt(urlStep, 10)))
 		: 1;
+
+	// Log initialization
+	debugLogger.step("INIT", "SignupFormFree component mounting", {
+		initialStep,
+		urlStep,
+	});
 
 	// Use our custom hooks for state management
 	const signupState = useSignupState(initialStep);
@@ -52,7 +59,7 @@ function SignupFormFree() {
 	// Guard against undefined functions during SSR or initialization
 	// This prevents "setFormData is not defined" and "updateFormData is not defined" errors
 	if (typeof window !== "undefined" && (!setFormData || !updateFormData)) {
-		console.error("[FREE SIGNUP CLIENT] Critical: setFormData or updateFormData is undefined", {
+		debugLogger.error("INIT", "Critical: setFormData or updateFormData is undefined", {
 			hasSetFormData: !!setFormData,
 			hasUpdateFormData: !!updateFormData,
 			signupStateKeys: Object.keys(signupState),
@@ -98,11 +105,18 @@ function SignupFormFree() {
 	// This prevents errors from previous steps or failed submissions from persisting
 	// Following production-first approach: only show errors when they're relevant to current step
 	useEffect(() => {
+		debugLogger.step("STEP_CHANGE", "Step navigation", {
+			newStep: step,
+			isSubmitting,
+			hasError: !!signupError,
+		});
+
 		// Clear validation errors when step changes (unless currently submitting)
 		if (!isSubmitting) {
 			setValidationErrors({});
 			// Also clear signup state error when navigating to a new step
 			if (signupError) {
+				debugLogger.debug("STEP_CHANGE", "Clearing previous errors");
 				setError("");
 			}
 			// Clear touched fields when changing steps to prevent stale error states
@@ -113,6 +127,10 @@ function SignupFormFree() {
 	// Mark component as mounted to prevent hydration mismatches
 	useEffect(() => {
 		setIsMounted(true);
+		debugLogger.step("MOUNT", "Component mounted successfully", {
+			step,
+			hasFormData: !!formData,
+		});
 	}, []);
 
 	// Clear errors on initial mount - always clear to prevent stale errors from persisting
@@ -139,10 +157,24 @@ function SignupFormFree() {
 
 	// Enhanced submit handler with validation and loading states
 	const handleSubmit = useCallback(async () => {
-		if (loading || isSubmitting) return;
+		if (loading || isSubmitting) {
+			debugLogger.warning("SUBMIT", "Submit already in progress");
+			return;
+		}
+
+		const submitTracker = debugLogger.createTracker("FORM_SUBMIT");
 
 		// Client-side validation
 		const errors: Record<string, string> = {};
+
+		debugLogger.step("VALIDATION", "Starting client-side validation", {
+			hasFullName: !!formData.fullName?.trim(),
+			hasEmail: !!formData.email?.trim(),
+			emailValid: emailValidation.isValid,
+			citiesCount: formData.cities?.length || 0,
+			careerPathCount: formData.careerPath?.length || 0,
+			gdprConsent: formData.gdprConsent,
+		});
 
 		if (!formData.fullName?.trim()) {
 			errors.fullName = "Full name is required";
@@ -165,11 +197,13 @@ function SignupFormFree() {
 		setValidationErrors(errors);
 
 		if (Object.keys(errors).length > 0) {
-			console.log('Validation failed - blocking submission:', errors);
+			debugLogger.error("VALIDATION", "Client-side validation failed", { errors });
+			submitTracker.error("Validation failed", { errorCount: Object.keys(errors).length });
 			return;
 		}
 
-		console.log('Validation passed - proceeding with submission');
+		debugLogger.success("VALIDATION", "All client-side validations passed");
+		submitTracker.checkpoint("Validation complete");
 
 		setIsSubmitting(true);
 		setLoading(true);
@@ -182,30 +216,22 @@ function SignupFormFree() {
 		setTimeout(() => setSubmissionProgress(10), 100);
 
 		try {
-			// Safe console logging - only use group in development, regular log in production
-			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-				console.group("🔵 [FREE SIGNUP CLIENT] Starting submission");
-			}
-			console.log("🔵 [FREE SIGNUP CLIENT] Starting submission - Form data:", {
+			debugLogger.step("SUBMIT_START", "Starting form submission", {
 				email: formData.email,
-				fullName: formData.fullName,
 				cities: formData.cities,
-				citiesLength: formData.cities?.length,
 				careerPath: formData.careerPath,
-				careerPathLength: formData.careerPath?.length,
 				visaStatus: formData.visaStatus,
-				gdprConsent: formData.gdprConsent,
-				ageVerified: formData.ageVerified,
 			});
-			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-				console.groupEnd();
-			}
+			submitTracker.checkpoint("Form submission started");
 
 			// Stage 1: Validation (10% - 30%)
 			setSubmissionProgress(10);
 			await new Promise((resolve) => setTimeout(resolve, 300));
 			setSubmissionProgress(30);
 			setSubmissionStage("Finding your perfect matches...");
+			debugLogger.step("SUBMIT_STAGE", "Stage 1: Validation", {
+				progress: "30%",
+			});
 
 			// Stage 2: API Call (30% - 70%)
 			setSubmissionProgress(40);
@@ -229,6 +255,15 @@ function SignupFormFree() {
 				age_verified: formData.gdprConsent === true,
 			};
 
+			debugLogger.debug("SUBMIT_API_DATA", "Prepared API payload", {
+				email: apiData.email,
+				citiesLength: apiData.cities?.length,
+				careerPathLength: apiData.careerPath?.length,
+				visaStatus: apiData.visaStatus,
+				termsAccepted: apiData.terms_accepted,
+				ageVerified: apiData.age_verified,
+			});
+
 			// Validate critical fields before sending
 			if (!apiData.cities || apiData.cities.length === 0) {
 				throw new Error("Please select at least one city");
@@ -246,25 +281,12 @@ function SignupFormFree() {
 				throw new Error("Age verification is required");
 			}
 
-			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-				console.group("🟢 [FREE SIGNUP CLIENT] Submitting to API");
-			}
-			console.log("🟢 [FREE SIGNUP CLIENT] Submitting to API - Payload:", {
-				email: apiData.email,
-				full_name: apiData.full_name,
-				cities: apiData.cities,
-				citiesLength: apiData.cities?.length,
-				careerPath: apiData.careerPath,
-				careerPathLength: apiData.careerPath?.length,
-				visaStatus: apiData.visaStatus,
-				terms_accepted: apiData.terms_accepted,
-				age_verified: apiData.age_verified,
-				hasBirthYear: !!apiData.birth_year,
+			debugLogger.step("SUBMIT_STAGE", "Stage 2: API Call", {
+				progress: "40%",
+				endpoint: "/api/signup/free",
+				method: "POST",
 			});
-			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-				console.log("Full API data:", JSON.stringify(apiData, null, 2));
-				console.groupEnd();
-			}
+			submitTracker.checkpoint("API call starting");
 
 			const response = await apiCallJson<{
 				userId: string;
@@ -278,21 +300,15 @@ function SignupFormFree() {
 				body: JSON.stringify(apiData),
 			});
 
-			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-				console.group("✅ [FREE SIGNUP CLIENT] API response received");
-			}
-			console.log("✅ [FREE SIGNUP CLIENT] API response received - Summary:", {
-				success: !!response,
+			debugLogger.success("SUBMIT_API_RESPONSE", "API response received", {
 				userId: response?.userId,
-				email: response?.email,
 				matchCount: response?.matchesCount,
-				hasError: !!response?.error,
-				error: response?.error,
+				email: response?.email,
+				status: "success",
 			});
-			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-				console.log("Full response:", response);
-				console.groupEnd();
-			}
+			submitTracker.checkpoint("API response successful", {
+				matchCount: response?.matchesCount,
+			});
 
 			if (!response) {
 				throw new Error("No response from server");
@@ -312,18 +328,11 @@ function SignupFormFree() {
 			setSubmissionProgress(100);
 			setSubmissionStage("Complete! Redirecting...");
 
-			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-				console.group("🎉 [FREE SIGNUP CLIENT] Signup successful!");
-			}
-			console.log("🎉 [FREE SIGNUP CLIENT] Signup successful! - Details:", {
+			debugLogger.success("SUBMIT_SUCCESS", "Signup successful!", {
 				email: response.email,
 				userId: response.userId,
 				matchCount: response.matchesCount,
-				redirectDelay: TIMING.REDIRECT_DELAY_MS,
 			});
-			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-				console.groupEnd();
-			}
 
 			// Save preferences for matches page before clearing form progress
 			// This allows PremiumJobsPreview to access user preferences
@@ -332,37 +341,27 @@ function SignupFormFree() {
 
 			// Store timeout ref for cleanup
 			redirectTimeoutRef.current = setTimeout(() => {
-				console.log("[FREE SIGNUP CLIENT] Redirecting to matches page", {
+				debugLogger.step("REDIRECT", "Redirecting to matches page", {
 					email: response.email,
 					tier: "free",
+				});
+				submitTracker.complete("Form submission complete - redirecting", {
+					redirectUrl: `/matches?tier=free&email=${response.email}`,
 				});
 				router.push(
 					`/matches?tier=free&email=${encodeURIComponent(response.email)}`,
 				);
 			}, TIMING.REDIRECT_DELAY_MS);
 		} catch (error) {
-			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-				console.group("❌ [FREE SIGNUP CLIENT] Error during submission");
-			}
-			console.error("❌ [FREE SIGNUP CLIENT] Error during submission - Summary:", {
-				error: error instanceof Error ? error.message : String(error),
+			debugLogger.error("SUBMIT_ERROR", "Error during submission", {
 				errorType: error instanceof ApiError ? "ApiError" : typeof error,
+				message: error instanceof Error ? error.message : String(error),
 				status: error instanceof ApiError ? error.status : undefined,
-				retryable: error instanceof ApiError ? error.retryable : undefined,
 			});
-			console.error("Form data at error:", {
-				email: formData.email,
-				fullName: formData.fullName,
-				cities: formData.cities,
-				careerPath: formData.careerPath,
+			submitTracker.error("Submission failed", {
+				errorType: error instanceof ApiError ? "ApiError" : typeof error,
+				message: error instanceof Error ? error.message : String(error),
 			});
-			if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-				console.error("Full error object:", error);
-				if (error instanceof ApiError && error.response) {
-					console.error("API error response:", error.response);
-				}
-				console.groupEnd();
-			}
 
 			setSubmissionProgress(0);
 			setSubmissionStage("");
@@ -372,7 +371,7 @@ function SignupFormFree() {
 			let errorDetails = {};
 
 			if (error instanceof ApiError) {
-				console.error("[FREE SIGNUP CLIENT] ApiError details", {
+				debugLogger.error("SUBMIT_API_ERROR", "API error details", {
 					status: error.status,
 					message: error.message,
 					response: error.response,
@@ -381,7 +380,7 @@ function SignupFormFree() {
 
 			// If it's a validation error, show the details
 			if (error.status === 400 && error.response?.details) {
-				console.error('API Validation Error Details:', error.response.details);
+				debugLogger.error('SUBMIT_VALIDATION_ERROR', 'API Validation Error Details:', error.response.details);
 				errorDetails = error.response.details;
 				
 				// Parse zod validation errors into user-friendly messages
@@ -404,6 +403,7 @@ function SignupFormFree() {
 					if (fieldErrors.cities) mappedErrors.cities = fieldErrors.cities;
 					
 					setValidationErrors(mappedErrors);
+					debugLogger.debug("SUBMIT_MAPPED_ERRORS", "Mapped error fields", mappedErrors);
 					
 					// Update error message to be more helpful
 					const errorMessages = Object.values(mappedErrors);
@@ -480,7 +480,7 @@ function SignupFormFree() {
 				});
 			}
 
-			console.error('Signup submission error:', {
+			debugLogger.error('SUBMIT_FINAL_ERROR', 'Signup submission error:', {
 				error: error instanceof ApiError ? error.message : String(error),
 				status: error instanceof ApiError ? error.status : undefined,
 				details: errorDetails,
@@ -534,11 +534,6 @@ function SignupFormFree() {
 			
 			setValidationErrors(safeValidationErrors);
 			showToast.error(errorMessage);
-
-			// Log error details for debugging (development only)
-			if (process.env.NODE_ENV === "development") {
-				console.error("Signup Error:", errorMessage, errorDetails);
-			}
 		} finally {
 			setLoading(false);
 			setIsSubmitting(false);
@@ -551,6 +546,7 @@ function SignupFormFree() {
 		setError,
 		setSuccessState,
 		clearProgress,
+		emailValidation,
 	]);
 
 	// Helper functions
