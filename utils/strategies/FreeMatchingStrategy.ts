@@ -218,6 +218,34 @@ async function rankAndReturnMatches(
 		})
 		.filter(Boolean); // Remove null entries
 
+		// If no matches found, try fallback with just city filter (more lenient)
+		if (matches.length === 0 && jobs.length > 0) {
+			apiLogger.warn("[FREE] No matches from AI, using raw job list as fallback", {
+				email: userPrefs.email,
+				availableJobs: jobs.length,
+				method: method,
+			});
+
+			// Take first 5 jobs as fallback
+			const fallbackMatches = jobs.slice(0, maxMatches).map((job: any) => ({
+				...job,
+				match_score: 0.5,
+				match_reason: "Matching temporarily unavailable - showing available opportunities",
+			}));
+
+			apiLogger.info("[FREE] Using fallback job list", {
+				email: userPrefs.email,
+				fallbackMatches: fallbackMatches.length,
+			});
+
+			return {
+				matches: fallbackMatches,
+				matchCount: fallbackMatches.length,
+				method: "free_fallback_jobs",
+				duration: Date.now() - startTime,
+			};
+		}
+
 		apiLogger.info("[FREE] Ranking complete", {
 			email: userPrefs.email,
 			inputJobs: jobs.length,
