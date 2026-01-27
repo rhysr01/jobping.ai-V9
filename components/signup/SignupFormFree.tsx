@@ -167,10 +167,15 @@ function SignupFormFree() {
 		// Client-side validation
 		const errors: Record<string, string> = {};
 
+		// Basic email regex as fallback (same as navigation logic)
+		const basicEmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+		const emailLooksValid = basicEmailRegex.test(formData.email.trim());
+
 		debugLogger.step("VALIDATION", "Starting client-side validation", {
 			hasFullName: !!formData.fullName?.trim(),
 			hasEmail: !!formData.email?.trim(),
 			emailValid: emailValidation.isValid,
+			emailLooksValid,
 			citiesCount: formData.cities?.length || 0,
 			careerPathCount: formData.careerPath?.length || 0,
 			gdprConsent: formData.gdprConsent,
@@ -181,8 +186,10 @@ function SignupFormFree() {
 		}
 		if (!formData.email?.trim()) {
 			errors.email = "Email is required";
-		} else if (!emailValidation.isValid) {
-			errors.email = emailValidation.error;
+		} else if (!emailValidation.isValid && !emailLooksValid) {
+			// Allow email if either debounced validation passed OR basic regex passes
+			// This prevents UX issues with 500ms debounce delay
+			errors.email = emailValidation.error || "Please enter a valid email address";
 		}
 		if (!formData.cities?.length) {
 			errors.cities = "Please select at least one city";
