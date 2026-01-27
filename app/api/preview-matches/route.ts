@@ -145,27 +145,35 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			query = query.in("city", cityArray);
 		}
 
-	// Apply role filter - this will naturally intersect with city filter
-	if (isPremiumPreview) {
-		query = query.or("is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management}");
-	} else {
-		query = query.or("is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}");
-	}
-
-	// 🐛 BUG FIX #4: Apply career path filter if provided
-	// Maps form value (e.g., "data") to database category (e.g., "data-analytics")
+	// Build early-career filter that includes career path
+	// If career path is specified, we need: (early-career OR career-path) AND apply career path
+	// If no career path: just early-career filter
+	let earlyCareerFilter = "";
 	if (normalizedCareerPath) {
 		const databaseCategory = FORM_TO_DATABASE_MAPPING[normalizedCareerPath];
 		if (databaseCategory) {
-			// Use PostgreSQL contains operator to filter jobs with this category
-			query = query.contains("categories", [databaseCategory]);
-			apiLogger.info("Applied career path filter", {
+			// Include both early-career and the specific career path
+			if (isPremiumPreview) {
+				earlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management},categories.cs.{${databaseCategory}}`;
+			} else {
+				earlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{${databaseCategory}}`;
+			}
+			apiLogger.info("Applied career path filter in OR clause", {
 				formValue: normalizedCareerPath,
 				databaseCategory,
 				requestId,
 			});
 		}
+	} else {
+		// No career path specified - use standard early-career filter
+		if (isPremiumPreview) {
+			earlyCareerFilter = "is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management}";
+		} else {
+			earlyCareerFilter = "is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}";
+		}
 	}
+	
+	query = query.or(earlyCareerFilter);
 
 		// Filter by visa sponsorship if specified
 		if (visaSponsorship) {
@@ -222,16 +230,26 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 				.is("filtered_reason", null)
 				.gte("created_at", sixtyDaysAgo.toISOString());
 
-			// Apply same role filtering
-			if (isPremiumPreview) {
-				fallbackQuery = fallbackQuery.or(
-					"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management}"
-				);
+			// Apply same role filtering with career path if specified
+			let fallbackEarlyCareerFilter = "";
+			if (normalizedCareerPath) {
+				const databaseCategory = FORM_TO_DATABASE_MAPPING[normalizedCareerPath];
+				if (databaseCategory) {
+					if (isPremiumPreview) {
+						fallbackEarlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management},categories.cs.{${databaseCategory}}`;
+					} else {
+						fallbackEarlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{${databaseCategory}}`;
+					}
+				}
 			} else {
-				fallbackQuery = fallbackQuery.or(
-					"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}"
-				);
+				if (isPremiumPreview) {
+					fallbackEarlyCareerFilter = "is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management}";
+				} else {
+					fallbackEarlyCareerFilter = "is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}";
+				}
 			}
+			
+			fallbackQuery = fallbackQuery.or(fallbackEarlyCareerFilter);
 
 			const { count: fallbackCount } = await fallbackQuery;
 			jobCount = Math.min(fallbackCount || 0, 500); // Cap at 500 to avoid overwhelming numbers
@@ -285,23 +303,26 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 			jobsQuery = jobsQuery.in("city", cityArray);
 		}
 
-		if (isPremiumPreview) {
-			jobsQuery = jobsQuery.or(
-				"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management}",
-			);
-		} else {
-			jobsQuery = jobsQuery.or(
-				"is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}",
-			);
-		}
-
-		// Apply career path filter if provided (same logic as count query)
+		// Build same early-career filter with career path included
+		let jobsEarlyCareerFilter = "";
 		if (normalizedCareerPath) {
 			const databaseCategory = FORM_TO_DATABASE_MAPPING[normalizedCareerPath];
 			if (databaseCategory) {
-				jobsQuery = jobsQuery.contains("categories", [databaseCategory]);
+				if (isPremiumPreview) {
+					jobsEarlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management},categories.cs.{${databaseCategory}}`;
+				} else {
+					jobsEarlyCareerFilter = `is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{${databaseCategory}}`;
+				}
+			}
+		} else {
+			if (isPremiumPreview) {
+				jobsEarlyCareerFilter = "is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career},categories.cs.{business},categories.cs.{management}";
+			} else {
+				jobsEarlyCareerFilter = "is_internship.eq.true,is_graduate.eq.true,categories.cs.{early-career}";
 			}
 		}
+		
+		jobsQuery = jobsQuery.or(jobsEarlyCareerFilter);
 
 		if (visaSponsorship === "need-sponsorship") {
 			jobsQuery = jobsQuery.eq("visa_friendly", true);
