@@ -1,13 +1,13 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { BrandIcons } from "../../../components/ui/BrandIcons";
 import { SuccessAnimation } from "../../../components/ui/SuccessAnimation";
 import CustomButton from "../../../components/ui/CustomButton";
 
-export default function EmailVerificationPage() {
+function EmailVerificationContent() {
 	const searchParams = useSearchParams();
 	const email = searchParams.get("email") || "";
 	const [isResending, setIsResending] = useState(false);
@@ -111,5 +111,13 @@ export default function EmailVerificationPage() {
 				</div>
 			</div>
 		</div>
+	);
+}
+
+export default function EmailVerificationPage() {
+	return (
+		<Suspense fallback={<div className="min-h-screen bg-black" />}>
+			<EmailVerificationContent />
+		</Suspense>
 	);
 }
