@@ -104,9 +104,9 @@ export default async function RootLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	// Get nonce from headers (set by middleware)
+	// Get headers (middleware sets x-nonce for CSP)
 	const headersList = await headers();
-	const nonce = headersList.get("x-nonce") || "";
+	// nonce is available via headersList.get("x-nonce") if needed for script tags
 
 	return (
 		<html lang="en" className="scroll-smooth" suppressHydrationWarning>
