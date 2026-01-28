@@ -65,11 +65,19 @@ export async function runFreeMatching(
 	// This is the KEY difference from premium - we filter AGGRESSIVELY because
 	// free users haven't provided skills, industries, company size, etc.
 	const preFiltered = jobs.filter((job) => {
-	const cityMatch = userPrefs.target_cities.some((city) => {
-		// All job cities are normalized to form values via migration
-		// Use exact case-insensitive match
-		if (!job.city) return true; // Include jobs with NULL city
-		return job.city.toLowerCase() === city.toLowerCase();
+	const cityMatch = userPrefs.target_cities.some((userCity) => {
+		// Use flexible matching like premium tier - substring matching for city names
+		const normalizedUserCity = userCity.toLowerCase().trim();
+		const normalizedJobCity = job.city?.toLowerCase().trim() || "";
+		const normalizedJobLocation = job.location?.toLowerCase().trim() || "";
+		
+		// Allow exact match or substring match (e.g., "Berlin" matches "Berlin-Friedrichshain")
+		return (
+			normalizedJobCity === normalizedUserCity ||
+			normalizedJobCity.includes(normalizedUserCity) ||
+			normalizedJobLocation.includes(normalizedUserCity) ||
+			normalizedUserCity.includes(normalizedJobCity)
+		);
 	});
 
 		// IMPROVED: Strict career path matching for free tier
@@ -111,11 +119,19 @@ export async function runFreeMatching(
 		});
 
 		// Fallback: Try broader search if pre-filter too strict
-		// Cities are normalized in database, use exact matching
+		// Use flexible city matching like premium
 		const fallbackFiltered = jobs.filter((job) =>
-			userPrefs.target_cities.some((city) => {
-				if (!job.city) return true; // Include jobs with NULL city
-				return job.city.toLowerCase() === city.toLowerCase();
+			userPrefs.target_cities.some((userCity) => {
+				const normalizedUserCity = userCity.toLowerCase().trim();
+				const normalizedJobCity = job.city?.toLowerCase().trim() || "";
+				const normalizedJobLocation = job.location?.toLowerCase().trim() || "";
+				
+				return (
+					normalizedJobCity === normalizedUserCity ||
+					normalizedJobCity.includes(normalizedUserCity) ||
+					normalizedJobLocation.includes(normalizedUserCity) ||
+					normalizedUserCity.includes(normalizedJobCity)
+				);
 			}),
 		);
 
