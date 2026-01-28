@@ -47,16 +47,17 @@ export const CAREER_TAXONOMY_VERSION = 1;
 
 // Canonical career paths - Single source of truth
 export const CANONICAL_CAREER_PATHS = [
-	"strategy-business-design", // Strategy & Business Design
-	"data-analytics", // Data & Analytics
-	"sales-client-success", // Sales & Client Success
-	"product-innovation", // Product & Engineering
-	"marketing-growth", // Marketing & Growth
-	"finance-investment", // Finance & Operations
-	"consulting", // Consulting & Advisory
-	"other", // Other / Open to Anything
-	"unsure", // I'm not sure yet
-	"unknown", // Could not infer the job's path
+	"strategy-business-design",
+	"data-analytics",
+	"sales-client-success",
+	"product-innovation",
+	"marketing-growth",
+	"finance-investment",
+	"operations-supply-chain",
+	"sustainability-esg",
+	"tech-transformation",
+	"unsure",
+	"unknown",
 ] as const;
 
 // Tie-break priority order (higher index = higher priority)
@@ -65,17 +66,18 @@ export const CAREER_PATH_PRIORITY = {
 	"data-analytics": 8,
 	"marketing-growth": 7,
 	"finance-investment": 6,
-	"strategy-business-design": 4,
-	"sales-client-success": 3,
-	consulting: 2,
-	other: 0,
+	"operations-supply-chain": 5,
+	"tech-transformation": 4,
+	"strategy-business-design": 3,
+	"sales-client-success": 2,
+	"sustainability-esg": 1,
 	unsure: -1,
 	unknown: -2,
 } as const;
 
-// Synonym slug mapping dictionary - maps user input to form career path values
+// Synonym slug mapping dictionary - maps user input to actual database career paths
 export const CAREER_PATH_SYNONYMS: Record<string, string> = {
-	// Strategy & Business Design synonyms
+	// Strategy & Business Design
 	strategy: "strategy-business-design",
 	"business development": "strategy-business-design",
 	"biz dev": "strategy-business-design",
@@ -88,7 +90,7 @@ export const CAREER_PATH_SYNONYMS: Record<string, string> = {
 	consulting: "strategy-business-design",
 	"consulting & advisory": "strategy-business-design",
 
-	// Data Analytics synonyms
+	// Data Analytics
 	"data analyst": "data-analytics",
 	"business analyst": "data-analytics",
 	ba: "data-analytics",
@@ -102,7 +104,7 @@ export const CAREER_PATH_SYNONYMS: Record<string, string> = {
 	"artificial intelligence": "data-analytics",
 	"data & analytics": "data-analytics",
 
-	// Sales & Client Success synonyms
+	// Sales & Client Success
 	"sales representative": "sales-client-success",
 	"account executive": "sales-client-success",
 	"client success": "sales-client-success",
@@ -114,7 +116,7 @@ export const CAREER_PATH_SYNONYMS: Record<string, string> = {
 	"sales-client-success": "sales-client-success",
 	sales: "sales-client-success",
 
-	// Product & Innovation synonyms
+	// Product & Innovation
 	"product manager": "product-innovation",
 	"product owner": "product-innovation",
 	"product development": "product-innovation",
@@ -127,7 +129,7 @@ export const CAREER_PATH_SYNONYMS: Record<string, string> = {
 	"product-innovation": "product-innovation",
 	product: "product-innovation",
 
-	// Marketing & Growth synonyms
+	// Marketing & Growth
 	brand: "marketing-growth",
 	"digital marketing": "marketing-growth",
 	"social media": "marketing-growth",
@@ -139,7 +141,7 @@ export const CAREER_PATH_SYNONYMS: Record<string, string> = {
 	"marketing-growth": "marketing-growth",
 	marketing: "marketing-growth",
 
-	// Finance & Operations synonyms
+	// Finance & Investment
 	financial: "finance-investment",
 	investment: "finance-investment",
 	banking: "finance-investment",
@@ -151,10 +153,49 @@ export const CAREER_PATH_SYNONYMS: Record<string, string> = {
 	"finance-investment": "finance-investment",
 	finance: "finance-investment",
 
-	// Other catch-all
-	other: "other",
-	unsure: "other",
-	unknown: "other",
+	// Operations & Supply Chain
+	"supply chain": "operations-supply-chain",
+	logistics: "operations-supply-chain",
+	procurement: "operations-supply-chain",
+	manufacturing: "operations-supply-chain",
+	production: "operations-supply-chain",
+	"quality assurance": "operations-supply-chain",
+	inventory: "operations-supply-chain",
+	"operations & supply chain": "operations-supply-chain",
+	"operations-supply-chain": "operations-supply-chain",
+	operations: "operations-supply-chain",
+
+	// Tech & Transformation
+	software: "tech-transformation",
+	developer: "tech-transformation",
+	engineer: "tech-transformation",
+	programming: "tech-transformation",
+	coding: "tech-transformation",
+	technology: "tech-transformation",
+	technical: "tech-transformation",
+	engineering: "tech-transformation",
+	devops: "tech-transformation",
+	cybersecurity: "tech-transformation",
+	infrastructure: "tech-transformation",
+	"tech & transformation": "tech-transformation",
+	"tech-transformation": "tech-transformation",
+
+	// Sustainability & ESG
+	esg: "sustainability-esg",
+	environmental: "sustainability-esg",
+	"social responsibility": "sustainability-esg",
+	"corporate responsibility": "sustainability-esg",
+	green: "sustainability-esg",
+	climate: "sustainability-esg",
+	renewable: "sustainability-esg",
+	"sustainability & esg": "sustainability-esg",
+	"sustainability-esg": "sustainability-esg",
+	sustainability: "sustainability-esg",
+
+	// Catch-all for unmatched
+	other: "unsure",
+	unknown: "unsure",
+	unsure: "unsure",
 };
 
 // Legacy constants (deprecated - use CANONICAL_CAREER_PATHS instead)
