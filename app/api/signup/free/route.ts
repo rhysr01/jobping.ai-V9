@@ -751,6 +751,7 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 
 	// SIMPLIFIED: Let PrefilterService handle all smart filtering
 	// Only do basic fetching - active, status, and freshness
+	// BUT: ADD COUNTRY FILTER at DB level to avoid fetching US jobs
 	const sixtyDaysAgo = new Date();
 	sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
 
@@ -762,13 +763,24 @@ export const POST = asyncHandler(async (request: NextRequest) => {
 		.is("filtered_reason", null)
 		.gte("created_at", sixtyDaysAgo.toISOString()) // Only recent jobs
 		.order("id", { ascending: false }); // Pseudo-random for variety
+
+	// 🔴 CRITICAL: Add country-level filtering at DB query level
+	// This prevents fetching 28k US jobs when user selects Berlin
+	if (targetCountries.size > 0) {
+		const countriesArray = Array.from(targetCountries);
+		query = query.in("country", countriesArray);
+		apiLogger.info("Free signup - country filter applied at DB level", {
+			requestId,
+			countries: countriesArray,
+		});
+	}
 	// REMOVED LIMIT - let PrefilterService filter by location/career first
 
-	apiLogger.info("Free signup - simplified job fetching", {
+	apiLogger.info("Free signup - job query configured", {
 		requestId,
 		email: normalizedEmail,
-		strategy: "basic-fetch-only",
-		note: "PrefilterService now handles all smart filtering (cities, career, etc.)",
+		strategy: "country-filter-at-db-level",
+		note: "PrefilterService handles city/career filtering after DB fetch",
 	});
 
 	let { data: allJobs, error: jobsError } = await query;
